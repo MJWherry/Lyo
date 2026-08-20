@@ -6,15 +6,15 @@ This document is the standard for where new Lyo packages live and how they are n
 
 Answer in order:
 
-1. **Lyo canonical model in Core?** → **Archetype A** — `Core/{Domain}/`, e.g. `Lyo.People.Models`, `Lyo.Geolocation.Postgres`.
-2. Else **pluggable Lyo interface under Communication or Security?** → **Archetype B** — `Communication|Security/{Capability}/`, e.g. `Lyo.Translation.Google`.
-3. Else **thin HTTP/SDK client** (host maps into Core or feeds an Archetype B adapter)? → **Archetype C** — `Integration/{Vendor}/`, e.g. `Lyo.Endato.Client`.
-4. Else **vendor-owned product** (own models/schema, not a Core projection)? → **Archetype D** — `Integration/{Vendor}/` full stack, e.g. `Lyo.Discord.Postgres`.
-5. Else **platform/infrastructure** (Api, Web, Job, Data, Features, Tools)? → **Archetype E** — existing top-level areas.
+1. **Lyo canonical model in Core?** Then **Archetype A.** `Core/{Domain}/`, e.g. `Lyo.People.Models`, `Lyo.Geolocation.Postgres`.
+2. Else **pluggable Lyo interface under Communication or Security?** Then **Archetype B.** `Communication|Security/{Capability}/`, e.g. `Lyo.Translation.Google`.
+3. Else **thin HTTP/SDK client** (host maps into Core or feeds an Archetype B adapter)? Then **Archetype C.** `Integration/{Vendor}/`, e.g. `Lyo.Endato.Client`.
+4. Else **vendor-owned product** (own models/schema, not a Core projection)? Then **Archetype D.** `Integration/{Vendor}/` full stack, e.g. `Lyo.Discord.Postgres`.
+5. Else **platform/infrastructure** (Api, Web, Job, Data, Features, Tools)? Then **Archetype E.** Existing top-level areas.
 
 ## Archetypes
 
-### A — Lyo domain (canonical)
+### A. Lyo domain (canonical)
 
 | | |
 |---|---|
@@ -23,18 +23,18 @@ Answer in order:
 | **Packages** | `Lyo.{Domain}.Models`, `Lyo.{Domain}` (contracts), `Lyo.{Domain}.Postgres`, tests |
 | **Must not** | Reference vendor SDKs, vendor HTTP clients, or vendor DTO packages |
 
-### B — Capability + provider
+### B. Capability + provider
 
 | | |
 |---|---|
 | **When** | Multiple vendors implement one Lyo interface (`ITranslationService`, `ISmsService`, `ITtsService`, OpenID providers, etc.). |
 | **Path** | `Communication/{Capability}/` or `Security/{Capability}/` |
 | **Packages** | `Lyo.{Capability}` + `Lyo.{Capability}.{Vendor}` |
-| **Stay** | Providers remain under the capability folder; do **not** move to `Integration/{Vendor}/`. |
+| **Stay** | Providers remain under the capability folder. Do **not** move to `Integration/{Vendor}/`. |
 
-**Typecast split (optional):** Extract `Lyo.{Vendor}.{Capability}.Client` under `Integration/{Vendor}/` (Archetype C) and keep `Lyo.{Capability}.{Vendor}` as the thin adapter (`Lyo.Tts.Typecast` → `Lyo.Typecast.Client`).
+**Typecast split (optional).** Extract `Lyo.{Vendor}.{Capability}.Client` under `Integration/{Vendor}/` (Archetype C) and keep `Lyo.{Capability}.{Vendor}` as the thin adapter (`Lyo.Tts.Typecast` → `Lyo.Typecast.Client`).
 
-### C — Vendor client
+### C. Vendor client
 
 | | |
 |---|---|
@@ -43,9 +43,9 @@ Answer in order:
 | **Name** | `Lyo.{Vendor}.{Domain}.Client` or `Lyo.{Vendor}.{Product}.Client` |
 | **Examples** | `Lyo.Endato.Client`, `Lyo.Google.Geolocation.Client`, `Lyo.Typecast.Client`, `Lyo.Espn.Fantasy.Football.Client` |
 
-Geolocation is **not** Communication: Google Maps lives here (Archetype C), not beside `Lyo.Translation.Google` (Archetype B).
+Geolocation is **not** Communication. Google Maps lives here (Archetype C), not beside `Lyo.Translation.Google` (Archetype B).
 
-### D — Vendor product vertical
+### D. Vendor product vertical
 
 | | |
 |---|---|
@@ -53,7 +53,7 @@ Geolocation is **not** Communication: Google Maps lives here (Archetype C), not 
 | **Path** | `Integration/{Vendor}/` (Models, Client, Postgres, Bot, …) |
 | **Examples** | `Lyo.Discord.*`, `Lyo.Endato.Postgres` (vendor cache/staging; separate from `people` schema) |
 
-### E — Platform
+### E. Platform
 
 | | |
 |---|---|
@@ -76,7 +76,7 @@ Geolocation is **not** Communication: Google Maps lives here (Archetype C), not 
 **Host**
 
 - Wire vendor client → mapper → Core store (`IPeopleStore`, `IGeolocationStore`, etc.).
-- Define external source type strings (e.g. `EndatoPsPerson`, `GoogleMapsPlace`) in the vendor/mapper package, not in Core. Persist on `*_source` rows as **`source_entity_type`** / **`source_entity_id`** with a module owner column (e.g. `person_id`); EntityReference does not add PostgreSQL FK constraints on source links.
+- Define external source type strings (e.g. `EndatoPsPerson`, `GoogleMapsPlace`) in the vendor/mapper package, not in Core. Persist on `*_source` rows as **`source_entity_type`** / **`source_entity_id`** with a module owner column (e.g. `person_id`). EntityReference does not add PostgreSQL FK constraints on source links.
 - Tenant-scoped **relations** (favorite, note, …) use **`for_entity_*`** / **`from_entity_*`** for subject/actor endpoints via `EntityRelationEntityBase`.
 
 ## Naming
@@ -88,7 +88,7 @@ Geolocation is **not** Communication: Google Maps lives here (Archetype C), not 
 | C | `Lyo.{Vendor}.{Domain}.Client` | `Integration/{Vendor}/Lyo.{Vendor}.{Domain}.Client` |
 | D | `Lyo.{Vendor}.*` | `Integration/{Vendor}/Lyo.{Vendor}.*` |
 
-`.Client` — required for thin HTTP/SDK wrappers (C). Optional for monolithic B providers (`Lyo.Sms.Twilio`).
+`.Client` is required for thin HTTP/SDK wrappers (C). Optional for monolithic B providers (`Lyo.Sms.Twilio`).
 
 ## Worked examples
 
@@ -141,62 +141,62 @@ Stays under `Communication/Translation/`.
 
 ---
 
-## Inventory — Integration (vendor / product)
+## Inventory: Integration (vendor / product)
 
 | Project | Archetype | Path | Target | Phase | Notes |
 |---------|-----------|------|--------|-------|-------|
-| `Lyo.Endato.Client` | C | `Integration/Endato/` | — | — | Ingest → Core/People in host |
-| `Lyo.Endato.Postgres` | D | `Integration/Endato/` | — | — | Vendor DB, not `people` |
-| `Lyo.Google.Geolocation.Client` | C | `Integration/Google/` | — | 1 | Also implements `IGeolocationService`; split deferred |
-| `Lyo.Typecast.Client` | C | `Integration/Typecast/` | — | — | Used by `Lyo.Tts.Typecast` |
-| `Lyo.Espn.Fantasy.Football.Client` | C | `Integration/Espn/` | — | 2 | Name lacks `.Client` suffix; acceptable |
-| `Lyo.Discord.Models` | D | `Integration/Discord/` | — | — | |
-| `Lyo.Discord.Client` | D | `Integration/Discord/` | — | — | |
-| `Lyo.Discord.Postgres` | D | `Integration/Discord/` | — | — | |
-| `Lyo.Discord.Bot` | D | `Integration/Discord/` | — | — | |
-| `Lyo.Api` | E | `Integration/Api/` | — | — | |
-| `Lyo.Api.Client` | E | `Integration/Api/` | — | — | Shared HTTP base for C clients |
-| `Lyo.Api.Models` | E | `Integration/Api/` | — | — | |
-| `Lyo.Api.Export*` | E | `Integration/Api/` | — | — | |
-| `Lyo.Web.*` | E | `Integration/Web/` | — | — | |
-| `Lyo.Job.*` | E | `Integration/Job/` | — | — | Job domain lives here, not Core |
+| `Lyo.Endato.Client` | C | `Integration/Endato/` | - | - | Ingest → Core/People in host |
+| `Lyo.Endato.Postgres` | D | `Integration/Endato/` | - | - | Vendor DB, not `people` |
+| `Lyo.Google.Geolocation.Client` | C | `Integration/Google/` | - | 1 | Also implements `IGeolocationService`; split deferred |
+| `Lyo.Typecast.Client` | C | `Integration/Typecast/` | - | - | Used by `Lyo.Tts.Typecast` |
+| `Lyo.Espn.Fantasy.Football.Client` | C | `Integration/Espn/` | - | 2 | Name lacks `.Client` suffix; acceptable |
+| `Lyo.Discord.Models` | D | `Integration/Discord/` | - | - | |
+| `Lyo.Discord.Client` | D | `Integration/Discord/` | - | - | |
+| `Lyo.Discord.Postgres` | D | `Integration/Discord/` | - | - | |
+| `Lyo.Discord.Bot` | D | `Integration/Discord/` | - | - | |
+| `Lyo.Api` | E | `Integration/Api/` | - | - | |
+| `Lyo.Api.Client` | E | `Integration/Api/` | - | - | Shared HTTP base for C clients |
+| `Lyo.Api.Models` | E | `Integration/Api/` | - | - | |
+| `Lyo.Api.Export*` | E | `Integration/Api/` | - | - | |
+| `Lyo.Web.*` | E | `Integration/Web/` | - | - | |
+| `Lyo.Job.*` | E | `Integration/Job/` | - | - | Job domain lives here, not Core |
 
-## Inventory — Communication (capabilities)
-
-| Project | Archetype | Path | Target | Phase | Notes |
-|---------|-----------|------|--------|-------|-------|
-| `Lyo.Translation` | B | `Communication/Translation/` | — | — | Abstract |
-| `Lyo.Translation.Google` | B | `Communication/Translation/` | — | — | Stays |
-| `Lyo.Translation.Aws` | B | `Communication/Translation/` | — | — | Stays |
-| `Lyo.Sms` | B | `Communication/Sms/` | — | — | Abstract |
-| `Lyo.Sms.Twilio` | B | `Communication/Sms/` | — | — | Monolithic SDK+provider |
-| `Lyo.Sms.Twilio.Postgres` | D | `Communication/Sms/` | — | — | Twilio-scoped DB |
-| `Lyo.Sms.Postgres` | A-like | `Communication/Sms/` | — | — | Lyo SMS persistence |
-| `Lyo.Tts` | B | `Communication/Speech/` | — | — | Abstract |
-| `Lyo.Tts.Typecast` | B | `Communication/Speech/` | — | — | → `Lyo.Typecast.Client` |
-| `Lyo.Tts.AwsPolly` | B | `Communication/Speech/` | — | — | |
-| `Lyo.Tts.WindowsSpeech` | B | `Communication/Speech/` | — | — | |
-| `Lyo.Email` | B | `Communication/Email/` | — | — | |
-| `Lyo.Email.Postgres` | A-like | `Communication/Email/` | — | — | |
-| `Lyo.MessageQueue` | B | `Communication/MessageQueue/` | — | — | |
-| `Lyo.MessageQueue.RabbitMq` | B | `Communication/MessageQueue/` | — | — | |
-
-## Inventory — Security (capabilities)
+## Inventory: Communication (capabilities)
 
 | Project | Archetype | Path | Target | Phase | Notes |
 |---------|-----------|------|--------|-------|-------|
-| `Lyo.Authentication` | B | `Security/Authentication/` | — | — | |
-| `Lyo.Authentication.Google` | B | `Security/Authentication/` | — | — | Stays |
-| `Lyo.Authentication.Keycloak` | B | `Security/Authentication/` | — | — | Stays |
-| `Lyo.Authentication.OpenIdConnect` | B | `Security/Authentication/` | — | — | |
-| `Lyo.Authentication.Postgres` | A-like | `Security/Authentication/` | — | — | Identity store |
-| `Lyo.Encryption` + algorithm packages | E/B | `Security/Encryption/` | — | — | |
-| `Lyo.KeyStore` | E/B | `Security/KeyStore/` | — | — | |
-| `Lyo.KeyStore.Aws` | B | `Security/KeyStore/` | — | — | AWS Secrets Manager provider |
-| `Lyo.ContentThreatScan` | B | `Security/ContentThreatScan/` | — | — | |
-| `Lyo.ContentThreatScan.Intel` | B | `Security/ContentThreatScan/` | — | — | |
+| `Lyo.Translation` | B | `Communication/Translation/` | - | - | Abstract |
+| `Lyo.Translation.Google` | B | `Communication/Translation/` | - | - | Stays |
+| `Lyo.Translation.Aws` | B | `Communication/Translation/` | - | - | Stays |
+| `Lyo.Sms` | B | `Communication/Sms/` | - | - | Abstract |
+| `Lyo.Sms.Twilio` | B | `Communication/Sms/` | - | - | Monolithic SDK+provider |
+| `Lyo.Sms.Twilio.Postgres` | D | `Communication/Sms/` | - | - | Twilio-scoped DB |
+| `Lyo.Sms.Postgres` | A-like | `Communication/Sms/` | - | - | Lyo SMS persistence |
+| `Lyo.Tts` | B | `Communication/Speech/` | - | - | Abstract |
+| `Lyo.Tts.Typecast` | B | `Communication/Speech/` | - | - | → `Lyo.Typecast.Client` |
+| `Lyo.Tts.AwsPolly` | B | `Communication/Speech/` | - | - | |
+| `Lyo.Tts.WindowsSpeech` | B | `Communication/Speech/` | - | - | |
+| `Lyo.Email` | B | `Communication/Email/` | - | - | |
+| `Lyo.Email.Postgres` | A-like | `Communication/Email/` | - | - | |
+| `Lyo.MessageQueue` | B | `Communication/MessageQueue/` | - | - | |
+| `Lyo.MessageQueue.RabbitMq` | B | `Communication/MessageQueue/` | - | - | |
 
-## Inventory — Core domains (reference)
+## Inventory: Security (capabilities)
+
+| Project | Archetype | Path | Target | Phase | Notes |
+|---------|-----------|------|--------|-------|-------|
+| `Lyo.Authentication` | B | `Security/Authentication/` | - | - | |
+| `Lyo.Authentication.Google` | B | `Security/Authentication/` | - | - | Stays |
+| `Lyo.Authentication.Keycloak` | B | `Security/Authentication/` | - | - | Stays |
+| `Lyo.Authentication.OpenIdConnect` | B | `Security/Authentication/` | - | - | |
+| `Lyo.Authentication.Postgres` | A-like | `Security/Authentication/` | - | - | Identity store |
+| `Lyo.Encryption` + algorithm packages | E/B | `Security/Encryption/` | - | - | |
+| `Lyo.KeyStore` | E/B | `Security/KeyStore/` | - | - | |
+| `Lyo.KeyStore.Aws` | B | `Security/KeyStore/` | - | - | AWS Secrets Manager provider |
+| `Lyo.ContentThreatScan` | B | `Security/ContentThreatScan/` | - | - | |
+| `Lyo.ContentThreatScan.Intel` | B | `Security/ContentThreatScan/` | - | - | |
+
+## Inventory: Core domains (reference)
 
 | Project | Archetype | Path |
 |---------|-----------|------|
@@ -212,18 +212,18 @@ Stays under `Communication/Translation/`.
 
 ### EntityReference (Archetype A)
 
-Shared **`EntityRef`** value type and PostgreSQL persistence helpers. Two row families:
+Shared `EntityRef` value type and PostgreSQL persistence helpers. Two row families:
 
 | Package | Role |
 |---------|------|
-| **`Lyo.EntityReference.Models`** | `EntityRef`, relation domain (`EntityRelationRow`, `EntityRelationEndpoints`, `EntityRelationValidation`), source provenance (`EntitySourceRecord`, `IEntitySourceDerived`, `EntitySourceValidation`), JSON/composite/interceptors |
-| **`Lyo.EntityReference.Postgres`** | EF bases — **`EntityRelationEntityBase`** (subject/actor → `for_entity_*` / `from_entity_*`), **`EntitySourceLinkEntityBase`** (`source_entity_*` + `imported_at`), **`EntitySourceDerivedEntityBase`** (`LocallyModifiedAt`); shared indexes; no PG FK on source links |
+| `Lyo.EntityReference.Models` | `EntityRef`, relation domain (`EntityRelationRow`, `EntityRelationEndpoints`, `EntityRelationValidation`), source provenance (`EntitySourceRecord`, `IEntitySourceDerived`, `EntitySourceValidation`), JSON/composite/interceptors |
+| `Lyo.EntityReference.Postgres` | EF bases: `EntityRelationEntityBase` (subject/actor → `for_entity_*` / `from_entity_*`), `EntitySourceLinkEntityBase` (`source_entity_*` + `imported_at`), `EntitySourceDerivedEntityBase` (`LocallyModifiedAt`); shared indexes; no PG FK on source links |
 
 Domain modules (People, Geolocation, Favorite, …) subclass these bases and own module-specific owner columns and store logic.
 
 ---
 
-## Phase 2 — Naming audit (no moves)
+## Phase 2: naming audit (no moves)
 
 | Item | Status | Action |
 |------|--------|--------|
@@ -233,14 +233,14 @@ Domain modules (People, Geolocation, Favorite, …) subclass these bases and own
 | `Lyo.Sms.Twilio` | OK | Monolithic B; rename not worth churn |
 | Split Google geolocation client / adapter | Deferred | Only if second maps vendor added (Typecast pattern) |
 
-## Phase 3 — Consolidation
+## Phase 3: consolidation
 
 | Item | Action |
 |------|--------|
 | Communication/Security providers → `Integration/{Vendor}` | **Not done** (forbidden by taxonomy) |
-| `Integration/People/` folder | **Not created** — Endato→People documented above only |
-| Typecast + Tts.Typecast | **Already correct** — template for future splits |
-| Discord / Job / Api / Web | **No change** — Archetype D or E |
+| `Integration/People/` folder | **Not created.** Endato→People documented above only |
+| Typecast + Tts.Typecast | **Already correct.** Template for future splits |
+| Discord / Job / Api / Web | **No change.** Archetype D or E |
 
 ---
 

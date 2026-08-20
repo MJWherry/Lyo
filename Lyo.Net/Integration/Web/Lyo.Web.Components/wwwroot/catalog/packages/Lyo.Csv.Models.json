@@ -2,8 +2,8 @@
   "id": "Lyo.Csv.Models",
   "name": "Lyo.Csv.Models",
   "area": "Data",
-  "tagline": "Interfaces and value types for the Lyo CSV stack. Defines the contract implemented by `Lyo.Csv` so consumers can depend on `ICsvService` / `ICsvReader` / `ICsvWriter` without the implementation package.",
-  "description": "Interfaces and value types for the Lyo CSV stack. Defines the contract implemented by [`Lyo.Csv`](../Lyo.Csv/README.md) so consumers can depend on `ICsvService` / `ICsvReader` / `ICsvWriter` without the implementation package.",
+  "tagline": "Interfaces and value types for the Lyo CSV stack. Lyo.Csv implements this contract so consumers can depend on ICsvService, ICsvReader, and ICsvWriter without the implementation package.",
+  "description": "Interfaces and value types for the Lyo CSV stack. [`Lyo.Csv`](../Lyo.Csv/README.md) implements this contract so consumers can depend on ICsvService, ICsvReader, and ICsvWriter without the implementation package.",
   "features": [],
   "examples": [],
   "sections": [
@@ -11,28 +11,28 @@
       "type": "list",
       "title": "Interfaces",
       "items": [
-        "`ICsvService` — façade with the full read/write/validate/compare/split/combine surface. Exposes `Writer`, `Reader`, `SetEncoding(Encoding)`, and `SetOptions(CsvOptions)`.",
-        "`ICsvWriter` — write enumerables / `IAsyncEnumerable<T>`, selected `PropertyInfo` columns, custom column-name dictionaries, formatter delegates, row/column dictionaries (`hasFooterRow` peels last row as trailing footer), and `Lyo.DataTable` snapshots (always appends `Footer` when present) to file, `Stream`, `TextWriter`, string, or byte array. Sync overloads work on all targets; async, progress (`IProgress<CsvProgress>`), and append overloads are gated on `!NETSTANDARD2_0`.",
-        "`ICsvReader` — parse files, streams, and byte arrays as typed rows, row/column dictionaries, or `Lyo.DataTable.Models.DataTable` (wrapped in `Result<T>`; `hasFooterRow` peels the last body row into `Footer`). Async-only surface adds streaming (`IAsyncEnumerable<T>` and string-row streams), `CsvParseOptions` (continue-on-error, row filter, max rows), chunked processing, statistics, schema validation, column-mapping parsing, and file comparison."
+        "ICsvService. Combined reader and writer with validate, compare, split, and combine methods. Exposes Writer, Reader, SetEncoding(Encoding), and SetOptions(CsvOptions).",
+        "ICsvWriter. Write enumerables / IAsyncEnumerable<T>, selected PropertyInfo columns, custom column-name dictionaries, formatter delegates, row/column dictionaries (hasFooterRow peels last row as trailing footer), and Lyo.DataTable snapshots (always appends Footer when present) to file, Stream, TextWriter, string, or byte array. Sync overloads work on all targets. Async, progress (IProgress<CsvProgress>), and append overloads are gated on !NETSTANDARD2_0.",
+        "ICsvReader. Parse files, streams, and byte arrays as typed rows, row/column dictionaries, or Lyo.DataTable.Models.DataTable (wrapped in Result<T>; hasFooterRow peels the last body row into Footer). Async methods add streaming (IAsyncEnumerable<T> and string-row streams), CsvParseOptions (continue-on-error, row filter, max rows), chunked processing, statistics, schema validation, column-mapping parsing, and file comparison."
       ]
     },
     {
       "type": "list",
       "title": "Models",
       "items": [
-        "`CsvOptions` — dialect (delimiter, quote, escape, comments), encoding, culture, header/trim/blank-line/column-count flags, and nested `Pooling` (defaults `PoolValues=false` / `PoolFormats=false`). Section name `Csv`.",
-        "`CsvColumnAttribute` — rename or ignore properties for typed mapping.",
-        "`ICsvValueConverter` — cell text ↔ CLR conversion contract.",
-        "`CsvBadDataException` — malformed CSV / conversion failures.",
-        "`CsvParseOptions` — `ContinueOnError`, `OnError`, `RowFilter`, `MaxRows`, and `Pooling` (same CSV defaults as `CsvOptions.CreateDefaultPooling`).",
-        "`CsvSchema` + `CsvColumn` — describe expected columns for `ValidateAsync`.",
-        "`ColumnMapping` — explicit column-name → property mapping for `ParseFileWithMappingAsync` / `ParseStreamWithMappingAsync`.",
-        "`CsvParseError` — error metadata surfaced to `CsvParseOptions.OnError`.",
-        "`CsvParseResult` / `CsvExportResult` — result envelopes used by the higher-level helpers.",
-        "`CsvStatistics` — row/column counts produced by `GetStatisticsAsync`.",
-        "`CsvComparisonResult` + `CsvRowDifference` — output of `CompareFilesAsync`.",
-        "`ValidationResult` — output of `ValidateAsync`.",
-        "`CsvProgress` — progress payload for `ExportToCsv*WithProgressAsync`."
+        "CsvOptions. Dialect (delimiter, quote, escape, comments), encoding, culture, header/trim/blank-line/column-count flags, and nested Pooling (defaults PoolValues=false / PoolFormats=false). Section name Csv.",
+        "CsvColumnAttribute. Rename or ignore properties for typed mapping.",
+        "ICsvValueConverter. Cell text to CLR conversion contract.",
+        "CsvBadDataException. Malformed CSV or conversion failures.",
+        "CsvParseOptions. ContinueOnError, OnError, RowFilter, MaxRows, and Pooling (same CSV defaults as CsvOptions.CreateDefaultPooling).",
+        "CsvSchema + CsvColumn. Expected columns for ValidateAsync.",
+        "ColumnMapping. Explicit column-name to property mapping for ParseFileWithMappingAsync / ParseStreamWithMappingAsync.",
+        "CsvParseError. Error metadata passed to CsvParseOptions.OnError.",
+        "CsvParseResult / CsvExportResult. Result envelopes used by the higher-level helpers.",
+        "CsvStatistics. Row and column counts from GetStatisticsAsync.",
+        "CsvComparisonResult + CsvRowDifference. Output of CompareFilesAsync.",
+        "ValidationResult. Output of ValidateAsync.",
+        "CsvProgress. Progress payload for ExportToCsv*WithProgressAsync."
       ]
     },
     {

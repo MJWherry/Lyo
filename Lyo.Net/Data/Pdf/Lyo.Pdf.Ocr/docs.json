@@ -2,8 +2,8 @@
   "id": "Lyo.Pdf.Ocr",
   "name": "Lyo.Pdf.Ocr",
   "area": "Data",
-  "tagline": "Glues `Lyo.Pdf.Rendering` (PDFium → PNG) to an `IOcrEngine` from `Lyo.Images.Ocr` and projects OCR pixel boxes back into PDF coordinate space.",
-  "description": "Glues [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md) (PDFium → PNG) to an\n`IOcrEngine` from `Lyo.Images.Ocr` and projects OCR pixel boxes back into PDF\ncoordinate space.\n\nTargets `net10.0`.",
+  "tagline": "Renders a PDF page to PNG via `Lyo.Pdf.Rendering`, runs `IOcrEngine`, then maps OCR pixel boxes back into PDF points.",
+  "description": "Renders a PDF page to PNG via [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md)\n(PDFium), runs an `IOcrEngine` from `Lyo.Images.Ocr`, then maps OCR pixel boxes back\ninto PDF points.\n\nTargets `net10.0`.",
   "features": [],
   "examples": [
     {
@@ -31,7 +31,7 @@
     {
       "type": "paragraph",
       "title": "Example",
-      "text": "For selectable-text PDFs prefer `IPdfReader.Text` (PdfPig) directly — OCR only helps when the PDF lacks an embedded text layer."
+      "text": "For selectable-text PDFs prefer `IPdfReader.Text` (PdfPig) directly. OCR only helps when the PDF lacks an embedded text layer."
     }
   ],
   "links": [],

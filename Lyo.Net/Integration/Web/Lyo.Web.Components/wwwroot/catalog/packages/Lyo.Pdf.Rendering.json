@@ -2,8 +2,8 @@
   "id": "Lyo.Pdf.Rendering",
   "name": "Lyo.Pdf.Rendering",
   "area": "Data",
-  "tagline": "Rasterizes PDF pages to PNG via PDFtoImage (PDFium + Skia under the hood; `bblanchon.PDFium` native packages). Targets `net10.0`.",
-  "description": "Rasterizes PDF pages to PNG via [PDFtoImage](https://www.nuget.org/packages/PDFtoImage) (PDFium + Skia under the hood; `bblanchon.PDFium` native packages). Targets `net10.0`.",
+  "tagline": "Rasterizes PDF pages to PNG via PDFtoImage (PDFium + Skia; `bblanchon.PDFium` native packages). Targets `net10.0`.",
+  "description": "Rasterizes PDF pages to PNG via [PDFtoImage](https://www.nuget.org/packages/PDFtoImage) (PDFium + Skia; `bblanchon.PDFium` native packages). Targets `net10.0`.",
   "features": [],
   "examples": [
     {

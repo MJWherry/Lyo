@@ -2,11 +2,11 @@
   "id": "Lyo.Discord.Bot",
   "name": "Lyo.Discord.Bot",
   "area": "Integration",
-  "tagline": "Library (not an executable) that runs a **DSharpPlus** Discord bot and **upserts** guild data into your Lyo API (`Lyo.Discord.Client` → PostgreSQL-backed `Discord/*` endpoints).",
-  "description": "Library (not an executable) that runs a **DSharpPlus** Discord bot and **upserts** guild data into your Lyo API (`Lyo.Discord.Client` → PostgreSQL-backed `Discord/*` endpoints).\nUse it as a **base** so host apps (e.g. `Lyo.TestConsole`) configure the Discord token under **`DiscordBot`**, the Lyo API HTTP client under **`LyoDiscordClient`**, resolve\nservices from DI, and call `RunAsync`.",
+  "tagline": "Library (not an executable) that runs a DSharpPlus Discord bot and upserts guild data into your Lyo API (`Lyo.Discord.Client` to PostgreSQL-backed `Discord/*` endpoints).",
+  "description": "Library (not an executable) that runs a DSharpPlus Discord bot and upserts guild data into your Lyo API (`Lyo.Discord.Client` to PostgreSQL-backed `Discord/*` endpoints). Use it as a base so host apps (e.g. `Lyo.TestConsole`) configure the Discord token under `DiscordBot`, the Lyo API HTTP client under `LyoDiscordClient`, resolve services from DI, and call `RunAsync`.",
   "features": [
-    "`LyoDiscordBotOptions` (from **`DiscordBot`**)",
-    "`LyoDiscordClientOptions` (from **`LyoDiscordClient`**) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client for upserts)",
+    "`LyoDiscordBotOptions` (from `DiscordBot`)",
+    "`LyoDiscordClientOptions` (from `LyoDiscordClient`) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client for upserts)",
     "`IGuildDatabaseSyncService` / `GuildDatabaseSyncService`",
     "`LyoDiscordBot` (singleton) and `LyoDiscordBotBase` (same instance)"
   ],
@@ -40,15 +40,15 @@
           "Optional. Gateway intents; default is `Guilds \\"
         ]
       ],
-      "lead": "**`DiscordBot`** (→ `LyoDiscordBotOptions`): Discord-only settings.",
-      "trail": "**`LyoDiscordClient`** (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits *\n*`ApiClientOptions`** — set **`BaseUrl`** (default `http://localhost:5092/` if omitted), plus compression, **`AcceptEncodings`**, **`EnsureStatusCode`**, etc."
+      "lead": "`DiscordBot` (→ `LyoDiscordBotOptions`): Discord-only settings.",
+      "trail": "`LyoDiscordClient` (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits `ApiClientOptions`. Set `BaseUrl` (default `http://localhost:5092/` if omitted), plus compression, `AcceptEncodings`, `EnsureStatusCode`, etc."
     },
     {
       "type": "list",
       "title": "Registration",
       "items": [
-        "`LyoDiscordBotOptions` (from **`DiscordBot`**)",
-        "`LyoDiscordClientOptions` (from **`LyoDiscordClient`**) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client for upserts)",
+        "`LyoDiscordBotOptions` (from `DiscordBot`)",
+        "`LyoDiscordClientOptions` (from `LyoDiscordClient`) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client for upserts)",
         "`IGuildDatabaseSyncService` / `GuildDatabaseSyncService`",
         "`LyoDiscordBot` (singleton) and `LyoDiscordBotBase` (same instance)"
       ]
@@ -99,14 +99,14 @@
     {
       "type": "markdown",
       "title": "Extending the base bot",
-      "body": "Derive from `LyoDiscordBotBase` and register your type with `AddLyoDiscordBot<MyBot>(configuration)`.\n\n- **`ConfigureDiscordConfiguration`** — adjust `DiscordConfiguration` (e.g. intents).\n- **`ConfigureDiscordClient`** — register DSharpPlus extensions (e.g. [CommandsNext](https://github.com/DSharpPlus/DSharpPlus), slash commands, interactivity). Call **before**\n  handlers are wired.\n- **`RegisterDefaultSyncHandlers`** — override if you need to change sync behavior; call `base.RegisterDefaultSyncHandlers(client)` to keep database sync.\n- **`RegisterAdditionalHandlers`** — subscribe to other gateway events.\n\nExample sketch:\n\n```csharp\npublic sealed class MyBot : LyoDiscordBotBase\n{\n    public MyBot(IOptions<LyoDiscordBotOptions> o, Lyo.Discord.Client.LyoDiscordClient api, IGuildDatabaseSyncService s, ILoggerFactory lf)\n        : base(o, api, s, lf) { }\n\n    protected override void ConfigureDiscordClient(DSharpPlus.DiscordClient client)\n    {\n        // client.UseCommandsNext(...);\n    }\n\n    protected override void RegisterAdditionalHandlers(DSharpPlus.DiscordClient client)\n    {\n        client.MessageCreated += async (_, e) => { /* ... */ };\n    }\n}\n```"
+      "body": "Derive from `LyoDiscordBotBase` and register your type with `AddLyoDiscordBot<MyBot>(configuration)`.\n\n- **`ConfigureDiscordConfiguration`.** adjust `DiscordConfiguration` (e.g. intents).\n- **`ConfigureDiscordClient`.** register DSharpPlus extensions (e.g. [CommandsNext](https://github.com/DSharpPlus/DSharpPlus), slash commands, interactivity). Call **before**\n handlers are wired.\n- **`RegisterDefaultSyncHandlers`.** override if you need to change sync behavior; call `base.RegisterDefaultSyncHandlers(client)` to keep database sync.\n- **`RegisterAdditionalHandlers`.** subscribe to other gateway events.\n\nExample sketch:\n\n```csharp\npublic sealed class MyBot : LyoDiscordBotBase\n{\n    public MyBot(IOptions<LyoDiscordBotOptions> o, Lyo.Discord.Client.LyoDiscordClient api, IGuildDatabaseSyncService s, ILoggerFactory lf)\n        : base(o, api, s, lf) { }\n\n    protected override void ConfigureDiscordClient(DSharpPlus.DiscordClient client)\n    {\n        // client.UseCommandsNext(...);\n    }\n\n    protected override void RegisterAdditionalHandlers(DSharpPlus.DiscordClient client)\n    {\n        client.MessageCreated += async (_, e) => { /* ... */ };\n    }\n}\n```"
     },
     {
       "type": "list",
       "title": "Packages",
       "items": [
-        "**DSharpPlus** — gateway and REST helpers used by the bot host.",
-        "**Lyo.Discord.Client** — HTTP upserts to your Lyo API."
+        "**DSharpPlus**. gateway and REST helpers used by the bot host.",
+        "**Lyo.Discord.Client**. HTTP upserts to your Lyo API."
       ]
     }
   ],

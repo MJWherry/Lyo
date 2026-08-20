@@ -2,8 +2,8 @@
   "id": "Lyo.Api.Export",
   "name": "Lyo.Api.Export",
   "area": "Integration",
-  "tagline": "Optional export feature for Lyo.Api. Registers the **Export** CRUD endpoint and `IExportService<TContext>`.",
-  "description": "Optional export feature for [Lyo.Api](../Lyo.Api/README.md). Registers the **Export** CRUD endpoint and `IExportService<TContext>`.",
+  "tagline": "Optional export for Lyo.Api. Registers the Export CRUD endpoint and `IExportService<TContext>`.",
+  "description": "Optional export for [Lyo.Api](../Lyo.Api/README.md). Registers the Export CRUD endpoint and `IExportService<TContext>`.",
   "features": [],
   "examples": [
     {
@@ -12,7 +12,7 @@
       "code": "builder.Services.AddLyoCrudServices<MyDbContext>();\nbuilder.Services.AddLyoApiExport<MyDbContext>();\nbuilder.Services.AddCsvExport(); // Lyo.Api.Export.Csv\nbuilder.Services.AddXlsxExport(); // Lyo.Api.Export.Xlsx"
     },
     {
-      "title": "Setup (2)",
+      "title": "Enable on builder",
       "language": "csharp",
       "code": ".WithCrud(ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance, config)\n// or\n.WithCrud(crud => crud.WithFlags(ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance))"
     }

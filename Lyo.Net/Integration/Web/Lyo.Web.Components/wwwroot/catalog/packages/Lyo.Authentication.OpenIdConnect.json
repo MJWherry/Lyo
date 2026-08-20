@@ -2,8 +2,8 @@
   "id": "Lyo.Authentication.OpenIdConnect",
   "name": "Lyo.Authentication.OpenIdConnect",
   "area": "Security",
-  "tagline": "OpenID Connect client base for Lyo. The Lyo API is the OIDC **confidential client** (BFF pattern); the frontend never sees the IdP and never receives tokens by URL fragment.",
-  "description": "OpenID Connect client base for Lyo. The Lyo API is the OIDC **confidential client** (BFF pattern); the frontend never sees the IdP and never receives tokens by URL fragment. After a successful external login, the API either:\n\n- issues tokens directly as JSON (for **API clients** calling `/auth/login/{provider}?mode=api`), or - mints a single-use **handoff code** and 302-redirects the browser to a whitelisted consumer origin which then exchanges that code server-to-server for the tokens (for **browser clients** via `Lyo.Authentication.Client`).",
+  "tagline": "OpenID Connect client base for Lyo. The Lyo API is the OIDC confidential client (BFF pattern). The frontend never sees the IdP and never receives tokens by URL fragment.",
+  "description": "OpenID Connect client base for Lyo. The Lyo API is the OIDC confidential client (BFF pattern). The frontend never sees the IdP and never receives tokens by URL fragment. After a successful external login, the API either:\n\n- issues tokens directly as JSON, for API clients calling `/auth/login/{provider}?mode=api`, or - mints a single-use handoff code and 302-redirects the browser to a whitelisted consumer origin, which then exchanges that code server-to-server for the tokens, for browser clients via `Lyo.Authentication.Client`.",
   "features": [],
   "examples": [
     {
@@ -17,16 +17,16 @@
       "type": "list",
       "title": "Building blocks",
       "items": [
-        "`IOpenIdConnectProvider` — abstraction describing a provider (discovery URL, client id/secret, scope/claim mapping)",
-        "`OpenIdConnectProviderRegistry` — keyed by name, resolved at `/auth/login/{name}`",
-        "`OidcDiscoveryCache` — hourly-refreshed OpenID Configuration cache",
-        "`OidcJwksResolver` — fetches and caches the provider's JWKS for `id_token` signature verification",
-        "`PkceCodes` + `StateNonceProtector` — generate and seal PKCE/state/nonce in an HTTP-only cookie via `IDataProtector`",
-        "`OidcAuthorizationUrlBuilder` — composes the `/authorize` URL with `code_challenge`, `state`, `nonce`",
-        "`OidcTokenExchangeClient` — typed `HttpClient` that POSTs the authorization code back for tokens",
-        "`OidcIdTokenValidator` — validates issuer, audience, nonce, exp, signature",
-        "`IExternalLoginCoordinator` / `DefaultExternalLoginCoordinator` — wraps the whole flow: discover-or-link-or-create the Lyo user, refresh `linked_identity.scopes_json`, and call `ILyoJwtIssuer.IssueAsync`. Emits `AuthAuditEventKind.{ExternalLoginSucceeded,ExternalLoginRejected,UserProvisioned,IdentityLinked}` along the way.",
-        "`IHandoffCodeStore` / `InMemoryHandoffCodeStore` — single-use, TTL-bounded handoff codes (browser handoff path)"
+        "`IOpenIdConnectProvider.` Abstraction describing a provider: discovery URL, client id/secret, scope/claim mapping.",
+        "`OpenIdConnectProviderRegistry.` Keyed by name, resolved at `/auth/login/{name}`.",
+        "`OidcDiscoveryCache.` Hourly-refreshed OpenID Configuration cache.",
+        "`OidcJwksResolver.` Fetches and caches the provider's JWKS for `id_token` signature verification.",
+        "`PkceCodes` + `StateNonceProtector.` Generate and seal PKCE/state/nonce in an HTTP-only cookie via `IDataProtector`.",
+        "`OidcAuthorizationUrlBuilder.` Composes the `/authorize` URL with `code_challenge`, `state`, `nonce`.",
+        "`OidcTokenExchangeClient.` Typed `HttpClient` that POSTs the authorization code back for tokens.",
+        "`OidcIdTokenValidator.` Validates issuer, audience, nonce, exp, signature.",
+        "`IExternalLoginCoordinator` / `DefaultExternalLoginCoordinator.` Wraps the whole flow: discover-or-link-or-create the Lyo user, refresh `linked_identity.scopes_json`, and call `ILyoJwtIssuer.IssueAsync`. Emits `AuthAuditEventKind.{ExternalLoginSucceeded,ExternalLoginRejected,UserProvisioned,IdentityLinked}` along the way.",
+        "`IHandoffCodeStore` / `InMemoryHandoffCodeStore.` Single-use, TTL-bounded handoff codes (browser handoff path)."
       ]
     },
     {
@@ -40,13 +40,13 @@
       "rows": [
         [
           "GET",
-          "`/auth/login/{provider}?returnUrl=...&mode=browser\\",
-          "api`"
+          "`/auth/login/{provider}?returnUrl=...&mode=browser|api`",
+          "Starts the OIDC login. `mode=browser` or `mode=api`."
         ],
         [
           "GET",
           "`/auth/callback/{provider}`",
-          "IdP redirects back here. Browser mode → mint handoff code + 302 to `{returnUrl}?lyo_handoff=lyoh_...`. API mode → 200 OK with `{access_token, refresh_token, expires_in, token_type}`."
+          "IdP redirects back here. Browser mode mints a handoff code and 302s to `{returnUrl}?lyo_handoff=lyoh_...`. API mode returns 200 OK with `{access_token, refresh_token, expires_in, token_type}`."
         ],
         [
           "POST",
@@ -84,12 +84,12 @@
     {
       "type": "paragraph",
       "title": "Registration",
-      "text": "That call binds two option sections: - `LyoExternalLogin` — `Sealing.{Purpose,DefaultExpiration}` and cookie name for the PKCE/state envelope. - `LyoOidcBff` — see [BFF options](#bff-options) below. The per-provider packages register their `IOpenIdConnectProvider` implementation under their canonical name (`google`, `keycloak:<realm>`)."
+      "text": "That call binds two option sections. `LyoExternalLogin` sets `Sealing.{Purpose,DefaultExpiration}` and the cookie name for the PKCE/state envelope. `LyoOidcBff` is documented under BFF options below. The per-provider packages register their `IOpenIdConnectProvider` implementation under their canonical name (`google`, `keycloak:<realm>`)."
     },
     {
       "type": "markdown",
       "title": "BFF options",
-      "body": "```json\n{\n  \"LyoOidcBff\": {\n    \"AllowedReturnOrigins\": [ \"http://localhost:5138\", \"https://app.example.com\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}\n```\n\n- `AllowedReturnOrigins` — exact origin (`scheme://host[:port]`) match for absolute `returnUrl` values and `Origin` checks on `/auth/handoff/exchange`. Same-origin (relative\n  `returnUrl` starting with `/`) is always allowed. Anything outside the allowlist falls back to `DefaultReturnUrl`.\n- `DefaultReturnUrl` — used when `returnUrl` is missing or rejected.\n- `HandoffCodeTtl` — short. 30s is plenty: the consumer redeems immediately on the redirect."
+      "body": "```json\n{\n  \"LyoOidcBff\": {\n    \"AllowedReturnOrigins\": [ \"http://localhost:5138\", \"https://app.example.com\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}\n```\n\n- `AllowedReturnOrigins.` Exact origin (`scheme://host[:port]`) match for absolute `returnUrl` values and `Origin` checks on `/auth/handoff/exchange`. Same-origin relative `returnUrl` starting with `/` is always allowed. Anything outside the allowlist falls back to `DefaultReturnUrl`.\n- `DefaultReturnUrl.` Used when `returnUrl` is missing or rejected.\n- `HandoffCodeTtl.` Short. 30s is plenty. The consumer redeems immediately on the redirect."
     },
     {
       "type": "table",
@@ -140,14 +140,14 @@
           "`/auth/logout` outcome."
         ]
       ],
-      "lead": "Every meaningful state transition emits an `AuthAuditEvent`. With `Lyo.Authentication.Postgres` wired up these land in `[user].[event]` (the `kind` column stores the enum's string\nname — `JwtIssued`, `HandoffCodeIssued`, …); otherwise they hit whatever `IAuthAuditRecorder` is registered (defaults to `NullAuthAuditRecorder`). IP / User-Agent / correlation\ncome from the registered `IAuthAuditContextAccessor` — call `services.AddLyoApiTokenAuthentication()` (or `services.AddLyoAuthHttpContextAccessor()` standalone) on an ASP.NET host\nto swap in `HttpAuthAuditContextAccessor`."
+      "lead": "Every meaningful state transition emits an `AuthAuditEvent`. With `Lyo.Authentication.Postgres` wired up these land in `[user].[event]`. The `kind` column stores the enum's string name, `JwtIssued`, `HandoffCodeIssued`, and so on. Otherwise they hit whatever `IAuthAuditRecorder` is registered, default `NullAuthAuditRecorder`. IP, User-Agent, and correlation come from the registered `IAuthAuditContextAccessor`. Call `services.AddLyoApiTokenAuthentication()` or `services.AddLyoAuthHttpContextAccessor()` standalone on an ASP.NET host to swap in `HttpAuthAuditContextAccessor`."
     },
     {
       "type": "list",
       "title": "Talking to it",
       "items": [
-        "**Browser consumers** — use `Lyo.Authentication.Client` (handoff redemption, session cookie, `LyoAuthDelegatingHandler` for outbound refresh).",
-        "**API clients** — call `/auth/login/{provider}?mode=api` and consume the JSON token response directly; call `/auth/refresh` when the access token nears expiry."
+        "**Browser consumers.** Use `Lyo.Authentication.Client` for handoff redemption, the session cookie, and `LyoAuthDelegatingHandler` for outbound refresh.",
+        "**API clients.** Call `/auth/login/{provider}?mode=api` and consume the JSON token response directly. Call `/auth/refresh` when the access token nears expiry."
       ]
     }
   ],
@@ -229,6 +229,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

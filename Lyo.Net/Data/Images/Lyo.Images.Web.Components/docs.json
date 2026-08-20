@@ -2,8 +2,8 @@
   "id": "Lyo.Images.Web.Components",
   "name": "Lyo.Images.Web.Components",
   "area": "Data",
-  "tagline": "Reusable **Blazor / MudBlazor** components for exercising `Lyo.Images`: an `IImageService` workbench and a spritesheet animator/extractor built on `ISpriteSheetExportService`.",
-  "description": "Reusable **Blazor / MudBlazor** components for exercising [`Lyo.Images`](../Lyo.Images/README.md): an `IImageService` workbench and a spritesheet\nanimator/extractor built on `ISpriteSheetExportService`.",
+  "tagline": "Blazor / MudBlazor workbenches for `Lyo.Images`: `IImageService` ops and a spritesheet animator/extractor on `ISpriteSheetExportService`.",
+  "description": "Blazor / MudBlazor components for [`Lyo.Images`](../Lyo.Images/README.md): an `IImageService` workbench and a spritesheet\nanimator/extractor built on `ISpriteSheetExportService`.",
   "features": [],
   "examples": [
     {
@@ -22,36 +22,36 @@
       ],
       "rows": [
         [
-          "**`<ImageWorkbench />`**",
-          "Upload an image, inspect metadata + palette, and exercise the `IImageService` surface (resize/crop/rotate/watermark/convert/thumbnail/compress)."
+          "`<ImageWorkbench />`",
+          "Upload an image, inspect metadata and palette, and run `IImageService` methods (resize, crop, rotate, watermark, convert, thumbnail, compress)."
         ],
         [
-          "**`<SpriteSheetWorkbench />`**",
-          "Two-tab workbench — **Animate** a flat strip and **Extract** a grid spritesheet from an animated source (GIF/WebP/APNG) via `ISpriteSheetExportService`."
+          "`<SpriteSheetWorkbench />`",
+          "Two-tab workbench. Animate a flat strip, or extract a grid spritesheet from an animated source (GIF/WebP/APNG) via `ISpriteSheetExportService`."
         ],
         [
-          "**`<SpriteSheetAnimateUploader />`**",
-          "Multi-sheet upload + label/select chrome consumed by `SpriteSheetWorkbench`."
+          "`<SpriteSheetAnimateUploader />`",
+          "Multi-sheet upload plus label/select chrome consumed by `SpriteSheetWorkbench`."
         ],
         [
-          "**`<SpriteSheetImageInfo />`**",
+          "`<SpriteSheetImageInfo />`",
           "Compact metadata readout (dimensions, format, byte size) for a loaded raster."
         ],
         [
-          "**`<SpriteSheetPlayer />`**",
+          "`<SpriteSheetPlayer />`",
           "Plays a sliced strip in-browser using a JS animator (canvas-based) for live preview."
         ],
         [
-          "**`<SpriteSheetProcessor />`**",
+          "`<SpriteSheetProcessor />`",
           "Slicing/parameter panel for spritesheets (frame size, padding, sample budget, FPS, grid)."
         ]
       ],
-      "trail": "Supporting types live in **`SpriteSheetModels.cs`** (`SpriteSheetEntry`, frame/grid state used to drive the workbench)."
+      "trail": "Supporting types live in `SpriteSheetModels.cs` (`SpriteSheetEntry`, frame/grid state used to drive the workbench)."
     },
     {
       "type": "paragraph",
       "title": "DI / required services",
-      "text": "Each consumer must register the underlying image services from `Lyo.Images`: Snackbars, dialogs, and JS interop are wired by **`Lyo.Web.Components`** (MudBlazor + the Lyo file upload + `IJsInterop`)."
+      "text": "Each consumer must register the underlying image services from `Lyo.Images`. Snackbars, dialogs, and JS interop are wired by `Lyo.Web.Components` (MudBlazor, the Lyo file upload, and `IJsInterop`)."
     },
     {
       "type": "paragraph",
@@ -104,7 +104,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -160,6 +176,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -185,6 +209,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -243,6 +275,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -262,7 +303,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

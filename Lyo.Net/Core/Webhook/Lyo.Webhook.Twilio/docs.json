@@ -2,8 +2,8 @@
   "id": "Lyo.Webhook.Twilio",
   "name": "Lyo.Webhook.Twilio",
   "area": "Core",
-  "tagline": "**Twilio** webhook signature validation for **`Lyo.Webhook`**: compares **`X-Twilio-Signature`** to an **HMAC-SHA1** (Base64) of the public request URL plus sorted **key+value** form parameters…",
-  "description": "**Twilio** webhook signature validation for **`Lyo.Webhook`**: compares **`X-Twilio-Signature`** to an **HMAC-SHA1** (Base64) of the public request URL plus sorted **key+value**\nform parameters, matching Twilio’s server-side behavior (including URL variants with/without an explicit default port).\n\nReference: [Twilio — Webhooks security](https://www.twilio.com/docs/usage/webhooks/webhooks-security).",
+  "tagline": "Twilio webhook signature validation for `Lyo.Webhook`. Compares `X-Twilio-Signature` to an HMAC-SHA1 (Base64) of the public request URL plus sorted key+value form parameters.",
+  "description": "Twilio webhook signature validation for `Lyo.Webhook`. Compares `X-Twilio-Signature` to an HMAC-SHA1 (Base64) of the public request URL plus sorted key+value\nform parameters, matching Twilio's server-side behavior (including URL variants with or without an explicit default port).\n\nReference: [Twilio webhooks security](https://www.twilio.com/docs/usage/webhooks/webhooks-security).",
   "features": [],
   "examples": [
     {
@@ -17,17 +17,17 @@
       "type": "list",
       "title": "Usage",
       "items": [
-        "Use the **`Lyo.Webhook`** fluent pipeline so the body is read once, **`RequestUrl`** is set, and **`Parameters`** are filled for **`application/x-www-form-urlencoded`** posts.",
-        "Ensure **`WebhookVerificationContext.RequestUrl`** matches the URL Twilio called (scheme, host, path, query). The default **`GetPublicRequestUrl()`** helper uses the current request; behind reverse proxies, configure forwarded headers / public base URL so this matches Twilio’s URL.",
-        "For **form** webhooks, **`Parameters`** must contain all form fields Twilio sends. The core library populates **`Parameters`** when **`Content-Type`** is * *`application/x-www-form-urlencoded`**."
+        "Use the `Lyo.Webhook` fluent pipeline so the body is read once, `RequestUrl` is set, and `Parameters` are filled for `application/x-www-form-urlencoded` posts.",
+        "Ensure `WebhookVerificationContext.RequestUrl` matches the URL Twilio called (scheme, host, path, query). The default `GetPublicRequestUrl()` helper uses the current request. Behind reverse proxies, configure forwarded headers / public base URL so this matches Twilio's URL.",
+        "For form webhooks, `Parameters` must contain all form fields Twilio sends. The core library populates `Parameters` when `Content-Type` is `application/x-www-form-urlencoded`."
       ]
     },
     {
       "type": "list",
       "title": "Types",
       "items": [
-        "**`TwilioWebhookSignatureVerifier`** — implements **`IWebhookSignatureVerifier`**; constructor takes the Twilio **Auth Token**.",
-        "**`TwilioUrlNormalization`** — internal URL variants (explicit **:443** / **:80** vs default) used in signature comparison."
+        "**TwilioWebhookSignatureVerifier.** Implements `IWebhookSignatureVerifier`. Constructor takes the Twilio Auth Token.",
+        "**TwilioUrlNormalization.** Internal URL variants (explicit `:443` / `:80` vs default) used in signature comparison."
       ]
     },
     {

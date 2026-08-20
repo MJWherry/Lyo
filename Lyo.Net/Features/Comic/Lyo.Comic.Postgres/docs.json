@@ -2,15 +2,15 @@
   "id": "Lyo.Comic.Postgres",
   "name": "Lyo.Comic.Postgres",
   "area": "Features",
-  "tagline": "PostgreSQL + EF Core implementation of **`Lyo.Comic.IComicStore`** (`PostgresComicStore`) backed by **`ComicDbContext`**, **`PostgresComicOptions`**, and `AddPostgresMigrations<ComicDbContext…",
-  "description": "PostgreSQL + EF Core implementation of **`Lyo.Comic.IComicStore`** (`PostgresComicStore`) backed by **`ComicDbContext`**, **`PostgresComicOptions`**, and\n`AddPostgresMigrations<ComicDbContext, PostgresComicOptions>` so deployments can auto-upgrade schema similarly to other Lyo feature modules.\n\n`PostgresComicStore` also implements **`Lyo.Health.IHealth`** so orchestrators can probe relational connectivity.",
+  "tagline": "PostgreSQL + EF Core implementation of `Lyo.Comic.IComicStore` (`PostgresComicStore`) via `ComicDbContext` and `PostgresComicOptions`.",
+  "description": "PostgreSQL + EF Core implementation of `Lyo.Comic.IComicStore` (`PostgresComicStore`) via `ComicDbContext`, `PostgresComicOptions`, and\n`AddPostgresMigrations<ComicDbContext, PostgresComicOptions>` so deployments can apply schema upgrades on startup.\n\n`PostgresComicStore` also implements `Lyo.Health.IHealth` so orchestrators can probe relational connectivity.",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "paragraph",
-      "title": "Schema & migrations",
-      "text": "Entities under `Database/` cover the full domain: `SeriesEntity`, `AlternateTitleEntity`, `VolumeEntity`, `ChapterEntity`, `PageEntity`, and `CharacterEntity`, each with an `*EntityConfiguration` (Fluent API mappings, indexes, and cascading deletes wired so removing a series prunes its volumes/chapters/pages/characters/alternate titles). Migrations live under `Migrations/` (`InitialCreate` is the current baseline) and use the `comic` schema declared on `PostgresComicOptions.Schema`. Never hand-edit migrated columns in production — ship code-first migrations alongside API changes."
+      "title": "Schema and migrations",
+      "text": "Entities under `Database/` cover the domain: `SeriesEntity`, `AlternateTitleEntity`, `VolumeEntity`, `ChapterEntity`, `PageEntity`, and `CharacterEntity`, each with an `*EntityConfiguration` (Fluent API mappings, indexes, and cascading deletes wired so removing a series prunes its volumes/chapters/pages/characters/alternate titles). Migrations live under `Migrations/` (`InitialCreate` is the current baseline) and use the `comic` schema declared on `PostgresComicOptions.Schema`. Never hand-edit migrated columns in production. Ship code-first migrations alongside API changes."
     },
     {
       "type": "table",
@@ -22,7 +22,7 @@
       "rows": [
         [
           "`AddComicDbContextFactory(Action<PostgresComicOptions>)`",
-          "Registers `IOptions<PostgresComicOptions>`, **`AddPostgresMigrations<ComicDbContext, PostgresComicOptions>()`**, and an `IDbContextFactory<ComicDbContext>` (`UseNpgsql` + migrations history under the configured schema). DbContext only — does **not** register `IComicStore`."
+          "Registers `IOptions<PostgresComicOptions>`, `AddPostgresMigrations<ComicDbContext, PostgresComicOptions>()`, and an `IDbContextFactory<ComicDbContext>` (`UseNpgsql` + migrations history under the configured schema). DbContext only, does **not** register `IComicStore`."
         ],
         [
           "`AddComicDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresComicOptions.SectionName)`",
@@ -42,7 +42,7 @@
         ],
         [
           "`AddPostgresComicStore(PostgresComicOptions options)`",
-          "Same as above with a pre-built options instance — for tests / integration harnesses."
+          "Same as above with a pre-built options instance, for tests / integration harnesses."
         ]
       ],
       "lead": "All six entry points are exposed as `IServiceCollection` extensions in `Lyo.Comic.Postgres.Extensions`:"
@@ -81,15 +81,15 @@
     {
       "type": "paragraph",
       "title": "Runtime expectations",
-      "text": "`PostgresComicStore` opens a fresh `ComicDbContext` per call via the registered `IDbContextFactory<ComicDbContext>`, so it is safe as a singleton under concurrent request load. Each `Save*Async` runs `SaveChangesAsync` inside the using-scope of that single context — callers that need cross-entity atomicity (for example saving a series together with its chapters) should orchestrate transactions above the store. When hosting under `Lyo.Comic.Api` (Lyo-Comic repo): - Mapper layers translate HTTP DTO ↔ domain records. - Enrichment pipelines may batch external metadata — ensure those respect transaction boundaries imposed by callers around `Save*Async` groupings."
+      "text": "`PostgresComicStore` opens a fresh `ComicDbContext` per call via the registered `IDbContextFactory<ComicDbContext>`, so a singleton is safe under concurrent requests. Each `Save*Async` runs `SaveChangesAsync` inside the using-scope of that single context. Callers that need cross-entity atomicity (for example saving a series together with its chapters) should orchestrate transactions above the store. When hosting under `Lyo.Comic.Api` (Lyo-Comic repo): mapper layers translate HTTP DTO ↔ domain records. Enrichment pipelines may batch external metadata. Those pipelines must respect transaction boundaries imposed by callers around `Save*Async` groupings."
     },
     {
       "type": "list",
       "title": "See also",
       "items": [
-        "[`Lyo.Comic`](../Lyo.Comic/README.md) — domain contract reference.",
-        "[`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) — shared `AddPostgresMigrations<,>` host helper leveraged here.",
-        "[`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md) — health-probe abstraction implemented by `PostgresComicStore`."
+        "[`Lyo.Comic`](../Lyo.Comic/README.md). Domain contract reference.",
+        "[`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md). Shared `AddPostgresMigrations<,>` host helper used here.",
+        "[`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md). Health-probe abstraction implemented by `PostgresComicStore`."
       ]
     }
   ],

@@ -2,8 +2,8 @@
   "id": "Lyo.Job.Alerts",
   "name": "Lyo.Job.Alerts",
   "area": "Integration",
-  "tagline": "Hosted **`JobAlertConsumer`** that subscribes to the `job.notifications.alert` routing key on the `job.events` exchange, deserializes **`JobAlertEvent`** payloads, and dispatches them through…",
-  "description": "Hosted **`JobAlertConsumer`** that subscribes to the `job.notifications.alert` routing key on the `job.events` exchange, deserializes **`JobAlertEvent`** payloads, and dispatches\nthem through **`INotificationPublisher`** (in-process handlers) and/or an optional **HTTP webhook**.\n\nAlert producers include `JobService` (SLA breaches), `JobScheduler` (failures, circuit breaker), and `JobMaintenanceService` (dead jobs, SLA scans) via\n`IJobEventPublisher.PublishAlertAsync`.",
+  "tagline": "Hosted `JobAlertConsumer` that subscribes to the `job.notifications.alert` routing key on the `job.events` exchange, deserializes `JobAlertEvent` payloads, and dispatches them through `INotificationPublisher` and/or an optional HTTP webhook.",
+  "description": "Hosted `JobAlertConsumer` that subscribes to the `job.notifications.alert` routing key on the `job.events` exchange, deserializes `JobAlertEvent` payloads, and dispatches them through `INotificationPublisher` (in-process handlers) and/or an optional HTTP webhook.\n\nAlert producers include `JobService` (SLA breaches), `JobScheduler` (failures, circuit breaker), and `JobMaintenanceService` (dead jobs, SLA scans) via `IJobEventPublisher.PublishAlertAsync`.",
   "features": [],
   "examples": [
     {
@@ -21,7 +21,7 @@
     {
       "type": "paragraph",
       "title": "Registration",
-      "text": "Requires `IMqService` to be registered and connected. `INotificationPublisher` is optional — when absent, only the webhook path runs (if configured)."
+      "text": "Requires `IMqService` to be registered and connected. `INotificationPublisher` is optional. When absent, only the webhook path runs (if configured)."
     },
     {
       "type": "table",
@@ -38,7 +38,7 @@
           "When set, each alert is POSTed as JSON to this URL."
         ]
       ],
-      "trail": "Per-definition `AlertWebhookUrl` on `JobDefinition` is persisted for custom integrations but is **not** read by `JobAlertConsumer` — only `JobAlertsOptions.AlertWebhookUrl` (or\n`INotificationPublisher` handlers) dispatch alerts from this package."
+      "trail": "Per-definition `AlertWebhookUrl` on `JobDefinition` is persisted for custom integrations but is **not** read by `JobAlertConsumer`. Only `JobAlertsOptions.AlertWebhookUrl` (or\n`INotificationPublisher` handlers) dispatch alerts from this package."
     },
     {
       "type": "table",

@@ -2,8 +2,8 @@
   "id": "Lyo.FFmpeg.Models",
   "name": "Lyo.FFmpeg.Models",
   "area": "Data",
-  "tagline": "Engine-neutral **contracts and models** for `Lyo.FFmpeg`: the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their request/options shapes (`AudioConversionRequest`…",
-  "description": "Engine-neutral **contracts and models** for [`Lyo.FFmpeg`](../Lyo.FFmpeg/README.md): the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their request/options shapes (`AudioConversionRequest`, `AudioConversionOptions`), the probe result type (`AudioProbeResult`), and global host configuration (`FFmpegOptions` + `FFmpegProcessOutputMode`).\n\nThis package has **no DI surface** — registration lives in `Lyo.FFmpeg`. Reference it from libraries that only need the abstractions (mocking, custom backends, host bindings).",
+  "tagline": "Contracts and models for Lyo.FFmpeg: IAudioPlayer, IAudioProber, IAudioConverter, AudioConversionRequest, AudioConversionOptions, AudioProbeResult, and FFmpegOptions.",
+  "description": "Contracts and models for [`Lyo.FFmpeg`](../Lyo.FFmpeg/README.md): IAudioPlayer, IAudioProber, IAudioConverter, AudioConversionRequest, AudioConversionOptions, AudioProbeResult, and host configuration (FFmpegOptions and FFmpegProcessOutputMode).\n\nThis package has no DI registration. Registration lives in Lyo.FFmpeg. Reference it from libraries that only need the abstractions (mocking, custom backends, host bindings).",
   "features": [],
   "examples": [],
   "sections": [
@@ -16,36 +16,36 @@
       ],
       "rows": [
         [
-          "**`IAudioPlayer`**",
-          "`PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)` — each returns `Task<Result<bool>>`."
+          "IAudioPlayer",
+          "PlayAsync(filePath), PlayStreamAsync(stream), PlayBytesAsync(bytes). Each returns Task<Result<bool>>."
         ],
         [
-          "**`IAudioProber`**",
-          "`ProbeAsync(filePath)`, `ProbeStreamAsync(stream)`, `ProbeBytesAsync(bytes)` → `Task<Result<AudioProbeResult>>`."
+          "IAudioProber",
+          "ProbeAsync(filePath), ProbeStreamAsync(stream), ProbeBytesAsync(bytes) return Task<Result<AudioProbeResult>>."
         ],
         [
-          "**`IAudioConverter`**",
-          "Full file/stream/byte conversion matrix plus a request-shaped `ConvertAsync(AudioConversionRequest)`."
+          "IAudioConverter",
+          "File, stream, and byte conversion overloads plus ConvertAsync(AudioConversionRequest)."
         ],
         [
-          "**`AudioConversionRequest`**",
-          "`InputPath`, `OutputPath`, `Codec` (default `pcm_s16le`), `SampleRate` (44100), `Channels` (2), `Format` (`wav`), `Overwrite` (true), `NoVideo` (true)."
+          "AudioConversionRequest",
+          "InputPath, OutputPath, Codec (default pcm_s16le), SampleRate (44100), Channels (2), Format (wav), Overwrite (true), NoVideo (true)."
         ],
         [
-          "**`AudioConversionOptions`**",
-          "Stream/byte-mode equivalent (no paths) — same fields, nullable defaults."
+          "AudioConversionOptions",
+          "Stream/byte-mode equivalent (no paths). Same fields, nullable defaults."
         ],
         [
-          "**`AudioProbeResult`**",
-          "`FilePath`, `DurationSeconds`, `Format`, `SampleRate`, `Channels`, `Codec`, `BitRate`, `FileSizeBytes`, `HasVideo`, `HasAudio`, `RawMetadata` (raw ffprobe key/value)."
+          "AudioProbeResult",
+          "FilePath, DurationSeconds, Format, SampleRate, Channels, Codec, BitRate, FileSizeBytes, HasVideo, HasAudio, RawMetadata (raw ffprobe key/value)."
         ],
         [
-          "**`FFmpegOptions`**",
-          "Executable paths (`FFmpegPath`, `FfprobePath`, `FfplayPath`), defaults (`DefaultCodec`, `DefaultSampleRate`, `DefaultChannels`, `DefaultFormat`, `DefaultOverwrite`, `DefaultNoVideo`), `GlobalArguments`, `EnableMetrics`, `SuppressFfplayOutput`, `ProcessOutputMode`. `SectionName = \"FFmpegOptions\"`."
+          "FFmpegOptions",
+          "Executable paths (FFmpegPath, FfprobePath, FfplayPath), defaults (DefaultCodec, DefaultSampleRate, DefaultChannels, DefaultFormat, DefaultOverwrite, DefaultNoVideo), GlobalArguments, EnableMetrics, SuppressFfplayOutput, ProcessOutputMode. SectionName = \"FFmpegOptions\"."
         ],
         [
-          "**`FFmpegProcessOutputMode`**",
-          "`Suppress` (default — capture stdout/stderr internally) or `Passthrough` (echo to console for debugging)."
+          "FFmpegProcessOutputMode",
+          "Suppress (default, capture stdout/stderr internally) or Passthrough (echo to console for debugging)."
         ]
       ]
     }

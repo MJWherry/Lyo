@@ -5,18 +5,18 @@
   "tagline": "PostgreSQL implementation of Lyo.Audit using Entity Framework Core. Persists `AuditChange` and `AuditEvent` records to PostgreSQL with JSONB columns for dictionary data.",
   "description": "PostgreSQL implementation of Lyo.Audit using Entity Framework Core. Persists `AuditChange` and `AuditEvent` records to PostgreSQL with JSONB columns for dictionary data.",
   "features": [
-    "**PostgresAuditRecorder** – Implements `IAuditRecorder` and `Lyo.Health.IHealth` with PostgreSQL persistence",
-    "**Migrations** – EF Core migrations in the `audit` schema (`PostgresAuditOptions.Schema`) with `audit_changes` and `audit_events` tables",
-    "**Auto migrations** – Optional automatic migration on startup via `EnableAutoMigrations`"
+    "**PostgresAuditRecorder.** Implements `IAuditRecorder` and `Lyo.Health.IHealth` with PostgreSQL persistence.",
+    "**Migrations.** EF Core migrations in the `audit` schema (`PostgresAuditOptions.Schema`) with `audit_changes` and `audit_events` tables.",
+    "**Auto migrations.** Optional automatic migration on startup via `EnableAutoMigrations`."
   ],
   "examples": [
     {
-      "title": "Quick Start",
+      "title": "Quick start",
       "language": "csharp",
       "code": "services.AddPostgresAuditRecorder(new PostgresAuditOptions {\n    ConnectionString = configuration.GetConnectionString(\"Audit\")!,\n    EnableAutoMigrations = true\n});\n\nservices.AddPostgresAuditRecorderFromConfiguration(configuration);"
     },
     {
-      "title": "Quick Start (2)",
+      "title": "Quick start (2)",
       "language": "csharp",
       "code": "services.AddAuditDbContextFactory(configuration.GetSection(\"PostgresAudit\").Get<PostgresAuditOptions>()!);"
     },
@@ -63,26 +63,26 @@
     },
     {
       "type": "paragraph",
-      "title": "Quick Start",
-      "text": "Need just the factory (e.g. to share with downstream services or run migrations explicitly)?"
+      "title": "Quick start",
+      "text": "Need just the factory, for example to share with downstream services or run migrations explicitly?"
     },
     {
       "type": "paragraph",
       "title": "Health",
-      "text": "`PostgresAuditRecorder` implements `Lyo.Health.IHealth` with `HealthCheckName = \"audit-postgres\"`. The probe opens an `AuditDbContext` and runs `Database.CanConnectAsync`, surfacing connection failures through `HealthResult.Unhealthy` so the recorder contributes to host health endpoints that resolve `IEnumerable<IHealth>`."
+      "text": "`PostgresAuditRecorder` implements `Lyo.Health.IHealth` with `HealthCheckName = \"audit-postgres\"`. The probe opens an `AuditDbContext` and runs `Database.CanConnectAsync`. Connection failures return `HealthResult.Unhealthy`. Hosts that resolve `IEnumerable<IHealth>` include this recorder."
     },
     {
       "type": "list",
       "title": "Schema",
       "items": [
-        "**audit.audit_changes** – `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid), `old_values_json` (jsonb), `changed_properties_json` (jsonb), `created_timestamp`, `updated_timestamp?`",
-        "**audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` ( uuid), `message?`, `metadata_json?` (jsonb), `created_timestamp`, `updated_timestamp?`"
+        "**audit.audit_changes.** `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid), `old_values_json` (jsonb), `changed_properties_json` (jsonb), `created_timestamp`, `updated_timestamp?`",
+        "**audit.audit_events.** `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid), `message?`, `metadata_json?` (jsonb), `created_timestamp`, `updated_timestamp?`"
       ]
     },
     {
       "type": "markdown",
       "title": "Tenancy",
-      "body": "`AuditChange` and `AuditEvent` records carry an optional `TenantId` (mapped to the `tenant_id` column). `PostgresAuditRecorder` runs every record through\n`TenancyResolver.Resolve` using the policy configured in `PostgresAuditOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset) before persisting:\n\n- `SystemOnly` — caller `TenantId` is ignored and the row stores `null` (system-level audit).\n- `SingleTenantDefault` *(default)* — caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.\n- `MultiTenantStrict` — caller must supply a non-empty `TenantId` or persistence throws.\n\nEach table has an `ix_<table>_tenant` index for filtered scans. Use `WhereTenant(tenantId)` to scope queries to a single tenant (or `null` for system rows) and\n`WhereTenantOrSystem(tenantId)` to include both. See [`Lyo.EntityReference.Postgres`](../../EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy) for the policy matrix.\n\n```json\n{\n  \"PostgresAudit\": {\n    \"ConnectionString\": \"Host=localhost;Database=audit;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
+      "body": "`AuditChange` and `AuditEvent` records carry an optional `TenantId` (mapped to the `tenant_id` column). `PostgresAuditRecorder` runs every record through\n`TenancyResolver.Resolve` using the policy configured in `PostgresAuditOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset) before persisting:\n\n- `SystemOnly`. Caller `TenantId` is ignored and the row stores `null` (system-level audit).\n- `SingleTenantDefault` *(default)*. Caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.\n- `MultiTenantStrict`. Caller must supply a non-empty `TenantId` or persistence throws.\n\nEach table has an `ix_<table>_tenant` index for filtered scans. Use `WhereTenant(tenantId)` to scope queries to a single tenant (or `null` for system rows) and\n`WhereTenantOrSystem(tenantId)` to include both. See [`Lyo.EntityReference.Postgres`](../../EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy) for the policy matrix.\n\n```json\n{\n  \"PostgresAudit\": {\n    \"ConnectionString\": \"Host=localhost;Database=audit;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
     }
   ],
   "links": [],

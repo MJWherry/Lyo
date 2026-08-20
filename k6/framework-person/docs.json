@@ -6,7 +6,7 @@
   "commands": [
     {
       "cmd": "python3 k6/framework-person/run_all.py",
-      "blurb": "Full matrix (90 cells: 3×5×3×2)"
+      "blurb": "All 90 cells (3×5×3×2)"
     },
     {
       "cmd": "python3 k6/framework-person/run_all.py nonsoak med uncached",

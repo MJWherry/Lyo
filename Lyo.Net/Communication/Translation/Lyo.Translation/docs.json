@@ -3,7 +3,7 @@
   "name": "Lyo.Translation",
   "area": "Communication",
   "tagline": "**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) stay under `Communication/Translation/`, not `Integration/`. See package layout.",
-  "description": "**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) stay under `Communication/Translation/`, not `Integration/`.\nSee [package layout](../../../docs/package-layout.md).\n\nContracts and shared behaviour for machine translation in Lyo: the `ITranslationService` interface,\n`TranslationServiceBase` (bulk pipeline + metrics + lifecycle events), error codes, metric key names,\nand a small DI helper.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
+  "description": "**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) stay under `Communication/Translation/`, not `Integration/`.\nSee [package layout](../../../docs/package-layout.md).\n\nContracts and shared translation behavior: `ITranslationService`,\n`TranslationServiceBase` (bulk pipeline, metrics, lifecycle events), error codes, metric key names,\nand a small DI helper.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
   "features": [],
   "examples": [
     {
@@ -23,19 +23,19 @@
       "rows": [
         [
           "`TranslateAsync(string text, LanguageCodeInfo targetLanguageCode, LanguageCodeInfo? sourceLanguage = null, CancellationToken ct = default)`",
-          "Convenience overload — builds a `TranslationRequest`, applies `Options.DefaultSourceLanguage` when not provided."
+          "Convenience overload. Builds a `TranslationRequest` and applies `Options.DefaultSourceLanguage` when the caller omits a source."
         ],
         [
           "`TranslateAsync(TranslationRequest request, CancellationToken ct = default)`",
-          "Full request flow."
+          "Translates a `TranslationRequest`."
         ],
         [
           "`TranslateBulkAsync(IEnumerable<TranslationRequest> requests, CancellationToken ct = default)`",
-          "Concurrency-capped bulk send (returns `IReadOnlyList<TranslationResult>`)."
+          "Concurrency-capped bulk send. Returns `IReadOnlyList<TranslationResult>`."
         ],
         [
           "`DetectLanguageAsync(string text, CancellationToken ct = default)`",
-          "Detects the language of `text`, returns `LanguageCodeInfo` (providers may return an unknown info on failure)."
+          "Detects the language of `text` and returns `LanguageCodeInfo`. Providers may return an unknown info on failure."
         ],
         [
           "`TestConnectionAsync(CancellationToken ct = default)`",
@@ -48,9 +48,9 @@
       "title": "`TranslationServiceBase`",
       "items": [
         "A shared bulk pipeline with a `SemaphoreSlim` sized by `TranslationServiceOptions.BulkTranslationConcurrencyLimit` and a hard per-call limit of `TranslationServiceOptions.MaxBulkTranslationLimit`.",
-        "Result ordering note: bulk results are collected through a `ConcurrentBag` so output order is **not** guaranteed to match the input order.",
+        "Bulk results go into a `ConcurrentBag`, so output order is not guaranteed to match input order.",
         "Lifecycle events: `Translating`, `Translated`, `BulkTranslating`, `BulkTranslated`.",
-        "A `MetricNames` dictionary providers can override per-provider in their constructor."
+        "A `MetricNames` dictionary providers can override in their constructor."
       ]
     },
     {
@@ -193,7 +193,7 @@
     {
       "type": "paragraph",
       "title": "DI helpers",
-      "text": "`Lyo.Translation.Extensions` exposes a generic helper used by provider packages: The helper registers `TOptions`, `TService`, and `ITranslationService` (resolved from `TService`) as singletons. Concrete provider packages (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) wrap this in their own `Add*FromConfiguration` extensions that also wire up native SDK clients."
+      "text": "`Lyo.Translation.Extensions` exposes a generic helper used by provider packages. It registers `TOptions`, `TService`, and `ITranslationService` (resolved from `TService`) as singletons. Concrete provider packages (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) wrap this in their own `Add*FromConfiguration` extensions that also register native SDK clients."
     }
   ],
   "links": [],

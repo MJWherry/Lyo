@@ -3,7 +3,7 @@
   "name": "Lyo.Reporting.Web.Components",
   "area": "Integration",
   "tagline": "MudBlazor ops UI for Lyo Reporting: browse definitions, run reports, and view/download generations.",
-  "description": "MudBlazor ops UI for Lyo Reporting: browse definitions, run reports, and view/download generations.\n\nThis package is a **Razor component library** — no `AddXxx` DI. The host supplies an authenticated `IApiClient` (and optional FileStorage download/view callbacks).\n\nPair with [`Lyo.Api.Reporting`](../../Api/Lyo.Api.Reporting/README.md) on the API host and [`Lyo.Reporting.Client`](../Lyo.Reporting.Client/README.md) for typed HTTP access.",
+  "description": "MudBlazor ops UI for Lyo Reporting: browse definitions, run reports, and view/download generations.\n\nThis package is a Razor component library. No `AddXxx` DI. The host supplies an authenticated `IApiClient` (and optional FileStorage download/view callbacks).\n\nPair with [`Lyo.Api.Reporting`](../../Api/Lyo.Api.Reporting/README.md) on the API host and [`Lyo.Reporting.Client`](../Lyo.Reporting.Client/README.md) for typed HTTP access.",
   "features": [],
   "examples": [],
   "sections": [
@@ -151,7 +151,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -199,6 +215,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -224,6 +248,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -282,6 +314,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -301,7 +342,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

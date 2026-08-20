@@ -1,8 +1,8 @@
 # Lyo.Postgres
 
-Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.). The package is a thin **`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at host startup when the consumer’s options opt in.
+Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.). A thin `IHostedService` runs `DbContext.Database.MigrateAsync` at host startup when the consumer's options opt in.
 
-> Out of scope: this package does **not** ship health checks, design-time `IDesignTimeDbContextFactory` helpers, or connection-string builders. Those live in the consumer > libraries (e.g. `Lyo.Audit.Postgres`, `Lyo.Email.Postgres`) when needed.
+> Out of scope: this package does not ship health checks, design-time `IDesignTimeDbContextFactory` helpers, or connection-string builders. Those live in the consumer > libraries (e.g. `Lyo.Audit.Postgres`, `Lyo.Email.Postgres`) when needed.
 
 ## Examples
 
@@ -23,13 +23,13 @@ services.Configure<AuditDbOptions>(configuration.GetSection("Audit:Postgres"));
 services.AddPostgresMigrations<AuditDbContext, AuditDbOptions>();
 ```
 
-## Public API
+## Types
 
 | Type | Role |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`IPostgresMigrationConfig`** | Contract for options classes that want to opt into hosted migrations. Members: `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`. |
-| **`PostgresMigrationHostedService<TContext, TOptions>`** | `IHostedService` that, on `StartAsync`, scopes a fresh `TContext` over the configured connection string, runs `CREATE SCHEMA IF NOT EXISTS "<Schema>"`, then `MigrateAsync`. |
-| **`Extensions.AddPostgresMigrations<TContext, TOptions>()`** | Registers the hosted service. Both type parameters are constrained: `TContext : DbContext`, `TOptions : class, IPostgresMigrationConfig`. |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IPostgresMigrationConfig` | Options contract for hosted migrations. Members: `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`. |
+| `PostgresMigrationHostedService<TContext, TOptions>` | `IHostedService` that, on `StartAsync`, scopes a fresh `TContext` over the configured connection string, runs `CREATE SCHEMA IF NOT EXISTS "<Schema>"`, then `MigrateAsync`. |
+| `Extensions.AddPostgresMigrations<TContext, TOptions>()` | Registers the hosted service. Both type parameters are constrained: `TContext : DbContext`, `TOptions : class, IPostgresMigrationConfig`. |
 
 The hosted service activates a `TContext` instance via `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so each consumer DbContext **must expose a public
 constructor that takes a single `DbContextOptions<TContext>`**. The migrations history table is stored in the schema returned by `IPostgresMigrationConfig.Schema` as
@@ -58,10 +58,10 @@ constructor that takes a single `DbContextOptions<TContext>`**. The migrations h
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
-- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
-- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
-- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (direct, third-party)
+- `Lyo.Exceptions` (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (direct, third-party)

@@ -3,7 +3,7 @@
   "name": "Lyo.DataTable.Models",
   "area": "Data",
   "tagline": "Mutable in-memory data table with sparse columns, thin cells, an optional format map, fluent builders, and an HTML renderer.",
-  "description": "Mutable in-memory data table with sparse columns, headers, footer, thin cells, a sparse\noptional format map, fluent builders, and an HTML renderer. Used as the canonical tabular\nexchange format for [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md),\n[`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md), and [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md),\nand for ad-hoc programmatic table construction.\n\nThis project contains all of the runtime types. The sibling\n[`Lyo.DataTable`](../Lyo.DataTable/README.md) project is an empty package placeholder.",
+  "description": "Mutable in-memory data table with sparse columns, headers, footer, thin cells, a sparse\noptional format map, fluent builders, and an HTML renderer. Used as the tabular\nexchange format for [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md),\n[`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md), and [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md),\nand for ad-hoc programmatic table construction.\n\nThis project contains all of the runtime types. The sibling\n[`Lyo.DataTable`](../Lyo.DataTable/README.md) project is an empty package placeholder.",
   "features": [],
   "examples": [],
   "sections": [
@@ -11,25 +11,25 @@
       "type": "list",
       "title": "Core types",
       "items": [
-        "`DataTable` — sparse table with `Headers`, `Rows`, and `Footer`. Indexer `this[int row, int col]` uses `row == -1` for header and `row == -2` for footer. Optional formatting lives in a thread-safe sparse map: `GetFormat` / `SetFormat` / `ClearFormat` / `Formats` (snapshot). Absent key = no format (never store null). Helpers: `SetHeader` / `SetFooter` / `SetCell` (optional format overloads clear the map when format is null; value-only `SetCell` leaves an existing format), `ClearCell` (clears value and format), `AddRow`, `MaxColumn`. On `net10.0`, `EnumerateRowsAsync` yields body rows for `await foreach` (table stays fully materialised). Cell structure mutation is not itself synchronized — only the format map is concurrent-safe. One cell object per populated coordinate remains even when slim (no cell-instance pooling).",
-        "`DataTableRow` — sparse `Cells` dictionary keyed by column index, with `SetCell` / `ClearCell` and an indexer.",
-        "`IDataTableCell` — `DisplayValue`, `ColSpan`, `RowSpan` only. Formatting is not on the cell.",
-        "`DataTableCell<T>` — sealed record implementing `IDataTableCell`; `DisplayValue` is `Value?.ToString() ?? \"\"`. `DataTableCell<string>.Empty` is the shared empty cell.",
-        "`DataTableCell` (static) — non-generic helpers: `Empty`, `FromValue(string?)`, `FromValue(string?, colSpan, rowSpan)`.",
-        "`DataTableCellFormat` — sealed record of optional font/fill/align/border/number-format fields; `HasAny()` detects meaningful style.",
-        "`DataTablePoolingOptions` — `PoolValues`, `PoolFormats`, `PoolingCellThreshold` (default 512; `0` = always when enabled). Section name `DataTablePooling`. Create one `DataTableValueInterner` per parse.",
-        "`DataTableValueInterner` — parse-scoped (single-threaded) string/format interning via ordinary dictionaries, gated by pooling options. Not process-wide `string.Intern`.",
-        "`DataTableToHtml.ToHtmlDocument(DataTable)` — renders HTML with inline styles from the format map (not from the cell type). Honors `ColSpan`/`RowSpan`."
+        "DataTable. Sparse table with Headers, Rows, and Footer. Indexer this[int row, int col] uses row == -1 for header and row == -2 for footer. Optional formatting lives in a sparse map that is safe for concurrent format reads and writes: GetFormat / SetFormat / ClearFormat / Formats (snapshot). Absent key means no format. Never store null. Helpers: SetHeader / SetFooter / SetCell (optional format overloads clear the map when format is null; value-only SetCell leaves an existing format), ClearCell (clears value and format), AddRow, MaxColumn. On net10.0, EnumerateRowsAsync yields body rows for await foreach. The table stays materialised. Cell structure mutation is not itself synchronized. Only the format map is concurrent-safe. One cell object per populated coordinate remains even when slim. No cell-instance pooling.",
+        "DataTableRow. Sparse Cells dictionary keyed by column index, with SetCell / ClearCell and an indexer.",
+        "IDataTableCell. DisplayValue, ColSpan, RowSpan only. Formatting is not on the cell.",
+        "DataTableCell<T>. Sealed record implementing IDataTableCell. DisplayValue is Value?.ToString() ?? \"\". DataTableCell<string>.Empty is the shared empty cell.",
+        "DataTableCell (static). Non-generic helpers: Empty, FromValue(string?), FromValue(string?, colSpan, rowSpan).",
+        "DataTableCellFormat. Sealed record of optional font/fill/align/border/number-format fields. HasAny() detects meaningful style.",
+        "DataTablePoolingOptions. PoolValues, PoolFormats, PoolingCellThreshold (default 512; 0 = always when enabled). Section name DataTablePooling. Create one DataTableValueInterner per parse.",
+        "DataTableValueInterner. Parse-scoped (single-threaded) string/format interning via ordinary dictionaries, gated by pooling options. Not process-wide string.Intern.",
+        "DataTableToHtml.ToHtmlDocument(DataTable). Renders HTML with inline styles from the format map, not from the cell type. Honors ColSpan/RowSpan."
       ]
     },
     {
       "type": "list",
       "title": "Fluent builders",
       "items": [
-        "`DataTableBuilder` — top-level builder. `AddColumn(col, configure)` defines conditional formatting applied to the table format map; `AddHeader` / `AddHeaders`, `AddFooter` / `AddFooters` / `AddSumFooter`, and `AddRow` overloads (including `BuildAndAdd`). `Build()` materializes the `DataTable` and computes sum footers.",
-        "`DataTableRowBuilder` — `SetCell<T>(col, value)` applies column-level `FormatWhen` rules into the row's pending format map; `AddCell` accepts strings, cells, or a `DataTableCellBuilder`.",
-        "`DataTableColumnBuilder` — `WithSumFooter()`; `FormatWhen<T>(when, apply)`.",
-        "`DataTableCellBuilder` — fluent setters for format + spans; `Build()` returns a thin cell; `BuildFormat()` / `Format` returns the optional format for the table map."
+        "DataTableBuilder. Top-level builder. AddColumn(col, configure) defines conditional formatting applied to the table format map. AddHeader / AddHeaders, AddFooter / AddFooters / AddSumFooter, and AddRow overloads including BuildAndAdd. Build() materializes the DataTable and computes sum footers.",
+        "DataTableRowBuilder. SetCell<T>(col, value) applies column-level FormatWhen rules into the row's pending format map. AddCell accepts strings, cells, or a DataTableCellBuilder.",
+        "DataTableColumnBuilder. WithSumFooter(); FormatWhen<T>(when, apply).",
+        "DataTableCellBuilder. Fluent setters for format and spans. Build() returns a thin cell. BuildFormat() / Format returns the optional format for the table map."
       ]
     },
     {

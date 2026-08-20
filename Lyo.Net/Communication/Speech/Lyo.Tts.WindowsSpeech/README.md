@@ -1,18 +1,18 @@
 # Lyo.Tts.WindowsSpeech
 
-Windows Speech Synthesis Text-to-Speech service implementation for the Lyo framework using Windows built-in SAPI (Speech API).
+Windows SAPI text-to-speech. `WindowsSpeechTtsService` uses the built-in Speech API.
 
 ## Features
 
-- **Windows Native**: Uses Windows built-in Speech Synthesis API (SAPI)
-- **Voice Selection**: Support for selecting installed Windows voices
-- **Speech Rate Control**: Adjustable speech rate (-10 to 10)
-- **Volume Control**: Adjustable volume (0 to 100)
-- **Bulk Operations**: Support for bulk text-to-speech synthesis
-- **Logging**: Comprehensive logging support via Microsoft.Extensions.Logging
-- **Metrics**: Optional metrics collection for monitoring TTS operations
-- **Thread-Safe**: Safe for concurrent use
-- **Async Support**: Full async/await support with cancellation token support
+- **SAPI.** Uses the Windows Speech Synthesis API.
+- **Voices.** Select any installed Windows voice.
+- **Rate.** Speech rate from -10 to 10.
+- **Volume.** Volume from 0 to 100.
+- **Bulk.** Bulk synthesis through the shared `Lyo.Tts` pipeline.
+- **Logging.** Logs through Microsoft.Extensions.Logging.
+- **Metrics.** Optional metrics on TTS calls.
+- **Concurrency.** Safe for concurrent use.
+- **Async.** Methods take `CancellationToken`.
 
 ## Examples
 
@@ -41,7 +41,7 @@ if (result.IsSuccess && result.AudioData is { Length: > 0 })
     await File.WriteAllBytesAsync("output.wav", result.AudioData);
 ```
 
-### Using with an explicit options instance
+### Explicit options instance
 
 ```csharp
 services.AddWindowsSpeechTtsService(new TtsServiceOptions
@@ -53,7 +53,7 @@ services.AddWindowsSpeechTtsService(new TtsServiceOptions
 });
 ```
 
-### List Available Voices
+### List available voices
 
 ```csharp
 var ttsService = serviceProvider.GetRequiredService<ITtsService<WindowsTtsRequest>>();
@@ -61,9 +61,9 @@ var ok = await ttsService.TestConnectionAsync();
 // TestConnectionAsync logs every installed SAPI voice via the registered ILogger.
 ```
 
-## Platform Support
+## Platform support
 
-**Windows Only**: This library only builds and runs on Windows platforms. It requires the `System.Speech` package which is Windows-specific.
+Windows only. This package builds and runs on Windows. It needs the `System.Speech` package, which is Windows-specific.
 
 ## Registered services
 
@@ -73,9 +73,9 @@ var ok = await ttsService.TestConnectionAsync();
 - `WindowsSpeechTtsService` (singleton; subclass of `TtsServiceBase<WindowsTtsRequest>`).
 - `ITtsService<WindowsTtsRequest>` resolved from the singleton above.
 
-It does **not** register the non-generic `ITtsService` — there is no `WindowsSpeechTtsAppService`
+It does not register the non-generic `ITtsService`. There is no `WindowsSpeechTtsAppService`
 adapter in this package today, so callers that depend on `ITtsService` should depend on
-`ITtsService<WindowsTtsRequest>` instead (or wire up their own adapter). The other Lyo TTS providers
+`ITtsService<WindowsTtsRequest>` instead, or wire their own adapter. The other Lyo TTS providers
 ([`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md), [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md))
 register both interfaces because they ship an `*TtsAppService` adapter.
 
@@ -95,15 +95,15 @@ register both interfaces because they ship an `*TtsAppService` adapter.
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Tts` — (direct, lyo)
-- `Lyo.Tts.Models` — (direct, lyo)
-- `System.Speech` `10.0.5` — (direct, microsoft, $([MSBuild]::IsOSPlatform('Windows')))
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Tts` (direct, lyo)
+- `Lyo.Tts.Models` (direct, lyo)
+- `System.Speech` `10.0.5` (direct, microsoft, $([MSBuild]::IsOSPlatform('Windows')))
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

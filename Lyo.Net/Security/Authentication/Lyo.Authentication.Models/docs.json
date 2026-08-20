@@ -2,8 +2,8 @@
   "id": "Lyo.Authentication.Models",
   "name": "Lyo.Authentication.Models",
   "area": "Security",
-  "tagline": "Wire-shape data for `Lyo.Authentication` — the half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients.",
-  "description": "Wire-shape data for `Lyo.Authentication` — the half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients. No services, no stores, no key material,\nno DI; just records, format helpers, and a JWT parser.",
+  "tagline": "Wire-shape data for `Lyo.Authentication`. The half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients.",
+  "description": "Wire-shape data for `Lyo.Authentication`. The half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients. No services, no stores, no key material, no DI. Just records, format helpers, and a JWT parser.",
   "features": [],
   "examples": [
     {
@@ -21,7 +21,7 @@
     {
       "type": "markdown",
       "title": "What's in it",
-      "body": "> The minting/hashing parts of `ApiTokenCodec`, every `IApiTokenStore` / `IUserStore` / `ILyoJwtIssuer` / `ILyoJwtValidator`, the scope registry runtime, and the audit recorder\n> live in **`Lyo.Authentication`** — not here. They depend on `Lyo.KeyStore`, `Lyo.Hashing`, and BouncyCastle, which have no business in a browser bundle."
+      "body": "> The minting/hashing parts of `ApiTokenCodec`, every `IApiTokenStore` / `IUserStore` / `ILyoJwtIssuer` / `ILyoJwtValidator`, the scope registry runtime, and the audit recorder live in `Lyo.Authentication`, not here. They depend on `Lyo.KeyStore`, `Lyo.Hashing`, and BouncyCastle, which have no business in a browser bundle."
     },
     {
       "type": "list",
@@ -29,12 +29,12 @@
       "items": [
         "A Blazor WebAssembly app that needs to decode a Lyo JWT, render a `LyoUser`, or describe an audit event.",
         "A non-Lyo client (e.g. a serverless function, a script, a CLI) that consumes the Lyo API and wants strongly-typed wire shapes without dragging in the server stack.",
-        "A shared library that sits between the API and a consumer — e.g. `Lyo.Authentication.Client`, `Lyo.Authentication.Web.Components`."
+        "A shared library that sits between the API and a consumer, for example `Lyo.Authentication.Client` or `Lyo.Authentication.Web.Components`."
       ]
     },
     {
       "type": "list",
-      "title": "When NOT to reference it",
+      "title": "When not to reference it",
       "items": [
         "If you are the API/auth-server host, reference `Lyo.Authentication` directly. It transitively pulls Models in for you, and you'll need the service interfaces and DI helpers that only live in the server package."
       ]
@@ -42,7 +42,7 @@
     {
       "type": "markdown",
       "title": "Verifying the boundary",
-      "body": "The intent of the split is that consumer-side projects can never accidentally compile against a server-only type. Quick way to assert this in CI for any consumer csproj:\n\n\n\nIf `dotnet build` reports `CS0234: The type or namespace name 'Services' does not exist in the namespace 'Lyo.Authentication'`, the boundary holds. Delete the probe."
+      "body": "Consumer-side projects must not compile against a server-only type. Assert that in CI for any consumer csproj:\n\n\n\nIf `dotnet build` reports `CS0234: The type or namespace name 'Services' does not exist in the namespace 'Lyo.Authentication'`, the boundary holds. Delete the probe."
     }
   ],
   "links": [],

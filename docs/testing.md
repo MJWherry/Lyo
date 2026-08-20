@@ -2,11 +2,11 @@
 
 There are three kinds of automated checks in this repo:
 
-- **Unit/integration tests** — xUnit projects named `*.Tests`.
-- **Micro-benchmarks** — BenchmarkDotNet projects named `*.Benchmarks`.
-- **Load tests** — k6 scripts under [`k6/`](../k6/).
+- **Unit/integration tests.** xUnit projects named `*.Tests`.
+- **Micro-benchmarks.** BenchmarkDotNet projects named `*.Benchmarks`.
+- **Load tests.** k6 scripts under [`k6/`](../k6/).
 
-All three can run on the host with the .NET SDK, and the test/benchmark projects can also run inside the container runner (see [Deployment](deployment.md)).
+All three can run on the host with the .NET SDK. The test and benchmark projects can also run inside the container runner (see [Deployment](deployment.md)).
 
 ## Unit tests (host)
 
@@ -21,17 +21,11 @@ dotnet test Lyo.Net/Security/Encryption/Lyo.Encryption.Tests
 dotnet test Lyo.Net/Data/Csv/Lyo.Csv.Tests --filter 'Category=Fast'
 ```
 
-Tests that use Testcontainers (the `*.Postgres` suites, Redis-backed locks, etc.)
-need a reachable Docker daemon to spin up sibling Redis/Postgres containers.
+Tests that use Testcontainers (the `*.Postgres` suites, Redis-backed locks, and similar) need a reachable Docker daemon to spin up sibling Redis/Postgres containers.
 
 ### Seeded test data
 
-Do **not** use unseeded `new Random()`, `RandomNumberGenerator.GetBytes` / `Fill`, or other crypto RNG for test *payloads* (plaintexts, keys, nonces under test). Use
-[`Lyo.Testing.TestData`](../Lyo.Net/Core/Lyo.Testing/TestData.cs) (`Create` / `Fill`,
-`TestData.Seed`). Benchmarks use [`BenchmarkData`](../Lyo.Net/Core/Benchmark/Lyo.Benchmark/Data/BenchmarkData.cs)
-(`PayloadSeed` / `DeterministicBytes`) — **same seed value** as `TestData.Seed` and
-`DeterministicPayloadStream.DefaultSeed`. Distinct values → distinct seeds (e.g. `TestData.Seed + i`, or `TestData.Seed ^ 1` for a wrong key). Temp paths may still use
-`Guid.NewGuid()`.
+Do **not** use unseeded `new Random()`, `RandomNumberGenerator.GetBytes` / `Fill`, or other crypto RNG for test *payloads* (plaintexts, keys, nonces under test). Use [`Lyo.Testing.TestData`](../Lyo.Net/Core/Lyo.Testing/TestData.cs) (`Create` / `Fill`, `TestData.Seed`). Benchmarks use [`BenchmarkData`](../Lyo.Net/Core/Benchmark/Lyo.Benchmark/Data/BenchmarkData.cs) (`PayloadSeed` / `DeterministicBytes`). Same seed value as `TestData.Seed` and `DeterministicPayloadStream.DefaultSeed`. Distinct values need distinct seeds (for example `TestData.Seed + i`, or `TestData.Seed ^ 1` for a wrong key). Temp paths may still use `Guid.NewGuid()`.
 
 ## Micro-benchmarks (host)
 
@@ -70,15 +64,11 @@ python3 scripts/docker/run.py --filter '*Sha256*' Lyo.Hashing.Benchmarks  # Benc
 python3 scripts/docker/run.py --test-filter 'Category=Fast' Lyo.Csv.Tests # xUnit --filter
 ```
 
-The `TARGET` grammar (groups, exact names, globs, paths) and the full option list are documented in [`docker/README.md`](../docker/README.md). Configuration such as `CPU_LIMIT`/
-`MEM_LIMIT` lives in [Configuration](configuration.md).
+The `TARGET` grammar (groups, exact names, globs, paths) and the full option list are documented in [`docker/README.md`](../docker/README.md). Configuration such as `CPU_LIMIT` / `MEM_LIMIT` lives in [Configuration](configuration.md).
 
 ## Load tests (k6)
 
-The k6 workloads live under [`k6/framework-person/`](../k6/framework-person/) and target the `TestApi` person endpoints. See that folder's
-[README](../k6/framework-person/README.md) for running the matrix, and the
-[K6 benchmark analysis](../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)
-for archived results.
+The k6 workloads live under [`k6/framework-person/`](../k6/framework-person/) and target the `TestApi` person endpoints. See that folder's [README](../k6/framework-person/README.md) for running the matrix, and the [K6 benchmark analysis](../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md) for archived results.
 
 ## Where results go: the dashboards
 
@@ -90,5 +80,4 @@ python3 scripts/benchmarks/build_manifests.py               # micro + k6
 python3 scripts/benchmarks/build_manifests.py --k6-only
 ```
 
-After regenerating, open [`docs/benchmarks/index.html`](benchmarks/index.html). The dashboard internals (schema, SLA grading, per-report context) are described
-in [benchmarks/README.md](benchmarks/README.md). When run in the container, the only path written back to the host is `docs/benchmarks/data/`.
+After regenerating, open [`docs/benchmarks/index.html`](benchmarks/index.html). The dashboard internals (schema, SLA grading, per-report context) are described in [benchmarks/README.md](benchmarks/README.md). When run in the container, the only path written back to the host is `docs/benchmarks/data/`.

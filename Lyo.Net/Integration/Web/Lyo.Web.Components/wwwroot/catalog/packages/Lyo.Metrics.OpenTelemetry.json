@@ -5,30 +5,30 @@
   "tagline": "OpenTelemetry implementation of `IMetrics` for exporting metrics to OpenTelemetry-compatible backends.",
   "description": "OpenTelemetry implementation of `IMetrics` for exporting metrics to OpenTelemetry-compatible backends.",
   "features": [
-    "Full `IMetrics` interface implementation",
-    "Automatic metric name sanitization for OpenTelemetry conventions",
-    "Tag/attribute conversion",
+    "`IMetrics` implementation backed by OpenTelemetry instruments",
+    "Metric name sanitization for OpenTelemetry conventions",
+    "Tag to attribute conversion",
     "Thread-safe metric recording",
-    "Support for multiple exporters (Console, Prometheus, OTLP, etc.)"
+    "Console, Prometheus, and OTLP exporters"
   ],
   "examples": [
     {
-      "title": "Basic Setup (Console Exporter)",
+      "title": "Console exporter",
       "language": "csharp",
       "code": "using Lyo.Metrics.OpenTelemetry;\n\nservices.AddLyoMetricsWithOpenTelemetry(\"MyApp.Metrics\");"
     },
     {
-      "title": "With Prometheus Exporter",
+      "title": "Prometheus exporter",
       "language": "csharp",
       "code": "services.AddLyoMetricsWithOpenTelemetry(\"MyApp.Metrics\", configureMeterProvider: builder =>\n{\n    builder.AddPrometheusExporter(options =>\n    {\n        options.ScrapeEndpointPath = \"/metrics\";\n    });\n});"
     },
     {
-      "title": "With OTLP Exporter (for Jaeger, Tempo, etc.)",
+      "title": "OTLP exporter",
       "language": "csharp",
       "code": "services.AddLyoMetricsWithOpenTelemetry(\"MyApp.Metrics\", configureMeterProvider: builder =>\n{\n    builder.AddOtlpExporter(options =>\n    {\n        options.Endpoint = new Uri(\"http://localhost:4317\");\n    });\n});"
     },
     {
-      "title": "With Multiple Exporters",
+      "title": "Multiple exporters",
       "language": "csharp",
       "code": "services.AddLyoMetricsWithOpenTelemetry(\"MyApp.Metrics\", configureMeterProvider: builder =>\n{\n    // Console for development\n    builder.AddConsoleExporter();\n    \n    // Prometheus for scraping\n    builder.AddPrometheusExporter();\n    \n    // OTLP for centralized collection\n    builder.AddOtlpExporter(options =>\n    {\n        options.Endpoint = new Uri(\"https://otel-collector:4317\");\n    });\n});"
     },
@@ -41,18 +41,18 @@
   "sections": [
     {
       "type": "list",
-      "title": "Metric Type Mapping",
+      "title": "Metric type mapping",
       "items": [
-        "**Counters**: `IncrementCounter` → OpenTelemetry `Counter<long>`",
-        "**Gauges**: `RecordGauge` → OpenTelemetry `Histogram<double>` (push-based)",
-        "**Histograms/Timings**: `RecordHistogram`/`RecordTiming` → OpenTelemetry `Histogram<double>`",
-        "**Errors**: `RecordError` → OpenTelemetry `Counter<long>` with error attributes",
-        "**Events**: `RecordEvent` → OpenTelemetry `Counter<long>`"
+        "**Counters.** `IncrementCounter` maps to OpenTelemetry `Counter<long>`.",
+        "**Gauges.** `RecordGauge` maps to OpenTelemetry `Histogram<double>` (push-based).",
+        "**Histograms / timings.** `RecordHistogram` / `RecordTiming` map to OpenTelemetry `Histogram<double>`.",
+        "**Errors.** `RecordError` maps to OpenTelemetry `Counter<long>` with error attributes.",
+        "**Events.** `RecordEvent` maps to OpenTelemetry `Counter<long>`."
       ]
     },
     {
       "type": "list",
-      "title": "Metric Name Sanitization",
+      "title": "Metric name sanitization",
       "items": [
         "Dots (`.`) are replaced with underscores (`_`)",
         "Hyphens (`-`) are replaced with underscores (`_`)",
@@ -61,7 +61,7 @@
     },
     {
       "type": "list",
-      "title": "Tag/Attribute Conversion",
+      "title": "Tag and attribute conversion",
       "items": [
         "Tag keys are sanitized (dots/hyphens → underscores)",
         "Tag values are preserved as-is"

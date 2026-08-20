@@ -1,21 +1,21 @@
 # Lyo.Streams
 
-Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: **`HashingStream`**).
+`TeeStream`, `CountingStream`, `ProgressStream`, `ConcatenatedStream`, and related stream wrappers. Incremental hashing lives in `Lyo.Hashing` (`HashingStream`).
 
 ## Features
 
-- **TeeStream** – Duplicate stream output to multiple destinations
-- **CountingStream** – Track bytes read or written
-- **ProgressStream** – Report progress during stream operations
-- **ConcatenatedStream** – Sequentially read from multiple streams
-- **DeterministicPayloadStream** – Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation); `DefaultSeed` is shared with `Lyo.Testing.TestData` and `BenchmarkData`
-- **NullingStream** – Write-only consuming sink that discards bytes (throughput / drain consumer)
-- **StreamExtensions** – `CopyToAsync` with optional `IProgress<long>` (cumulative bytes written)
-- **StreamChunkSizeHelper** – Determine optimal buffer size for stream operations
+- **TeeStream.** Duplicate stream output to multiple destinations.
+- **CountingStream.** Track bytes read or written.
+- **ProgressStream.** Report progress during stream operations.
+- **ConcatenatedStream.** Sequentially read from multiple streams.
+- **DeterministicPayloadStream.** Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation). `DefaultSeed` is shared with `Lyo.Testing.TestData` and `BenchmarkData`.
+- **NullingStream.** Write-only consuming sink that discards bytes (throughput / drain consumer).
+- **StreamExtensions.** `CopyToAsync` with optional `IProgress<long>` (cumulative bytes written).
+- **StreamChunkSizeHelper.** Pick a buffer size for stream operations.
 
 ## Examples
 
-### Quick Start
+### Quick start
 
 ```csharp
 using Lyo.Streams;
@@ -57,6 +57,6 @@ Console.WriteLine($"Drained {sink.BytesWritten} bytes");
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `System.Buffers` `4.6.1` — (direct, microsoft, netstandard2.0)
-- `System.Memory` `4.6.3` — (direct, microsoft, netstandard2.0)
+- `Lyo.Exceptions` (direct, lyo)
+- `System.Buffers` `4.6.1` (direct, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` (direct, microsoft, netstandard2.0)

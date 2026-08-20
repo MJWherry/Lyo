@@ -2,13 +2,13 @@
   "id": "Lyo.Validation",
   "name": "Lyo.Validation",
   "area": "Core",
-  "tagline": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and data-driven schemas that reuse the WhereClause engine.",
-  "description": "`Lyo.Validation` contains reusable C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures. Errors are populated through `Lyo.Result.Error` so callers can render Problem Details, log structurally, or aggregate into `BulkResult`.\n\nSchemas are named `WhereClause` documents (`ValidationSchema`) that hosts load from an API or [`Lyo.Validation.Postgres`](../Lyo.Validation.Postgres/README.md). Evaluation reuses `IWhereClauseService.ExplainMatch`; failed nodes become errors via `WhereClauseExplainResult.ToErrors`.",
+  "tagline": "C# validators, fluent rule builders, validation attributes, and `WhereClause` schemas that return `Lyo.Result.Result<T>` failures.",
+  "description": "C# validators, fluent rule builders, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures. Errors are populated through `Lyo.Result.Error` so callers can render Problem Details, log structurally, or aggregate into `BulkResult`.\n\nSchemas are named `WhereClause` documents (`ValidationSchema`) that hosts load from an API or [`Lyo.Validation.Postgres`](../Lyo.Validation.Postgres/README.md). Evaluation reuses `IWhereClauseService.ExplainMatch`. Failed nodes become errors via `WhereClauseExplainResult.ToErrors`.",
   "features": [
-    "**Fluent + attributes** — `ValidatorBuilder<T>` / `PropertyValidatorBuilder<T, TProperty>` and `AttributeValidator<T>`",
-    "**Schema documents** — `ValidationSchema` keyed by name, optional target type, `WhereClause` constraints (`In`, `NotIn`, `Regex`, …)",
-    "**Pluggable store** — `IValidationSchemaStore` (in-memory default; Postgres in a sibling package)",
-    "**Shared error mapping** — `WhereClauseExplainResult.ToErrors` in Query.Models (not a Validation-local builder)"
+    "**Fluent + attributes.** `ValidatorBuilder<T>` / `PropertyValidatorBuilder<T, TProperty>` and `AttributeValidator<T>`.",
+    "**Schema documents.** `ValidationSchema` keyed by name, optional target type, `WhereClause` constraints (`In`, `NotIn`, `Regex`, and similar).",
+    "**Store.** `IValidationSchemaStore` (in-memory default. Postgres in a sibling package).",
+    "**Error mapping.** `WhereClauseExplainResult.ToErrors` in Query.Models (not a Validation-local builder)."
   ],
   "examples": [
     {
@@ -43,12 +43,12 @@
     {
       "type": "markdown",
       "title": "Attribute-based validation",
-      "body": "`AttributeValidator<T>` reads validation attributes from `T`'s public, instance-readable properties (compiled property getters are cached statically per `T`). It composes Lyo's own\n`ValidationAttributeBase` attributes with `System.ComponentModel.DataAnnotations.ValidationAttribute`, and — when `T` implements `IValidatableObject` — also runs\n`Validate(ValidationContext)`. `AttributeValidator<T>.Shared` exposes a cached singleton; convenience extension `value.ValidateWithAttributes()` calls it.\n\n\n\nDataAnnotations error codes are mapped onto `Lyo.Result.ValidationErrorCodes` (e.g. `RequiredAttribute` → `RequiredValue`, `EmailAddressAttribute` → `InvalidEmail`,\n`RangeAttribute` → `OutOfRange`); anything not mapped falls back to `ValidationFailed`."
+      "body": "`AttributeValidator<T>` reads validation attributes from `T`'s public, instance-readable properties (compiled property getters are cached statically per `T`). It composes Lyo's own\n`ValidationAttributeBase` attributes with `System.ComponentModel.DataAnnotations.ValidationAttribute`, and when `T` implements `IValidatableObject` also runs\n`Validate(ValidationContext)`. `AttributeValidator<T>.Shared` exposes a cached singleton. `value.ValidateWithAttributes()` calls it.\n\n\n\nDataAnnotations error codes are mapped onto `Lyo.Result.ValidationErrorCodes` (e.g. `RequiredAttribute` → `RequiredValue`, `EmailAddressAttribute` → `InvalidEmail`,\n`RangeAttribute` → `OutOfRange`); anything not mapped falls back to `ValidationFailed`."
     },
     {
       "type": "markdown",
       "title": "Database-backed schemas",
-      "body": "`ValidationSchema` is the wire DTO hosts PUT/GET on their own API. Constraints are a polymorphic `WhereClause` (`$type`: `condition` / `group`) using `ComparisonOperatorEnum` (`Equals`, `In`, `NotIn`, `Regex`, …). An instance is valid iff the query engine reports a match.\n\nRegister `AddValidation()` plus `AddQueryValidationEvaluator()` (after `AddLyoQueryServices()`). Persist with [`Lyo.Validation.Postgres`](../Lyo.Validation.Postgres/README.md) (`AddPostgresValidationStoreFromConfiguration`). `WhereClauseValidator<T>` calls `ExplainMatch` then `ToErrors` — do not add a second error mapper in API code."
+      "body": "`ValidationSchema` is the wire DTO hosts PUT/GET on their own API. Constraints are a polymorphic `WhereClause` (`$type`: `condition` / `group`) using `ComparisonOperatorEnum` (`Equals`, `In`, `NotIn`, `Regex`, …). An instance is valid iff the query engine reports a match.\n\nRegister `AddValidation()` plus `AddQueryValidationEvaluator()` (after `AddLyoQueryServices()`). Persist with [`Lyo.Validation.Postgres`](../Lyo.Validation.Postgres/README.md) (`AddPostgresValidationStoreFromConfiguration`). `WhereClauseValidator<T>` calls `ExplainMatch` then `ToErrors`. Do not add a second error mapper in API code."
     }
   ],
   "links": [],

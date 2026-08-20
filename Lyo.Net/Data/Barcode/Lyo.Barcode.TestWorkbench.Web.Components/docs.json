@@ -2,8 +2,8 @@
   "id": "Lyo.Barcode.TestWorkbench.Web.Components",
   "name": "Lyo.Barcode.TestWorkbench.Web.Components",
   "area": "Data",
-  "tagline": "Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from `Lyo.Barcode.Web.Components` inside an `MudContainer` for the Lyo gateway test harness.",
-  "description": "Thin **MudBlazor** wrapper that hosts **`<BarcodeWorkbench />`** from [`Lyo.Barcode.Web.Components`](../Lyo.Barcode.Web.Components/README.md) inside an `MudContainer` for the Lyo\ngateway test harness.",
+  "tagline": "MudBlazor page wrapper that hosts <BarcodeWorkbench /> from Lyo.Barcode.Web.Components inside a MudContainer for the Lyo gateway test harness.",
+  "description": "MudBlazor page wrapper that hosts <BarcodeWorkbench /> from [`Lyo.Barcode.Web.Components`](../Lyo.Barcode.Web.Components/README.md) inside a MudContainer for the Lyo gateway test harness.",
   "features": [],
   "examples": [],
   "sections": [
@@ -16,15 +16,15 @@
       ],
       "rows": [
         [
-          "**`<BarcodeTestWorkbench />`**",
-          "Page-level wrapper that titles the surface (\"Barcode test workbench\") and renders `<BarcodeWorkbench />`. No extra parameters."
+          "<BarcodeTestWorkbench />",
+          "Page wrapper that sets the title to \"Barcode test workbench\" and renders <BarcodeWorkbench />. No extra parameters."
         ]
       ]
     },
     {
       "type": "paragraph",
-      "title": "DI / required services",
-      "text": "Same as `Lyo.Barcode.Web.Components`: register an `IBarcodeService` implementation (e.g. `AddNativeBarcodeService`) and the standard `Lyo.Web.Components` host wiring."
+      "title": "Required services",
+      "text": "Same as Lyo.Barcode.Web.Components: register an IBarcodeService implementation such as AddNativeBarcodeService and the standard Lyo.Web.Components host wiring."
     }
   ],
   "links": [],
@@ -72,7 +72,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -128,6 +144,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -153,6 +177,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -219,6 +251,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -238,7 +279,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

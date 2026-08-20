@@ -2,8 +2,8 @@
   "id": "Lyo.Images.Skia",
   "name": "Lyo.Images.Skia",
   "area": "Data",
-  "tagline": "**SkiaSharp** implementation of **`IImageService`** from `Lyo.Images`: resize, crop, rotate, watermark, format conversion, thumbnails, compression, metadata (with optional **MetadataExtractor**-based…",
-  "description": "**SkiaSharp** implementation of **`IImageService`** from [`Lyo.Images`](../Lyo.Images/README.md): resize, crop, rotate, watermark, format conversion, thumbnails, compression,\nmetadata (with optional **MetadataExtractor**-based EXIF in the Skia pipeline), palette extraction, and batch processing.",
+  "tagline": "SkiaSharp `IImageService` from `Lyo.Images`: resize, crop, rotate, watermark, convert, thumbnails, compression, metadata, palette, batch.",
+  "description": "SkiaSharp implementation of `IImageService` from [`Lyo.Images`](../Lyo.Images/README.md): resize, crop, rotate, watermark, format conversion, thumbnails, compression,\nmetadata (optional MetadataExtractor EXIF in the Skia pipeline), palette extraction, and batch processing.",
   "features": [],
   "examples": [
     {
@@ -23,49 +23,49 @@
       "title": "When to use Skia vs ImageSharp",
       "headers": [
         "",
-        "**Lyo.Images.Skia**",
-        "**Lyo.Images (ImageSharp)**"
+        "Lyo.Images.Skia",
+        "Lyo.Images (ImageSharp)"
       ],
       "rows": [
         [
-          "**Platforms**",
-          "Strong on Linux/mobile; native Skia assets.",
-          "Pure managed; broad format support."
+          "Platforms",
+          "Strong on Linux and mobile. Native Skia assets.",
+          "Pure managed. Broader format coverage."
         ],
         [
-          "**EXIF**",
+          "EXIF",
           "Extended EXIF via MetadataExtractor where wired.",
-          "Rich EXIF via ImageSharp metadata APIs."
+          "EXIF via ImageSharp metadata APIs."
         ],
         [
-          "**Decoration**",
-          "Inherits the ImageSharp-backed `IImageDecorationService` primitives via `ImageServiceBase`; `AddSkiaImageService` does **not** auto-register `IImageDecorationService` separately. Add `AddImageSharpImageService` first if you want it resolvable as its own type.",
+          "Decoration",
+          "Inherits the ImageSharp-backed `IImageDecorationService` primitives via `ImageServiceBase`. `AddSkiaImageService` does not auto-register `IImageDecorationService` separately. Add `AddImageSharpImageService` first if you want it resolvable as its own type.",
           "`AddImageSharpImageService` registers `IImageDecorationService` as well."
         ]
       ]
     },
     {
       "type": "table",
-      "title": "Public API",
+      "title": "Types",
       "headers": [
         "Type",
         "Description"
       ],
       "rows": [
         [
-          "**`SkiaImageService`**",
+          "`SkiaImageService`",
           "`IImageService` implementation using SkiaSharp bitmap decode/encode."
         ],
         [
-          "**`Extensions`**",
-          "**`AddSkiaImageService`**, **`AddSkiaImageServiceFromConfiguration`** — same **`ImageServiceOptions`** / `\"ImageService\"` section as ImageSharp."
+          "`Extensions`",
+          "`AddSkiaImageService`, `AddSkiaImageServiceFromConfiguration`. Same `ImageServiceOptions` / `\"ImageService\"` section as ImageSharp."
         ],
         [
-          "**`Constants.Metrics`**",
+          "`Constants.Metrics`",
           "Metric name strings for Skia operation timings."
         ]
       ],
-      "trail": "Internal helpers (**`SkiaExifExtractor`**, etc.) are not part of the supported public contract."
+      "trail": "Internal helpers (`SkiaExifExtractor`, etc.) are not part of the supported public contract."
     },
     {
       "type": "paragraph",
@@ -74,11 +74,11 @@
     },
     {
       "type": "list",
-      "title": "Advantages of SkiaSharp",
+      "title": "Why pick SkiaSharp",
       "items": [
-        "Cross-platform native rendering performance.",
-        "Solid text rendering for watermarks.",
-        "Broad raster format support (JPEG, PNG, WebP, GIF, BMP, ICO, etc.—subject to Skia build)."
+        "Native rendering on Linux and mobile.",
+        "Text rendering for watermarks is reliable.",
+        "Raster formats include JPEG, PNG, WebP, GIF, BMP, ICO, depending on the Skia build."
       ]
     }
   ],

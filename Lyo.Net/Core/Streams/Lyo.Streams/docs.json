@@ -2,21 +2,21 @@
   "id": "Lyo.Streams",
   "name": "Lyo.Streams",
   "area": "Core",
-  "tagline": "Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: * *`HashingStream`**).",
-  "description": "Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: *\n*`HashingStream`**).",
+  "tagline": "`TeeStream`, `CountingStream`, `ProgressStream`, `ConcatenatedStream`, and related stream wrappers. Incremental hashing lives in `Lyo.Hashing` (`HashingStream`).",
+  "description": "`TeeStream`, `CountingStream`, `ProgressStream`, `ConcatenatedStream`, and related stream wrappers. Incremental hashing lives in `Lyo.Hashing` (`HashingStream`).",
   "features": [
-    "**TeeStream** – Duplicate stream output to multiple destinations",
-    "**CountingStream** – Track bytes read or written",
-    "**ProgressStream** – Report progress during stream operations",
-    "**ConcatenatedStream** – Sequentially read from multiple streams",
-    "**DeterministicPayloadStream** – Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation); `DefaultSeed` is shared with `Lyo.Testing.TestData` and `BenchmarkData`",
-    "**NullingStream** – Write-only consuming sink that discards bytes (throughput / drain consumer)",
-    "**StreamExtensions** – `CopyToAsync` with optional `IProgress<long>` (cumulative bytes written)",
-    "**StreamChunkSizeHelper** – Determine optimal buffer size for stream operations"
+    "**TeeStream.** Duplicate stream output to multiple destinations.",
+    "**CountingStream.** Track bytes read or written.",
+    "**ProgressStream.** Report progress during stream operations.",
+    "**ConcatenatedStream.** Sequentially read from multiple streams.",
+    "**DeterministicPayloadStream.** Read-only generator of a fixed-length deterministic byte sequence from a seed (no full-buffer allocation). `DefaultSeed` is shared with `Lyo.Testing.TestData` and `BenchmarkData`.",
+    "**NullingStream.** Write-only consuming sink that discards bytes (throughput / drain consumer).",
+    "**StreamExtensions.** `CopyToAsync` with optional `IProgress<long>` (cumulative bytes written).",
+    "**StreamChunkSizeHelper.** Pick a buffer size for stream operations."
   ],
   "examples": [
     {
-      "title": "Quick Start",
+      "title": "Quick start",
       "language": "csharp",
       "code": "using Lyo.Streams;\nusing Lyo.Hashing;\nusing System.Security.Cryptography;\n\n// Hash while reading — use Lyo.Hashing.HashingStream\nusing var hashingStream = new HashingStream(sourceStream, SHA256.Create());\nawait hashingStream.CopyToAsync(destinationStream);\nvar hash = hashingStream.GetHash();\n\n// Tee to multiple outputs\nusing var tee = new TeeStream(inputStream, stream1, stream2);\nawait tee.CopyToAsync(outputStream);\n\n// Concatenate multiple streams\nvar streams = new[] { stream1, stream2, stream3 };\nusing var concatenated = new ConcatenatedStream(streams);\nawait concatenated.CopyToAsync(outputStream);\n\n// Copy with progress (IProgress<long> reports cumulative bytes written)\nvar progress = new Progress<long>(bytes => Console.WriteLine($\"Copied {bytes} bytes\"));\nawait source.CopyToAsync(destination, bufferSize: 81920, progress: progress);"
     },

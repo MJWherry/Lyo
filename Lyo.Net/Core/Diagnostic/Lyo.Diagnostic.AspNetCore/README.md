@@ -1,6 +1,6 @@
 # Lyo.Diagnostic.AspNetCore
 
-ASP.NET Core integration for **Lyo.Diagnostic**: scoped **breadcrumb** trails per request and **exception recording** to the in-memory error inbox plus structured logging, without replacing your existing problem-details middleware.
+ASP.NET Core integration for `Lyo.Diagnostic`. Scoped breadcrumb trails per request and exception recording to the in-memory error inbox plus structured logging, without replacing existing problem-details middleware.
 
 ## Examples
 
@@ -36,9 +36,9 @@ public sealed class OrdersController(IBreadcrumbTrail breadcrumbs)
 
 ## Pipeline ordering
 
-- This middleware sits **closer to route handlers** and runs **first when an exception unwinds**.
-- It **records** the failure and calls **`IStructuredLogEnricher`**, then **rethrows**.
-- Outer middleware can still build **Problem Details** / HTTP error bodies.
+- This middleware sits closer to route handlers and runs first when an exception unwinds.
+- It records the failure and calls `IStructuredLogEnricher`, then rethrows.
+- Outer middleware can still build Problem Details / HTTP error bodies.
 
 ## Options (`DiagnosticWebOptions`)
 
@@ -54,24 +54,24 @@ public sealed class OrdersController(IBreadcrumbTrail breadcrumbs)
 
 Inject `IBreadcrumbTrail` (scoped) and add entries before risky work:
 
-Do **not** put secrets or PII in breadcrumb data. See the **`Lyo.Diagnostic`** README.
+Do not put secrets or PII in breadcrumb data. See the `Lyo.Diagnostic` README.
 
 ## Lyo.Api
 
-`Lyo.Api` exposes **`AddLyoApiDiagnosticRecording`** as a convenience wrapper around **`AddLyoDiagnosticsWeb`**.
+`Lyo.Api` exposes `AddLyoApiDiagnosticRecording` as a wrapper around `AddLyoDiagnosticsWeb`.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Diagnostic` — (direct, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.PackageMetadata` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)
+- `Lyo.Diagnostic` (direct, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

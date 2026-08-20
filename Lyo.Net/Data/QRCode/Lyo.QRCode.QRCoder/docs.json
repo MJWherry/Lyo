@@ -2,8 +2,8 @@
   "id": "Lyo.QRCode.QRCoder",
   "name": "Lyo.QRCode.QRCoder",
   "area": "Data",
-  "tagline": "**QRCoder**-backed implementation of **`IQRCodeService`** from `Lyo.QRCode`. Pick this when you need **JPEG / Bitmap** output on Windows or want to use QRCoder's mature renderers; pick the built-in…",
-  "description": "**QRCoder**-backed implementation of **`IQRCodeService`** from [`Lyo.QRCode`](../Lyo.QRCode/README.md). Pick this when you need **JPEG / Bitmap** output on Windows or want to use\nQRCoder's mature renderers; pick the built-in **`BuiltInQRCodeService`** when you want the in-library ISO encoder with no extra NuGet.",
+  "tagline": "QRCoder implementation of `IQRCodeService` from `Lyo.QRCode`. Use this for JPEG / Bitmap on Windows, or QRCoder's renderers.",
+  "description": "QRCoder implementation of `IQRCodeService` from [`Lyo.QRCode`](../Lyo.QRCode/README.md). Use this when you need JPEG / Bitmap output on Windows or want QRCoder's\nrenderers. Use `BuiltInQRCodeService` when you want the in-library ISO encoder with no extra NuGet.",
   "features": [],
   "examples": [
     {
@@ -25,18 +25,18 @@
   "sections": [
     {
       "type": "table",
-      "title": "Public API",
+      "title": "Types",
       "headers": [
         "Type",
         "Description"
       ],
       "rows": [
         [
-          "**`QRCoderQRCodeService`**",
-          "`IQRCodeService` implementation. No image dependencies — decoration (logo, frame, caption, padding) is the consumer's job via `Lyo.Images.IImageDecorationService`."
+          "`QRCoderQRCodeService`",
+          "`IQRCodeService` implementation. No image dependencies. Decoration (logo, frame, caption, padding) is the consumer's job via `Lyo.Images.IImageDecorationService`."
         ],
         [
-          "**`QRCoderQrCodeServiceExtensions`**",
+          "`QRCoderQrCodeServiceExtensions`",
           "DI: `AddQRCoderQrCodeService(Action<QRCodeServiceOptions>?)`, `AddQRCoderQrCodeService(QRCodeServiceOptions)`, `AddQRCoderQrCodeServiceFromConfiguration(IConfiguration, sectionName?)`."
         ]
       ]
@@ -45,9 +45,9 @@
       "type": "list",
       "title": "Notes",
       "items": [
-        "**JPEG / Bitmap** outputs go through `System.Drawing` and are only fully supported on **Windows**; PNG/SVG paths run cross-platform.",
-        "Decoding (`ReadFromImageAsync`) uses **`QRCodeZxingRead`** in this package (ZXing.Net + ImageSharp), same as the built-in service.",
-        "**Decoration is out of scope**: the QRCoder service no longer applies center logos or frames. Pipe the returned bytes through `Lyo.Images.IImageDecorationService.Pipeline(...)` and call `Overlay` / `AddFrame` / `AddCaption` / `AddOuterPadding` as needed (see the [`Lyo.Images` README](../../Images/Lyo.Images/README.md))."
+        "JPEG / Bitmap outputs go through `System.Drawing` and work on Windows. PNG/SVG paths run cross-platform.",
+        "Decoding (`ReadFromImageAsync`) uses `QRCodeZxingRead` in this package (ZXing.Net + ImageSharp), same as the built-in service.",
+        "**Decoration is out of scope.** The QRCoder service no longer applies center logos or frames. Pipe the returned bytes through `Lyo.Images.IImageDecorationService.Pipeline(...)` and call `Overlay` / `AddFrame` / `AddCaption` / `AddOuterPadding` as needed (see the [`Lyo.Images` README](../../Images/Lyo.Images/README.md))."
       ]
     }
   ],

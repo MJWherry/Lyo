@@ -5,14 +5,14 @@
   "tagline": "A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging.",
   "description": "A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging. Does not include any library-specific pipeline definitions;\npipelines are defined entirely via configuration.",
   "features": [
-    "**Default pipelines** – `lyo-basic` and `lyo-http` with sensible retry and timeout; use without config",
-    "Load resilience pipelines from `appsettings.json` (or any `IConfiguration` source)",
-    "Support for Retry, Timeout, and CircuitBreaker strategies",
-    "Built-in logging for retries, timeouts, and circuit breaker state changes",
-    "**Resilience for actions** – `IResilientExecutor` uses default pipeline by default; specify pipeline name to override",
-    "**Result-type support** – pass `isSuccess` predicate to retry when methods return failed Result instead of throwing",
-    "**Resilience for HttpClient** – `AddLyoResilienceHandler()` uses default; or pass pipeline name",
-    "Integrates with `Polly.Extensions` and `ResiliencePipelineProvider<string>` for DI"
+    "**Default pipelines.** `lyo-basic` and `lyo-http` with retry and timeout. Usable without config.",
+    "Load resilience pipelines from `appsettings.json` (or any `IConfiguration` source).",
+    "Retry, Timeout, and CircuitBreaker strategies.",
+    "Logging for retries, timeouts, and circuit breaker state changes.",
+    "**Actions.** `IResilientExecutor` uses the default pipeline. Pass a pipeline name to override.",
+    "**Result types.** Pass an `isSuccess` predicate to retry when methods return a failed Result instead of throwing.",
+    "**HttpClient.** `AddLyoResilienceHandler()` uses the default pipeline, or pass a pipeline name.",
+    "Wires `Polly.Extensions` and `ResiliencePipelineProvider<string>` into DI."
   ],
   "examples": [
     {
@@ -66,8 +66,8 @@
       "type": "list",
       "title": "Configuration",
       "items": [
-        "**Nested under service options** (recommended) – resilience config lives in a `Resilience` subsection of your options (e.g. `TwilioOptions:Resilience`). Use `AddLyoResiliencePipelinesFromOptions(\"TwilioOptions\")`.",
-        "**Standalone section** – use `AddLyoResiliencePipelines(\"Lyo:ResiliencePipelines\")` or any custom section path."
+        "**Nested under service options** (recommended). Resilience config lives in a `Resilience` subsection of your options (e.g. `TwilioOptions:Resilience`). Use `AddLyoResiliencePipelinesFromOptions(\"TwilioOptions\")`.",
+        "**Standalone section.** Use `AddLyoResiliencePipelines(\"Lyo:ResiliencePipelines\")` or any custom section path."
       ]
     },
     {
@@ -91,14 +91,14 @@
       ],
       "rows": [
         [
-          "**HTTP calls**",
+          "HTTP calls",
           "`AddLyoResilienceHandler` on the HttpClient",
           "`IResilientExecutor` around code that uses that HttpClient"
         ],
         [
-          "**Non-HTTP** (DB, SDK, file I/O)",
+          "Non-HTTP (DB, SDK, file I/O)",
           "`IResilientExecutor`",
-          "—"
+          ""
         ]
       ],
       "lead": "Apply resilience at **one level only** to avoid exponential retries:",
@@ -176,9 +176,9 @@
       "type": "list",
       "title": "Logging",
       "items": [
-        "**Retry**: Warning on each retry with attempt number and delay",
-        "**Timeout**: Warning when an operation times out",
-        "**CircuitBreaker**: Warning when opened; Info when closed or half-opened"
+        "**Retry.** Warning on each retry with attempt number and delay.",
+        "**Timeout.** Warning when an operation times out.",
+        "**CircuitBreaker.** Warning when opened. Info when closed or half-opened."
       ]
     }
   ],

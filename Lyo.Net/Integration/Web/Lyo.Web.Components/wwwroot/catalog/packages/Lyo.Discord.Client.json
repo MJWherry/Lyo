@@ -2,8 +2,8 @@
   "id": "Lyo.Discord.Client",
   "name": "Lyo.Discord.Client",
   "area": "Integration",
-  "tagline": "Typed HTTP client for the Discord REST surface exposed by `Lyo.Api` (the `Discord/*` group registered by `Lyo.Discord.Postgres`).",
-  "description": "Typed HTTP client for the Discord REST surface exposed by `Lyo.Api` (the `Discord/*` group registered by [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md)). Wraps `Lyo.Api.Client.ApiClient` so all Lyo-API behavior — Accept-Encoding, request compression, problem-details parsing — comes for free.",
+  "tagline": "Typed HTTP client for the Discord REST endpoints exposed by `Lyo.Api` (the `Discord/*` group registered by `Lyo.Discord.Postgres`).",
+  "description": "Typed HTTP client for the Discord REST endpoints exposed by `Lyo.Api` (the `Discord/*` group registered by [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md)). Wraps `Lyo.Api.Client.ApiClient` so Accept-Encoding, request compression, and problem-details parsing match other Lyo clients.",
   "features": [],
   "examples": [
     {
@@ -15,7 +15,7 @@
   "sections": [
     {
       "type": "table",
-      "title": "Surface",
+      "title": "Managers",
       "headers": [
         "Property",
         "Manager",
@@ -74,7 +74,7 @@
     {
       "type": "paragraph",
       "title": "Options ([`LyoDiscordClientOptions`](LyoDiscordClientOptions.cs))",
-      "text": "Configuration section: `LyoDiscordClient` (shadows the base `ApiClient` section). Inherits all [`ApiClientOptions`](../../Api/Lyo.Api.Client/README.md#options-apiclientoptions) flags (`BaseUrl`, `EnsureStatusCode`, `AcceptEncodings`, `RequestCompression`, …). Default `BaseUrl` is `http://localhost:5251/` so it works against a locally-hosted Lyo API host out of the box; override for any other deployment."
+      "text": "Configuration section: `LyoDiscordClient` (shadows the base `ApiClient` section). Inherits all [`ApiClientOptions`](../../Api/Lyo.Api.Client/README.md#options-apiclientoptions) flags (`BaseUrl`, `EnsureStatusCode`, `AcceptEncodings`, `RequestCompression`, …). Default `BaseUrl` is `http://localhost:5251/` so it targets a local Lyo API host. Override for any other deployment."
     },
     {
       "type": "table",
@@ -186,6 +186,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

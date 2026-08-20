@@ -1,6 +1,6 @@
 # Lyo.Discord.Models
 
-Wire-level DTOs and shared constants for the Discord integration. Used by both [`Lyo.Discord.Client`](../Lyo.Discord.Client/README.md) (typed HTTP client) and [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md) (API host + persistence) so request/response shapes stay symmetric.
+Wire-level DTOs and shared constants for the Discord integration. Used by [`Lyo.Discord.Client`](../Lyo.Discord.Client/README.md) (typed HTTP client) and [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md) (API host + persistence) so request and response shapes match.
 
 ## Request DTOs ([`Request/`](Request))
 
@@ -31,7 +31,7 @@ before save.
 
 ## Route constants ([`Constants.cs`](Constants.cs))
 
-`Constants.Rest.Discord` centralizes route segments so client managers and host endpoints stay in lock-step:
+`Constants.Rest.Discord` holds route segments shared by client managers and host endpoints:
 
 | Constant / helper | Value |
 | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
@@ -45,11 +45,12 @@ before save.
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Api.Models` — (direct, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Api.Models` (direct, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

@@ -2,8 +2,8 @@
   "id": "Lyo.TestApi",
   "name": "Lyo.TestApi",
   "area": "Tools",
-  "tagline": "Minimal-API host that backs `Lyo.TestGateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes the file storage…",
-  "description": "Minimal-API host that backs `Lyo.TestGateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes\nthe file storage workbench surface that the TestGateway `/filestorage-workbench` page talks to.",
+  "tagline": "Minimal-API host that backs `Lyo.TestGateway` and `Lyo.TestConsole`. Wires Lyo Postgres stores, the RabbitMQ job system, S3 file storage with two-key encryption, and the file-storage workbench endpoints.",
+  "description": "Minimal-API host that backs `Lyo.TestGateway` and `Lyo.TestConsole`. It wires the Lyo Postgres stores, RabbitMQ-driven job system, S3 file storage with two-key encryption, and exposes\nthe file storage workbench endpoints that the TestGateway `/filestorage-workbench` page talks to.",
   "features": [],
   "examples": [],
   "sections": [
@@ -11,28 +11,28 @@
       "type": "list",
       "title": "Host setup (`Program.cs`)",
       "items": [
-        "**Kestrel** — `MaxRequestBodySize = long.MaxValue` and matching `FormOptions.MultipartBodyLengthLimit` so multi-GB direct uploads stream cleanly.",
-        "**OpenAPI / Scalar** — `AddOpenApi()`. In development, `MapOpenApi()` and `MapScalarApiReference()` are mounted so `/scalar/v1` (or whatever Scalar picks) shows every endpoint.",
-        "**Compression** — Brotli + Gzip response compression (level `Fastest`) and request decompression so Gateway calls can ship Brotli payloads.",
-        "**JSON** — `LyoJsonSerializerOptions.ApplyTo` + `AddLyoDateOnlyModelConverters` + `ReferenceHandler.IgnoreCycles` + `JsonIgnoreCondition.WhenWritingNull`.",
-        "**Infra** — `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (registers `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster via `ConfigureMapster()`.",
-        "**Locks** — `AddRedisLock` if `Redis:ConnectionString` (or `ConnectionStrings:Redis`) is set, otherwise `AddLocalLock()`.",
-        "**Messaging** — `SetupRabbitMqServiceFromConfiguration` + `AddMqJobEventPublisher` (job state changes flow through MQ).",
-        "**Postgres stores** — A single `ConnectionStrings:Postgres` is shared by `Job`, `People`, `TwilioSms`, `Discord`, `Config`, `Comic`, `FileMetadataStore`. Every `AddXxxDbContextFactory` is called with `EnableAutoMigrations = true` so a fresh database is brought up on first run.",
-        "**CRUD/QueryConcrete** — `AddLyoCrudServices<TContext>()` for `JobContext`, `PeopleDbContext`, `TwilioSmsDbContext`, `FileMetadataStoreDbContext`; `AddLyoQueryServices()`; Person uses typed `CreateBuilder` at `/Person/*` plus root From/Joins `POST /Query` via `MapRootQueryEndpoints<PeopleDbContext>()`; Twilio uses `MapDynamicCrudEndpoints` ( includes `POST /Twilio/Query`); `AddLyoApiExport<TContext>()` + `AddCsvExport()` / `AddXlsxExport()` for `PeopleDbContext`, `DiscordDbContext`, `JobContext`; `AddPostgresSprocService<PeopleDbContext>()`.",
-        "**File storage** — `AddTwoKeyEncryptionFromConfiguration(…, Constants.FileStorageWorkbench.ServiceKey, \"AwsKeyStore\")` + `AddPostgresFileMetadataStoreKeyed(\"gateway-filestorage-metadata\")` reading `PostgresFileMetadataStore` (falls back to the shared Postgres connection if not set) + `AddS3FileStorageServiceKeyed(\"gateway-filestorage\")` chained with `UseFileMetadataStore`, `UseEncryptionService`, `ConfigureS3FileStorage()`.",
-        "**Audit** — `AddPostgresFileAuditSink()` writes to the file metadata DB; `AddScoped<IFileAuditEventHandler, FileMetadataQueryCacheInvalidationHandler>` invalidates the `Lyo.Cache` QueryProject cache for `FileMetadataEntity` on successful `Save`/`Delete`/`MultipartComplete` and on any `MigrateDeks` / `RotateDeks` so workbench grids see fresh rows.",
-        "**Scheduler** — `AddJobScheduler()` is commented out; jobs are queued by MQ but not polled by this host."
+        "**Kestrel.** `MaxRequestBodySize = long.MaxValue` and matching `FormOptions.MultipartBodyLengthLimit` so multi-GB direct uploads stream cleanly.",
+        "**OpenAPI / Scalar.** `AddOpenApi()`. In development, `MapOpenApi()` and `MapScalarApiReference()` are mounted so `/scalar/v1` (or whatever Scalar picks) shows every endpoint.",
+        "**Compression.** Brotli + Gzip response compression (level `Fastest`) and request decompression so Gateway calls can ship Brotli payloads.",
+        "**JSON.** `LyoJsonSerializerOptions.ApplyTo` + `AddLyoDateOnlyModelConverters` + `ReferenceHandler.IgnoreCycles` + `JsonIgnoreCondition.WhenWritingNull`.",
+        "**Infra.** `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (registers `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster via `ConfigureMapster()`.",
+        "**Locks.** `AddRedisLock` if `Redis:ConnectionString` (or `ConnectionStrings:Redis`) is set, otherwise `AddLocalLock()`.",
+        "**Messaging.** `SetupRabbitMqServiceFromConfiguration` + `AddMqJobEventPublisher` (job state changes flow through MQ).",
+        "**Postgres stores.** A single `ConnectionStrings:Postgres` is shared by `Job`, `People`, `TwilioSms`, `Discord`, `Config`, `Comic`, `FileMetadataStore`. Every `AddXxxDbContextFactory` is called with `EnableAutoMigrations = true` so a fresh database is brought up on first run.",
+        "**CRUD/QueryConcrete.** `AddLyoCrudServices<TContext>()` for `JobContext`, `PeopleDbContext`, `TwilioSmsDbContext`, `FileMetadataStoreDbContext`; `AddLyoQueryServices()`; Person uses typed `CreateBuilder` at `/Person/*` plus root From/Joins `POST /Query` via `MapRootQueryEndpoints<PeopleDbContext>()`; Twilio uses `MapDynamicCrudEndpoints` ( includes `POST /Twilio/Query`); `AddLyoApiExport<TContext>()` + `AddCsvExport()` / `AddXlsxExport()` for `PeopleDbContext`, `DiscordDbContext`, `JobContext`; `AddPostgresSprocService<PeopleDbContext>()`.",
+        "**File storage.** `AddTwoKeyEncryptionFromConfiguration(…, Constants.FileStorageWorkbench.ServiceKey, \"AwsKeyStore\")` + `AddPostgresFileMetadataStoreKeyed(\"gateway-filestorage-metadata\")` reading `PostgresFileMetadataStore` (falls back to the shared Postgres connection if not set) + `AddS3FileStorageServiceKeyed(\"gateway-filestorage\")` chained with `UseFileMetadataStore`, `UseEncryptionService`, `ConfigureS3FileStorage()`.",
+        "**Audit.** `AddPostgresFileAuditSink()` writes to the file metadata DB; `AddScoped<IFileAuditEventHandler, FileMetadataQueryCacheInvalidationHandler>` invalidates the `Lyo.Cache` QueryProject cache for `FileMetadataEntity` on successful `Save`/`Delete`/`MultipartComplete` and on any `MigrateDeks` / `RotateDeks` so workbench grids see fresh rows.",
+        "**Scheduler.** `AddJobScheduler()` is commented out; jobs are queued by MQ but not polled by this host."
       ]
     },
     {
       "type": "markdown",
       "title": "`SetupCourtCanaryEndpoints` (root extension)",
-      "body": "`SetupEndpoints.cs` adds one extension method on `WebApplication` that chains every endpoint group:\n\n```text\nBuildJobGroup ← from Lyo.Job.Postgres (full job/job-run CRUD)\nBuildReportingGroup ← from Lyo.Api.Reporting (definitions CRUD, generations query/get/delete, Generate/Rerun/Download; anonymous in this host)\nBuildPersonGroup ← Person CRUD (Lyo.Api builder) + info/{schema}/{table}/{column}/GetUniqueCounts\nBuildDiscordGroup ← Discord dynamic CRUD\nBuildTwilioGroup ← Twilio dynamic CRUD (route prefix \"Twilio\")\nBuildFileStorageWorkbenchGroup ← MapGroup(\"Workbench/FileStorage\") (see below)\nBuildDirectFileUploadEndpoint ← POST upload/file (mirrors files/save-stream)\nBuildFileStorageWorkbenchFileMetadataQuery ← ReadOnly Lyo.Api builder over FileMetadataEntity at \"Workbench/FileStorage/FileMetadata\"\n```\n\nReporting uses `AddPostgresReportingManagement` + `AddLyoApiReporting` + `AddIOTempService`. Generate hooks save staged output via the keyed File Storage workbench service (\n`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup, generation delete, or definition delete).\n`ReportingApiOptions.DownloadStreamFactory` streams persisted outputs back from the same keyed `IFileStorageService`, which maps `GET Reporting/Generation/{id}/Download`.\nCSV/XLSX/JSON renderers are registered by default; HTML/PDF requires hosting `AddReportingWebRenderer` separately. Retention cleanup (`ReportRetentionService.CleanupAsync`) is\nregistered but not scheduled — set `PostgresReportingOptions.GenerationRetention` and trigger it from a job/scheduler to enable it.\n\nCustom Job endpoints exist because the dynamic CRUD route for `JobRun` does not expose Create/Cancel — those need to go through MQ via `JobService`.\n\nThe Person group uses `Lyo.Api` `CreateBuilder<…>` with `WithFlags(All | UpsertInheritCreate | UpsertInheritUpdate | PatchInheritsUpdate)`, a `BeforeCreate` that assigns\n`LyoGuid.CreateCombPostgres()`, plus `WithMetadata` / `WithProjectionComputedFields`. It also adds a `GET info/{schema}/{table}/{column}/GetUniqueCounts` route that invokes\n`StoredProcedures.Info.UniqueValuesWithCount` via `ISprocService`."
+      "body": "`SetupEndpoints.cs` adds one extension method on `WebApplication` that chains every endpoint group:\n\n```text\nBuildJobGroup ← from Lyo.Job.Postgres (full job/job-run CRUD)\nBuildReportingGroup ← from Lyo.Api.Reporting (definitions CRUD, generations query/get/delete, Generate/Rerun/Download; anonymous in this host)\nBuildPersonGroup ← Person CRUD (Lyo.Api builder) + info/{schema}/{table}/{column}/GetUniqueCounts\nBuildDiscordGroup ← Discord dynamic CRUD\nBuildTwilioGroup ← Twilio dynamic CRUD (route prefix \"Twilio\")\nBuildFileStorageWorkbenchGroup ← MapGroup(\"Workbench/FileStorage\") (see below)\nBuildDirectFileUploadEndpoint ← POST upload/file (mirrors files/save-stream)\nBuildFileStorageWorkbenchFileMetadataQuery ← ReadOnly Lyo.Api builder over FileMetadataEntity at \"Workbench/FileStorage/FileMetadata\"\n```\n\nReporting uses `AddPostgresReportingManagement` + `AddLyoApiReporting` + `AddIOTempService`. Generate hooks save staged output via the keyed File Storage workbench service (\n`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup, generation delete, or definition delete).\n`ReportingApiOptions.DownloadStreamFactory` streams persisted outputs back from the same keyed `IFileStorageService`, which maps `GET Reporting/Generation/{id}/Download`.\nCSV/XLSX/JSON renderers are registered by default; HTML/PDF requires hosting `AddReportingWebRenderer` separately. Retention cleanup (`ReportRetentionService.CleanupAsync`) is\nregistered but not scheduled, set `PostgresReportingOptions.GenerationRetention` and trigger it from a job/scheduler to enable it.\n\nCustom Job endpoints exist because the dynamic CRUD route for `JobRun` does not expose Create/Cancel, those need to go through MQ via `JobService`.\n\nThe Person group uses `Lyo.Api` `CreateBuilder<…>` with `WithFlags(All | UpsertInheritCreate | UpsertInheritUpdate | PatchInheritsUpdate)`, a `BeforeCreate` that assigns\n`LyoGuid.CreateCombPostgres()`, plus `WithMetadata` / `WithProjectionComputedFields`. It also adds a `GET info/{schema}/{table}/{column}/GetUniqueCounts` route that invokes\n`StoredProcedures.Info.UniqueValuesWithCount` via `ISprocService`."
     },
     {
       "type": "table",
-      "title": "File Storage Workbench group (`Workbench/FileStorage`)",
+      "title": "File storage workbench group (`Workbench/FileStorage`)",
       "headers": [
         "Method",
         "Route",
@@ -107,7 +107,7 @@
         [
           "`PUT`",
           "`direct-upload/{fileId:guid}/put`",
-          "Only when keyed service is `LocalFileStorageService` — `ReceiveWorkbenchDirectPutAsync`; otherwise 501"
+          "Only when keyed service is `LocalFileStorageService`. `ReceiveWorkbenchDirectPutAsync`; otherwise 501"
         ],
         [
           "`POST`",
@@ -122,7 +122,7 @@
         [
           "`PUT`",
           "`stage/{stageId:guid}/put`",
-          "Local only — `ReceiveWorkbenchStagePutAsync`; otherwise 501"
+          "Local only. `ReceiveWorkbenchStagePutAsync`; otherwise 501"
         ],
         [
           "`POST`",
@@ -167,7 +167,7 @@
         [
           "`GET`",
           "`diagnostics/keys?prefix&maxKeys`",
-          "`IFileStorageDiagnosticsService.ListStorageKeysAsync` clamped to 1–10 000; 501 if backend doesn't implement diagnostics"
+          "`IFileStorageDiagnosticsService.ListStorageKeysAsync` clamped to 1 to 10 000; 501 if backend doesn't implement diagnostics"
         ],
         [
           "`GET`",
@@ -230,7 +230,7 @@
           "`SetCurrentVersionAsync(KeyId, Version)`"
         ]
       ],
-      "lead": "`FileStorageWorkbench/SetupFileStorageWorkbenchEndpoints.cs` mounts the workbench group at `Constants.FileStorageWorkbench.Route` (`Workbench/FileStorage`) with the\n`FileStorageWorkbench` OpenAPI tag. All endpoints resolve services as **keyed** — `IFileStorageService`, `IMultipartUploadService`, and `IKeyStore` (cast to `IKeyInventoryStore`\nwhere available) under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-filestorage`).",
+      "lead": "`FileStorageWorkbench/SetupFileStorageWorkbenchEndpoints.cs` mounts the workbench group at `Constants.FileStorageWorkbench.Route` (`Workbench/FileStorage`) with the\n`FileStorageWorkbench` OpenAPI tag. All endpoints resolve services as **keyed.** `IFileStorageService`, `IMultipartUploadService`, and `IKeyStore` (cast to `IKeyInventoryStore`\nwhere available) under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-filestorage`).",
       "trail": "`access-links` returns relative paths (`Workbench/FileStorage/files/access/{token}/download` and `…/presigned-read`); both routes call\n`IFileDownloadAccessService.ValidateAndConsumeDownloadAsync(token, user, remoteIp)` and translate `FileDownloadAccessConsumeFailureReason` to 400/403/404/410/429 via\n`MapFailureStatusCode`.\n\nAfter every mutating call (`save`, `save-stream`, `direct-upload/complete`, `stage/commit`, `multipart/complete`, `copy`, `DELETE files/{id}`) the handler calls\n`cache.InvalidateQueryCacheAsync<FileMetadataEntity>()` so the read-only QueryProject endpoint stays consistent. `FileMetadataQueryCacheInvalidationHandler` performs the same\ninvalidation when audit events flow in from the file storage layer."
     },
     {
@@ -241,12 +241,12 @@
     {
       "type": "paragraph",
       "title": "Staged file upload",
-      "text": "Two-phase uploads live under `Workbench/FileStorage/stage/*` (see endpoint table above). State is stored in **`staged_file_upload`**, not **`file_metadata`**, until * *`stage/{id}/commit`**. Local backends accept **`PUT stage/{stageId}/put`** on this host; S3/Blob return presigned URLs from **`stage/begin`**. Register **`IStagedFileUploadStore` ** via Postgres/Sqlite metadata builders (or in-memory for dev). Hook **`IStagedFileUploadEventHandler`** to enqueue async commit workers after **`UploadCompleted`**."
+      "text": "Two-phase uploads live under `Workbench/FileStorage/stage/*` (see endpoint table above). State is stored in `staged_file_upload`, not `file_metadata`, until `stage/{id}/commit`. Local backends accept `PUT stage/{stageId}/put` on this host; S3/Blob return presigned URLs from `stage/begin`. Register `IStagedFileUploadStore` via Postgres/Sqlite metadata builders (or in-memory for dev). Hook `IStagedFileUploadEventHandler` to enqueue async commit workers after `UploadCompleted`."
     },
     {
       "type": "paragraph",
       "title": "FileMetadata Query/QueryProject",
-      "text": "`BuildFileStorageWorkbenchFileMetadataQuery` registers a read-only Lyo.Api builder over `FileMetadataStoreDbContext` / `FileMetadataEntity` at `Constants.FileStorageWorkbench.FileMetadata` (`Workbench/FileStorage/FileMetadata`). The standard `/QueryConcrete` and `/QueryProject` routes are produced by `WithReadOnlyEndpoints()`, allowing anonymous access — the Gateway's `Lyo.Query.Web.Components` grids POST against this route directly."
+      "text": "`BuildFileStorageWorkbenchFileMetadataQuery` registers a read-only Lyo.Api builder over `FileMetadataStoreDbContext` / `FileMetadataEntity` at `Constants.FileStorageWorkbench.FileMetadata` (`Workbench/FileStorage/FileMetadata`). The standard `/QueryConcrete` and `/QueryProject` routes are produced by `WithReadOnlyEndpoints()`, allowing anonymous access, the Gateway's `Lyo.Query.Web.Components` grids POST against this route directly."
     },
     {
       "type": "table",

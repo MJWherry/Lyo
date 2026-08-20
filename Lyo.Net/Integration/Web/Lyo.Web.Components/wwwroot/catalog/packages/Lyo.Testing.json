@@ -2,10 +2,10 @@
   "id": "Lyo.Testing",
   "name": "Lyo.Testing",
   "area": "Core",
-  "tagline": "Part of the Lyo workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based asynchronous assertions, and an…",
-  "description": "Part of the [Lyo](../../../README.md) workspace: shared **xUnit v3** helpers for the rest of the solution — fluent `Should*` assertions, exception/collection helpers, polling-based asynchronous assertions, and an `ITestOutputHelper`-backed logger.",
+  "tagline": "xUnit v3 helpers: fluent `Should*` assertions, exception and collection helpers, polling assertions, and an `ITestOutputHelper` logger.",
+  "description": "xUnit v3 helpers: fluent `Should*` assertions, exception and collection helpers, polling-based asynchronous assertions, and an `ITestOutputHelper`-backed logger.",
   "features": [
-    "**TestData** – Seeded reproducible byte payloads (`TestData.Seed` / `Create` / `Fill`); same seed as `BenchmarkData.PayloadSeed` and `DeterministicPayloadStream.DefaultSeed`"
+    "**TestData.** Seeded reproducible byte payloads (`TestData.Seed` / `Create` / `Fill`). Same seed as `BenchmarkData.PayloadSeed` and `DeterministicPayloadStream.DefaultSeed`."
   ],
   "examples": [
     {
@@ -24,13 +24,13 @@
       "type": "list",
       "title": "Assertions",
       "items": [
-        "**Value comparison** — `ShouldBe(expected)`, `ShouldNotBe(unexpected)`, `ShouldBeSameAs`, `ShouldNotBeSameAs`, `ShouldBeAssignableTo<T>()`, `ShouldBeOfType<T>()`.",
-        "**Nulls** — `ShouldBeNull` / `ShouldNotBeNull` (overloads for reference and nullable-value types; the `NotNull` variants flow `[NotNull]` for nullable-flow analysis).",
-        "**Booleans** — `ShouldBeTrue(message?)`, `ShouldBeFalse(message?)`.",
-        "**Ordering / ranges (where `T : IComparable<T>`)** — `ShouldBeGreaterThan`, `ShouldBeGreaterThanOrEqualTo`, `ShouldBeLessThan`, `ShouldBeLessThanOrEqualTo`, `ShouldBeBetween`.",
-        "**Time** — `DateTime.ShouldBeCloseTo(expected, tolerance)`, `TimeSpan.ShouldBeCloseTo(expected, tolerance)`.",
-        "**Strings** — `ShouldStartWith`, `ShouldEndWith`, `ShouldContain(substring)`, `ShouldNotContain`, `ShouldMatch(pattern)`, `ShouldNotMatch`, `ShouldBeEmpty`, `ShouldNotBeEmpty`.",
-        "**Collections** — `ShouldBeEmpty`, `ShouldNotBeEmpty`, `ShouldContain(item)`, `ShouldNotContain`, `ShouldContainAll(expected)`, `ShouldContainNone(excluded)`, `ShouldHaveCount(count)`, `ShouldHaveCount(count, predicate)`, `ShouldAllSatisfy(predicate)`, `ShouldAnySatisfy(predicate)`, `ShouldHaveUniqueItems`, `ShouldBeEquivalentTo(expected)`, plus `ShouldBeOrdered` / `ShouldBeOrderedDescending` for `IComparable<T>` collections."
+        "**Value comparison.** `ShouldBe(expected)`, `ShouldNotBe(unexpected)`, `ShouldBeSameAs`, `ShouldNotBeSameAs`, `ShouldBeAssignableTo<T>()`, `ShouldBeOfType<T>()`.",
+        "**Nulls.** `ShouldBeNull` / `ShouldNotBeNull` (overloads for reference and nullable-value types. The `NotNull` variants flow `[NotNull]` for nullable-flow analysis).",
+        "**Booleans.** `ShouldBeTrue(message?)`, `ShouldBeFalse(message?)`.",
+        "**Ordering / ranges (where `T : IComparable<T>`).** `ShouldBeGreaterThan`, `ShouldBeGreaterThanOrEqualTo`, `ShouldBeLessThan`, `ShouldBeLessThanOrEqualTo`, `ShouldBeBetween`.",
+        "**Time.** `DateTime.ShouldBeCloseTo(expected, tolerance)`, `TimeSpan.ShouldBeCloseTo(expected, tolerance)`.",
+        "**Strings.** `ShouldStartWith`, `ShouldEndWith`, `ShouldContain(substring)`, `ShouldNotContain`, `ShouldMatch(pattern)`, `ShouldNotMatch`, `ShouldBeEmpty`, `ShouldNotBeEmpty`.",
+        "**Collections.** `ShouldBeEmpty`, `ShouldNotBeEmpty`, `ShouldContain(item)`, `ShouldNotContain`, `ShouldContainAll(expected)`, `ShouldContainNone(excluded)`, `ShouldHaveCount(count)`, `ShouldHaveCount(count, predicate)`, `ShouldAllSatisfy(predicate)`, `ShouldAnySatisfy(predicate)`, `ShouldHaveUniqueItems`, `ShouldBeEquivalentTo(expected)`, plus `ShouldBeOrdered` / `ShouldBeOrderedDescending` for `IComparable<T>` collections."
       ]
     },
     {
@@ -38,15 +38,15 @@
       "title": "Exceptions",
       "items": [
         "`Throws<T>(action, message?)` / `ThrowsAsync<T>(func, message?)`",
-        "`ThrowsAny(action, params Type[])` / `ThrowsAnyAsync(func, params Type[])` — passes when the captured exception's `GetType()` is in the supplied list.",
-        "`ThrowsWithInnerException<T>(action, innerType)` / `ThrowsWithInnerExceptionAsync<T>(func, innerType)` — asserts both the outer and inner exception types.",
+        "`ThrowsAny(action, params Type[])` / `ThrowsAnyAsync(func, params Type[])`. Passes when the captured exception's `GetType()` is in the supplied list.",
+        "`ThrowsWithInnerException<T>(action, innerType)` / `ThrowsWithInnerExceptionAsync<T>(func, innerType)`. Asserts both the outer and inner exception types.",
         "`DoesNotThrow(action)` / `DoesNotThrowAsync(func)`."
       ]
     },
     {
       "type": "markdown",
       "title": "Polling",
-      "body": "`Lyo.Testing.PollAssert` wraps **Polly** retry + timeout policies for \"wait until eventually true\" scenarios:\n\n\n\nAll overloads accept an optional `pollInterval` (defaults to `100 ms`) and an optional `failureMessage` on the predicate variants."
+      "body": "`Lyo.Testing.PollAssert` wraps Polly retry and timeout policies for wait-until-true checks.\n\n\n\nAll overloads accept an optional `pollInterval` (defaults to `100 ms`) and an optional `failureMessage` on the predicate variants."
     },
     {
       "type": "paragraph",

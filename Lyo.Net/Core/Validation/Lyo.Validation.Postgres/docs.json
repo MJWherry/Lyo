@@ -3,11 +3,11 @@
   "name": "Lyo.Validation.Postgres",
   "area": "Core",
   "tagline": "PostgreSQL persistence for `ValidationSchema` documents (WhereClause JSONB) via `IValidationSchemaStore`.",
-  "description": "PostgreSQL + EF Core implementation of [`IValidationSchemaStore`](../Lyo.Validation/README.md). Stores named validation schemas in schema **`validation`**, table **`schema`**, with `constraints_json` / `messages_json` as jsonb.\n\n**Archetype A (Lyo domain).** Hosts expose or fetch `ValidationSchema` JSON on their own API; this package is the database backend only.",
+  "description": "PostgreSQL + EF Core implementation of [`IValidationSchemaStore`](../Lyo.Validation/README.md). Stores named validation schemas in schema `validation`, table `schema`, with `constraints_json` / `messages_json` as jsonb.\n\n**Archetype A (Lyo domain).** Hosts expose or fetch `ValidationSchema` JSON on their own API. This package is the database backend only.",
   "features": [
-    "**`PostgresValidationSchemaStore`** — `IValidationSchemaStore` via `IDbContextFactory<ValidationDbContext>`",
-    "**JSONB WhereClause** — same AST as query filters (`In`, `NotIn`, `Regex`, groups)",
-    "**Unique key** — `ux_validation_schema_key` on `key`"
+    "**PostgresValidationSchemaStore.** `IValidationSchemaStore` via `IDbContextFactory<ValidationDbContext>`.",
+    "**JSONB WhereClause.** Same AST as query filters (`In`, `NotIn`, `Regex`, groups).",
+    "**Unique key.** `ux_validation_schema_key` on `key`."
   ],
   "examples": [
     {
@@ -20,7 +20,7 @@
     {
       "type": "paragraph",
       "title": "Schema",
-      "text": "PostgreSQL schema **`validation`**. Table **`schema`**: `id`, unique `key`, `target_type_name`, `description`, `constraints_json` (WhereClause), `messages_json`, timestamps. Migrations history lives in `__EFMigrationsHistory` in the same schema."
+      "text": "PostgreSQL schema `validation`. Table `schema`: `id`, unique `key`, `target_type_name`, `description`, `constraints_json` (WhereClause), `messages_json`, timestamps. Migrations history lives in `__EFMigrationsHistory` in the same schema."
     },
     {
       "type": "paragraph",

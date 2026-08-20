@@ -1,0 +1,49 @@
+# Reusable: run sibling *.Tests for the selected pack set.
+# Disabled in pipeline.yml (commented / if: false) until we turn tests on.
+# When enabled: only workflow_dispatch with channel=preview.
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      scope:
+        required: true
+        type: string
+      packages:
+        required: false
+        type: string
+        default: ""
+      since:
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      BUILD_CONFIG: Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Lyo
+        uses: ./.github/actions/setup-lyo
+
+      - name: Restore
+        run: dotnet restore Lyo.Net/Lyo.slnx
+
+      - name: Test selected projects
+        env:
+          SCOPE: ${{ inputs.scope }}
+          PACKAGES: ${{ inputs.packages }}
+          SINCE: ${{ inputs.since }}
+        run: |
+          python3 scripts/nuget/ci_test.py --scope "$SCOPE" --packages "$PACKAGES" --since "$SINCE"

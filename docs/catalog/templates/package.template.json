@@ -6,7 +6,7 @@
   "tagline": "One-line pitch for the package.",
   "description": "Longer intro: what it is, when to use it, and the primary contracts (interfaces / Add* extensions).",
   "features": [
-    "**Feature one** — short explanation",
+    "**Feature one.** Short explanation",
     {
       "title": "Feature group",
       "text": "Optional blurb for the group.",

@@ -2,16 +2,16 @@
   "id": "Lyo.Lock",
   "name": "Lyo.Lock",
   "area": "Core",
-  "tagline": "Key-based **exclusive locks** and **keyed semaphores** (bounded concurrency per key) with a small abstraction layer and in-memory implementations for a single process.",
-  "description": "Key-based **exclusive locks** and **keyed semaphores** (bounded concurrency per key) with a small abstraction layer and in-memory implementations for a single process.",
+  "tagline": "Key-based exclusive locks and keyed semaphores (bounded concurrency per key), plus in-memory implementations for a single process.",
+  "description": "Key-based exclusive locks and keyed semaphores (bounded concurrency per key), plus in-memory implementations for a single process.",
   "features": [
-    "**`ILockService`** — acquire/release by string key, or `ExecuteWithLockAsync` helpers that throw `TimeoutException` if the lock is not obtained.",
-    "**`LocalLockService`** — one holder per normalized key using `SemaphoreSlim`.",
-    "**`IKeyedSemaphoreService`** — up to `maxConcurrency` simultaneous permit holders **per key**.",
-    "**`LocalKeyedSemaphoreService`** — per-key `SemaphoreSlim` with ref-counted cleanup when idle.",
-    "**Key normalization** — by default keys are compared case-insensitively (`ToLowerInvariant`); optional skip when keys are already normalized.",
-    "**DI** — `AddLocalLock`, `AddLocalLockFromConfiguration`, `AddLocalKeyedSemaphore`, `AddLocalKeyedSemaphoreFromConfiguration`.",
-    "**Metrics** — optional timers/counters via `Lyo.Metrics` when `EnableMetrics` is true and `IMetrics` is registered."
+    "**ILockService.** Acquire/release by string key, or `ExecuteWithLockAsync` helpers that throw `TimeoutException` if the lock is not obtained.",
+    "**LocalLockService.** One holder per normalized key using `SemaphoreSlim`.",
+    "**IKeyedSemaphoreService.** Up to `maxConcurrency` simultaneous permit holders per key.",
+    "**LocalKeyedSemaphoreService.** Per-key `SemaphoreSlim` with ref-counted cleanup when idle.",
+    "**Key normalization.** By default keys are compared case-insensitively (`ToLowerInvariant`). Set skip when keys are already normalized.",
+    "**DI.** `AddLocalLock`, `AddLocalLockFromConfiguration`, `AddLocalKeyedSemaphore`, `AddLocalKeyedSemaphoreFromConfiguration`.",
+    "**Metrics.** Optional timers/counters via `Lyo.Metrics` when `EnableMetrics` is true and `IMetrics` is registered."
   ],
   "examples": [
     {
@@ -54,7 +54,7 @@
           "Cap concurrent exports/API calls/backfills *per tenant or resource key* without global rate limits"
         ]
       ],
-      "trail": "For **multiple servers or processes**, register a distributed `ILockService` (see [`Lyo.Lock.Redis`](../Lyo.Lock.Redis/README.md)). Keyed semaphores in this package remain **local\nonly**."
+      "trail": "For multiple servers or processes, register a distributed `ILockService` (see [`Lyo.Lock.Redis`](../Lyo.Lock.Redis/README.md)). Keyed semaphores in this package remain local\nonly."
     },
     {
       "type": "paragraph",
@@ -65,7 +65,7 @@
       "type": "list",
       "title": "Rules for keyed semaphores",
       "items": [
-        "Use a **stable `maxConcurrency`** for a given key while any permit is held or waiters exist. If you pass a different `maxConcurrency` for an active key, `LocalKeyedSemaphoreService` throws (`InvalidOperationException`) instead of undefined behavior.",
+        "Use a stable `maxConcurrency` for a given key while any permit is held or waiters exist. If you pass a different `maxConcurrency` for an active key, `LocalKeyedSemaphoreService` throws `InvalidOperationException` instead of undefined behavior.",
         "Cancellation tokens on `AcquireAsync` / `ExecuteAsync` are honored while waiting."
       ]
     },
@@ -86,7 +86,7 @@
         [
           "`DefaultLockDuration`",
           "60s",
-          "Used by **distributed** locks (Redis TTL). Ignored by `LocalLockService`."
+          "Used by distributed locks (Redis TTL). Ignored by `LocalLockService`."
         ],
         [
           "`KeyPrefix`",
@@ -158,30 +158,30 @@
         ]
       ],
       "lead": "When metrics are enabled and `IMetrics` is registered, names match `Lyo.Lock.Constants`:\n\n**Locks (`Constants.Metrics`)**",
-      "trail": "**Semaphores (`Constants.SemaphoreMetrics`)**\n\n| Name | Role |\n|-----------------------------------------------------------|------------------------------|\n| `semaphore.acquire.duration` | Wait time for a permit |\n| `semaphore.acquire.success` / `semaphore.acquire.failure` | Counter |\n| `semaphore.release.duration` | Release timing |\n| `semaphore.execute.duration` | Wall time for `ExecuteAsync` |\n\nTag dimension: `key` — logical key string as passed by the caller (see XML docs on `Constants`)."
+      "trail": "**Semaphores (`Constants.SemaphoreMetrics`)**\n\n| Name | Role |\n|-----------------------------------------------------------|------------------------------|\n| `semaphore.acquire.duration` | Wait time for a permit |\n| `semaphore.acquire.success` / `semaphore.acquire.failure` | Counter |\n| `semaphore.release.duration` | Release timing |\n| `semaphore.execute.duration` | Wall time for `ExecuteAsync` |\n\nTag dimension `key` is the logical key string as passed by the caller (see XML docs on `Constants`)."
     },
     {
       "type": "list",
-      "title": "API summary — `ILockService`",
+      "title": "ILockService methods",
       "items": [
-        "`AcquireAsync` — returns `ILockHandle?` (`null` on timeout).",
-        "`ExecuteWithLockAsync` / `ExecuteWithLockAsync<T>` — acquire, run delegate, release; throw `TimeoutException` if not acquired."
+        "**AcquireAsync.** Returns `ILockHandle?` (`null` on timeout).",
+        "**ExecuteWithLockAsync / ExecuteWithLockAsync<T>.** Acquire, run the delegate, release. Throw `TimeoutException` if not acquired."
       ]
     },
     {
       "type": "list",
-      "title": "API summary — `ILockHandle` / `IPermitHandle`",
+      "title": "ILockHandle / IPermitHandle methods",
       "items": [
-        "`ReleaseAsync` — idempotent after first release.",
-        "`Dispose` / `DisposeAsync` — release (sync dispose may block briefly on internal `ReleaseAsync`)."
+        "**ReleaseAsync.** Idempotent after the first release.",
+        "**Dispose / DisposeAsync.** Release. Sync dispose may block briefly on the internal `ReleaseAsync`."
       ]
     },
     {
       "type": "list",
-      "title": "API summary — `IKeyedSemaphoreService`",
+      "title": "IKeyedSemaphoreService methods",
       "items": [
-        "`AcquireAsync` — returns `IPermitHandle?` on timeout.",
-        "`ExecuteAsync` / `ExecuteAsync<T>` — throw `TimeoutException` if no permit."
+        "**AcquireAsync.** Returns `IPermitHandle?` on timeout.",
+        "**ExecuteAsync / ExecuteAsync<T>.** Throw `TimeoutException` if no permit."
       ]
     }
   ],

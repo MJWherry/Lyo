@@ -2,8 +2,8 @@
   "id": "Lyo.Authentication.AspNetCore",
   "name": "Lyo.Authentication.AspNetCore",
   "area": "Security",
-  "tagline": "ASP.NET Core integration for `Lyo.Authentication`. Three schemes coexist behind a single dispatcher:",
-  "description": "ASP.NET Core integration for `Lyo.Authentication`. Three schemes coexist behind a single dispatcher:\n\n- `LyoApiToken` — validates Format-B opaque tokens (`lyo_pat_live_...`)\n- `LyoJwt` — validates Lyo-signed Ed25519 JWTs (`ey...`)\n- `LyoBearer` (the default) — sniffs the `Authorization`/`X-Api-Key` header and forwards to one of the above\n\n```csharp\nservices.AddLyoAuthentication(configuration);\nservices.AddInMemoryAuthenticationStores();\nservices.AddLyoApiTokenAuthentication();\n\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapLyoJwks();\n```\n\nPer-endpoint scope-based authorization uses the `scope:<name>` policy convention. The `ScopeAuthorizationPolicyProvider` creates these policies on demand, so endpoints can simply\ndo:\n\n```csharp\nendpoints.MapGet(\"/people\", ...).RequireAuthorization(\"scope:people.read\");\n```\n\nor, when working with `EndpointAuth` from `Lyo.Api`:\n\n```csharp\nGetAuth = EndpointAuth.RequireAuthorization(\"scope:people.read\")\n```",
+  "tagline": "ASP.NET Core integration for `Lyo.Authentication`. Three schemes coexist behind a single dispatcher.",
+  "description": "ASP.NET Core integration for `Lyo.Authentication`. Three schemes coexist behind a single dispatcher:\n\n- `LyoApiToken.` Validates Format-B opaque tokens (`lyo_pat_live_...`)\n- `LyoJwt.` Validates Lyo-signed Ed25519 JWTs (`ey...`)\n- `LyoBearer` (the default). Sniffs the `Authorization`/`X-Api-Key` header and forwards to one of the above\n\n```csharp\nservices.AddLyoAuthentication(configuration);\nservices.AddInMemoryAuthenticationStores();\nservices.AddLyoApiTokenAuthentication();\n\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapLyoJwks();\n```\n\nPer-endpoint scope-based authorization uses the `scope:<name>` policy convention. `ScopeAuthorizationPolicyProvider` creates these policies on demand, so endpoints can do:\n\n```csharp\nendpoints.MapGet(\"/people\", ...).RequireAuthorization(\"scope:people.read\");\n```\n\nor, when working with `EndpointAuth` from `Lyo.Api`:\n\n```csharp\nGetAuth = EndpointAuth.RequireAuthorization(\"scope:people.read\")\n```",
   "features": [],
   "examples": [],
   "sections": [],
@@ -92,6 +92,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

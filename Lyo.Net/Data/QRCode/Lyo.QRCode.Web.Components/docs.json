@@ -2,8 +2,8 @@
   "id": "Lyo.QRCode.Web.Components",
   "name": "Lyo.QRCode.Web.Components",
   "area": "Data",
-  "tagline": "Reusable **Blazor** components for QR code generation and preview workflows (**MudBlazor**).",
-  "description": "Reusable **Blazor** components for QR code generation and preview workflows (**MudBlazor**). The main surface is **`QrCodeWorkbench`**: a three-column layout (output and styling ·\ntyped payload · result), wired to **`IQRCodeService`**, **`IImageDecorationService`** (overlay / frame / caption / padding primitives from **`Lyo.Images`**), and\n**`Lyo.Web.Components.FileUpload.LyoFileUpload`** for logo files.",
+  "tagline": "Blazor / MudBlazor components for QR code generation and preview.",
+  "description": "Blazor / MudBlazor components for QR code generation and preview. The main component is `QrCodeWorkbench`: a three-column layout (output and styling,\ntyped payload, result), wired to `IQRCodeService`, `IImageDecorationService` (overlay / frame / caption / padding primitives from `Lyo.Images`), and\n`Lyo.Web.Components.FileUpload.LyoFileUpload` for logo files.",
   "features": [],
   "examples": [],
   "sections": [
@@ -16,24 +16,24 @@
       ],
       "rows": [
         [
-          "**Output and styling**",
-          "Format (optional **`AllowedFormats`** parameter restricts the dropdown, e.g. PNG+SVG only), error correction, output size preset (and custom pixels per module), quiet zone, dark/light module colors, logo upload (**`LyoFileUpload`** with **`ChipFileNameMaxLength`** / **`ChipMaxWidthCss`** for long names in narrow layouts), logo size slider, logo border, PNG **badge preset** and caption options (font, min header, auto-size header), frame colors."
+          "Output and styling",
+          "Format (optional `AllowedFormats` parameter restricts the dropdown, e.g. PNG+SVG only), error correction, output size preset (and custom pixels per module), quiet zone, dark/light module colors, logo upload (`LyoFileUpload` with `ChipFileNameMaxLength` / `ChipMaxWidthCss` for long names in narrow layouts), logo size slider, logo border, PNG badge preset and caption options (font, min header, auto-size header), frame colors."
         ],
         [
-          "**Payload**",
-          "**`QrPayloadKind`** selector and fields for plain text, URL, Wi‑Fi, mailto, tel, SMS, geo, vCard/meCard, WhatsApp, Telegram, Signal; encoded preview and generate."
+          "Payload",
+          "`QrPayloadKind` selector and fields for plain text, URL, Wi-Fi, mailto, tel, SMS, geo, vCard/meCard, WhatsApp, Telegram, Signal. Encoded preview and generate."
         ],
         [
-          "**Result**",
-          "Format, file size, frame label; module scale and dimensions; raster/SVG preview (SVG uses an **`<img>`** with **`object-fit: contain`** so large matrix sizes stay in the box). **Click the preview** to open the full image in a new tab (raster: data URL; SVG: **blob URL** so browsers allow a new tab—`data:image/svg+xml` navigations are often blocked). **Download** streams bytes via JS."
+          "Result",
+          "Format, file size, frame label; module scale and dimensions; raster/SVG preview (SVG uses an `<img>` with `object-fit: contain` so large matrix sizes stay in the box). Click the preview to open the image in a new tab (raster: data URL; SVG: blob URL so browsers allow a new tab. `data:image/svg+xml` navigations are often blocked). Download streams bytes via JS."
         ]
       ],
-      "trail": "**Decoration pipeline:** After the QR is generated, the workbench builds an `IImageDecorationPipeline` and queues stages based on user input:\n\n- A **logo upload** (PNG/SVG only) queues an **`Overlay`** stage. The pad behind the logo uses the QR **light** color; when the *Logo border* checkbox is on, the stroke uses the\n  QR **dark** color so the border stays visible.\n- A **badge preset** other than *None* queues additional stages:\n    - **Border only** — `AddFrame` (slate stroke, padding around the QR); a caption (if provided) becomes a footer band via `AddCaption(FooterBelow)`.\n    - **Rounded panel** — `AddOuterPadding` (rounded card) + `AddFrame` (slate stroke).\n    - **Badge with header** — `AddCaption(HeaderAbove, notch)` + `AddOuterPadding` (rounded card + drop shadow) + `AddFrame` (stroke matching the header chrome).\n\nMud color pickers are deconstructed into opaque `#RRGGBB` strings before being passed into the option builders (length-9 forms aren't always `#RRGGBBAA`)."
+      "trail": "**Decoration pipeline.** After the QR is generated, the workbench builds an `IImageDecorationPipeline` and queues stages based on user input:\n\n- A logo upload (PNG/SVG only) queues an `Overlay` stage. The pad behind the logo uses the QR light color. When the *Logo border* checkbox is on, the stroke uses the\n  QR dark color so the border stays visible.\n- A badge preset other than *None* queues additional stages:\n    - **Border only.** `AddFrame` (slate stroke, padding around the QR). A caption (if provided) becomes a footer band via `AddCaption(FooterBelow)`.\n    - **Rounded panel.** `AddOuterPadding` (rounded card) + `AddFrame` (slate stroke).\n    - **Badge with header.** `AddCaption(HeaderAbove, notch)` + `AddOuterPadding` (rounded card + drop shadow) + `AddFrame` (stroke matching the header chrome).\n\nMud color pickers are deconstructed into opaque `#RRGGBB` strings before being passed into the option builders (length-9 forms aren't always `#RRGGBBAA`)."
     },
     {
       "type": "markdown",
-      "title": "`QrCodeWorkbench` — Restrict output formats (host)",
-      "body": "```razor\n<QrCodeWorkbench AllowedFormats=\"@(new[] { QRCodeFormat.Png, QRCodeFormat.Svg })\"/>\n```\n\nWhen **`AllowedFormats`** is null or an empty collection, all **`QRCodeFormat`** enum values appear. When the host changes **`AllowedFormats`** and the current selection is no\nlonger allowed, the workbench resets to the first entry in the list."
+      "title": "`QrCodeWorkbench`: restrict output formats (host)",
+      "body": "```razor\n<QrCodeWorkbench AllowedFormats=\"@(new[] { QRCodeFormat.Png, QRCodeFormat.Svg })\"/>\n```\n\nWhen `AllowedFormats` is null or an empty collection, all `QRCodeFormat` enum values appear. When the host changes `AllowedFormats` and the current selection is no\nlonger allowed, the workbench resets to the first entry in the list."
     }
   ],
   "links": [],
@@ -89,7 +89,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -145,6 +161,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -170,6 +194,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -228,6 +260,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -247,7 +288,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

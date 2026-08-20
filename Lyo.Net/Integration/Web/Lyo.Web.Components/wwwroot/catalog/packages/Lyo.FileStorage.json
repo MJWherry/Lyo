@@ -2,8 +2,8 @@
   "id": "Lyo.FileStorage",
   "name": "Lyo.FileStorage",
   "area": "Data",
-  "tagline": "Production-oriented **file storage** for .NET: save / stream-save / read / delete / metadata with optional **compression** ( `Lyo.Compression`), **two-key encryption** (`Lyo.Encryption`), **duplicate…",
-  "description": "Production-oriented **file storage** for .NET: save / stream-save / read / delete / metadata with optional **compression** ([ `Lyo.Compression`](../../Compression/Lyo.Compression/README.md)), **two-key encryption** ([`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)), **duplicate hashing**, **access policies**, **malware scans**, **audit hooks**, **multipart uploads** ( via [`IMultipartUploadService`](Multipart/IMultipartUploadService.cs)), and **presigned/direct-upload/copy** on cloud-capable backends.\n\nWith XML documentation generation enabled in the repo (**`GenerateDocumentationFile`** in **`Directory.Build.props`**), IntelliSense surfaces the same summaries as this README for documented members.",
+  "tagline": "Save, stream-save, read, delete, and metadata for files. Optional compression (Lyo.Compression), two-key encryption (Lyo.Encryption), duplicate hashing, access policies, malware scans, audit hooks, multipart uploads (IMultipartUploadService), and presigned/direct-upload/copy on cloud backends.",
+  "description": "Save, stream-save, read, delete, and metadata for files. Optional compression ([Lyo.Compression](../../Compression/Lyo.Compression/README.md)), two-key encryption ([Lyo.Encryption](../../../Security/Encryption/Lyo.Encryption/README.md)), duplicate hashing, access policies, malware scans, audit hooks, multipart uploads (via [IMultipartUploadService](Multipart/IMultipartUploadService.cs)), and presigned/direct-upload/copy on cloud-capable backends.\n\nWith GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.",
   "features": [],
   "examples": [
     {
@@ -12,7 +12,7 @@
       "code": "using Lyo.FileStorage;\nusing Lyo.FileStorage.Models;\n\nvar options = new DiskFileStorageOptions\n{\n    RootDirectoryPath = \"/path/to/storage\",\n    EnableDuplicateDetection = true,\n    DuplicateStrategy = DuplicateHandlingStrategy.ReturnExisting\n};\n\nvar service = new LocalFileStorageService(options);\n\n// Save a file\nvar data = File.ReadAllBytes(\"document.pdf\");\nvar result = await service.SaveFileAsync(\n    data,\n    originalFileName: \"document.pdf\",\n    compress: true,\n    encrypt: true,\n    keyId: \"my-encryption-key\");\n\n// Retrieve a file\nvar retrievedData = await service.GetFileAsync(result.Id);\n\n// Delete a file\nawait service.DeleteFileAsync(result.Id);"
     },
     {
-      "title": "S3 storage (AWS, Backblaze B2, MinIO, Wasabi, Cloudflare R2, …)",
+      "title": "S3 storage (AWS, Backblaze B2, MinIO, Wasabi, Cloudflare R2)",
       "language": "csharp",
       "code": "using Lyo.FileStorage.S3;\nusing Lyo.FileStorage.Models;\n\nvar options = new S3FileStorageOptions\n{\n    BucketName = \"my-bucket\",\n    Region = \"us-east-1\",\n    AccessKeyId = \"your-access-key\",\n    SecretAccessKey = \"your-secret-key\"\n};\n\nvar metadataStore = new YourMetadataStore(); // IFileMetadataStore\nvar service = new S3FileStorageService(options, metadataStore);\n\n// Same IFileStorageService contract as LocalFileStorageService"
     }
@@ -27,124 +27,124 @@
       ],
       "rows": [
         [
-          "**This README**",
-          "Core **`IFileStorageService`**, **`LocalFileStorageService`**, options/DTOs, backend capability matrix"
+          "This README",
+          "IFileStorageService, LocalFileStorageService, options/DTOs, backend capability matrix"
         ],
         [
           "[`FileStorageArchitecture.drawio`](FileStorageArchitecture.drawio)",
-          "Multi-page diagram: **overview**, upload (general), **save (compress·encrypt)**, **staged upload**, **read**, **copy**, **DEK migrate**, **DEK rotate**, delete"
+          "Multi-page diagram: overview, upload (general), save (compress/encrypt), staged upload, read, copy, DEK migrate, DEK rotate, delete"
         ],
         [
-          "**`Lyo.FileStorage.S3/README.md`**: S3-compatible storage (AWS, B2, MinIO, …)",
-          "[`S3FileStorageService.cs`](../Lyo.FileStorage.S3/S3FileStorageService.cs), **`S3FileStorageOptions`**, DI builders"
+          "Lyo.FileStorage.S3/README.md: S3-compatible storage (AWS, B2, MinIO, …)",
+          "[`S3FileStorageService.cs`](../Lyo.FileStorage.S3/S3FileStorageService.cs), S3FileStorageOptions, DI builders"
         ],
         [
-          "**`Lyo.FileStorage.AzureBlob/README.md`**: Azure Blob",
-          "[`AzureBlobFileStorageService.cs`](../Lyo.FileStorage.AzureBlob/AzureBlobFileStorageService.cs), **`AzureBlobFileStorageOptions`**, SAS / SSE notes"
+          "Lyo.FileStorage.AzureBlob/README.md: Azure Blob",
+          "[`AzureBlobFileStorageService.cs`](../Lyo.FileStorage.AzureBlob/AzureBlobFileStorageService.cs), AzureBlobFileStorageOptions, SAS / SSE notes"
         ],
         [
-          "**`Lyo.FileStorage.Web.Components`**: Workbench UI",
+          "Lyo.FileStorage.Web.Components: Workbench UI",
           "Blazor grids and dialogs that call a configured Test API"
         ]
       ],
-      "trail": "For multipart session stores and Postgres metadata, follow references from your host registration (e.g. **`Lyo.FileMetadataStore.Postgres`**)."
+      "trail": "For multipart session stores and Postgres metadata, follow references from your host registration (e.g. Lyo.FileMetadataStore.Postgres)."
     },
     {
       "type": "table",
       "title": "Backend capability matrix",
       "headers": [
         "Capability",
-        "Local disk (**`LocalFileStorageService`**)",
-        "S3 (**`S3FileStorageService`**)",
-        "Blob (**`AzureBlobFileStorageService`**)"
+        "Local disk (LocalFileStorageService)",
+        "S3 (S3FileStorageService)",
+        "Blob (AzureBlobFileStorageService)"
       ],
       "rows": [
         [
-          "**Presigned GET**",
-          "Only when **`DiskFileStorageOptions.AllowFileUriPresignedUrls`** (returns **`file://`**, dev-only); no response-header overrides",
-          "Yes (incl. **`PreSignedReadUrlOptions`**)",
+          "Presigned GET",
+          "Only when DiskFileStorageOptions.AllowFileUriPresignedUrls (returns file://, dev-only). No response-header overrides.",
+          "Yes (incl. PreSignedReadUrlOptions)",
           "Yes (SAS + optional response headers)"
         ],
         [
-          "**Direct PUT upload** (**`BeginDirectUpload` / `CompleteDirectUpload`**)",
-          "Yes when **`DirectUploadReceiveBaseUri`** is set (PUT URL hits Test API / host receiver); otherwise **`ConfigurationException`**",
+          "Direct PUT upload (BeginDirectUpload / CompleteDirectUpload)",
+          "Yes when DirectUploadReceiveBaseUri is set (PUT URL hits Test API / host receiver). Otherwise ConfigurationException.",
           "Yes",
           "Yes"
         ],
         [
-          "**Server-sideCopy** (**`CopyFileAsync`**)",
+          "Server-side copy (CopyFileAsync)",
           "Yes (filesystem copy + metadata)",
-          "Yes (`CopyObject`)",
+          "Yes (CopyObject)",
           "Yes (same API)"
         ],
         [
-          "**Move** (**`MoveFileAsync`**)",
-          "Yes (`File.Move` + metadata; same file id)",
-          "Yes (`CopyObject` then delete source)",
-          "Yes (`SyncCopyFromUri` then delete source)"
+          "Move (MoveFileAsync)",
+          "Yes (File.Move + metadata; same file id)",
+          "Yes (CopyObject then delete source)",
+          "Yes (SyncCopyFromUri then delete source)"
         ],
         [
-          "**Rename** (**`RenameFileAsync`**)",
-          "Yes (metadata `OriginalFileName` only)",
+          "Rename (RenameFileAsync)",
+          "Yes (metadata OriginalFileName only)",
           "Yes (same)",
           "Yes (same)"
         ],
         [
-          "**Diagnostics listing** (**`IFileStorageDiagnosticsService`**)",
-          "Yes (relative paths under **`RootDirectoryPath`**)",
-          "Yes (combined **`KeyPrefix`**)",
+          "Diagnostics listing (IFileStorageDiagnosticsService)",
+          "Yes (relative paths under RootDirectoryPath)",
+          "Yes (combined KeyPrefix)",
           "Yes"
         ],
         [
-          "**Multipart** (**`AddLocalMultipartUploadService` / …S3/Blob**)",
+          "Multipart (AddLocalMultipartUploadService / …S3/Blob)",
           "Yes (server-staged parts)",
           "Yes",
           "Yes"
         ],
         [
-          "**Staged upload** (**`IStagedFileUploadService` / `AddLocalStagedFileUploadService` / …S3/Blob**)",
-          "Yes when **`DirectUploadReceiveBaseUri`** is set (API PUT to `.stage/`); otherwise **`ConfigurationException`**",
-          "Yes (presigned PUT to `.stage/{id}/object`)",
+          "Staged upload (IStagedFileUploadService / AddLocalStagedFileUploadService / …S3/Blob)",
+          "Yes when DirectUploadReceiveBaseUri is set (API PUT to .stage/). Otherwise ConfigurationException.",
+          "Yes (presigned PUT to .stage/{id}/object)",
           "Yes (SAS PUT; not with SSE-C customer key)"
         ]
       ],
-      "trail": "Plaintext direct uploads (**`BeginDirectUpload`**) deliberately **exclude** encryption/compression on the edge PUT; finalized metadata runs through normal\npolicy/malware/availability flags.\n\n**Staged uploads** use a separate **`staged_file_upload`** table (not **`file_metadata`** until **commit**). **Complete** verifies and hashes the staged object; **commit** runs the\nnormal compress/encrypt pipeline (API or job worker via **`UploadCompleted`** events)."
+      "trail": "Plaintext direct uploads (BeginDirectUpload) exclude encryption and compression on the edge PUT. Finalized metadata runs through the usual policy, malware, and availability flags.\n\nStaged uploads use a separate staged_file_upload table, not file_metadata until commit. Complete verifies and hashes the staged object. Commit runs the normal compress/encrypt pipeline (API or job worker via UploadCompleted events)."
     },
     {
       "type": "paragraph",
-      "title": "Backend capability matrix — **`CancellationToken`** and cloud signing",
-      "text": "**`ct`** honours cooperative cancellation during most async I/O. **Presigned URL generation**, some **AWS signing**, and synchronous SDK paths may complete even after cancellation is requested — see **`GetPreSignedReadUrlAsync`** and related remarks on **`IFileStorageService`**."
+      "title": "CancellationToken and cloud signing",
+      "text": "ct honours cooperative cancellation during most async I/O. Presigned URL generation, some AWS signing, and synchronous SDK paths may complete even after cancellation is requested. See GetPreSignedReadUrlAsync and related remarks on IFileStorageService."
     },
     {
       "type": "list",
-      "title": "Contracts — **`IFileStorageService`**",
+      "title": "IFileStorageService",
       "items": [
-        "**Writes** — **`SaveFileAsync`**, **`SaveFromStreamAsync`**",
-        "**Reads** — **`GetFileAsync`**, **`GetFileStreamAsync`** (compressed payloads are decompressed via **`ICompressionService.Resolver`** using stored **`CompressionAlgorithm`** metadata; optional per-call **`compressionAlgorithmOverride`** or **`FileStorageServiceBaseOptions.DecompressionAlgorithmOverride`**; bounded by **`MaxDecompressedFileSize`** through **`MaxBytesWriteStream`**)",
-        "**Zip archive** — **`IFileStorageArchiveService.CreateArchiveAsync`** spools files through **`Lyo.IO.Temp`**, zips on disk (nested **`ZipPath`**, caller **`fileName`**), and returns a stream that deletes the temp session on dispose. Caps: **`FileStorageArchiveOptions.MaxFileCount`** / **`MaxTotalUncompressedBytes`**. DI: **`AddFileStorageArchiveServiceFromConfiguration`** + **`AddFileStorageArchiveServiceKeyed`**.",
-        "**Metadata / delete** — **`GetMetadataAsync`**, **`DeleteFileAsync(Guid, FileDeletionMode, CancellationToken)`** (deletes the backing object then, depending on * *`FileDeletionMode`**, either *tombstones* metadata (`RemoveObjectAndTombstoneMetadata`, default) or *purges* it via **`IFileMetadataStore.PurgeMetadataAsync`** ( `RemoveObjectAndPurgeMetadata` — operator/governance flows only; never accept this mode from end-user input)",
-        "**Temporary links** — **`GetPreSignedReadUrlAsync`** (with optional **`PreSignedReadUrlOptions`** overrides; both overloads accept **`CancellationToken`** with a default of `default`)",
-        "**Direct single PUT** — **`BeginDirectUploadAsync`**, **`CompleteDirectUploadAsync`** (S3/Blob populate **`RequiredPutHeaders`** for SSE + signed `Content-Type` parity)",
-        "**Copy** — **`CopyFileAsync`** (new file id)",
-        "**Move / rename** — **`MoveFileAsync`** (same file id, relocate by **`PathPrefix`**); **`RenameFileAsync`** (metadata **`OriginalFileName`** only)",
-        "**Key ops** — **`MigrateDeksAsync`**, **`RotateDeksAsync`** (results split **`Skipped`** vs **`Failed`**; missing blobs and short encryption headers fail-fast)",
-        "**Events** — **`FileSaved`**, **`FileRetrieved`**, **`FileDeleted`**, **`FileMoved`**, **`FileRenamed`**, **`FileMetadataRetrieved`**, **`FileAuditOccurred`**. Payloads carry a redacted **`FileStoreSnapshot`** ( wrapped DEK and KEK salt omitted)",
-        "**Health** — **`CheckHealthAsync`** via **`IHealth`** (lightweight vs full via **`HealthCheckMode`**)"
+        "**Writes.** SaveFileAsync, SaveFromStreamAsync",
+        "**Reads.** GetFileAsync, GetFileStreamAsync. Compressed payloads are decompressed via ICompressionService.Resolver using stored CompressionAlgorithm metadata. Optional per-call compressionAlgorithmOverride or FileStorageServiceBaseOptions.DecompressionAlgorithmOverride. Bounded by MaxDecompressedFileSize through MaxBytesWriteStream.",
+        "**Zip archive.** IFileStorageArchiveService.CreateArchiveAsync spools files through Lyo.IO.Temp, zips on disk (nested ZipPath, caller fileName), and returns a stream that deletes the temp session on dispose. Caps: FileStorageArchiveOptions.MaxFileCount / MaxTotalUncompressedBytes. DI: AddFileStorageArchiveServiceFromConfiguration + AddFileStorageArchiveServiceKeyed.",
+        "**Metadata / delete.** GetMetadataAsync, DeleteFileAsync(Guid, FileDeletionMode, CancellationToken). Deletes the backing object then, depending on FileDeletionMode, either tombstones metadata (RemoveObjectAndTombstoneMetadata, default) or purges it via IFileMetadataStore.PurgeMetadataAsync (RemoveObjectAndPurgeMetadata). Operator/governance flows only. Never accept this mode from end-user input.",
+        "**Temporary links.** GetPreSignedReadUrlAsync (with optional PreSignedReadUrlOptions overrides). Both overloads accept CancellationToken with a default of default.",
+        "**Direct single PUT.** BeginDirectUploadAsync, CompleteDirectUploadAsync. S3/Blob populate RequiredPutHeaders for SSE + signed Content-Type parity.",
+        "**Copy.** CopyFileAsync (new file id)",
+        "**Move / rename.** MoveFileAsync (same file id, relocate by PathPrefix). RenameFileAsync (metadata OriginalFileName only).",
+        "**Key ops.** MigrateDeksAsync, RotateDeksAsync. Results split Skipped vs Failed. Missing blobs and short encryption headers fail-fast.",
+        "**Events.** FileSaved, FileRetrieved, FileDeleted, FileMoved, FileRenamed, FileMetadataRetrieved, FileAuditOccurred. Payloads carry a redacted FileStoreSnapshot (wrapped DEK and KEK salt omitted).",
+        "**Health.** CheckHealthAsync via IHealth. Depth follows HealthCheckMode."
       ]
     },
     {
       "type": "paragraph",
-      "title": "Contracts — **`IFileStorageDiagnosticsService`**",
-      "text": "Optional **`ListStorageKeysAsync`** implemented by backends that can enumerate object/path keys (Local, S3, Blob). All implementations normalize the caller-supplied prefix through **`Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix`** — the same helper that backs **`FileStorageServiceBase.ValidatePathPrefix`** — which strips wrapping slashes and rejects `..` segments, doubled separators, and embedded `\\0` with **`ArgumentException`** (HTTP 400 in ASP.NET)."
+      "title": "IFileStorageDiagnosticsService",
+      "text": "Optional ListStorageKeysAsync implemented by backends that can enumerate object/path keys (Local, S3, Blob). All implementations normalize the caller-supplied prefix through Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix, the same helper that backs FileStorageServiceBase.ValidatePathPrefix. It strips wrapping slashes and rejects `..` segments, doubled separators, and embedded `\\0` with ArgumentException (HTTP 400 in ASP.NET)."
     },
     {
       "type": "paragraph",
-      "title": "Contracts — **`IMultipartUploadService`**",
-      "text": "Large-file client-part uploads; register multipart services together with keyed **`IFileStorageService`** (**`Extensions.AddLocalMultipartUploadService`** or S3/Blob equivalents)."
+      "title": "IMultipartUploadService",
+      "text": "Large-file client-part uploads. Register multipart services together with keyed IFileStorageService (Extensions.AddLocalMultipartUploadService or S3/Blob equivalents)."
     },
     {
       "type": "table",
-      "title": "Contracts — **`IStagedFileUploadService`**",
+      "title": "IStagedFileUploadService",
       "headers": [
         "Step",
         "Method",
@@ -153,67 +153,67 @@
       "rows": [
         [
           "1",
-          "**`BeginAsync`**",
-          "Returns presigned/SAS PUT URL + **`RequiredPutHeaders`**."
+          "BeginAsync",
+          "Returns presigned/SAS PUT URL + RequiredPutHeaders."
         ],
         [
           "2",
           "Client PUT",
-          "S3/Blob: direct to cloud URL. Local: **`PUT …/stage/{stageId}/put`** via Test API when **`DirectUploadReceiveBaseUri`** is set."
+          "S3/Blob: direct to cloud URL. Local: PUT …/stage/{stageId}/put via Test API when DirectUploadReceiveBaseUri is set."
         ],
         [
           "3",
-          "**`CompleteAsync`**",
-          "Confirms object exists, hashes bytes, sets status **`Uploaded`**."
+          "CompleteAsync",
+          "Confirms object exists, hashes bytes, sets status Uploaded."
         ],
         [
           "4",
-          "**`CommitAsync`**",
-          "Runs normal save pipeline; optional **`StagedUploadCommitRequest.Compress`** / **`Encrypt`**."
+          "CommitAsync",
+          "Runs normal save pipeline. Optional StagedUploadCommitRequest.Compress / Encrypt."
         ],
         [
-          "—",
-          "**`AbortAsync`**",
+          "optional",
+          "AbortAsync",
           "Deletes staging object best-effort."
         ],
         [
-          "—",
-          "**`GetAsync`**",
+          "optional",
+          "GetAsync",
           "Current stage snapshot."
         ]
       ],
-      "lead": "Two-phase uploads for large or untrusted client payloads: **begin** → client PUT to a staging key (`…/.stage/{stageId}/object`) → **complete** (verify/hash) → **commit** (\ncompress/encrypt into canonical storage). Session state lives in **`IStagedFileUploadStore`** / **`staged_file_upload`** — not **`file_metadata`** until commit.",
-      "trail": "Register **`AddLocalStagedFileUploadService`**, **`AddKeyedS3StagedFileUploadService`**, or **`AddAzureBlobStagedFileUploadService`**. Postgres/Sqlite metadata builders auto-register *\n*`PostgresStagedFileUploadStore`** / **`SqliteStagedFileUploadStore`** when no store is present. Hook **`IStagedFileUploadEventHandler`** (or service events) to enqueue async\ncommit workers after **`UploadCompleted`**."
+      "lead": "Two-phase uploads for large or untrusted client payloads: begin, then client PUT to a staging key (`…/.stage/{stageId}/object`), then complete (verify/hash), then commit (compress/encrypt into canonical storage). Session state lives in IStagedFileUploadStore / staged_file_upload, not file_metadata until commit.",
+      "trail": "Register AddLocalStagedFileUploadService, AddKeyedS3StagedFileUploadService, or AddAzureBlobStagedFileUploadService. Postgres/Sqlite metadata builders auto-register PostgresStagedFileUploadStore / SqliteStagedFileUploadStore when no store is present. Hook IStagedFileUploadEventHandler (or service events) to enqueue async commit workers after UploadCompleted."
     },
     {
       "type": "table",
-      "title": "Service matrix (**`Lyo.FileStorage`** assembly)",
+      "title": "Types in this assembly",
       "headers": [
         "Type",
         "Role"
       ],
       "rows": [
         [
-          "**`LocalFileStorageService`**",
-          "**`DiskFileStorageOptions`**, **`IFileMetadataStore`**, path sharding under root"
+          "LocalFileStorageService",
+          "DiskFileStorageOptions, IFileMetadataStore, path sharding under root"
         ],
         [
-          "**`FileStorageServiceBase`**",
+          "FileStorageServiceBase",
           "Shared pipeline for save/read/delete, hashing, auditing, multipart plumbing"
         ],
         [
-          "**`Extensions`** — namespace **`Lyo.FileStorage`**",
-          "Keyed **`IFileStorageService`** registration for disk, multipart session helpers, **`IFileOperationContextAccessor`**, **`IFileStorageArchiveService`**"
+          "Extensions (namespace Lyo.FileStorage)",
+          "Keyed IFileStorageService registration for disk, multipart session helpers, IFileOperationContextAccessor, IFileStorageArchiveService"
         ],
         [
-          "**`FileStorageArchiveService`**",
-          "**`IFileStorageArchiveService`**: spool via **`Lyo.IO.Temp`**, nested **`ZipPath`**, caller **`fileName`**, caps from **`FileStorageArchiveOptions`**"
+          "FileStorageArchiveService",
+          "IFileStorageArchiveService: spool via Lyo.IO.Temp, nested ZipPath, caller fileName, caps from FileStorageArchiveOptions"
         ]
       ]
     },
     {
       "type": "table",
-      "title": "Service matrix (**`Lyo.FileStorage`** assembly) — Extension points",
+      "title": "Extension points",
       "headers": [
         "Type",
         "Registered via",
@@ -221,39 +221,39 @@
       ],
       "rows": [
         [
-          "**`IFileOperationContextAccessor`**",
-          "**`services.AddFileOperationContextAccessor()`**",
-          "Async-local tenant / actor / correlation propagation surfaced on **`FileAuditEventArgs`** and policy callbacks. The default implementation is registered as a singleton."
+          "IFileOperationContextAccessor",
+          "services.AddFileOperationContextAccessor()",
+          "Async-local tenant / actor / correlation propagation copied onto FileAuditEventArgs and policy callbacks. The default implementation is registered as a singleton."
         ],
         [
-          "**`IFileAuditEventHandler`**",
-          "Register as many as you want (`services.AddScoped<IFileAuditEventHandler, MySink>()`). **`AddPostgresFileAuditSink()`** in **`Lyo.FileMetadataStore.Postgres`** wires the bundled Postgres sink.",
+          "IFileAuditEventHandler",
+          "Register as many as you want (services.AddScoped<IFileAuditEventHandler, MySink>()). AddPostgresFileAuditSink() in Lyo.FileMetadataStore.Postgres wires the bundled Postgres sink.",
           "Fan-out audit handlers invoked for save / read / delete / metadata / policy events."
         ],
         [
-          "**`IFileContentPolicy`**",
-          "Register a single implementation (`services.AddScoped<IFileContentPolicy, MyPolicy>()`).",
-          "Optional pre-save gate that can reject by content (extension/MIME/header sniffing); rejections raise **`FilePolicyRejectedException`**."
+          "IFileContentPolicy",
+          "Register a single implementation (services.AddScoped<IFileContentPolicy, MyPolicy>()).",
+          "Optional pre-save gate that can reject by content (extension/MIME/header sniffing). Rejections raise FilePolicyRejectedException."
         ],
         [
-          "**`IFileMalwareScanner`** / **`CompositeFileMalwareScanner`** / **`ContentThreatMalwareScanner`** (from **`Lyo.ContentThreatScan`**)",
-          "Register the chosen scanner; **`CompositeFileMalwareScanner`** composes multiple.",
-          "Per-byte scan integration. `RequireScanBeforeAvailable` + missing scanner = fail-closed across save / stream / direct-upload paths."
+          "IFileMalwareScanner / CompositeFileMalwareScanner / ContentThreatMalwareScanner (from Lyo.ContentThreatScan)",
+          "Register the chosen scanner. CompositeFileMalwareScanner composes multiple.",
+          "Per-byte scan integration. RequireScanBeforeAvailable + missing scanner = fail-closed across save / stream / direct-upload paths."
         ],
         [
-          "**`IMultipartUploadSessionStore`**",
-          "**`AddInMemoryMultipartUploadSessionStore()`** / **`TryAddInMemoryMultipartUploadSessionStoreIfMissing()`** in-process default; **`AddPostgresMultipartUploadSessionStore()`** for Postgres.",
-          "Tracks staged multipart upload sessions; required by `Local`/`S3`/`Blob` multipart services."
+          "IMultipartUploadSessionStore",
+          "AddInMemoryMultipartUploadSessionStore() / TryAddInMemoryMultipartUploadSessionStoreIfMissing() in-process default. AddPostgresMultipartUploadSessionStore() for Postgres.",
+          "Tracks staged multipart upload sessions. Required by Local/S3/Blob multipart services."
         ],
         [
-          "**`IStagedFileUploadStore`**",
-          "**`AddInMemoryStagedFileUploadStore()`** / **`TryAddInMemoryStagedFileUploadStoreIfMissing()`**; **`AddPostgresStagedFileUploadStore()`** / **`AddSqliteStagedFileUploadStore()`** via metadata builders.",
-          "Persists in-flight staged uploads in **`staged_file_upload`** until **commit**."
+          "IStagedFileUploadStore",
+          "AddInMemoryStagedFileUploadStore() / TryAddInMemoryStagedFileUploadStoreIfMissing(). AddPostgresStagedFileUploadStore() / AddSqliteStagedFileUploadStore() via metadata builders.",
+          "Persists in-flight staged uploads in staged_file_upload until commit."
         ],
         [
-          "**`IStagedFileUploadEventHandler`**",
-          "Register implementations (`services.AddScoped<IStagedFileUploadEventHandler, MyPublisher>()`).",
-          "Optional lifecycle fan-out (e.g. RabbitMQ commit worker after **`UploadCompleted`**)."
+          "IStagedFileUploadEventHandler",
+          "Register implementations (services.AddScoped<IStagedFileUploadEventHandler, MyPublisher>()).",
+          "Optional lifecycle fan-out (e.g. RabbitMQ commit worker after UploadCompleted)."
         ]
       ]
     },
@@ -261,116 +261,116 @@
       "type": "list",
       "title": "Multipart, direct upload, DEK operations",
       "items": [
-        "**`FileStorageDekOperations`** — implements **`MigrateDeksAsync`** and **`RotateDeksAsync`** uniformly across backends, including short-encryption-header detection and per-file failure isolation.",
-        "**`FileStorageStreamingPipelines`** — composes compression / encryption / hash / max-size guards over streamed save and read paths.",
-        "**`PlainDirectUploadCoordinator`** — finalizes plaintext direct-upload PUTs into a normal **`SaveFileAsync`** outcome (policy, scan, availability) and runs only when the caller used **`BeginDirectUploadAsync`** without compression/encryption hints.",
-        "**`StagedUploadCoordinator`** — shared begin/complete/commit/abort orchestration for **`IStagedFileUploadService`**; backend packages plug in **`IStagedFilePhysicalIO`** ( presigned PUT, stat, read, delete)."
+        "FileStorageDekOperations. Implements MigrateDeksAsync and RotateDeksAsync uniformly across backends, including short-encryption-header detection and per-file failure isolation.",
+        "FileStorageStreamingPipelines. Composes compression / encryption / hash / max-size guards over streamed save and read paths.",
+        "PlainDirectUploadCoordinator. Finalizes plaintext direct-upload PUTs into a normal SaveFileAsync outcome (policy, scan, availability) and runs only when the caller used BeginDirectUploadAsync without compression/encryption hints.",
+        "StagedUploadCoordinator. Shared begin/complete/commit/abort orchestration for IStagedFileUploadService. Backend packages plug in IStagedFilePhysicalIO (presigned PUT, stat, read, delete)."
       ]
     },
     {
       "type": "table",
-      "title": "Options — **`FileStorageServiceBaseOptions`** / **`DiskFileStorageOptions`**",
+      "title": "DiskFileStorageOptions",
       "headers": [
         "Property",
         "Typical use"
       ],
       "rows": [
         [
-          "**`RootDirectoryPath`**",
-          "Root folder for blobs and bundled JSON metadata (when **`IFileMetadataStore`** not injected explicitly)"
+          "RootDirectoryPath",
+          "Root folder for blobs and bundled JSON metadata (when IFileMetadataStore is not injected explicitly)"
         ],
         [
-          "**`EnableMetrics`**",
-          "Emit metrics via **`IMetrics`** when configured"
+          "EnableMetrics",
+          "Emit metrics via IMetrics when configured"
         ],
         [
-          "**`AllowFileUriPresignedUrls`**",
-          "(**Dev**) allow **`file://`** presigned-style URLs instead of rejecting presigned reads"
+          "AllowFileUriPresignedUrls",
+          "Dev only. Allow file:// presigned-style URLs instead of rejecting presigned reads."
         ],
         [
-          "**`DirectUploadReceiveBaseUri`**",
-          "Absolute origin of the host that exposes **`PUT …/Workbench/FileStorage/direct-upload/{fileId}/put`** (matches **Lyo.TestApi** conventions). When null, **`BeginDirectUploadAsync`** delegates to **`NotSupported`**"
+          "DirectUploadReceiveBaseUri",
+          "Absolute origin of the host that exposes PUT …/Workbench/FileStorage/direct-upload/{fileId}/put (matches Lyo.TestApi conventions). When null, BeginDirectUploadAsync delegates to NotSupported."
         ],
         [
-          "**`DirectUploadPutRouteRelativePath`**",
-          "Path between base URI and **`{fileId}/put`**; default **`Workbench/FileStorage/direct-upload`** with the bundled Test API"
+          "DirectUploadPutRouteRelativePath",
+          "Path between base URI and {fileId}/put. Default Workbench/FileStorage/direct-upload with the bundled Test API."
         ],
         [
-          "**Inherited (`FileStorageServiceBaseOptions`)**",
+          "Inherited (FileStorageServiceBaseOptions)",
           ""
         ],
         [
-          "**`HealthCheckMode`**",
-          "Lightweight vs fuller health probes"
+          "HealthCheckMode",
+          "Lightweight vs deeper health probes"
         ],
         [
-          "**`HashAlgorithm`**, **`EnableDuplicateDetection`**, **`DuplicateStrategy`**",
-          "Dedup by plaintext `originalFileHash`; see [Duplicate detection](#duplicate-detection)"
+          "HashAlgorithm, EnableDuplicateDetection, DuplicateStrategy",
+          "Dedup by plaintext originalFileHash. See Duplicate detection."
         ],
         [
-          "**`ThrowOnFileNotFound`**, **`ThrowOnDeleteNotFound`**, **`ThrowOnHashMismatch`**",
+          "ThrowOnFileNotFound, ThrowOnDeleteNotFound, ThrowOnHashMismatch",
           "Failure-vs-null behaviour"
         ],
         [
-          "**`MaxUploadSizeBytes`**, **`MaxDecompressedFileSize`**, **`AllowedContentTypes`**",
-          "Safety / validation. `MaxUploadSizeBytes` is enforced on direct-upload PUT bodies in addition to streamed saves; an **empty** `AllowedContentTypes` list **denies** all uploads (configure null or omit to allow any)."
+          "MaxUploadSizeBytes, MaxDecompressedFileSize, AllowedContentTypes",
+          "Safety / validation. MaxUploadSizeBytes is enforced on direct-upload PUT bodies in addition to streamed saves. An empty AllowedContentTypes list denies all uploads (configure null or omit to allow any)."
         ],
         [
-          "**`RequireScanBeforeAvailable`**, **`DefaultAvailability`**, **`AllowReadQuarantinedForAdmin`**",
-          "Availability + **`IFileMalwareScanner`** integration. When `RequireScanBeforeAvailable` is true and no scanner is registered, saves **fail-closed** across `byte[]`/stream/direct-upload paths. The chained **`CompositeFileMalwareScanner`** caps each scan at 64 MiB and reacts via **`CompositeOversizedPolicy`** (default: quarantine; alternatives: reject, allow-truncated)."
+          "RequireScanBeforeAvailable, DefaultAvailability, AllowReadQuarantinedForAdmin",
+          "Availability + IFileMalwareScanner integration. When RequireScanBeforeAvailable is true and no scanner is registered, saves fail-closed across byte[]/stream/direct-upload paths. The chained CompositeFileMalwareScanner caps each scan at 64 MiB and reacts via CompositeOversizedPolicy (default: quarantine; alternatives: reject, allow-truncated)."
         ],
         [
-          "**`DecompressionAlgorithmOverride`**",
+          "DecompressionAlgorithmOverride",
           "When set, all reads decompress with this codec instead of per-file metadata (migration/recovery)."
         ]
       ],
-      "lead": "**`DiskFileStorageOptions`** adds:"
+      "lead": "DiskFileStorageOptions adds:"
     },
     {
       "type": "table",
-      "title": "Options — **`FileStorageServiceBaseOptions`** / **`DiskFileStorageOptions`** — Compression (resolver)",
+      "title": "Compression resolver",
       "headers": [
         "Concern",
         "Behaviour"
       ],
       "rows": [
         [
-          "**Write**",
-          "When `compress: true`, **`ICompressionService.ResolveForCompress`** picks the codec (delegates to **`ICompressionAlgorithmSelector`** when registered in compression DI). **`ICompressionService.Resolver`** performs the compress; **`FileStoreResult.CompressionAlgorithm`** records the codec."
+          "Write",
+          "When compress: true, ICompressionService.ResolveForCompress picks the codec (delegates to ICompressionAlgorithmSelector when registered in compression DI). ICompressionService.Resolver performs the compress. FileStoreResult.CompressionAlgorithm records the codec."
         ],
         [
-          "**Read**",
-          "**`metadata.CompressionAlgorithm`** → **`ICompressionService.Resolver.DecompressAsync`**. Override order: per-call `compressionAlgorithmOverride` → **`DecompressionAlgorithmOverride`** → metadata → **`ICompressionService.Algorithm`** (legacy rows with `IsCompressed` but null algorithm)."
+          "Read",
+          "metadata.CompressionAlgorithm → ICompressionService.Resolver.DecompressAsync. Override order: per-call compressionAlgorithmOverride → DecompressionAlgorithmOverride → metadata → ICompressionService.Algorithm (legacy rows with IsCompressed but null algorithm)."
         ],
         [
-          "**DI**",
-          "File storage depends on **`ICompressionService`** only. Register **`AddCompressionService`** + **`AddCompressionPolicySelector`** in the host; register addon factories (LZ4, Zstd, …) for every algorithm you may **read**. See [`Lyo.Compression`](../../Compression/Lyo.Compression/README.md)."
+          "DI",
+          "File storage depends on ICompressionService only. Register AddCompressionService + AddCompressionPolicySelector in the host. Register addon factories (LZ4, Zstd, …) for every algorithm you may read. See [Lyo.Compression](../../Compression/Lyo.Compression/README.md)."
         ]
       ]
     },
     {
       "type": "table",
-      "title": "Options — **`FileStorageServiceBaseOptions`** / **`DiskFileStorageOptions`** — Duplicate detection",
+      "title": "Duplicate detection",
       "headers": [
-        "**`DuplicateStrategy`**",
+        "DuplicateStrategy",
         "Behaviour"
       ],
       "rows": [
         [
-          "**`ReturnExisting`**",
-          "If an active row exists for the hash **and** the requested storage profile matches the stored row (`IsCompressed`, `IsEncrypted`, `CompressionAlgorithm` when compressed, `DataEncryptionKeyId` when encrypted — compared after write-time compression policy resolution), return that row’s metadata and skip writing. If the hash matches but the profile differs, throw **`ConflictException`** (HTTP 409). Soft-deleted rows are excluded from hash lookup."
+          "ReturnExisting",
+          "If an active row exists for the hash and the requested storage profile matches the stored row (IsCompressed, IsEncrypted, CompressionAlgorithm when compressed, DataEncryptionKeyId when encrypted, compared after write-time compression policy resolution), return that row's metadata and skip writing. If the hash matches but the profile differs, throw ConflictException (HTTP 409). Soft-deleted rows are excluded from hash lookup."
         ],
         [
-          "**`Overwrite`**",
-          "Delete the prior blob, reuse the existing file id, and save again using the **new** request’s compress/encrypt options (profile may change: plain ↔ compressed, unencrypted ↔ encrypted, different `keyId`, etc.)."
+          "Overwrite",
+          "Delete the prior blob, reuse the existing file id, and save again using the new request's compress/encrypt options (profile may change: plain ↔ compressed, unencrypted ↔ encrypted, different keyId, etc.)."
         ],
         [
-          "**`AllowDuplicate`**",
-          "Always allocate a new file id even when the hash matches; profiles may differ."
+          "AllowDuplicate",
+          "Always allocate a new file id even when the hash matches. Profiles may differ."
         ]
       ],
-      "lead": "When **`EnableDuplicateDetection`** is true, saves hash plaintext and call **`IFileMetadataStore.FindByHashAsync`** before persisting transformed bytes.",
-      "trail": "Reads are unchanged: **`GetFileAsync`** / **`GetFileStreamAsync`** decode according to stored metadata, not per-request compress/encrypt flags.\n\nLegacy appsettings **`LocalFileStorage`** vs **`DiskFileStorage`** binder details are documented on **`DiskFileStorageOptions.LegacySectionName`** and *\n*`DiskFileStorageConfigurationBinder`**. The internal `BindDiskFileStorage(IServiceProvider, string? preferredSection)` is invoked by the keyed-disk **`AddFileStorageServiceKeyed`\n** overloads that accept a `configSectionName`; it tries the preferred section, then **`DiskFileStorageOptions.SectionName`** (`DiskFileStorage`), then *\n*`DiskFileStorageOptions.LegacySectionName`** (`LocalFileStorage`) and logs a warning when the legacy section is matched."
+      "lead": "When EnableDuplicateDetection is true, saves hash plaintext and call IFileMetadataStore.FindByHashAsync before persisting transformed bytes.",
+      "trail": "Reads are unchanged: GetFileAsync / GetFileStreamAsync decode according to stored metadata, not per-request compress/encrypt flags.\n\nLegacy appsettings LocalFileStorage vs DiskFileStorage binder details are documented on DiskFileStorageOptions.LegacySectionName and DiskFileStorageConfigurationBinder. The internal BindDiskFileStorage(IServiceProvider, string? preferredSection) is invoked by the keyed-disk AddFileStorageServiceKeyed overloads that accept a configSectionName. It tries the preferred section, then DiskFileStorageOptions.SectionName (DiskFileStorage), then DiskFileStorageOptions.LegacySectionName (LocalFileStorage) and logs a warning when the legacy section is matched."
     },
     {
       "type": "table",
@@ -413,86 +413,81 @@
           "Local disk bound from configuration; encryption inline."
         ]
       ],
-      "lead": "`AddFileStorageServiceKeyed` ships in seven shapes so the same key can wire (a) an existing keyed file store, (b) a fresh `LocalFileStorageService` from options/section, and either\nreuse or define the encryption key:",
-      "trail": "For cloud backends, use the package-specific keyed entry points: **`AddS3FileStorageServiceKeyed(keyName)`** in **`Lyo.FileStorage.S3`** (fluent builder) and the non-keyed *\n*`AddAzureBlobFileStorageService(...)`** in **`Lyo.FileStorage.AzureBlob`** (keyed Blob is an open item — see that README)."
+      "lead": "AddFileStorageServiceKeyed ships in seven shapes so the same key can wire (a) an existing keyed file store, (b) a fresh LocalFileStorageService from options/section, and either reuse or define the encryption key:",
+      "trail": "For cloud backends, use the package-specific keyed entry points: AddS3FileStorageServiceKeyed(keyName) in Lyo.FileStorage.S3 (fluent builder) and the non-keyed AddAzureBlobFileStorageService(...) in Lyo.FileStorage.AzureBlob (keyed Blob is an open item. See that README)."
     },
     {
       "type": "table",
-      "title": "DTO highlights",
+      "title": "DTOs",
       "headers": [
         "Type",
         "Purpose"
       ],
       "rows": [
         [
-          "**`DirectUploadBeginRequest`**",
-          "Declared max size, path prefix, content type hints for **`BeginDirectUploadAsync`**"
+          "DirectUploadBeginRequest",
+          "Declared max size, path prefix, content type hints for BeginDirectUploadAsync"
         ],
         [
-          "**`DirectUploadBeginResult`**",
-          "PUT URL (or SAS), TTL, **`StorageLocation`**, **`RequiredPutHeaders`**"
+          "DirectUploadBeginResult",
+          "PUT URL (or SAS), TTL, StorageLocation, RequiredPutHeaders"
         ],
         [
-          "**`DirectUploadCompleteRequest`**",
+          "DirectUploadCompleteRequest",
           "Expected length / rename on finalize"
         ],
         [
-          "**`PreSignedReadUrlOptions`**",
-          "**`ContentDisposition`**, **`ContentType`** for cloud GET overrides"
+          "PreSignedReadUrlOptions",
+          "ContentDisposition, ContentType for cloud GET overrides"
         ],
         [
-          "**`CopyFileRequest`**",
-          "Optional **`PathPrefix`** override for **`CopyFileAsync`**"
+          "CopyFileRequest",
+          "Optional PathPrefix override for CopyFileAsync"
         ],
         [
-          "**`MoveFileRequest`**",
-          "Target **`PathPrefix`** for **`MoveFileAsync`** (same file id)"
+          "MoveFileRequest",
+          "Target PathPrefix for MoveFileAsync (same file id)"
         ],
         [
-          "**`RenameFileRequest`**",
-          "New **`OriginalFileName`** for **`RenameFileAsync`** (metadata only)"
+          "RenameFileRequest",
+          "New OriginalFileName for RenameFileAsync (metadata only)"
         ]
       ],
-      "trail": "Dependency injection for disk is usually **`Extensions.AddFileStorageServiceKeyed`** overloads keyed with your tenant/service key alongside **`IFileMetadataStore`** registration.\n\n---"
+      "trail": "Dependency injection for disk is usually Extensions.AddFileStorageServiceKeyed overloads keyed with your tenant/service key alongside IFileMetadataStore registration."
     },
     {
       "type": "list",
-      "title": "Features (overview)",
+      "title": "Features",
       "items": [
-        "**Multiple storage backends** — Local disk (**this package**); cloud in **`Lyo.FileStorage.S3`** and **`Lyo.FileStorage.AzureBlob`**",
-        "**Compression & encryption** — Optional **`ICompressionService`** (exposes **`Resolver`** and **`ResolveForCompress`**; policy via **`AddCompressionPolicySelector`**), * *`ITwoKeyEncryptionService`**",
-        "**Metadata** — **`IFileMetadataStore`** (**`FileStoreResult`**)",
-        "**Duplicate detection** — Configurable hashing strategies (**`DuplicateHandlingStrategy`**)",
-        "**Streaming** — **`SaveFromStreamAsync`**, pipeline reads via **`GetFileStreamAsync`**",
-        "**Thread safety** — Design matches concurrent callers; honour lifetimes on **`IFileMetadataStore`** and keystores",
-        "**Cleanup** — Partial file cleanup helpers on **`FileStorageServiceBase`**",
-        "**Metrics & logging** — Hooks into **`IMetrics`** / **`ILoggerFactory`**"
+        "**Multiple storage backends.** Local disk in this package. Cloud in Lyo.FileStorage.S3 and Lyo.FileStorage.AzureBlob.",
+        "**Compression and encryption.** Optional ICompressionService (exposes Resolver and ResolveForCompress; policy via AddCompressionPolicySelector), ITwoKeyEncryptionService.",
+        "**Metadata.** IFileMetadataStore (FileStoreResult).",
+        "**Duplicate detection.** Configurable hashing strategies (DuplicateHandlingStrategy).",
+        "**Streaming.** SaveFromStreamAsync, pipeline reads via GetFileStreamAsync.",
+        "**Lifetimes.** Honour lifetimes on IFileMetadataStore and keystores. Overlapping async calls on one service instance are supported.",
+        "**Cleanup.** Partial file cleanup helpers on FileStorageServiceBase.",
+        "**Metrics and logging.** Hooks into IMetrics / ILoggerFactory."
       ]
     },
     {
       "type": "paragraph",
-      "title": "Production ready",
-      "text": "This library has been exercised for library-style production scenarios and includes defensive validation, hashing, auditing hooks, malware scan integration, and observable health checks (**`CheckHealthAsync`**)."
-    },
-    {
-      "type": "paragraph",
       "title": "Error handling",
-      "text": "Detailed errors cover missing optional services, invalid prefixes, traversal attempts (diagnostics/listing paths), **`FileNotAvailableException`** for availability-aware reads, * *`FilePolicyRejectedException`** for scanners, and **`FileNotFoundException`** when configured to throw."
+      "text": "Errors cover missing optional services, invalid prefixes, traversal attempts (diagnostics/listing paths), FileNotAvailableException for availability-aware reads, FilePolicyRejectedException for scanners, and FileNotFoundException when configured to throw."
     },
     {
       "type": "paragraph",
       "title": "Security",
-      "text": "Path prefixes are normalised on cloud/local paths via shared helpers: **`Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix`** for both listing prefixes and save/direct-upload entry points, and **`CloudObjectKeyBuilder`** for object/blob key shape (**`Build`**, **`FromMetadata`** from `SourceFileName` + path prefix, **`InferTrailingSuffixAfterFileId`**). Save paths additionally apply **`EnsureUnderRoot`** before writing to disk. * *`HashVerifyingReadStream`** uses a fixed-time compare and only verifies on EOF. Pre-signed reads fall back to the metadata-recorded **`PathPrefix`** so SAS/GET URLs work even when the caller cannot supply the original prefix. **`DirectUploadReceiveBaseUri`** trusts the named host — use only inside controlled (**Test API**) topologies."
+      "text": "Path prefixes are normalised on cloud/local paths via shared helpers: Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix for both listing prefixes and save/direct-upload entry points, and CloudObjectKeyBuilder for object/blob key shape (Build, FromMetadata from SourceFileName + path prefix, InferTrailingSuffixAfterFileId). Save paths also apply EnsureUnderRoot before writing to disk. HashVerifyingReadStream uses a fixed-time compare and only verifies on EOF. Pre-signed reads fall back to the metadata-recorded PathPrefix so SAS/GET URLs work even when the caller cannot supply the original prefix. DirectUploadReceiveBaseUri trusts the named host. Use only inside controlled Test API topologies."
     },
     {
       "type": "paragraph",
-      "title": "Thread safety",
-      "text": "**`LocalFileStorageService`** and **`FileStorageServiceBase`** are safe for overlapping async calls assuming dependencies are disposed/correct lifetime."
+      "title": "Concurrency",
+      "text": "LocalFileStorageService and FileStorageServiceBase accept overlapping async calls. Honour the lifetimes of IFileMetadataStore and keystores."
     },
     {
       "type": "paragraph",
       "title": "Health checks",
-      "text": "Use **`await fileStorage.CheckHealthAsync(ct)`**; backends choose lightweight vs fuller modes via **`HealthCheckMode`**."
+      "text": "Use await fileStorage.CheckHealthAsync(ct). Backends choose lightweight vs deeper modes via HealthCheckMode."
     },
     {
       "type": "table",
@@ -503,16 +498,16 @@
       ],
       "rows": [
         [
-          "**`Lyo.FileStorage.Tests`**",
-          "Local backend end-to-end (streaming, hashing, multipart, direct upload, **staged upload**, audit, scan policies, duplicate strategies, cancellation, deletion modes), `FileHelpers` path-prefix coverage, **`CloudObjectKeyBuilder.FromMetadata`**, and **zip archive** (flat/nested paths, names, limits, missing id, temp-session dispose)"
+          "Lyo.FileStorage.Tests",
+          "Local backend end-to-end (streaming, hashing, multipart, direct upload, staged upload, audit, scan policies, duplicate strategies, cancellation, deletion modes), FileHelpers path-prefix coverage, CloudObjectKeyBuilder.FromMetadata, and zip archive (flat/nested paths, names, limits, missing id, temp-session dispose)"
         ],
         [
-          "**`Lyo.FileStorage.S3.Tests`**",
-          "Isolated coverage for `S3UploadServerSideEncryption`, `S3UploadStream`, **`S3StagedFileUploadService`** (presigned PUT via `FakeAmazonS3`), `S3GetObjectResponseStream`, `CloudObjectKeyBuilder`, options invariants"
+          "Lyo.FileStorage.S3.Tests",
+          "Isolated coverage for S3UploadServerSideEncryption, S3UploadStream, S3StagedFileUploadService (presigned PUT via FakeAmazonS3), S3GetObjectResponseStream, CloudObjectKeyBuilder, options invariants"
         ],
         [
-          "**`Lyo.FileStorage.AzureBlob.Tests`**",
-          "Isolated coverage for `AzureBlobFileStorageOptions`, **`AzureBlobStagedFileUploadService`** (offline SAS generation), `CloudObjectKeyBuilder`"
+          "Lyo.FileStorage.AzureBlob.Tests",
+          "Isolated coverage for AzureBlobFileStorageOptions, AzureBlobStagedFileUploadService (offline SAS generation), CloudObjectKeyBuilder"
         ]
       ],
       "trail": "Cloud backends use a `DispatchProxy`-based lightweight stub for `IAmazonS3`; deeper end-to-end coverage would need LocalStack/Azurite."

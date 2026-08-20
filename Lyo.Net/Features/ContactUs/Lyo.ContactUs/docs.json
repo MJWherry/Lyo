@@ -2,8 +2,8 @@
   "id": "Lyo.ContactUs",
   "name": "Lyo.ContactUs",
   "area": "Features",
-  "tagline": "Core abstractions for contact-form submission. The interface (`IContactUsService`) and a `ContactUsServiceBase` that handles validation, error-code mapping, and logging live here; concrete storage…",
-  "description": "Core abstractions for contact-form submission. The interface (`IContactUsService`) and a `ContactUsServiceBase` that handles validation, error-code mapping, and logging live\nhere; concrete storage implementations live in sibling packages such as [`Lyo.ContactUs.Postgres`](../Lyo.ContactUs.Postgres/README.md).",
+  "tagline": "Contact-form submission contracts. `IContactUsService` and `ContactUsServiceBase` handle validation, error-code mapping, and logging. Storage lives in sibling packages.",
+  "description": "Contact-form submission contracts. `IContactUsService` and `ContactUsServiceBase` handle validation, error-code mapping, and logging.\nStorage implementations live in sibling packages such as [`Lyo.ContactUs.Postgres`](../Lyo.ContactUs.Postgres/README.md).",
   "features": [],
   "examples": [
     {
@@ -20,7 +20,7 @@
   "sections": [
     {
       "type": "list",
-      "title": "Surface — `IContactUsService`",
+      "title": "`IContactUsService`",
       "items": [
         "`Task<ContactUsSubmitResult> SubmitAsync(ContactUsRequest request, CancellationToken ct = default)`",
         "`Task<bool> TestConnectionAsync(CancellationToken ct = default)`"
@@ -28,7 +28,7 @@
     },
     {
       "type": "list",
-      "title": "Surface — `ContactUsServiceBase`",
+      "title": "`ContactUsServiceBase`",
       "items": [
         "`ValidateRequest(ContactUsRequest)` (virtual; default checks `Name` / `Email` (≤ 320 chars) / `Subject` / `Message` and clamps message length to `Options.MinMessageLength` … `Options.MaxMessageLength`).",
         "`SubmitCoreAsync(ContactUsRequest, CancellationToken)` (abstract; actually persist the row).",
@@ -37,7 +37,7 @@
     },
     {
       "type": "list",
-      "title": "Surface — Request / result models (`Lyo.ContactUs.Models`)",
+      "title": "Request / result models (`Lyo.ContactUs.Models`)",
       "items": [
         "`ContactUsRequest` *(record)*: `Name` (req, ≤ 200), `Email` (req, ≤ 320, `[EmailAddress]`), `Subject` (req, ≤ 500), `Message` (req, ≤ 10 000), optional `Phone` (≤ 50), optional `Company` (≤ 200).",
         "`ContactUsServiceOptions`: `SectionName = \"ContactUsOptions\"`, `MaxMessageLength` (default `10000`), `MinMessageLength` (default `10`), `EnableMetrics` (default `false`).",
@@ -46,11 +46,11 @@
     },
     {
       "type": "list",
-      "title": "Surface — DI helpers (`Extensions`)",
+      "title": "DI helpers (`Extensions`)",
       "items": [
-        "`services.AddContactUsService<TService, TOptions>(Action<TOptions>? configure = null)` — generic registration of a custom `IContactUsService` + options type.",
-        "`services.AddContactUsService<TService>(ContactUsServiceOptions options)` — same with a pre-built options instance.",
-        "`services.AddContactUsFromConfiguration(IConfiguration configuration, string sectionName = ContactUsServiceOptions.SectionName)` — binds only the shared `ContactUsServiceOptions` (idempotent — skips if already registered). Pair this with a storage registration such as `AddContactUsPostgres(...)` from `Lyo.ContactUs.Postgres` to get a working service."
+        "`services.AddContactUsService<TService, TOptions>(Action<TOptions>? configure = null)` generic registration of a custom `IContactUsService` + options type.",
+        "`services.AddContactUsService<TService>(ContactUsServiceOptions options)` same with a pre-built options instance.",
+        "`services.AddContactUsFromConfiguration(IConfiguration configuration, string sectionName = ContactUsServiceOptions.SectionName)` binds only the shared `ContactUsServiceOptions` (idempotent, skips if already registered). Pair this with a storage registration such as `AddContactUsPostgres(...)` from `Lyo.ContactUs.Postgres` to get a working service."
       ]
     },
     {

@@ -3,7 +3,7 @@
   "name": "Lyo.Encryption.AesSiv",
   "area": "Security",
   "tagline": "AES-SIV (RFC 5297) deterministic authenticated encryption addon for `Lyo.Encryption`. Provides `AesSivEncryptionService` backed by `Dorssel.Security.Cryptography.AesExtra` and matching DI extensions.",
-  "description": "AES-SIV (RFC 5297) deterministic authenticated encryption addon for `Lyo.Encryption`. Provides `AesSivEncryptionService` backed by `Dorssel.Security.Cryptography.AesExtra` and matching DI extensions.\n\nInstall this addon only when you actually use AES-SIV — the core `Lyo.Encryption` package no longer pulls `Dorssel.Security.Cryptography.AesExtra`.",
+  "description": "AES-SIV (RFC 5297) deterministic authenticated encryption addon for `Lyo.Encryption`. Provides `AesSivEncryptionService` backed by `Dorssel.Security.Cryptography.AesExtra` and matching DI extensions.\n\nInstall this addon only when you actually use AES-SIV. The core `Lyo.Encryption` package no longer pulls `Dorssel.Security.Cryptography.AesExtra`.",
   "features": [],
   "examples": [
     {
@@ -21,17 +21,17 @@
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "Requires **`IKeyStore`**. Configure keys with `AddLocalKeyStore` / `AddKeyedLocalKeyStore` and read **`IConfiguration`** inside the `configure` callback (see [ `Lyo.KeyStore`](../Lyo.KeyStore/README.md))."
+      "text": "Requires `IKeyStore`. Configure keys with `AddLocalKeyStore` / `AddKeyedLocalKeyStore` and read `IConfiguration` inside the `configure` callback (see [`Lyo.KeyStore`](../Lyo.KeyStore/README.md))."
     },
     {
       "type": "paragraph",
       "title": "Keyed two-key",
-      "text": "See [`Lyo.Encryption`](../Lyo.Encryption/README.md) for the full registration table and core `AddEncryptionServiceKeyed` overloads."
+      "text": "See [`Lyo.Encryption`](../Lyo.Encryption/README.md) for the registration table and core `AddEncryptionServiceKeyed` overloads."
     },
     {
       "type": "paragraph",
       "title": "Performance",
-      "text": "BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **17.0 ms encrypt / 16.4 ms decrypt @ 1 MB** (~25× slower than AES-GCM). Deterministic SIV mode; choose for nonce-misuse resistance, not peak throughput. Full tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)."
+      "text": "BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **17.0 ms encrypt / 16.4 ms decrypt @ 1 MB** (~25× slower than AES-GCM). Deterministic SIV mode. Choose for nonce-misuse resistance, not peak throughput. Tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)."
     }
   ],
   "links": [],

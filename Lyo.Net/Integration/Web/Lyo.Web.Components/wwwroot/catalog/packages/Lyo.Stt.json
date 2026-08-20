@@ -2,17 +2,17 @@
   "id": "Lyo.Stt",
   "name": "Lyo.Stt",
   "area": "Communication",
-  "tagline": "Provider-agnostic Speech-to-Text **contract** for the Lyo stack. This package ships the interface (`ISttService`), an abstract base class (`SttServiceBase`), the request/result/options/event records…",
-  "description": "Provider-agnostic Speech-to-Text **contract** for the Lyo stack. This package ships the interface (`ISttService`), an abstract base class (`SttServiceBase`), the request/result/options/event records, and metric name constants. **No provider implementations ship in this repository today** — applications that need transcription provide their own `SttServiceBase` subclass (or any `ISttService`) and register it through DI themselves.",
+  "tagline": "Speech-to-text contract for Lyo. Ships `ISttService`, `SttServiceBase`, request/result/options/event records, and metric name constants. No provider packages ship in this repo.",
+  "description": "Speech-to-text contract for Lyo. This package ships `ISttService`, an abstract `SttServiceBase`, the request/result/options/event records, and metric name constants. No provider implementations ship in this repository. Applications that need transcription implement `SttServiceBase` (or any `ISttService`) and register it themselves.",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "list",
-      "title": "What ships — `ISttService`",
+      "title": "`ISttService`",
       "items": [
         "`RecognizeAsync(byte[] audioData, LanguageCodeInfo?, AudioFormat?, CancellationToken)`",
-        "`RecognizeFromFileAsync(string audioFilePath, LanguageCodeInfo?, CancellationToken)` — audio format is detected from the file extension.",
+        "`RecognizeFromFileAsync(string audioFilePath, LanguageCodeInfo?, CancellationToken)`. Audio format is detected from the file extension.",
         "`RecognizeFromStreamAsync(Stream audioStream, LanguageCodeInfo?, AudioFormat?, CancellationToken)`",
         "`RecognizeAsync(SttRequest request, CancellationToken)`",
         "`RecognizeBulkAsync(IEnumerable<SttRequest>, CancellationToken)`",
@@ -21,12 +21,12 @@
     },
     {
       "type": "paragraph",
-      "title": "What ships — `SttServiceBase`",
-      "text": "Abstract `ISttService` implementation (also `IDisposable`) that supplies the bulk pipeline, concurrency throttling, and metric/event plumbing. Subclasses implement: - `Task<SttResult> RecognizeCoreAsync(SttRequest request, CancellationToken ct)` — the actual provider call. - `Task<bool> TestConnectionAsync(CancellationToken ct)`. The base class exposes events `Recognizing`, `Recognized`, `BulkRecognizing`, and `BulkRecognized`, and applies a `SemaphoreSlim` sized by `SttServiceOptions.BulkSttConcurrencyLimit` to throttle bulk work."
+      "title": "`SttServiceBase`",
+      "text": "Abstract `ISttService` implementation (also `IDisposable`) that supplies the bulk pipeline, concurrency throttling, and metric/event plumbing. Subclasses implement `Task<SttResult> RecognizeCoreAsync(SttRequest request, CancellationToken ct)` (the provider call) and `Task<bool> TestConnectionAsync(CancellationToken ct)`. The base class exposes events `Recognizing`, `Recognized`, `BulkRecognizing`, and `BulkRecognized`, and applies a `SemaphoreSlim` sized by `SttServiceOptions.BulkSttConcurrencyLimit` to throttle bulk work."
     },
     {
       "type": "table",
-      "title": "What ships — `SttServiceOptions`",
+      "title": "`SttServiceOptions`",
       "headers": [
         "Property",
         "Type",
@@ -75,7 +75,7 @@
     },
     {
       "type": "table",
-      "title": "What ships — Metric names (`Lyo.Stt.Constants.Metrics`)",
+      "title": "Metric names (`Lyo.Stt.Constants.Metrics`)",
       "headers": [
         "Key",
         "Metric",
@@ -128,7 +128,7 @@
     {
       "type": "paragraph",
       "title": "No bundled providers",
-      "text": "There are no `Lyo.Stt.*` provider packages in this solution at the moment. To use the contract you must write your own implementation (typically by subclassing `SttServiceBase` and wiring it into DI directly). If/when a provider ships, this README will list it here."
+      "text": "There are no `Lyo.Stt.*` provider packages in this solution. To use the contract you must write your own implementation, typically by subclassing `SttServiceBase` and registering it in DI. If a provider ships later, this README will list it here."
     },
     {
       "type": "paragraph",

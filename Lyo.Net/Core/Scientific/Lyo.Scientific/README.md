@@ -1,12 +1,12 @@
 # Lyo.Scientific
 
-Scientific **domain models**, **reference datasets**, **SI-oriented unit helpers**, and **formula discovery** built on [ `Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md). Numerical formulas that operate on these types are in [ `Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md) (F#).
+Scientific domain models, reference datasets, SI-oriented unit helpers, and formula discovery built on [ `Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md). Numerical formulas that operate on these types are in [ `Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md) (F#).
 
-**Target frameworks:** `netstandard2.0`, `net10.0`
+Target frameworks: `netstandard2.0`, `net10.0`
 
 ## `ScientificConstants`
 
-Named **CODATA-style** double constants (SI): gravitational constant, standard gravity, speed of light, universal gas constant, vacuum permittivity, Planck constant, Avogadro, Boltzmann, elementary charge, plus `Pi` and `Tau`. Use for physics formulas (see `PhysicsFunctions` in `Lyo.Mathematics.Functions`). ---
+Named CODATA-style double constants (SI): gravitational constant, standard gravity, speed of light, universal gas constant, vacuum permittivity, Planck constant, Avogadro, Boltzmann, elementary charge, plus `Pi` and `Tau`. Use for physics formulas (see `PhysicsFunctions` in `Lyo.Mathematics.Functions`).
 
 ## Units (`Lyo.Scientific.Units`)
 
@@ -21,8 +21,6 @@ Named **CODATA-style** double constants (SI): gravitational constant, standard g
 | `UnitConversion.Add` | Adds SI values after dimension check. |
 | `UnitConversion.ApplyPrefix` | Scales by metric prefix multiplier. |
 | `ScientificUnitPrefix` / `ScientificUnitPrefixes.Metric` | T, G, M, k, h, da, d, c, m, μ, n, p prefixes. |
-
----
 
 ## Astronomy (`Lyo.Scientific.Astronomy`)
 
@@ -42,8 +40,6 @@ Named **CODATA-style** double constants (SI): gravitational constant, standard g
 | `Asteroid`, `Comet` | Small-body records with `OrbitalElements`, physical parameters. |
 | `SmallBodies.Asteroids` / `SmallBodies.Comets` | Example entries (Ceres, 1P/Halley). |
 
----
-
 ## Chemistry (`Lyo.Scientific.Chemistry`)
 
 | Type / static | Description |
@@ -61,13 +57,11 @@ Named **CODATA-style** double constants (SI): gravitational constant, standard g
 | `BalancedReactionResult` | Balanced reaction sides. |
 | `StoichiometryResult` | Product moles + mass (grams). |
 
----
-
 ## Engineering (`Lyo.Scientific.Engineering`)
 
-- **Materials / catalogs:** `MaterialProperty` (density, specific heat, conductivity, optional viscosity, expansion, Young’s modulus, yield, fracture toughness); `EngineeringMaterials.Common` (Air, Water, Steel, Aluminum, Copper).
-- **Thermo / heat / flow:** `ThermodynamicState`, `HeatTransferInput`, `ConductionInput`, `ThermalExpansionInput`, `ConvectiveHeatTransferInput`, `RadiativeHeatTransferInput`, `HeatExchangerInput`, `HeatExchangerResult`, `NaturalConvectionInput`, `ConvectionCorrelationInput`, `RadiationExchangeInput`, `FluidFlowState`, `ReynoldsNumberInput`, `DragForceInput`, `BuoyancyInput`, `PipeFlowInput`, `NozzleFlowInput`, `NozzleFlowResult`, `CompressibleFlowInput`, `ObliqueShockInput`, `ObliqueShockResult`, `NormalShockInput`, …
-- **Mechanics / solids:** `RotationalInertiaInput`, `RotationalEnergyInput`, `AngularMomentumInput`, `SpringOscillatorInput`, `PendulumInput`, `StressStrainInput`, `BeamBendingInput`, `FractureInput`, `RectangularSectionInput`, `CircularSectionInput`, `FatigueInput`, `SNCurveInput`, `BeamSectionProfile`, `BeamSectionCatalog.Common`.
+- **Materials / catalogs.** `MaterialProperty` (density, specific heat, conductivity, optional viscosity, expansion, Young's modulus, yield, fracture toughness). `EngineeringMaterials.Common` (Air, Water, Steel, Aluminum, Copper).
+- **Thermo / heat / flow.** `ThermodynamicState`, `HeatTransferInput`, `ConductionInput`, `ThermalExpansionInput`, `ConvectiveHeatTransferInput`, `RadiativeHeatTransferInput`, `HeatExchangerInput`, `HeatExchangerResult`, `NaturalConvectionInput`, `ConvectionCorrelationInput`, `RadiationExchangeInput`, `FluidFlowState`, `ReynoldsNumberInput`, `DragForceInput`, `BuoyancyInput`, `PipeFlowInput`, `NozzleFlowInput`, `NozzleFlowResult`, `CompressibleFlowInput`, `ObliqueShockInput`, `ObliqueShockResult`, `NormalShockInput`, and similar.
+- **Mechanics / solids.** `RotationalInertiaInput`, `RotationalEnergyInput`, `AngularMomentumInput`, `SpringOscillatorInput`, `PendulumInput`, `StressStrainInput`, `BeamBendingInput`, `FractureInput`, `RectangularSectionInput`, `CircularSectionInput`, `FatigueInput`, `SNCurveInput`, `BeamSectionProfile`, `BeamSectionCatalog.Common`.
 
 ## Discovery and workflow helpers
 
@@ -75,8 +69,6 @@ Named **CODATA-style** double constants (SI): gravitational constant, standard g
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `ScientificFormulaRegistry.All` | Curated `FormulaDescriptor` entries pointing at `Lyo.Scientific.Functions` (molar mass, reaction balance, orbital period, oblique shock, fatigue life, …). |
 | `ScientificWorkflowExtensions` | `MolarMassEstimate(this ChemicalCompound)` (element weights × counts), `InAstronomicalUnits(this PlanetaryBody)`, `GetMaterial(this string name)` (case-insensitive match in `EngineeringMaterials.Common`). |
-
----
 
 ## Repository
 
@@ -86,9 +78,9 @@ Named **CODATA-style** double constants (SI): gravitational constant, standard g
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Mathematics` — (direct, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Mathematics` (direct, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

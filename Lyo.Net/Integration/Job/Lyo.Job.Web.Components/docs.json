@@ -2,8 +2,8 @@
   "id": "Lyo.Job.Web.Components",
   "name": "Lyo.Job.Web.Components",
   "area": "Integration",
-  "tagline": "Blazor / MudBlazor dashboard for the Lyo job-management stack. Drop `JobManagement` into a host page for Statistics, Definitions, Schedules, Runs (with **progress** and **SLA breach** indicators)…",
-  "description": "Blazor / MudBlazor dashboard for the Lyo job-management stack. Drop `JobManagement` into a host page for Statistics, Definitions, Schedules, Runs (with **progress** and **SLA\nbreach** indicators), **worker registry**, and **workflow** views — all using an injected `IApiClient` and configurable base route prefix.\n\nPair with [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for a live-updating dashboard that receives `JobEvent` broadcasts without polling.\n\nAll components target server-side or interactive Blazor in `net10.0` and pull in MudBlazor `>= 9.3`.\n\nThis package is a **Razor component library** — it has no `AddXxx` DI registration. The host must already register `IApiClient` (and optionally [\n`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for live updates).",
+  "tagline": "Blazor / MudBlazor dashboard for the Lyo job stack. Add `JobManagement` to a host page for Statistics, Definitions, Schedules, Runs (progress and SLA breach), worker registry, and workflow views.",
+  "description": "Blazor / MudBlazor dashboard for the Lyo job stack. Add `JobManagement` to a host page for Statistics, Definitions, Schedules, Runs (progress and SLA breach indicators), worker registry, and workflow views. Uses an injected `IApiClient` and a configurable base route prefix.\n\nPair with [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for a live dashboard that receives `JobEvent` broadcasts without polling.\n\nTargets server-side or interactive Blazor on `net10.0` and pulls in MudBlazor `>= 9.3`.\n\nThis package is a Razor component library. It has no `AddXxx` DI registration. The host must already register `IApiClient` (and optionally [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for live updates).",
   "features": [],
   "examples": [
     {
@@ -116,7 +116,7 @@
     },
     {
       "type": "table",
-      "title": "Production hardening in the UI",
+      "title": "UI features",
       "headers": [
         "Feature",
         "Where surfaced"
@@ -136,7 +136,7 @@
         ],
         [
           "Queue resync",
-          "`JobRunGrid` **Resync RabbitMQ** toolbar — `POST Job/Run/Resync` (scoped when a definition filter is set)"
+          "`JobRunGrid` **Resync RabbitMQ** toolbar. `POST Job/Run/Resync` (scoped when a definition filter is set)"
         ],
         [
           "Worker registry",
@@ -148,7 +148,7 @@
         ],
         [
           "Schedules / blackout calendars",
-          "**Schedules** tab — add/remove schedules, enable toggle, timezone dropdown defaulting to the browser zone, local date pickers, inline blackout calendar/windows, misfire/cron fields"
+          "**Schedules** tab. Add/remove schedules, enable toggle, timezone dropdown defaulting to the browser zone, local date pickers, inline blackout calendar/windows, misfire/cron fields"
         ],
         [
           "Dry run",

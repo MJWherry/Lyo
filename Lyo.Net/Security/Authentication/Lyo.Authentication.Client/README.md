@@ -1,6 +1,6 @@
 # Lyo.Authentication.Client
 
-Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host (typically a Blazor Server gateway or a server-rendered API consumer) into a Lyo authentication API without ever exposing tokens to the browser.
+Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host, typically a Blazor Server gateway or a server-rendered API consumer, into a Lyo authentication API without ever exposing tokens to the browser.
 
 ## Examples
 
@@ -63,18 +63,18 @@ app.MapLyoAuthSignOut();
 The Lyo API (running `Lyo.Authentication.OpenIdConnect.Endpoints.AuthEndpointsMapper`)
 handles `/auth/login`, `/auth/callback`, `/auth/handoff/exchange`, `/auth/token`,
 `/auth/refresh`, `/auth/logout`, and `/auth/me`. It issues Lyo-signed JWTs after a
-successful external login (Google, Keycloak, …).
+successful external login (Google, Keycloak, and others).
 
 For browser clients the callback redirects to
-`{returnUrl}?lyo_handoff=lyoh_…` instead of dropping tokens directly. This
+`{returnUrl}?lyo_handoff=lyoh_...` instead of dropping tokens directly. This
 package picks up the redirect on the consumer origin, exchanges the handoff code
 server-to-server for the tokens, stashes them in a `LyoAuthSessionStore`,
 issues an HttpOnly cookie containing only the data-protected session id, and
 projects the JWT claims into ASP.NET's `ClaimsPrincipal` and Blazor's
 `AuthenticationStateProvider`.
 
-Outbound API calls go through `LyoAuthDelegatingHandler` which injects
-`Authorization: Bearer <access_token>` and transparently refreshes on 401.
+Outbound API calls go through `LyoAuthDelegatingHandler`, which injects
+`Authorization: Bearer <access_token>` and refreshes on 401.
 
 ```
 browser ── GET /auth/sign-in/google ─────────────► consumer (this lib)
@@ -98,11 +98,11 @@ browser receives Set-Cookie: lyo_session=...
 
 ## Quick start
 
-In the consuming host's `Program.cs`: `appsettings.json`: On the API side, add the consumer's origin to the allow-list: Then in your UI:
+Register in the consuming host's `Program.cs`. Bind `appsettings.json`. On the API side, add the consumer's origin to the allow-list. Then in your UI:
 
 ## API client flow (no browser)
 
-For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `POST /auth/refresh` directly on the API. Both return JSON `{access_token, expires_in, refresh_token, token_type}`. This package isn't needed for that flow — it exists purely to bridge the browser handoff into a server-managed session.
+For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `POST /auth/refresh` directly on the API. Both return JSON `{access_token, expires_in, refresh_token, token_type}`. This package isn't needed for that flow. It exists to bridge the browser handoff into a server-managed session.
 
 ## Production swap-out points
 
@@ -112,7 +112,7 @@ For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `
 
 ## Security checklist
 
-- Cookies are `HttpOnly`, `Secure` (when the request is HTTPS), `SameSite=Lax`, and carry only the data-protected session id — never tokens.
+- Cookies are `HttpOnly`, `Secure` (when the request is HTTPS), `SameSite=Lax`, and carry only the data-protected session id. Never tokens.
 - The handoff code is single-use, TTL-bounded (default 30s), and bound to the consumer's `Origin` header on the exchange.
 - Tokens never appear in URL fragments, server logs, or the browser DOM.
 - Sign-out revokes the refresh token at the API and clears the local session.
@@ -121,19 +121,20 @@ For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Api.Models` — (direct, lyo)
-- `Lyo.Authentication.Models` — (direct, lyo)
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Diagnostic.AspNetCore` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Diagnostic` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.PackageMetadata` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)
+- `Lyo.Api.Models` (direct, lyo)
+- `Lyo.Authentication.Models` (direct, lyo)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Diagnostic.AspNetCore` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

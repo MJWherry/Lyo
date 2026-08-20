@@ -16,7 +16,7 @@
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "See [`Lyo.Compression`](../Lyo.Compression/README.md) for the registration overview, `ICompressionResolver`, and configuration file example. **File storage reads:** register `AddXzCompressor()` when stored metadata may reference XZ; reads dispatch through `ICompressionResolver` by `CompressionAlgorithm` metadata."
+      "text": "See [`Lyo.Compression`](../Lyo.Compression/README.md) for registration, ICompressionResolver, and the configuration file example. File storage reads: register AddXzCompressor() when stored metadata may reference XZ. Reads dispatch through ICompressionResolver by CompressionAlgorithm metadata."
     }
   ],
   "links": [],

@@ -2,12 +2,12 @@
   "id": "Lyo.Tts.AwsPolly",
   "name": "Lyo.Tts.AwsPolly",
   "area": "Communication",
-  "tagline": "Amazon Polly integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.",
-  "description": "[Amazon Polly](https://docs.aws.amazon.com/polly/) integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "tagline": "Amazon Polly TTS. `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.",
+  "description": "[Amazon Polly](https://docs.aws.amazon.com/polly/) TTS. `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
   "features": [],
   "examples": [
     {
-      "title": "Quick start (code)",
+      "title": "Quick start",
       "language": "csharp",
       "code": "using Lyo.Common.Enums;\nusing Lyo.Common.Records;\nusing Lyo.Tts.AwsPolly;\n\nvar options = new AwsPollyOptions\n{\n    Region = \"us-east-1\",\n    DefaultVoiceId = nameof(AwsPollyVoiceId.Joanna),\n    DefaultLanguageCode = LanguageCodeInfo.EnUs,\n    DefaultOutputFormat = AudioFormat.Mp3\n};\n\nawait using var service = new AwsPollyTtsService(options);\nvar result = await service.SynthesizeAsync(\"Hello, world!\");\n\nif (result.IsSuccess && result.AudioData is { Length: > 0 })\n{\n    await File.WriteAllBytesAsync(\"out.mp3\", result.AudioData);\n}"
     },
@@ -20,7 +20,7 @@
   "sections": [
     {
       "type": "paragraph",
-      "title": "Quick start (code)",
+      "title": "Quick start",
       "text": "Prefer **IAM roles**, environment credentials, or the shared credentials file instead of embedding `AccessKeyId` / `SecretAccessKey`."
     },
     {
@@ -29,13 +29,13 @@
       "items": [
         "`AwsPollyTtsService` (the singleton implementation, subclass of `TtsServiceBase<AwsPollyTtsRequest>`).",
         "`ITtsService<AwsPollyTtsRequest>` resolved from the singleton above.",
-        "`AwsPollyTtsAppService` — a thin adapter that converts `TtsResult<AwsPollyTtsRequest>` into `TtsSynthesisResult`.",
-        "`ITtsService` (non-generic) backed by `AwsPollyTtsAppService`, so callers that only need the simple contract can resolve it directly without referencing the Polly-specific types."
+        "`AwsPollyTtsAppService` converts `TtsResult<AwsPollyTtsRequest>` into `TtsSynthesisResult`.",
+        "`ITtsService` (non-generic) backed by `AwsPollyTtsAppService`, so callers that only need the simple contract can resolve it without referencing Polly-specific types."
       ]
     },
     {
       "type": "table",
-      "title": "Behaviour notes",
+      "title": "Behavior notes",
       "headers": [
         "Area",
         "Detail"
@@ -55,7 +55,7 @@
         ],
         [
           "Adapter",
-          "`AwsPollyTtsAppService` adapts `AwsPollyTtsService` to `ITtsService.SynthesizeAsync(text, voiceId)`, surfacing the first error message on failure and audio bytes on success"
+          "`AwsPollyTtsAppService` adapts `AwsPollyTtsService` to `ITtsService.SynthesizeAsync(text, voiceId)`. On failure it returns the first error message. On success it returns audio bytes."
         ]
       ]
     }

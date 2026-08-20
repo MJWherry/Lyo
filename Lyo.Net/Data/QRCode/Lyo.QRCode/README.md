@@ -1,6 +1,6 @@
 # Lyo.QRCode
 
-**QR code generation and reading** for Lyo: **`IQRCodeService`**, **`QRCodeBuilder`**, ISO **Model 2** encoding in-box (**`BuiltInQRCodeService`**), optional **QRCoder** adapter package **`Lyo.QRCode.QRCoder`**, and typed **payload helpers** (`Lyo.QRCode.Payloads`) for Wi‑Fi, URLs, vCard, `mailto:`, etc.
+QR code generation and reading for Lyo: `IQRCodeService`, `QRCodeBuilder`, ISO Model 2 encoding in-box (`BuiltInQRCodeService`), optional QRCoder adapter package `Lyo.QRCode.QRCoder`, and typed payload helpers (`Lyo.QRCode.Payloads`) for Wi-Fi, URLs, vCard, `mailto:`, etc.
 
 ## Examples
 
@@ -42,28 +42,28 @@ var (_, opts) = QRCodeBuilder.New()
 ## Architecture
 
 | Piece | Role |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **`IQRCodeService`** | Generate to memory, stream, file; batch; **`ReadFromImageAsync`** (ZXing). |
-| **`BuiltInQRCodeService`** | In-library **PNG/SVG** rasterization; **no QRCoder NuGet** for encode. JPEG/BMP not supported here (platform / format limits). |
-| **`Lyo.QRCode.QRCoder`** | Optional **`QRCoderQRCodeService`** + **`AddQRCoderQrCodeService`** for JPEG/Bitmap on Windows and QRCoder-based render path. |
-| **`QRCodeBuilder`** | Fluent **`QRCodeOptions`** + **`WithData`** / **`WithPayload(IQrPayload)`**. |
-| **`Payloads`** | **`IQrPayload`**, **`QrPayloadKind`**, **`WifiQrPayload`**, **`HttpUrlPayload`**, contacts, URI schemes, messaging URLs — all serialize to the string passed to **`GenerateAsync`**. |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IQRCodeService` | Generate to memory, stream, file; batch; `ReadFromImageAsync` (ZXing). |
+| `BuiltInQRCodeService` | In-library PNG/SVG rasterization. No QRCoder NuGet for encode. JPEG/BMP not supported here (platform / format limits). |
+| `Lyo.QRCode.QRCoder` | Optional `QRCoderQRCodeService` + `AddQRCoderQrCodeService` for JPEG/Bitmap on Windows and a QRCoder render path. |
+| `QRCodeBuilder` | `QRCodeOptions` plus `WithData` / `WithPayload(IQrPayload)`. |
+| `Payloads` | `IQrPayload`, `QrPayloadKind`, `WifiQrPayload`, `HttpUrlPayload`, contacts, URI schemes, messaging URLs. All serialize to the string passed to `GenerateAsync`. |
 
 ## Optional: QRCoder package
 
-Add project/package reference to **`Lyo.QRCode.QRCoder`** and call **`AddQRCoderQrCodeService`** (or **`AddQRCoderQrCodeServiceFromConfiguration`**) instead of or in addition to * *`AddQRCodeService`**, depending on how you register **`IQRCodeService`**.
+Add a project/package reference to `Lyo.QRCode.QRCoder` and call `AddQRCoderQrCodeService` (or `AddQRCoderQrCodeServiceFromConfiguration`) instead of or in addition to `AddQRCodeService`, depending on how you register `IQRCodeService`.
 
 ## Payload helpers (`Lyo.QRCode.Payloads`)
 
-- **Wi‑Fi (`WifiQrPayload`)** — Omits **`H:`** when the SSID is not hidden (better phone compatibility than **`H:false`**). Open networks omit **`P`** (not **`P:;`**).
-- **SMS (`SmsPayload`)** — Defaults to **`sms:`** URI scheme; **`smsto:`** is opt-in (some Android SMS apps crash on long **`smsto:`** bodies). Very long URIs throw (* *`MaxSmsQrUriLength`**) to avoid app crashes.
+- **Wi-Fi (`WifiQrPayload`).** Omits `H:` when the SSID is not hidden (better phone compatibility than `H:false`). Open networks omit `P` (not `P:;`).
+- **SMS (`SmsPayload`).** Defaults to `sms:` URI scheme. `smsto:` is opt-in (some Android SMS apps crash on long `smsto:` bodies). Very long URIs throw (`MaxSmsQrUriLength`) to avoid app crashes.
 
 ## Key options
 
-- **`QRCodeOptions.Size`** — **Pixels per module** (each black/white square), not the full image width. Total size ≈ module count per side × **`Size`** (decoration applied separately may grow that further).
-- **`QRCodeOptions.Icon`** — **Hint only** for the encoder: the only field consumed is **`IconSizePercent`**, which bumps the effective ECC level so a planned center logo doesn't break scanning. **`IconBytes`**, **`IconFilePath`**, and **`DrawIconBorder`** are metadata for the consumer's overlay call — the QR encoder never composites the icon. Apply the actual overlay (and any frame/caption/padding) post-generation through **`Lyo.Images.IImageDecorationService`** (see migration note below).
+- `QRCodeOptions.Size`. Pixels per module (each black/white square), not the image width. Total size ≈ module count per side × `Size`. Decoration applied later may grow that further.
+- `QRCodeOptions.Icon`. Hint only for the encoder. The only field consumed is `IconSizePercent`, which bumps the effective ECC level so a planned center logo doesn't break scanning. `IconBytes`, `IconFilePath`, and `DrawIconBorder` are metadata for the consumer's overlay call. The QR encoder never composites the icon. Apply the overlay (and any frame/caption/padding) after generation through `Lyo.Images.IImageDecorationService` (see migration note below).
 
-## Key options — Migration: decoration moved out of the encoder
+## Migration: decoration moved out of the encoder
 
 `QRCodeOptions.Frame`, `QRCodeBuilder.WithFrame(...)`, and the optional `IImageService` / `IQrFrameLayoutService` constructor parameters on `BuiltInQRCodeService` are gone.
 Compose icons and chrome on the returned bytes with `Lyo.Images`:
@@ -88,26 +88,26 @@ var decorated = await decoration.Pipeline(qrBytes)
 
 ## Error correction
 
-**`QRCodeErrorCorrectionLevel`**: Low (~7%), Medium (~15%), Quartile (~25%), High (~30%) recovery. Higher levels tolerate damage and logos better but increase symbol version for the same payload.
+`QRCodeErrorCorrectionLevel`: Low (~7%), Medium (~15%), Quartile (~25%), High (~30%) recovery. Higher levels tolerate damage and logos better but increase symbol version for the same payload.
 
 ## Blazor UI (optional)
 
-- [`Lyo.QRCode.Web.Components`](../Lyo.QRCode.Web.Components/README.md) — **`QrCodeWorkbench`** and related MudBlazor components.
+- [`Lyo.QRCode.Web.Components`](../Lyo.QRCode.Web.Components/README.md). `QrCodeWorkbench` and related MudBlazor components.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `SixLabors.ImageSharp` `3.1.12` — (direct, third-party)
-- `ZXing.Net` `0.16.11` — (direct, third-party)
-- `ZXing.Net.Bindings.ImageSharp.V3` `0.16.18` — (direct, third-party)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `SixLabors.ImageSharp` `3.1.12` (direct, third-party)
+- `ZXing.Net` `0.16.11` (direct, third-party)
+- `ZXing.Net.Bindings.ImageSharp.V3` `0.16.18` (direct, third-party)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

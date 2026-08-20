@@ -5,13 +5,13 @@
   "tagline": "Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific aggregate.",
   "description": "Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific aggregate.",
   "features": [
-    "`ChangeRecord` for entity-scoped history with old values, changed values, optional **actor** (`FromEntity` at API; `from_entity_*` in DB), and optional `ChangeType` / `Message`",
+    "`ChangeRecord` for entity-scoped history with old values, changed values, optional actor (`FromEntity` at API; `from_entity_*` in DB), and optional `ChangeType` / `Message`",
     "`IChangeTracker` for recording, querying, and deleting change history",
-    "`NullChangeTracker.Instance` (singleton) when change tracking is optional — all writes/queries are no-ops"
+    "`NullChangeTracker.Instance` (singleton) when change tracking is optional. All writes and queries are no-ops."
   ],
   "examples": [
     {
-      "title": "Quick Start",
+      "title": "Quick start",
       "language": "csharp",
       "code": "using Lyo.ChangeTracker;\nusing Lyo.EntityReference.Models;\n\nvar orderRef = EntityRef.ForGuid(\"Order\", Guid.Parse(\"11111111-1111-1111-1111-111111111111\"));\nvar userRef = EntityRef.ForKey(\"User\", \"123\");\n\nvar change = new ChangeRecord(\n    orderRef,\n    new Dictionary<string, object?> { [\"Status\"] = \"Draft\" },\n    new Dictionary<string, object?> { [\"Status\"] = \"Submitted\" }) {\n    FromEntity = userRef,\n    ChangeType = \"Updated\",\n    Message = \"Order submitted\"\n};\n\nawait changeTracker.RecordChangeAsync(change);\nvar history = await changeTracker.GetForEntityAsync(orderRef);"
     }
@@ -19,7 +19,7 @@
   "sections": [
     {
       "type": "table",
-      "title": "`IChangeTracker` surface",
+      "title": "`IChangeTracker` methods",
       "headers": [
         "Method",
         "Purpose"
@@ -50,7 +50,7 @@
           "Deletes all history rows recorded against a specific entity."
         ]
       ],
-      "trail": "The base abstraction is purely a contract — health/diagnostics are added by adapter packages (see `Lyo.ChangeTracker.Postgres`)."
+      "trail": "The base abstraction is a contract only. Health and diagnostics come from adapter packages. See `Lyo.ChangeTracker.Postgres`."
     }
   ],
   "links": [],

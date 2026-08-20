@@ -2,8 +2,8 @@
   "id": "Lyo.Barcode",
   "name": "Lyo.Barcode",
   "area": "Data",
-  "tagline": "**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**.",
-  "description": "**Barcode generation and decoding abstractions** for Lyo: **`IBarcodeService`**, request/options models, and a fluent **`BarcodeBuilder`**. Concrete rendering and symbology support live in companion packages (for example **`Lyo.Barcode.Native`**).",
+  "tagline": "Barcode generation and decoding contracts: IBarcodeService, request and options models, and BarcodeBuilder.",
+  "description": "Barcode generation and decoding contracts: IBarcodeService, request and options models, and BarcodeBuilder. Concrete rendering and symbology live in companion packages such as Lyo.Barcode.Native.",
   "features": [],
   "examples": [
     {
@@ -25,59 +25,59 @@
   "sections": [
     {
       "type": "table",
-      "title": "Public API overview",
+      "title": "Public API",
       "headers": [
         "Type",
         "Description"
       ],
       "rows": [
         [
-          "**`IBarcodeService`**",
-          "Generate barcodes (string or **`BarcodeBuilder`**), stream/file output, batch, and **read** barcodes from raster bytes."
+          "IBarcodeService",
+          "Generate barcodes from a string or BarcodeBuilder, write to stream or file, batch, and read barcodes from raster bytes."
         ],
         [
-          "**`BarcodeBuilder`**",
-          "Fluent configuration of payload, **`BarcodeSymbology`**, **`BarcodeOptions`** (module width, colors, human-readable text, border)."
+          "BarcodeBuilder",
+          "Fluent payload, BarcodeSymbology, and BarcodeOptions (module width, colors, human-readable text, border)."
         ],
         [
-          "**`BarcodeRequest`**",
-          "Batch item: **`Data`**, **`Symbology`**, optional **`Options`**, optional **`Id`**."
+          "BarcodeRequest",
+          "Batch item: Data, Symbology, optional Options, optional Id."
         ],
         [
-          "**`BarcodeOptions`**",
-          "Raster/SVG dimensions, colors, quiet zone, human-readable caption under bars, optional **border** frame."
+          "BarcodeOptions",
+          "Raster/SVG dimensions, colors, quiet zone, human-readable caption under bars, optional border frame."
         ],
         [
-          "**`BarcodeServiceOptions`**",
-          "Host limits and defaults for implementations (see **`SectionName`**)."
+          "BarcodeServiceOptions",
+          "Host limits and defaults for implementations. See SectionName."
         ],
         [
-          "**`BarcodeResult`**",
-          "**`Result<BarcodeRequest>`** carrying **`ImageBytes`**, dimensions, format."
+          "BarcodeResult",
+          "Result<BarcodeRequest> with ImageBytes, dimensions, and format."
         ],
         [
-          "**`BarcodeImageReadResult`**",
-          "Decoder output: **`Text`**, **`FormatName`**."
+          "BarcodeImageReadResult",
+          "Decoder output: Text, FormatName."
         ],
         [
-          "**`BarcodeSymbology`**, **`BarcodeFormat`**",
+          "BarcodeSymbology, BarcodeFormat",
           "Supported symbologies and output formats."
         ],
         [
-          "**`BarcodeErrorCodes`**",
+          "BarcodeErrorCodes",
           "Stable error code strings for failures."
         ]
       ]
     },
     {
       "type": "paragraph",
-      "title": "Border (rendering)",
-      "text": "When **`BarcodeOptions.ShowBorder`** is true, **`Lyo.Barcode.Native`** expands the output by **`2 × BorderWidthPixels`** on width and height and draws a filled frame in * *`BorderColorHex`** around the symbol (inside that inset, the usual background and bars are unchanged). Width is clamped by **`BarcodeServiceOptions.MinBorderWidthPixels`** / * *`MaxBorderWidthPixels`** (defaults **1–64**). **`BorderColorHex`** must be **`#RGB`** or **`#RRGGBB`** when the border is enabled."
+      "title": "Border rendering",
+      "text": "When BarcodeOptions.ShowBorder is true, Lyo.Barcode.Native expands the output by 2 × BorderWidthPixels on width and height and draws a filled frame in BorderColorHex around the symbol. Inside that inset, the usual background and bars are unchanged. Width is clamped by BarcodeServiceOptions.MinBorderWidthPixels / MaxBorderWidthPixels (defaults 1 to 64). BorderColorHex must be #RGB or #RRGGBB when the border is enabled."
     },
     {
       "type": "paragraph",
       "title": "Configuration binding",
-      "text": "Implementations may bind **`BarcodeServiceOptions`** from configuration using section **`BarcodeService`** (see **`BarcodeServiceOptions.SectionName`**)."
+      "text": "Implementations may bind BarcodeServiceOptions from configuration using section BarcodeService (see BarcodeServiceOptions.SectionName)."
     }
   ],
   "links": [],

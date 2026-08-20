@@ -2,8 +2,8 @@
   "id": "Lyo.People.Models",
   "name": "Lyo.People.Models",
   "area": "Core",
-  "tagline": "People and person-related models for the Lyo library suite.",
-  "description": "People and person-related models for the Lyo library suite.\n\n**Archetype A (Lyo domain).** Vendor ingest (e.g. [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md)) is Archetype C; map into `people.*` in the host.\nSee [package layout](../../../docs/package-layout.md).",
+  "tagline": "`Person`, contact, employment, identification, and relationship records for the people domain.",
+  "description": "`Person`, contact, employment, identification, and relationship records for the people domain.\n\n**Archetype A (Lyo domain).** Vendor ingest (e.g. [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md)) is Archetype C. Map into `people.*` in the host.\nSee [package layout](../../../docs/package-layout.md).",
   "features": [],
   "examples": [
     {
@@ -16,55 +16,55 @@
     {
       "type": "markdown",
       "title": "Overview",
-      "body": "This package provides domain models for representing people, their contact information, relationships, employment history, and preferences. It integrates with\n`Lyo.Geolocation.Models` for address support. Internal rows live in **`people.*`** with parallel **`{entity}_source`** link tables ([\n`EntitySourceRecord`](../../EntityReference/Lyo.EntityReference.Models/EntitySourceRecord.cs) / [`PeopleSourceTypes`](PeopleSourceTypes.cs)): **`source_entity_*`** + *\n*`imported_at`** (owner via parent FK). Aggregates implement **`IEntitySourceDerived`** (`Sources`, optional **`LocallyModifiedAt`**). Enriched locations may also be stored in [\n`geolocation.address`](../Geolocation/Lyo.Geolocation.Postgres/README.md); link across stores via `EntityRef` on source rows (e.g. `GeolocationAddress`), not cross-schema FKs."
+      "body": "`Person` holds demographics, contact info, addresses, employment, relationships, and preferences. Addresses reuse\n`Lyo.Geolocation.Models`. Internal rows live in `people.*` with parallel `{entity}_source` link tables ([`EntitySourceRecord`](../../EntityReference/Lyo.EntityReference.Models/EntitySourceRecord.cs) / [`PeopleSourceTypes`](PeopleSourceTypes.cs)): `source_entity_*` plus `imported_at` (owner via parent FK). Aggregates implement `IEntitySourceDerived` (`Sources`, optional `LocallyModifiedAt`). Enriched locations may also be stored in [`geolocation.address`](../Geolocation/Lyo.Geolocation.Postgres/README.md). Link across stores via `EntityRef` on source rows (e.g. `GeolocationAddress`), not cross-schema FKs."
     },
     {
       "type": "list",
-      "title": "Models — Core",
+      "title": "Core models",
       "items": [
-        "**Person** — Main person entity with demographics, contact info, addresses, and metadata",
-        "**PersonName** — Structured name with prefix, suffix, preferred name, and formatting options",
-        "**Employment** — Employment history with company, title, dates, and compensation",
-        "**Identification** — ID documents (passport, driver's license, SSN, etc.)"
+        "**Person.** Demographics, contact info, addresses, and metadata.",
+        "**PersonName.** Prefix, suffix, preferred name, and formatting options.",
+        "**Employment.** Company, title, dates, and compensation.",
+        "**Identification.** Passport, driver's license, SSN, and similar documents."
       ]
     },
     {
       "type": "list",
-      "title": "Models — Contact",
+      "title": "Contact models",
       "items": [
-        "**PhoneNumber** — Base phone number (E.164 format)",
-        "**EmailAddress** — Base email address",
-        "**ContactPhoneNumber** — Person–phone association with type (mobile, home, work)",
-        "**ContactEmailAddress** — Person–email association with type (personal, work)",
-        "**SocialMediaProfile** — Social platform profiles (LinkedIn, Twitter, etc.)",
-        "**CommunicationPreferences** — Channel preferences (email, SMS, marketing opt-in)"
+        "**PhoneNumber.** Base phone number (E.164 format).",
+        "**EmailAddress.** Base email address.",
+        "**ContactPhoneNumber.** Person-phone association with type (mobile, home, work).",
+        "**ContactEmailAddress.** Person-email association with type (personal, work).",
+        "**SocialMediaProfile.** Social platform profiles (LinkedIn, Twitter, and similar).",
+        "**CommunicationPreferences.** Channel preferences (email, SMS, marketing opt-in)."
       ]
     },
     {
       "type": "list",
-      "title": "Models — Preferences",
+      "title": "Preference models",
       "items": [
-        "**PersonPreferences** — Contact method, timezone, language",
-        "**PrivacyPreferences** — Data sharing and directory visibility"
+        "**PersonPreferences.** Contact method, timezone, language.",
+        "**PrivacyPreferences.** Data sharing and directory visibility."
       ]
     },
     {
       "type": "list",
-      "title": "Models — Relationships",
+      "title": "Relationship models",
       "items": [
-        "**PersonRelationship** — Links between people (spouse, parent, employer, etc.)"
+        "**PersonRelationship.** Links between people (spouse, parent, employer, and similar)."
       ]
     },
     {
       "type": "list",
       "title": "Enums",
       "items": [
-        "`ContactEmailType` — Personal, Work, Other",
-        "`ContactPhoneType` — Mobile, Home, Work, Fax, Other",
-        "`RelationshipType` — Spouse, Parent, Child, Employer, etc.",
-        "`IdentificationType` — Passport, DriversLicense, SSN, etc.",
-        "`EmploymentType` — FullTime, PartTime, Contract, Freelance, etc.",
-        "`NameFormat` — Full, Formal, Display, Initials, etc."
+        "**ContactEmailType.** Personal, Work, Other.",
+        "**ContactPhoneType.** Mobile, Home, Work, Fax, Other.",
+        "**RelationshipType.** Spouse, Parent, Child, Employer, and similar.",
+        "**IdentificationType.** Passport, DriversLicense, SSN, and similar.",
+        "**EmploymentType.** FullTime, PartTime, Contract, Freelance, and similar.",
+        "**NameFormat.** Full, Formal, Display, Initials, and similar."
       ]
     }
   ],

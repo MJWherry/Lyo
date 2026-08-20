@@ -2,7 +2,7 @@
 
 Execution engine for [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) filter trees. `IWhereClauseService` / `BaseWhereClauseService` translates polymorphic `WhereClause` ASTs (`condition` / `group`, optional `SubClause`) into LINQ expression trees on `IQueryable<T>`, applies multi-key `SortBy`, and can evaluate / explain the same AST against a loaded entity in memory.
 
-**What this package is:** AST → expression / matcher. **What it is not:** HTTP endpoints, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq` builders, or query-*result* caching — those live in Models + [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md).
+**What this package is.** AST → expression / matcher. **What it is not.** HTTP endpoints, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq` builders, or query-*result* caching. Those live in Models + [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md).
 
 EF-agnostic at the boundary (works on any `IQueryable`, including EF `DbSet` and in-memory). Requires `ICacheService` + `CacheOptions` for compiled predicate / matcher / metadata caches.
 
@@ -10,17 +10,17 @@ Targets `net10.0`.
 
 ## Features
 
-- **AST → `IQueryable`** — `ApplyWhereClause` builds EF-translatable (or provider) expression trees from `WhereClause`
-- **16 comparators** — Equals / NotEquals / Contains* / StartsWith* / EndsWith* / Greater* / Less* / In / NotIn / Regex / NotRegex
-- **Collection paths** — `Lines.Quantity` → `Any(...)` on collection elements; bare collection / `.Count` style paths compare against count
-- **Two-phase SubClause** — `includeSubClauses: false` for SQL root pass; load includes then match sub-tree in memory
-- **Multi-key sort** — `SortByProperty` + `ApplyOrdering` with `Priority` and stable default tie-break
-- **In-memory match + explain** — `MatchesWhereClause` / `ExplainMatch` with blocking path and OR-branch detail; `ExplainMatch(...).ToErrors()` for structured validation errors
-- **ICache hot path** — compiled EF predicates (`filter_ef_predicate:*`), matchers (`filter_matcher:*`), sort keys, property-path metadata
-- **Path validation** — `TryValidatePropertyPath` / `InvalidQueryException` for bad dotted paths
-- **Contains→Regex coalesce** — adjacent `Contains` leaves on the same string field can merge into one `Regex` alternation
-- **Property diffing** — `IPropertyComparisonService` for patch/update pipelines
-- **Value coercion** — `IValueConversionService` for JSON literals → CLR property types (suppressible when `Lyo.Api` owns conversion)
+- **AST → `IQueryable`.** `ApplyWhereClause` builds EF-translatable (or provider) expression trees from `WhereClause`.
+- **16 comparators.** Equals / NotEquals / Contains* / StartsWith* / EndsWith* / Greater* / Less* / In / NotIn / Regex / NotRegex.
+- **Collection paths.** `Lines.Quantity` → `Any(...)` on collection elements. Bare collection / `.Count` style paths compare against count.
+- **Two-phase SubClause.** `includeSubClauses: false` for SQL root pass. Load includes then match the sub-tree in memory.
+- **Multi-key sort.** `SortByProperty` + `ApplyOrdering` with `Priority` and a stable default tie-break.
+- **In-memory match + explain.** `MatchesWhereClause` / `ExplainMatch` with blocking path and OR-branch detail. `ExplainMatch(...).ToErrors()` for structured validation errors.
+- **ICache hot path.** Compiled EF predicates (`filter_ef_predicate:*`), matchers (`filter_matcher:*`), sort keys, property-path metadata.
+- **Path validation.** `TryValidatePropertyPath` / `InvalidQueryException` for bad dotted paths.
+- **Contains→Regex coalesce.** Adjacent `Contains` leaves on the same string field can merge into one `Regex` alternation.
+- **Property diffing.** `IPropertyComparisonService` for patch/update pipelines.
+- **Value coercion.** `IValueConversionService` for JSON literals → CLR property types (suppressible when `Lyo.Api` owns conversion).
 
 ## Examples
 
@@ -144,7 +144,7 @@ var diffs = propertyComparisonService.GetPropertyDifferences(entity, patchDto);
 | [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) | `POST …/QueryConcrete`, `/QueryProject`, root `/Query`; **query result** caching; projection SQL |
 | [`Lyo.Query.Web.Components`](../Lyo.Query.Web.Components/README.md) | Blazor query workbench |
 
-Builders and endpoint payloads are documented on **Models** / **Api**. This doc covers the runtime translator.
+Builders and endpoint payloads are documented on Models / Api. This doc covers the runtime translator.
 
 ## IWhereClauseService
 
@@ -156,7 +156,7 @@ Builders and endpoint payloads are documented on **Models** / **Api**. This doc 
 | `SortByProperty<T>(source, propertyName, direction?)` | Single dotted path `OrderBy` / `OrderByDescending` (default Desc when null). Collections order by **count**. |
 | `ApplyOrdering<T>(…, sortByProps, defaultOrder, defaultSortDirection)` | Multi-key sort by `SortBy.Priority` then list order; always attaches default tie-break for stable paging. |
 | `MatchesWhereClause<T>(entity, where)` | Compiled in-memory matcher (`filter_matcher:…` cache). |
-| `ExplainMatch<T>(entity, where)` | `WhereClauseExplainResult` — per-node pass/fail, `BlockingPath`, OR-branch outcomes, `SubClause` chains. **In-memory only** (default interface throws). |
+| `ExplainMatch<T>(entity, where)` | `WhereClauseExplainResult`. Per-node pass/fail, `BlockingPath`, OR-branch outcomes, `SubClause` chains. In-memory only (default interface throws). |
 | `GetCollectionIncludePathsForWhereClause<T>(where)` | Distinct navigation prefixes that cross collections (for EF `Include` before sub-clause match). |
 | `TryValidatePropertyPath<T>(name, out error)` | Preflight for sort / filter fields. |
 
@@ -184,17 +184,17 @@ Operators come from `ComparisonOperatorEnum` on each `ConditionClause`:
 
 ## Two-phase SubClause execution
 
-`WhereClause.SubClause` (on a condition or group) supports split execution — used heavily by `Lyo.Api` query pipelines:
+`WhereClause.SubClause` (on a condition or group) supports split execution. `Lyo.Api` query pipelines use this a lot:
 
-1. **Phase 1 (DB)** — `ApplyWhereClause(..., includeSubClauses: false)` so only the primary predicate becomes SQL.
-2. **Load** — `GetCollectionIncludePathsForWhereClause` → EF `Include` for collection segments referenced by the sub-tree.
-3. **Phase 2 (memory)** — `MatchesWhereClause` / `ExplainMatch` on materialized entities with the **full** tree (`includeSubClauses` default true).
+1. **Phase 1 (DB).** `ApplyWhereClause(..., includeSubClauses: false)` so only the primary predicate becomes SQL.
+2. **Load.** `GetCollectionIncludePathsForWhereClause` → EF `Include` for collection segments referenced by the sub-tree.
+3. **Phase 2 (memory).** `MatchesWhereClause` / `ExplainMatch` on materialized entities with the complete tree (`includeSubClauses` default true).
 
 Helpers:
 
-- `WhereClauseHelpers.HasAnySubClause(node)` — detect whether a two-phase path is needed
-- `WhereClauseHelpers.TryExtractConditions` — flatten simple And/Or trees for projection-level filtering (returns `false` if any `SubClause`)
-- `WhereClauseHelpers.GetWhereClauseTreeHash` — structural fingerprint for cache keys / logging (not cryptographic)
+- `WhereClauseHelpers.HasAnySubClause(node)`. Detect whether a two-phase path is needed.
+- `WhereClauseHelpers.TryExtractConditions`. Flatten simple And/Or trees for projection-level filtering (returns `false` if any `SubClause`).
+- `WhereClauseHelpers.GetWhereClauseTreeHash`. Structural fingerprint for cache keys / logging (not cryptographic).
 
 ```csharp
 var where = WhereClauseBuilder.And()
@@ -205,7 +205,7 @@ var where = WhereClauseBuilder.And()
 
 ## ICache usage (predicate / matcher cache)
 
-`AddLyoQueryServices` **requires** `ICacheService` + `CacheOptions` (e.g. `AddLocalCache` / `AddFusionCache`). This is **not** the same as `Lyo.Api` query-*result* caching (`QueryOptions.CacheQueryResultsAsUtf8Payload`).
+`AddLyoQueryServices` requires `ICacheService` + `CacheOptions` (e.g. `AddLocalCache` / `AddFusionCache`). This is not the same as `Lyo.Api` query-*result* caching (`QueryOptions.CacheQueryResultsAsUtf8Payload`).
 
 | Cache key prefix / pattern | Stores |
 | --- | --- |
@@ -218,7 +218,7 @@ var where = WhereClauseBuilder.And()
 
 Tags typically include the entity CLR type so hosts can invalidate by type when schemas change.
 
-**Api result cache** (optional UTF-8 payload entries for `/QueryConcrete` + `/QueryProject`) is documented under [Lyo.Api — Query result caching](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
+**Api result cache** (optional UTF-8 payload entries for `/QueryConcrete` + `/QueryProject`) is documented under [Lyo.Api query result caching](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
 
 ## IPropertyComparisonService
 
@@ -228,11 +228,11 @@ Used by patch/update pipelines (e.g. `Lyo.Api`) to build minimal diffs. Strategi
 
 ## IValueConversionService
 
-- `ConvertToTargetType(value, targetType)` — JSON literals → CLR (primitives, nullables, `Guid`, enums, date/time, lists)
-- `GetUnderlyingType(type)` — strip `Nullable<T>`
-- `IsObjectEnumerable(value)` — non-`string` / non-`byte[]` `IEnumerable`
+- `ConvertToTargetType(value, targetType)`. JSON literals → CLR (primitives, nullables, `Guid`, enums, date/time, lists)
+- `GetUnderlyingType(type)`. Strip `Nullable<T>`
+- `IsObjectEnumerable(value)`. Non-`string` / non-`byte[]` `IEnumerable`
 
-When hosting **`Lyo.Api`**, register Api’s richer `ITypeConversionService` (extends this interface) and call:
+When hosting `Lyo.Api`, register Api's `ITypeConversionService` (extends this interface) and call:
 
 ```csharp
 services.AddLyoQueryServices(registerValueConversion: false);
@@ -290,30 +290,30 @@ Tags: `entity_type`, `operation` (`Constants.Metrics.Tags`).
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Cache` — (direct, lyo)
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Lyo.Query.Models` — (direct, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Lyo.Compression` — (transitive, lyo)
-- `Lyo.Encryption` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Health` — (transitive, lyo)
-- `Lyo.KeyStore` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Lyo.Streams` — (transitive, lyo)
-- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
-- `EasyCompressor` `2.1.0` — (transitive, third-party)
-- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
-- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Caching.Memory` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Cache` (direct, lyo)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Query.Models` (direct, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Compression` (transitive, lyo)
+- `Lyo.Encryption` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
+- `Lyo.KeyStore` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Lyo.Streams` (transitive, lyo)
+- `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
+- `EasyCompressor` `2.1.0` (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Caching.Memory` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

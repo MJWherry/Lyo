@@ -7,7 +7,7 @@
   "features": [],
   "examples": [
     {
-      "title": "Consumer composition (example)",
+      "title": "Consumer composition",
       "language": "csharp",
       "code": "// Host project references: Lyo.Geolocation.Postgres, Lyo.Google.Geolocation.Client, …\nservices.AddPostgresGeolocationStoreFromConfiguration(configuration);\nservices.AddGoogleMapsClientFromConfiguration(configuration);\nservices.AddGoogleMapsGeolocationService();\n\n// Ingest: call IGeolocationService, map to Address + EntitySourceRecord, then:\nawait geolocationStore.SaveAddressAsync(address, ct);"
     }
@@ -26,7 +26,7 @@
           "Domain DTOs (`Address`, `GeocodeResult`, `Route`, …)"
         ],
         [
-          "**`Lyo.Geolocation`** (this)",
+          "`Lyo.Geolocation` (this)",
           "`IGeolocationService`, `IGeolocationStore`, `GeolocationQueryKey`, `GeolocationMath`"
         ],
         [
@@ -34,7 +34,7 @@
           "EF Core store (`geolocation` schema)"
         ]
       ],
-      "trail": "This package does **not** reference HTTP clients or vendor SDKs. Wire providers and import mappers in the **host** (API, worker, tool)."
+      "trail": "This package does not reference HTTP clients or vendor SDKs. Wire providers and import mappers in the host (API, worker, tool)."
     },
     {
       "type": "paragraph",
@@ -45,20 +45,20 @@
       "type": "list",
       "title": "`IGeolocationStore`",
       "items": [
-        "Canonical **`geolocation.address`** rows",
-        "**`geolocation.address_source`** — import provenance: **`source_entity_*`** + **`imported_at`** (owner `address_id` on parent); external type strings come from the importing app (e.g. `GoogleMapsPlace`)",
-        "**`GetBySourceAsync`** (matches **`source_entity_*`**) / **`SaveAddressAsync`** — parent **`Address`** implements **`IEntitySourceDerived`** (`Sources`, optional * *`LocallyModifiedAt`**)"
+        "Canonical `geolocation.address` rows",
+        "`geolocation.address_source`. Import provenance: `source_entity_*` + `imported_at` (owner `address_id` on parent). External type strings come from the importing app, for example `GoogleMapsPlace`.",
+        "`GetBySourceAsync` (matches `source_entity_*`) / `SaveAddressAsync`. Parent `Address` implements `IEntitySourceDerived` (`Sources`, optional `LocallyModifiedAt`)."
       ]
     },
     {
       "type": "paragraph",
-      "title": "Consumer composition (example)",
-      "text": "A worker or API registers **store + provider(s)** and owns mapping from vendor DTOs to `Address` + `Sources`: Vendor-specific `EntityRef` type names (e.g. `GoogleMapsPlace`) are defined in the integration package that performs the mapping, not in this assembly."
+      "title": "Consumer composition",
+      "text": "A worker or API registers the store and provider(s) and owns mapping from vendor DTOs to `Address` + `Sources`. Vendor-specific `EntityRef` type names (for example `GoogleMapsPlace`) are defined in the integration package that performs the mapping, not in this assembly."
     },
     {
       "type": "paragraph",
       "title": "See also",
-      "text": "[`Lyo.People.Models`](../People/Lyo.People.Models/README.md) — internal people rows with their own `*_source` tables; link across stores via `EntityRef` at import time."
+      "text": "[`Lyo.People.Models`](../People/Lyo.People.Models/README.md). Internal people rows with their own `*_source` tables. Link across stores via `EntityRef` at import time."
     }
   ],
   "links": [],

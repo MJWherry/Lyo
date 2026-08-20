@@ -1,20 +1,20 @@
-# Lyo Compression Library
+# Lyo.Compression
 
-A production-ready .NET compression library providing efficient, thread-safe compression with support for multiple algorithms, batch operations, and atomic file operations.
+Compress and decompress bytes, strings, streams, and files through ICompressionService (default codec plus Resolver, AlgorithmSelector, and ResolveForCompress) and ICompressionResolver (explicit per-algorithm compress/decompress, implemented by CompressionService). Batch file work and atomic file writes are included.
 
-The primary contracts are **`ICompressionService`** (default codec plus **`Resolver`**, **`AlgorithmSelector`**, and **`ResolveForCompress`**) and **`ICompressionResolver`** ( explicit per-algorithm compress/decompress; implemented by **`CompressionService`**). With **XML documentation** enabled in the repo (`GenerateDocumentationFile` in `Directory.Build.props`), IntelliSense on **`ICompressionService`** and **`CompressionServiceOptions`** carries the same behavioral detail as the API summaries below; this README stays the long-form guide (examples, security, configuration tables).
+With GenerateDocumentationFile set in Directory.Build.props, IntelliSense on ICompressionService and CompressionServiceOptions carries the same behavioral detail as the method summaries below.
 
 ## Features
 
-- **Multiple Compression Algorithms** (matches the `CompressionAlgorithm` enum) — GZip (default for .NET Standard 2.0); Brotli (default for net10.0+; not available on `netstandard2.0`); Deflate; ZLib (not available on `netstandard2.0`); Snappier (Snappy); ZstdSharp (Zstandard); LZ4; LZMA; BZip2 (via SharpZipLib); XZ (via `Joveler.Compression.XZ`; native `liblzma` required on Linux: `apt install liblzma5`)
-- **Comprehensive API** — Byte array compression/decompression; String compression/decompression with encoding support; Stream compression/decompression (sync and async); File compression/decompression (sync and async); Batch file operations with parallel processing; Base64 encoding/decoding integration
-- **`ICompressionResolver`** — Per-algorithm dispatch (cached factories); used by file storage for metadata-driven decompress
-- **Production-Ready Features** — Thread-safe operations (can be registered as singleton); Atomic file operations (prevents partial files on failure); Configurable input size limits (DoS protection); Decompression bomb protection (validates decompressed size); Encoding fallback (invalid encodings fall back to UTF-8); Comprehensive error handling; Extensive test coverage
-- **Performance Optimizations** — Buffered I/O for file operations; Parallel batch processing with configurable concurrency; Memory-efficient stream operations; Optimized buffer sizes
+- Algorithms from CompressionAlgorithm: GZip (default on netstandard2.0); Brotli (default on net10.0+; not on netstandard2.0); Deflate; ZLib (not on netstandard2.0); Snappier (Snappy); ZstdSharp (Zstandard); LZ4; LZMA; BZip2 (SharpZipLib); XZ (Joveler.Compression.XZ; native liblzma required on Linux: apt install liblzma5).
+- Byte array, string (with encoding), stream (sync and async), file (sync and async), batch files with parallel work, and Base64.
+- ICompressionResolver. Per-algorithm dispatch with cached factories. File storage uses it for metadata-driven decompress.
+- Safe to register as a singleton. File writes go to a temp path then rename, so a failed compress leaves no partial target. MaxInputSize caps input and decompressed output. Unknown encodings fall back to UTF-8.
+- File I/O uses 64 KB buffers by default. Batch file work honors MaxParallelFileOperations.
 
 ## Examples
 
-### Basic Compression
+### Basic compression
 
 ```csharp
 using Lyo.Compression;
@@ -36,7 +36,7 @@ Console.WriteLine($"Compression ratio: {compressInfo.CompressionRatio:P2}");
 Console.WriteLine($"Decompressed matches original: {original.SequenceEqual(decompressed)}");
 ```
 
-### Custom Configuration
+### Custom configuration
 
 ```csharp
 using Lyo.Compression;
@@ -54,7 +54,7 @@ var options = new CompressionServiceOptions
 var service = new CompressionService(options: options);
 ```
 
-### 1. Basic Compression
+### Compress and decompress bytes
 
 ```csharp
 var service = new CompressionService();
@@ -74,7 +74,7 @@ Console.WriteLine($"Decompression time: {decompressInfo.DecompressionTimeMs}ms")
 Assert.Equal(data, decompressed);
 ```
 
-### 2. String Compression
+### String compression
 
 ```csharp
 var service = new CompressionService();
@@ -93,7 +93,7 @@ var decompressInfoUtf16 = service.DecompressString(compressedUtf16, out var deco
 Assert.Equal(text, decompressedUtf16);
 ```
 
-### 3. Stream Compression
+### Stream compression
 
 ```csharp
 var service = new CompressionService();
@@ -123,7 +123,7 @@ await service.DecompressAsync(compressedStreamAsync, decompressedStreamAsync);
 Assert.Equal(original, decompressedStreamAsync.ToArray());
 ```
 
-### 4. File Compression
+### File compression
 
 ```csharp
 var service = new CompressionService();
@@ -147,7 +147,7 @@ var compressInfoAsync = await service.CompressFileAsync(inputFile, outputFile);
 var decompressInfoAsync = await service.DecompressFileAsync(outputFile);
 ```
 
-### 5. Batch Operations
+### Batch operations
 
 ```csharp
 var service = new CompressionService();
@@ -192,7 +192,7 @@ foreach (var failed in compressResult.FailedFiles)
 var compressResultAsync = await service.CompressFilesAsync(files);
 ```
 
-### 6. Base64 Compression
+### Base64 compression
 
 ```csharp
 var service = new CompressionService();
@@ -207,7 +207,7 @@ var decompressInfo = service.DecompressFromBase64(base64String, out var decompre
 Assert.Equal(data, decompressed);
 ```
 
-### 7. Try Methods (Non-Throwing)
+### Try methods
 
 ```csharp
 var service = new CompressionService();
@@ -233,7 +233,7 @@ else
 }
 ```
 
-### 8. Dependency Injection (ASP.NET Core)
+### Register with DI
 
 ```csharp
 using Lyo.Compression;
@@ -262,7 +262,7 @@ services.AddCompressionServiceFromConfiguration(
 services.AddDefaultCompressionService<CompressionService>();
 ```
 
-### 8. Dependency Injection (ASP.NET Core) (2)
+### Keyed registration
 
 ```csharp
 services.AddCompressionServiceKeyed("tenant-a", options =>
@@ -273,7 +273,7 @@ services.AddCompressionServiceKeyed("tenant-b", options =>
 // Resolve: GetRequiredKeyedService<ICompressionService>("tenant-a")
 ```
 
-### 8. Dependency Injection (ASP.NET Core) (3)
+### Addon factories
 
 ```csharp
 services.AddLz4Compressor(); // Lyo.Compression.Lz4
@@ -281,7 +281,7 @@ services.AddZstdCompressor(); // Lyo.Compression.Zstd
 // Then set DefaultAlgorithm on options (lambda, config file, or keyed configure).
 ```
 
-### 8. Dependency Injection (ASP.NET Core) (4)
+### Inject ICompressionService
 
 ```csharp
 public class MyController(ICompressionService compressionService)
@@ -324,7 +324,7 @@ public class CompressionServiceOptions
 }
 ```
 
-### Configuration file example (appsettings.json)
+### appsettings.json
 
 ```json
 {
@@ -340,7 +340,7 @@ public class CompressionServiceOptions
 }
 ```
 
-### `ICompressionResolver` (per-algorithm dispatch)
+### ICompressionResolver
 
 ```csharp
 services.AddCompressionService();
@@ -351,14 +351,14 @@ var service = provider.GetRequiredService<ICompressionService>();
 var resolver = provider.GetRequiredService<ICompressionResolver>();
 ```
 
-### `ICompressionAlgorithmSelector` (write-time policy)
+### ICompressionAlgorithmSelector
 
 ```csharp
 services.AddCompressionServiceFromConfiguration(configuration, "CompressionOptions");
 services.AddCompressionPolicySelector(configuration, "CompressionOptions:Policy");
 ```
 
-### `ICompressionAlgorithmSelector` (write-time policy) (2)
+### Policy in appsettings
 
 ```json
 {
@@ -382,7 +382,7 @@ services.AddCompressionPolicySelector(configuration, "CompressionOptions:Policy"
 }
 ```
 
-### Encoding Fallback
+### Encoding fallback
 
 ```csharp
 var service = new CompressionService(options: new CompressionServiceOptions 
@@ -397,7 +397,7 @@ var decompressInfo = service.DecompressString(compressed, out var decompressed);
 Assert.Equal(text, decompressed); // Works correctly with UTF-8 fallback
 ```
 
-### Parallel Processing
+### Parallel file operations
 
 ```csharp
 var options = new CompressionServiceOptions
@@ -411,50 +411,45 @@ var result = await service.CompressFilesAsync(files); // Processes files in para
 
 ## Benchmarks
 
-Zstd compresses 100 MB in tens of milliseconds at multi‑GB/s throughput.
+Zstd compresses 100 MB in tens of milliseconds at multi-GB/s throughput.
 
 - Portfolio suite: `compression`
 - [Zstd compress](/benchmarks/compression)
 - [Benchmark summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md)
 
-## 4. File Compression
+## Atomic file writes
 
-**Note:** File operations are atomic - if compression fails, no partial file is left at the target location.
+File operations write to a unique temporary file first, then rename. If compression fails, no partial file is left at the target path.
 
-## 8. Dependency Injection (ASP.NET Core)
+## Register with DI
 
-#### What gets registered
+What gets registered
 
 | Call | Registers in DI |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `AddCompressionService()` | Built-in **`ICompressorFactory`**, **`CompressionServiceOptions`**, **`CompressionService`**, **`ICompressionResolver`** → same instance |
-| `AddCompressionResolver()` | **`ICompressionResolver`** only (idempotent; usually unnecessary — already called by `AddCompressionService`) |
-| `AddDefaultCompressionService<CompressionService>()` | **`ICompressionService`** → same instance as `CompressionService` |
-| `AddCompressionPolicySelector(…)` | **`ICompressionAlgorithmSelector`** + **`CompressionPolicyOptions`** (optional write-time policy for file storage) |
-| `AddLz4Compressor()` / other addons | Additional **`ICompressorFactory`** entries only |
-| `AddCompressionServiceKeyed("key", …)` | Per-key options + **`CompressionService`** + **`ICompressionService`** (no separate default mapper) |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| AddCompressionService() | Built-in ICompressorFactory, CompressionServiceOptions, CompressionService, ICompressionResolver pointing at the same instance. |
+| AddCompressionResolver() | ICompressionResolver only (idempotent; usually unnecessary. Already called by AddCompressionService). |
+| AddDefaultCompressionService<CompressionService>() | ICompressionService pointing at the same instance as CompressionService. |
+| AddCompressionPolicySelector(…) | ICompressionAlgorithmSelector + CompressionPolicyOptions (optional write-time policy for file storage). |
+| AddLz4Compressor() / other addons | Additional ICompressorFactory entries only. |
+| AddCompressionServiceKeyed("key", …) | Per-key options + CompressionService + ICompressionService (no separate default mapper). |
 
-`AddCompressionService` does **not** register **`ICompressionService`** until you call **`AddDefaultCompressionService<TConcrete>()`**. **`ICompressionResolver`** is registered
-automatically.
+AddCompressionService does not register ICompressionService until you call AddDefaultCompressionService<TConcrete>(). ICompressionResolver is registered automatically.
 
-#### Unkeyed registration (typical app)
+Unkeyed registration is the typical app path. See the appsettings.json example for the CompressionOptions section shape.
 
-See [Configuration File Example](#configuration-file-example-appsettingsjson) below for the `CompressionOptions` section shape.
+Keyed registration is for multi-tenant or multiple policies.
 
-#### Keyed registration (multi-tenant / multiple policies)
+Optional addon factories: register before or with AddCompressionService. Idempotent.
 
-Optional addon factories (register before or with `AddCompressionService`; idempotent):
+## ICompressionResolver
 
-#### Consumption
+- DI: AddCompressionService() registers ICompressionResolver pointing at the same CompressionService singleton. Call AddCompressionResolver() only if you registered CompressionService yourself and still need the interface mapping.
+- Defaults: new CompressionService() / new CompressionService(options: null) uses CompressionServiceOptions.Default (static singleton; do not mutate).
 
-## `ICompressionResolver` (per-algorithm dispatch)
+## ICompressionAlgorithmSelector
 
-- **DI:** `AddCompressionService()` registers **`ICompressionResolver`** → the same **`CompressionService`** singleton. Call **`AddCompressionResolver()`** only if you registered * *`CompressionService`** yourself and still need the interface mapping.
-- **Defaults:** `new CompressionService()` / `new CompressionService(options: null)` uses **`CompressionServiceOptions.Default`** (static singleton; do not mutate).
-
-## `ICompressionAlgorithmSelector` (write-time policy)
-
-Register policy-driven algorithm selection for **file storage saves** (and any caller that injects the selector). Rules use `FileTypeInfo` category, MIME/content-type, size, tenant, and environment name; first matching rule wins, then built-in heuristics, then environment profile, then default. Example policy section: **File storage read path:** decompress uses `metadata.CompressionAlgorithm` via **`ICompressionService.Resolver`** (not the configured default). Optional overrides: `GetFileAsync(id, compressionAlgorithmOverride: …, ct)` or `FileStorageServiceBaseOptions.DecompressionAlgorithmOverride`. Register factories for every algorithm you may **read** from historical files.
+Register policy-driven algorithm selection for file storage saves, and any caller that injects the selector. Rules use FileTypeInfo category, MIME/content-type, size, tenant, and environment name. First matching rule wins, then built-in heuristics, then environment profile, then default. File storage read path: decompress uses metadata.CompressionAlgorithm via ICompressionService.Resolver, not the configured default. Optional overrides: GetFileAsync(id, compressionAlgorithmOverride: …, ct) or FileStorageServiceBaseOptions.DecompressionAlgorithmOverride. Register factories for every algorithm you may read from historical files.
 
 ## Validation
 
@@ -463,9 +458,9 @@ Register policy-driven algorithm selection for **file storage saves** (and any c
 - `AsyncFileBufferSize` must be >= 1024 bytes
 - `MaxInputSize` must be >= 1024 bytes
 
-## Security & Best Practices — Input Size Limits
+## Input size limits
 
-The library enforces configurable input size limits to prevent denial-of-service attacks:
+MaxInputSize rejects oversized inputs:
 
 ```csharp
 var options = new CompressionServiceOptions
@@ -480,9 +475,9 @@ var largeData = new byte[options.MaxInputSize + 1];
 service.Compress(largeData, out _); // Throws exception
 ```
 
-## Security & Best Practices — Decompression Bomb Protection
+## Decompression bomb protection
 
-The library protects against decompression bombs (small compressed files that decompress to extremely large files):
+Both compressed input size and decompressed output size are checked against MaxInputSize:
 
 ```csharp
 // Both compressed input size AND decompressed output size are validated
@@ -502,14 +497,14 @@ catch (InvalidOperationException ex)
 }
 ```
 
-**Note:** The library validates both:
+CompressionService validates both:
 
-- **Compressed input size** - Prevents processing extremely large compressed files
-- **Decompressed output size** - Prevents decompression bomb attacks (small compressed → very large decompressed)
+- **Compressed input size.** Rejects extremely large compressed files.
+- **Decompressed output size.** Rejects a small compressed payload that expands past MaxInputSize.
 
-## Security & Best Practices — Atomic File Operations
+## Atomic file operations
 
-All file operations are atomic - they write to a unique temporary file first, then atomically rename it:
+File operations write to a unique temporary file first, then atomically rename it:
 
 ```csharp
 // If compression fails, no partial file is left at the target location
@@ -524,12 +519,11 @@ catch (Exception ex)
 }
 ```
 
-**Note:** Temporary files use GUID-based naming to prevent conflicts with existing files. The temporary file is created
-in the same directory as the target file and is automatically cleaned up on failure.
+Temporary files use GUID-based naming to avoid colliding with existing files. The temporary file is created in the same directory as the target file and is cleaned up on failure.
 
-## Security & Best Practices — Path Validation
+## Path validation
 
-File paths are validated and canonicalized to prevent directory traversal attacks:
+File paths are validated and canonicalized to block directory traversal:
 
 ```csharp
 // These will throw ArgumentException:
@@ -537,21 +531,21 @@ service.CompressFile("../../../etc/passwd", "output.br"); // Directory traversal
 service.CompressFile("file\0name.txt", "output.br"); // Invalid characters
 ```
 
-## API Reference — Service properties
+## Service properties
 
-- `string FileExtension { get; }` — Extension associated with this instance's algorithm (`Constants.Data.AlgorithmExtensions`), e.g. `.gz`, `.br`, `.zst`.
-- `CompressionAlgorithm Algorithm { get; }` — Algorithm bound to this service instance at construction time.
+- `string FileExtension { get; }`. Extension associated with this instance's algorithm (`Constants.Data.AlgorithmExtensions`), e.g. `.gz`, `.br`, `.zst`.
+- `CompressionAlgorithm Algorithm { get; }`. Algorithm bound to this service instance at construction time.
 
-## API Reference — Core Methods
+## Core methods
 
-- `CompressionInfo Compress(byte[] bytes, out byte[] compressed)` - Compress byte array
-- `DecompressionInfo Decompress(byte[] compressedBytes, out byte[] decompressed)` - Decompress byte array
-- `CompressionInfo CompressString(string text, out byte[] compressed, Encoding? encoding = null)` - Compress string
-- `DecompressionInfo DecompressString(byte[] compressedBytes, out string decompressed, Encoding? encoding = null)` - Decompress string
-- `CompressionInfo CompressToBase64(byte[] bytes, out string base64String)` - Compress byte array to Base64 string
-- `DecompressionInfo DecompressFromBase64(string base64String, out byte[] decompressed)` - Decompress from Base64 string
+- `CompressionInfo Compress(byte[] bytes, out byte[] compressed)`. Compress byte array.
+- `DecompressionInfo Decompress(byte[] compressedBytes, out byte[] decompressed)`. Decompress byte array.
+- `CompressionInfo CompressString(string text, out byte[] compressed, Encoding? encoding = null)`. Compress string.
+- `DecompressionInfo DecompressString(byte[] compressedBytes, out string decompressed, Encoding? encoding = null)`. Decompress string.
+- `CompressionInfo CompressToBase64(byte[] bytes, out string base64String)`. Compress byte array to Base64 string.
+- `DecompressionInfo DecompressFromBase64(string base64String, out byte[] decompressed)`. Decompress from Base64 string.
 
-## API Reference — Compression Algorithms
+## Compression algorithms
 
 ```csharp
 public enum CompressionAlgorithm
@@ -569,23 +563,22 @@ public enum CompressionAlgorithm
 }
 ```
 
-File extensions are sourced from `Lyo.Common.Records.FileTypeInfo` via `Constants.Data.AlgorithmExtensions` (e.g. `.gz`, `.br`, `.zst`, `.lz4`, `.lzma`, `.bz2`, `.xz`,
-`.snappy`, `.deflate`, `.zlib`).
+File extensions are sourced from `Lyo.Common.Records.FileTypeInfo` via `Constants.Data.AlgorithmExtensions` (e.g. `.gz`, `.br`, `.zst`, `.lz4`, `.lzma`, `.bz2`, `.xz`, `.snappy`, `.deflate`, `.zlib`).
 
-## API Reference — Information Types
+## Information types
 
-- `CompressionInfo` - Compression statistics (`CompressionRatio`, `SpaceSavedPercent`, `TimeMs`)
-- `DecompressionInfo` - Decompression statistics (`ExpansionRatio`, `SizeIncreasePercent`, `DecompressionTimeMs`)
-- `FileCompressionInfo` - File compression statistics
-- `FileDecompressionInfo` - File decompression statistics
-- `BatchFileCompressionResult` - Batch compression results
-- `BatchFileDecompressionResult` - Batch decompression results
+- `CompressionInfo`. Compression statistics (`CompressionRatio`, `SpaceSavedPercent`, `TimeMs`).
+- `DecompressionInfo`. Decompression statistics (`ExpansionRatio`, `SizeIncreasePercent`, `DecompressionTimeMs`).
+- `FileCompressionInfo`. File compression statistics.
+- `FileDecompressionInfo`. File decompression statistics.
+- `BatchFileCompressionResult`. Batch compression results.
+- `BatchFileDecompressionResult`. Batch decompression results.
 
 ## Performance
 
-BenchmarkDotNet suite: [`Lyo.Compression.Benchmarks`](../Lyo.Compression.Benchmarks/) — full write-up in [ `BENCHMARK_SUMMARY.md`](../Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md) (last run **June 14, 2026**, .NET 10.0.9, Linux Mint 22.1, Intel Core Ultra 7 155U). Payloads use * *random bytes** unless noted; real compressible data improves ratios and lowers BZip2 allocation.
+BenchmarkDotNet suite: [`Lyo.Compression.Benchmarks`](../Lyo.Compression.Benchmarks/). Write-up in [`BENCHMARK_SUMMARY.md`](../Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md) (last run June 14, 2026, .NET 10.0.9, Linux Mint 22.1, Intel Core Ultra 7 155U). Payloads use random bytes unless noted. Real compressible data improves ratios and lowers BZip2 allocation.
 
-## Performance — Benchmark highlights (June 2026)
+## Benchmark numbers (June 2026)
 
 | Workload | Fastest compress | Fastest decompress | GZip baseline |
 | ----------------------- | ------------------ | ------------------ | ----------------- |
@@ -594,29 +587,26 @@ BenchmarkDotNet suite: [`Lyo.Compression.Benchmarks`](../Lyo.Compression.Benchma
 | 10 MB in-memory | **LZ4 (~1.8 ms)** | **Zstd (~1.3 ms)** | ~197 ms / ~9.0 ms |
 | 100 MB in-memory | **LZ4 (~18 ms)** | **Zstd (~13 ms)** | ~2.0 s / ~78 ms |
 | 100 MB streaming | **Zstd (~65 ms)** | Zstd (~58 ms) | ~1.9 s / ~65 ms |
-| 1 GB streaming compress | **Zstd (~1.0 s)** | — | ~19.9 s |
+| 1 GB streaming compress | **Zstd (~1.0 s)** | n/a | ~19.9 s |
 
-**Zstd vs GZip streaming compress:** ~**29×** at 100 MB, ~**20×** at 1–2 GB. Policy defaults (`FastAlgorithm: LZ4`, `ArchivalAlgorithm: Zstd`, default Brotli) align with these
-numbers.
+Zstd vs GZip streaming compress: about 29× at 100 MB, about 20× at 1 to 2 GB. Policy defaults (FastAlgorithm: LZ4, ArchivalAlgorithm: Zstd, default Brotli) align with these numbers.
 
-> **BZip2 on random data:** SharpZipLib allocates a sort stack on every internal `QSort3` call; benchmarks show **~764 MB alloc per 1 MB** compress on noise, but **~8 MB on
-compressible text**. Use BZip2 for `.tar.bz2` interop on compressible payloads, not pre-compressed blobs.
+> **BZip2 on random data.** SharpZipLib allocates a sort stack on every internal QSort3 call. Benchmarks show about 764 MB alloc per 1 MB compress on noise, but about 8 MB on compressible text. Use BZip2 for `.tar.bz2` interop on compressible payloads, not pre-compressed blobs.
 
-## Performance — Algorithm selection
+## Algorithm selection
 
-- **LZ4**: Fastest compress at 1 MB+ in benchmarks; best for real-time, streaming, and policy `FastAlgorithm`
-- **Snappier**: Fastest at 1 KB; very low latency, lower ratio
-- **ZstdSharp**: Best large-file decompress; excellent streaming compress; policy `ArchivalAlgorithm`
-- **Brotli** (default for net10.0+): Strong ratio; slower than LZ4/Zstd but faster than GZip on many sizes
-- **GZip**: Compatibility baseline; similar to Deflate/ZLib
-- **Deflate / ZLib**: Similar to GZip
-- **LZMA / XZ**: High ratio, slow compress; archival (XZ needs native `liblzma` on Linux: `apt install liblzma5`)
-- **BZip2**: `.tar.bz2` interop via SharpZipLib; avoid on incompressible or pre-compressed data (see note above)
+- **LZ4.** Fastest compress at 1 MB+ in benchmarks. Best for real-time, streaming, and policy FastAlgorithm.
+- **Snappier.** Fastest at 1 KB. Very low latency, lower ratio.
+- **ZstdSharp.** Best large-file decompress. Strong streaming compress. Policy ArchivalAlgorithm.
+- **Brotli** (default for net10.0+). Strong ratio. Slower than LZ4/Zstd but faster than GZip on many sizes.
+- **GZip.** Compatibility baseline. Similar to Deflate/ZLib.
+- **Deflate / ZLib.** Similar to GZip.
+- **LZMA / XZ.** High ratio, slow compress. Archival (XZ needs native `liblzma` on Linux: `apt install liblzma5`).
+- **BZip2.** `.tar.bz2` interop via SharpZipLib. Avoid on incompressible or pre-compressed data (see note above).
 
-## Performance — Buffer sizes
+## Buffer sizes
 
-Default buffer sizes (64 KB) provide a good balance between memory usage and performance. For high-throughput scenarios,
-consider increasing:
+Default buffer sizes (64 KB) balance memory and throughput. For high-throughput hosts, increase them:
 
 ```csharp
 var options = new CompressionServiceOptions
@@ -626,9 +616,9 @@ var options = new CompressionServiceOptions
 };
 ```
 
-## Thread Safety
+## Concurrency
 
-The `CompressionService` is **thread-safe** and can be registered as a **singleton**:
+CompressionService is safe to register as a singleton:
 
 ```csharp
 // Safe to use concurrently
@@ -646,12 +636,11 @@ Task.Run(() => service.Compress(data2, out _));
 // Both operations are safe and independent
 ```
 
-**Note:** `CompressionServiceOptions` is mutable, but options are validated and used only during service construction.
-Once the service is created, options are read-only from the service's perspective.
+CompressionServiceOptions is mutable, but options are validated and used only during service construction. Once the service is created, it treats options as read-only.
 
-## Important Notes — File Extensions
+## File extensions
 
-The service automatically adds the correct file extension based on the algorithm:
+The service adds the file extension for the algorithm:
 
 ```csharp
 var service = new CompressionService(options: new CompressionServiceOptions 
@@ -663,9 +652,9 @@ var outputFile = service.CompressFile("document.txt");
 // outputFile.OutputFilePath will be "document.txt.br"
 ```
 
-## Important Notes — Stream Position
+## Stream position
 
-Stream operations automatically reset the input stream position to 0 if the stream supports seeking:
+Stream operations reset the input stream position to 0 if the stream supports seeking:
 
 ```csharp
 using var stream = new MemoryStream(data);
@@ -674,9 +663,9 @@ stream.Position = 100; // Position is not at start
 service.Compress(stream, outputStream); // Automatically resets to position 0
 ```
 
-## Important Notes — Cancellation Tokens
+## Cancellation tokens
 
-All async methods support cancellation tokens, including batch operations:
+All async methods accept cancellation tokens, including batch operations:
 
 ```csharp
 using var cts = new CancellationTokenSource();
@@ -697,59 +686,58 @@ catch (OperationCanceledException)
 }
 ```
 
-**Note:** Batch operations check the cancellation token before processing each file, allowing for responsive
-cancellation even during long-running batch operations.
+Batch operations check the cancellation token before each file, so a long batch can stop between files.
 
-## Important Notes — Error Handling
+## Error handling
 
-- `ArgumentNullException` - Null input parameters
-- `ArgumentException` - Invalid arguments (empty data, invalid paths, etc.)
-- `ArgumentOutsideRangeException` - Input exceeds `MaxInputSize` or invalid options
-- `FileNotFoundException` - Input file does not exist
-- `InvalidOperationException` - File size exceeds limits, or decompressed size exceeds `MaxInputSize` (decompression bomb protection)
-- `OperationCanceledException` - Operation was cancelled
+- `ArgumentNullException`. Null input parameters.
+- `ArgumentException`. Invalid arguments (empty data, invalid paths, etc.).
+- `ArgumentOutsideRangeException`. Input exceeds `MaxInputSize` or invalid options.
+- `FileNotFoundException`. Input file does not exist.
+- `InvalidOperationException`. File size exceeds limits, or decompressed size exceeds `MaxInputSize` (decompression bomb protection).
+- `OperationCanceledException`. Operation was cancelled.
 
-## Additional Resources
+## See also
 
-- [`BENCHMARK_SUMMARY.md`](../Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md) — BenchmarkDotNet results (algorithms, streaming, last run June 2026).
-- [`EasyCompressor`](https://www.nuget.org/packages/EasyCompressor) — underlying compressor abstraction backing GZip/Brotli/Deflate/ZLib/Snappier/Zstd/LZ4/LZMA paths.
-- [`Joveler.Compression.XZ`](https://www.nuget.org/packages/Joveler.Compression.XZ) — XZ (LZMA2) implementation (requires native `liblzma` on Linux).
-- [`SharpZipLib`](https://www.nuget.org/packages/SharpZipLib) — used for BZip2.
+- [`BENCHMARK_SUMMARY.md`](../Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md). BenchmarkDotNet results (algorithms, streaming, last run June 2026).
+- [`EasyCompressor`](https://www.nuget.org/packages/EasyCompressor). Compressor abstraction backing GZip/Brotli/Deflate/ZLib/Snappier/Zstd/LZ4/LZMA paths.
+- [`Joveler.Compression.XZ`](https://www.nuget.org/packages/Joveler.Compression.XZ). XZ (LZMA2) implementation (requires native `liblzma` on Linux).
+- [`SharpZipLib`](https://www.nuget.org/packages/SharpZipLib). Used for BZip2.
 - [.NET Compression Documentation](https://docs.microsoft.com/en-us/dotnet/api/system.io.compression)
 
-## Public surface
+## Public types
 
 | Type | Description |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`ICompressionService`** / **`CompressionService`** | Default-codec contract + implementation. `FileExtension`, `Algorithm`, full byte/string/stream/file/batch/base64 API (sync + async + `Try*`). |
-| **`ICompressionResolver`** | Per-algorithm compress/decompress (`GetCompressor`, stream/byte APIs with explicit `CompressionAlgorithm`). Implemented by **`CompressionService`**. |
-| **`ICompressionAlgorithmSelector`** / **`CompressionPolicyAlgorithmSelector`** | Optional write-time policy (rules, env profiles, built-in skips). Used by file storage on save when registered. |
-| **`CompressionServiceOptions`** | `Default` (static), `DefaultAlgorithm`, `DefaultCompressionLevel`, `MaxInputSize`, `MaxParallelFileOperations`, buffer sizes, `EnableMetrics`. `SectionName = "CompressionOptions"`. |
-| **`CompressionPolicyOptions`** | Policy rules, `MinCompressSizeBytes`, environment profiles. Bind from `CompressionOptions:Policy`. |
-| **`CompressionAlgorithm`** | Enum: `GZip`, `Brotli`*, `Deflate`, `ZLib`*, `Snappier`, `ZstdSharp`, `LZ4`, `LZMA`, `BZip2`, `XZ`. (*Brotli/ZLib require net10.0; unavailable on `netstandard2.0`.) |
-| **`CompressionInfo` / `DecompressionInfo`** | In-memory operation metadata. |
-| **`FileCompressionInfo` / `FileDecompressionInfo`** | File-level operation metadata (input/output paths, sizes, timings). |
-| **`BatchFileCompressionResult` / `BatchFileDecompressionResult`** | Batch metadata + per-file failures (`FailedFiles`). |
-| **`CompressionFileInfo` / `DecompressionFileInfo` / `FileCompressionInfo` / `FileDecompressionInfo` / `FailedFileOperation` / `BatchCompressionResult` / `BatchDecompressionResult` / `CompressionProgress`** | Supporting models in `Lyo.Compression.Models`. |
-| **`Extensions`** | DI: `AddCompressionService()`, `AddCompressionResolver()`, `AddDefaultCompressionService<TConcrete>()`, `AddCompressionServiceFromConfiguration`, `AddCompressionPolicySelector`, `AddCompressionServiceKeyed`. |
-| **`CompressionErrorCodes`** | Stable error code strings. |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ICompressionService / CompressionService | Default-codec contract and implementation. FileExtension, Algorithm, byte/string/stream/file/batch/base64 methods (sync + async + Try*). |
+| ICompressionResolver | Per-algorithm compress/decompress (GetCompressor, stream/byte APIs with explicit CompressionAlgorithm). Implemented by CompressionService. |
+| ICompressionAlgorithmSelector / CompressionPolicyAlgorithmSelector | Optional write-time policy (rules, env profiles, built-in skips). Used by file storage on save when registered. |
+| CompressionServiceOptions | Default (static), DefaultAlgorithm, DefaultCompressionLevel, MaxInputSize, MaxParallelFileOperations, buffer sizes, EnableMetrics. SectionName = "CompressionOptions". |
+| CompressionPolicyOptions | Policy rules, MinCompressSizeBytes, environment profiles. Bind from CompressionOptions:Policy. |
+| CompressionAlgorithm | Enum: GZip, Brotli*, Deflate, ZLib*, Snappier, ZstdSharp, LZ4, LZMA, BZip2, XZ. (*Brotli/ZLib require net10.0; unavailable on netstandard2.0.) |
+| CompressionInfo / DecompressionInfo | In-memory operation metadata. |
+| FileCompressionInfo / FileDecompressionInfo | File-level operation metadata (input/output paths, sizes, timings). |
+| BatchFileCompressionResult / BatchFileDecompressionResult | Batch metadata + per-file failures (FailedFiles). |
+| CompressionFileInfo / DecompressionFileInfo / FileCompressionInfo / FileDecompressionInfo / FailedFileOperation / BatchCompressionResult / BatchDecompressionResult / CompressionProgress | Supporting models in Lyo.Compression.Models. |
+| Extensions | DI: AddCompressionService(), AddCompressionResolver(), AddDefaultCompressionService<TConcrete>(), AddCompressionServiceFromConfiguration, AddCompressionPolicySelector, AddCompressionServiceKeyed. |
+| CompressionErrorCodes | Stable error code strings. |
 
-The `Compressors/` folder (`BZip2Compressor`, `XZCompressor`) contains internal helpers backing those two algorithms; consumers should go through `ICompressionService`.
+The Compressors/ folder (BZip2Compressor, XZCompressor) contains internal helpers backing those two algorithms. Callers should go through ICompressionService.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Lyo.Streams` — (direct, lyo)
-- `EasyCompressor` `2.1.0` — (direct, third-party)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Lyo.Streams` (direct, lyo)
+- `EasyCompressor` `2.1.0` (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

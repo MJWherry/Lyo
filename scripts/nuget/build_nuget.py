@@ -16,6 +16,12 @@ Local packs append the SemVer prerelease label ``preview`` (e.g. 1.0.0-preview)
 so they are distinct from release packages. Pass --release when publishing so
 the version is used as-is (1.0.0).
 
+Selection is the named patterns, ``--changed-since`` hits, or every packable
+``Lyo.*`` project. The packer does not walk ProjectReferences in either
+direction: changing Encryption packs Encryption only; changing Common packs
+Common only. Lyo ProjectReferences in the nupkg are pinned to the dependency's
+last published version unless that dependency is also in this pack set.
+
 Change detection:
   Each project's source directory is fingerprinted using git (committed state +
   staged/unstaged diffs + untracked file contents). Matching fingerprints skip
@@ -34,10 +40,13 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -242,21 +251,96 @@ def get_project_dependencies(csproj_file: Path) -> list[Path]:
     return deps
 
 
-def get_full_build_set(projects: list[Path]) -> list[Path]:
-    result: list[Path] = []
-    seen: set[Path] = set()
+def _stable_versions(versions: list[str]) -> list[str]:
+    return [v for v in versions if v and "-" not in v]
 
-    def add_with_deps(csproj_file: Path) -> None:
-        if csproj_file in seen:
-            return
-        seen.add(csproj_file)
-        for dep in get_project_dependencies(csproj_file):
-            add_with_deps(dep)
-        result.append(csproj_file)
 
-    for project in projects:
-        add_with_deps(project)
-    return result
+def _nuget_org_latest(package_id: str) -> str:
+    url = f"https://api.nuget.org/v3-flatcontainer/{package_id.lower()}/index.json"
+    try:
+        with urllib.request.urlopen(url, timeout=15) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+        return ""
+    versions = [str(v) for v in (data.get("versions") or []) if v]
+    if not versions:
+        return ""
+    stable = _stable_versions(versions)
+    return (stable or versions)[-1]
+
+
+def _github_packages_latest(package_id: str) -> str:
+    owner = os.environ.get("GITHUB_REPOSITORY_OWNER") or os.environ.get("GITHUB_PACKAGES_OWNER") or ""
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GITHUB_PACKAGES_TOKEN") or ""
+    if not owner or not token:
+        return ""
+    url = f"https://nuget.pkg.github.com/{owner}/download/{package_id.lower()}/index.json"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}", "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+        return ""
+    versions = [str(v) for v in (data.get("versions") or []) if v]
+    if not versions:
+        return ""
+    stable = _stable_versions(versions)
+    return (stable or versions)[-1]
+
+
+def last_published_version(package_id: str, state_file: Path, fallback: str) -> str:
+    """Last known version: local .build-state, then nuget.org, then GitHub Packages."""
+    _, stored = _read_state_entry(state_file, package_id)
+    if stored:
+        return stored
+    nuget_ver = _nuget_org_latest(package_id)
+    if nuget_ver:
+        return nuget_ver
+    github_ver = _github_packages_latest(package_id)
+    if github_ver:
+        return github_ver
+    return fallback
+
+
+def collect_dependency_pins(pack_set: list[Path], *, version: str, state_file: Path) -> dict[str, str]:
+    pack_names = {get_project_name(p) for p in pack_set}
+    pins: dict[str, str] = {}
+    for proj in pack_set:
+        for dep in get_project_dependencies(proj):
+            name = get_project_name(dep)
+            if name in pins:
+                continue
+            pins[name] = version if name in pack_names else last_published_version(name, state_file, version)
+    return pins
+
+
+def write_dependency_version_targets(path: Path, pins: dict[str, str]) -> None:
+    """Generate an MSBuild targets file that pins ProjectReference nupkg versions."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        '<Project>',
+        '  <Target Name="ApplyLyoDependencyVersions"',
+        '          AfterTargets="_GetProjectReferenceVersions"',
+        '          BeforeTargets="GenerateNuspec">',
+        '    <ItemGroup>',
+    ]
+    for name, ver in sorted(pins.items()):
+        safe_name = name.replace("'", "")
+        safe_ver = ver.replace("'", "")
+        lines.append(
+            f"""      <_ProjectReferencesWithVersions Update="*" Condition="'%(Filename)' == '{safe_name}'">"""
+        )
+        lines.append(f"        <ProjectVersion>{safe_ver}</ProjectVersion>")
+        lines.append("      </_ProjectReferencesWithVersions>")
+    lines.extend(
+        [
+            "    </ItemGroup>",
+            "  </Target>",
+            "</Project>",
+            "",
+        ]
+    )
+    path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _version_msbuild_props(version: str) -> list[str]:
@@ -271,7 +355,8 @@ def build_project(csproj_file: Path, *, version: str, config: str, incremental: 
     name = get_project_name(csproj_file)
     label = "incremental" if incremental else "version " + version
     print_info(f"Building {name} ({label})...")
-    cmd = ["dotnet", "build", str(csproj_file), "-c", config, "/p:BuildProjectReferences=false", *_version_msbuild_props(version)]
+    # Leave ProjectReferences on so upstream libs compile; they are not packed.
+    cmd = ["dotnet", "build", str(csproj_file), "-c", config, *_version_msbuild_props(version)]
     if not incremental:
         # After the full argv — never insert next to -c or MSBuild treats the flag as Configuration.
         cmd.append("--no-incremental")
@@ -283,7 +368,14 @@ def build_project(csproj_file: Path, *, version: str, config: str, incremental: 
     return ok
 
 
-def pack_project(csproj_file: Path, *, version: str, config: str, output_dir: Path) -> bool:
+def pack_project(
+    csproj_file: Path,
+    *,
+    version: str,
+    config: str,
+    output_dir: Path,
+    dep_targets: Path | None,
+) -> bool:
     name = get_project_name(csproj_file)
     print_info(f"Packing {name} (version {version})...")
     cmd = [
@@ -299,6 +391,8 @@ def pack_project(csproj_file: Path, *, version: str, config: str, output_dir: Pa
         "/p:BuildProjectReferences=false",
         "/p:SkipToolingDocsOnPack=true",
     ]
+    if dep_targets is not None:
+        cmd.append(f"/p:LyoDependencyVersionTargets={dep_targets}")
     ok = subprocess.run(cmd, cwd=LYO_NET).returncode == 0
     if ok:
         print_success(f"Packed {name}")
@@ -308,11 +402,20 @@ def pack_project(csproj_file: Path, *, version: str, config: str, output_dir: Pa
 
 
 class Builder:
-    def __init__(self, *, version: str, force: bool, config: str, output_dir: Path) -> None:
+    def __init__(
+        self,
+        *,
+        version: str,
+        force: bool,
+        config: str,
+        output_dir: Path,
+        dep_targets: Path | None,
+    ) -> None:
         self.version = version
         self.force = force
         self.config = config
         self.output_dir = output_dir
+        self.dep_targets = dep_targets
         self.state_file = output_dir / ".build-state"
         self.visited: set[Path] = set()
         self.failed: set[Path] = set()
@@ -320,21 +423,12 @@ class Builder:
         self.pack_only: list[str] = []
         self.built: list[str] = []
 
-    def build_and_pack_with_deps(self, csproj_file: Path) -> bool:
+    def build_and_pack(self, csproj_file: Path) -> bool:
         name = get_project_name(csproj_file)
         project_dir = csproj_file.parent
 
         if csproj_file in self.visited:
             return csproj_file not in self.failed
-
-        for dep in get_project_dependencies(csproj_file):
-            if not dep.is_file():
-                continue
-            if not self.build_and_pack_with_deps(dep):
-                print_error(f"Failed to build dependency: {get_project_name(dep)}")
-                self.failed.add(csproj_file)
-                self.visited.add(csproj_file)
-                return False
 
         source_changed = True
         version_changed = True
@@ -362,7 +456,13 @@ class Builder:
                 self.visited.add(csproj_file)
                 return False
 
-        if not pack_project(csproj_file, version=self.version, config=self.config, output_dir=self.output_dir):
+        if not pack_project(
+            csproj_file,
+            version=self.version,
+            config=self.config,
+            output_dir=self.output_dir,
+            dep_targets=self.dep_targets,
+        ):
             self.failed.add(csproj_file)
             self.visited.add(csproj_file)
             return False
@@ -452,20 +552,36 @@ def main(argv: list[str] | None = None) -> int:
         print_warning("No projects found matching the specified pattern(s)")
         return 1
 
-    full_set = get_full_build_set(projects_to_build)
-    print_info(f"Found {len(projects_to_build)} project(s) to evaluate ({len(full_set)} including deps):")
+    print_info(f"Found {len(projects_to_build)} project(s) to pack (selected only, no graph walk):")
     for project in projects_to_build:
         print(f"  - {get_project_name(project)}")
     print()
 
-    builder = Builder(version=version, force=args.force, config=config, output_dir=output_dir)
+    state_file = output_dir / ".build-state"
+    pins = collect_dependency_pins(projects_to_build, version=version, state_file=state_file)
+    dep_targets: Path | None = None
+    if pins:
+        dep_targets = output_dir / "lyo-dep-versions.targets"
+        write_dependency_version_targets(dep_targets, pins)
+        print_info("Lyo ProjectReference pins (last published unless also in this pack set):")
+        for name, ver in sorted(pins.items()):
+            print(f"  - {name} -> {ver}")
+        print()
+
+    builder = Builder(
+        version=version,
+        force=args.force,
+        config=config,
+        output_dir=output_dir,
+        dep_targets=dep_targets,
+    )
     failed_projects: list[str] = []
     for project in projects_to_build:
         if project in builder.visited:
             continue
-        if not builder.build_and_pack_with_deps(project):
+        if not builder.build_and_pack(project):
             failed_projects.append(get_project_name(project))
-            print_warning(f"Skipping remaining dependents of {get_project_name(project)}")
+            print_warning(f"Failed: {get_project_name(project)}")
 
     print()
     print_info("Build Summary:")

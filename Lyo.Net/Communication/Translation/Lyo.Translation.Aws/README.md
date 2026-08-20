@@ -1,12 +1,12 @@
 # Lyo.Translation.Aws
 
-[Amazon Translate](https://docs.aws.amazon.com/translate/) implementation of [`ITranslationService`](../Lyo.Translation/README.md): translate text, bounded **bulk** translation, pragmatic **language detection**, and **`ListLanguages`** connection checks.
+[Amazon Translate](https://docs.aws.amazon.com/translate/) implementation of [`ITranslationService`](../Lyo.Translation/README.md). Translates text, runs bounded bulk translation, infers language via a Translate call, and probes connectivity with `ListLanguages`.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
 ## Examples
 
-### Registration (dependency injection)
+### Register with DI
 
 ```csharp
 using Lyo.Translation.Aws;
@@ -27,7 +27,7 @@ services.AddAwsTranslationService(o =>
 services.AddAwsTranslationService(new AwsTranslationOptions { Region = "us-east-1" });
 ```
 
-## Registration (dependency injection)
+## Register with DI
 
 `AddAwsTranslationService` and `AddAwsTranslationServiceFromConfiguration` register:
 
@@ -35,12 +35,12 @@ services.AddAwsTranslationService(new AwsTranslationOptions { Region = "us-east-
 - `AwsTranslationService` (singleton; subclass of `TranslationServiceBase`).
 - `ITranslationService` resolved from `AwsTranslationService`.
 
-`AddAwsTranslationServiceFromConfiguration` also bootstraps `IAmazonTranslate` from
+`AddAwsTranslationServiceFromConfiguration` also registers `IAmazonTranslate` from
 `AwsTranslationOptions` if no `IAmazonTranslate` is already registered. The other two overloads do
-**not** register an `IAmazonTranslate`; bring your own if you want explicit credentials or sharing.
+not register an `IAmazonTranslate`. Bring your own if you want explicit credentials or sharing.
 The service constructor accepts an optional `IAmazonTranslate` and resolves one from DI when present.
 
-Ensure `AwsTranslationOptions` (and optionally `IAmazonTranslate`) agree on region and credentials.
+`AwsTranslationOptions` and `IAmazonTranslate` should agree on region and credentials.
 
 ## `AwsTranslationOptions`
 
@@ -55,7 +55,7 @@ Inherits everything on [`TranslationServiceOptions`](../Lyo.Translation/README.m
 
 Configuration section name: `AwsTranslationOptions.SectionName = "AwsTranslationOptions"`.
 
-## Behaviour notes
+## Behavior notes
 
 | Feature | Detail |
 | --------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -67,16 +67,16 @@ Configuration section name: `AwsTranslationOptions.SectionName = "AwsTranslation
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Translation` — (direct, lyo)
-- `AWSSDK.Translate` `4.0.100.3` — (direct, third-party)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Translation` (direct, lyo)
+- `AWSSDK.Translate` `4.0.100.3` (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

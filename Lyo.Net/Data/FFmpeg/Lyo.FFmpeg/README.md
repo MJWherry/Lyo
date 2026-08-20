@@ -1,6 +1,6 @@
 # Lyo.FFmpeg
 
-FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from [`Lyo.FFmpeg.Models`](../Lyo.FFmpeg.Models/README.md): **`IAudioPlayer`**, **`IAudioProber`**, **`IAudioConverter`**. Includes a fluent **`FFmpegCommandBuilder`** for hand-rolled command lines and a temp-file helper for stream inputs (`FFmpegTempHelper`).
+Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via CliWrap) behind three contracts from [`Lyo.FFmpeg.Models`](../Lyo.FFmpeg.Models/README.md): IAudioPlayer, IAudioProber, IAudioConverter. Includes FFmpegCommandBuilder for hand-rolled command lines and FFmpegTempHelper for stream inputs.
 
 ## Examples
 
@@ -56,7 +56,7 @@ await converter.ConvertFileToFileAsync(
 }
 ```
 
-### Configuration binding (2)
+### AddFFmpegServicesFromConfiguration
 
 ```csharp
 services.AddFFmpegServicesFromConfiguration(builder.Configuration);
@@ -79,17 +79,16 @@ var args = new FFmpegCommandBuilder()
 ## Public API
 
 | Type | Description |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`FFmpegAudioPlayer`** | `IAudioPlayer` over `ffplay`; `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)`. |
-| **`FFmpegAudioProber`** | `IAudioProber` over `ffprobe`; `ProbeAsync`, `ProbeStreamAsync`, `ProbeBytesAsync` → `AudioProbeResult` (duration, sample rate, channels, codec, bit rate, has-video/audio, raw `ffprobe` metadata). |
-| **`FFmpegAudioConverter`** | `IAudioConverter` over `ffmpeg`; full matrix of file/stream/byte conversion overloads (`ConvertFileToFileAsync`, `ConvertFileToStreamAsync`, `ConvertStreamToBytesAsync`, etc.) and a request-shaped `ConvertAsync(AudioConversionRequest)`. |
-| **`FFmpegCommandBuilder`** | Fluent builder for ad-hoc ffmpeg command lines: `WithInput/WithOutput`, `WithCodec`, `WithSampleRate`, `WithChannels`, `WithFormat`, `WithOverwrite`, `WithNoVideo`, `WithDefaults(FFmpegOptions)`, custom args. |
-| **`FFmpegProcessRunner`** | Internal runner that executes the built command line through CliWrap, applying `FFmpegOptions.GlobalArguments` and `ProcessOutputMode` (`Suppress`/`Passthrough`). |
-| **`FFmpegTempHelper`** | Materializes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path (cleaned up on disposal). |
-| **`Extensions`** | DI: **`AddFFmpegServices()`**, **`AddFFmpegServices(Action<FFmpegOptions>)`**, **`AddFFmpegServicesFromConfiguration(IConfiguration, sectionName?)`**. |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FFmpegAudioPlayer | IAudioPlayer over ffplay. PlayAsync(filePath), PlayStreamAsync(stream), PlayBytesAsync(bytes). |
+| FFmpegAudioProber | IAudioProber over ffprobe. ProbeAsync, ProbeStreamAsync, ProbeBytesAsync return AudioProbeResult (duration, sample rate, channels, codec, bit rate, has-video/audio, raw ffprobe metadata). |
+| FFmpegAudioConverter | IAudioConverter over ffmpeg. File, stream, and byte conversion overloads (ConvertFileToFileAsync, ConvertFileToStreamAsync, ConvertStreamToBytesAsync, and the rest) plus ConvertAsync(AudioConversionRequest). |
+| FFmpegCommandBuilder | Fluent builder for ad-hoc ffmpeg command lines: WithInput/WithOutput, WithCodec, WithSampleRate, WithChannels, WithFormat, WithOverwrite, WithNoVideo, WithDefaults(FFmpegOptions), custom args. |
+| FFmpegProcessRunner | Internal runner that executes the built command line through CliWrap, applying FFmpegOptions.GlobalArguments and ProcessOutputMode (Suppress/Passthrough). |
+| FFmpegTempHelper | Writes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path. Cleans up on disposal. |
+| Extensions | DI: AddFFmpegServices(), AddFFmpegServices(Action<FFmpegOptions>), AddFFmpegServicesFromConfiguration(IConfiguration, sectionName?). |
 
-Each `AddFFmpegServices*` overload registers `FFmpegAudioPlayer`/`FFmpegAudioProber`/`FFmpegAudioConverter` as **scoped** services and exposes them through both the concrete
-type and their respective interfaces.
+Each AddFFmpegServices* overload registers FFmpegAudioPlayer, FFmpegAudioProber, and FFmpegAudioConverter as scoped services and exposes them through both the concrete type and their interfaces.
 
 ## Notes
 
@@ -101,15 +100,15 @@ type and their respective interfaces.
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.FFmpeg.Models` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `CliWrap` `3.10.2` — (direct, third-party)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Lyo.Common` — (transitive, lyo)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.FFmpeg.Models` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `CliWrap` `3.10.2` (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Common` (transitive, lyo)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

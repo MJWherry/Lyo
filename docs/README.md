@@ -1,10 +1,8 @@
 # Lyo documentation
 
-Project-wide documentation for **LYO — Library for Your Organization**, a .NET toolkit of libraries and apps for business data. The per-package API docs live next to each library
-as `README.md` files; this folder holds the cross-cutting guides that do not belong to a single package.
+Project-wide documentation for LYO, Library for Your Organization: a .NET toolkit of libraries and apps for business data. Per-package API docs live next to each library as `README.md`. This folder holds the guides that do not belong to a single package.
 
-> The root [`README.md`](../README.md) is the canonical project overview and
-> package index. Start there if you are new to the repo.
+> The root [`README.md`](../README.md) is the project overview and package index. Start there if you are new to the repo.
 
 ## Package docs (source of truth)
 
@@ -24,25 +22,25 @@ python3 scripts/docs/project-docs.py render
 # or from apps/gateway: npm run sync-docs
 ```
 
-Edit `docs.json`, then `render`. README is generated output — never the source of truth.
+Edit `docs.json`, then `render`. README is generated output, never the source of truth.
 
 ## Guides
 
-| Document                              | What it covers                                                                           |
-|---------------------------------------|------------------------------------------------------------------------------------------|
-| [Getting started](getting-started.md) | Prerequisites, consuming a package, a minimal working example.                           |
-| [Architecture](architecture.md)       | Area model, the dependency law, and how the package taxonomy fits together.              |
-| [Configuration](configuration.md)     | Environment variables and options used by the docker runner and tooling.                 |
+| Document                              | What it covers                                                                          |
+|---------------------------------------|-----------------------------------------------------------------------------------------|
+| [Getting started](getting-started.md) | Prerequisites, consuming a package, a minimal working example.                          |
+| [Architecture](architecture.md)       | Area model, the dependency law, and how the package taxonomy fits together.             |
+| [Configuration](configuration.md)     | Environment variables and options used by the docker runner and tooling.                |
 | [Testing](testing.md)                 | Running unit tests, BenchmarkDotNet suites, and k6 load tests (local and containerized). |
-| [Deployment](deployment.md)           | The container stack, resource limits, and operational notes.                             |
-| [Publishing](publishing.md)           | Packing, versioning (`preview` vs `--release`), and publishing to nuget.org from GitHub Actions. |
-| [Glossary](glossary.md)               | Domain terms and recurring concepts.                                                     |
-| [Security](security/README.md)        | Security model, reporting, and crypto design notes.                                      |
+| [Deployment](deployment.md)           | The container stack, resource limits, and operational notes.                            |
+| [CI](ci.md)                           | Branch model (`dev` / `main`), pipeline inputs, nuget.org preview vs release.           |
+| [Publishing](publishing.md)           | Local packing, versioning (`preview` vs `--release`), and nuget.org Trusted Publishing. |
+| [Glossary](glossary.md)               | Domain terms and recurring concepts.                                                    |
+| [Security](security/README.md)        | Security model, reporting, and crypto design notes.                                     |
 
 ## Interactive artifacts (HTML)
 
-These are self-contained web apps, not markdown. GitHub will not render them inline when browsing the repo — open them locally (clone, then open the file in a browser) or publish
-them via Pages.
+These are self-contained web apps, not markdown. GitHub will not render them inline when browsing the repo. Open them locally (clone, then open the file in a browser) or publish them via Pages.
 
 | Artifact                                         | What it is                                                                                                                |
 |--------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|

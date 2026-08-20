@@ -2,13 +2,13 @@
   "id": "Lyo.Audit",
   "name": "Lyo.Audit",
   "area": "Core",
-  "tagline": "Audit trail library with two distinct concepts: **AuditChange** (entity change tracking) and **AuditEvent** (events to log).",
-  "description": "Audit trail library with two distinct concepts: **AuditChange** (entity change tracking) and **AuditEvent** (events to log). `AuditChange` and `AuditEvent` are immutable\nrecords—once created they do not change. Both carry an `EntityRef` for the thing they are about plus an optional `EntityRef` for the actor that caused them. Includes\n`IAuditRecorder` for pluggable storage.",
+  "tagline": "Audit trail library with two records: `AuditChange` (entity change tracking) and `AuditEvent` (events to log).",
+  "description": "Audit trail library with two records: `AuditChange` (entity change tracking) and `AuditEvent` (events to log). Both are immutable. Once created they do not change. Each carries an `EntityRef` for the subject plus an optional `EntityRef` for the actor. `IAuditRecorder` is the storage contract.",
   "features": [
-    "**AuditChange** (record) – Entity/property change: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property → old value), `ChangedProperties` (property → new value), optional `Actor` (`EntityRef?`)",
-    "**AuditEvent** (record) – An event to log: `Id` (Guid), `Subject` (`EntityRef`), `EventType`, `Timestamp`, optional `Message`, `Actor` (`EntityRef?`), and `Metadata`",
-    "**IAuditRecorder** – Interface with sync and async methods: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`, `RecordEvents`/`RecordEventsAsync` (implement to persist to database, log sink, etc.)",
-    "**NullAuditRecorder** – No-op implementation when auditing is not needed"
+    "**AuditChange.** Entity/property change record: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property to old value), `ChangedProperties` (property to new value), optional `Actor` (`EntityRef?`).",
+    "**AuditEvent.** Event to log: `Id` (Guid), `Subject` (`EntityRef`), `EventType`, `Timestamp`, optional `Message`, `Actor` (`EntityRef?`), and `Metadata`.",
+    "**IAuditRecorder.** Sync and async methods: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`, `RecordEvents`/`RecordEventsAsync`. Implement to persist to a database or log sink.",
+    "**NullAuditRecorder.** No-op implementation when auditing is not needed."
   ],
   "examples": [
     {
@@ -36,7 +36,7 @@
     {
       "type": "markdown",
       "title": "PostgreSQL persistence",
-      "body": "Use **Lyo.Audit.Postgres** for PostgreSQL storage with EF Core migrations:\n\n```xml\n<PackageReference Include=\"Lyo.Audit.Postgres\" Version=\"1.0.22\" />\n```\n\n```csharp\nservices.AddPostgresAuditRecorder(new PostgresAuditOptions {\n    ConnectionString = configuration.GetConnectionString(\"Audit\"),\n    EnableAutoMigrations = true\n});\n```\n\nWhen `EnableAutoMigrations` is true, migrations run at **host startup** (via `IHostedService`), not during service registration. Ensure your app uses a host (e.g.\n`Host.CreateDefaultBuilder()` or `WebApplication.CreateBuilder()`)."
+      "body": "Use `Lyo.Audit.Postgres` for PostgreSQL storage with EF Core migrations:\n\n```xml\n<PackageReference Include=\"Lyo.Audit.Postgres\" Version=\"1.0.22\" />\n```\n\n```csharp\nservices.AddPostgresAuditRecorder(new PostgresAuditOptions {\n    ConnectionString = configuration.GetConnectionString(\"Audit\"),\n    EnableAutoMigrations = true\n});\n```\n\nWhen `EnableAutoMigrations` is true, migrations run at host startup via `IHostedService`, not during service registration. The app must use a host such as\n`Host.CreateDefaultBuilder()` or `WebApplication.CreateBuilder()`."
     }
   ],
   "links": [],

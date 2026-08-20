@@ -1,6 +1,6 @@
 # Lyo.Sqlite
 
-Shared SQLite migration plumbing for Lyo libraries that ship their own EF Core schema. The package is a thin **`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at host startup when the consumer's options opt in.
+Shared SQLite migration plumbing for Lyo libraries that ship their own EF Core schema. A thin `IHostedService` runs `DbContext.Database.MigrateAsync` at host startup when the consumer's options opt in.
 
 > Out of scope: health checks, design-time `IDesignTimeDbContextFactory` helpers, and connection-string builders live in consumer libraries when needed.
 
@@ -22,13 +22,13 @@ services.Configure<FileStoreSqliteOptions>(configuration.GetSection("SqliteFileM
 services.AddSqliteMigrations<SqliteFileMetadataStoreDbContext, FileStoreSqliteOptions>();
 ```
 
-## Public API
+## Types
 
 | Type | Role |
-| ---------------------------------------------------------- | ------------------------------------------------ |
-| **`ISqliteMigrationConfig`** | `ConnectionString`, `EnableAutoMigrations` |
-| **`SqliteMigrationHostedService<TContext, TOptions>`** | Runs `MigrateAsync` on `StartAsync` when enabled |
-| **`Extensions.AddSqliteMigrations<TContext, TOptions>()`** | Registers the hosted service |
+| ------------------------------------------------------ | ------------------------------------------------ |
+| `ISqliteMigrationConfig` | `ConnectionString`, `EnableAutoMigrations` |
+| `SqliteMigrationHostedService<TContext, TOptions>` | Runs `MigrateAsync` on `StartAsync` when enabled |
+| `Extensions.AddSqliteMigrations<TContext, TOptions>()` | Registers the hosted service |
 
 The hosted service constructs `TContext` via `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so each consumer DbContext **must expose a public constructor that
 takes a single `DbContextOptions<TContext>`**.
@@ -37,9 +37,9 @@ takes a single `DbContextOptions<TContext>`**.
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Microsoft.EntityFrameworkCore` `10.0.5` — (direct, microsoft)
-- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (direct, microsoft)
-- `Microsoft.EntityFrameworkCore.Sqlite` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
+- `Lyo.Exceptions` (direct, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.EntityFrameworkCore.Sqlite` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)

@@ -1,6 +1,6 @@
 # Lyo.Web.Automation.Playwright
 
-Playwright implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, manages session-scoped browser contexts, and exposes the same tab/frame/dialog/keyboard/locator surface as [`Lyo.Web.Automation.Selenium`](../Lyo.Web.Automation.Selenium/README.md) so JSON automation plans and scripted runners behave identically across both engines.
+Playwright implementation of the `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, manages session-scoped browser contexts, and exposes the same tab, frame, dialog, keyboard, and locator helpers as [`Lyo.Web.Automation.Selenium`](../Lyo.Web.Automation.Selenium/README.md) so JSON automation plans and scripted runners behave the same on both engines.
 
 ## Examples
 
@@ -16,22 +16,22 @@ await session.StartBrowserAsync();
 await session.Browser.NavigateAsync("https://example.com");
 ```
 
-## Surface — Browser ([`Browser/`](Browser))
+## Browser ([`Browser/`](Browser))
 
-- **`PlaywrightBrowser`** — concrete `IWebAutomationBrowser` (`StartBrowserAsync` boots Playwright, optionally a persistent context, and a default page); composes `PlaywrightBrowserTabs`, `PlaywrightDialogs`, `PlaywrightKeyboard`, `PlaywrightFrameNavigator`, `PlaywrightFrameSelectors`, `PlaywrightCookieJar`, `PlaywrightHeaderStore`.
-- **`PlaywrightBrowserTabInfo`** / **`PlaywrightTabManager`** — engine-native tab info and management.
-- **`BrowserUrlRedaction`** — query/fragment redaction used in logs when `MaskSensitiveUrlsInLogs` is set.
-- **`PlaywrightWebAutomationElement`** — `IWebAutomationElement` adapter on top of Playwright `ILocator` (`ClickAsync`, `SendKeysAsync` with `Fill` / `PressSequentially`, `SendKeysRawAsync`, attribute reads, etc.).
-- **`PlaywrightLocatorFactory`** ([`PlaywrightLocatorFactory.cs`](PlaywrightLocatorFactory.cs)) — converts `Lyo.Web.Automation` element specs to Playwright locators.
+- **`PlaywrightBrowser`.** concrete `IWebAutomationBrowser` (`StartBrowserAsync` boots Playwright, optionally a persistent context, and a default page); composes `PlaywrightBrowserTabs`, `PlaywrightDialogs`, `PlaywrightKeyboard`, `PlaywrightFrameNavigator`, `PlaywrightFrameSelectors`, `PlaywrightCookieJar`, `PlaywrightHeaderStore`.
+- `PlaywrightBrowserTabInfo` / `PlaywrightTabManager`. Engine-native tab info and management.
+- **`BrowserUrlRedaction`.** query/fragment redaction used in logs when `MaskSensitiveUrlsInLogs` is set.
+- `PlaywrightWebAutomationElement`. `IWebAutomationElement` adapter on top of Playwright `ILocator` (`ClickAsync`, `SendKeysAsync` with `Fill` / `PressSequentially`, `SendKeysRawAsync`, attribute reads, etc.).
+- `PlaywrightLocatorFactory` ([`PlaywrightLocatorFactory.cs`](PlaywrightLocatorFactory.cs)). Converts `Lyo.Web.Automation` element specs to Playwright locators.
 
-## Surface — Service ([`Service/`](Service))
+## Service ([`Service/`](Service))
 
-- **`IPlaywrightBrowserService`** — singleton factory: `CreateSession(PlaywrightSessionOptions?)`, `ActiveSessionCount`, `Dispose`.
-- **`IPlaywrightBrowserSession`** — scoped session.
-- **`PlaywrightExecutionContext`** / `PlaywrightExecutionContextFactory` — wiring used by the automation runners.
-- **`PlaywrightMetricTags`** — metric-tag constants.
+- **`IPlaywrightBrowserService`.** singleton factory: `CreateSession(PlaywrightSessionOptions?)`, `ActiveSessionCount`, `Dispose`.
+- **`IPlaywrightBrowserSession`.** scoped session.
+- `PlaywrightExecutionContext` / `PlaywrightExecutionContextFactory`. Wiring used by the automation runners.
+- **`PlaywrightMetricTags`.** metric-tag constants.
 
-## Surface — Configuration ([`Configuration/`](Configuration))
+## Configuration ([`Configuration/`](Configuration))
 
 [`PlaywrightBrowserOptions`](Configuration/PlaywrightBrowserOptions.cs) holds application-wide defaults; `PlaywrightSessionOptions` is the per-session subclass passed to
 `CreateSession`. Configuration section: `"PlaywrightBrowserOptions"`.
@@ -54,7 +54,7 @@ await session.Browser.NavigateAsync("https://example.com");
 | `MaskSensitiveUrlsInLogs` | `false` | Strip query/fragment in log lines. |
 | `ServiceRootDirectory` | `{tmp}/lyo-playwright` | Each session creates `session-{id}/` with `browser-profile/`, `artifacts/`, `downloads/`. |
 | `BrowserUserDataDirectory` / `DownloadDirectory` / `ArtifactsDirectory` | derived under session dir | Override individually if needed. |
-| `Clone()` | — | Deep copy used to derive session-specific options. |
+| `Clone()` | n/a | Deep copy used to derive session-specific options. |
 
 ## DI registration ([`Service/PlaywrightServiceExtensions.cs`](Service/PlaywrightServiceExtensions.cs))
 
@@ -70,19 +70,19 @@ await session.Browser.NavigateAsync("https://example.com");
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.IO.Temp` — (direct, lyo)
-- `Lyo.Web.Automation` — (direct, lyo)
-- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (direct, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Playwright` `1.59.0` — (direct, microsoft)
-- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Formatter` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `SmartFormat.NET` `3.6.1` — (transitive, third-party)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.IO.Temp` (direct, lyo)
+- `Lyo.Web.Automation` (direct, lyo)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Playwright` `1.59.0` (direct, microsoft)
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Formatter` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `SmartFormat.NET` `3.6.1` (transitive, third-party)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

@@ -15,7 +15,7 @@
   "sections": [
     {
       "type": "table",
-      "title": "Extensions — `PrivacyServiceCollectionExtensions`",
+      "title": "`PrivacyServiceCollectionExtensions`",
       "headers": [
         "Extension",
         "Purpose"
@@ -27,7 +27,7 @@
         ],
         [
           "`services.AddLyoPrivacyPolicy(object serviceKey, Action<RedactionPolicyBuilder> configure)`",
-          "Registers a **keyed** `ITextRedactor` built from a custom `RedactionPolicyBuilder`. Useful when one host needs different redaction posture per workload (e.g. `\"Support\"`, `\"Marketing\"`). The policy's `Name` defaults to `serviceKey.ToString()` when not set."
+          "Registers a keyed `ITextRedactor` built from a custom `RedactionPolicyBuilder`. Use this when one host needs different redaction rules per workload (e.g. `\"Support\"`, `\"Marketing\"`). The policy's `Name` defaults to `serviceKey.ToString()` when not set."
         ]
       ]
     }

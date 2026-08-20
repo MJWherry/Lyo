@@ -2,8 +2,8 @@
   "id": "Lyo.Api.Client",
   "name": "Lyo.Api.Client",
   "area": "Integration",
-  "tagline": "HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and **`System.Text.Json`** parity with…",
-  "description": "HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and **`System.Text.Json`** parity with server options when you wire them.\n\nImplements **`IDisposable`** (**`ApiClient`** disposes underlying resources—resolve via **`IHttpClientFactory`** so lifetimes stay correct in DI).",
+  "tagline": "HTTP client for Lyo minimal APIs: JSON in/out, gzip/brotli/deflate, query-string encoding for GET DTOs, file upload helpers, and `System.Text.Json` parity with server options when you wire them.",
+  "description": "HTTP client for Lyo minimal APIs: JSON in/out, gzip/brotli/deflate, query-string encoding for GET DTOs, file upload helpers, and `System.Text.Json` parity with server options when you wire them.\n\n`ApiClient` implements `IDisposable` and disposes its resources. Resolve it via `IHttpClientFactory` so lifetimes stay correct in DI.",
   "features": [],
   "examples": [
     {
@@ -15,8 +15,8 @@
   "sections": [
     {
       "type": "markdown",
-      "title": "Surface (`IApiClient`)",
-      "body": "**Serialization**\n\n- **`GetSerializerOptions()`** exposes effective **`JsonSerializerOptions`**—use the same instance for ad-hoc serializers in your worker to avoid schema drift.\n\n**GET**\n\n- **`GetAsAsync<TResult>(uri, beforeRequest, ct)`** basic JSON GET.\n- **`GetAsAsync<TRequest, TResult>(uri, query, enumerableDelimiter, …)`** serializes `TRequest` properties as query parameters (helps mirror `Lyo.Api` endpoints that accept\n  flattened DTO queries).\n\n**Bodies & verbs**\n\n- **`PostAsAsync` / `PutAsAsync` / `PatchAsAsync` / `DeleteAsAsync`** map to JSON content (generic + non-generic overloads).\n- **`PostAsBinaryAsync`** for raw byte returns (exports, generated PDFs, etc.).\n\n**Files**\n\n- **`GetFileAsync` / `GetFileWithTypeAsync`** buffer entire payload.\n- **`GetFileStreamAsync`** returns **`Stream` + filename + length** without forcing memory spikes—**caller disposes** underlying **`HttpResponseMessage`** per XML contract.\n- **`PostFileAsAsync`** overloads stream/byte[]/path + **`FileTypeInfo`** for MIME + extension hints.\n\n**Customization hook**\n\nEach method accepts optional **`Action<HttpRequestMessage>`** to append auth headers (`Authorization: Bearer …`), correlation ids, `Accept` overrides, or tracing headers.\n\nThrows **`ApiException`** wrapping non-success status codes with contextual payload extraction (see class for available properties). `ApiException` derives from\n`Lyo.Exceptions.Models.HttpException`, so callers can handle it through the shared HTTP hierarchy: `StatusCode` and `ErrorCode` (populated from the first parsed\n`LyoProblemDetails` error code) come from the base type, and `IsTransient` is `true` for 408/429/502/503/504 — which lets `Lyo.Resilience` retry pipelines pick it up\nautomatically."
+      "title": "`IApiClient` methods",
+      "body": "**Serialization**\n\n- `GetSerializerOptions()` exposes effective `JsonSerializerOptions`. Use the same instance for ad-hoc serializers in your worker to avoid schema drift.\n\n**GET**\n\n- `GetAsAsync<TResult>(uri, beforeRequest, ct)` returns deserialized JSON.\n- `GetAsAsync<TRequest, TResult>(uri, query, enumerableDelimiter, …)` serializes `TRequest` properties as query parameters so GET DTOs match `Lyo.Api` flattened query endpoints.\n\n**Bodies and verbs**\n\n- **`PostAsAsync` / `PutAsAsync` / `PatchAsAsync` / `DeleteAsAsync`** map to JSON content (generic + non-generic overloads).\n- `PostAsBinaryAsync` for raw byte returns (exports, generated PDFs, etc.).\n\n**Files**\n\n- **`GetFileAsync` / `GetFileWithTypeAsync`** buffer entire payload.\n- `GetFileStreamAsync` returns **`Stream` + filename + length** without forcing memory spikes. The caller disposes underlying `HttpResponseMessage` per XML contract.\n- `PostFileAsAsync` overloads stream/byte[]/path + `FileTypeInfo` for MIME + extension hints.\n\n**Customization hook**\n\nEach method accepts optional `Action<HttpRequestMessage>` to append auth headers (`Authorization: Bearer …`), correlation ids, `Accept` overrides, or tracing headers.\n\nThrows `ApiException` wrapping non-success status codes with contextual payload extraction (see class for available properties). `ApiException` derives from\n`Lyo.Exceptions.Models.HttpException`, so callers can handle it through the shared HTTP hierarchy: `StatusCode` and `ErrorCode` (populated from the first parsed\n`LyoProblemDetails` error code) come from the base type, and `IsTransient` is `true` for 408/429/502/503/504, which lets `Lyo.Resilience` retry pipelines pick it up\nautomatically."
     },
     {
       "type": "table",
@@ -55,7 +55,7 @@
         [
           "`RequestCompressionMinBytes`",
           "`1024`",
-          "Minimum serialized payload size before compression kicks in (avoids spending CPU on tiny bodies)."
+          "Minimum serialized payload size before compression applies (skips CPU on tiny bodies)."
         ]
       ],
       "lead": "Configuration section: `ApiClientOptions.SectionName = \"ApiClient\"`. Integration-specific clients (Discord, Endato, ESPN, Typecast, …) subclass this type and shadow `SectionName`\nso all transport flags bind under their own section.",
@@ -63,29 +63,29 @@
     },
     {
       "type": "list",
-      "title": "Compression & performance",
+      "title": "Compression and performance",
       "items": [
-        "Adds `Accept-Encoding` headers from **`AcceptEncodings`** (duplicates removed, case normalized).",
-        "Sets **`HttpClientHandler.AutomaticDecompression`** when **`EnableAutoResponseDecompression`** is `true` (maps `gzip`/`deflate`/`br` where the target framework supports Brotli).",
+        "Adds `Accept-Encoding` headers from `AcceptEncodings` (duplicates removed, case normalized).",
+        "Sets `HttpClientHandler.AutomaticDecompression` when `EnableAutoResponseDecompression` is `true` (maps `gzip`/`deflate`/`br` where the target framework supports Brotli).",
         "Returns the underlying `IHttpClientBuilder` so callers can chain resilience, message handlers, or named-client overrides."
       ]
     },
     {
       "type": "paragraph",
       "title": "DI registration",
-      "text": "`clientName` defaults to **`nameof(IApiClient)`** for named `HttpClientFactory` resolution. Bind from configuration with the standard `services.Configure<ApiClientOptions>(config.GetSection(ApiClientOptions.SectionName))` if you prefer the section route."
+      "text": "`clientName` defaults to `nameof(IApiClient)` for named `HttpClientFactory` resolution. Bind from configuration with the standard `services.Configure<ApiClientOptions>(config.GetSection(ApiClientOptions.SectionName))` if you prefer the section route."
     },
     {
       "type": "paragraph",
       "title": "Typical integration tests",
-      "text": "Spin `WebApplicationFactory` for your API host, call through **`IApiClient`**, assert **`ApiException.StatusCode`** ProblemDetails bodies using shared models from [ `Lyo.Api.Models`](../Lyo.Api.Models/README.md)."
+      "text": "Host the API with `WebApplicationFactory`, call through `IApiClient`, and assert `ApiException.StatusCode` plus ProblemDetails bodies using models from [`Lyo.Api.Models`](../Lyo.Api.Models/README.md)."
     },
     {
       "type": "list",
       "title": "Related",
       "items": [
-        "[`Lyo.Api.Models`](../Lyo.Api.Models/README.md) — payloads + error contracts.",
-        "[`Lyo.Api`](../Lyo.Api/README.md) — authoritative server behavior you are mirroring client-side."
+        "[`Lyo.Api.Models`](../Lyo.Api.Models/README.md). Payloads + error contracts.",
+        "[`Lyo.Api`](../Lyo.Api/README.md). Server endpoints this client calls."
       ]
     }
   ],
@@ -168,6 +168,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

@@ -2,8 +2,8 @@
   "id": "Lyo.TestGateway",
   "name": "Lyo.TestGateway",
   "area": "Tools",
-  "tagline": "Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, etc.) and a thin proxy layer that lets every page run against either…",
-  "description": "Interactive Blazor Server workbench for the Lyo platform. It hosts ~30 routed test pages (cache, locks, file storage, PDF, etc.) and a thin proxy layer that lets every page\nrun against either a remote API (`Lyo.Gateway.Api` by default via `ApiClient` / `LyoAuthClient`, or `Lyo.TestApi` for kitchen-sink) or against in-process services registered the same way as in production.",
+  "tagline": "Interactive Blazor Server workbench for the Lyo platform. About 30 routed test pages (cache, locks, file storage, PDF, and more) plus a thin proxy so each page can hit a remote API or in-process services.",
+  "description": "Interactive Blazor Server workbench for the Lyo platform. It hosts about 30 routed test pages (cache, locks, file storage, PDF, and more) and a thin proxy layer so every page\ncan run against a remote API (`Lyo.Gateway.Api` by default via `ApiClient` / `LyoAuthClient`, or `Lyo.TestApi` for kitchen-sink) or against in-process services registered the same way as a real host.",
   "features": [],
   "examples": [],
   "sections": [
@@ -112,22 +112,22 @@
           "`Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.Privacy.Web.Components`"
         ]
       ],
-      "lead": "Every workbench page lives under `Components/Pages/` and uses `@attribute [Route(\"/\" + Constants.Page.X)]` so route strings come from `Lyo.TestGateway.Constants.Page`. Highlights:",
+      "lead": "Every workbench page lives under `Components/Pages/` and uses `@attribute [Route(\"/\" + Constants.Page.X)]` so route strings come from `Lyo.TestGateway.Constants.Page`.",
       "trail": "Constants are defined in `Lyo.TestGateway.Constants.Page` (workbench routes) and `Lyo.TestGateway.Models.Constants` (Person/FileStorageWorkbench API routes)."
     },
     {
       "type": "list",
       "title": "Proxy routes",
       "items": [
-        "`GET /filestorage-download/{fileId:guid}?expiresHours=…` (`Constants.FileStorageWorkbench.ProxyDownloadRoute`) — Requires `FileStorageWorkbench:UseRemoteApiServices=true` (alias `UseTestApiServices` still accepted). Asks the remote API for metadata; for plain files it requests `…/files/{id}/presigned-read` and 302s to the storage URL so bytes never cross the Gateway. For encrypted/compressed files it streams decrypted output from `…/files/{id}/download`, copying through `HttpResponseStream` and setting `Content-Length` from metadata so browser progress works."
+        "`GET /filestorage-download/{fileId:guid}?expiresHours=…` (`Constants.FileStorageWorkbench.ProxyDownloadRoute`). Requires `FileStorageWorkbench:UseRemoteApiServices=true` (alias `UseTestApiServices` still accepted). Asks the remote API for metadata; for plain files it requests `…/files/{id}/presigned-read` and 302s to the storage URL so bytes never cross the Gateway. For encrypted/compressed files it streams decrypted output from `…/files/{id}/download`, copying through `HttpResponseStream` and setting `Content-Length` from metadata so browser progress works."
       ]
     },
     {
       "type": "list",
-      "title": "File Storage Workbench wiring",
+      "title": "File storage workbench wiring",
       "items": [
-        "**Proxy mode (`UseRemoteApiServices = true`, the default in `appsettings.json`; `UseTestApiServices` is an accepted alias)** — Registers keyed `IFileStorageService` → `TestApiFileStorageService` (also implements **`IFileStorageDiagnosticsService`** via `GET diagnostics/keys` for the Browser Exists column), keyed * *`IStagedFileUploadService`** → **`TestApiStagedFileUploadService`**, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the remote API (`ApiClient:BaseUrl`, typically `Lyo.Gateway.Api` on `:5251`) using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).",
-        "**In-process mode (`UseRemoteApiServices = false`, `AutoRegisterS3Services = true`)** — Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`), Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the same workbench page binds to a real backend."
+        "**Proxy mode (`UseRemoteApiServices = true`, the default in `appsettings.json`; `UseTestApiServices` is an accepted alias).** Registers keyed `IFileStorageService` → `TestApiFileStorageService` (also implements `IFileStorageDiagnosticsService` via `GET diagnostics/keys` for the Browser Exists column), keyed `IStagedFileUploadService` → `TestApiStagedFileUploadService`, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the remote API (`ApiClient:BaseUrl`, typically `Lyo.Gateway.Api` on `:5251`) using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).",
+        "**In-process mode (`UseRemoteApiServices = false`, `AutoRegisterS3Services = true`).** Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`), Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the same workbench page binds to a real backend."
       ]
     },
     {
@@ -944,6 +944,14 @@
     },
     {
       "name": "Lyo.Privacy",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",

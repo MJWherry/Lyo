@@ -1,10 +1,10 @@
 # Lyo.ContentThreatScan.Intel
 
-Optional **`DefaultContentThreatReputationPipeline`** for Malware Bazaar, VirusTotal, and **`clamd` INSTREAM** (TCP).
+Optional `DefaultContentThreatReputationPipeline` for Malware Bazaar, VirusTotal, and `clamd` INSTREAM (TCP).
 
 ## Composition
 
-Construct **`DefaultContentThreatReputationPipeline`** with a shared **`HttpClient`** (often from **`IHttpClientFactory`**), `ReputationPipelineOptions` bound from configuration, and an optional `ILogger`. Register the instance as **`IContentThreatReputationPipeline`** wherever **`ContentThreatMalwareScanner`** or other hosts need reputation. Probes are omitted when keys are absent: empty **`VirusTotalApiKey`** skips VT; empty **`MalwareBazaarAuthKey`** skips Bazaar; **`Clamd.Enabled == false`** skips `clamd`.
+Construct `DefaultContentThreatReputationPipeline` with a shared `HttpClient` (often from `IHttpClientFactory`), `ReputationPipelineOptions` bound from configuration, and an optional `ILogger`. Register the instance as `IContentThreatReputationPipeline` wherever `ContentThreatMalwareScanner` or other hosts need reputation. Probes are omitted when keys are absent: empty `VirusTotalApiKey` skips VT; empty `MalwareBazaarAuthKey` skips Bazaar; `Clamd.Enabled == false` skips `clamd`.
 
 ## `ReputationPipelineOptions`
 
@@ -23,9 +23,9 @@ Construct **`DefaultContentThreatReputationPipeline`** with a shared **`HttpClie
 
 ## Outages and quotas
 
-- **`Ignore`** — swallow (logged); no score bump
-- **`TreatAsSuspect`** — adds `ProviderFailureSuspectBump` under a stable rule id
-- **`ImmediateThreatBump`** — large contribution capped by disposition options (policy-driven “fail closed”)
+- `Ignore.` Swallow (logged). No score bump.
+- `TreatAsSuspect.` Adds `ProviderFailureSuspectBump` under a stable rule id.
+- `ImmediateThreatBump.` Large contribution capped by disposition options. Policy-driven fail-closed.
 
 ## Digest cache
 
@@ -35,13 +35,13 @@ Construct **`DefaultContentThreatReputationPipeline`** with a shared **`HttpClie
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.ContentThreatScan` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (direct, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `System.Text.Json` `10.0.5` — (direct, microsoft)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.ContentThreatScan` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `System.Text.Json` `10.0.5` (direct, microsoft)
+- `Lyo.Hashing` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

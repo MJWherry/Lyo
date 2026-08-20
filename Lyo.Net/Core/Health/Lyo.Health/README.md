@@ -1,6 +1,6 @@
 # Lyo.Health
 
-Interface for services that can report their health. Services implement `IHealth` and expose health directly—no central health service. Health returns `HealthResult` with status, timings, and optional metadata.
+Interface for services that report their own health. Implement `IHealth`. There is no central health service. Health returns `HealthResult` with status, timings, and optional metadata.
 
 ## Examples
 
@@ -40,12 +40,12 @@ HealthResult.Unhealthy(sw.Elapsed, "Database connection failed", metadata: null,
 
 ## Contract
 
-- **`HealthCheckName`** is a short identifier (e.g. `"filestorage"`, `"cache"`, `"rabbitmq"`, `"audit-postgres"`, `"change-tracker-postgres"`) used to label probe output in hosts.
-- **`CheckHealthAsync`** is the live probe; it should be cheap, short-circuiting, and honor the supplied `CancellationToken`.
+- `HealthCheckName` is a short identifier used to label probe output in hosts, for example `"filestorage"`, `"cache"`, `"rabbitmq"`, `"audit-postgres"`, `"change-tracker-postgres"`.
+- `CheckHealthAsync` is the live probe. Keep it cheap and short-circuiting, and honor the supplied `CancellationToken`.
 
 ## `HealthResult`
 
-`HealthResult` is an immutable, sealed class that captures the outcome of a probe:
+`HealthResult` is an immutable, sealed class for the outcome of a probe:
 
 | Member | Type | Notes |
 | ----------- | --------------------------------------- | --------------------------------------------------------------------------------- |
@@ -60,10 +60,10 @@ Use the static factories rather than constructing directly:
 
 ## Usage
 
-Get health from the service directly: Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend `IHealth`—health comes from the service, no separate registration. Hosts that need an aggregate view typically resolve `IEnumerable<IHealth>` and fan out `CheckHealthAsync` in parallel, then publish the resulting `HealthResult` collection.
+Get health from the service directly. Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend `IHealth`. Health comes from the service. No separate registration. Hosts that need an aggregate view typically resolve `IEnumerable<IHealth>` and fan out `CheckHealthAsync` in parallel, then publish the resulting `HealthResult` collection.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)

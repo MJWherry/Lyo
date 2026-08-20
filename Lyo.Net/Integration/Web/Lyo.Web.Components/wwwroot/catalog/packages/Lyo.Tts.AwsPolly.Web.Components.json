@@ -2,8 +2,8 @@
   "id": "Lyo.Tts.AwsPolly.Web.Components",
   "name": "Lyo.Tts.AwsPolly.Web.Components",
   "area": "Communication",
-  "tagline": "Blazor (MudBlazor) workbench component for trying out the `Lyo.Tts.AwsPolly` implementation interactively from a host application.",
-  "description": "Blazor (MudBlazor) workbench component for trying out the [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md) implementation interactively from a host application.",
+  "tagline": "Blazor (MudBlazor) workbench for trying `Lyo.Tts.AwsPolly` from a host app.",
+  "description": "Blazor (MudBlazor) workbench for trying [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md) from a host app.",
   "features": [],
   "examples": [],
   "sections": [
@@ -11,9 +11,9 @@
       "type": "list",
       "title": "Components",
       "items": [
-        "`AwsPollyWorkbench` — voice / audio format / language selector backed by `AwsPollyVoiceId`, a multi-line text input, and **Synthesize** / **Test Connection** actions:",
-        "Resolves `AwsPollyTtsService` and `AwsPollyOptions` from the DI container (so the host must register them via [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md) first).",
-        "Calls `AwsPollyTtsService.SynthesizeAsync(...)` with a populated `AwsPollyTtsRequest`, surfacing status text via `MudAlert` and feedback through `ISnackbar`.",
+        "`AwsPollyWorkbench` has voice, audio format, and language selectors backed by `AwsPollyVoiceId`, a multi-line text input, and **Synthesize** / **Test Connection** actions.",
+        "Resolves `AwsPollyTtsService` and `AwsPollyOptions` from DI. The host must register them via [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md) first.",
+        "Calls `AwsPollyTtsService.SynthesizeAsync(...)` with a populated `AwsPollyTtsRequest`. Status text goes to `MudAlert` and feedback goes through `ISnackbar`.",
         "Renders the returned audio bytes inline via `IJsInterop` for browser playback."
       ]
     },
@@ -68,7 +68,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -124,6 +140,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -149,6 +173,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -232,6 +264,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -251,7 +292,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

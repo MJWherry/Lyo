@@ -1,17 +1,17 @@
 # Lyo.Webhook
 
-Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and counters**, and **structured logging** via `Microsoft.Extensions.Logging`.
+Inbound webhook verification for ASP.NET Core: raw body and headers, HMAC helpers, a fluent `MapWebhook().Verify().Handle()` pipeline, `Lyo.Metrics` timings and counters, and structured logging via `Microsoft.Extensions.Logging`.
 
-Provider-specific algorithms (e.g. Twilio) live in separate packages such as **Lyo.Webhook.Twilio**.
+Provider-specific algorithms (e.g. Twilio) live in separate packages such as `Lyo.Webhook.Twilio`.
 
 ## Features
 
-- **Abstractions**: `IWebhookSignatureVerifier`, `WebhookVerificationContext`, `WebhookVerificationResult`
-- **Crypto helpers**: `WebhookCrypto` (HMAC-SHA256 / SHA1, constant-time compare, hex parse)
-- **ASP.NET Core**: read raw body, header dictionary, public URL, optional **form-urlencoded** parameters for signed form posts
-- **Fluent routes**: `MapWebhook("/path").Verify(verifier).Handle(...)` or `HandleJson<T>(...)`
-- **Metrics** (`Lyo.Metrics`): `lyo.webhook.request.duration`, `lyo.webhook.verification.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON parse failures, handler errors
-- **Logging**: category **`Lyo.Webhook`** (debug for incoming requests, warning on failed verification / bad JSON, error on handler exceptions)
+- **Abstractions.** `IWebhookSignatureVerifier`, `WebhookVerificationContext`, `WebhookVerificationResult`.
+- **Crypto.** `WebhookCrypto` (HMAC-SHA256 / SHA1, constant-time compare, hex parse).
+- **ASP.NET Core.** Read raw body, header dictionary, public URL, optional form-urlencoded parameters for signed form posts.
+- **Fluent routes.** `MapWebhook("/path").Verify(verifier).Handle(...)` or `HandleJson<T>(...)`.
+- **Metrics.** `lyo.webhook.request.duration`, `lyo.webhook.verification.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON parse failures, handler errors.
+- **Logging.** Category `Lyo.Webhook` (debug for incoming requests, warning on failed verification / bad JSON, error on handler exceptions).
 
 ## Examples
 
@@ -43,13 +43,13 @@ app.MapWebhook("/webhooks/json-example")
 
 ## Registration
 
-Register **`Lyo.Metrics`** and logging in your host (same as other Lyo services): At runtime the webhook pipeline resolves **`IMetrics`** and **`ILoggerFactory`** from **`HttpContext.RequestServices`**. If **`IMetrics`** is missing, **`NullMetrics`** is used; if **`ILoggerFactory`** is missing, **`NullLogger`** is used.
+Register `Lyo.Metrics` and logging in your host. At runtime the webhook pipeline resolves `IMetrics` and `ILoggerFactory` from `HttpContext.RequestServices`. If `IMetrics` is missing, `NullMetrics` is used. If `ILoggerFactory` is missing, `NullLogger` is used.
 
 ## Fluent mapping
 
-- Failed signature → **401**
-- Invalid JSON (when using `HandleJson`) → **400**
-- Metric tag **`route`** = route pattern string (keep cardinality low)
+- Failed signature returns 401
+- Invalid JSON (when using `HandleJson`) returns 400
+- Metric tag `route` is the route pattern string (keep cardinality low)
 
 ## Manual verification (no fluent API)
 
@@ -57,13 +57,13 @@ Use `WebhookCrypto`, `WebhookHeaders`, and `HttpRequest` extensions (`ReadRawBod
 
 ## Target framework
 
-- **net10.0** only (same line as the rest of this solution).
+- net10.0 only.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Metrics` — (direct, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)

@@ -30,12 +30,12 @@
           "`EndatoCeQueryEntity`, `EndatoCePersonEntity`, `EndatoCeAddressEntity`, `EndatoCeEmailAddressEntity`, `EndatoCePhoneNumberEntity` (+ matching `*Configuration` classes)."
         ]
       ],
-      "lead": "- **`EndatoDbContext`** ([`Database/EndatoDbContext.cs`](Database/EndatoDbContext.cs)) and `EndatoDbContextFactory` for design-time tooling.\n- **`PostgresEndatoOptions`** ([`PostgresEndatoOptions.cs`](PostgresEndatoOptions.cs)) — `IPostgresMigrationConfig`. Section `\"PostgresEndato\"`. Properties: `ConnectionString`,\n  `EnableAutoMigrations` (default `false`); `Schema = \"endato\"` is constant.\n- **Migrations** under [`Migrations/`](Migrations).\n\nThe two domains (Person Search and Contact Enrichment) are intentionally split into separate entity groups so caching either source is independent:",
+      "lead": "- `EndatoDbContext` ([`Database/EndatoDbContext.cs`](Database/EndatoDbContext.cs)) and `EndatoDbContextFactory` for design-time tooling.\n- `PostgresEndatoOptions` ([`PostgresEndatoOptions.cs`](PostgresEndatoOptions.cs)). `IPostgresMigrationConfig`. Section `\"PostgresEndato\"`. Properties: `ConnectionString`,\n `EnableAutoMigrations` (default `false`); `Schema = \"endato\"` is constant.\n- **Migrations** under [`Migrations/`](Migrations).\n\nThe two domains (Person Search and Contact Enrichment) are intentionally split into separate entity groups so caching either source is independent:",
       "trail": "`OnModelCreating` sets `HasDefaultSchema(\"endato\")` and applies each entity configuration; the migrations history table is also written to the `endato` schema."
     },
     {
       "type": "table",
-      "title": "DI surface ([`Extensions.cs`](Extensions.cs))",
+      "title": "DI registration ([`Extensions.cs`](Extensions.cs))",
       "headers": [
         "Method",
         "Description"

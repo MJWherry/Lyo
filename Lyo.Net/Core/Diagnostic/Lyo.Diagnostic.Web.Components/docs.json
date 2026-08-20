@@ -3,7 +3,7 @@
   "name": "Lyo.Diagnostic.Web.Components",
   "area": "Core",
   "tagline": "Blazor (Server / Interactive) workbench for analyzing and triaging .NET stack traces and exception payloads with `Lyo.Diagnostic`.",
-  "description": "Blazor (Server / Interactive) workbench for analyzing and triaging .NET stack traces and exception payloads with [`Lyo.Diagnostic`](../Lyo.Diagnostic/README.md). The workbench is\ndeliberately pure-UI — paste, view, and classify; nothing is persisted by the components themselves.",
+  "description": "Blazor (Server / Interactive) workbench for analyzing and triaging .NET stack traces and exception payloads with [`Lyo.Diagnostic`](../Lyo.Diagnostic/README.md). The workbench is UI only. Paste, view, and classify. The components do not persist anything.",
   "features": [],
   "examples": [],
   "sections": [
@@ -16,35 +16,35 @@
       ],
       "rows": [
         [
-          "**`DiagnosticWorkbench`**",
+          "`DiagnosticWorkbench`",
           "Top-level shell. Composes the panels below into a side-by-side input/output review layout."
         ],
         [
-          "**`StackTraceDecodePanel`**",
+          "`StackTraceDecodePanel`",
           "Paste raw stack trace text. Decodes via `IStackTraceDecoder` and renders structured frames."
         ],
         [
-          "**`DecodedStackTraceSummary`**",
+          "`DecodedStackTraceSummary`",
           "Compact summary chip with top frame, exception type, framework signature."
         ],
         [
-          "**`StackFrameTable`**",
-          "Tabular view of decoded frames (`method`, `file`, `line`, `assembly`) with row-level highlighting for user-code frames."
+          "`StackFrameTable`",
+          "Tabular view of decoded frames (`method`, `file`, `line`, `assembly`). User-code frames are styled."
         ],
         [
-          "**`SanitisedStackTracePanel`**",
-          "Renders the sanitised stack trace (paths/PII trimmed) suitable for inclusion in customer-facing error pages."
+          "`SanitisedStackTracePanel`",
+          "Renders the sanitised stack trace (paths/PII trimmed) for customer-facing error pages."
         ],
         [
-          "**`ExceptionTypeClassifierPanel`**",
-          "Runs the pasted exception type through `IExceptionTypeClassifier` and displays the resulting category (`Transient`, `Programming`, `Validation`, `Security`, …)."
+          "`ExceptionTypeClassifierPanel`",
+          "Runs the pasted exception type through `IExceptionTypeClassifier` and displays the category (`Transient`, `Programming`, `Validation`, `Security`, …)."
         ]
       ]
     },
     {
       "type": "paragraph",
       "title": "Host integration",
-      "text": "The workbench resolves `IStackTraceDecoder` and `IExceptionTypeClassifier` from DI — register them via `Lyo.Diagnostic` extensions before mounting `<DiagnosticWorkbench />`. MudBlazor is used for layout (via `Lyo.Web.Components`)."
+      "text": "The workbench resolves `IStackTraceDecoder` and `IExceptionTypeClassifier` from DI. Register them via `Lyo.Diagnostic` extensions before mounting `<DiagnosticWorkbench />`. Layout uses MudBlazor through `Lyo.Web.Components`."
     }
   ],
   "links": [],
@@ -92,7 +92,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -140,6 +156,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -165,6 +189,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -223,6 +255,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -242,7 +283,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

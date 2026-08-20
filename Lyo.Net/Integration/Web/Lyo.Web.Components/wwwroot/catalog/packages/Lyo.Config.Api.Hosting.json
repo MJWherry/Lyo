@@ -2,8 +2,8 @@
   "id": "Lyo.Config.Api.Hosting",
   "name": "Lyo.Config.Api.Hosting",
   "area": "Apps",
-  "tagline": "Bridges **`IConfigApiClient`** (`Lyo.Config.Api.Client`) into **`Microsoft.Extensions.DependencyInjection`** and **`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared…",
-  "description": "Bridges **`IConfigApiClient`** ([`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)) into **`Microsoft.Extensions.DependencyInjection`** and **`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared **`ResolvedConfigRecord`** ledger (ETags + **304** polling), then **one definition key JSON blob** binds each **`IOptionsMonitor<TOptions>`**.\n\nPrefer **`IOptionsMonitor<TOptions>.CurrentValue`** (or **`OnChange`**) for values that reload at runtime. **`IOptions<TOptions>`** is not registered here and would not observe remote updates anyway.",
+  "tagline": "Wires `IConfigApiClient` (`Lyo.Config.Api.Client`) into `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Options`. A `BackgroundService` polls a shared `ResolvedConfigRecord` ledger.",
+  "description": "Wires `IConfigApiClient` ([`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)) into `Microsoft.Extensions.DependencyInjection` and `Microsoft.Extensions.Options`. A `BackgroundService` keeps a shared `ResolvedConfigRecord` ledger (ETags + `304` polling). Then one definition-key JSON blob binds each `IOptionsMonitor<TOptions>`.\n\nPrefer `IOptionsMonitor<TOptions>.CurrentValue` (or `OnChange`) for values that reload at runtime. `IOptions<TOptions>` is not registered here and would not observe remote updates anyway.",
   "features": [],
   "examples": [
     {
@@ -27,8 +27,8 @@
       "type": "list",
       "title": "Configuration",
       "items": [
-        "**`StartupTimeout`** — omit or **`null`** to wait indefinitely for the first **200**.",
-        "**`RequireSuccessOnStartup`** — **`false`** allows the host to start after **`StartupTimeout`** even if no snapshot arrived (ledger stays empty unless you later reload manually; prefer keeping **`true`** unless you tolerate cold-start without remote config)."
+        "`StartupTimeout`. Omit or `null` to wait indefinitely for the first **200**.",
+        "`RequireSuccessOnStartup`. `false` allows the host to start after `StartupTimeout` even if no snapshot arrived (ledger stays empty unless you later reload manually; prefer keeping `true` unless you tolerate cold-start without remote config)."
       ]
     },
     {
@@ -59,9 +59,9 @@
     },
     {
       "type": "table",
-      "title": "`ConfigApiResolvedLedger` — the in-process resolved-config cache",
+      "title": "`ConfigApiResolvedLedger`",
       "headers": [
-        "Surface",
+        "Member",
         "Purpose"
       ],
       "rows": [
@@ -87,7 +87,7 @@
     },
     {
       "type": "table",
-      "title": "Missing definition key behaviour",
+      "title": "Missing definition key behavior",
       "headers": [
         "Condition",
         "`Throw` (default)",
@@ -117,16 +117,16 @@
       "type": "list",
       "title": "Limitations",
       "items": [
-        "**No named options.** `ConfigApiOptionsMonitor<T>` ignores the `name` argument on `IOptionsMonitor<T>.Get(string?)`: requests for `Options.DefaultName` (or `null` / empty) return the cached `CurrentValue`, **anything else throws `InvalidOperationException`**. There is no way to map several names onto different definition keys through this monitor.",
+        "**No named options.** `ConfigApiOptionsMonitor<T>` ignores the `name` argument on `IOptionsMonitor<T>.Get(string?)`: requests for `Options.DefaultName` (or `null` / empty) return the cached `CurrentValue`. Anything else throws `InvalidOperationException`. There is no way to map several names onto different definition keys through this monitor.",
         "**One definition key per `TOptions` type per host.** `AddConfigApiOptions<TOptions>(definitionKey, …)` registers an unkeyed singleton `IOptionsMonitor<TOptions>`. Calling it twice with the same `TOptions` and different `definitionKey` values **replaces** the prior registration (last call wins); you cannot bind one POCO to two definition keys in the same host. Use distinct `TOptions` types (or sub-records) for each definition key.",
-        "**`Enabled = false` leaves the ledger empty.** Without polling, `ConfigApiResolvedLedger.Current` stays `null` unless something else calls `SetResolved` directly. Options monitors then fall back to `ConfigApiMissingDefinitionKeyBehavior` semantics — see the table above.",
+        "**`Enabled = false` leaves the ledger empty.** Without polling, `ConfigApiResolvedLedger.Current` stays `null` unless something else calls `SetResolved` directly. Options monitors then fall back to `ConfigApiMissingDefinitionKeyBehavior` semantics, see the table above.",
         "**`IOptions<T>` and `IOptionsSnapshot<T>` are not registered** by this package. Inject `IOptionsMonitor<T>` (or, in scoped consumers, `IOptionsSnapshot<T>` if you register your own adapter) so changes from the polling service propagate."
       ]
     },
     {
       "type": "markdown",
-      "title": "Runtime behaviour summary",
-      "body": "```mermaid\nflowchart LR\n    HS[BackgroundService_poll] --> Ledger[Resolved_ledger_ETag]\n    Ledger --> Mon[OptionsMonitor_builder]\n```\n\n1. Hosted service probes **`IConfigApiClient.ResolveForAppAsync`** with **`AppKind`/`AppId`** and **`If-None-Match`** from **`ConfigApiResolvedLedger.CurrentEtag`**.\n2. On **200**, the ledger swaps in the new **`ResolvedConfigRecord`** and invalidates **`IChangeToken`** listeners.\n3. Each **`ConfigApiOptionsMonitor<T>`** reacts by re-materializing **`T`** via **`ResolvedConfigRecord.TryGetValue(definitionKey, …)`** + JSON deserialize (same *\n   *`ConfigJsonSerializerOptions.Default`** semantics as **`GetValue<T>`** elsewhere).\n\nREST paths remain in **[`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md)**. Resolve outcomes (**`ConfigResolveOutcome`**) are in *\n*[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md)**; HTTP registration and **`ConfigPolling`** in **[`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)**."
+      "title": "Runtime behavior",
+      "body": "```mermaid\nflowchart LR\n    HS[BackgroundService_poll] --> Ledger[Resolved_ledger_ETag]\n    Ledger --> Mon[OptionsMonitor_builder]\n```\n\n1. Hosted service probes `IConfigApiClient.ResolveForAppAsync` with `AppKind`/`AppId` and `If-None-Match` from `ConfigApiResolvedLedger.CurrentEtag`.\n2. On **200**, the ledger swaps in the new `ResolvedConfigRecord` and invalidates `IChangeToken` listeners.\n3. Each `ConfigApiOptionsMonitor<T>` reacts by re-materializing `T` via `ResolvedConfigRecord.TryGetValue(definitionKey, …)` + JSON deserialize (same `ConfigJsonSerializerOptions.Default` semantics as `GetValue<T>` elsewhere).\n\nREST paths remain in [`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md). Resolve outcomes (`ConfigResolveOutcome`) are in [`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md); HTTP registration and `ConfigPolling` in [`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)."
     }
   ],
   "links": [],
@@ -248,6 +248,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

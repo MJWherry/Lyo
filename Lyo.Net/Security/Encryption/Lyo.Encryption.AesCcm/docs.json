@@ -3,7 +3,7 @@
   "name": "Lyo.Encryption.AesCcm",
   "area": "Security",
   "tagline": "AES-CCM authenticated encryption addon for `Lyo.Encryption`. Provides `AesCcmEncryptionService` (BouncyCastle-backed on all targets) and matching DI extensions.",
-  "description": "AES-CCM authenticated encryption addon for `Lyo.Encryption`. Provides `AesCcmEncryptionService` (BouncyCastle-backed on all targets) and matching DI extensions.\n\nInstall this addon only when you actually use AES-CCM — the core `Lyo.Encryption` package no longer pulls BouncyCastle on `net10`.",
+  "description": "AES-CCM authenticated encryption addon for `Lyo.Encryption`. Provides `AesCcmEncryptionService` (BouncyCastle-backed on all targets) and matching DI extensions.\n\nInstall this addon only when you actually use AES-CCM. The core `Lyo.Encryption` package no longer pulls BouncyCastle on `net10`.",
   "features": [],
   "examples": [
     {
@@ -21,17 +21,17 @@
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "Requires a registered **`IKeyStore`** ([`Lyo.KeyStore`](../Lyo.KeyStore/README.md))."
+      "text": "Requires a registered `IKeyStore` ([`Lyo.KeyStore`](../Lyo.KeyStore/README.md))."
     },
     {
       "type": "paragraph",
       "title": "Keyed two-key (recommended for file storage)",
-      "text": "Registers **`AesCcmEncryptionService`**, **`IEncryptionService`**, and **`ITwoKeyEncryptionService`** under the same key. See [`Lyo.Encryption`](../Lyo.Encryption/README.md) and [Encryption area `README.md`](../README.md) for mixed DEK/KEK algorithms and RSA registration."
+      "text": "Registers `AesCcmEncryptionService`, `IEncryptionService`, and `ITwoKeyEncryptionService` under the same key. See [`Lyo.Encryption`](../Lyo.Encryption/README.md) and [Encryption area `README.md`](../README.md) for mixed DEK/KEK algorithms and RSA registration."
     },
     {
       "type": "paragraph",
       "title": "Performance",
-      "text": "BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **12.2 ms encrypt / 11.1 ms decrypt @ 1 MB** (~18× slower than AES-GCM). BouncyCastle-backed path. Full tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)."
+      "text": "BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **12.2 ms encrypt / 11.1 ms decrypt @ 1 MB** (~18× slower than AES-GCM). BouncyCastle-backed path. Tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)."
     }
   ],
   "links": [],

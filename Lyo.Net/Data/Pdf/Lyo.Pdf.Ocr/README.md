@@ -1,6 +1,6 @@
 # Lyo.Pdf.Ocr
 
-Glues [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md) (PDFium → PNG) to an `IOcrEngine` from `Lyo.Images.Ocr` and projects OCR pixel boxes back into PDF coordinate space.
+Renders a PDF page to PNG via [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md) (PDFium), runs an `IOcrEngine` from `Lyo.Images.Ocr`, then maps OCR pixel boxes back into PDF points.
 
 Targets `net10.0`.
 
@@ -64,25 +64,25 @@ unexpected exceptions are tagged with `PdfOcrErrorCodes.ReadFailed`
 
 ## Example
 
-For selectable-text PDFs prefer `IPdfReader.Text` (PdfPig) directly — OCR only helps when the PDF lacks an embedded text layer.
+For selectable-text PDFs prefer `IPdfReader.Text` (PdfPig) directly. OCR only helps when the PDF lacks an embedded text layer.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Images.Ocr` — (direct, lyo)
-- `Lyo.Pdf.Models` — (direct, lyo)
-- `Lyo.Pdf.Rendering` — (direct, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.DataTable.Models` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `PDFtoImage` `5.2.1` — (transitive, third-party)
-- `SixLabors.ImageSharp` `3.1.12` — (transitive, third-party)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Images.Ocr` (direct, lyo)
+- `Lyo.Pdf.Models` (direct, lyo)
+- `Lyo.Pdf.Rendering` (direct, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `PDFtoImage` `5.2.1` (transitive, third-party)
+- `SixLabors.ImageSharp` `3.1.12` (transitive, third-party)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

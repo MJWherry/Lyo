@@ -2,8 +2,8 @@
   "id": "Lyo.Discord.Models",
   "name": "Lyo.Discord.Models",
   "area": "Integration",
-  "tagline": "Wire-level DTOs and shared constants for the Discord integration. Used by both `Lyo.Discord.Client` (typed HTTP client) and `Lyo.Discord.Postgres` (API host + persistence) so request/response shapes…",
-  "description": "Wire-level DTOs and shared constants for the Discord integration. Used by both [`Lyo.Discord.Client`](../Lyo.Discord.Client/README.md) (typed HTTP client) and [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md) (API host + persistence) so request/response shapes stay symmetric.",
+  "tagline": "Wire-level DTOs and shared constants for the Discord integration. Used by `Lyo.Discord.Client` (typed HTTP client) and `Lyo.Discord.Postgres` (API host + persistence) so request and response shapes match.",
+  "description": "Wire-level DTOs and shared constants for the Discord integration. Used by [`Lyo.Discord.Client`](../Lyo.Discord.Client/README.md) (typed HTTP client) and [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md) (API host + persistence) so request and response shapes match.",
   "features": [],
   "examples": [],
   "sections": [
@@ -94,7 +94,7 @@
           "`Discord/Guild/{guildId}/GuildSettings/Revert/{revision}`"
         ]
       ],
-      "lead": "`Constants.Rest.Discord` centralizes route segments so client managers and host endpoints stay in lock-step:"
+      "lead": "`Constants.Rest.Discord` holds route segments shared by client managers and host endpoints:"
     }
   ],
   "links": [],
@@ -134,6 +134,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

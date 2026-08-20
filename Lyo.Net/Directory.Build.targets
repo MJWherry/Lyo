@@ -34,4 +34,7 @@
         <Warning Text="tooling-docs render skipped or failed (exit $(_ToolingDocsExitCode)). Pack continues."
                  Condition="Exists('$(_ToolingDocs)') AND '$(_ToolingDocsExitCode)' != '' AND '$(_ToolingDocsExitCode)' != '0'"/>
     </Target>
+
+    <!-- build_nuget.py writes this when packing a subset; pins Lyo ProjectReference nupkg versions. -->
+    <Import Project="$(LyoDependencyVersionTargets)" Condition="'$(LyoDependencyVersionTargets)' != '' AND Exists('$(LyoDependencyVersionTargets)')"/>
 </Project>

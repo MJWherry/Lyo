@@ -5,19 +5,19 @@
   "tagline": "PostgreSQL persistence for Lyo.People.Models using Entity Framework Core.",
   "description": "PostgreSQL persistence for Lyo.People.Models using Entity Framework Core.\n\n**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host.\nSee [package layout](../../../docs/package-layout.md).",
   "features": [
-    "**person** — Core person data with flattened name, demographics, and JSON columns for preferences/citizenship/custom fields",
-    "**phone_number** — Base phone numbers (E.164)",
-    "**email_address** — Base email addresses",
-    "**contact_phone_number** — Person–phone junction with type (mobile, home, work)",
-    "**contact_email_address** — Person–email junction with type (personal, work)",
-    "**social_media_profile** — Social platform profiles",
-    "**address** — Addresses (simplified for people schema)",
-    "**contact_address** — Person–address junction with type (home, work, billing)",
-    "**identification** — ID documents (passport, driver's license, SSN, etc.)",
-    "**person_relationship** — Relationships between people",
-    "**employment** — Employment history",
-    "**person_source**, **address_source**, **phone_number_source**, **email_address_source** — import provenance via **`source_entity_*`** + **`imported_at`** (see [ `PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs))",
-    "**contact_address_source**, **contact_phone_number_source**, **contact_email_address_source** — optional junction-level provenance (same shape)"
+    "**person.** Core person data with flattened name, demographics, and JSON columns for preferences/citizenship/custom fields.",
+    "**phone_number.** Base phone numbers (E.164).",
+    "**email_address.** Base email addresses.",
+    "**contact_phone_number.** Person-phone junction with type (mobile, home, work).",
+    "**contact_email_address.** Person-email junction with type (personal, work).",
+    "**social_media_profile.** Social platform profiles.",
+    "**address.** Addresses (simplified for people schema).",
+    "**contact_address.** Person-address junction with type (home, work, billing).",
+    "**identification.** ID documents (passport, driver's license, SSN, and similar).",
+    "**person_relationship.** Relationships between people.",
+    "**employment.** Employment history.",
+    "**person_source, address_source, phone_number_source, email_address_source.** Import provenance via `source_entity_*` plus `imported_at` (see [`PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs)).",
+    "**contact_address_source, contact_phone_number_source, contact_email_address_source.** Optional junction-level provenance (same shape)."
   ],
   "examples": [
     {
@@ -41,19 +41,19 @@
       "type": "list",
       "title": "Overview",
       "items": [
-        "**person** — Core person data with flattened name, demographics, and JSON columns for preferences/citizenship/custom fields",
-        "**phone_number** — Base phone numbers (E.164)",
-        "**email_address** — Base email addresses",
-        "**contact_phone_number** — Person–phone junction with type (mobile, home, work)",
-        "**contact_email_address** — Person–email junction with type (personal, work)",
-        "**social_media_profile** — Social platform profiles",
-        "**address** — Addresses (simplified for people schema)",
-        "**contact_address** — Person–address junction with type (home, work, billing)",
-        "**identification** — ID documents (passport, driver's license, SSN, etc.)",
-        "**person_relationship** — Relationships between people",
-        "**employment** — Employment history",
-        "**person_source**, **address_source**, **phone_number_source**, **email_address_source** — import provenance via **`source_entity_*`** + **`imported_at`** (see [ `PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs))",
-        "**contact_address_source**, **contact_phone_number_source**, **contact_email_address_source** — optional junction-level provenance (same shape)"
+        "**person.** Core person data with flattened name, demographics, and JSON columns for preferences/citizenship/custom fields.",
+        "**phone_number.** Base phone numbers (E.164).",
+        "**email_address.** Base email addresses.",
+        "**contact_phone_number.** Person-phone junction with type (mobile, home, work).",
+        "**contact_email_address.** Person-email junction with type (personal, work).",
+        "**social_media_profile.** Social platform profiles.",
+        "**address.** Addresses (simplified for people schema).",
+        "**contact_address.** Person-address junction with type (home, work, billing).",
+        "**identification.** ID documents (passport, driver's license, SSN, and similar).",
+        "**person_relationship.** Relationships between people.",
+        "**employment.** Employment history.",
+        "**person_source, address_source, phone_number_source, email_address_source.** Import provenance via `source_entity_*` plus `imported_at` (see [`PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs)).",
+        "**contact_address_source, contact_phone_number_source, contact_email_address_source.** Optional junction-level provenance (same shape)."
       ]
     },
     {
@@ -64,7 +64,7 @@
     {
       "type": "paragraph",
       "title": "Registration",
-      "text": "Everything ships as extension methods on `IServiceCollection`; no people-domain service is registered — consumers resolve `PeopleDbContext` (scoped) or `IDbContextFactory<PeopleDbContext>` (singleton) and write their own repositories. The factory overloads also call `services.AddPostgresMigrations<PeopleDbContext, PostgresPeopleOptions>()` from `Lyo.Postgres`, which honours `PostgresPeopleOptions.EnableAutoMigrations` and stamps the `__EFMigrationsHistory` table inside the `people` schema."
+      "text": "Everything ships as extension methods on `IServiceCollection`. No people-domain service is registered. Consumers resolve `PeopleDbContext` (scoped) or `IDbContextFactory<PeopleDbContext>` (singleton) and write their own repositories. The factory overloads also call `services.AddPostgresMigrations<PeopleDbContext, PostgresPeopleOptions>()` from `Lyo.Postgres`, which honours `PostgresPeopleOptions.EnableAutoMigrations` and stamps the `__EFMigrationsHistory` table inside the `people` schema."
     },
     {
       "type": "paragraph",

@@ -3,16 +3,16 @@
   "name": "Lyo.Query.Models",
   "area": "Data",
   "tagline": "Filter / sort / projection DTOs and fluent builders (`WhereClause`, QueryConcrete / QueryProject / root Query) shared by Lyo.Query and Lyo.Api.",
-  "description": "Filter / sort / projection DTOs and fluent builders for query requests. The same `WhereClause` tree is consumed by [`Lyo.Query`](../Lyo.Query/README.md) (turns it into LINQ on `IQueryable`) and by [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) endpoints (`QueryConcrete`, `QueryProject`, root `Query`), so HTTP clients and in-process tests build queries the same way.\n\nCovers the polymorphic where-clause AST, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, sort + explain result shapes, and builders (`WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`).\n\n> **Caching:** Result caching for `POST …/QueryConcrete` and `POST …/QueryProject` is configured > on the API host (`QueryOptions.CacheQueryResultsAsUtf8Payload`, `ICacheService` / Fusion), > not on these DTOs. See *Query result caching* in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).\n\nTargets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions`, `Lyo.Common`, and `Lyo.Result`.",
+  "description": "Filter / sort / projection DTOs and fluent builders for query requests. The same `WhereClause` tree is consumed by [`Lyo.Query`](../Lyo.Query/README.md) (turns it into LINQ on `IQueryable`) and by [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) endpoints (`QueryConcrete`, `QueryProject`, root `Query`), so HTTP clients and in-process tests build queries the same way.\n\nCovers the polymorphic where-clause AST, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, sort + explain result shapes, and builders (`WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`).\n\n> **Caching.** Result caching for `POST …/QueryConcrete` and `POST …/QueryProject` is configured > on the API host (`QueryOptions.CacheQueryResultsAsUtf8Payload`, `ICacheService` / Fusion), > not on these DTOs. See *Query result caching* in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).\n\nTargets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions`, `Lyo.Common`, and `Lyo.Result`.",
   "features": [
-    "**WhereClause AST** — polymorphic `condition` / `group` JSON tree with optional `SubClause` for two-phase filters",
-    "**QueryConcreteReq** — full entity-graph body for `POST …/QueryConcrete` (includes, sort, keys, options)",
-    "**ProjectionQueryReq** — `Select` + computed fields for `POST …/QueryProject`",
-    "**QueryReq (root)** — `From` / `Joins` / `Select` for dynamic-context `POST …/Query`",
-    "**Fluent builders** — `WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`",
-    "**ParameterOptions** — static key/label list or root `QueryReq` template for Job/Reporting definition parameter pickers (`ParameterOptionsJson`, `ParameterOptionsBinder`)",
-    "**Shared with Lyo.Query + Lyo.Api** — same DTOs for in-process LINQ and HTTP endpoints",
-    "**Explain → errors** — `WhereClauseExplainResult.ToErrors` maps a failed in-memory explain tree to `Lyo.Result.Error` (AND = per-leaf, OR = one summary). Used by validation schemas; not for SQL `ApplyWhereClause`."
+    "**WhereClause AST.** Polymorphic `condition` / `group` JSON tree with optional `SubClause` for two-phase filters.",
+    "**QueryConcreteReq.** Entity-graph body for `POST …/QueryConcrete` (includes, sort, keys, options).",
+    "**ProjectionQueryReq.** `Select` + computed fields for `POST …/QueryProject`.",
+    "**QueryReq (root).** `From` / `Joins` / `Select` for dynamic-context `POST …/Query`.",
+    "**Builders.** `WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`.",
+    "**ParameterOptions.** Static key/label list or root `QueryReq` template for Job/Reporting definition parameter pickers (`ParameterOptionsJson`, `ParameterOptionsBinder`).",
+    "**Shared with Lyo.Query + Lyo.Api.** Same DTOs for in-process LINQ and HTTP endpoints.",
+    "**Explain → errors.** `WhereClauseExplainResult.ToErrors` maps a failed in-memory explain tree to `Lyo.Result.Error` (AND = per-leaf, OR = one summary). Used by validation schemas, not for SQL `ApplyWhereClause`."
   ],
   "examples": [
     {
@@ -69,41 +69,41 @@
       "type": "list",
       "title": "Enums",
       "items": [
-        "`ComparisonOperatorEnum` — `Unknown`, `Equals`, `NotEquals`, `Contains`, `NotContains`, `StartsWith`, `EndsWith`, `NotStartsWith`, `NotEndsWith`, `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`, `In`, `NotIn`, `Regex`, `NotRegex`. Each carries a `[Description]` symbol (`=`, `≠`, etc.) for UI use. `GreaterThan*` / `LessThan*` over collection navigations operate on the collection's count.",
-        "`GroupOperatorEnum` — `And`, `Or`.",
-        "`QueryTotalCountMode` — `Exact`, `None`, `HasMore`.",
-        "`QueryIncludeFilterMode` — `Full`, `MatchedOnly`.",
-        "`JoinType` — `Inner`, `Left` (root `/Query` joins; v1)."
+        "`ComparisonOperatorEnum`. `Unknown`, `Equals`, `NotEquals`, `Contains`, `NotContains`, `StartsWith`, `EndsWith`, `NotStartsWith`, `NotEndsWith`, `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`, `In`, `NotIn`, `Regex`, `NotRegex`. Each carries a `[Description]` symbol (`=`, `≠`, etc.) for UI use. `GreaterThan*` / `LessThan*` over collection navigations operate on the collection's count.",
+        "`GroupOperatorEnum`. `And`, `Or`.",
+        "`QueryTotalCountMode`. `Exact`, `None`, `HasMore`.",
+        "`QueryIncludeFilterMode`. `Full`, `MatchedOnly`.",
+        "`JoinType`. `Inner`, `Left` (root `/Query` joins; v1)."
       ]
     },
     {
       "type": "markdown",
       "title": "Request DTOs (`Common/Request`)",
-      "body": "- `QueryRequestBase` — shared fields: `Start`, `Amount` (paging), `Keys`. Polymorphic JSON (`$type`: `concrete` / `project` / `root`) so cache/API can deserialize `ProjectedQueryRes.QueryRequest` (`List<object[]>` of composite primary keys), `WhereClause`, `Include` (navigation paths for eager load), `SortBy` (`List<SortBy>`).\n- `QueryConcreteReq : QueryRequestBase, IQueryExecutionRequest` — request body for `/QueryConcrete` (full entity graphs). `Options : QueryRequestOptions` (TotalCount + IncludeFilter).\n- `ProjectionQueryReq : QueryRequestBase, IQueryExecutionRequest` — request body for `/QueryProject`. Adds `Select` (required) and `ComputedField[] ComputedFields`. `Include` is ignored — navigations are derived from `Select` and any collection paths referenced in `WhereClause`. `Options : ProjectedQueryRequestOptions` adds `ZipSiblingCollectionSelections` (default `true`).\n- `QueryReq : QueryRequestBase, IQueryExecutionRequest` — request body for **root** `/Query` (dynamic context base). Required `From` (`FromClause`), optional `Joins` (`JoinClause`), required `Select` (alias.property), optional `ComputedFields`. `Include` forbidden. Nested `FromClause.Query` / `JoinClause.Query` is a `SourceQueryScope` (Where/Keys), not `WhereClause.SubClause`.\n- `FromClause` / `JoinClause` / `JoinOn` / `SourceQueryScope` — join AST for root Query.\n- `ComputedField(Name, Template)` — adds a column derived from a SmartFormat template evaluated against the projected row (requires `IFormatterService` in the host).\n- `IQueryExecutionRequest` — common execution surface for concrete / projection / root query.\n\nMaps onto `Lyo.Api` host routes (see [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) for caching, options, and SQL projection details):\n\n| Request DTO | Endpoint | Response |\n| --- | --- | --- |\n| `QueryConcreteReq` | `POST {baseRoute}/QueryConcrete` | `QueryRes<T>` (entity graphs) |\n| `ProjectionQueryReq` | `POST {baseRoute}/QueryProject` | `ProjectedQueryRes<T>` |\n| `QueryReq` | `POST {dynamicBase}/Query` | `ProjectedQueryRes` (JSON rows; From/Joins) |\n\n**Result caching** for QueryConcrete / QueryProject is host-side (`QueryOptions.CacheQueryResultsAsUtf8Payload` + `ICacheService` / Fusion), not on these DTOs. Both endpoints share the same option and tag-based invalidation (`QueryCacheKeyBuilder` / `QueryCacheTagBuilder`)."
+      "body": "- `QueryRequestBase`. Shared fields: `Start`, `Amount` (paging), `Keys`. Polymorphic JSON (`$type`: `concrete` / `project` / `root`) so cache/API can deserialize `ProjectedQueryRes.QueryRequest` (`List<object[]>` of composite primary keys), `WhereClause`, `Include` (navigation paths for eager load), `SortBy` (`List<SortBy>`).\n- `QueryConcreteReq : QueryRequestBase, IQueryExecutionRequest`. Request body for `/QueryConcrete` (entity graphs). `Options : QueryRequestOptions` (TotalCount + IncludeFilter).\n- `ProjectionQueryReq : QueryRequestBase, IQueryExecutionRequest`. Request body for `/QueryProject`. Adds `Select` (required) and `ComputedField[] ComputedFields`. `Include` is ignored. Navigations are derived from `Select` and any collection paths referenced in `WhereClause`. `Options : ProjectedQueryRequestOptions` adds `ZipSiblingCollectionSelections` (default `true`).\n- `QueryReq : QueryRequestBase, IQueryExecutionRequest`. Request body for root `/Query` (dynamic context base). Required `From` (`FromClause`), optional `Joins` (`JoinClause`), required `Select` (alias.property), optional `ComputedFields`. `Include` forbidden. Nested `FromClause.Query` / `JoinClause.Query` is a `SourceQueryScope` (Where/Keys), not `WhereClause.SubClause`.\n- `FromClause` / `JoinClause` / `JoinOn` / `SourceQueryScope`. Join AST for root Query.\n- `ComputedField(Name, Template)`. Adds a column derived from a SmartFormat template evaluated against the projected row (requires `IFormatterService` in the host).\n- `IQueryExecutionRequest`. Shared methods for concrete / projection / root query.\n\nMaps onto `Lyo.Api` host routes (see [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) for caching, options, and SQL projection details):\n\n| Request DTO | Endpoint | Response |\n| --- | --- | --- |\n| `QueryConcreteReq` | `POST {baseRoute}/QueryConcrete` | `QueryRes<T>` (entity graphs) |\n| `ProjectionQueryReq` | `POST {baseRoute}/QueryProject` | `ProjectedQueryRes<T>` |\n| `QueryReq` | `POST {dynamicBase}/Query` | `ProjectedQueryRes` (JSON rows; From/Joins) |\n\n**Result caching** for QueryConcrete / QueryProject is host-side (`QueryOptions.CacheQueryResultsAsUtf8Payload` + `ICacheService` / Fusion), not on these DTOs. Both endpoints share the same option and tag-based invalidation (`QueryCacheKeyBuilder` / `QueryCacheTagBuilder`)."
     },
     {
       "type": "list",
       "title": "Sort",
       "items": [
-        "`SortBy(PropertyName, Direction?, Priority?)` — dotted property path with an optional explicit `Priority`. When omitted the list order in the request determines tie-break order."
+        "`SortBy(PropertyName, Direction?, Priority?)`. Dotted property path with an optional explicit `Priority`. When omitted the list order in the request determines tie-break order."
       ]
     },
     {
       "type": "paragraph",
       "title": "Explain results",
-      "text": "`WhereClauseExplainResult`, `WhereClauseExplainNode`, `WhereClauseExplainKind`, and `ExplainOrBranchOutcome` — produced by `IWhereClauseService.ExplainMatch<TEntity>(...)` in `Lyo.Query`. Each node tracks `Passed`, AST `Path`, optional `Description`, group `Operator`, condition `Field` / `Comparison` / `FilterValue` / `ActualValueSummary`, and `SubClause` chains. The top-level result also carries `BlockingPath`, `FailureSummary`, and per-branch detail for failed `Or` groups."
+      "text": "`WhereClauseExplainResult`, `WhereClauseExplainNode`, `WhereClauseExplainKind`, and `ExplainOrBranchOutcome` are produced by `IWhereClauseService.ExplainMatch<TEntity>(...)` in `Lyo.Query`. Each node tracks `Passed`, AST `Path`, optional `Description`, group `Operator`, condition `Field` / `Comparison` / `FilterValue` / `ActualValueSummary`, and `SubClause` chains. The top-level result also carries `BlockingPath`, `FailureSummary`, and per-branch detail for failed `Or` groups."
     },
     {
       "type": "markdown",
       "title": "Builders",
-      "body": "| Builder | Produces | Notes |\n| --- | --- | --- |\n| `WhereClauseBuilder` | `WhereClause` | `And()` / `Or()`; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, …); nested groups; `AddSubClause` / `AddConditionWithSubClause` for two-phase filters |\n| `WhereClauseBuilderFor<T>` | `WhereClause` | From `WhereClauseBuilder.For<T>()` — property paths via `Expression<Func<T, …>>` |\n| `QueryConcreteReqBuilder` | `QueryConcreteReq` | Includes, keys, where, sort, paging, total-count / include-filter modes; `For<T>()` typed helpers |\n| `ProjectionQueryReqBuilder` | `ProjectionQueryReq` | Same as concrete plus `AddSelect` / `AddComputedField` / zip sibling collections |\n| `QueryReqBuilder` | `QueryReq` | Root `/Query`: `From`, `Join`, selects, where/sort/paging |\n\nSee **Examples** above for full builder samples (also documented under Query & Request Builders in `Lyo.Api`)."
+      "body": "| Builder | Produces | Notes |\n| --- | --- | --- |\n| `WhereClauseBuilder` | `WhereClause` | `And()` / `Or()`; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, …); nested groups; `AddSubClause` / `AddConditionWithSubClause` for two-phase filters |\n| `WhereClauseBuilderFor<T>` | `WhereClause` | From `WhereClauseBuilder.For<T>()`. Property paths via `Expression<Func<T, …>>` |\n| `QueryConcreteReqBuilder` | `QueryConcreteReq` | Includes, keys, where, sort, paging, total-count / include-filter modes; `For<T>()` typed helpers |\n| `ProjectionQueryReqBuilder` | `ProjectionQueryReq` | Same as concrete plus `AddSelect` / `AddComputedField` / zip sibling collections |\n| `QueryReqBuilder` | `QueryReq` | Root `/Query`: `From`, `Join`, selects, where/sort/paging |\n\nSee Examples above for builder samples (also documented under Query & Request Builders in `Lyo.Api`)."
     },
     {
       "type": "list",
       "title": "Attributes and exceptions",
       "items": [
-        "`[QueryPropertyName(\"CanonicalName\")]` — overrides the serialized / query path name when the C# property differs from the canonical query path (useful when EF scaffolding or DTOs rename a column).",
-        "`InvalidQueryException : InvalidOperationException` — thrown by `Lyo.Query` for invalid paths or unsupported operators."
+        "`[QueryPropertyName(\"CanonicalName\")]`. Overrides the serialized / query path name when the C# property differs from the canonical query path (useful when EF scaffolding or DTOs rename a column).",
+        "`InvalidQueryException : InvalidOperationException`. Thrown by `Lyo.Query` for invalid paths or unsupported operators."
       ]
     }
   ],

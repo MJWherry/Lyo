@@ -1,9 +1,8 @@
 # Docs schema
 
-Package documentation **source of truth** is each project’s `docs.json`
-(e.g. `Lyo.Net/Data/Compression/Lyo.Compression/docs.json`).
+Package documentation **source of truth** is each project's `docs.json` (for example `Lyo.Net/Data/Compression/Lyo.Compression/docs.json`).
 
-`README.md` next to it is **generated** by `render` — never edit README as source.
+`README.md` next to it is **generated** by `render`. Never edit README as source.
 
 This folder only keeps shared **JSON Schema** for editors/validators.
 
@@ -22,5 +21,5 @@ python3 scripts/docs/project-docs.py render
 npm run sync-docs
 ```
 
-**Do not hand-edit generated `README.md` files.**  
-**Do not run `extract`** unless you intentionally want to overwrite `docs.json` from README (`extract --force` only — lossy).
+**Do not hand-edit generated `README.md` files.**
+**Do not run `extract`** unless you intentionally want to overwrite `docs.json` from README (`extract --force` only, and it is lossy).

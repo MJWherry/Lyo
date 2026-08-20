@@ -2,8 +2,8 @@
   "id": "Lyo.Job.Worker",
   "name": "Lyo.Job.Worker",
   "area": "Integration",
-  "tagline": "Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a single `ExecuteAsync(IJobWorkerContext)` method — the base class consumes the priority-enabled worker-type queue…",
-  "description": "Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement a single `ExecuteAsync(IJobWorkerContext)` method — the base class consumes the priority-enabled\nworker-type queue (`job.run.{workerType}` with `x-max-priority=10`), drives the full run lifecycle (fetch, start, heartbeat, progress, finish), registers in the **worker registry\n**, decrypts encrypted parameters, supports **batch child runs**, subscribes to cancellation messages, links **distributed traces** from queue envelopes, and reports results back\nto the Job API.\n\n`JobWorkerBase` extends `Lyo.MessageQueue.QueueWorkerBase<Guid, Result<Unit>>`, inheriting ack / requeue / DLQ semantics and `queue.worker.*` metrics.",
+  "tagline": "Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement `ExecuteAsync(IJobWorkerContext)`. The base class consumes the priority-enabled worker-type queue.",
+  "description": "Worker SDK for the Lyo job system. Subclass `JobWorkerBase` and implement `ExecuteAsync(IJobWorkerContext)`. The base class consumes the priority-enabled worker-type queue (`job.run.{workerType}` with `x-max-priority=10`), drives the run lifecycle (fetch, start, heartbeat, progress, finish), registers in the worker registry, decrypts encrypted parameters, supports batch child runs, subscribes to cancellation messages, links distributed traces from queue envelopes, and reports results back to the Job API.\n\n`JobWorkerBase` extends `Lyo.MessageQueue.QueueWorkerBase<Guid, Result<Unit>>`, inheriting ack / requeue / DLQ semantics and `queue.worker.*` metrics.",
   "features": [],
   "examples": [
     {
@@ -21,7 +21,7 @@
     {
       "type": "paragraph",
       "title": "Registration",
-      "text": "Requires `IMqService`, `IJobClient` (registered automatically via `AddJobWorker` when `IApiClient` and `apiBaseUrl` are available), and `IJobEventPublisher`. Register the publisher with `Lyo.Job.Client.AddMqJobEventPublisher()` / `AddMqJobEventPublisherFromConfiguration()` (`IMqService` + Job.Client) — do **not** use `Lyo.Job.Postgres.AddMqJobEventPublisher*` on worker hosts, and do **not** reference `Lyo.Job.Scheduler` just for the publisher. Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`, `IMetrics`. When `maxRequeueCount` or `dlqName` are omitted, defaults derive from `QueueWorkerOptions` or `job.run.{workerType}.dlq`."
+      "text": "Requires `IMqService`, `IJobClient` (registered automatically via `AddJobWorker` when `IApiClient` and `apiBaseUrl` are available), and `IJobEventPublisher`. Register the publisher with `Lyo.Job.Client.AddMqJobEventPublisher()` / `AddMqJobEventPublisherFromConfiguration()` (`IMqService` + Job.Client). Do **not** use `Lyo.Job.Postgres.AddMqJobEventPublisher*` on worker hosts, and do **not** reference `Lyo.Job.Scheduler` just for the publisher. Optional: `IJobParameterEncryptionService` (`AddJobParameterEncryption`), `ILogger<TWorker>`, `IMetrics`. When `maxRequeueCount` or `dlqName` are omitted, defaults derive from `QueueWorkerOptions` or `job.run.{workerType}.dlq`."
     },
     {
       "type": "table",
@@ -79,7 +79,7 @@
         ],
         [
           "`job.worker.start.rejected`",
-          "`Started` rejected by the API CAS guard (duplicate delivery / cancelled run) — message dropped, not requeued"
+          "`Started` rejected by the API CAS guard (duplicate delivery / cancelled run). Message dropped, not requeued"
         ],
         [
           "`job.worker.shutdown.requeued`",
@@ -87,14 +87,14 @@
         ],
         [
           "`job.worker.late_finish.dropped`",
-          "`Finished` report rejected as terminal (run already finalized, e.g. timed out by maintenance) — dropped cleanly"
+          "`Finished` report rejected as terminal (run already finalized, e.g. timed out by maintenance). Dropped cleanly"
         ]
       ],
       "trail": "Also emits inherited `queue.worker.*` metrics from the message-queue worker base."
     },
     {
       "type": "table",
-      "title": "Production features",
+      "title": "Worker features",
       "headers": [
         "Feature",
         "Implementation"
@@ -130,29 +130,29 @@
         ],
         [
           "**Dry run**",
-          "Not applicable — dry-run requests are validated and returned by `JobService` without MQ publish, so workers never receive them."
+          "Not applicable. Dry-run requests are validated and returned by `JobService` without MQ publish, so workers never receive them."
         ]
       ],
       "trail": "Override `HeartbeatInterval` (default 30 s) in a subclass to tune heartbeat/progress PATCH cadence for long-running jobs."
     },
     {
       "type": "paragraph",
-      "title": "Production features — Cancellation topology",
+      "title": "Cancellation topology",
       "text": "Cancellations are broadcast, not competed for: each worker instance binds its **own exclusive auto-delete queue** (`job.run.{workerType}.cancel.{instanceId}`) to the `job.events` exchange on the `job.notifications.run.cancelled` routing key. Every instance of a scaled-out worker type therefore sees every cancel message; instances not executing that run simply ignore it. (A single shared cancel queue would deliver each cancel to only one competing consumer and silently lose cancellations for scaled-out workers.) The queues are auto-deleted when the instance disconnects."
     },
     {
       "type": "list",
-      "title": "Production features — Shutdown and rejection semantics",
+      "title": "Shutdown and rejection",
       "items": [
-        "**Graceful host shutdown** — a run interrupted by host shutdown (not by a user cancel) is handed back via `POST Job/Run/{id}/Requeue`, which CAS-transitions it `Running -> Queued` for redelivery on restart instead of terminally cancelling it. If the requeue fails (API down, or the run is `Cancelling` because a user cancel is pending), the run is left for the maintenance dead-job watchdog.",
-        "**`Started` rejected (400)** — the API's CAS guard rejects starts for non-`Queued` runs (duplicate dispatch delivery, run cancelled while queued). The worker drops the message without requeueing — retrying can never succeed.",
-        "**`Finished` rejected (400)** — the run was already finalized (e.g. timed out by maintenance while the worker was still executing). The worker logs and drops the report as terminal instead of churning it through requeue/DLQ. Transient finish failures (network, 5xx) are retried before giving up."
+        "**Graceful host shutdown**. a run interrupted by host shutdown (not by a user cancel) is handed back via `POST Job/Run/{id}/Requeue`, which CAS-transitions it `Running -> Queued` for redelivery on restart instead of terminally cancelling it. If the requeue fails (API down, or the run is `Cancelling` because a user cancel is pending), the run is left for the maintenance dead-job watchdog.",
+        "**`Started` rejected (400)**. the API's CAS guard rejects starts for non-`Queued` runs (duplicate dispatch delivery, run cancelled while queued). The worker drops the message without requeueing. Retrying can never succeed.",
+        "**`Finished` rejected (400)**. the run was already finalized (e.g. timed out by maintenance while the worker was still executing). The worker logs and drops the report as terminal instead of churning it through requeue/DLQ. Transient finish failures (network, 5xx) are retried before giving up."
       ]
     },
     {
       "type": "markdown",
       "title": "Worker lifecycle",
-      "body": "```mermaid\nsequenceDiagram\n    participant Q as job.run.workerType\n    participant W as JobWorkerBase\n    participant API as Job API\n    Q->>W: runId message\n    W->>API: GET run\n    W->>API: POST Started\n    W->>API: PATCH heartbeat / progress\n    W->>W: ExecuteAsync(ctx)\n    W->>API: POST Finished\n    Note over W,API: Registry PATCH in parallel\n```\n\n1. **Fetch** — `GET Job/Run/{id}` with full includes.\n2. **Start** — `POST Job/Run/{id}/Started`; decrypt parameters.\n3. **Heartbeat loop** — PATCH `LastHeartbeatUtc` + progress fields every `HeartbeatInterval` (default 30 s).\n4. **`ExecuteAsync(ctx)`** — subclass work; use `ctx.ReportProgressAsync`, `ctx.CreateChildRunsAsync`, `ctx.CancellationToken`.\n5. **Finish** — `POST Job/Run/{id}/Finished` with `JobWorkerResultBuilder` results.\n\n`StartAsync` also registers the worker instance and subscribes to cancellation messages for this `WorkerType`. Registry registration is best-effort: a failed\n`POST Job/WorkerInstance` (for example when the Job API is unreachable) does not stop the worker from consuming jobs. Unregistered workers retry registration on every\n`HeartbeatInterval` until the Job API accepts the request; a later heartbeat `404` also triggers re-registration."
+      "body": "```mermaid\nsequenceDiagram\n    participant Q as job.run.workerType\n    participant W as JobWorkerBase\n    participant API as Job API\n    Q->>W: runId message\n    W->>API: GET run\n    W->>API: POST Started\n    W->>API: PATCH heartbeat / progress\n    W->>W: ExecuteAsync(ctx)\n    W->>API: POST Finished\n    Note over W,API: Registry PATCH in parallel\n```\n\n1. **Fetch**. `GET Job/Run/{id}` with full includes.\n2. **Start**. `POST Job/Run/{id}/Started`; decrypt parameters.\n3. **Heartbeat loop**. PATCH `LastHeartbeatUtc` + progress fields every `HeartbeatInterval` (default 30 s).\n4. `ExecuteAsync(ctx)`. Subclass work; use `ctx.ReportProgressAsync`, `ctx.CreateChildRunsAsync`, `ctx.CancellationToken`.\n5. **Finish**. `POST Job/Run/{id}/Finished` with `JobWorkerResultBuilder` results.\n\n`StartAsync` also registers the worker instance and subscribes to cancellation messages for this `WorkerType`. Registry registration is best-effort: a failed\n`POST Job/WorkerInstance` (for example when the Job API is unreachable) does not stop the worker from consuming jobs. Unregistered workers retry registration on every\n`HeartbeatInterval` until the Job API accepts the request; a later heartbeat `404` also triggers re-registration."
     },
     {
       "type": "table",

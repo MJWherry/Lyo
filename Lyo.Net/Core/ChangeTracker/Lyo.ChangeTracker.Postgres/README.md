@@ -12,7 +12,7 @@ PostgreSQL implementation of `Lyo.ChangeTracker`. Persists entity-scoped change 
 
 ## Examples
 
-### Quick Start
+### Quick start
 
 ```csharp
 services.AddPostgresChangeTracker(new PostgresChangeTrackerOptions {
@@ -32,7 +32,7 @@ dotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTr
 
 ## Registration
 
-The package layers registration helpers so hosts can pick the level of integration they need:
+Registration helpers, from factory-only to `IChangeTracker`:
 
 | Extension | What it adds |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -45,21 +45,21 @@ The package layers registration helpers so hosts can pick the level of integrati
 
 ## Health
 
-`PostgresChangeTracker` implements `Lyo.Health.IHealth` with `HealthCheckName = "change-tracker-postgres"`. The probe opens a `ChangeTrackerDbContext` and runs `Database.CanConnectAsync`, returning a `HealthResult` with the schema name in its data bag — so the tracker contributes to host health endpoints that resolve `IEnumerable<IHealth>`.
+`PostgresChangeTracker` implements `Lyo.Health.IHealth` with `HealthCheckName = "change-tracker-postgres"`. The probe opens a `ChangeTrackerDbContext` and runs `Database.CanConnectAsync`. The `HealthResult` data bag includes the schema name. Hosts that resolve `IEnumerable<IHealth>` include this tracker.
 
 ## Schema
 
 - All tables live in the `change_tracker` schema (see `PostgresChangeTrackerOptions.Schema`).
-- `change_tracker.changes` — subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id` (uuid), JSON `OldValues`, JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
+- `change_tracker.changes`. Subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id` (uuid), JSON `OldValues`, JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
 
 ## Tenancy
 
 `ChangeRecord` carries an optional `TenantId`; `null` denotes a system / untenanted row. `PostgresChangeTracker` runs every record through `TenancyResolver.Resolve` using the
 policy configured in `PostgresChangeTrackerOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset) before persisting:
 
-- `SystemOnly` — caller `TenantId` is ignored; the row stores `null`.
-- `SingleTenantDefault` *(default)* — caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.
-- `MultiTenantStrict` — caller must supply a non-empty `TenantId` or persistence throws.
+- `SystemOnly`. Caller `TenantId` is ignored. The row stores `null`.
+- `SingleTenantDefault` *(default)*. Caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.
+- `MultiTenantStrict`. Caller must supply a non-empty `TenantId` or persistence throws.
 
 The `ix_changes_tenant` index supports per-tenant lookups. Use the
 `WhereTenant` / `WhereTenantOrSystem` helpers from [`Lyo.EntityReference.Postgres`](../../EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy) to query the table.
@@ -77,22 +77,22 @@ The `ix_changes_tenant` index supports per-tenant lookups. Use the
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.ChangeTracker` — (direct, lyo)
-- `Lyo.EntityReference.Models` — (direct, lyo)
-- `Lyo.EntityReference.Postgres` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Health` — (direct, lyo)
-- `Lyo.Postgres` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Lyo.Common` — (transitive, lyo)
-- `Microsoft.EntityFrameworkCore` `10.0.5` — (transitive, microsoft)
-- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (transitive, microsoft)
-- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.ChangeTracker` (direct, lyo)
+- `Lyo.EntityReference.Models` (direct, lyo)
+- `Lyo.EntityReference.Postgres` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Health` (direct, lyo)
+- `Lyo.Postgres` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Lyo.Common` (transitive, lyo)
+- `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

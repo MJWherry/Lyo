@@ -16,15 +16,15 @@
     {
       "type": "paragraph",
       "title": "Overview",
-      "text": "Schema **`geolocation`**: - **address** — Canonical normalized addresses (`Lyo.Geolocation.Models.Address`) - **address_source** — provenance per import (`source_entity_*` + `imported_at`; owner `address_id`; lookup index on `source_entity_*`) There is **no** `geocode_cache` table. This project references only **`Lyo.Geolocation`**, **`Lyo.Geolocation.Models`**, and **`Lyo.EntityReference.Postgres`** — not Google, Endato, or other vendors."
+      "text": "Schema `geolocation` holds `address` (canonical normalized addresses from `Lyo.Geolocation.Models.Address`) and `address_source` (provenance per import: `source_entity_*` + `imported_at`, owner `address_id`, lookup index on `source_entity_*`). There is no `geocode_cache` table. This project references only `Lyo.Geolocation`, `Lyo.Geolocation.Models`, and `Lyo.EntityReference.Postgres`. Not Google, Endato, or other vendors."
     },
     {
       "type": "list",
       "title": "Usage",
       "items": [
         "Call a vendor client (e.g. Google Maps) in a separate integration assembly.",
-        "Map to `Address` + `EntitySourceRecord.From(externalRef, importedAt)` on **`Sources`** (owner id set on save).",
-        "`await store.SaveAddressAsync(address, ct)` or `GetBySourceAsync` (queries **`source_entity_*`**) for idempotent ingest."
+        "Map to `Address` + `EntitySourceRecord.From(externalRef, importedAt)` on `Sources`. Owner id is set on save.",
+        "`await store.SaveAddressAsync(address, ct)` or `GetBySourceAsync` (queries `source_entity_*`) for idempotent ingest."
       ]
     },
     {

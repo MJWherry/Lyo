@@ -2,15 +2,15 @@
   "id": "Lyo.Scientific",
   "name": "Lyo.Scientific",
   "area": "Core",
-  "tagline": "Scientific **domain models**, **reference datasets**, **SI-oriented unit helpers**, and **formula discovery** built on `Lyo.Mathematics`.",
-  "description": "Scientific **domain models**, **reference datasets**, **SI-oriented unit helpers**, and **formula discovery** built on [\n`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md). Numerical formulas that operate on these types are in [\n`Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md) (F#).\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "tagline": "Scientific domain models, reference datasets, SI-oriented unit helpers, and formula discovery built on `Lyo.Mathematics`.",
+  "description": "Scientific domain models, reference datasets, SI-oriented unit helpers, and formula discovery built on [\n`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md). Numerical formulas that operate on these types are in [\n`Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md) (F#).\n\nTarget frameworks: `netstandard2.0`, `net10.0`",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "paragraph",
       "title": "`ScientificConstants`",
-      "text": "Named **CODATA-style** double constants (SI): gravitational constant, standard gravity, speed of light, universal gas constant, vacuum permittivity, Planck constant, Avogadro, Boltzmann, elementary charge, plus `Pi` and `Tau`. Use for physics formulas (see `PhysicsFunctions` in `Lyo.Mathematics.Functions`). ---"
+      "text": "Named CODATA-style double constants (SI): gravitational constant, standard gravity, speed of light, universal gas constant, vacuum permittivity, Planck constant, Avogadro, Boltzmann, elementary charge, plus `Pi` and `Tau`. Use for physics formulas (see `PhysicsFunctions` in `Lyo.Mathematics.Functions`)."
     },
     {
       "type": "table",
@@ -56,8 +56,7 @@
           "`ScientificUnitPrefix` / `ScientificUnitPrefixes.Metric`",
           "T, G, M, k, h, da, d, c, m, μ, n, p prefixes."
         ]
-      ],
-      "trail": "---"
+      ]
     },
     {
       "type": "table",
@@ -119,8 +118,7 @@
           "`SmallBodies.Asteroids` / `SmallBodies.Comets`",
           "Example entries (Ceres, 1P/Halley)."
         ]
-      ],
-      "trail": "---"
+      ]
     },
     {
       "type": "table",
@@ -178,16 +176,15 @@
           "`StoichiometryResult`",
           "Product moles + mass (grams)."
         ]
-      ],
-      "trail": "---"
+      ]
     },
     {
       "type": "list",
       "title": "Engineering (`Lyo.Scientific.Engineering`)",
       "items": [
-        "**Materials / catalogs:** `MaterialProperty` (density, specific heat, conductivity, optional viscosity, expansion, Young’s modulus, yield, fracture toughness); `EngineeringMaterials.Common` (Air, Water, Steel, Aluminum, Copper).",
-        "**Thermo / heat / flow:** `ThermodynamicState`, `HeatTransferInput`, `ConductionInput`, `ThermalExpansionInput`, `ConvectiveHeatTransferInput`, `RadiativeHeatTransferInput`, `HeatExchangerInput`, `HeatExchangerResult`, `NaturalConvectionInput`, `ConvectionCorrelationInput`, `RadiationExchangeInput`, `FluidFlowState`, `ReynoldsNumberInput`, `DragForceInput`, `BuoyancyInput`, `PipeFlowInput`, `NozzleFlowInput`, `NozzleFlowResult`, `CompressibleFlowInput`, `ObliqueShockInput`, `ObliqueShockResult`, `NormalShockInput`, …",
-        "**Mechanics / solids:** `RotationalInertiaInput`, `RotationalEnergyInput`, `AngularMomentumInput`, `SpringOscillatorInput`, `PendulumInput`, `StressStrainInput`, `BeamBendingInput`, `FractureInput`, `RectangularSectionInput`, `CircularSectionInput`, `FatigueInput`, `SNCurveInput`, `BeamSectionProfile`, `BeamSectionCatalog.Common`."
+        "**Materials / catalogs.** `MaterialProperty` (density, specific heat, conductivity, optional viscosity, expansion, Young's modulus, yield, fracture toughness). `EngineeringMaterials.Common` (Air, Water, Steel, Aluminum, Copper).",
+        "**Thermo / heat / flow.** `ThermodynamicState`, `HeatTransferInput`, `ConductionInput`, `ThermalExpansionInput`, `ConvectiveHeatTransferInput`, `RadiativeHeatTransferInput`, `HeatExchangerInput`, `HeatExchangerResult`, `NaturalConvectionInput`, `ConvectionCorrelationInput`, `RadiationExchangeInput`, `FluidFlowState`, `ReynoldsNumberInput`, `DragForceInput`, `BuoyancyInput`, `PipeFlowInput`, `NozzleFlowInput`, `NozzleFlowResult`, `CompressibleFlowInput`, `ObliqueShockInput`, `ObliqueShockResult`, `NormalShockInput`, and similar.",
+        "**Mechanics / solids.** `RotationalInertiaInput`, `RotationalEnergyInput`, `AngularMomentumInput`, `SpringOscillatorInput`, `PendulumInput`, `StressStrainInput`, `BeamBendingInput`, `FractureInput`, `RectangularSectionInput`, `CircularSectionInput`, `FatigueInput`, `SNCurveInput`, `BeamSectionProfile`, `BeamSectionCatalog.Common`."
       ]
     },
     {
@@ -206,8 +203,7 @@
           "`ScientificWorkflowExtensions`",
           "`MolarMassEstimate(this ChemicalCompound)` (element weights × counts), `InAstronomicalUnits(this PlanetaryBody)`, `GetMaterial(this string name)` (case-insensitive match in `EngineeringMaterials.Common`)."
         ]
-      ],
-      "trail": "---"
+      ]
     },
     {
       "type": "paragraph",

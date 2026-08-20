@@ -1,19 +1,19 @@
 # Lyo.FileSystemWatcher
 
-A production-ready file system watcher library for .NET that provides reliable change detection using snapshot-based monitoring, debouncing, and hash-based move/rename detection.
+Snapshot-based file watcher for .NET. Detects creates, deletes, changes, moves, and renames with debounce and SHA256 hashing.
 
 ## Features
 
-- **Snapshot-Based Change Detection** - More reliable than relying solely on FileSystemWatcher events
-- **Debouncing** - Batches rapid changes to prevent event storms
-- **Hash-Based Move Detection** - Detects file moves and renames even when file system events don't provide this information
-- **Comprehensive Events** - Separate events for files and directories with detailed change information
-- **Thread-Safe** - Safe to use from multiple threads
-- **Metrics Support** - Optional integration with Lyo.Metrics for observability
-- **Configurable** - Extensive configuration options for performance and behavior tuning
-- **Error Handling** - Comprehensive error handling with logging and error events
-- **Cancellation Support** - Full cancellation token support for graceful shutdown
-- **Structured Logging** - Full integration with Microsoft.Extensions.Logging
+- **Snapshot-based change detection.** Compares directory snapshots instead of relying only on FileSystemWatcher events.
+- **Debouncing.** Batches rapid changes so you do not get an event storm.
+- **Hash-based move detection.** Detects file moves and renames even when the file system does not report them.
+- **File and directory events.** Separate events with `FileSystemChangeInfo` payloads.
+- **Thread-safe.** Safe to use from multiple threads.
+- **Metrics.** Optional `IMetrics` integration (`Lyo.Metrics`).
+- **Options.** `FileSystemWatcherOptions` for debounce, hashing, path comparison, and subdirectory watching.
+- **Errors.** Snapshot and detection failures go to `Error` and to `ILogger` when you pass one.
+- **Cancellation.** `CancellationToken` on long-running snapshot work.
+- **Logging.** Microsoft.Extensions.Logging when you pass an `ILogger`.
 
 ## Examples
 
@@ -91,7 +91,7 @@ watcher.Error += (sender, ex) =>
 // Subscribe to events...
 ```
 
-### Disable File Hashing for Better Performance
+### Disable file hashing for better performance
 
 ```csharp
 var options = new FileSystemWatcherOptions
@@ -100,7 +100,7 @@ var options = new FileSystemWatcherOptions
 };
 ```
 
-### Adjust Debounce Delay
+### Adjust debounce delay
 
 ```csharp
 var options = new FileSystemWatcherOptions
@@ -110,7 +110,7 @@ var options = new FileSystemWatcherOptions
 };
 ```
 
-### Case-Sensitive File Systems (Linux/macOS)
+### Case-sensitive file systems (Linux/macOS)
 
 ```csharp
 var options = new FileSystemWatcherOptions
@@ -198,7 +198,7 @@ services.AddSingleton<FileSystemWatcher>(sp =>
 });
 ```
 
-### Change Types
+### Change types
 
 ```csharp
 public enum ChangeTypeEnum
@@ -212,7 +212,7 @@ public enum ChangeTypeEnum
 }
 ```
 
-### Example Metrics Setup
+### Example metrics setup
 
 ```csharp
 using Lyo.Metrics;
@@ -236,28 +236,28 @@ var watcher = new FileSystemWatcher("C:\\MyDirectory", options, logger, metrics)
 | `PathComparison` | `StringComparison` | `OrdinalIgnoreCase` | String comparison for path operations. Use `Ordinal` for case-sensitive file systems |
 | `EnableMetrics` | `bool` | `false` | Enable metrics collection (requires IMetrics instance) |
 
-## File Events
+## File events
 
-- `FileCreated` - Fired when a file is created
-- `FileDeleted` - Fired when a file is deleted
-- `FileChanged` - Fired when a file's content is modified
-- `FileMoved` - Fired when a file is moved to a different directory
-- `FileRenamed` - Fired when a file is renamed (moved within same directory)
+- `FileCreated`. Fired when a file is created.
+- `FileDeleted`. Fired when a file is deleted.
+- `FileChanged`. Fired when a file's content is modified.
+- `FileMoved`. Fired when a file is moved to a different directory.
+- `FileRenamed`. Fired when a file is renamed (moved within same directory).
 
-## Directory Events
+## Directory events
 
-- `DirectoryCreated` - Fired when a directory is created
-- `DirectoryDeleted` - Fired when a directory is deleted
-- `DirectoryChanged` - Fired when a directory's content changes
-- `DirectoryMoved` - Fired when a directory is moved to a different parent
-- `DirectoryRenamed` - Fired when a directory is renamed (moved within same parent)
+- `DirectoryCreated`. Fired when a directory is created.
+- `DirectoryDeleted`. Fired when a directory is deleted.
+- `DirectoryChanged`. Fired when a directory's content changes.
+- `DirectoryMoved`. Fired when a directory is moved to a different parent.
+- `DirectoryRenamed`. Fired when a directory is renamed (moved within same parent).
 
-## General Events
+## General events
 
-- `OnAnyChange` - Fired for any file or directory change
-- `Error` - Fired when an error occurs during snapshot or change detection
+- `OnAnyChange`. Fired for any file or directory change.
+- `Error`. Fired when snapshot or change detection fails.
 
-## Event Data
+## Event data
 
 All events provide a `FileSystemChangeInfo` object with the following properties:
 
@@ -273,44 +273,44 @@ public sealed record FileSystemChangeInfo(
     int? NewDirCount = null) // Directory: subdirectories after change
 ```
 
-## Metrics Integration
+## Metrics integration
 
 When `EnableMetrics` is set to `true` and an `IMetrics` instance is provided, the following metrics are recorded:
 
-## Metrics Integration — Snapshot Metrics
+## Snapshot metrics
 
-- `filesystemwatcher.snapshot.duration` - Duration of snapshot operations (timing)
-- `filesystemwatcher.snapshot.duration_ms` - Duration of snapshot operations in milliseconds (gauge)
-- `filesystemwatcher.snapshot.file_count` - Number of files in snapshot (gauge)
-- `filesystemwatcher.snapshot.directory_count` - Number of directories in snapshot (gauge)
-- `filesystemwatcher.snapshot.item_count` - Total items in snapshot (gauge)
+- `filesystemwatcher.snapshot.duration`. Duration of snapshot operations (timing).
+- `filesystemwatcher.snapshot.duration_ms`. Duration of snapshot operations in milliseconds (gauge).
+- `filesystemwatcher.snapshot.file_count`. Number of files in snapshot (gauge).
+- `filesystemwatcher.snapshot.directory_count`. Number of directories in snapshot (gauge).
+- `filesystemwatcher.snapshot.item_count`. Total items in snapshot (gauge).
 
-## Metrics Integration — Change Detection Metrics
+## Change detection metrics
 
-- `filesystemwatcher.change_detection.duration` - Duration of change detection (timing)
-- `filesystemwatcher.change_detection.duration_ms` - Duration of change detection in milliseconds (gauge)
-- `filesystemwatcher.changes.detected` - Number of changes detected per scan (gauge)
+- `filesystemwatcher.change_detection.duration`. Duration of change detection (timing).
+- `filesystemwatcher.change_detection.duration_ms`. Duration of change detection in milliseconds (gauge).
+- `filesystemwatcher.changes.detected`. Number of changes detected per scan (gauge).
 
-## Metrics Integration — Event Metrics
+## Event metrics
 
-- `filesystemwatcher.file.created` - File created events (counter)
-- `filesystemwatcher.file.deleted` - File deleted events (counter)
-- `filesystemwatcher.file.changed` - File changed events (counter)
-- `filesystemwatcher.file.moved` - File moved events (counter)
-- `filesystemwatcher.file.renamed` - File renamed events (counter)
-- `filesystemwatcher.directory.created` - Directory created events (counter)
-- `filesystemwatcher.directory.deleted` - Directory deleted events (counter)
-- `filesystemwatcher.directory.changed` - Directory changed events (counter)
-- `filesystemwatcher.directory.moved` - Directory moved events (counter)
-- `filesystemwatcher.directory.renamed` - Directory renamed events (counter)
+- `filesystemwatcher.file.created`. File created events (counter).
+- `filesystemwatcher.file.deleted`. File deleted events (counter).
+- `filesystemwatcher.file.changed`. File changed events (counter).
+- `filesystemwatcher.file.moved`. File moved events (counter).
+- `filesystemwatcher.file.renamed`. File renamed events (counter).
+- `filesystemwatcher.directory.created`. Directory created events (counter).
+- `filesystemwatcher.directory.deleted`. Directory deleted events (counter).
+- `filesystemwatcher.directory.changed`. Directory changed events (counter).
+- `filesystemwatcher.directory.moved`. Directory moved events (counter).
+- `filesystemwatcher.directory.renamed`. Directory renamed events (counter).
 
-## Metrics Integration — Error Metrics
+## Error metrics
 
-- `filesystemwatcher.error.count` - Number of errors encountered (counter)
+- `filesystemwatcher.error.count`. Number of errors encountered (counter).
 
-## Error Handling
+## Error handling
 
-The watcher provides comprehensive error handling:
+Subscribe to `Error` for snapshot and detection failures. If you pass an `ILogger`, those errors are also logged.
 
 ```csharp
 // Subscribe to error events
@@ -325,18 +325,18 @@ var logger = loggerFactory.CreateLogger<FileSystemWatcher>();
 var watcher = new FileSystemWatcher("C:\\MyDirectory", options, logger);
 ```
 
-Common error scenarios:
+Typical failures:
 
-- **Snapshot failures**: Directory access denied, disk errors, etc.
-- **Change detection errors**: Memory issues, cancellation, etc.
-- **Event handler exceptions**: Errors in your event handlers are caught and logged (won't crash the watcher)
+- **Snapshot failures.** Directory access denied, disk errors.
+- **Change detection.** Memory pressure, cancellation.
+- **Event handler exceptions.** Caught and logged. They do not crash the watcher.
 
-## Performance Considerations — File Hashing
+## File hashing
 
-- **Enabled (default)**: Provides accurate move/rename detection but slower on large directories
-- **Disabled**: Faster performance but move detection relies on file system events only
+- **Enabled (default).** Accurate move/rename detection. Slower on large directories.
+- **Disabled.** Faster. Move detection relies on file system events only.
 
-## Performance Considerations — Memory Usage
+## Memory usage
 
 - Snapshots store the complete directory tree in memory
 - For very large directory structures (10,000+ files), consider:
@@ -344,21 +344,21 @@ Common error scenarios:
 - Increasing debounce delay
 - Monitoring memory usage
 
-## Performance Considerations — Debounce Delay
+## Debounce delay
 
-- **Lower values (50-100ms)**: Faster response, higher CPU usage
-- **Higher values (500-1000ms)**: Slower response, lower CPU usage
-- **Default (250ms)**: Good balance for most scenarios
+- **Lower values (50-100ms).** Faster response, higher CPU usage.
+- **Higher values (500-1000ms).** Slower response, lower CPU usage.
+- **Default (250ms).** A reasonable default for most directories.
 
-## Performance Considerations — Expected Performance
+## Expected snapshot times
 
-- **Small directories (< 100 files)**: < 100ms per snapshot
-- **Medium directories (100-1000 files)**: 100-500ms per snapshot
-- **Large directories (> 1000 files)**: 500ms+ per snapshot (depends on file sizes if hashing enabled)
+- **Small directories (< 100 files).** Under 100ms per snapshot.
+- **Medium directories (100-1000 files).** 100-500ms per snapshot.
+- **Large directories (> 1000 files).** 500ms+ per snapshot. Hashing large files stretches this.
 
-## Thread Safety
+## Thread safety
 
-The `FileSystemWatcher` is **thread-safe** and can be used from multiple threads:
+`FileSystemWatcher` is thread-safe and can be used from multiple threads:
 
 ```csharp
 // Safe to use from multiple threads
@@ -392,78 +392,78 @@ finally
 }
 ```
 
-## Troubleshooting — Events Not Firing
+## Troubleshooting: events not firing
 
-- **Check path exists**: The directory must exist when creating the watcher
-- **Check permissions**: Ensure read access to the directory
-- **Check debounce delay**: Very rapid changes may be batched together
-- **Check event handlers**: Ensure handlers are subscribed before changes occur
-- **Wait for initial snapshot**: The watcher needs time to take the initial snapshot
+- **Check path exists.** The directory must exist when creating the watcher.
+- **Check permissions.** You need read access to the directory.
+- **Check debounce delay.** Very rapid changes may be batched together.
+- **Check event handlers.** Subscribe before changes occur.
+- **Wait for initial snapshot.** The watcher needs time to take the first snapshot.
 
-## Troubleshooting — High CPU Usage
+## Troubleshooting: high CPU usage
 
-- **Disable file hashing**: Set `EnableFileHashing = false`
-- **Increase debounce delay**: Higher values reduce CPU usage
-- **Monitor snapshot frequency**: Too many rapid changes can cause high CPU
+- **Disable file hashing.** Set `EnableFileHashing = false`.
+- **Increase debounce delay.** Higher values reduce CPU usage.
+- **Watch snapshot frequency.** Too many rapid changes can spike CPU.
 
-## Troubleshooting — Memory Usage
+## Troubleshooting: memory usage
 
-- **Monitor snapshot size**: Large directory trees consume more memory
-- **Consider disabling hashing**: Reduces memory per file entry
-- **Watch for memory leaks**: Ensure watcher is properly disposed
+- **Watch snapshot size.** Large directory trees consume more memory.
+- **Disable hashing.** Reduces memory per file entry.
+- **Dispose the watcher.** Leaks show up if you leave it running.
 
-## Troubleshooting — Missing Move/Rename Events
+## Troubleshooting: missing move/rename events
 
-- **Enable file hashing**: Required for reliable move/rename detection
-- **Check file system**: Some file systems may not provide move events
-- **Check timing**: Very rapid moves may be detected as delete+create
-- **Directory moves**: Directory name must stay the same for move detection (different parent, same name)
+- **Enable file hashing.** Required for reliable move/rename detection.
+- **Check the file system.** Some file systems do not report move events.
+- **Check timing.** Very rapid moves may show up as delete+create.
+- **Directory moves.** The directory name must stay the same (different parent, same name).
 
-## Known Limitations — File Move Bug
+## Known limitation: file move bug
 
 There is a known bug where directory change events for the source directory when moving a file show incorrect counts. The destination directory works correctly.
 
-## Known Limitations — Performance
+## Known limitations: performance
 
 - File hashing can be slow on large files or many files
 - Snapshot operations are synchronous and can block briefly
 - Very large directory structures consume significant memory
 
-## Known Limitations — Directory Move Detection
+## Known limitations: directory move detection
 
 - Directory move detection only works when the directory name stays the same but the parent changes
 - If both name and parent change, it will be detected as delete + create
 
-## Architecture — Snapshot-Based Detection
+## Architecture: snapshot-based detection
 
-The watcher uses periodic snapshots of the directory structure, comparing them to detect changes. This provides more reliable change detection than relying solely on FileSystemWatcher events.
+The watcher takes periodic snapshots of the directory tree and diffs them. That is more reliable than FileSystemWatcher events alone.
 
-## Architecture — Debouncing
+## Architecture: debouncing
 
 Multiple rapid changes are batched together using a debounce timer to prevent event storms and reduce CPU usage.
 
-## Architecture — Hash-Based Move Detection
+## Architecture: hash-based move detection
 
 File hashing (SHA256) is used to detect moves and renames even when the file system doesn't provide this information directly.
 
-## Architecture — Error Resilience
+## Architecture: error resilience
 
 - Event handler exceptions are caught and logged, preventing one faulty handler from crashing the watcher
 - Snapshot errors are caught and reported via the Error event
 - Cancellation tokens allow graceful shutdown of long-running operations
 
-## Public surface
+## Types
 
 | Type | Description |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`FileSystemWatcher`** | Snapshot-based, debounced watcher (`IDisposable`). Constructor: `FileSystemWatcher(string path, FileSystemWatcherOptions?, ILogger?, IMetrics?)`. Raises the file/directory/`OnAnyChange`/`Error` events listed above. |
-| **`FileSystemWatcherOptions`** | `IncludeSubdirectories`, `DebounceTimerDelay`, `EnableFileHashing`, `PathComparison`, `EnableMetrics`. |
-| **`FileSystemChangeInfo`** | `record` payload emitted by every change event. |
-| **`ChangeTypeEnum`** | `Unknown` / `Created` / `Changed` / `Deleted` / `Renamed` / `Moved`. |
-| **`DirectorySnapshotEntry`** | Single snapshot entry (path, info, optional `Hash`, `Fingerprint`, `FileSize`). |
-| **`SnapshotTree`** / **`SnapshotDirectoryNode`** | In-memory snapshot of the watched tree used for diffing. |
-| **`Constants.Metrics`** + **`Constants.Metrics.Tags`** | Metric and tag name constants (see *Metrics Integration* above). |
-| **`Utilities`** | Helpers shared by the watcher implementation. |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FileSystemWatcher` | Snapshot-based, debounced watcher (`IDisposable`). Constructor: `FileSystemWatcher(string path, FileSystemWatcherOptions?, ILogger?, IMetrics?)`. Raises the file/directory/`OnAnyChange`/`Error` events listed above. |
+| `FileSystemWatcherOptions` | `IncludeSubdirectories`, `DebounceTimerDelay`, `EnableFileHashing`, `PathComparison`, `EnableMetrics`. |
+| `FileSystemChangeInfo` | `record` payload emitted by every change event. |
+| `ChangeTypeEnum` | `Unknown` / `Created` / `Changed` / `Deleted` / `Renamed` / `Moved`. |
+| `DirectorySnapshotEntry` | Single snapshot entry (path, info, optional `Hash`, `Fingerprint`, `FileSize`). |
+| `SnapshotTree` / `SnapshotDirectoryNode` | In-memory snapshot of the watched tree used for diffing. |
+| `Constants.Metrics` + `Constants.Metrics.Tags` | Metric and tag name constants (see snapshot, change detection, event, and error metrics above). |
+| `Utilities` | Helpers shared by the watcher implementation. |
 
 <!-- LYO_README_SYNC:END -->
 
@@ -471,13 +471,13 @@ File hashing (SHA256) is used to detect moves and renames even when the file sys
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Hashing` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Hashing` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

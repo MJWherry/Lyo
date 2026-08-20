@@ -1,14 +1,33 @@
-# Pack and push Lyo.* nupkgs to nuget.org.
+# Push Lyo.* nupkgs to nuget.org.
 # Auth is NuGet Trusted Publishing (OIDC) — no long-lived API key in the repo.
-# Setup: docs/publishing.md
+# Filename is locked to the nuget.org Trusted Publishing policy.
+# Prefer Actions → CI - Pipeline. This workflow is the OIDC push job
+# (workflow_call) plus an emergency pack+push dispatch.
+# Setup: docs/publishing.md and docs/ci.md
+#
+# Do not attach a GitHub Environment to the OIDC login job. Leave the
+# nuget.org policy Environment empty. No required-reviewer gate — solo
+# pushes to main publish without waiting.
 
 name: Publish - NuGet
 
 on:
+  workflow_call:
+    inputs:
+      artifact_name:
+        description: Artifact name uploaded by the pack job
+        required: false
+        type: string
+        default: nuget-packages
+      dry_run:
+        description: Skip nuget.org push
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       scope:
-        description: "What to pack"
+        description: "Emergency pack: what to pack (prefer CI - Pipeline)"
         required: true
         type: choice
         options:
@@ -17,17 +36,17 @@ on:
           - all
         default: changed
       packages:
-        description: "Package names or globs when scope=named (space-separated, e.g. Lyo.Encryption Lyo.Encryption.*)"
+        description: "Package names or globs when scope=named"
         required: false
         type: string
         default: ""
       version:
-        description: "Release version (no preview suffix). Must be new on nuget.org for packages you intend to update."
+        description: "Release version (no preview suffix)"
         required: true
         type: string
         default: "1.0.0"
       since:
-        description: "Git ref for scope=changed (empty = latest tag, else HEAD~1)"
+        description: "Git ref for scope=changed"
         required: false
         type: string
         default: ""
@@ -37,13 +56,15 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
-  publish:
+  pack-emergency:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
-    permissions:
-      contents: read
-      id-token: write
     env:
       NUGET_OUTPUT_DIR: ${{ github.workspace }}/artifacts/nuget
       BUILD_CONFIG: Release
@@ -54,10 +75,8 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "10.x"
+      - name: Setup Lyo
+        uses: ./.github/actions/setup-lyo
 
       - name: Pack
         env:
@@ -66,34 +85,12 @@ jobs:
           VERSION: ${{ inputs.version }}
           SINCE: ${{ inputs.since }}
         run: |
-          set -euo pipefail
-          cmd=(python3 scripts/nuget/build_nuget.py --release -f -v "$VERSION")
-          case "$SCOPE" in
-            all)
-              ;;
-            changed)
-              cmd+=(--changed-since)
-              if [ -n "$SINCE" ]; then
-                cmd+=("$SINCE")
-              fi
-              ;;
-            named)
-              if [ -z "${PACKAGES// }" ]; then
-                echo "scope=named requires the packages input" >&2
-                exit 1
-              fi
-              set -f
-              # shellcheck disable=SC2206
-              cmd+=($PACKAGES)
-              set +f
-              ;;
-            *)
-              echo "unknown scope: $SCOPE" >&2
-              exit 1
-              ;;
-          esac
-          printf 'Pack: %s\n' "${cmd[*]}"
-          "${cmd[@]}"
+          python3 scripts/nuget/ci_pack.py \
+            --scope "$SCOPE" \
+            --packages "$PACKAGES" \
+            --since "$SINCE" \
+            --version "$VERSION" \
+            --channel release
 
       - name: Upload nupkgs
         uses: actions/upload-artifact@v4
@@ -104,15 +101,33 @@ jobs:
             artifacts/nuget/*.snupkg
           if-no-files-found: warn
 
+  push:
+    needs: [pack-emergency]
+    if: ${{ always() && !inputs.dry_run && (needs.pack-emergency.result == 'success' || needs.pack-emergency.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download nupkgs
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name || 'nuget-packages' }}
+          path: artifacts/nuget
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
       - name: NuGet login (OIDC)
-        if: ${{ !inputs.dry_run }}
         uses: NuGet/login@v1
         id: login
         with:
           user: ${{ secrets.NUGET_USER }}
 
       - name: Push to nuget.org
-        if: ${{ !inputs.dry_run }}
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |

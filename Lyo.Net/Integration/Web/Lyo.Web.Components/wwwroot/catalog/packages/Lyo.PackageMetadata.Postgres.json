@@ -2,71 +2,71 @@
   "id": "Lyo.PackageMetadata.Postgres",
   "name": "Lyo.PackageMetadata.Postgres",
   "area": "Core",
-  "tagline": "EF Core persistence for **`Lyo.PackageMetadata.IPackageMetadataStore`**.",
-  "description": "EF Core persistence for **`Lyo.PackageMetadata.IPackageMetadataStore`**.",
+  "tagline": "EF Core persistence for `Lyo.PackageMetadata.IPackageMetadataStore`.",
+  "description": "EF Core persistence for `Lyo.PackageMetadata.IPackageMetadataStore`.",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "paragraph",
       "title": "Problem it solves",
-      "text": "Stack traces contain **stripped namespaces / assembly-qualified tokens**. [`Lyo.PackageMetadata`](../Lyo.PackageMetadata/README.md) resolves **“what NuGet/Git package owns this prefix?”** for diagnostics overlays. **`PostgresPackageMetadataStore`** implements the store against normalized tables (**`PackageStackPrefix`** rows ordered by * *`NormalizedPrefix`** length) so resolution is **`O(sorted prefixes)` in-process** after each DB read (bulk API loads all prefixes once per call when caching allows)."
+      "text": "Stack traces contain stripped namespaces / assembly-qualified tokens. [`Lyo.PackageMetadata`](../Lyo.PackageMetadata/README.md) resolves which NuGet or Git package owns a prefix for diagnostics overlays. `PostgresPackageMetadataStore` implements the store against normalized tables (`PackageStackPrefix` rows ordered by `NormalizedPrefix` length) so resolution is `O(sorted prefixes)` in-process after each DB read. The bulk API loads all prefixes once per call when caching allows."
     },
     {
       "type": "list",
       "title": "Storage model (conceptual)",
       "items": [
-        "**`PackageMetadataEntity`** holds catalog metadata (**id, package name, version range, SPDX/license expression blobs**, etc.—see EF configurations).",
-        "**`PackageStackPrefixEntity`** maps **`NormalizedPrefix`** → owning package (**longest prefix wins**)."
+        "`PackageMetadataEntity` holds catalog metadata (id, package name, version range, SPDX/license expression blobs). See EF configurations for the rest.",
+        "`PackageStackPrefixEntity` maps `NormalizedPrefix` to the owning package. Longest prefix wins."
       ]
     },
     {
       "type": "list",
-      "title": "Implementing behaviors — Bulk resolution (`TryGetManyForStrippedMethodPrefixesAsync`)",
+      "title": "Bulk resolution (`TryGetManyForStrippedMethodPrefixesAsync`)",
       "items": [
-        "Input: list of **distinct** stripped prefixes (typically one per decoded stack frame subtree).",
-        "Output: dictionary **including one entry per input key**, value **`null`** when nothing matches contract rules.",
-        "**Never** silently drop requested keys—that invariant keeps **`Lyo.Diagnostic`** bulk decode paths deterministic."
+        "Input: list of distinct stripped prefixes (typically one per decoded stack frame subtree).",
+        "Output: dictionary including one entry per input key, value `null` when nothing matches contract rules.",
+        "Never silently drop requested keys. That invariant keeps `Lyo.Diagnostic` bulk decode paths deterministic."
       ]
     },
     {
       "type": "table",
-      "title": "Implementing behaviors — Prefix catalog caching (`PostgresPrefixCatalogCachingMode`)",
+      "title": "Prefix catalog caching (`PostgresPrefixCatalogCachingMode`)",
       "headers": [
         "Mode",
         "Meaning"
       ],
       "rows": [
         [
-          "**`InvalidateOnRegisterManyOrClear`**",
-          "Maintain an immutable in-process snapshot; reload when mutations bump generation counter (**`ClearPrefixCatalogCache`** or **`RegisterManyAsync`** on same instance)."
+          "`InvalidateOnRegisterManyOrClear`",
+          "Keep an immutable in-process snapshot. Reload when mutations bump the generation counter (`ClearPrefixCatalogCache` or `RegisterManyAsync` on the same instance)."
         ],
         [
-          "**`Disabled`**",
-          "Always hit Postgres (wrap with outer cache yourself if importing huge catalogs asynchronously)."
+          "`Disabled`",
+          "Always hit Postgres. Wrap with an outer cache yourself if importing huge catalogs asynchronously."
         ]
       ],
       "lead": "`PostgresPackageMetadataOptions.PrefixCatalogCaching` controls repeated DB chatter:",
-      "trail": "`ClearPrefixCatalogCache()` is harmless when caching disabled (**only bumps generation**).\n\nCross-process writes **do not** invalidate—document that for ops (*disable snapshot* or bust cache after CLI imports)."
+      "trail": "`ClearPrefixCatalogCache()` is a no-op on the cache when caching is disabled. It only bumps the generation.\n\nCross-process writes do not invalidate. Disable the snapshot or bust the cache after CLI imports."
     },
     {
       "type": "list",
       "title": "DI registration (`Extensions`)",
       "items": [
-        "**`AddPackageMetadataDbContextFactory`** (+ `FromConfiguration`) — binds **`PostgresPackageMetadataOptions`**, registers **`PackageMetadataDbContext` factory**, attaches * *`AddPostgresMigrations`** bootstrap.",
-        "**`AddPostgresPackageMetadataStore`** — factory + **`IPackageMetadataStore` ⇒ PostgresPackageMetadataStore** singleton resolving options + **`IDbContextFactory`**."
+        "**AddPackageMetadataDbContextFactory** (and `FromConfiguration`). Binds `PostgresPackageMetadataOptions`, registers the `PackageMetadataDbContext` factory, attaches `AddPostgresMigrations` bootstrap.",
+        "**AddPostgresPackageMetadataStore.** Factory plus `IPackageMetadataStore` as `PostgresPackageMetadataStore` singleton resolving options and `IDbContextFactory`."
       ]
     },
     {
       "type": "paragraph",
       "title": "Migrations & schema",
-      "text": "Migrations ship under **`Migrations/`** (schema/table names follow **`PostgresPackageMetadataOptions.Schema`** conventions—inspect snapshot for authoritative DDL)."
+      "text": "Migrations ship under `Migrations/`. Schema and table names follow `PostgresPackageMetadataOptions.Schema`. Inspect the snapshot for authoritative DDL."
     },
     {
       "type": "list",
       "title": "See also",
       "items": [
-        "[`Lyo.Diagnostic`](../../Diagnostic/Lyo.Diagnostic/README.md) stack decode + breadcrumb tooling that **optionally consumes** **`IPackageMetadataStore`**."
+        "[`Lyo.Diagnostic`](../../Diagnostic/Lyo.Diagnostic/README.md) stack decode and breadcrumb tooling that optionally consumes `IPackageMetadataStore`."
       ]
     }
   ],

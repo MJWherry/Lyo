@@ -79,7 +79,7 @@
     },
     {
       "type": "list",
-      "title": "Public API (generated)",
+      "title": "Types (generated)",
       "items": [
         "`Extensions`",
         "`XlsxErrorCodes`",

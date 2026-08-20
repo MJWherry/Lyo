@@ -2,18 +2,18 @@
   "id": "Lyo.Tts.WindowsSpeech",
   "name": "Lyo.Tts.WindowsSpeech",
   "area": "Communication",
-  "tagline": "Windows Speech Synthesis Text-to-Speech service implementation for the Lyo framework using Windows built-in SAPI (Speech API).",
-  "description": "Windows Speech Synthesis Text-to-Speech service implementation for the Lyo framework using Windows built-in SAPI (Speech API).",
+  "tagline": "Windows SAPI text-to-speech. `WindowsSpeechTtsService` uses the built-in Speech API.",
+  "description": "Windows SAPI text-to-speech. `WindowsSpeechTtsService` uses the built-in Speech API.",
   "features": [
-    "**Windows Native**: Uses Windows built-in Speech Synthesis API (SAPI)",
-    "**Voice Selection**: Support for selecting installed Windows voices",
-    "**Speech Rate Control**: Adjustable speech rate (-10 to 10)",
-    "**Volume Control**: Adjustable volume (0 to 100)",
-    "**Bulk Operations**: Support for bulk text-to-speech synthesis",
-    "**Logging**: Comprehensive logging support via Microsoft.Extensions.Logging",
-    "**Metrics**: Optional metrics collection for monitoring TTS operations",
-    "**Thread-Safe**: Safe for concurrent use",
-    "**Async Support**: Full async/await support with cancellation token support"
+    "**SAPI.** Uses the Windows Speech Synthesis API.",
+    "**Voices.** Select any installed Windows voice.",
+    "**Rate.** Speech rate from -10 to 10.",
+    "**Volume.** Volume from 0 to 100.",
+    "**Bulk.** Bulk synthesis through the shared `Lyo.Tts` pipeline.",
+    "**Logging.** Logs through Microsoft.Extensions.Logging.",
+    "**Metrics.** Optional metrics on TTS calls.",
+    "**Concurrency.** Safe for concurrent use.",
+    "**Async.** Methods take `CancellationToken`."
   ],
   "examples": [
     {
@@ -22,12 +22,12 @@
       "code": "using Lyo.Tts;\nusing Lyo.Tts.Models;\nusing Lyo.Tts.WindowsSpeech;\nusing Microsoft.Extensions.DependencyInjection;\n\nvar services = new ServiceCollection();\nservices.AddWindowsSpeechTtsService(options =>\n{\n    options.DefaultVoiceId = \"Microsoft Zira Desktop\";\n    options.DefaultOutputFormat = AudioFormat.Wav;\n    options.MaxTextLength = 5000;\n    options.EnableMetrics = true;\n});\n\nawait using var serviceProvider = services.BuildServiceProvider();\nvar ttsService = serviceProvider.GetRequiredService<ITtsService<WindowsTtsRequest>>();\n\nvar result = await ttsService.SynthesizeAsync(\"Hello, world!\");\nif (result.IsSuccess && result.AudioData is { Length: > 0 })\n    await File.WriteAllBytesAsync(\"output.wav\", result.AudioData);"
     },
     {
-      "title": "Using with an explicit options instance",
+      "title": "Explicit options instance",
       "language": "csharp",
       "code": "services.AddWindowsSpeechTtsService(new TtsServiceOptions\n{\n    DefaultVoiceId = \"Microsoft Zira Desktop\",\n    DefaultOutputFormat = AudioFormat.Wav,\n    MaxTextLength = 5000,\n    EnableMetrics = true,\n});"
     },
     {
-      "title": "List Available Voices",
+      "title": "List available voices",
       "language": "csharp",
       "code": "var ttsService = serviceProvider.GetRequiredService<ITtsService<WindowsTtsRequest>>();\nvar ok = await ttsService.TestConnectionAsync();\n// TestConnectionAsync logs every installed SAPI voice via the registered ILogger."
     }
@@ -35,13 +35,13 @@
   "sections": [
     {
       "type": "paragraph",
-      "title": "Platform Support",
-      "text": "**Windows Only**: This library only builds and runs on Windows platforms. It requires the `System.Speech` package which is Windows-specific."
+      "title": "Platform support",
+      "text": "Windows only. This package builds and runs on Windows. It needs the `System.Speech` package, which is Windows-specific."
     },
     {
       "type": "markdown",
       "title": "Registered services",
-      "body": "`AddWindowsSpeechTtsService` (`Action<TtsServiceOptions>?` or `TtsServiceOptions`) registers:\n\n- `TtsServiceOptions` (singleton).\n- `WindowsSpeechTtsService` (singleton; subclass of `TtsServiceBase<WindowsTtsRequest>`).\n- `ITtsService<WindowsTtsRequest>` resolved from the singleton above.\n\nIt does **not** register the non-generic `ITtsService` — there is no `WindowsSpeechTtsAppService`\nadapter in this package today, so callers that depend on `ITtsService` should depend on\n`ITtsService<WindowsTtsRequest>` instead (or wire up their own adapter). The other Lyo TTS providers\n([`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md), [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md))\nregister both interfaces because they ship an `*TtsAppService` adapter."
+      "body": "`AddWindowsSpeechTtsService` (`Action<TtsServiceOptions>?` or `TtsServiceOptions`) registers:\n\n- `TtsServiceOptions` (singleton).\n- `WindowsSpeechTtsService` (singleton; subclass of `TtsServiceBase<WindowsTtsRequest>`).\n- `ITtsService<WindowsTtsRequest>` resolved from the singleton above.\n\nIt does not register the non-generic `ITtsService`. There is no `WindowsSpeechTtsAppService`\nadapter in this package today, so callers that depend on `ITtsService` should depend on\n`ITtsService<WindowsTtsRequest>` instead, or wire their own adapter. The other Lyo TTS providers\n([`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md), [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md))\nregister both interfaces because they ship an `*TtsAppService` adapter."
     },
     {
       "type": "list",

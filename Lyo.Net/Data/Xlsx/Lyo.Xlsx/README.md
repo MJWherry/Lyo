@@ -178,7 +178,7 @@ The no-arg parse methods keep their first-sheet behavior. `AsDataTable` is thin 
 
 Dynamic OpenXML styles cover the fields on `DataTableCellFormat` (RGB colors, common borders/align/numFmt). Theme colors are not round-tripped on import (`TryGetColorHex` returns null for theme). Unique custom cell formats are capped at 512 per workbook; further formats fall back to the default style. FontSize/FontName are intentionally not imported (ClosedXML defaults would fill the sparse map).
 
-## Public API (generated)
+## Types (generated)
 
 - `Extensions`
 - `XlsxErrorCodes`
@@ -192,20 +192,20 @@ Copyright © Lyo
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Lyo.Xlsx.Models` — (direct, lyo)
-- `ClosedXML` `0.105.0` — (direct, third-party)
-- `DocumentFormat.OpenXml` `3.1.1` — (direct, third-party)
-- `ExcelDataReader` `3.9.0` — (direct, third-party)
-- `ExcelDataReader.DataSet` `3.9.0` — (direct, third-party)
-- `Microsoft.Extensions.Configuration` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
-- `System.Text.Encoding.CodePages` `10.0.5` — (direct, microsoft)
-- `Lyo.DataTable.Models` — (transitive, lyo)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Lyo.Xlsx.Models` (direct, lyo)
+- `ClosedXML` `0.105.0` (direct, third-party)
+- `DocumentFormat.OpenXml` `3.1.1` (direct, third-party)
+- `ExcelDataReader` `3.9.0` (direct, third-party)
+- `ExcelDataReader.DataSet` `3.9.0` (direct, third-party)
+- `Microsoft.Extensions.Configuration` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)
+- `System.Text.Encoding.CodePages` `10.0.5` (direct, microsoft)
+- `Lyo.DataTable.Models` (transitive, lyo)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

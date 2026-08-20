@@ -1,25 +1,25 @@
 # Lyo.Sms.Twilio
 
-A production-ready Twilio SMS/MMS service implementation for .NET, built on the extensible `Lyo.Sms` library.
+Twilio SMS and MMS through `Lyo.Sms`. `TwilioSmsService` implements `ISmsService`.
 
 ## Features
 
-- **Twilio Integration** - Full support for Twilio SMS and MMS messaging
-- **Bulk Messaging** - Efficient bulk SMS sending with rate limiting
-- **MMS Support** - Send multimedia messages with up to 10 media attachments
-- **Message Querying** - Query messages by various filter criteria
-- **Error Handling** - Comprehensive error handling with Twilio-specific error codes
-- **Logging** - Built-in logging support via Microsoft.Extensions.Logging
-- **Metrics** - Optional metrics collection for monitoring SMS operations
-- **Dependency Injection** - Full support for .NET dependency injection
-- **Async/Await** - Fully asynchronous API with cancellation token support
-- **Thread-Safe** - Thread-safe implementation for concurrent use
-- **Validation** - Automatic validation of required configuration options
-- **Events** - Events for message sending, message sent, bulk sending, and bulk sent
+- **Twilio.** SMS and MMS through the Twilio API.
+- **Bulk.** Bulk SMS with rate limiting.
+- **MMS.** Up to 10 media attachments per message.
+- **Query.** `GetMessagesAsync` with `SmsMessageQueryFilter`.
+- **Errors.** Twilio-specific error codes on `TwilioSmsResult`.
+- **Logging.** Logs through Microsoft.Extensions.Logging.
+- **Metrics.** Optional metrics on SMS operations.
+- **DI.** `AddTwilioSmsService` and `AddTwilioSmsServiceFromConfiguration`.
+- **Async.** Methods take `CancellationToken`.
+- **Concurrency.** Safe for concurrent use.
+- **Validation.** `TwilioOptionsValidator` checks required options.
+- **Events.** `MessageSending`, `MessageSent`, `BulkSending`, `BulkSent`.
 
 ## Examples
 
-### 1. Configure Twilio Options
+### Configure Twilio options
 
 ```json
 {
@@ -35,7 +35,7 @@ A production-ready Twilio SMS/MMS service implementation for .NET, built on the 
 }
 ```
 
-### 1. Configure Twilio Options (2)
+### Configure Twilio options (2)
 
 ```csharp
 var options = new TwilioOptions
@@ -49,7 +49,7 @@ var options = new TwilioOptions
 };
 ```
 
-### 2. Register Services
+### Register services
 
 ```csharp
 // In ConfigureServices(context, services):
@@ -58,7 +58,7 @@ services.AddTwilioSmsServiceFromConfiguration(context.Configuration);
 // services.AddTwilioSmsServiceFromConfiguration(context.Configuration, "MyTwilio");
 ```
 
-### 3. Use the Service
+### Send an SMS
 
 ```csharp
 public class MyService
@@ -91,7 +91,7 @@ public class MyService
 }
 ```
 
-### Using the Builder Pattern
+### SmsMessageBuilder
 
 ```csharp
 var builder = SmsMessageBuilder
@@ -103,7 +103,7 @@ var builder = SmsMessageBuilder
 var result = await _smsService.SendAsync(builder);
 ```
 
-### Sending MMS (Multimedia Messages)
+### Send MMS
 
 ```csharp
 var builder = SmsMessageBuilder
@@ -116,7 +116,7 @@ var builder = SmsMessageBuilder
 var result = await _smsService.SendAsync(builder);
 ```
 
-### Sending Bulk Messages
+### Send bulk messages
 
 ```csharp
 var messages = new[]
@@ -137,7 +137,7 @@ foreach (var result in results)
 }
 ```
 
-### Sending Bulk Messages (2)
+### BulkSmsBuilder
 
 ```csharp
 var bulkBuilder = BulkSmsBuilder
@@ -173,7 +173,7 @@ foreach (var result in bulkResult.Results)
 }
 ```
 
-### Querying Messages
+### Query messages
 
 ```csharp
 var filter = new SmsMessageQueryFilter
@@ -191,7 +191,7 @@ foreach (var message in result.Items)
 // Cursor-based pagination: use result.NextCursor as DateSentBefore for next page when result.HasMore
 ```
 
-### Getting a Message by ID
+### Get a message by id
 
 ```csharp
 var message = await _smsService.GetMessageByIdAsync("SM1234567890abcdef");
@@ -203,7 +203,7 @@ if (message.IsSuccess)
 }
 ```
 
-### Testing Connection
+### Test connection
 
 ```csharp
 var isConnected = await _smsService.TestConnectionAsync();
@@ -213,7 +213,7 @@ if (isConnected)
 }
 ```
 
-### Using Events
+### MessageSending
 
 ```csharp
 _smsService.MessageSending += (sender, args) =>
@@ -223,7 +223,7 @@ _smsService.MessageSending += (sender, args) =>
 };
 ```
 
-### Using Events (2)
+### MessageSent
 
 ```csharp
 _smsService.MessageSent += (sender, args) =>
@@ -245,7 +245,7 @@ _smsService.MessageSent += (sender, args) =>
 };
 ```
 
-### Using Events (3)
+### BulkSending
 
 ```csharp
 _smsService.BulkSending += (sender, args) =>
@@ -254,7 +254,7 @@ _smsService.BulkSending += (sender, args) =>
 };
 ```
 
-### Using Events (4)
+### BulkSent
 
 ```csharp
 _smsService.BulkSent += (sender, args) =>
@@ -268,7 +268,7 @@ _smsService.BulkSent += (sender, args) =>
 };
 ```
 
-### Using Events (5)
+### Subscribe to events
 
 ```csharp
 public class SmsNotificationService
@@ -346,7 +346,7 @@ if (result is TwilioSmsResult twilioResult)
 }
 ```
 
-### Error Handling
+### Error handling
 
 ```csharp
 var result = await _smsService.SendSmsAsync("+1234567890", "Hello");
@@ -370,55 +370,54 @@ if (!result.IsSuccess)
 }
 ```
 
-## 1. Configure Twilio Options
+## Configure Twilio options
 
-#### Using Configuration File (appsettings.json)
+#### Using configuration file (appsettings.json)
 
-#### Using Code
+#### Using code
 
-## 2. Register Services
+## Register services
 
-#### Using Configuration Binding
+#### Using configuration binding
 
-`AddTwilioSmsService(IConfiguration, string)` is an alias kept for callers that prefer the shorter name;
-both register the same singletons: `TwilioOptions`, `TwilioOptionsValidator`, `TwilioSmsService`, plus
+`AddTwilioSmsService(IConfiguration, string)` is an alias kept for callers that prefer the shorter name.
+Both register the same singletons: `TwilioOptions`, `TwilioOptionsValidator`, `TwilioSmsService`, plus
 the cross-typed `ISmsService` and `ISmsService<TwilioSmsResult>` interfaces backed by the same instance.
 On `net6.0`+ targets an `IHttpClient` keyed `"lyo-twilio-sms"` is also registered so Twilio reuses the
-shared `IHttpClientFactory` pool (resilient policies layered via the application's `IHttpClientFactory`
-configuration apply automatically).
+shared `IHttpClientFactory` pool. Resilience policies on the application's `IHttpClientFactory`
+configuration apply automatically.
 
-## Sending Bulk Messages
+## Send bulk messages
 
-#### Using IEnumerable of Builders
+#### Using IEnumerable of builders
 
-#### Using BulkSmsBuilder (Recommended)
+#### Using BulkSmsBuilder
 
-## Using Events
+## Events
 
-The Twilio SMS service provides events for monitoring message operations:
+The Twilio SMS service raises events around send operations:
 
-#### MessageSending Event
+#### MessageSending
 
-Fired before each message is sent (including during bulk operations):
+Fired before each message is sent, including during bulk operations:
 
-#### MessageSent Event
+#### MessageSent
 
 Fired after each message is sent (success or failure):
 
-#### BulkSending Event
+#### BulkSending
 
-Fired before a bulk send operation starts:
+Fired before a bulk send starts:
 
-#### BulkSent Event
+#### BulkSent
 
-Fired after a bulk send operation completes:
+Fired after a bulk send completes:
 
-#### Complete Event Example
+#### Complete event example
 
-**Note**: Events fire even when operations fail, allowing you to track all SMS operations regardless of success or
-failure. This is useful for monitoring, logging, and user notifications.
+Events fire even when operations fail, so you can track every attempt. Useful for monitoring, logging, and user notifications.
 
-## Twilio-Specific Features — Error Codes
+## Twilio error codes
 
 Twilio-specific error codes are included in the result via `TwilioSmsResult.TwilioErrorCode`:
 
@@ -445,21 +444,21 @@ if (!result.IsSuccess && result is TwilioSmsResult twilioResult)
 
 The library does not include built-in retry or timeout logic. Apply resilience at the application layer (e.g. using [Lyo.Resilience](https://www.nuget.org/packages/Lyo.Resilience) with `AddLyoResilienceHandler` on the HttpClient, or by wrapping `ISmsService` calls) as needed.
 
-## Rate Limiting
+## Rate limiting
 
-- **Concurrent Requests**: Limited to 10 concurrent requests (configurable via `BulkSmsConcurrencyLimit`)
-- **Automatic Throttling**: Built-in semaphore-based throttling
-- **Non-blocking**: Uses async/await for efficient resource usage
-- **Bulk Limits**: Maximum number of messages per bulk operation (configurable via `MaxBulkSmsLimit`)
+- **Concurrent requests.** Limited to 10 concurrent requests (configurable via `BulkSmsConcurrencyLimit`).
+- **Throttling.** `SemaphoreSlim` caps concurrency.
+- **Async.** Methods take `CancellationToken`.
+- **Bulk limits.** Maximum messages per bulk operation (configurable via `MaxBulkSmsLimit`).
 
-## Thread Safety
+## Thread safety
 
 - All instance fields are readonly
 - Bulk operations use thread-safe collections (`ConcurrentBag`)
 - Rate limiting uses `SemaphoreSlim` for thread-safe concurrency control
 - The underlying Twilio SDK client is thread-safe
 
-## TwilioOptions Properties
+## `TwilioOptions` properties
 
 | Property | Type | Required | Default | Description |
 | ------------------------- | --------- | -------- | ------- | ------------------------------------- |
@@ -473,7 +472,7 @@ The library does not include built-in retry or timeout logic. Apply resilience a
 
 ## Logging
 
-The library uses Microsoft.Extensions.Logging for all logging:
+The library uses Microsoft.Extensions.Logging:
 
 ```csharp
 services.AddLogging(builder =>
@@ -485,15 +484,15 @@ services.AddLogging(builder =>
 
 Log levels:
 
-- **Information**: Successful operations, message details
-- **Warning**: Retries, long messages, connection issues
-- **Error**: Failures, exceptions
+- **Information.** Successful operations, message details
+- **Warning.** Retries, long messages, connection issues
+- **Error.** Failures, exceptions
 
-Phone numbers are automatically masked in logs (only last 4 digits shown) for privacy.
+Phone numbers are masked in logs (last 4 digits only).
 
 ## Metrics
 
-Optional metrics collection is available:
+Set `EnableMetrics` to collect:
 
 ```csharp
 services.AddLyoMetrics();
@@ -528,16 +527,16 @@ Metrics tracked:
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Lyo.Sms` — (direct, lyo)
-- `Microsoft.Extensions.Http` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (direct, microsoft)
-- `Twilio` `7.14.9` — (direct, third-party)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.Sms.Models` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Lyo.Sms` (direct, lyo)
+- `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)
+- `Twilio` `7.14.9` (direct, third-party)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.Sms.Models` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

@@ -2,19 +2,19 @@
   "id": "Lyo.DateAndTime",
   "name": "Lyo.DateAndTime",
   "area": "Core",
-  "tagline": "Date, time, US timezone conversion, day-of-week scheduling, and US holiday metadata for .NET. The API is **static** and **thread-safe** (no mutable shared state).",
-  "description": "Date, time, US timezone conversion, day-of-week scheduling, and US holiday metadata for .NET. The API is **static** and **thread-safe** (no mutable shared state).\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "tagline": "Date, time, US timezone conversion, day-of-week scheduling, and US holiday metadata. Static and thread-safe. No mutable shared state.",
+  "description": "Date, time, US timezone conversion, day-of-week scheduling, and US holiday metadata. The API is static and thread-safe. No mutable shared state.\n\n**Target frameworks.** `netstandard2.0`, `net10.0`",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "paragraph",
       "title": "Time zones and `DateAndTime`",
-      "text": "`DateAndTime` resolves `TimeZoneInfo` via `GeographicInfo.FromState(usState)` in `Lyo.Common`. Each US state maps to an **IANA** identifier (for example `America/New_York`, `America/Chicago`, `America/Denver`, `America/Los_Angeles`, `America/Phoenix`, `America/Anchorage`, `Pacific/Honolulu`). If the OS does not recognize the ID, `GetTimeZoneByState` returns `null` and conversion helpers return `null` instead of throwing."
+      "text": "`DateAndTime` resolves `TimeZoneInfo` via `GeographicInfo.FromState(usState)` in `Lyo.Common`. Each US state maps to an IANA identifier (for example `America/New_York`, `America/Chicago`, `America/Denver`, `America/Los_Angeles`, `America/Phoenix`, `America/Anchorage`, `Pacific/Honolulu`). If the OS does not recognize the ID, `GetTimeZoneByState` returns `null` and conversion helpers return `null` instead of throwing."
     },
     {
       "type": "table",
-      "title": "Time zones and `DateAndTime` — `DateAndTime` — timezone",
+      "title": "`DateAndTime` timezone methods",
       "headers": [
         "Member",
         "Description"
@@ -22,7 +22,7 @@
       "rows": [
         [
           "`GetTimeZoneByState(USState)`",
-          "`TimeZoneInfo?` for the state’s primary mapping, or `null`."
+          "`TimeZoneInfo?` for the state's primary mapping, or `null`."
         ],
         [
           "`GetLocalDateTime(USState, DateTime? utc = null)`",
@@ -38,13 +38,13 @@
         ],
         [
           "`ConvertToUtc(USState, DateTime localDateTime)`",
-          "Interprets `localDateTime` in the state’s zone and returns UTC, or `null` if unmapped."
+          "Interprets `localDateTime` in the state's zone and returns UTC, or `null` if unmapped."
         ]
       ]
     },
     {
       "type": "table",
-      "title": "Time zones and `DateAndTime` — `DateAndTime` — scheduling",
+      "title": "`DateAndTime` scheduling methods",
       "headers": [
         "Member",
         "Description"
@@ -52,23 +52,23 @@
       "rows": [
         [
           "`GetNextScheduledDateTime(USState, IEnumerable<TimeOnly> times, DayFlags)`",
-          "Next local instant strictly after “now” on an allowed day, for one of the listed clock times."
+          "Next local instant strictly after \"now\" on an allowed day, for one of the listed clock times."
         ],
         [
           "`GetNextScheduledDateTime(USState, TimeOnly start, TimeOnly end, int intervalMinutes, DayFlags)`",
-          "Next instant after “now” on an allowed day, stepping by `intervalMinutes` within `[start, end]` inclusive."
+          "Next instant after \"now\" on an allowed day, stepping by `intervalMinutes` within `[start, end]` inclusive."
         ],
         [
           "`IsPastDue(USState, IEnumerable<TimeOnly> times, DayFlags, DateTime? lastRunUtc)`",
-          "`true` if any scheduled slot **after** the localized last run and **on or before** localized “now” falls on an allowed day within the scan window."
+          "`true` if any scheduled slot after the localized last run and on or before localized \"now\" falls on an allowed day within the scan window."
         ],
         [
           "`IsPastDue(USState, TimeOnly start, TimeOnly end, int minuteInterval, DayFlags, DateTime? lastRunUtc)`",
-          "**Window mode:** only considers **today** (local calendar). Returns `true` only if today is scheduled, “now” is inside `[start, end]`, and the latest tick **at or before** “now” is after the localized last run."
+          "**Window mode.** Only considers today (local calendar). Returns `true` only if today is scheduled, \"now\" is inside `[start, end]`, and the latest tick at or before \"now\" is after the localized last run."
         ],
         [
           "`GetScheduledTimesForDay(DateTime date, IEnumerable<TimeOnly> times, DayFlags)`",
-          "Yields local `DateTime` values on `date.Date` for each time if `date` matches `DayFlags`. **Does not** take `USState` (caller supplies the calendar date)."
+          "Yields local `DateTime` values on `date.Date` for each time if `date` matches `DayFlags`. Does not take `USState`. The caller supplies the calendar date."
         ],
         [
           "`GetScheduledTimesForDay(DateTime date, TimeOnly start, TimeOnly end, int intervalMinutes, DayFlags)`",
@@ -76,23 +76,23 @@
         ],
         [
           "`IsScheduledDay(DateTime dateTime, DayFlags)`",
-          "Whether `dateTime`’s day-of-week is included in `scheduleFlags`."
+          "Whether `dateTime`'s day-of-week is included in `scheduleFlags`."
         ]
       ],
-      "lead": "Scheduling uses **local** `DateTime` in the given state (`GetCurrentLocalDateTime` / conversions). `DayFlags` is a `[Flags]` enum from `Lyo.Common` (weekday bits). Internally the\nday flag is `1 << (int)date.DayOfWeek`.\n\n**Constants (not configurable):** next-slot search looks up to **7 days** ahead; discrete-time past-due scans up to **7 days** of history when `lastRunDateTime` is null (default\nanchor is UTC “now minus 7 days”).",
-      "trail": "**`TimeOnly` vs `TimeOnlyModel`:** On `net6.0` or greater, scheduling APIs use `System.TimeOnly`. On `netstandard2.0`, use `Lyo.DateAndTime.TimeOnlyModel`, which is\nsource-compatible for typical call sites via conditional compilation in this library (`TimeOnly` type alias in `DateAndTime.cs`).\n\n---"
+      "lead": "Scheduling uses local `DateTime` in the given state (`GetCurrentLocalDateTime` / conversions). `DayFlags` is a `[Flags]` enum from `Lyo.Common` (weekday bits). Internally the\nday flag is `1 << (int)date.DayOfWeek`.\n\n**Constants (not configurable).** Next-slot search looks up to 7 days ahead. Discrete-time past-due scans up to 7 days of history when `lastRunDateTime` is null. The default\nanchor is UTC \"now minus 7 days\".",
+      "trail": "**`TimeOnly` vs `TimeOnlyModel`.** On `net6.0` or greater, scheduling APIs use `System.TimeOnly`. On `netstandard2.0`, use `Lyo.DateAndTime.TimeOnlyModel`, which is\nsource-compatible for typical call sites via conditional compilation in this library (`TimeOnly` type alias in `DateAndTime.cs`)."
     },
     {
       "type": "list",
       "title": "`DateOnlyModel` and `TimeOnlyModel` (.NET Standard 2.0)",
       "items": [
-        "**`DateOnlyModel`** — day number from 0001-01-01; `Year`/`Month`/`Day`, `Today`, `AddDays`/`AddMonths`/`AddYears`, `FromDateTime`/`Parse`/`TryParse`/`ParseExact`/`TryParseExact`, comparison operators, `ToDateTime()`, `ToDateTime(TimeOnlyModel)`.",
-        "**`TimeOnlyModel`** — ticks within one day; constructors from hour/minute/(second)/(ms), `Ticks`, `FromTimeSpan`/`FromDateTime`, parse APIs, `ToTimeSpan()`, `ToDateTime(DateOnlyModel)`, `Add`/`AddHours`/`AddMinutes`/`AddSeconds`/`AddMilliseconds` (wraps within a day)."
+        "**`DateOnlyModel`.** Day number from 0001-01-01. `Year`/`Month`/`Day`, `Today`, `AddDays`/`AddMonths`/`AddYears`, `FromDateTime`/`Parse`/`TryParse`/`ParseExact`/`TryParseExact`, comparison operators, `ToDateTime()`, `ToDateTime(TimeOnlyModel)`.",
+        "**`TimeOnlyModel`.** Ticks within one day. Constructors from hour/minute/(second)/(ms), `Ticks`, `FromTimeSpan`/`FromDateTime`, parse APIs, `ToTimeSpan()`, `ToDateTime(DateOnlyModel)`, `Add`/`AddHours`/`AddMinutes`/`AddSeconds`/`AddMilliseconds` (wraps within a day)."
       ]
     },
     {
       "type": "table",
-      "title": "US holidays — `HolidayInfo` and `HolidayDateRule`",
+      "title": "US holidays (`HolidayInfo` and `HolidayDateRule`)",
       "headers": [
         "API",
         "Description"
@@ -127,12 +127,11 @@
           "First non-`Unknown` holiday matching that calendar date, or `null`."
         ]
       ],
-      "lead": "**`HolidayDateRule`** enum: `Unknown`, `FixedDate`, `NthWeekdayOfMonth`, `LastWeekdayOfMonth`.\n\n**`HolidayInfo`** is an immutable `record` with: `Name`, `Slug`, `Description`, `IsFederal`, `IsObservedWhenWeekend`, `DateRule`, `Month`, `DayOfMonth`, `DayOfWeek`, `Occurrence`,\n`Aliases`, plus `CanonicalName` (`Slug`).\n\nStatic instances include (among others): `NewYearsDay`, `MartinLutherKingJrDay`, `ValentinesDay`, `PresidentsDay`, `StPatricksDay`, `EasterSunday`, `MothersDay`, `MemorialDay`,\n`Juneteenth`, `FathersDay`, `IndependenceDay`, `LaborDay`, `ColumbusDay`, `Halloween`, `VeteransDay`, `ThanksgivingDay`, `ChristmasDay`, `NewYearsEve`, and `Unknown`.",
-      "trail": "---"
+      "lead": "`HolidayDateRule` values: `Unknown`, `FixedDate`, `NthWeekdayOfMonth`, `LastWeekdayOfMonth`.\n\n`HolidayInfo` is an immutable `record` with `Name`, `Slug`, `Description`, `IsFederal`, `IsObservedWhenWeekend`, `DateRule`, `Month`, `DayOfMonth`, `DayOfWeek`, `Occurrence`,\n`Aliases`, plus `CanonicalName` (`Slug`).\n\nStatic instances include `NewYearsDay`, `MartinLutherKingJrDay`, `ValentinesDay`, `PresidentsDay`, `StPatricksDay`, `EasterSunday`, `MothersDay`, `MemorialDay`,\n`Juneteenth`, `FathersDay`, `IndependenceDay`, `LaborDay`, `ColumbusDay`, `Halloween`, `VeteransDay`, `ThanksgivingDay`, `ChristmasDay`, `NewYearsEve`, and `Unknown`."
     },
     {
       "type": "table",
-      "title": "JSON — `Lyo.DateAndTime.Json`",
+      "title": "`Lyo.DateAndTime.Json`",
       "headers": [
         "Type",
         "Behavior"
@@ -140,18 +139,17 @@
       "rows": [
         [
           "`DateOnlyModelConverter`",
-          "`JsonConverter<DateOnlyModel?>` — ISO `yyyy-MM-dd` strings; null/whitespace → null."
+          "`JsonConverter<DateOnlyModel?>`. ISO `yyyy-MM-dd` strings. Null or whitespace becomes null."
         ],
         [
           "`TimeOnlyModelConverter`",
-          "`JsonConverter<TimeOnlyModel?>` — `HH:mm:ss.fffffff`; null/whitespace → null."
+          "`JsonConverter<TimeOnlyModel?>`. `HH:mm:ss.fffffff`. Null or whitespace becomes null."
         ],
         [
           "`LyoJsonSerializerOptionsExtensions.AddLyoDateOnlyModelConverters(JsonSerializerOptions)`",
           "Registers both converters and returns `options`."
         ]
-      ],
-      "trail": "---"
+      ]
     },
     {
       "type": "table",
@@ -179,10 +177,9 @@
         ],
         [
           "`TimeZoneNotFoundException`",
-          "Rare; thrown by BCL if a zone id is invalid in edge environments (library usually returns `null` from `GeographicInfo.TimeZone`)."
+          "Rare. Thrown by BCL if a zone id is invalid in edge environments. This library usually returns `null` from `GeographicInfo.TimeZone`."
         ]
-      ],
-      "trail": "---"
+      ]
     },
     {
       "type": "paragraph",

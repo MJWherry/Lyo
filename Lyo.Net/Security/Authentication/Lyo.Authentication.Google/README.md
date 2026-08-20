@@ -98,7 +98,7 @@ cd Lyo.Net/Tools/Lyo.TestGateway && dotnet run --launch-profile http
 
 ## Usage
 
-`appsettings.json`: When `HostedDomain` is set the provider rejects login attempts whose id_token `hd` claim does not match — useful for Google Workspace-only deployments. Personal `@gmail.com` accounts are rejected.
+`appsettings.json`: When `HostedDomain` is set the provider rejects login attempts whose id_token `hd` claim does not match. Use this for Google Workspace-only deployments. Personal `@gmail.com` accounts are rejected.
 
 ## Claim mapping
 
@@ -111,7 +111,7 @@ cd Lyo.Net/Tools/Lyo.TestGateway && dotnet run --launch-profile http
 | `picture` | `LyoUser.AvatarUrl` |
 | `locale` | `LyoUser.PreferredLanguageBcp47` |
 
-Google does not emit roles, so `LinkedIdentity.Scopes` is always empty here — give the user baseline scopes via `LyoUser.Scopes` instead.
+Google does not emit roles, so `LinkedIdentity.Scopes` is always empty here. Give the user baseline scopes via `LyoUser.Scopes` instead.
 
 ## Local development setup
 
@@ -119,22 +119,22 @@ End-to-end recipe for exercising the BFF flow on your laptop against real Google
 
 ## 1. Create the OAuth client in Google Cloud
 
-- Go to <https://console.cloud.google.com/> and create (or pick) a project — e.g. `lyo-dev-local`.
+- Go to <https://console.cloud.google.com/> and create or pick a project, for example `lyo-dev-local`.
 - **APIs & Services → OAuth consent screen**:
 - User type: **External** for personal `@gmail.com` testing, **Internal** if everyone is in a single Workspace.
 - App name + support email + developer contact email (anything sensible).
 - Scopes: leave the defaults; the provider only requests `openid email profile`.
-- **Test users**: while the app is in *Testing* status, only emails listed here can log in — add your own Google account(s) now or the callback will 403.
+- **Test users.** While the app is in *Testing* status, only emails listed here can log in. Add your own Google account(s) now or the callback will 403.
 - **APIs & Services → Credentials → Create credentials → OAuth client ID**:
 - Application type: **Web application**.
 - Name: `Lyo TestApi local`.
 - **Authorized JavaScript origins**: `http://localhost:5251`.
-- **Authorized redirect URIs**: `http://localhost:5251/auth/callback/google` — must match `GoogleAuth:RedirectUri` byte-for-byte (scheme, host, port, path, no trailing slash). The Gateway origin (`http://localhost:5138`) is **not** a Google redirect URI; the browser only goes through the API.
-- Copy the generated **Client ID** and **Client secret** — you'll paste them in the next step.
+- **Authorized redirect URIs.** `http://localhost:5251/auth/callback/google`. Must match `GoogleAuth:RedirectUri` byte-for-byte (scheme, host, port, path, no trailing slash). The Gateway origin (`http://localhost:5138`) is **not** a Google redirect URI. The browser only goes through the API.
+- Copy the generated **Client ID** and **Client secret**. You'll paste them in the next step.
 
 ## 2. Wire the secrets into Lyo.TestApi
 
-The TestApi only registers the Google provider when `GoogleAuth:ClientId` is non-empty. Do **not** put real secrets in the committed `appsettings.json` / `appsettings.Development.json`. Use `dotnet user-secrets`: Leave `HostedDomain` **unset** for personal `@gmail.com` accounts. For Workspace-only: Also seed the JWT issuer/audience so locally-issued tokens are accepted by the Gateway: The Gateway origin must be on the BFF allow-list — already present in `Lyo.TestApi/appsettings.Development.json`:
+The TestApi only registers the Google provider when `GoogleAuth:ClientId` is non-empty. Do **not** put real secrets in the committed `appsettings.json` / `appsettings.Development.json`. Use `dotnet user-secrets`. Leave `HostedDomain` **unset** for personal `@gmail.com` accounts. For Workspace-only, set it. Also seed the JWT issuer/audience so locally-issued tokens are accepted by the Gateway. The Gateway origin must be on the BFF allow-list, already present in `Lyo.TestApi/appsettings.Development.json`:
 
 ## 3. Point the Gateway at the TestApi
 
@@ -142,7 +142,7 @@ The Gateway uses `Lyo.Authentication.Client`. The relevant `appsettings.json` bl
 
 ## 4. Run both services and exercise the flow
 
-- `http://localhost:5251/.well-known/jwks.json` — should return a single Ed25519 JWK.
+- `http://localhost:5251/.well-known/jwks.json`. Should return a single Ed25519 JWK.
 - Visit `http://localhost:5138` and click **Sign in with Google** (or hit `http://localhost:5138/auth/sign-in/google?returnUrl=/`). The Gateway 302s to the TestApi, which 302s to Google, which 302s back to the TestApi callback, which 302s to `http://localhost:5138/auth/handoff?lyo_handoff=lyoh_...`. The Gateway redeems the code server-side, sets `lyo_session`, and lands you on `/`.
 - After login, `GET http://localhost:5251/auth/me` with `Authorization: Bearer <access_token>` (grab it from the session store via diagnostic tooling or from the API log line) returns the principal.
 - `POST http://localhost:5138/auth/sign-out` revokes the refresh token at the API and clears `lyo_session`.
@@ -161,37 +161,36 @@ The Gateway uses `Lyo.Authentication.Client`. The relevant `appsettings.json` bl
 
 ## 6. Promote to deployed environments
 
-When you move off localhost, replace the user-secrets values with the deployed equivalents and **add a second OAuth client** in Google Cloud (or extra redirect URIs on the same
-client) for each environment:
+When you move off localhost, replace the user-secrets values with the deployed equivalents and **add a second OAuth client** in Google Cloud, or extra redirect URIs on the same client, for each environment:
 
 - Staging: `https://api-staging.example.com/auth/callback/google` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app-staging.example.com`
 - Production: `https://api.example.com/auth/callback/google` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app.example.com`
 
-Production must be on HTTPS — Google rejects non-`localhost` plain-HTTP redirect URIs. Submit the OAuth consent screen for verification before you remove the *Testing* gate,
-otherwise external users will still get the unverified-app screen (and personal accounts beyond the 100-test-user cap will be blocked).
+Production must be on HTTPS. Google rejects non-`localhost` plain-HTTP redirect URIs. Submit the OAuth consent screen for verification before you remove the *Testing* gate, otherwise external users will still get the unverified-app screen, and personal accounts beyond the 100-test-user cap will be blocked.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Authentication.OpenIdConnect` — (direct, lyo)
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Api.Models` — (transitive, lyo)
-- `Lyo.Authentication` — (transitive, lyo)
-- `Lyo.Authentication.Models` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.KeyStore` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party)
-- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
-- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Authentication.OpenIdConnect` (direct, lyo)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Authentication` (transitive, lyo)
+- `Lyo.Authentication.Models` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.KeyStore` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

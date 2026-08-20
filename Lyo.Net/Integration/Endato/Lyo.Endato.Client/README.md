@@ -2,7 +2,7 @@
 
 Typed HTTP client for the [Endato](https://www.endato.com/) data-enrichment REST API.
 
-**Archetype C (vendor client).** Canonical people rows live in [`Lyo.People.Postgres`](../../../Core/People/Lyo.People.Postgres/README.md) (Archetype A); optional vendor cache in [ `Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). Host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` / `EndatoCePerson` on **`source_entity_*`**). See [package layout](../../../docs/package-layout.md).
+**Archetype C (vendor client).** Canonical people rows live in [`Lyo.People.Postgres`](../../../Core/People/Lyo.People.Postgres/README.md) (Archetype A); optional vendor cache in [ `Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). Host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` / `EndatoCePerson` on `source_entity_*`). See [package layout](../../../docs/package-layout.md).
 
 Subclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and optional request compression behave the same as for any other Lyo HTTP client.
 
@@ -33,7 +33,7 @@ services.AddEndatoClient(o => {
 }
 ```
 
-## Surface
+## Managers
 
 [`EndatoClient`](EndatoClient.cs) wires the two galaxy-API endpoints behind manager properties:
 
@@ -49,9 +49,9 @@ Authentication is wired automatically: the client sets `galaxy-ap-name` / `galax
 
 Models live under [`Models/Person`](Models/Person) (request + response, plus pagination) and [`Models/Enrichment`](Models/Enrichment).
 
-## Surface — Request builders
+## Request builders
 
-Person Search — see [Person Search properties](https://enformiongo.readme.io/reference/person-search-properties):
+Person Search. See [Person Search properties](https://enformiongo.readme.io/reference/person-search-properties):
 
 ```csharp
 var query = PersonQueryBuilder.Create("Jane", "Doe", age: 42)
@@ -66,7 +66,7 @@ var response = await client.Persons.QueryPersonsAsync(
     PersonQueryBuilder.Create("Jane", "Doe", age: 42).WithPhone("5125550100"), ct);
 ```
 
-Contact Enrichment — see [Contact Enrichment properties](https://enformiongo.readme.io/reference/contact-enrichment-properties). The API requires **at least two** of name, phone,
+Contact Enrichment. See [Contact Enrichment properties](https://enformiongo.readme.io/reference/contact-enrichment-properties). The API requires **at least two** of name, phone,
 email, or address; `EnrichmentQueryBuilder.Build()` enforces that:
 
 ```csharp
@@ -78,7 +78,7 @@ var query = EnrichmentQueryBuilder.Create("John", "Smith")
 var response = await client.Enrichment.QueryEnrichmentAsync(query, ct);
 ```
 
-## Surface — Numeric fields
+## Numeric fields
 
 `EndatoClient` uses [`LyoJsonSerializerOptions`](../../../Core/Common/Lyo.Common/LyoJsonSerializerOptions.cs) (`AllowReadingFromString`), so latitude/longitude deserialize into `decimal?` whether the API sends JSON numbers or quoted strings.
 
@@ -110,20 +110,21 @@ Example `appsettings.json`:
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Api.Client` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Lyo.Api.Models` — (transitive, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Diagnostic` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.PackageMetadata` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)
+- `Lyo.Api.Client` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

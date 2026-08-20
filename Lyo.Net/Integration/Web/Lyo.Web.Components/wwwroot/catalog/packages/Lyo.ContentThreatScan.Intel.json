@@ -2,15 +2,15 @@
   "id": "Lyo.ContentThreatScan.Intel",
   "name": "Lyo.ContentThreatScan.Intel",
   "area": "Security",
-  "tagline": "Optional **`DefaultContentThreatReputationPipeline`** for Malware Bazaar, VirusTotal, and **`clamd` INSTREAM** (TCP).",
-  "description": "Optional **`DefaultContentThreatReputationPipeline`** for Malware Bazaar, VirusTotal, and **`clamd` INSTREAM** (TCP).",
+  "tagline": "Optional `DefaultContentThreatReputationPipeline` for Malware Bazaar, VirusTotal, and `clamd` INSTREAM (TCP).",
+  "description": "Optional `DefaultContentThreatReputationPipeline` for Malware Bazaar, VirusTotal, and `clamd` INSTREAM (TCP).",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "paragraph",
       "title": "Composition",
-      "text": "Construct **`DefaultContentThreatReputationPipeline`** with a shared **`HttpClient`** (often from **`IHttpClientFactory`**), `ReputationPipelineOptions` bound from configuration, and an optional `ILogger`. Register the instance as **`IContentThreatReputationPipeline`** wherever **`ContentThreatMalwareScanner`** or other hosts need reputation. Probes are omitted when keys are absent: empty **`VirusTotalApiKey`** skips VT; empty **`MalwareBazaarAuthKey`** skips Bazaar; **`Clamd.Enabled == false`** skips `clamd`."
+      "text": "Construct `DefaultContentThreatReputationPipeline` with a shared `HttpClient` (often from `IHttpClientFactory`), `ReputationPipelineOptions` bound from configuration, and an optional `ILogger`. Register the instance as `IContentThreatReputationPipeline` wherever `ContentThreatMalwareScanner` or other hosts need reputation. Probes are omitted when keys are absent: empty `VirusTotalApiKey` skips VT; empty `MalwareBazaarAuthKey` skips Bazaar; `Clamd.Enabled == false` skips `clamd`."
     },
     {
       "type": "table",
@@ -66,9 +66,9 @@
       "type": "list",
       "title": "Outages and quotas",
       "items": [
-        "**`Ignore`** — swallow (logged); no score bump",
-        "**`TreatAsSuspect`** — adds `ProviderFailureSuspectBump` under a stable rule id",
-        "**`ImmediateThreatBump`** — large contribution capped by disposition options (policy-driven “fail closed”)"
+        "`Ignore.` Swallow (logged). No score bump.",
+        "`TreatAsSuspect.` Adds `ProviderFailureSuspectBump` under a stable rule id.",
+        "`ImmediateThreatBump.` Large contribution capped by disposition options. Policy-driven fail-closed."
       ]
     },
     {

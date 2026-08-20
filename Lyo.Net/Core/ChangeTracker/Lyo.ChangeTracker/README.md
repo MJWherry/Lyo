@@ -4,13 +4,13 @@ Generic entity change history built around `Lyo.EntityReference.Models.EntityRef
 
 ## Features
 
-- `ChangeRecord` for entity-scoped history with old values, changed values, optional **actor** (`FromEntity` at API; `from_entity_*` in DB), and optional `ChangeType` / `Message`
+- `ChangeRecord` for entity-scoped history with old values, changed values, optional actor (`FromEntity` at API; `from_entity_*` in DB), and optional `ChangeType` / `Message`
 - `IChangeTracker` for recording, querying, and deleting change history
-- `NullChangeTracker.Instance` (singleton) when change tracking is optional — all writes/queries are no-ops
+- `NullChangeTracker.Instance` (singleton) when change tracking is optional. All writes and queries are no-ops.
 
 ## Examples
 
-### Quick Start
+### Quick start
 
 ```csharp
 using Lyo.ChangeTracker;
@@ -32,7 +32,7 @@ await changeTracker.RecordChangeAsync(change);
 var history = await changeTracker.GetForEntityAsync(orderRef);
 ```
 
-## `IChangeTracker` surface
+## `IChangeTracker` methods
 
 | Method | Purpose |
 | ---------------------------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -43,15 +43,15 @@ var history = await changeTracker.GetForEntityAsync(orderRef);
 | `GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, …)` | Returns history scoped by entity type, optionally filtered by id. |
 | `DeleteForEntityAsync(EntityRef forEntity, …)` | Deletes all history rows recorded against a specific entity. |
 
-The base abstraction is purely a contract — health/diagnostics are added by adapter packages (see `Lyo.ChangeTracker.Postgres`).
+The base abstraction is a contract only. Health and diagnostics come from adapter packages. See `Lyo.ChangeTracker.Postgres`.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.EntityReference.Models` — (direct, lyo)
-- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.EntityReference.Models` (direct, lyo)
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

@@ -2,23 +2,23 @@
   "id": "Lyo.Tools.Postgres",
   "name": "Lyo.Tools.Postgres",
   "area": "Tools",
-  "tagline": "Interactive Spectre.Console TUI for running and rolling back EF Core migrations against the Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders.",
-  "description": "Interactive Spectre.Console TUI for running and rolling back EF Core migrations against the Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders. Useful for spinning a\nfresh local database up to the latest schema or stepping a single schema back to a specific migration.",
+  "tagline": "Spectre.Console TUI for running and rolling back EF Core migrations against Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders.",
+  "description": "Spectre.Console TUI for running and rolling back EF Core migrations against Lyo Postgres `DbContext`s, plus a couple of Bogus-powered seeders. Use it to bring a\nfresh local database up to the latest schema or step one schema back to a specific migration.",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "paragraph",
       "title": "Entry point",
-      "text": "`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, registers a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key — set in `appsettings.Development.json` or environment variables), then hands off to `Menu.RunAsync(scope.ServiceProvider, cts.Token)`. Ctrl+C cancels the host. Three scoped services are wired: - `MigrationRunner` — drives EF migrations on demand for any registered context. - `ComicDbSeeder` — Bogus-faked comic series, volumes, chapters (with `VolumeId`), pages, character–volume appearances, and tags. Prompts to replace existing rows. - `PeopleDbSeeder` — Bogus-faked person rows with phones, emails, addresses, etc."
+      "text": "`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, registers a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key, set in `appsettings.Development.json` or environment variables), then hands off to `Menu.RunAsync(scope.ServiceProvider, cts.Token)`. Ctrl+C cancels the host. Three scoped services are wired. `MigrationRunner` drives EF migrations on demand for any registered context. `ComicDbSeeder` fakes comic series, volumes, chapters (with `VolumeId`), pages, character and volume appearances, and tags, and prompts to replace existing rows. `PeopleDbSeeder` fakes person rows with phones, emails, addresses, and related data."
     },
     {
       "type": "list",
       "title": "Main menu",
       "items": [
-        "**Seeds** — Comic Database or People Database. Each seeder prompts for record count (default 20 / 50) and an optional integer random seed. Both skip if the target table already has rows.",
-        "**Migrations** — see below.",
-        "**Change Connection String** — accepts a new value and updates `ConnectionStringProvider` in place. The header shows a masked preview (`first 40 chars + ****`)."
+        "**Seeds.** Comic Database or People Database. Each seeder prompts for record count (default 20 / 50) and an optional integer random seed. Both skip if the target table already has rows.",
+        "**Migrations.** See below.",
+        "**Change connection string.** Accepts a new value and updates `ConnectionStringProvider` in place. The header shows a masked preview (`first 40 chars + ****`)."
       ]
     },
     {
@@ -137,16 +137,16 @@
         ]
       ],
       "lead": "`MigrationRunner` (see `MigrationRunner.cs`) knows about 21 `DbContext`s, each paired with a Postgres schema name used for `__EFMigrationsHistory`:",
-      "trail": "The menu offers **Run All (Latest)**, which calls every `RunXxxAsync` in registration order, or a context-specific submenu with four actions:\n\n- **Migrate to Latest** — `MigrateLatestAsync<TContext>` (`context.Database.MigrateAsync`).\n- **Migrate to Target…** — `MigrateToAsync<TContext>(target)` via `IMigrator.MigrateAsync(target)`. The picker lists every migration with ` APPLIED` / `· PENDING` status, plus a\n  top \"Roll back all\" sentinel (passes `\"0\"` after a confirmation) and a \"Cancel\" sentinel.\n- **View Status** — Table of all defined migrations with applied/pending state.\n- **View Current Version** — `GetCurrentVersionAsync<TContext>` returns the last applied migration name, or \"No migrations applied yet.\"\n\nBefore each `MigrateAsync`, `EnsureSchemaAsync` runs `CREATE SCHEMA IF NOT EXISTS \"schema\"` so the migrations history table can be created in its own schema even on a brand-new\ndatabase. Contexts are constructed at call time via `Activator.CreateInstance(typeof(TContext), options)` with the connection string pulled from `ConnectionStringProvider` on every\ncall, so the \"Change Connection String\" menu option takes effect immediately."
+      "trail": "The menu offers **Run All (Latest)**, which calls every `RunXxxAsync` in registration order, or a context-specific submenu with four actions:\n\n- **Migrate to Latest.** `MigrateLatestAsync<TContext>` (`context.Database.MigrateAsync`).\n- **Migrate to Target….** `MigrateToAsync<TContext>(target)` via `IMigrator.MigrateAsync(target)`. The picker lists every migration with ` APPLIED` / `· PENDING` status, plus a\n  top \"Roll back all\" sentinel (passes `\"0\"` after a confirmation) and a \"Cancel\" sentinel.\n- **View Status.** Table of all defined migrations with applied/pending state.\n- **View Current Version.** `GetCurrentVersionAsync<TContext>` returns the last applied migration name, or \"No migrations applied yet.\"\n\nBefore each `MigrateAsync`, `EnsureSchemaAsync` runs `CREATE SCHEMA IF NOT EXISTS \"schema\"` so the migrations history table can be created in its own schema even on a brand-new\ndatabase. Contexts are constructed at call time via `Activator.CreateInstance(typeof(TContext), options)` with the connection string pulled from `ConnectionStringProvider` on every\ncall, so the \"Change Connection String\" menu option takes effect immediately."
     },
     {
       "type": "list",
       "title": "`ConnectionStringProvider`",
       "items": [
-        "`ConnectionString` (mutable) — current value.",
-        "`IsConfigured` — non-empty check.",
-        "`GetOrThrow()` — throws if no string is set (e.g. you launched without `appsettings.Development.json`).",
-        "`GetMasked()` — returns `(not set)` or the first 40 characters followed by `****` for safe display in the TUI header."
+        "`ConnectionString` (mutable), current value.",
+        "`IsConfigured`. Non-empty check.",
+        "`GetOrThrow()` throws if no string is set (e.g. you launched without `appsettings.Development.json`).",
+        "`GetMasked()` returns `(not set)` or the first 40 characters followed by `` for safe display in the TUI header."
       ]
     },
     {

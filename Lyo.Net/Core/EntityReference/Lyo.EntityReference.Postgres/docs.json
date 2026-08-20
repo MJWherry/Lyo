@@ -2,8 +2,8 @@
   "id": "Lyo.EntityReference.Postgres",
   "name": "Lyo.EntityReference.Postgres",
   "area": "Core",
-  "tagline": "Entity Framework Core building blocks for **relation** rows (subject/actor associations) and **source link** rows (import provenance) on PostgreSQL.",
-  "description": "Entity Framework Core building blocks for **relation** rows (subject/actor associations) and **source link** rows (import provenance) on PostgreSQL.",
+  "tagline": "Entity Framework Core building blocks for relation rows (subject/actor associations) and source link rows (import provenance) on PostgreSQL.",
+  "description": "Entity Framework Core building blocks for relation rows (subject/actor associations) and source link rows (import provenance) on PostgreSQL.",
   "features": [],
   "examples": [],
   "sections": [
@@ -27,8 +27,8 @@
           "Entity that performed or owns the relation (e.g. `User`)"
         ]
       ],
-      "lead": "**Relations** — subject/actor endpoints (persisted as legacy `for_entity_*` / `from_entity_*` names):",
-      "trail": "Endpoint columns are **nullable at the DB level**; stores and **`EntityRelationValidation`** enforce both endpoints.\n\n**Source provenance** — inline on parent rows (same pattern as relations on `comment`):\n\n| Property (C#) | Column |\n|---------------------------------------|-------------------------------------------|\n| `SourceEntityType` / `SourceEntityId` | `source_entity_type` / `source_entity_id` |\n| `ImportedAt` | `imported_at` |"
+      "lead": "**Relations.** Subject/actor endpoints, persisted as legacy `for_entity_*` / `from_entity_*` names:",
+      "trail": "Endpoint columns are nullable at the DB level. Stores and `EntityRelationValidation` enforce both endpoints.\n\n**Source provenance.** Inline on parent rows, same pattern as relations on `comment`:\n\n| Property (C#) | Column |\n|---------------------------------------|-------------------------------------------|\n| `SourceEntityType` / `SourceEntityId` | `source_entity_type` / `source_entity_id` |\n| `ImportedAt` | `imported_at` |"
     },
     {
       "type": "table",
@@ -39,24 +39,24 @@
       ],
       "rows": [
         [
-          "**`EntityRelationEndpointsEntityBase`**",
+          "`EntityRelationEndpointsEntityBase`",
           "Shared subject/actor columns only. Rarely used directly."
         ],
         [
-          "**`EntityRelationEntityBase`**",
+          "`EntityRelationEntityBase`",
           "Canonical tenant-scoped relation: soft-delete, visibility, jsonb metadata, lifecycle timestamps. Subclass per module (`FavoriteEntity`, `TagEntity`, …)."
         ],
         [
-          "**`EntitySourceEntityBase`**",
-          "Inline import provenance on parent rows (`source_entity_*`, `imported_at`). Subclass per module (`PersonEntity`, `AddressEntity`, …) — mirrors **`EntityRelationEntityBase`** for source instead of ref."
+          "`EntitySourceEntityBase`",
+          "Inline import provenance on parent rows (`source_entity_*`, `imported_at`). Subclass per module (`PersonEntity`, `AddressEntity`, …). Mirrors `EntityRelationEntityBase` for source instead of ref."
         ],
         [
-          "**`EntitySourceDerivedEntityBase`**",
-          "Extends **`EntitySourceEntityBase`** with **`Id`**, lifecycle timestamps, and **`LocallyModifiedAt`** when content may diverge from imported source(s)."
+          "`EntitySourceDerivedEntityBase`",
+          "Extends `EntitySourceEntityBase` with `Id`, lifecycle timestamps, and `LocallyModifiedAt` when content may diverge from imported source(s)."
         ],
         [
-          "**`EntityRelationOptionalActorBase`**",
-          "String ids with optional actor columns and **nullable** tenant id (audit / change-tracker style rows)."
+          "`EntityRelationOptionalActorBase`",
+          "String ids with optional actor columns and nullable tenant id (audit / change-tracker style rows)."
         ]
       ]
     },
@@ -72,32 +72,32 @@
       "type": "list",
       "title": "Types",
       "items": [
-        "**`EntityRelationEndpointConfigurationExtensions.ConfigureEntityRelationEndpointColumns`** — Maps subject/actor columns to `for_entity_*` / `from_entity_*`.",
-        "**`EntitySourceLinkConfigurationExtensions.ConfigureEntitySourceColumns`** — Inline source columns + lookup index. **`ConfigureEntitySourceDerivedColumns`** maps **`Id`** and * *`LocallyModifiedAt`** on derived aggregates.",
-        "**`EntitySourceConfiguration<TEntity>`** — Shared source column names/types and indexes. Subclass per module (optional; modules may call extensions directly).",
-        "**`EntityRelationConfiguration<TEntity>`** — Shared relation column names/types and indexes. Subclass per module.",
-        "**`EntityRelationOptionalActorExtensions.MapOptionalActorColumns`** — Endpoint columns plus nullable `tenant_id`.",
-        "**`EntityRelationMapping`** / **`EntitySourceMapping`** — Domain ↔ EF mapping for endpoints and provenance records.",
-        "**`EntityRefModuleDbContext`** — Override `SaveChanges` / `SaveChangesAsync` to set **`CreatedAt`** to UTC for new **`EntityRelationEntityBase`** entities when still default.",
-        "**`EntityRefPostgresStoreBase`** — DI-friendly base for stores: resolves **`EntityRefOptions`**, holds **`IEntityRefActionInterceptor`** pipeline, exposes **`ResolveTenant`** and **`RunInterceptorsAsync`**.",
-        "**`EntityRefPostgresStoreHelpers`** — **`WhereActive`**, **`WhereTenant`** (for `EntityRelationEntityBase`), **`RunInterceptorsAsync`**.",
-        "**`EntityRelationOptionalActorHelpers`** — **`WhereTenant`** and **`WhereTenantOrSystem`** for the optional-actor base."
+        "**`EntityRelationEndpointConfigurationExtensions.ConfigureEntityRelationEndpointColumns`.** Maps subject/actor columns to `for_entity_*` / `from_entity_*`.",
+        "**`EntitySourceLinkConfigurationExtensions.ConfigureEntitySourceColumns`.** Inline source columns + lookup index. `ConfigureEntitySourceDerivedColumns` maps `Id` and `LocallyModifiedAt` on derived aggregates.",
+        "**`EntitySourceConfiguration<TEntity>`.** Shared source column names/types and indexes. Subclass per module. Optional. Modules may call extensions directly.",
+        "**`EntityRelationConfiguration<TEntity>`.** Shared relation column names/types and indexes. Subclass per module.",
+        "**`EntityRelationOptionalActorExtensions.MapOptionalActorColumns`.** Endpoint columns plus nullable `tenant_id`.",
+        "**`EntityRelationMapping` / `EntitySourceMapping`.** Domain to EF mapping for endpoints and provenance records.",
+        "**`EntityRefModuleDbContext`.** Override `SaveChanges` / `SaveChangesAsync` to set `CreatedAt` to UTC for new `EntityRelationEntityBase` entities when still default.",
+        "**`EntityRefPostgresStoreBase`.** DI-friendly base for stores. Resolves `EntityRefOptions`, holds `IEntityRefActionInterceptor` pipeline, exposes `ResolveTenant` and `RunInterceptorsAsync`.",
+        "**`EntityRefPostgresStoreHelpers`.** `WhereActive`, `WhereTenant` (for `EntityRelationEntityBase`), `RunInterceptorsAsync`.",
+        "**`EntityRelationOptionalActorHelpers`.** `WhereTenant` and `WhereTenantOrSystem` for the optional-actor base."
       ]
     },
     {
       "type": "list",
       "title": "Typical module wiring",
       "items": [
-        "Define an EF entity inheriting **`EntityRelationEntityBase`** (relations) or **`EntitySourceEntityBase`** / **`EntitySourceDerivedEntityBase`** (inline provenance).",
-        "Implement **`IEntityTypeConfiguration<T>`** inheriting **`EntityRelationConfiguration<T>`** or call **`ConfigureEntitySourceColumns`**, then map module-specific columns/indexes after **`ToTable`** / **`HasKey`**.",
-        "Use **`EntityRefModuleDbContext`** (or replicate **`StampCreatedAtUtc`** logic) so **`created_at`** is populated automatically.",
-        "In the store layer, map **`EntityRef`** to string columns via **`EntityRefPersistedGuid.PersistedEntityId()`** when callers still pass Guid values in **`EntityRef.EntityId`**."
+        "Define an EF entity inheriting `EntityRelationEntityBase` (relations) or `EntitySourceEntityBase` / `EntitySourceDerivedEntityBase` (inline provenance).",
+        "Implement `IEntityTypeConfiguration<T>` inheriting `EntityRelationConfiguration<T>` or call `ConfigureEntitySourceColumns`, then map module-specific columns/indexes after `ToTable` / `HasKey`.",
+        "Use `EntityRefModuleDbContext` (or replicate `StampCreatedAtUtc` logic) so `created_at` is populated automatically.",
+        "In the store layer, map `EntityRef` to string columns via `EntityRefPersistedGuid.PersistedEntityId()` when callers still pass Guid values in `EntityRef.EntityId`."
       ]
     },
     {
       "type": "paragraph",
       "title": "Debugging",
-      "text": "**`EntityRelationEntityBase`** and **`EntityRelationOptionalActorBase`** implement **`[DebuggerDisplay(...)]`** and **`ToString()`** for quick inspection in the debugger and logs."
+      "text": "`EntityRelationEntityBase` and `EntityRelationOptionalActorBase` implement `[DebuggerDisplay(...)]` and `ToString()` for inspection in the debugger and logs."
     },
     {
       "type": "table",
@@ -109,54 +109,54 @@
       ],
       "rows": [
         [
-          "**`SystemOnly`**",
+          "`SystemOnly`",
           "any",
-          "Always resolves to `null`; only valid for stores backed by a nullable `tenant_id` column."
+          "Always resolves to `null`. Only valid for stores backed by a nullable `tenant_id` column."
         ],
         [
-          "**`SingleTenantDefault`** (default)",
+          "`SingleTenantDefault` (default)",
           "non-empty",
           "Returns the caller value."
         ],
         [
-          "**`SingleTenantDefault`**",
+          "`SingleTenantDefault`",
           "null / empty",
           "Falls back to `TenancyOptions.DefaultTenantId`, then `EntityRefOptions.DefaultTenantId`."
         ],
         [
-          "**`MultiTenantStrict`**",
+          "`MultiTenantStrict`",
           "non-empty",
           "Returns the caller value."
         ],
         [
-          "**`MultiTenantStrict`**",
+          "`MultiTenantStrict`",
           "null / empty",
-          "Throws `ArgumentNullException` — callers must supply an explicit tenant."
+          "Throws `ArgumentNullException`. Callers must supply an explicit tenant."
         ],
         [
-          "**`MultiTenantOptional`**",
+          "`MultiTenantOptional`",
           "non-empty",
           "Returns the caller value."
         ],
         [
-          "**`MultiTenantOptional`**",
+          "`MultiTenantOptional`",
           "null / empty",
-          "Returns `null` — row is system-level / untenanted (audit, change-tracker, …)."
+          "Returns `null`. Row is system-level / untenanted (audit, change-tracker, …)."
         ]
       ],
-      "lead": "Per-feature tenancy policy is configured via **`TenancyOptions`** on each `Postgres*Options` (e.g. `PostgresFavoriteOptions.Tenancy`). The store resolves caller-supplied\n`Guid? tenantId` through **`TenancyResolver.Resolve`** before reads and writes:",
-      "trail": "If a per-feature `TenancyOptions.Mode` is unset it inherits **`EntityRefOptions.Mode`** (default `SingleTenantDefault`). The same fallback applies to `DefaultTenantId`.\n\n`EntityRefPostgresStoreBase` rejects `SystemOnly` at construction time for stores that map to a non-nullable `tenant_id` column. Pass `requiresNonNullTenant: false` from the base\nctor for stores backed by `EntityRelationOptionalActorBase` (or any nullable-tenant entity)."
+      "lead": "Per-feature tenancy policy is configured via `TenancyOptions` on each `Postgres*Options`, for example `PostgresFavoriteOptions.Tenancy`. The store resolves caller-supplied\n`Guid? tenantId` through `TenancyResolver.Resolve` before reads and writes:",
+      "trail": "If a per-feature `TenancyOptions.Mode` is unset it inherits `EntityRefOptions.Mode` (default `SingleTenantDefault`). The same fallback applies to `DefaultTenantId`.\n\n`EntityRefPostgresStoreBase` rejects `SystemOnly` at construction time for stores that map to a non-nullable `tenant_id` column. Pass `requiresNonNullTenant: false` from the base\nctor for stores backed by `EntityRelationOptionalActorBase` (or any nullable-tenant entity)."
     },
     {
       "type": "markdown",
-      "title": "Tenancy — `appsettings.json`",
-      "body": "```json\n{\n  \"EntityRef\": {\n    \"Mode\": \"SingleTenantDefault\",\n    \"DefaultTenantId\": \"00000000-0000-0000-0000-000000000000\"\n  },\n  \"PostgresAudit\": { \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" } },\n  \"PostgresChangeTracker\": { \"Tenancy\": { \"Mode\": \"SystemOnly\" } },\n  \"PostgresFavorite\": { }\n}\n```\n\nBind `EntityRefOptions` once at the host with **`AddEntityRefOptionsFromConfiguration`**; each module's `Extensions.cs` is responsible for binding its own `Postgres*Options`\nsection."
+      "title": "Tenancy in `appsettings.json`",
+      "body": "```json\n{\n  \"EntityRef\": {\n    \"Mode\": \"SingleTenantDefault\",\n    \"DefaultTenantId\": \"00000000-0000-0000-0000-000000000000\"\n  },\n  \"PostgresAudit\": { \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" } },\n  \"PostgresChangeTracker\": { \"Tenancy\": { \"Mode\": \"SystemOnly\" } },\n  \"PostgresFavorite\": { }\n}\n```\n\nBind `EntityRefOptions` once at the host with `AddEntityRefOptionsFromConfiguration`. Each module's `Extensions.cs` binds its own `Postgres*Options`\nsection."
     },
     {
       "type": "list",
       "title": "See also",
       "items": [
-        "**`Lyo.EntityReference.Models`** — `EntityRef`, `EntityRelationRow`, `EntitySourceRecord`, `EntityRelationValidation`, `EntitySourceValidation`, composite encoding, JSON converter, and interceptors."
+        "`Lyo.EntityReference.Models`. `EntityRef`, `EntityRelationRow`, `EntitySourceRecord`, `EntityRelationValidation`, `EntitySourceValidation`, composite encoding, JSON converter, and interceptors."
       ]
     }
   ],

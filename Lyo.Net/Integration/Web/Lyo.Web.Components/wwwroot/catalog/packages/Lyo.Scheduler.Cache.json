@@ -22,12 +22,12 @@
       ],
       "rows": [
         [
-          "**`CacheSchedulerStateStore`**",
+          "`CacheSchedulerStateStore`",
           "`ISchedulerStateStore` implementation that reads and writes scheduler state through `ICacheService`. Keys are scoped per schedule id."
         ],
         [
-          "**`SchedulerCacheExtensions`**",
-          "DI extensions."
+          "`SchedulerCacheExtensions`",
+          "DI extensions: `AddSchedulerWithCache`."
         ]
       ]
     },

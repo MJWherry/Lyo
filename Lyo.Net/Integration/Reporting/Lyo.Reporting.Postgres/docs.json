@@ -53,7 +53,7 @@
           "host calls `AddReportingWebRenderer()` (+ `AddWebRenderer`)"
         ]
       ],
-      "lead": "`ReportService` resolves `IEnumerable<IReportRenderer>` from DI — it does **not** project-reference `Lyo.Reporting.Web`.",
+      "lead": "`ReportService` resolves `IEnumerable<IReportRenderer>` from DI. It does **not** project-reference `Lyo.Reporting.Web`.",
       "trail": "Optional host `IReportDataProvider` / `ReportingGenerationProfile` (keyed by definition `GenerationProfileKey`) supply domain data or pre-rendered files before render."
     },
     {
@@ -63,7 +63,7 @@
         "`AllowAdHocGeneration` (default `true`): when `false`, `GenerateAsync` requires a saved `ReportDefinitionId` and rejects `ReportDataJson` / `OverrideReportDataJson` payloads. Reruns of stored snapshots remain allowed.",
         "`MaxConcurrentGenerations` (default `0` = unlimited): gates the provider + render section via a process-wide `ReportGenerationThrottle`. When saturated, generate waits briefly then throws `ReportBusyException` (mapped to HTTP 503 by the API).",
         "`GenerationRetention` (default `null` = disabled): age after which terminal generations are eligible for `ReportRetentionService` cleanup.",
-        "Input hygiene: request file names are sanitized (directory segments, `..`, invalid/control characters stripped; length capped) and `ReportDataJson` must parse as JSON — malformed payloads fail fast with `ReportValidationException` **before** a generation row is persisted.",
+        "Input hygiene: request file names are sanitized (directory segments, `..`, invalid/control characters stripped; length capped) and `ReportDataJson` must parse as JSON. Malformed payloads fail fast with `ReportValidationException` **before** a generation row is persisted.",
         "Failure resilience: `Failed` status is persisted with `CancellationToken.None`, so client disconnects can't strand generations in `Running`."
       ]
     },
@@ -78,7 +78,7 @@
     },
     {
       "type": "list",
-      "title": "Parameters — Validation semantics",
+      "title": "Parameter validation",
       "items": [
         "Values are validated against the declared `ReportParameterType` (`Guid`, `Int`, `Long`, `Decimal`, `Bool`, `DateTime`, `DateOnly`, `TimeOnly`, `Json`, `Regex`, `Xml`); `String`/ `Enum`/`Unknown` accept any string (`Enum` is constrained via `AllowedValues`).",
         "`ValidationRegex` runs with a 1-second match timeout and a 500-character pattern cap; a timeout or invalid pattern is reported as a validation error, never an unhandled exception (ReDoS-safe).",
@@ -95,7 +95,7 @@
     {
       "type": "paragraph",
       "title": "Retention cleanup",
-      "text": "`ReportRetentionService.CleanupAsync` batch-deletes terminal (`Succeeded`/`Failed`) generations older than `GenerationRetention`, oldest first, keeping in-flight (`Pending`/ `Running`) rows. Before each row is removed, `ReportGenerationHooks.OnCleanupAsync` runs so the host can delete the persisted output blob; a hook failure logs and retains that row. Emits the `reporting.generation.cleaned` metric. The service is registered by `AddPostgresReportingManagement` but **not scheduled** — hosts trigger it themselves, e.g. via Lyo.Scheduler or a Lyo.Job interval job:"
+      "text": "`ReportRetentionService.CleanupAsync` batch-deletes terminal (`Succeeded`/`Failed`) generations older than `GenerationRetention`, oldest first, keeping in-flight (`Pending`/ `Running`) rows. Before each row is removed, `ReportGenerationHooks.OnCleanupAsync` runs so the host can delete the persisted output blob; a hook failure logs and retains that row. Emits the `reporting.generation.cleaned` metric. The service is registered by `AddPostgresReportingManagement` but **not scheduled**. hosts trigger it themselves, e.g. via Lyo.Scheduler or a Lyo.Job interval job:"
     }
   ],
   "links": [],

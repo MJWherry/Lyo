@@ -26,35 +26,35 @@
     {
       "type": "markdown",
       "title": "Loading",
-      "body": "`IPdfService` exposes paired sync and async loaders for **file**, **bytes**, and\n**stream** (`OpenFromFile`, `OpenFromFileAsync`, `OpenFromBytes`,\n`OpenFromBytesAsync`, `OpenFromStream`, `OpenFromStreamAsync`) plus matching batch\noverloads (`OpenFromFiles`, `OpenFromFilesAsync`, `OpenFromBytesBatch`,\n`OpenFromBytesBatchAsync`, `OpenFromStreams`, `OpenFromStreamsAsync`).\n\nURL loaders are **async only** — `OpenFromUrlAsync` and `OpenFromUrlsAsync` — so the\nservice never blocks on synchronous HTTP. Register an `HttpClient` via DI to share\nconnection pooling and timeouts (see below); without one, a new `HttpClient` is\ncreated per call and disposed.\n\nEach loader returns an `IPdfReader` (PdfPig + immutable byte snapshot).\n**The caller owns the instance** and must dispose it (`using` /\n`await using`); `PdfService` itself does not implement `IDisposable`.\n\n`PdfServiceOptions.MaxPdfSizeBytes` enforces a per-PDF byte cap (default\n`SuggestedMaxPdfSizeBytes = 25 MiB`)."
+      "body": "`IPdfService` exposes paired sync and async loaders for file, bytes, and\nstream (`OpenFromFile`, `OpenFromFileAsync`, `OpenFromBytes`,\n`OpenFromBytesAsync`, `OpenFromStream`, `OpenFromStreamAsync`) plus matching batch\noverloads (`OpenFromFiles`, `OpenFromFilesAsync`, `OpenFromBytesBatch`,\n`OpenFromBytesBatchAsync`, `OpenFromStreams`, `OpenFromStreamsAsync`).\n\nURL loaders are async only (`OpenFromUrlAsync` and `OpenFromUrlsAsync`) so the\nservice never blocks on synchronous HTTP. Register an `HttpClient` via DI to share\nconnection pooling and timeouts (see below). Without one, a new `HttpClient` is\ncreated per call and disposed.\n\nEach loader returns an `IPdfReader` (PdfPig + immutable byte snapshot).\nThe caller owns the instance and must dispose it (`using` /\n`await using`). `PdfService` itself does not implement `IDisposable`.\n\n`PdfServiceOptions.MaxPdfSizeBytes` enforces a per-PDF byte cap (default\n`SuggestedMaxPdfSizeBytes = 25 MiB`)."
     },
     {
       "type": "list",
       "title": "Extraction (`pdf.Text`)",
       "items": [
-        "**Words and lines** — `GetWords` / `GetLines` (+ async) with optional page and line tolerance.",
-        "**Anchored slices** — `GetWordsBetween` / `GetLinesBetween` (+ async).",
-        "**Regions** — `GetLinesInBoundingBox`, `GetColumnarTextInBoundingBox`, and a word-list overload `GetColumnarText(words, columnCount, yTolerance?)`.",
-        "**Key/value pairs** — `ExtractKeyValuePairs` with `int? page`, `PdfWord[]`, `PdfSection`, and section-name overloads (`startSection` + ordered `sectionsInOrder` + optional `defaultEndSection`, page range, and `yTolerance`). Section-name overloads return `null` when the requested section is not found.",
-        "**Tables** — `ExtractTable(headers, …)` returns `IReadOnlyList<IReadOnlyDictionary<string, string?>>`. `ExtractDataTable(headers, …)` returns a `Lyo.DataTable`. Section-name overloads return `null` when the section is missing. `ParseBytesAsDataTable` re-opens a byte buffer for one-shot extraction.",
-        "**Inference helpers** — `InferKeyValuePairsFromFormatting(words, yTolerance, columnCount, inferFlags, keyValueDelimiters?)` and `InferTableHeadersFromFormatting(words, …)` use `PdfInferFormattingFlags` (Bold, Semicolon, Underline) and optional punctuation terminators.",
-        "**Sections** — `GetSection`, `GetWordsBetweenSections`, `GetLinesBetweenSections` (+ async)."
+        "**Words and lines.** `GetWords` / `GetLines` (+ async) with optional page and line tolerance.",
+        "**Anchored slices.** `GetWordsBetween` / `GetLinesBetween` (+ async).",
+        "**Regions.** `GetLinesInBoundingBox`, `GetColumnarTextInBoundingBox`, and a word-list overload `GetColumnarText(words, columnCount, yTolerance?)`.",
+        "**Key/value pairs.** `ExtractKeyValuePairs` with `int? page`, `PdfWord[]`, `PdfSection`, and section-name overloads (`startSection` + ordered `sectionsInOrder` + optional `defaultEndSection`, page range, and `yTolerance`). Section-name overloads return `null` when the requested section is not found.",
+        "**Tables.** `ExtractTable(headers, …)` returns `IReadOnlyList<IReadOnlyDictionary<string, string?>>`. `ExtractDataTable(headers, …)` returns a `Lyo.DataTable`. Section-name overloads return `null` when the section is missing. `ParseBytesAsDataTable` re-opens a byte buffer for one-shot extraction.",
+        "**Inference helpers.** `InferKeyValuePairsFromFormatting(words, yTolerance, columnCount, inferFlags, keyValueDelimiters?)` and `InferTableHeadersFromFormatting(words, …)` use `PdfInferFormattingFlags` (Bold, Semicolon, Underline) and optional punctuation terminators.",
+        "**Sections.** `GetSection`, `GetWordsBetweenSections`, `GetLinesBetweenSections` (+ async)."
       ]
     },
     {
       "type": "list",
       "title": "Editing and merging (`IPdfWriter`)",
       "items": [
-        "`MergePdfs` / `MergePdfsAsync` — return merged bytes.",
-        "`MergePdfsToFile` / `MergePdfsToFileAsync` — write merged bytes to a path.",
-        "`MergePdfsToStream` / `MergePdfsToStreamAsync` — write merged bytes to a stream.",
-        "`MergePdfFiles` / `MergePdfBytes` (+ async) — file-path or byte-array variants with a designated initial PDF."
+        "`MergePdfs` / `MergePdfsAsync`. Return merged bytes.",
+        "`MergePdfsToFile` / `MergePdfsToFileAsync`. Write merged bytes to a path.",
+        "`MergePdfsToStream` / `MergePdfsToStreamAsync`. Write merged bytes to a stream.",
+        "`MergePdfFiles` / `MergePdfBytes` (+ async). File-path or byte-array variants with a designated initial PDF."
       ]
     },
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "`PdfServiceOptions` is registered as a singleton; `PdfService` and `IPdfService` share the same scoped instance. When an `IHttpClientFactory` is available the default registrations create a named client (`nameof(PdfService)`) for URL loads; otherwise `HttpClient` is created per-call. `IMetrics` is optional — when present and `EnableMetrics = true`, PDF operations emit metrics through the registered implementation."
+      "text": "`PdfServiceOptions` is registered as a singleton. `PdfService` and `IPdfService` share the same scoped instance. When an `IHttpClientFactory` is available the default registrations create a named client (`nameof(PdfService)`) for URL loads. Otherwise `HttpClient` is created per call. `IMetrics` is optional. When present and `EnableMetrics = true`, PDF operations emit metrics through the registered implementation."
     }
   ],
   "links": [],

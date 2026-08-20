@@ -2,19 +2,19 @@
   "id": "Lyo.Hashing",
   "name": "Lyo.Hashing",
   "area": "Security",
-  "tagline": "Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), non-cryptographic checksums (**CRC-32/CRC-32C/CRC-64/Adler-32**), hexadecimal encoding (**`HexEncoding`**)…",
-  "description": "Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), non-cryptographic checksums (**CRC-32/CRC-32C/CRC-64/Adler-32**), hexadecimal encoding (**`HexEncoding`**), incremental hashing (**`HashingStream`**), sparse file fingerprints (**`SparseFileFingerprinter`**), and an injectable façade (**`IHashingService`** / **`HashingService`**). A process-wide default is exposed as **`HashingService.Shared`** (analogous to **`Random.Shared`**).\n\nThe public contracts are **`IHashingService`**, **`Hasher`**, **`HexEncoding`**, **`HashingStream`**, and **`SparseFileFingerprinter`**; **`HashingService`** is the default **`IHashingService`** implementation. With XML doc generation enabled in the repo, IntelliSense surfaces the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror the interfaces.\n\nHex letter casing for service helpers uses **`TextLetterCase`** (**`Upper`** / **`Lower`**) from **`Lyo.Common`**.",
+  "tagline": "Digests (SHA-256/384/512), optional MD5 for non-security fingerprints only, non-cryptographic checksums (CRC-32/CRC-32C/CRC-64/Adler-32), hexadecimal encoding (`HexEncoding`), incremental hashing (`HashingStream`), sparse file fingerprints (`SparseFileFingerprinter`), and injectable `IHashingService` / `HashingService`.",
+  "description": "Digests (SHA-256/384/512), optional MD5 for non-security fingerprints only, non-cryptographic checksums (CRC-32/CRC-32C/CRC-64/Adler-32), hexadecimal encoding (`HexEncoding`), incremental hashing (`HashingStream`), sparse file fingerprints (`SparseFileFingerprinter`), and injectable `IHashingService` / `HashingService`. A process-wide default is `HashingService.Shared`, analogous to `Random.Shared`.\n\nThe public contracts are `IHashingService`, `Hasher`, `HexEncoding`, `HashingStream`, and `SparseFileFingerprinter`. `HashingService` is the default `IHashingService` implementation. With XML doc generation enabled in the repo, IntelliSense shows the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror the interfaces.\n\nHex letter casing for service helpers uses `TextLetterCase` (`Upper` / `Lower`) from `Lyo.Common`.",
   "features": [
-    "**SHA-2** – One-shot buffer hashing on modern .NET; stream hashing via **`HashAlgorithm`**",
-    "**MD5** – Legacy compatibility and fingerprints only (not for security)",
-    "**Checksums** – **`Checksummer`** / **`ChecksumStream`**: CRC-32, CRC-32C, CRC-64/ECMA-182, Adler-32 for corruption detection (not for security)",
-    "**`IHashingService`** – Buffers, streams, files, hex encode/parse, timing-safe equality, HMAC-SHA-256/512, fingerprinting, **`CreateHashingStream`**, checksums (**`Checksum`** / **`ChecksumValue`** / **`ChecksumFileAsync`** / **`CreateChecksumStream`**)",
-    "**`Hasher`** – Static digest helpers without allocating a service",
-    "**`HexEncoding`** – Encode/decode hex with explicit casing",
-    "**`byte[].ToHexString()`** – Extension in namespace **`Lyo.Hashing`** (**`ByteArrayHexExtensions`**) — lowercase hex for historical consistency",
-    "**`HashingStream`** – Wrap any **`Stream`**; hash updates on read/write; **`GetHash()`** / **`GetHashHex`**",
-    "**Sparse fingerprints** – **`SparseFileFingerprinter`** samples large files; MD5 of size + samples (and mtime for very large files)",
-    "**DI** – **`AddLyoHashing`** registers **`HashingService.Shared`** or a configured **`HashingService`**"
+    "**SHA-2.** One-shot buffer hashing on modern .NET. Stream hashing via `HashAlgorithm`.",
+    "**MD5.** Legacy compatibility and fingerprints only. Not for security.",
+    "**Checksums.** `Checksummer` / `ChecksumStream`: CRC-32, CRC-32C, CRC-64/ECMA-182, Adler-32 for corruption detection. Not for security.",
+    "**`IHashingService`.** Buffers, streams, files, hex encode/parse, timing-safe equality, HMAC-SHA-256/512, fingerprinting, `CreateHashingStream`, checksums (`Checksum` / `ChecksumValue` / `ChecksumFileAsync` / `CreateChecksumStream`).",
+    "**`Hasher`.** Static digest helpers without allocating a service.",
+    "**`HexEncoding`.** Encode/decode hex with explicit casing.",
+    "**`byte[].ToHexString()`.** Extension in namespace `Lyo.Hashing` (`ByteArrayHexExtensions`). Lowercase hex for historical consistency.",
+    "**`HashingStream`.** Wrap any `Stream`. Hash updates on read/write. `GetHash()` / `GetHashHex`.",
+    "**Sparse fingerprints.** `SparseFileFingerprinter` samples large files. MD5 of size + samples, and mtime for very large files.",
+    "**DI.** `AddLyoHashing` registers `HashingService.Shared` or a configured `HashingService`."
   ],
   "examples": [
     {
@@ -28,7 +28,7 @@
       "code": "var digest = hashing.Hash(ContentDigestAlgorithm.Sha256, payload);\nvar hex = hashing.ToHex(digest); // uses DefaultHexLetterCase from options\n\nusing var ms = new MemoryStream(payload);\nvar digest2 = hashing.Hash(ContentDigestAlgorithm.Sha256, ms);\n\nvar fileDigest = await hashing.HashFileAsync(ContentDigestAlgorithm.Sha512, \"/path/to/file.bin\", ct);"
     },
     {
-      "title": "Static **`Hasher`** (no service)",
+      "title": "Static Hasher (no service)",
       "language": "csharp",
       "code": "var sha256 = Hasher.ComputeSha256(data);\nvar sha384 = Hasher.ComputeSha384(span);\nvar fromStream = Hasher.ComputeSha512(stream);\n\n// Generic SHA-2 selector: digestBits 256, 384, or 512\nvar any = Hasher.ComputeSha2(256, data);"
     },
@@ -38,12 +38,12 @@
       "code": "var upper = HexEncoding.ToHexString(digest, TextLetterCase.Upper);\nvar lower = HexEncoding.ToHexString(digest, TextLetterCase.Lower);\nvar roundTrip = HexEncoding.FromHex(upper);\n\n// Timing-safe compare (length mismatch → false)\nvar ok = hashing.FixedTimeEquals(left, right);\n\n// Parse expected hex then compare (invalid hex → false)\nvar matches = hashing.EqualsHex(digest, expectedHexChars);"
     },
     {
-      "title": "**`byte[]` extension** (lowercase hex)",
+      "title": "byte[] extension (lowercase hex)",
       "language": "csharp",
       "code": "using Lyo.Hashing;\n\nbyte[] buf = [0xDE, 0xAD];\nvar s = buf.ToHexString(); // \"dead\" — always lowercase"
     },
     {
-      "title": "**`HashingStream`**",
+      "title": "HashingStream",
       "language": "csharp",
       "code": "using System.Security.Cryptography;\nusing var inner = File.OpenRead(path);\nusing var hashingStream = new HashingStream(inner, SHA256.Create());\nvar buffer = new byte[8192];\nint n;\nwhile ((n = await hashingStream.ReadAsync(buffer, ct)) > 0) { /* process buffer */ }\nvar digest = hashingStream.GetHash();"
     },
@@ -74,49 +74,49 @@
       "rows": [
         [
           "One-off digest in a hot path, no DI",
-          "**`Hasher.ComputeSha256`** / **`HexEncoding.ToHexString`**"
+          "`Hasher.ComputeSha256` / `HexEncoding.ToHexString`"
         ],
         [
-          "Tests, scripts, or **`Random.Shared`-style** access",
-          "**`HashingService.Shared`**"
+          "Tests, scripts, or `Random.Shared`-style access",
+          "`HashingService.Shared`"
         ],
         [
           "ASP.NET / hosted apps",
-          "Inject **`IHashingService`** via **`AddLyoHashing`**"
+          "Inject `IHashingService` via `AddLyoHashing`"
         ],
         [
           "Hash while copying or processing a stream",
-          "**`HashingStream`** or **`IHashingService.CreateHashingStream`**"
+          "`HashingStream` or `IHashingService.CreateHashingStream`"
         ],
         [
           "Detect accidental corruption (transport, storage)",
-          "**`Checksummer`** / **`ChecksumStream`** (CRC / Adler-32)"
+          "`Checksummer` / `ChecksumStream` (CRC / Adler-32)"
         ],
         [
-          "“Did this huge file change?” without full read",
-          "**`FingerprintSampledFileAsync`** / **`SparseFileFingerprinter`**"
+          "Did this huge file change, without a full read?",
+          "`FingerprintSampledFileAsync` / `SparseFileFingerprinter`"
         ]
       ]
     },
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "Use **`using Lyo.Hashing.Registration`** so extension methods **`AddLyoHashing`** resolve on **`IServiceCollection`**."
+      "text": "Use `using Lyo.Hashing.Registration` so extension methods `AddLyoHashing` resolve on `IServiceCollection`."
     },
     {
       "type": "paragraph",
-      "title": "**`HashingStream`**",
-      "text": "Wrap an inner stream; every byte read or written updates the hash. Call **`GetHash()`** when finished (or **`GetHashHex`** for a string). **`GetHashString()`** remains **uppercase ** for backward compatibility; prefer **`GetHashHex(TextLetterCase)`** for explicit casing. When created via **`IHashingService.CreateHashingStream`**, the correct **`HashAlgorithm`** instance is chosen for **`ContentDigestAlgorithm`**."
+      "title": "HashingStream",
+      "text": "Wrap an inner stream. Every byte read or written updates the hash. Call `GetHash()` when finished, or `GetHashHex` for a string. `GetHashString()` stays uppercase for backward compatibility. Prefer `GetHashHex(TextLetterCase)` for explicit casing. When created via `IHashingService.CreateHashingStream`, the correct `HashAlgorithm` instance is chosen for `ContentDigestAlgorithm`."
     },
     {
       "type": "paragraph",
       "title": "Checksums (non-cryptographic)",
-      "text": "For accidental-corruption detection (transport, storage, archive formats) — **not** for security, signatures, or tamper detection. On modern .NET the CRC-32 and CRC-64 buffer paths delegate to **`System.IO.Hashing`**; CRC-32C and Adler-32 use internal implementations that produce identical results across targets."
+      "text": "For accidental-corruption detection (transport, storage, archive formats). Not for security, signatures, or tamper detection. On modern .NET the CRC-32 and CRC-64 buffer paths delegate to `System.IO.Hashing`. CRC-32C and Adler-32 use internal implementations that produce identical results across targets."
     },
     {
       "type": "paragraph",
       "title": "Sparse file fingerprint",
-      "text": "For directory snapshots or “probably unchanged” checks without hashing entire files: Thresholds and sample sizes come from **`FileFingerprintOptions`** (service defaults in **`HashingOptions.FingerprintDefaults`**)."
+      "text": "For directory snapshots or \"probably unchanged\" checks without hashing entire files. Thresholds and sample sizes come from `FileFingerprintOptions` (service defaults in `HashingOptions.FingerprintDefaults`)."
     },
     {
       "type": "paragraph",
@@ -125,7 +125,7 @@
     },
     {
       "type": "table",
-      "title": "**`HashingOptions`**",
+      "title": "HashingOptions",
       "headers": [
         "Property",
         "Default",
@@ -133,20 +133,20 @@
       ],
       "rows": [
         [
-          "**`DefaultHexLetterCase`**",
-          "**`Upper`**",
-          "Casing for **`IHashingService.ToHex`** when **`letterCase`** is omitted"
+          "`DefaultHexLetterCase`",
+          "`Upper`",
+          "Casing for `IHashingService.ToHex` when `letterCase` is omitted"
         ],
         [
-          "**`FingerprintDefaults`**",
-          "**`FileFingerprintOptions.Default`**",
-          "Defaults passed to **`FingerprintSampledFileAsync`** when options argument is null"
+          "`FingerprintDefaults`",
+          "`FileFingerprintOptions.Default`",
+          "Defaults passed to `FingerprintSampledFileAsync` when options argument is null"
         ]
       ]
     },
     {
       "type": "table",
-      "title": "**`FileFingerprintOptions`**",
+      "title": "FileFingerprintOptions",
       "headers": [
         "Property",
         "Default",
@@ -154,22 +154,22 @@
       ],
       "rows": [
         [
-          "**`LargeFileThreshold`**",
+          "`LargeFileThreshold`",
           "100 MiB",
           "Above this, extra middle/end samples are read"
         ],
         [
-          "**`VeryLargeThreshold`**",
+          "`VeryLargeThreshold`",
           "1 GiB",
           "Above this, uses mtime + smaller content sample"
         ],
         [
-          "**`SampleSize`**",
+          "`SampleSize`",
           "128 bytes",
           "Sample length for start/middle/end reads"
         ],
         [
-          "**`VeryLargeSampleSize`**",
+          "`VeryLargeSampleSize`",
           "64 bytes",
           "Content sample size in the very-large path"
         ]
@@ -177,33 +177,33 @@
     },
     {
       "type": "table",
-      "title": "**`ContentDigestAlgorithm`**",
+      "title": "ContentDigestAlgorithm",
       "headers": [
         "Value",
         "Meaning"
       ],
       "rows": [
         [
-          "**`Sha256`**",
+          "`Sha256`",
           "SHA-256"
         ],
         [
-          "**`Sha384`**",
+          "`Sha384`",
           "SHA-384"
         ],
         [
-          "**`Sha512`**",
+          "`Sha512`",
           "SHA-512"
         ],
         [
-          "**`Md5`**",
-          "MD5 — **not for security**"
+          "`Md5`",
+          "MD5. Not for security."
         ]
       ]
     },
     {
       "type": "table",
-      "title": "**`ChecksumAlgorithm`**",
+      "title": "ChecksumAlgorithm",
       "headers": [
         "Value",
         "Definition",
@@ -211,22 +211,22 @@
       ],
       "rows": [
         [
-          "**`Crc32`**",
+          "`Crc32`",
           "CRC-32 IEEE/ISO-HDLC (zip, gzip, PNG)",
           "`0xCBF43926`"
         ],
         [
-          "**`Crc32C`**",
+          "`Crc32C`",
           "CRC-32C Castagnoli (iSCSI, ext4, SSE4.2)",
           "`0xE3069283`"
         ],
         [
-          "**`Crc64`**",
+          "`Crc64`",
           "CRC-64/ECMA-182 (matches `System.IO.Hashing`)",
           "`0x6C40DF5F0B497347`"
         ],
         [
-          "**`Adler32`**",
+          "`Adler32`",
           "Adler-32 (zlib / RFC 1950)",
           "`0x091E01DE`"
         ]
@@ -237,10 +237,10 @@
       "type": "list",
       "title": "Notes",
       "items": [
-        "**MD5** and sparse fingerprints are for compatibility, change detection, or tooling — do not use them for passwords, signatures, or integrity where an attacker can influence inputs.",
-        "**Checksums** (CRC / Adler-32) detect accidental corruption only; they are trivially forgeable and must not be used as a security or tamper-detection boundary.",
-        "**`HashFileAsync`** throws if the file is missing; **`FingerprintSampledFileAsync`** returns **`null`** when the path does not exist.",
-        "On **netstandard2.0**, file hashing uses synchronous **`HashAlgorithm`** paths under the hood where async OS APIs are unavailable."
+        "**MD5** and sparse fingerprints are for compatibility, change detection, or tooling. Do not use them for passwords, signatures, or integrity where an attacker can influence inputs.",
+        "**Checksums** (CRC / Adler-32) detect accidental corruption only. They are trivially forgeable and must not be used as a security or tamper-detection boundary.",
+        "`HashFileAsync` throws if the file is missing. `FingerprintSampledFileAsync` returns `null` when the path does not exist.",
+        "On netstandard2.0, file hashing uses synchronous `HashAlgorithm` paths under the hood where async OS APIs are unavailable."
       ]
     }
   ],

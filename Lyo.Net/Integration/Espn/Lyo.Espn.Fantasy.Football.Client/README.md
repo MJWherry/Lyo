@@ -16,7 +16,7 @@ services.AddFantasyFootballClient(o => {
 });
 ```
 
-## Surface
+## Managers
 
 [`FantasyFootballClient`](FantasyFootballClient.cs) wires four manager properties; only seasons from **2018** onward are supported (validated by `ValidateSeason`).
 
@@ -59,20 +59,21 @@ All overloads register `FantasyFootballClient` as a singleton, pulling `ILoggerF
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Api.Client` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Lyo.Api.Models` — (transitive, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Diagnostic` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.PackageMetadata` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)
+- `Lyo.Api.Client` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

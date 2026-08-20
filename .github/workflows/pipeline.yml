@@ -1,0 +1,174 @@
+# Dispatcher: build / pack / publish Lyo libraries.
+# Auto-runs only on push to main (release → nuget.org).
+# Every other branch, including dev, is Actions → Run workflow.
+# Tests are scaffolded in _test.yml but not called (see commented job).
+name: CI - Pipeline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: What to pack
+        required: true
+        type: choice
+        options:
+          - changed
+          - named
+          - all
+        default: changed
+      packages:
+        description: "Names or globs when scope=named (space-separated)"
+        required: false
+        type: string
+        default: ""
+      since:
+        description: "Git ref for scope=changed (empty = last v* tag, else HEAD~1)"
+        required: false
+        type: string
+        default: ""
+      version:
+        description: "SemVer (required off main). Preview gets -preview.<run_number> unless already labeled."
+        required: false
+        type: string
+        default: ""
+      stages:
+        description: Which stages to run
+        required: true
+        type: choice
+        options:
+          - build
+          - pack
+          - build-and-pack
+          - pack-and-publish
+          - all
+        default: all
+      destination:
+        description: "Where to publish. auto = main/dev → nuget.org, else none."
+        required: false
+        type: choice
+        options:
+          - auto
+          - none
+          - github
+          - nuget.org
+          - both
+        default: auto
+      channel:
+        description: "preview or release. auto = main → release, else preview. release is main-only."
+        required: false
+        type: choice
+        options:
+          - auto
+          - preview
+          - release
+        default: auto
+      force:
+        description: Force rebuild of the selected pack set
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: Pack and upload artifacts; skip all pushes
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.cfg.outputs.version }}
+      channel: ${{ steps.cfg.outputs.channel }}
+      destination: ${{ steps.cfg.outputs.destination }}
+      scope: ${{ steps.cfg.outputs.scope }}
+      stages: ${{ steps.cfg.outputs.stages }}
+      do_build: ${{ steps.cfg.outputs.do_build }}
+      do_pack: ${{ steps.cfg.outputs.do_pack }}
+      do_publish_nuget: ${{ steps.cfg.outputs.do_publish_nuget }}
+      do_publish_github: ${{ steps.cfg.outputs.do_publish_github }}
+      dry_run: ${{ steps.cfg.outputs.dry_run }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Resolve pipeline config
+        id: cfg
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          python3 scripts/nuget/ci_pack.py --emit-config \
+            --scope "${{ github.event_name == 'workflow_dispatch' && inputs.scope || 'changed' }}" \
+            --packages "${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}" \
+            --since "${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}" \
+            --version "${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}" \
+            --stages "${{ github.event_name == 'workflow_dispatch' && inputs.stages || 'all' }}" \
+            --destination "${{ github.event_name == 'workflow_dispatch' && inputs.destination || '' }}" \
+            --channel "${{ github.event_name == 'workflow_dispatch' && inputs.channel || '' }}" \
+            ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
+
+  build:
+    needs: resolve
+    if: ${{ needs.resolve.outputs.do_build == 'true' }}
+    uses: ./.github/workflows/_build.yml
+    with:
+      version: ${{ needs.resolve.outputs.version }}
+
+  # Test is implemented in _test.yml but not enabled yet.
+  # When you turn it on: only on workflow_dispatch with channel=preview
+  # (never auto, never channel=release / nuget.org stable).
+  # test:
+  #   needs: [resolve, build]
+  #   if: ${{ false && github.event_name == 'workflow_dispatch' && needs.resolve.outputs.channel == 'preview' }}
+  #   uses: ./.github/workflows/_test.yml
+  #   with:
+  #     scope: ${{ needs.resolve.outputs.scope }}
+  #     packages: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
+  #     since: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+
+  pack:
+    needs: [resolve, build]
+    if: ${{ always() && needs.resolve.result == 'success' && needs.resolve.outputs.do_pack == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    uses: ./.github/workflows/_pack.yml
+    with:
+      version: ${{ needs.resolve.outputs.version }}
+      channel: ${{ needs.resolve.outputs.channel }}
+      scope: ${{ needs.resolve.outputs.scope }}
+      packages: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
+      since: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+      force: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+
+  publish-nuget:
+    needs: [resolve, pack]
+    if: ${{ always() && needs.pack.result == 'success' && needs.resolve.outputs.do_publish_nuget == 'true' }}
+    uses: ./.github/workflows/publish-nuget.yml
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+    with:
+      artifact_name: nuget-packages
+      dry_run: false
+
+  publish-github:
+    needs: [resolve, pack]
+    if: ${{ always() && needs.pack.result == 'success' && needs.resolve.outputs.do_publish_github == 'true' }}
+    uses: ./.github/workflows/_publish-github.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      artifact_name: nuget-packages

@@ -2,8 +2,8 @@
   "id": "Lyo.Reporting.Web",
   "name": "Lyo.Reporting.Web",
   "area": "Integration",
-  "tagline": "Blazor `ReportViewer`, business document templates, and HTML/PDF `IReportRenderer` implementation.",
-  "description": "Blazor `ReportViewer`, business document templates, and HTML/PDF `IReportRenderer` implementation.",
+  "tagline": "Blazor `ReportViewer`, business document templates, and an `IReportRenderer` that emits HTML and PDF.",
+  "description": "Blazor `ReportViewer`, business document templates, and an `IReportRenderer` that emits HTML and PDF.",
   "features": [],
   "examples": [
     {

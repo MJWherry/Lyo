@@ -2,8 +2,8 @@
   "id": "Lyo.Csv",
   "name": "Lyo.Csv",
   "area": "Data",
-  "tagline": "Owned CSV stack implementing `Lyo.Csv.Models`. `CsvService` composes a `CsvWriter` and `CsvReader` over an internal tokenizer/writer with typed binders — no third-party CSV dependency.",
-  "description": "Owned implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md). `CsvService` composes a `CsvWriter` and `CsvReader` over an internal field tokenizer/writer and cached type binder. Multi-targets `net10.0;netstandard2.0`; async, streaming, and option-based overloads are only available on `net10.0`.",
+  "tagline": "Owned CSV stack implementing Lyo.Csv.Models. CsvService composes a CsvWriter and CsvReader over an internal tokenizer/writer with typed binders. No third-party CSV library.",
+  "description": "Owned implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md). CsvService composes a CsvWriter and CsvReader over an internal field tokenizer/writer and cached type binder. Multi-targets `net10.0;netstandard2.0`. Async, streaming, and option-based overloads are only available on `net10.0`.",
   "features": [
     "Strongly-typed read/write via `IEnumerable<T>` / `List<T>` and `IAsyncEnumerable<T>` (net10).",
     "Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`) read and write.",
@@ -64,21 +64,21 @@
     {
       "type": "markdown",
       "title": "Output targets",
-      "body": "Each export path is available as file / stream / `TextWriter` / string / byte array\noverloads, in sync (all TFMs) and async (`net10.0`) flavors:\n\n```csharp\ncsv.ExportToCsv(rows, \"out.csv\");\ncsv.ExportToCsvStream(rows, stream);\ncsv.ExportToCsv(rows, textWriter);\nstring text = csv.ExportToCsvString(rows);\nbyte[] bytes = csv.ExportToCsvBytes(rows);\n\nawait csv.ExportToCsvAsync(rows, \"out.csv\", ct);\nawait csv.ExportToCsvStreamAsync(rows, stream, ct);\nstring textAsync = await csv.ExportToCsvStringAsync(rows, ct);\nbyte[] bytesAsync = await csv.ExportToCsvBytesAsync(rows, ct);\n```"
+      "body": "Each export path is available as file / stream / `TextWriter` / string / byte array overloads, in sync (all TFMs) and async (`net10.0`) variants:\n\n```csharp\ncsv.ExportToCsv(rows, \"out.csv\");\ncsv.ExportToCsvStream(rows, stream);\ncsv.ExportToCsv(rows, textWriter);\nstring text = csv.ExportToCsvString(rows);\nbyte[] bytes = csv.ExportToCsvBytes(rows);\n\nawait csv.ExportToCsvAsync(rows, \"out.csv\", ct);\nawait csv.ExportToCsvStreamAsync(rows, stream, ct);\nstring textAsync = await csv.ExportToCsvStringAsync(rows, ct);\nbyte[] bytesAsync = await csv.ExportToCsvBytesAsync(rows, ct);\n```"
     },
     {
       "type": "markdown",
       "title": "URL and batch",
-      "body": "```csharp\nResult<DataTable> table = await csv.ParseFromUrlAsDataTableAsync(url, hasHeaderRow: true, hasFooterRow: true, ct);\nList<Person> rows = await csv.ParseFromUrlAsync<Person>(url, ct);\n\nIReadOnlyList<Result<DataTable>> results =\n    await csv.BatchParseFilesAsDataTableAsync(paths, hasHeaderRow: true, hasFooterRow: true, ct);\n```\n\nIf you do not supply an `HttpClient` to the constructor, a fresh one is created per URL\ncall and disposed afterward; production callers should inject one via DI.\nPass `hasFooterRow: true` when the last physical row should become `DataTable.Footer` (default `false`)."
+      "body": "```csharp\nResult<DataTable> table = await csv.ParseFromUrlAsDataTableAsync(url, hasHeaderRow: true, hasFooterRow: true, ct);\nList<Person> rows = await csv.ParseFromUrlAsync<Person>(url, ct);\n\nIReadOnlyList<Result<DataTable>> results =\n    await csv.BatchParseFilesAsDataTableAsync(paths, hasHeaderRow: true, hasFooterRow: true, ct);\n```\n\nIf you do not supply an `HttpClient` to the constructor, a fresh one is created per URL call and disposed afterward. Inject one via DI. Pass `hasFooterRow: true` when the last physical row should become `DataTable.Footer` (default `false`)."
     },
     {
       "type": "paragraph",
       "title": "Dialect defaults",
-      "text": "Default `CsvOptions` use comma delimiter, RFC doubled quotes, header row on, blank-line skip, field trim, and `DetectColumnCountChanges` (throws `CsvBadDataException` on uneven rows). Header names match properties case-insensitively after trim; rename with `[CsvColumn]`. Prefer typed/`IAsyncEnumerable` streams for large files — `Parse*AsDataTable*` materializes the full grid. <!-- LYO_README_SYNC:BEGIN -->"
+      "text": "Default CsvOptions use comma delimiter, RFC doubled quotes, header row on, blank-line skip, field trim, and DetectColumnCountChanges (throws CsvBadDataException on uneven rows). Header names match properties case-insensitively after trim. Rename with [CsvColumn]. Prefer typed or IAsyncEnumerable streams for large files. Parse*AsDataTable* materializes the entire grid. <!-- LYO_README_SYNC:BEGIN -->"
     },
     {
       "type": "list",
-      "title": "Public API (generated)",
+      "title": "Public types",
       "items": [
         "`CsvErrorCodes`",
         "`CsvService`",

@@ -3,7 +3,7 @@
   "name": "Lyo.Encryption.XChaCha20Poly1305",
   "area": "Security",
   "tagline": "XChaCha20-Poly1305 (24-byte nonce, 32-byte key) authenticated-encryption addon for `Lyo.Encryption`.",
-  "description": "XChaCha20-Poly1305 (24-byte nonce, 32-byte key) authenticated-encryption addon for `Lyo.Encryption`. Uses an HChaCha20 subkey derivation step then BouncyCastle's IETF\nChaCha20-Poly1305 implementation for the inner AEAD.\n\nInstall this addon only when you actually use XChaCha20-Poly1305 — the core `Lyo.Encryption` package no longer pulls BouncyCastle on `net10`.",
+  "description": "XChaCha20-Poly1305 (24-byte nonce, 32-byte key) authenticated-encryption addon for `Lyo.Encryption`. Uses an HChaCha20 subkey derivation step then BouncyCastle's IETF ChaCha20-Poly1305 implementation for the inner AEAD.\n\nInstall this addon only when you actually use XChaCha20-Poly1305. The core `Lyo.Encryption` package no longer pulls BouncyCastle on `net10`.",
   "features": [],
   "examples": [
     {
@@ -26,7 +26,7 @@
     {
       "type": "paragraph",
       "title": "Dependency injection",
-      "text": "Requires **`IKeyStore`**. Use `configure =>` on key-store registration to bind secrets from **`IConfiguration`** ([`Lyo.KeyStore`](../Lyo.KeyStore/README.md))."
+      "text": "Requires `IKeyStore`. Use `configure =>` on key-store registration to bind secrets from `IConfiguration` ([`Lyo.KeyStore`](../Lyo.KeyStore/README.md))."
     },
     {
       "type": "paragraph",
@@ -36,7 +36,7 @@
     {
       "type": "paragraph",
       "title": "Performance",
-      "text": "BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **2.54 ms encrypt / 2.34 ms decrypt @ 1 MB** (~3.8× AES-GCM; HChaCha20 + BouncyCastle). Benchmarks use explicit key material. Full tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)."
+      "text": "BenchmarkDotNet on Intel Core Ultra 7 155U (.NET 10.0.9, June 2026): **2.54 ms encrypt / 2.34 ms decrypt @ 1 MB** (~3.8× AES-GCM; HChaCha20 + BouncyCastle). Benchmarks use explicit key material. Tables: [`BENCHMARK_SUMMARY.md`](../Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)."
     }
   ],
   "links": [],

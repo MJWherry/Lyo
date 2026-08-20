@@ -2,100 +2,100 @@
   "id": "Lyo.Sms.Twilio",
   "name": "Lyo.Sms.Twilio",
   "area": "Communication",
-  "tagline": "A production-ready Twilio SMS/MMS service implementation for .NET, built on the extensible `Lyo.Sms` library.",
-  "description": "A production-ready Twilio SMS/MMS service implementation for .NET, built on the extensible `Lyo.Sms` library.",
+  "tagline": "Twilio SMS and MMS through `Lyo.Sms`. `TwilioSmsService` implements `ISmsService`.",
+  "description": "Twilio SMS and MMS through `Lyo.Sms`. `TwilioSmsService` implements `ISmsService`.",
   "features": [
-    "**Twilio Integration** - Full support for Twilio SMS and MMS messaging",
-    "**Bulk Messaging** - Efficient bulk SMS sending with rate limiting",
-    "**MMS Support** - Send multimedia messages with up to 10 media attachments",
-    "**Message Querying** - Query messages by various filter criteria",
-    "**Error Handling** - Comprehensive error handling with Twilio-specific error codes",
-    "**Logging** - Built-in logging support via Microsoft.Extensions.Logging",
-    "**Metrics** - Optional metrics collection for monitoring SMS operations",
-    "**Dependency Injection** - Full support for .NET dependency injection",
-    "**Async/Await** - Fully asynchronous API with cancellation token support",
-    "**Thread-Safe** - Thread-safe implementation for concurrent use",
-    "**Validation** - Automatic validation of required configuration options",
-    "**Events** - Events for message sending, message sent, bulk sending, and bulk sent"
+    "**Twilio.** SMS and MMS through the Twilio API.",
+    "**Bulk.** Bulk SMS with rate limiting.",
+    "**MMS.** Up to 10 media attachments per message.",
+    "**Query.** `GetMessagesAsync` with `SmsMessageQueryFilter`.",
+    "**Errors.** Twilio-specific error codes on `TwilioSmsResult`.",
+    "**Logging.** Logs through Microsoft.Extensions.Logging.",
+    "**Metrics.** Optional metrics on SMS operations.",
+    "**DI.** `AddTwilioSmsService` and `AddTwilioSmsServiceFromConfiguration`.",
+    "**Async.** Methods take `CancellationToken`.",
+    "**Concurrency.** Safe for concurrent use.",
+    "**Validation.** `TwilioOptionsValidator` checks required options.",
+    "**Events.** `MessageSending`, `MessageSent`, `BulkSending`, `BulkSent`."
   ],
   "examples": [
     {
-      "title": "1. Configure Twilio Options",
+      "title": "Configure Twilio options",
       "language": "json",
       "code": "{\n  \"TwilioOptions\": {\n    \"AccountSid\": \"your_account_sid\",\n    \"AuthToken\": \"your_auth_token\",\n    \"DefaultFromPhoneNumber\": \"+1234567890\",\n    \"BulkSmsConcurrencyLimit\": 10,\n    \"MaxMessageBodyLength\": 1600,\n    \"MaxBulkSmsLimit\": 1000,\n    \"EnableMetrics\": false\n  }\n}"
     },
     {
-      "title": "1. Configure Twilio Options (2)",
+      "title": "Configure Twilio options (2)",
       "language": "csharp",
       "code": "var options = new TwilioOptions\n{\n    AccountSid = \"your_account_sid\",\n    AuthToken = \"your_auth_token\",\n    DefaultFromPhoneNumber = \"+1234567890\",\n    BulkSmsConcurrencyLimit = 10, // Max concurrent bulk SMS requests (default: 10)\n    MaxMessageBodyLength = 1600, // Max message body length in characters (default: 1600)\n    MaxBulkSmsLimit = 1000 // Max messages per bulk operation (default: 1000)\n};"
     },
     {
-      "title": "2. Register Services",
+      "title": "Register services",
       "language": "csharp",
       "code": "// In ConfigureServices(context, services):\nservices.AddTwilioSmsServiceFromConfiguration(context.Configuration);\n// Override the configuration section name (default: \"TwilioOptions\"):\n// services.AddTwilioSmsServiceFromConfiguration(context.Configuration, \"MyTwilio\");"
     },
     {
-      "title": "3. Use the Service",
+      "title": "Send an SMS",
       "language": "csharp",
       "code": "public class MyService\n{\n    private readonly ISmsService _smsService;\n    \n    public MyService(ISmsService smsService)\n    {\n        _smsService = smsService;\n    }\n    \n    public async Task SendSmsAsync()\n    {\n        // Simple send\n        var result = await _smsService.SendSmsAsync(\n            to: \"+1234567890\",\n            body: \"Hello, World!\",\n            from: \"+1987654321\"\n        );\n        \n        if (result.IsSuccess)\n        {\n            Console.WriteLine($\"Message sent! ID: {result.MessageId}\");\n        }\n        else\n        {\n            Console.WriteLine($\"Failed: {result.ErrorMessage}\");\n        }\n    }\n}"
     },
     {
-      "title": "Using the Builder Pattern",
+      "title": "SmsMessageBuilder",
       "language": "csharp",
       "code": "var builder = SmsMessageBuilder\n    .New()\n    .SetTo(\"+1234567890\")\n    .SetFrom(\"+1987654321\")\n    .SetBody(\"Hello, World!\");\n\nvar result = await _smsService.SendAsync(builder);"
     },
     {
-      "title": "Sending MMS (Multimedia Messages)",
+      "title": "Send MMS",
       "language": "csharp",
       "code": "var builder = SmsMessageBuilder\n    .New()\n    .SetTo(\"+1234567890\")\n    .SetFrom(\"+1987654321\")\n    .SetBody(\"Check out this image!\")\n    .AddMediaUrl(new Uri(\"https://example.com/image.jpg\"));\n\nvar result = await _smsService.SendAsync(builder);"
     },
     {
-      "title": "Sending Bulk Messages",
+      "title": "Send bulk messages",
       "language": "csharp",
       "code": "var messages = new[]\n{\n    SmsMessageBuilder.New().SetTo(\"+1111111111\").SetBody(\"Message 1\"),\n    SmsMessageBuilder.New().SetTo(\"+2222222222\").SetBody(\"Message 2\"),\n    SmsMessageBuilder.New().SetTo(\"+3333333333\").SetBody(\"Message 3\")\n};\n\nvar results = await _smsService.SendBulkAsync(messages);\n\nforeach (var result in results)\n{\n    if (result.IsSuccess)\n    {\n        Console.WriteLine($\"Sent to {result.To}: {result.MessageId}\");\n    }\n}"
     },
     {
-      "title": "Sending Bulk Messages (2)",
+      "title": "BulkSmsBuilder",
       "language": "csharp",
       "code": "var bulkBuilder = BulkSmsBuilder\n    .New()\n    .SetDefaultFrom(\"+1987654321\") // Optional: set default sender for all messages\n    .SetMaxLimit(100) // Optional: limit number of messages\n    .Add(\"+1111111111\", \"Message 1\")\n    .Add(\"+2222222222\", \"Message 2\")\n    .Add(\"+3333333333\", \"Message 3\", \"+19998887777\"); // Override sender for specific message\n\nvar bulkResult = await _smsService.SendBulkAsync(bulkBuilder);\n\nConsole.WriteLine($\"Total: {bulkResult.TotalCount}\");\nConsole.WriteLine($\"Success: {bulkResult.SuccessCount}\");\nConsole.WriteLine($\"Failed: {bulkResult.FailureCount}\");\nConsole.WriteLine($\"Elapsed: {bulkResult.ElapsedTime}\");\n\nif (bulkResult.IsCompleteSuccess)\n{\n    Console.WriteLine(\"All messages sent successfully!\");\n}\n\nforeach (var result in bulkResult.Results)\n{\n    if (result.IsSuccess)\n    {\n        Console.WriteLine($\"Sent to {result.To}: {result.MessageId}\");\n    }\n    else\n    {\n        Console.WriteLine($\"Failed to send to {result.To}: {result.ErrorMessage}\");\n    }\n}"
     },
     {
-      "title": "Querying Messages",
+      "title": "Query messages",
       "language": "csharp",
       "code": "var filter = new SmsMessageQueryFilter\n{\n    From = \"+1987654321\",\n    DateSentAfter = DateTime.UtcNow.AddDays(-7),\n    PageSize = 50\n};\n\nvar result = await _smsService.GetMessagesAsync(filter);\nforeach (var message in result.Items)\n{\n    Console.WriteLine($\"{message.DateSent}: {message.Body}\");\n}\n// Cursor-based pagination: use result.NextCursor as DateSentBefore for next page when result.HasMore"
     },
     {
-      "title": "Getting a Message by ID",
+      "title": "Get a message by id",
       "language": "csharp",
       "code": "var message = await _smsService.GetMessageByIdAsync(\"SM1234567890abcdef\");\nif (message.IsSuccess)\n{\n    Console.WriteLine($\"Status: {message.Status}\");\n    Console.WriteLine($\"Body: {message.Body}\");\n    Console.WriteLine($\"Price: {((TwilioSmsResult)message).Price} {((TwilioSmsResult)message).PriceUnit}\");\n}"
     },
     {
-      "title": "Testing Connection",
+      "title": "Test connection",
       "language": "csharp",
       "code": "var isConnected = await _smsService.TestConnectionAsync();\nif (isConnected)\n{\n    Console.WriteLine(\"Connected to Twilio!\");\n}"
     },
     {
-      "title": "Using Events",
+      "title": "MessageSending",
       "language": "csharp",
       "code": "_smsService.MessageSending += (sender, args) =>\n{\n    var request = args.SmsRequest;\n    Console.WriteLine($\"Sending SMS to {request.To}: {request.Body}\");\n};"
     },
     {
-      "title": "Using Events (2)",
+      "title": "MessageSent",
       "language": "csharp",
       "code": "_smsService.MessageSent += (sender, args) =>\n{\n    var result = args.SmsResult;\n    if (result.IsSuccess)\n    {\n        Console.WriteLine($\"SMS sent successfully: {result.MessageId}\");\n        if (result is TwilioSmsResult twilioResult)\n        {\n            Console.WriteLine($\" Status: {twilioResult.Status}\");\n            Console.WriteLine($\" Price: {twilioResult.Price} {twilioResult.PriceUnit}\");\n        }\n    }\n    else\n    {\n        Console.WriteLine($\"SMS failed: {result.ErrorMessage}\");\n    }\n};"
     },
     {
-      "title": "Using Events (3)",
+      "title": "BulkSending",
       "language": "csharp",
       "code": "_smsService.BulkSending += (sender, args) =>\n{\n    Console.WriteLine($\"Starting bulk send for {args.BulkSmsMessage.Count} messages\");\n};"
     },
     {
-      "title": "Using Events (4)",
+      "title": "BulkSent",
       "language": "csharp",
       "code": "_smsService.BulkSent += (sender, args) =>\n{\n    var bulkResult = args.BulkSmsResult;\n    Console.WriteLine($\"Bulk send completed:\");\n    Console.WriteLine($\" Total: {bulkResult.TotalCount}\");\n    Console.WriteLine($\" Success: {bulkResult.SuccessCount}\");\n    Console.WriteLine($\" Failure: {bulkResult.FailureCount}\");\n    Console.WriteLine($\" Elapsed: {bulkResult.ElapsedTime}\");\n};"
     },
     {
-      "title": "Using Events (5)",
+      "title": "Subscribe to events",
       "language": "csharp",
       "code": "public class SmsNotificationService\n{\n    private readonly ISmsService _smsService;\n    \n    public SmsNotificationService(ISmsService smsService)\n    {\n        _smsService = smsService;\n        SubscribeToEvents();\n    }\n    \n    private void SubscribeToEvents()\n    {\n        _smsService.MessageSending += OnMessageSending;\n        _smsService.MessageSent += OnMessageSent;\n        _smsService.BulkSending += OnBulkSending;\n        _smsService.BulkSent += OnBulkSent;\n    }\n    \n    private void OnMessageSending(object? sender, SmsSendingEventArgs args)\n    {\n        Console.WriteLine($\"Preparing to send SMS to {args.SmsRequest.To}\");\n    }\n    \n    private void OnMessageSent(object? sender, SmsSentEventArgs args)\n    {\n        if (args.SmsResult.IsSuccess)\n        {\n            Console.WriteLine($\" SMS sent: {args.SmsResult.MessageId}\");\n            if (args.SmsResult is TwilioSmsResult twilioResult)\n            {\n                Console.WriteLine($\" Twilio Status: {twilioResult.Status}\");\n                Console.WriteLine($\" Cost: {twilioResult.Price} {twilioResult.PriceUnit}\");\n            }\n        }\n        else\n        {\n            Console.WriteLine($\" SMS failed: {args.SmsResult.ErrorMessage}\");\n        }\n    }\n    \n    private void OnBulkSending(object? sender, SmsBulkSendingEventArgs args)\n    {\n        Console.WriteLine($\"Starting bulk SMS operation: {args.BulkSmsMessage.Count} messages\");\n    }\n    \n    private void OnBulkSent(object? sender, BulkSmsSentEventArgs args)\n    {\n        var bulkResult = args.BulkSmsResult;\n        Console.WriteLine($\"Bulk SMS completed: {bulkResult.SuccessCount}/{bulkResult.TotalCount} successful in {bulkResult.ElapsedTime.TotalSeconds:F2}s\");\n        \n        if (bulkResult.FailureCount > 0)\n        {\n            Console.WriteLine($\" Failures: {bulkResult.FailureCount}\");\n            foreach (var r in bulkResult.FailedResults)\n                Console.WriteLine($\" - {r.Data?.To}: {string.Join(\"; \", r.Errors?.Select(e => e.Message) ?? [])}\");\n        }\n    }\n}"
     },
@@ -105,7 +105,7 @@
       "code": "var result = await _smsService.SendSmsAsync(\"+1234567890\", \"Hello\");\n\nif (result is TwilioSmsResult twilioResult)\n{\n    Console.WriteLine($\"Message SID: {twilioResult.MessageId}\");\n    Console.WriteLine($\"Status: {twilioResult.Status}\");\n    Console.WriteLine($\"Segments: {twilioResult.NumSegments}\");\n    Console.WriteLine($\"Price: {twilioResult.Price} {twilioResult.PriceUnit}\");\n    Console.WriteLine($\"Account SID: {twilioResult.AccountSid}\");\n}"
     },
     {
-      "title": "Error Handling",
+      "title": "Error handling",
       "language": "csharp",
       "code": "var result = await _smsService.SendSmsAsync(\"+1234567890\", \"Hello\");\n\nif (!result.IsSuccess)\n{\n    Console.WriteLine($\"Error: {result.ErrorMessage}\");\n    Console.WriteLine($\"Error Code: {result.ErrorCode}\");\n    \n    if (result.Exception != null)\n    {\n        Console.WriteLine($\"Exception: {result.Exception.Message}\");\n        \n        // Handle specific exception types\n        if (result.Exception is InvalidFormatException formatEx)\n        {\n            Console.WriteLine($\"Invalid Value: {formatEx.InvalidValue}\");\n            Console.WriteLine($\"Valid Formats: {string.Join(\", \", formatEx.ValidFormats)}\");\n        }\n    }\n}"
     }
@@ -113,27 +113,27 @@
   "sections": [
     {
       "type": "markdown",
-      "title": "1. Configure Twilio Options",
-      "body": "#### Using Configuration File (appsettings.json)\n\n#### Using Code"
+      "title": "Configure Twilio options",
+      "body": "#### Using configuration file (appsettings.json)\n\n#### Using code"
     },
     {
       "type": "markdown",
-      "title": "2. Register Services",
-      "body": "#### Using Configuration Binding\n\n`AddTwilioSmsService(IConfiguration, string)` is an alias kept for callers that prefer the shorter name;\nboth register the same singletons: `TwilioOptions`, `TwilioOptionsValidator`, `TwilioSmsService`, plus\nthe cross-typed `ISmsService` and `ISmsService<TwilioSmsResult>` interfaces backed by the same instance.\nOn `net6.0`+ targets an `IHttpClient` keyed `\"lyo-twilio-sms\"` is also registered so Twilio reuses the\nshared `IHttpClientFactory` pool (resilient policies layered via the application's `IHttpClientFactory`\nconfiguration apply automatically)."
+      "title": "Register services",
+      "body": "#### Using configuration binding\n\n`AddTwilioSmsService(IConfiguration, string)` is an alias kept for callers that prefer the shorter name.\nBoth register the same singletons: `TwilioOptions`, `TwilioOptionsValidator`, `TwilioSmsService`, plus\nthe cross-typed `ISmsService` and `ISmsService<TwilioSmsResult>` interfaces backed by the same instance.\nOn `net6.0`+ targets an `IHttpClient` keyed `\"lyo-twilio-sms\"` is also registered so Twilio reuses the\nshared `IHttpClientFactory` pool. Resilience policies on the application's `IHttpClientFactory`\nconfiguration apply automatically."
     },
     {
       "type": "markdown",
-      "title": "Sending Bulk Messages",
-      "body": "#### Using IEnumerable of Builders\n\n#### Using BulkSmsBuilder (Recommended)"
+      "title": "Send bulk messages",
+      "body": "#### Using IEnumerable of builders\n\n#### Using BulkSmsBuilder"
     },
     {
       "type": "markdown",
-      "title": "Using Events",
-      "body": "The Twilio SMS service provides events for monitoring message operations:\n\n#### MessageSending Event\n\nFired before each message is sent (including during bulk operations):\n\n#### MessageSent Event\n\nFired after each message is sent (success or failure):\n\n#### BulkSending Event\n\nFired before a bulk send operation starts:\n\n#### BulkSent Event\n\nFired after a bulk send operation completes:\n\n#### Complete Event Example\n\n**Note**: Events fire even when operations fail, allowing you to track all SMS operations regardless of success or\nfailure. This is useful for monitoring, logging, and user notifications."
+      "title": "Events",
+      "body": "The Twilio SMS service raises events around send operations:\n\n#### MessageSending\n\nFired before each message is sent, including during bulk operations:\n\n#### MessageSent\n\nFired after each message is sent (success or failure):\n\n#### BulkSending\n\nFired before a bulk send starts:\n\n#### BulkSent\n\nFired after a bulk send completes:\n\n#### Complete event example\n\nEvents fire even when operations fail, so you can track every attempt. Useful for monitoring, logging, and user notifications."
     },
     {
       "type": "markdown",
-      "title": "Twilio-Specific Features — Error Codes",
+      "title": "Twilio error codes",
       "body": "Twilio-specific error codes are included in the result via `TwilioSmsResult.TwilioErrorCode`:\n\n```csharp\nif (!result.IsSuccess && result is TwilioSmsResult twilioResult)\n{\n    if (twilioResult.TwilioErrorCode.HasValue)\n    {\n        Console.WriteLine($\"Twilio Error Code: {twilioResult.TwilioErrorCode}\");\n        // Common error codes:\n        // 20003 - Unreachable destination handset\n        // 20429 - Too Many Requests (rate limit)\n        // 30001 - Queue overflow\n        // 30008 - Unknown destination handset\n    }\n\n    // The Errors collection (inherited from Result<SmsRequest>) carries human-readable messages and codes\n    var firstError = twilioResult.Errors?.FirstOrDefault();\n    Console.WriteLine($\"Error: {firstError?.Message} ({firstError?.Code})\");\n}\n```"
     },
     {
@@ -143,17 +143,17 @@
     },
     {
       "type": "list",
-      "title": "Rate Limiting",
+      "title": "Rate limiting",
       "items": [
-        "**Concurrent Requests**: Limited to 10 concurrent requests (configurable via `BulkSmsConcurrencyLimit`)",
-        "**Automatic Throttling**: Built-in semaphore-based throttling",
-        "**Non-blocking**: Uses async/await for efficient resource usage",
-        "**Bulk Limits**: Maximum number of messages per bulk operation (configurable via `MaxBulkSmsLimit`)"
+        "**Concurrent requests.** Limited to 10 concurrent requests (configurable via `BulkSmsConcurrencyLimit`).",
+        "**Throttling.** `SemaphoreSlim` caps concurrency.",
+        "**Async.** Methods take `CancellationToken`.",
+        "**Bulk limits.** Maximum messages per bulk operation (configurable via `MaxBulkSmsLimit`)."
       ]
     },
     {
       "type": "list",
-      "title": "Thread Safety",
+      "title": "Thread safety",
       "items": [
         "All instance fields are readonly",
         "Bulk operations use thread-safe collections (`ConcurrentBag`)",
@@ -163,7 +163,7 @@
     },
     {
       "type": "table",
-      "title": "TwilioOptions Properties",
+      "title": "`TwilioOptions` properties",
       "headers": [
         "Property",
         "Type",
@@ -226,12 +226,12 @@
     {
       "type": "markdown",
       "title": "Logging",
-      "body": "The library uses Microsoft.Extensions.Logging for all logging:\n\n```csharp\nservices.AddLogging(builder =>\n{\n    builder.AddConsole();\n    builder.SetMinimumLevel(LogLevel.Information);\n});\n```\n\nLog levels:\n\n- **Information**: Successful operations, message details\n- **Warning**: Retries, long messages, connection issues\n- **Error**: Failures, exceptions\n\nPhone numbers are automatically masked in logs (only last 4 digits shown) for privacy."
+      "body": "The library uses Microsoft.Extensions.Logging:\n\n```csharp\nservices.AddLogging(builder =>\n{\n    builder.AddConsole();\n    builder.SetMinimumLevel(LogLevel.Information);\n});\n```\n\nLog levels:\n\n- **Information.** Successful operations, message details\n- **Warning.** Retries, long messages, connection issues\n- **Error.** Failures, exceptions\n\nPhone numbers are masked in logs (last 4 digits only)."
     },
     {
       "type": "markdown",
       "title": "Metrics",
-      "body": "Optional metrics collection is available:\n\n```csharp\nservices.AddLyoMetrics();\nservices.AddTwilioSmsService(options =>\n{\n    options.EnableMetrics = true;\n    // ... other options\n});\n```\n\nMetrics tracked:\n\n- `sms.twilio.send.duration`\n- `sms.twilio.send.success`\n- `sms.twilio.send.failure`\n- `sms.twilio.bulk.send.duration`\n- `sms.twilio.bulk.send.total`\n- `sms.twilio.bulk.send.success`\n- `sms.twilio.bulk.send.failure`\n- `sms.twilio.bulk.send.last_duration_ms`\n- `sms.twilio.api.get_message.duration`\n- `sms.twilio.api.get_messages.duration`\n- `sms.twilio.test_connection.duration`"
+      "body": "Set `EnableMetrics` to collect:\n\n```csharp\nservices.AddLyoMetrics();\nservices.AddTwilioSmsService(options =>\n{\n    options.EnableMetrics = true;\n    // ... other options\n});\n```\n\nMetrics tracked:\n\n- `sms.twilio.send.duration`\n- `sms.twilio.send.success`\n- `sms.twilio.send.failure`\n- `sms.twilio.bulk.send.duration`\n- `sms.twilio.bulk.send.total`\n- `sms.twilio.bulk.send.success`\n- `sms.twilio.bulk.send.failure`\n- `sms.twilio.bulk.send.last_duration_ms`\n- `sms.twilio.api.get_message.duration`\n- `sms.twilio.api.get_messages.duration`\n- `sms.twilio.test_connection.duration`"
     },
     {
       "type": "list",

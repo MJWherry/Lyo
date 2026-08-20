@@ -2,8 +2,8 @@
   "id": "Lyo.MessageQueue.RabbitMq.Web.Components",
   "name": "Lyo.MessageQueue.RabbitMq.Web.Components",
   "area": "Communication",
-  "tagline": "Reusable Blazor components for RabbitMQ-specific exchanges, bindings, and broker workbenches.",
-  "description": "Reusable Blazor components for RabbitMQ-specific exchanges, bindings, and broker workbenches.",
+  "tagline": "Blazor components for RabbitMQ exchanges, bindings, and broker workbenches.",
+  "description": "Blazor components for RabbitMQ exchanges, bindings, and broker workbenches.",
   "features": [],
   "examples": [],
   "sections": [
@@ -32,8 +32,8 @@
           "All-queue statistics with optional name filter, manual refresh, and auto-refresh polling"
         ]
       ],
-      "lead": "`RabbitMqWorkbench.razor` is an internal dashboard for exercising the full `IRabbitMqService` surface:",
-      "trail": "Queue creation supports:\n\n- **`x-max-priority`** — numeric max priority (same pattern as job workers use for `job.run.{workerType}` queues).\n- **DLQ auto-wiring** — `CreateQueueWithDlq` with optional custom DLQ name.\n\nPublishing supports:\n\n- **`SendToQueueWithPriority`** / envelope publish with priority (requires a priority-enabled queue).\n- **`SendToQueueDelayed`** — broker-side delay via TTL + dead-letter wait queues."
+      "lead": "`RabbitMqWorkbench.razor` is an internal dashboard for the full `IRabbitMqService` API:",
+      "trail": "Queue creation supports:\n\n- **`x-max-priority`.** Numeric max priority (same pattern as job workers use for `job.run.{workerType}` queues).\n- **DLQ auto-wiring.** `CreateQueueWithDlq` with optional custom DLQ name.\n\nPublishing supports:\n\n- **`SendToQueueWithPriority`.** Envelope publish with priority (requires a priority-enabled queue).\n- **`SendToQueueDelayed`.** Broker-side delay via TTL + dead-letter wait queues."
     }
   ],
   "links": [],

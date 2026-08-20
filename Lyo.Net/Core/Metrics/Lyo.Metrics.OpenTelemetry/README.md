@@ -4,15 +4,15 @@ OpenTelemetry implementation of `IMetrics` for exporting metrics to OpenTelemetr
 
 ## Features
 
-- Full `IMetrics` interface implementation
-- Automatic metric name sanitization for OpenTelemetry conventions
-- Tag/attribute conversion
+- `IMetrics` implementation backed by OpenTelemetry instruments
+- Metric name sanitization for OpenTelemetry conventions
+- Tag to attribute conversion
 - Thread-safe metric recording
-- Support for multiple exporters (Console, Prometheus, OTLP, etc.)
+- Console, Prometheus, and OTLP exporters
 
 ## Examples
 
-### Basic Setup (Console Exporter)
+### Console exporter
 
 ```csharp
 using Lyo.Metrics.OpenTelemetry;
@@ -20,7 +20,7 @@ using Lyo.Metrics.OpenTelemetry;
 services.AddLyoMetricsWithOpenTelemetry("MyApp.Metrics");
 ```
 
-### With Prometheus Exporter
+### Prometheus exporter
 
 ```csharp
 services.AddLyoMetricsWithOpenTelemetry("MyApp.Metrics", configureMeterProvider: builder =>
@@ -32,7 +32,7 @@ services.AddLyoMetricsWithOpenTelemetry("MyApp.Metrics", configureMeterProvider:
 });
 ```
 
-### With OTLP Exporter (for Jaeger, Tempo, etc.)
+### OTLP exporter
 
 ```csharp
 services.AddLyoMetricsWithOpenTelemetry("MyApp.Metrics", configureMeterProvider: builder =>
@@ -44,7 +44,7 @@ services.AddLyoMetricsWithOpenTelemetry("MyApp.Metrics", configureMeterProvider:
 });
 ```
 
-### With Multiple Exporters
+### Multiple exporters
 
 ```csharp
 services.AddLyoMetricsWithOpenTelemetry("MyApp.Metrics", configureMeterProvider: builder =>
@@ -80,21 +80,21 @@ using (metrics.StartTimer("operation.duration"))
 }
 ```
 
-## Metric Type Mapping
+## Metric type mapping
 
-- **Counters**: `IncrementCounter` → OpenTelemetry `Counter<long>`
-- **Gauges**: `RecordGauge` → OpenTelemetry `Histogram<double>` (push-based)
-- **Histograms/Timings**: `RecordHistogram`/`RecordTiming` → OpenTelemetry `Histogram<double>`
-- **Errors**: `RecordError` → OpenTelemetry `Counter<long>` with error attributes
-- **Events**: `RecordEvent` → OpenTelemetry `Counter<long>`
+- **Counters.** `IncrementCounter` maps to OpenTelemetry `Counter<long>`.
+- **Gauges.** `RecordGauge` maps to OpenTelemetry `Histogram<double>` (push-based).
+- **Histograms / timings.** `RecordHistogram` / `RecordTiming` map to OpenTelemetry `Histogram<double>`.
+- **Errors.** `RecordError` maps to OpenTelemetry `Counter<long>` with error attributes.
+- **Events.** `RecordEvent` maps to OpenTelemetry `Counter<long>`.
 
-## Metric Name Sanitization
+## Metric name sanitization
 
 - Dots (`.`) are replaced with underscores (`_`)
 - Hyphens (`-`) are replaced with underscores (`_`)
 - Names starting with digits are prefixed with `_`
 
-## Tag/Attribute Conversion
+## Tag and attribute conversion
 
 - Tag keys are sanitized (dots/hyphens → underscores)
 - Tag values are preserved as-is
@@ -103,10 +103,10 @@ using (metrics.StartTimer("operation.duration"))
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `OpenTelemetry` `1.16.0` — (direct, third-party)
-- `OpenTelemetry.Exporter.Console` `1.16.0` — (direct, third-party)
-- `OpenTelemetry.Extensions.Hosting` `1.16.0` — (direct, third-party)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `OpenTelemetry` `1.16.0` (direct, third-party)
+- `OpenTelemetry.Exporter.Console` `1.16.0` (direct, third-party)
+- `OpenTelemetry.Extensions.Hosting` `1.16.0` (direct, third-party)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)

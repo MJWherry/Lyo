@@ -2,40 +2,40 @@
   "id": "Lyo.Sms.Web.Components",
   "name": "Lyo.Sms.Web.Components",
   "area": "Communication",
-  "tagline": "**Blazor (MudBlazor)** workbench UI for exercising an injected **`ISmsService`** (provider-neutral `Result<SmsRequest>` surface). Depends on MudBlazor/snackbar primitives from `Lyo.Web.Components`.",
-  "description": "**Blazor (MudBlazor)** workbench UI for exercising an injected **`ISmsService`** (provider-neutral `Result<SmsRequest>` surface). Depends on MudBlazor/snackbar primitives from [\n`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md).\n\n---",
+  "tagline": "Blazor (MudBlazor) workbench for an injected `ISmsService`. Uses MudBlazor and snackbar helpers from `Lyo.Web.Components`.",
+  "description": "Blazor (MudBlazor) workbench for an injected `ISmsService`. Uses MudBlazor and snackbar helpers from [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md).",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "table",
-      "title": "Component: **`SmsWorkbench`**",
+      "title": "`SmsWorkbench`",
       "headers": [
         "Button",
         "Behavior"
       ],
       "rows": [
         [
-          "**Send SMS / MMS**",
-          "Builds **`BulkSmsBuilder`**, adds **one row per recipient** with shared body; for **each recipient**, **every** configured media chip is appended via **`AddAttachment`**, so duplicates appear if multiple recipients × same media intent—adjust if you fork the component."
+          "Send SMS / MMS",
+          "Builds `BulkSmsBuilder` and adds one row per recipient with a shared body. For each recipient, every configured media chip is appended via `AddAttachment`, so the same media URL is attached once per recipient. Adjust that if you fork the component."
         ],
         [
-          "**Test SMS Connection**",
-          "Calls **`SmsService.TestConnectionAsync()`**."
+          "Test SMS Connection",
+          "Calls `SmsService.TestConnectionAsync()`."
         ]
       ],
-      "lead": "Renders a small operator panel:\n\n- **Recipients** — **`LyoChipInput`** constrained by **`RegexPatterns.PhoneNumberRegex`** (consistent with SMS stack validation UX).\n- **From override** — optional **`LyoNullableTextField`** forwarded to **`BulkSmsBuilder.SetDefaultFrom`**.\n- **Public media URLs** — chip list validated as **`http`/`https`**; each URL becomes an MMS attachment (see below).\n- **Body** — multiline Mud text field.\n\nActions:",
-      "trail": "Outcome panel shows **`BulkResult<SmsRequest>`** summary (total/success/failure/error strings) plus a per-row table using **`LyoResultErrorFormatter`** on failures.\n\n**`ISnackbar`** mirrors status banners for rapid feedback.\n\n---"
+      "lead": "Renders a small operator panel:\n\n- **Recipients.** `LyoChipInput` constrained by `RegexPatterns.PhoneNumberRegex` (same validation as the SMS stack).\n- **From override.** Optional `LyoNullableTextField` forwarded to `BulkSmsBuilder.SetDefaultFrom`.\n- **Public media URLs.** Chip list validated as `http`/`https`. Each URL becomes an MMS attachment (see below).\n- **Body.** Multiline Mud text field.\n\nActions:",
+      "trail": "The outcome panel shows a `BulkResult<SmsRequest>` summary (total/success/failure/error strings) plus a per-row table using `LyoResultErrorFormatter` on failures.\n\n`ISnackbar` mirrors status banners."
     },
     {
       "type": "paragraph",
-      "title": "Component: **`TwilioSmsLogGrid`**",
-      "text": "Projected grid over **`POST {BaseRoute}/TwilioSmsLogEntity/QueryProject`** (default base **`Twilio`**). **SID** / **Account SID** use compact **`LyoIdField`**. **Sent** / **Logged** (and hidden **Created**) use **`LyoTimestamp`** (nullable). **Received**, **Direction**, and **Status** are color chips. **Body** is truncated with ellipsis; hover shows the full text. Quick search ORs **SID** (`Id`), **From**, **To**, and **Body**. Row menu **Open chat** queries **`To` or `From` = that person** (outbound → row **To**, inbound → row **From**) and pages until all matching log rows are loaded. Header **Refresh** re-runs that query. Composer sends via **`ISmsService.SendSmsAsync`**, then **`POST`**s the existing create route. Pass **`IApiClient`**; the host must also register **`ISmsService`**. ---"
+      "title": "`TwilioSmsLogGrid`",
+      "text": "Projected grid over `POST {BaseRoute}/TwilioSmsLogEntity/QueryProject` (default base `Twilio`). SID and Account SID use compact `LyoIdField`. Sent, Logged, and the hidden Created column use `LyoTimestamp` (nullable). Received, Direction, and Status are color chips. Body is truncated with ellipsis. Hover shows the full text. Quick search ORs SID (`Id`), From, To, and Body. Row menu Open chat queries `To` or `From` = that person (outbound uses row To, inbound uses row From) and pages until all matching log rows are loaded. Header Refresh re-runs that query. Composer sends via `ISmsService.SendSmsAsync`, then POSTs the existing create route. Pass `IApiClient`. The host must also register `ISmsService`."
     },
     {
       "type": "paragraph",
-      "title": "Setup expectations",
-      "text": "In the consuming host's **`Program.cs`** / startup: 1. Register a real **`ISmsService`** (e.g. **`AddTwilioSmsService*`**). 2. Add MudBlazor + [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md) services the host already uses internally. 3. Render **`<SmsWorkbench />`** and/or **`<TwilioSmsLogGrid ApiClient=\"…\" />`** inside an authenticated or internal-only area—these components have **no** rate limiting UI. Reminder from the Razor copy: MMS media must be **publicly reachable** by the SMS aggregator; unsupported providers quietly ignore attachments. ---"
+      "title": "Host setup",
+      "text": "In the consuming host's `Program.cs` / startup: 1. Register a real `ISmsService` (for example `AddTwilioSmsService*`). 2. Add MudBlazor plus [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md) services the host already uses. 3. Render `<SmsWorkbench />` and/or `<TwilioSmsLogGrid ApiClient=\"…\" />` inside an authenticated or internal-only area. These components have no rate limiting UI. MMS media must be publicly reachable by the SMS aggregator. Unsupported providers ignore attachments."
     }
   ],
   "links": [],

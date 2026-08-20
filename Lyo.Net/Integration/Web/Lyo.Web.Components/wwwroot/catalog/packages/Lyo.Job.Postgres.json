@@ -3,7 +3,7 @@
   "name": "Lyo.Job.Postgres",
   "area": "Integration",
   "tagline": "PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem.",
-  "description": "PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, hand-rolled `JobLyoMapper` (`ILyoMapper`), optional parameter encryption, audit recording, and `IJobEventPublisher` so a host can drop in a complete job service: definitions, parameters, schedules, triggers, calendars, workflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats.",
+  "description": "PostgreSQL persistence and minimal-API host for the Lyo job-management subsystem. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, hand-rolled `JobLyoMapper` (`ILyoMapper`), optional parameter encryption, audit recording, and `IJobEventPublisher` so a host can run a job service: definitions, parameters, schedules, triggers, calendars, workflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats.",
   "features": [],
   "examples": [
     {
@@ -15,8 +15,8 @@
   "sections": [
     {
       "type": "markdown",
-      "title": "Drop-and-play registration",
-      "body": "`AddPostgresJobManagement` registers the `JobContext` factory, optional auto-migrations, the Lyo CRUD services, `JobService`, `JobLyoMapper` as `ILyoMapper`, and a default no-op\n`IJobEventPublisher` (`NullJobEventPublisher`). Hosts that also use Mapster for non-job types should replace `ILyoMapper` with `CompositeLyoMapper(job, mapsterFallback)`. Replace\nthe publisher with `AddMqJobEventPublisher()` once you have an `IMqService` available (API hosts with a job database only). **Scheduler and worker hosts must not use this package's\npublisher** — use `Lyo.Job.Client.AddMqJobEventPublisher*` (`IMqService` + Job.Client) instead.\n\nWhen `IAuditRecorder` is registered, CRUD hooks record `JobDefinition.*`, `JobRun.*`, and related entity events via `JobAuditHelper`."
+      "title": "Registration",
+      "body": "`AddPostgresJobManagement` registers the `JobContext` factory, optional auto-migrations, the Lyo CRUD services, `JobService`, `JobLyoMapper` as `ILyoMapper`, and a default no-op\n`IJobEventPublisher` (`NullJobEventPublisher`). Hosts that also use Mapster for non-job types should replace `ILyoMapper` with `CompositeLyoMapper(job, mapsterFallback)`. Replace\nthe publisher with `AddMqJobEventPublisher()` once you have an `IMqService` available (API hosts with a job database only). **Scheduler and worker hosts must not use this package's\npublisher**. use `Lyo.Job.Client.AddMqJobEventPublisher*` (`IMqService` + Job.Client) instead.\n\nWhen `IAuditRecorder` is registered, CRUD hooks record `JobDefinition.*`, `JobRun.*`, and related entity events via `JobAuditHelper`."
     },
     {
       "type": "table",
@@ -133,7 +133,7 @@
         [
           "`Queued` → `Running`",
           "`StartedJobRun` (worker picked up the dispatch message)",
-          "CAS on `State == Queued` — a redelivered dispatch, a second worker, or a start after a queued-run cancel is rejected with 400 (no-requeue), never double-executed."
+          "CAS on `State == Queued`. A redelivered dispatch, a second worker, or a start after a queued-run cancel is rejected with 400 (no-requeue), never double-executed."
         ],
         [
           "`Queued` → `Finished`/`Cancelled`",
@@ -165,17 +165,17 @@
     },
     {
       "type": "paragraph",
-      "title": "Run state machine — Dispatch suppression",
+      "title": "Dispatch suppression",
       "text": "`CreateJobRun` skips the immediate `RunCreated` publish when `JobRunReq.SuppressDispatch` is set **or** `ScheduledSlotUtc` is in the future (metric `job.service.run.dispatch.deferred`). The caller then owns dispatch: the scheduler's delayed-MQ envelope delivers backoff retries, and the workflow engine publishes step runs only after linking them to their run step. The maintenance service's stuck-queued recovery (below) is the safety net if the owner crashes before publishing. With suppression requested, creation succeeds even while MQ is disconnected."
     },
     {
       "type": "paragraph",
-      "title": "Run state machine — Encryption flow",
+      "title": "Encryption flow",
       "text": "Parameter values matching an encrypted definition parameter are encrypted at rest (`EncryptedValue`) and masked (`***`) by `JobLyoMapper` on every API response. `StartedJobRun` is the single worker-trusted exception: it decrypts parameter values server-side in the response so the executing worker receives real values. Rerun and child-run creation build their requests from the stored entity (not the masked API response), so ciphertext survives cloning and masked `***` strings are never persisted as real values."
     },
     {
       "type": "table",
-      "title": "Production hardening in `JobService`",
+      "title": "`JobService` hardening",
       "headers": [
         "Feature",
         "Behavior"
@@ -242,7 +242,7 @@
     },
     {
       "type": "table",
-      "title": "Metrics (`job.service.*`, `job.maintenance.*`, `job.sla.*`) — `job.service.*`",
+      "title": "Metrics (`job.service.*`, `job.maintenance.*`, `job.sla.*`). `job.service.*`",
       "headers": [
         "Metric",
         "When recorded"
@@ -300,7 +300,7 @@
     },
     {
       "type": "table",
-      "title": "Metrics (`job.service.*`, `job.maintenance.*`, `job.sla.*`) — `job.maintenance.*`",
+      "title": "Metrics (`job.service.*`, `job.maintenance.*`, `job.sla.*`). `job.maintenance.*`",
       "headers": [
         "Metric",
         "When recorded"
@@ -338,7 +338,7 @@
     },
     {
       "type": "table",
-      "title": "Metrics (`job.service.*`, `job.maintenance.*`, `job.sla.*`) — `job.sla.*`",
+      "title": "Metrics (`job.service.*`, `job.maintenance.*`, `job.sla.*`). `job.sla.*`",
       "headers": [
         "Metric",
         "When recorded"
@@ -353,7 +353,7 @@
     {
       "type": "markdown",
       "title": "`JobMaintenanceService`",
-      "body": "`BackgroundService` (`IHealth`: `job-maintenance`) ticking every `CheckIntervalSeconds`:\n\n1. **Dead jobs** — `Running`/`Cancelling` runs past `TimeoutMinutes` → `Finished`/`Timeout` + optional `DeadJob` alert. After commit, publishes `RunFinished` for each timed-out run\n   so the scheduler's retry/trigger/circuit-breaker accounting fires (a late worker finish for the same run is rejected by the state check and dropped by the worker as terminal).\n2. **Circuit breaker reset** — re-enables definitions after `CircuitBreakerResetMinutes`; publishes `DefinitionUpdated` so scheduler caches refresh promptly.\n3. **Stuck queued redispatch** — re-publishes `RunCreated` for due `Queued` runs untouched for `QueuedRunRedispatchMinutes` (lost publishes, delayed retries whose slot came due,\n   crashed suppressed-dispatch owners). Bumps `UpdatedTimestamp` so a stuck run retries once per threshold window; duplicate deliveries are harmless because `StartedJobRun` only\n   transitions `Queued -> Running` once.\n4. **Retention purge** — deletes finished runs older than effective retention in `PurgeBatchSize` batches. Detaches FK references from surviving rows first: `ReRanFromJobRunId`/\n   `TriggeredByJobRunId`/`ParentJobRunId` on related runs and `JobWorkflowRunStep.JobRunId` (workflow history is preserved with the run reference nulled), so purging\n   workflow-created runs or parents with surviving children cannot violate FKs and wedge the purge.\n5. **Worker pruning** — removes stale `JobWorkerInstance` rows.\n6. **SLA breach scan** — marks `SlaBreached` and increments `job.sla.breach` for overdue queued/running jobs. Alerts for SLA breaches are published by `JobService` on start/finish\n   transitions, not by this background scan.\n\n```mermaid\nflowchart LR\n    tick[Maintenance tick] --> dead[Fail dead jobs]\n    tick --> cb[Reset circuit breakers]\n    tick --> redisp[Redispatch stuck queued runs]\n    tick --> ret[Purge by retention]\n    tick --> wrk[Prune worker instances]\n    tick --> sla[Detect SLA breaches]\n    dead --> alert[PublishAlertAsync]\n    dead --> fin[PublishRunFinishedAsync]\n    cb --> defupd[PublishDefinitionUpdatedAsync]\n```"
+      "body": "`BackgroundService` (`IHealth`: `job-maintenance`) ticking every `CheckIntervalSeconds`:\n\n1. **Dead jobs**. `Running`/`Cancelling` runs past `TimeoutMinutes` → `Finished`/`Timeout` + optional `DeadJob` alert. After commit, publishes `RunFinished` for each timed-out run\n so the scheduler's retry/trigger/circuit-breaker accounting fires (a late worker finish for the same run is rejected by the state check and dropped by the worker as terminal).\n2. **Circuit breaker reset**. re-enables definitions after `CircuitBreakerResetMinutes`; publishes `DefinitionUpdated` so scheduler caches refresh promptly.\n3. **Stuck queued redispatch**. re-publishes `RunCreated` for due `Queued` runs untouched for `QueuedRunRedispatchMinutes` (lost publishes, delayed retries whose slot came due,\n crashed suppressed-dispatch owners). Bumps `UpdatedTimestamp` so a stuck run retries once per threshold window; duplicate deliveries are harmless because `StartedJobRun` only\n transitions `Queued -> Running` once.\n4. **Retention purge**. deletes finished runs older than effective retention in `PurgeBatchSize` batches. Detaches FK references from surviving rows first: `ReRanFromJobRunId`/\n `TriggeredByJobRunId`/`ParentJobRunId` on related runs and `JobWorkflowRunStep.JobRunId` (workflow history is preserved with the run reference nulled), so purging\n workflow-created runs or parents with surviving children cannot violate FKs and wedge the purge.\n5. **Worker pruning**. removes stale `JobWorkerInstance` rows.\n6. **SLA breach scan**. marks `SlaBreached` and increments `job.sla.breach` for overdue queued/running jobs. Alerts for SLA breaches are published by `JobService` on start/finish\n transitions, not by this background scan.\n\n```mermaid\nflowchart LR\n    tick[Maintenance tick] --> dead[Fail dead jobs]\n    tick --> cb[Reset circuit breakers]\n    tick --> redisp[Redispatch stuck queued runs]\n    tick --> ret[Purge by retention]\n    tick --> wrk[Prune worker instances]\n    tick --> sla[Detect SLA breaches]\n    dead --> alert[PublishAlertAsync]\n    dead --> fin[PublishRunFinishedAsync]\n    cb --> defupd[PublishDefinitionUpdatedAsync]\n```"
     },
     {
       "type": "table",
@@ -437,14 +437,14 @@
       "type": "list",
       "title": "Event publishers (`Events/`)",
       "items": [
-        "**`NullJobEventPublisher`** — default; `IsConnected() == false`.",
-        "**`MqJobEventPublisher`** — creates queues/exchange bindings; publishes run events with optional priority; routes alerts to `job.notifications.alert`. Resolves worker types from EF when `JobContext` is registered. For scheduler/worker hosts use `Lyo.Job.Client.MqJobEventPublisher` instead."
+        "**`NullJobEventPublisher`.** default; `IsConnected() == false`.",
+        "**`MqJobEventPublisher`.** creates queues/exchange bindings; publishes run events with optional priority; routes alerts to `job.notifications.alert`. Resolves worker types from EF when `JobContext` is registered. For scheduler/worker hosts use `Lyo.Job.Client.MqJobEventPublisher` instead."
       ]
     },
     {
       "type": "markdown",
       "title": "Design-time migrations",
-      "body": "Set `JOB_CONNECTION_STRING` and run:\n\n```bash\nexport JOB_CONNECTION_STRING=\"Host=localhost;Database=postgres;Username=postgres;Password=password\"\ndotnet ef migrations add YourMigrationName --project Lyo.Job.Postgres\n```\n\nRecent migrations of note:\n\n- `WidenJobDefinitionWorkerType` — widens `job_definition.worker_type` from 7 to 50 characters, matching `job_worker_instance.worker_type` (worker type names longer than 7\n  characters were previously truncated/rejected on the definition side only)."
+      "body": "Set `JOB_CONNECTION_STRING` and run:\n\n```bash\nexport JOB_CONNECTION_STRING=\"Host=localhost;Database=postgres;Username=postgres;Password=password\"\ndotnet ef migrations add YourMigrationName --project Lyo.Job.Postgres\n```\n\nRecent migrations of note:\n\n- **`WidenJobDefinitionWorkerType`.** widens `job_definition.worker_type` from 7 to 50 characters, matching `job_worker_instance.worker_type` (worker type names longer than 7\n characters were previously truncated/rejected on the definition side only)."
     }
   ],
   "links": [],

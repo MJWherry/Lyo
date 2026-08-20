@@ -382,7 +382,7 @@ def feature_node_to_md(node, indent: int = 0) -> list[str]:
         return lines
 
     if title and text:
-        label = f"**{title}** — {text}"
+        label = f"**{title}.** {text}"
     elif title:
         label = f"**{title}**" if items else title
     else:
@@ -405,7 +405,7 @@ def list_item_to_md(item, indent: int = 0, ordered: bool = False, index: int = 1
     text = (item.get("text") or "").strip()
     children = item.get("items") or []
     if title and text:
-        label = f"**{title}** — {text}"
+        label = f"**{title}.** {text}"
     else:
         label = text or title
 
@@ -829,7 +829,7 @@ def docs_to_readme(pkg: dict) -> str:
         if benches.get("suite"):
             lines.append(f"- Portfolio suite: `{benches['suite']}`")
         for item in benches.get("items") or []:
-            note = f" — {item['note']}" if item.get("note") else ""
+            note = f". {item['note']}" if item.get("note") else ""
             lines.append(f"- [{item['label']}]({item['href']}){note}")
         lines.append("")
 
@@ -862,7 +862,7 @@ def docs_to_readme(pkg: dict) -> str:
             version = dep.get("version")
             label = f"`{name}`"
             ver = f" `{version}`" if version else ""
-            lines.append(f"- {label}{ver} — ({tag_str})" if tag_str else f"- {label}{ver}")
+            lines.append(f"- {label}{ver} ({tag_str})" if tag_str else f"- {label}{ver}")
         lines.append("")
 
     text = "\n".join(lines)

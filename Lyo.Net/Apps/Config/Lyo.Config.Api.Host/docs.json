@@ -3,7 +3,7 @@
   "name": "Lyo.Config.Api.Host",
   "area": "Apps",
   "tagline": "Standalone ASP.NET host for `Lyo.Config.Api`.",
-  "description": "Thin Web host that calls `AddConfigApi` and `MapConfigApiEndpoints` from [`Lyo.Config.Api`](../Lyo.Config.Api/README.md). Embed those extensions in another API (for example Gateway) instead of running this host when composing surfaces.",
+  "description": "Thin Web host that calls `AddConfigApi` and `MapConfigApiEndpoints` from [`Lyo.Config.Api`](../Lyo.Config.Api/README.md). Embed those extensions in another API (for example Gateway) instead of running this host.",
   "features": [
     "Listens on http://localhost:5088 (see Properties/launchSettings.json).",
     "Development-only OpenAPI + Scalar.",

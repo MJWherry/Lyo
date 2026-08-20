@@ -28,7 +28,7 @@
       "rows": [
         [
           "`ServerAuthSignInLauncher`",
-          "Sign-in 302s through the consumer's `/auth/sign-in/{provider}` endpoint; sign-out submits a POST to `/auth/sign-out` via a dynamically constructed form (CSRF-safe)."
+          "Sign-in 302s through the consumer's `/auth/sign-in/{provider}` endpoint. Sign-out submits a POST to `/auth/sign-out` via a dynamically constructed form (CSRF-safe)."
         ],
         [
           "`ServerAuthSessionAccessor`",
@@ -36,14 +36,14 @@
         ],
         [
           "`ServerAuthUserClient`",
-          "Typed `HttpClient` with `AddLyoAuthHandler()` so calls to `GET /auth/me` and `GET /auth/users/{id}` automatically carry the bearer and auto-refresh on 401."
+          "Typed `HttpClient` with `AddLyoAuthHandler()` so calls to `GET /auth/me` and `GET /auth/users/{id}` carry the bearer and refresh on 401."
         ]
       ]
     },
     {
       "type": "paragraph",
       "title": "Registration",
-      "text": "Make sure the consuming Blazor Server router picks up this package's pages — either via auto-scan or by adding the assembly to `AdditionalAssemblies`:"
+      "text": "Make sure the consuming Blazor Server router picks up this package's pages, either via auto-scan or by adding the assembly to `AdditionalAssemblies`:"
     }
   ],
   "links": [],
@@ -90,7 +90,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -154,6 +170,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -179,6 +203,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -245,6 +277,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -273,7 +314,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

@@ -3,7 +3,7 @@
   "name": "Lyo.Google.Geolocation.Client",
   "area": "Integration",
   "tagline": "Google Maps REST client and `IGeolocationService` implementation.",
-  "description": "Google Maps REST client and `IGeolocationService` implementation.\n\n**Archetype C** — `Integration/Google/` (vendor folder). Geolocation is not Communication; this package mirrors `Lyo.Endato.Client` + Core store, not `Lyo.Translation.Google`. Path\nconfirmed in [package layout](../../../docs/package-layout.md) (Phase 1).\n\nReferences [`Lyo.Geolocation`](../../../Core/Geolocation/Lyo.Geolocation/README.md) and [`Lyo.Geolocation.Models`](../../../Core/Geolocation/Lyo.Geolocation.Models/README.md)\nonly — **not** `Lyo.Geolocation.Postgres`. The host wires this client together with the store.",
+  "description": "Google Maps REST client and `IGeolocationService` implementation.\n\n**Archetype C.** `Integration/Google/` (vendor folder). Geolocation is not Communication. This package mirrors `Lyo.Endato.Client` plus a Core store, not `Lyo.Translation.Google`. Path confirmed in [package layout](../../../docs/package-layout.md) (Phase 1).\n\nReferences [`Lyo.Geolocation`](../../../Core/Geolocation/Lyo.Geolocation/README.md) and [`Lyo.Geolocation.Models`](../../../Core/Geolocation/Lyo.Geolocation.Models/README.md) only, not `Lyo.Geolocation.Postgres`. The host wires this client together with the store.",
   "features": [],
   "examples": [
     {
@@ -31,7 +31,7 @@
         ],
         [
           "`GoogleMapsMapper`",
-          "Google JSON → `Address` + `EntitySourceRecord.From(...)` (`GoogleGeolocationSourceTypes.GoogleMapsPlace` on **`source_entity_*`**)"
+          "Google JSON → `Address` + `EntitySourceRecord.From(...)` (`GoogleGeolocationSourceTypes.GoogleMapsPlace` on `source_entity_*`)"
         ]
       ]
     }
@@ -156,6 +156,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

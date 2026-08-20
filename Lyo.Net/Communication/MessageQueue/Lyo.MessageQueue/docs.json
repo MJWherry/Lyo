@@ -2,29 +2,29 @@
   "id": "Lyo.MessageQueue",
   "name": "Lyo.MessageQueue",
   "area": "Communication",
-  "tagline": "Portable **queue + exchange** abstraction (`IMqService`) so schedulers, workers, and gateways can compile against **one contract** while swapping RabbitMQ—or future brokers—behind…",
-  "description": "Portable **queue + exchange** abstraction (`IMqService`) so schedulers, workers, and gateways can compile against **one contract** while swapping RabbitMQ—or future brokers—behind\n**`Lyo.MessageQueue.*` implementations**.\n\nImplements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity alongside DB/cache checks.",
+  "tagline": "`IMqService` is the queue and exchange contract. Schedulers, workers, and gateways compile against one interface and swap `Lyo.MessageQueue.*` brokers behind it.",
+  "description": "`IMqService` is the queue and exchange contract. Schedulers, workers, and gateways compile against one interface and swap RabbitMQ or later brokers behind\n`Lyo.MessageQueue.*` implementations.\n\nImplements `Lyo.Health.IHealth` so dashboards can ping broker connectivity alongside DB/cache checks.",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "list",
-      "title": "Contract highlights (`IMqService`)",
+      "title": "`IMqService`",
       "items": [
-        "**`ConnectAsync` / `DisconnectAsync`** establish sessions.",
-        "**`IsConnected`** — synchronous snapshot for guards."
+        "`ConnectAsync` / `DisconnectAsync` open and close sessions.",
+        "`IsConnected` is a synchronous snapshot for guards."
       ]
     },
     {
       "type": "markdown",
       "title": "Messaging envelopes (`QueueMessageEnvelope<T>`)",
-      "body": "`QueueMessageEnvelope<T>` carries `Payload`, `RequeueCount`, `MessageId`, `EnqueuedAt`, `TraceId`, and\n`Version` alongside the payload. The internal `QueueWorkerHelpers.DeserializeMessage<T>` detects JSON\nshaped like `{ Payload, RequeueCount, … }` vs raw DTO JSON so you can:\n\n- Attach `RequeueCount` / identifiers / timestamps without wrapping every caller manually.\n- Migrate legacy producers that still emit bare JSON objects — the first requeue from a legacy message\n  is automatically wrapped in an envelope by `QueueWorkerBase` so subsequent requeues count correctly.\n\n`MessageProcessingExceptionHandling` (`IgnoreAndRemoveFromQueue`, `ThrowAndRemoveFromQueue`,\n`RequeueOnException`) is the shared enum implementations expose for tuning how thrown exceptions in\nmessage handlers are mapped to ack/nack/requeue semantics."
+      "body": "`QueueMessageEnvelope<T>` carries `Payload`, `RequeueCount`, `MessageId`, `EnqueuedAt`, `TraceId`, and\n`Version` alongside the payload. The internal `QueueWorkerHelpers.DeserializeMessage<T>` detects JSON\nshaped like `{ Payload, RequeueCount, … }` vs raw DTO JSON so you can:\n\n- Attach `RequeueCount` / identifiers / timestamps without wrapping every caller manually.\n- Migrate legacy producers that still emit bare JSON objects. The first requeue from a legacy message\n  is automatically wrapped in an envelope by `QueueWorkerBase` so subsequent requeues count correctly.\n\n`MessageProcessingExceptionHandling` (`IgnoreAndRemoveFromQueue`, `ThrowAndRemoveFromQueue`,\n`RequeueOnException`) is the shared enum implementations expose for tuning how thrown exceptions in\nmessage handlers map to ack/nack/requeue."
     },
     {
       "type": "list",
-      "title": "Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`)",
+      "title": "`QueueWorkerBase`",
       "items": [
-        "Implements `IHostedService` + `IDisposable` + `IHealth` — `StartAsync` connects (if needed) and calls `SubscribeToQueue`; `StopAsync` cancels and waits up to `DrainTimeoutMs` (default `30_000` ms) for in-flight messages before returning.",
+        "Implements `IHostedService` + `IDisposable` + `IHealth`. `StartAsync` connects if needed and calls `SubscribeToQueue`. `StopAsync` cancels and waits up to `DrainTimeoutMs` (default `30_000` ms) for in-flight messages before returning.",
         "Parses messages via the envelope-aware `DeserializeMessage` helper.",
         "Executes your abstract `DoWorkAsync(TRequest, CancellationToken) → Task<TResult>`.",
         "Applies requeue heuristics: an optional `Metadata[\"requeue\"]` bool on the result overrides the default `!IsSuccess` requeue.",
@@ -34,12 +34,12 @@
     },
     {
       "type": "markdown",
-      "title": "Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`) — Envelope retry flow",
-      "body": "Every failure path acks the original delivery and republishes a counted copy — a bad message or a\nrepeatedly-throwing `DoWorkAsync` can never spin in an infinite broker redelivery loop:\n\n```mermaid\nflowchart LR\n    msg[Message delivered] --> des{Deserialize\\nautocorrect ladder}\n    des -->|unrecoverable| poison[Ack + forward original bytes to DLQ]\n    des -->|ok| work[DoWorkAsync]\n    work -->|success| ack[Ack]\n    work -->|failure / exception| cap{RequeueCount < max?}\n    cap -->|yes| requeue[\"Ack + republish with RequeueCount+1\\n(delayed by RequeueDelay × attempt when supported)\"]\n    requeue --> msg\n    cap -->|no| dlq[Ack + route to DLQ or drop]\n```"
+      "title": "Envelope retry flow",
+      "body": "Every failure path acks the original delivery and republishes a counted copy. A bad message or a\nrepeatedly-throwing `DoWorkAsync` cannot loop forever on broker redelivery:\n\n```mermaid\nflowchart LR\n    msg[Message delivered] --> des{Deserialize\\nautocorrect ladder}\n    des -->|unrecoverable| poison[Ack + forward original bytes to DLQ]\n    des -->|ok| work[DoWorkAsync]\n    work -->|success| ack[Ack]\n    work -->|failure / exception| cap{RequeueCount < max?}\n    cap -->|yes| requeue[\"Ack + republish with RequeueCount+1\\n(delayed by RequeueDelay × attempt when supported)\"]\n    requeue --> msg\n    cap -->|no| dlq[Ack + route to DLQ or drop]\n```"
     },
     {
       "type": "table",
-      "title": "Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`) — `QueueWorkerOptions`",
+      "title": "`QueueWorkerOptions`",
       "headers": [
         "Property",
         "Type",
@@ -60,26 +60,26 @@
           "Base retry delay (linear backoff by attempt). Requires an `IDelayedMqService` transport; `null`/zero = no delay."
         ]
       ],
-      "lead": "Shared defaults resolved by DI registration paths (e.g. `AddJobWorker` / `AddJobWorkerFromConfiguration`,\nsection name `\"QueueWorkerOptions\"`) — the `QueueWorkerBase` constructor signature stays unchanged:",
-      "trail": "- Tracks `InFlightCount`, exposes a `queue-worker:{QueueName}` health probe via `CheckHealthAsync`, and\n  emits metrics via the injected `IMetrics`:\n    - `queue.worker.message.processing.duration` (timer; tag `queue`)\n    - `queue.worker.messages.received` / `processed` / `requeued` / `deserialization.failed` / `dropped.max_requeue` / `dlq`\n    - `queue.worker.started` / `start.failed` / `stopped`\n    - `queue.worker.running` (gauge; `1` while running, `0` after stop)\n    - Error records on `queue.worker.message.processing.error` and `queue.worker.message.deserialization.error`\n\nThis is the **production-grade** path for long-running consumers in Lyo’s own job/email stacks."
+      "lead": "Shared defaults resolved by DI registration paths (for example `AddJobWorker` / `AddJobWorkerFromConfiguration`,\nsection name `\"QueueWorkerOptions\"`). The `QueueWorkerBase` constructor signature stays unchanged:",
+      "trail": "- Tracks `InFlightCount`, exposes a `queue-worker:{QueueName}` health probe via `CheckHealthAsync`, and\n  emits metrics via the injected `IMetrics`:\n    - `queue.worker.message.processing.duration` (timer; tag `queue`)\n    - `queue.worker.messages.received` / `processed` / `requeued` / `deserialization.failed` / `dropped.max_requeue` / `dlq`\n    - `queue.worker.started` / `start.failed` / `stopped`\n    - `queue.worker.running` (gauge; `1` while running, `0` after stop)\n    - Error records on `queue.worker.message.processing.error` and `queue.worker.message.deserialization.error`\n\nThis is the hosted-consumer path used by Lyo job and email workers."
     },
     {
       "type": "list",
-      "title": "Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`) — Health and diagnostics surface",
+      "title": "Health and diagnostics",
       "items": [
-        "`MqServiceHealth` — `Queues` and `Connections` collections.",
-        "`MessageQueueInfo(Name, State?, Type?, Messages, MessagesReady, MessagesUnacknowledged, Consumers, AdditionalProperties)` — generic per-queue snapshot.",
-        "`ConnectionInfo(User, UserProvidedName?, State, VHost)` — generic connection snapshot.",
-        "`QueuePeekMessage(Payload, PayloadEncoding?, Exchange?, RoutingKey?, MessageCount?, Redelivered)` — what `PeekQueueMessages` returns."
+        "`MqServiceHealth`. `Queues` and `Connections` collections.",
+        "`MessageQueueInfo(Name, State?, Type?, Messages, MessagesReady, MessagesUnacknowledged, Consumers, AdditionalProperties)`. Per-queue snapshot.",
+        "`ConnectionInfo(User, UserProvidedName?, State, VHost)`. Connection snapshot.",
+        "`QueuePeekMessage(Payload, PayloadEncoding?, Exchange?, RoutingKey?, MessageCount?, Redelivered)`. What `PeekQueueMessages` returns."
       ]
     },
     {
       "type": "list",
-      "title": "Operational guidance",
+      "title": "Operations",
       "items": [
-        "Treat **`byte[]`** as **opaque at the interface**—sign and compress at the app layer if payloads leave a trust zone.",
-        "**Idempotency**: requeue storms happen when handlers throw—make side effects idempotent or persist processing tokens.",
-        "**Health**: implementors should ensure **`IHealth`** surfaces broker reachability; don’t lie “healthy” when `IsConnected()` is false unless you intend lazy connect."
+        "Treat `byte[]` as opaque at the interface. Sign and compress at the app layer if payloads leave a trust zone.",
+        "**Idempotency.** Requeue storms happen when handlers throw. Make side effects idempotent or persist processing tokens.",
+        "**Health.** Implementors should make `IHealth` report broker reachability. Do not report healthy when `IsConnected()` is false unless you intend a lazy connect."
       ]
     },
     {
@@ -92,15 +92,15 @@
       "rows": [
         [
           "[`Lyo.MessageQueue.RabbitMq`](../Lyo.MessageQueue.RabbitMq/README.md)",
-          "Production **`RabbitMQ.Client`** driver + DI helpers."
+          "`RabbitMQ.Client` driver and DI helpers."
         ],
         [
-          "**`Lyo.MessageQueue.Web.Components`**",
-          "Blazor UX for queue inspection/management in internal tools."
+          "`Lyo.MessageQueue.Web.Components`",
+          "Blazor UI for queue inspection and management in internal tools."
         ],
         [
-          "**`Lyo.MessageQueue.RabbitMq.Web.Components`**",
-          "Rabbit-specific components + wiring."
+          "`Lyo.MessageQueue.RabbitMq.Web.Components`",
+          "Rabbit-specific components and wiring."
         ]
       ]
     },
@@ -108,8 +108,8 @@
       "type": "list",
       "title": "Related",
       "items": [
-        "[`Lyo.Job.Scheduler`](../../../Integration/Job/Lyo.Job.Scheduler/README.md) — often pairs with queues for fan-out triggers.",
-        "[`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md) — uniform health reporting."
+        "[`Lyo.Job.Scheduler`](../../../Integration/Job/Lyo.Job.Scheduler/README.md). Often pairs with queues for fan-out triggers.",
+        "[`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md). Shared health reporting."
       ]
     }
   ],

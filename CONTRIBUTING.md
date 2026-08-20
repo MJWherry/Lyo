@@ -4,8 +4,7 @@ Thanks for helping improve Lyo.
 
 ## License for your contribution
 
-By submitting a pull request or otherwise contributing code or documentation to this repository, you agree that your contribution is licensed under the **Apache License, Version
-2.0**—the same license as the project ([`LICENSE`](LICENSE)). That keeps inbound rights aligned with what everyone gets outbound.
+By submitting a pull request or otherwise contributing code or documentation to this repository, you agree that your contribution is licensed under the **Apache License, Version 2.0**, the same license as the project ([`LICENSE`](LICENSE)). That keeps inbound rights aligned with what everyone gets outbound.
 
 ## What we hope for (not a legal requirement)
 
@@ -15,9 +14,9 @@ If Lyo helps your project, we still **hope** you will:
 
 - **Send bugfixes and small improvements upstream** when they are generally useful and not secret sauce.
 - **Open an issue** before large changes so we can agree on direction.
-- **Keep PRs focused**—one concern per PR when possible.
+- **Keep PRs focused.** One concern per PR when possible.
 
-None of that is required by the license; it is how healthy libraries stay maintainable.
+None of that is required by the license. It is how healthy libraries stay maintainable.
 
 ## Practical notes
 

@@ -2,8 +2,8 @@
   "id": "Lyo.Health",
   "name": "Lyo.Health",
   "area": "Core",
-  "tagline": "Interface for services that can report their health. Services implement `IHealth` and expose health directly—no central health service.",
-  "description": "Interface for services that can report their health. Services implement `IHealth` and expose health directly—no central health service. Health returns `HealthResult` with status,\ntimings, and optional metadata.",
+  "tagline": "Interface for services that report their own health. Implement `IHealth`. There is no central health service.",
+  "description": "Interface for services that report their own health. Implement `IHealth`. There is no central health service. Health returns `HealthResult` with status,\ntimings, and optional metadata.",
   "features": [],
   "examples": [
     {
@@ -26,7 +26,7 @@
     {
       "type": "markdown",
       "title": "Contract",
-      "body": "- **`HealthCheckName`** is a short identifier (e.g. `\"filestorage\"`, `\"cache\"`, `\"rabbitmq\"`, `\"audit-postgres\"`, `\"change-tracker-postgres\"`) used to label probe output in hosts.\n- **`CheckHealthAsync`** is the live probe; it should be cheap, short-circuiting, and honor the supplied `CancellationToken`."
+      "body": "- `HealthCheckName` is a short identifier used to label probe output in hosts, for example `\"filestorage\"`, `\"cache\"`, `\"rabbitmq\"`, `\"audit-postgres\"`, `\"change-tracker-postgres\"`.\n- `CheckHealthAsync` is the live probe. Keep it cheap and short-circuiting, and honor the supplied `CancellationToken`."
     },
     {
       "type": "table",
@@ -68,13 +68,13 @@
           "Captured exception when the probe threw."
         ]
       ],
-      "lead": "`HealthResult` is an immutable, sealed class that captures the outcome of a probe:",
+      "lead": "`HealthResult` is an immutable, sealed class for the outcome of a probe:",
       "trail": "Use the static factories rather than constructing directly:"
     },
     {
       "type": "paragraph",
       "title": "Usage",
-      "text": "Get health from the service directly: Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend `IHealth`—health comes from the service, no separate registration. Hosts that need an aggregate view typically resolve `IEnumerable<IHealth>` and fan out `CheckHealthAsync` in parallel, then publish the resulting `HealthResult` collection."
+      "text": "Get health from the service directly. Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend `IHealth`. Health comes from the service. No separate registration. Hosts that need an aggregate view typically resolve `IEnumerable<IHealth>` and fan out `CheckHealthAsync` in parallel, then publish the resulting `HealthResult` collection."
     }
   ],
   "links": [],

@@ -1,26 +1,26 @@
 # Lyo.Common
 
-Cross-cutting primitives shared across the Lyo library suite: ID generators, file/MIME/language/HTTP/file-size metadata, geometry, secure RNG, typed extension classes, and shared `System.Text.Json` options.
+Shared primitives: ID generators, file/MIME/language/HTTP/file-size metadata, geometry, secure RNG, typed extensions, and shared `System.Text.Json` options.
 
-> **Note** — earlier versions of this README also described `Ensure`, `Error`, `ErrorBuilder`, and `Result*` types. Those live in **[`Lyo.Result`](../../Result/Lyo.Result/README.md)**, not here. `Lyo.Common` has **no** dependency on results — it sits below them and provides primitives that the rest of the > framework composes.
+> **Note.** Earlier versions of this README also described `Ensure`, `Error`, `ErrorBuilder`, and `Result*` types. Those live in [`Lyo.Result`](../../Result/Lyo.Result/README.md), not here. `Lyo.Common` has no dependency on results.
 
 ## Features
 
-- **ID generators** (`Identifiers/`) — `Ksuid`, `LyoGuid`, `NanoId`, `Snowflake`, `Ulid`, and `AutoIncrementIdGenerator` for thread-safe, sortable identifiers.
-- **Record metadata catalogs** (`Records/`) — `FileTypeInfo` (`.GetFileTypeFromExtension`, MIME mapping, two-key envelope suffix, common storage-resolution suffix list), `FileSizeUnitInfo`, `HttpStatusCodeInfo`, `PortInfo` (well-known ports + `PortCategory`, `FromPort`/`FromName`/`ByCategory`, implicit `int`), `LanguageCodeInfo`, `ProgrammingLanguageInfo`, `BoundingBox2D`.
-- **Enum catalogs** (`Enums/`) — `FileTypeFlags`, `MimeType`, `PortCategory`, language and HTTP enums with metadata-attribute lookups.
-- **Typed extension classes** (`Extensions/`) — `StringExtensions` (truncate, ellipsis, case helpers), `ScalarExtensions` (`ToScalar<T>`, parsing helpers), `DictionaryExtensions` ( `GetValueAs<T>`), `StreamExtensions` (bounded reads, copy helpers), `EnumMetadataExtensions`, `LanguageExtensions`, `TypeInfoExtensions`.
-- **`CollectionExtensions`** — materialization helpers (`AsListOrToList`, `AsReadOnlyCollectionOrToList`) that avoid redundant copies when the source is already the right shape.
-- **`Utilities`** — small shared helpers (`SafeDispose`, file-size conversions, expression-based property-path extraction).
-- **Pathing** (`Pathing/`) — `PathStyle` (`Host` / `Posix`) and `PathHelpers` for combine, full-path normalize (`.`/`..`), file/dir name, `SanitizeFileName`, and under-root jail checks with Uri-style throw helpers (`ThrowIfEscapesRoot`, `ThrowIfInvalidPath`).
-- **Cryptographic random** (`Security/CryptographicRandom`) — `RandomNumberGenerator`-backed byte / int / string helpers, used by other Lyo packages instead of `System.Random` for anything security-adjacent.
-- **`Disposable`** — convenience base / lambda disposable.
-- **`HashCodeHelpers`** — `HashCode.Combine`-style helpers for `netstandard2.0`.
-- **`LyoJsonSerializerOptions`** — shared `JsonSerializerOptions` (case-insensitive, ignore-null, enum-as-string) plus converters in `JsonConverters/` that other packages reuse.
+- **ID generators** (`Identifiers/`). `Ksuid`, `LyoGuid`, `NanoId`, `Snowflake`, `Ulid`, and `AutoIncrementIdGenerator` for thread-safe, sortable identifiers.
+- **Record metadata catalogs** (`Records/`). `FileTypeInfo` (`.GetFileTypeFromExtension`, MIME mapping, two-key envelope suffix, common storage-resolution suffix list), `FileSizeUnitInfo`, `HttpStatusCodeInfo`, `PortInfo` (well-known ports + `PortCategory`, `FromPort`/`FromName`/`ByCategory`, implicit `int`), `LanguageCodeInfo`, `ProgrammingLanguageInfo`, `BoundingBox2D`.
+- **Enum catalogs** (`Enums/`). `FileTypeFlags`, `MimeType`, `PortCategory`, language and HTTP enums with metadata-attribute lookups.
+- **Typed extension classes** (`Extensions/`). `StringExtensions` (truncate, ellipsis, case helpers), `ScalarExtensions` (`ToScalar<T>`, parsing helpers), `DictionaryExtensions` (`GetValueAs<T>`), `StreamExtensions` (bounded reads, copy helpers), `EnumMetadataExtensions`, `LanguageExtensions`, `TypeInfoExtensions`.
+- **`CollectionExtensions`.** Materialization helpers (`AsListOrToList`, `AsReadOnlyCollectionOrToList`) that skip a copy when the source is already the right shape.
+- **`Utilities`.** Shared helpers: `SafeDispose`, file-size conversions, expression-based property-path extraction.
+- **Pathing** (`Pathing/`). `PathStyle` (`Host` / `Posix`) and `PathHelpers` for combine, full-path normalize (`.`/`..`), file/dir name, `SanitizeFileName`, and under-root jail checks with Uri-style throw helpers (`ThrowIfEscapesRoot`, `ThrowIfInvalidPath`).
+- **Cryptographic random** (`Security/CryptographicRandom`). `RandomNumberGenerator`-backed byte / int / string helpers. Other Lyo packages use this instead of `System.Random` for security-adjacent work.
+- **`Disposable`.** Base class and lambda disposable.
+- **`HashCodeHelpers`.** `HashCode.Combine`-style helpers for `netstandard2.0`.
+- **`LyoJsonSerializerOptions`.** Shared `JsonSerializerOptions` (case-insensitive, ignore-null, enum-as-string) plus converters in `JsonConverters/` that other packages reuse.
 
 ## Examples
 
-### Quick Start
+### Quick start
 
 ```csharp
 using Lyo.Common.Identifiers;
@@ -121,12 +121,11 @@ PathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, root, full);
 
 ## Conversion
 
-`Lyo.Common.Conversion.TypeConversion` is the central type-conversion engine used across the Lyo suite (API patch binding, query filters, web-component grids, message-queue
-envelopes). It converts CLR objects, strings, character spans, and `JsonElement` values to target types — nullable unwrapping, enums (name or numeric), `Guid`/date/time parsing,
-and collection materialization (`T[]`, `List<T>`, `HashSet<T>`, `IReadOnlyList<T>`, `ISet<T>`, any concrete collection with an `IEnumerable<T>` constructor).
+`Lyo.Common.Conversion.TypeConversion` converts CLR objects, strings, character spans, and `JsonElement` values to target types. Callers include API patch binding, query filters, web-component grids, and message-queue
+envelopes. It unwraps nullables, parses enums (name or numeric), `Guid`/date/time, and materializes collections (`T[]`, `List<T>`, `HashSet<T>`, `IReadOnlyList<T>`, `ISet<T>`, any concrete collection with an `IEnumerable<T>` constructor).
 
-Failures throw `TypeConversionException` (derives `InvalidOperationException`) carrying `Value`, `SourceType`, and `TargetType`. Hook up logging by assigning the static logger —
-Debug on success, Warning on `Try*` misses, Error before throws (all zero-allocation via `LoggerMessage.Define` and disabled by default with `NullLogger`):
+Failures throw `TypeConversionException` (derives `InvalidOperationException`) carrying `Value`, `SourceType`, and `TargetType`. Assign the static logger to get
+Debug on success, Warning on `Try*` misses, and Error before throws. Logging is zero-allocation via `LoggerMessage.Define` and off by default (`NullLogger`).
 
 `TypeConversionExtensions` adds the reflection helpers the engine uses: `IsNumericType()`, `IsNullable()`, `IsCollectionType()`, `GetCollectionElementType()`,
 `GetFriendlyTypeName()`, `IsObjectEnumerable()`, and `TryGetAsEnumerable<T>()`.
@@ -135,7 +134,7 @@ Debug on success, Warning on `Try*` misses, Error before throws (all zero-alloca
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `System.Memory` `4.6.3` — (direct, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
+- `Lyo.Exceptions` (direct, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `System.Memory` `4.6.3` (direct, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)

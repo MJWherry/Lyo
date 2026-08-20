@@ -5,9 +5,9 @@
   "tagline": "FTP-backed IFileStorageService via Lyo.Ftp.Client.",
   "description": "Physical-IO provider for Lyo.FileStorage over FTP/FTPS. Supports save/read/delete/copy/move and DEK header rotation. Presigned URLs, multipart, and staged upload are not supported in v1 (base NotSupportedException).",
   "features": [
-    "**FTP physical IO** — streams via commit-on-close upload / leased read.",
-    "**Path jail** — POSIX paths under `Ftp.RootRemoteDirectory`.",
-    "**DI** — `AddFtpFileStorageService` / `FromConfiguration` (Blob-shaped)."
+    "**FTP physical IO.** Streams via commit-on-close upload and leased read.",
+    "**Path jail.** POSIX paths under `Ftp.RootRemoteDirectory`.",
+    "**DI.** `AddFtpFileStorageService` and `AddFtpFileStorageServiceFromConfiguration`, same shape as the Blob extensions."
   ],
   "examples": [
     {

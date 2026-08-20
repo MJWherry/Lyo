@@ -2,23 +2,23 @@
   "id": "Lyo.IO.Temp",
   "name": "Lyo.IO.Temp",
   "area": "Data",
-  "tagline": "Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling.",
-  "description": "Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling. Ideal for upload processing, report generation, or any workflow needing short-lived temp storage.\n\nThe public contract is **`IIOTempService`** and **`IIOTempSession`**; **`IOTempService`** / **`IOTempSession`** are the default implementations. With XML doc generation enabled in the repo, IntelliSense surfaces the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror the interfaces.",
+  "tagline": "Create and manage temporary files and directories with sessions, naming strategies, and overflow handling.",
+  "description": "Create and manage temporary files and directories with sessions, naming strategies, and overflow handling.\n\nThe public contract is `IIOTempService` and `IIOTempSession`. `IOTempService` / `IOTempSession` are the default implementations. With XML doc generation enabled in the repo, IntelliSense shows the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror the interfaces.",
   "features": [
-    "**Session-based** – `IIOTempSession` groups temp files/dirs; cleanup on session dispose",
-    "**Standalone files/dirs** – One-off `CreateFile` / `CreateDirectory` without a session",
-    "**Pluggable storage** – `IIOTempStorageProvider` abstracts all I/O; ships with `FileSystemIOTempStorageProvider` (default, `PathStyle.Host`) and `InMemoryIOTempStorageProvider` (WASM / tests, `PathStyle.Posix`); path math uses `Lyo.Common.Pathing.PathHelpers`",
-    "**Naming strategies** – `Guid`, `Sequential`, `Timestamp`, `RandomChars`",
-    "**Overflow handling** – `ThrowException`, `DeleteOldest`, or `DeleteLargest` when per-file or total-size limits are exceeded",
-    "**File generator** – `session.Generator` produces random-bytes files, structured text/CSV/JSON, zip archives, and simulated directory trees",
-    "**Events** – `FileCreated` / `DirectoryCreated` callbacks on session for observability",
-    "**Sub-sessions** – Nested sessions rooted inside a parent session",
-    "**Session inspection** – Snapshots, byte totals, discovery enumerations",
-    "**Keyed session pooling** – `GetOrCreateSession(key)` for per-request/per-pipeline pools",
-    "**Fluent options** – `WithMaxFileSize` / `WithMaxTotalSize` extension methods on options objects",
-    "**Assertion helpers** – `AssertFilesExist` / `AssertTotalSize` on `IIOTempSession` for test code",
-    "**Auto-cleanup** – Background `IHostedService` that periodically calls `Cleanup()`",
-    "**Metrics** – Session created, files created, cleanup counts (when `IMetrics` registered)"
+    "**Session-based.** `IIOTempSession` groups temp files/dirs. Cleanup on session dispose.",
+    "**Standalone files/dirs.** One-off `CreateFile` / `CreateDirectory` without a session.",
+    "**Pluggable storage.** `IIOTempStorageProvider` abstracts all I/O. Ships with `FileSystemIOTempStorageProvider` (default, `PathStyle.Host`) and `InMemoryIOTempStorageProvider` (WASM / tests, `PathStyle.Posix`). Path math uses `Lyo.Common.Pathing.PathHelpers`.",
+    "**Naming strategies.** `Guid`, `Sequential`, `Timestamp`, `RandomChars`.",
+    "**Overflow handling.** `ThrowException`, `DeleteOldest`, or `DeleteLargest` when per-file or total-size limits are exceeded.",
+    "**File generator.** `session.Generator` produces random-bytes files, structured text/CSV/JSON, zip archives, and simulated directory trees.",
+    "**Events.** `FileCreated` / `DirectoryCreated` callbacks on session.",
+    "**Sub-sessions.** Nested sessions rooted inside a parent session.",
+    "**Session inspection.** Snapshots, byte totals, discovery enumerations.",
+    "**Keyed session pooling.** `GetOrCreateSession(key)` for per-request/per-pipeline pools.",
+    "**Fluent options.** `WithMaxFileSize` / `WithMaxTotalSize` extension methods on options objects.",
+    "**Assertion helpers.** `AssertFilesExist` / `AssertTotalSize` on `IIOTempSession` for test code.",
+    "**Auto-cleanup.** Background `IHostedService` that periodically calls `Cleanup()`.",
+    "**Metrics.** Session created, files created, cleanup counts (when `IMetrics` registered)."
   ],
   "examples": [
     {
@@ -32,7 +32,7 @@
       "code": "using var session = _ioTempService.CreateSession();\n\n// Write your own data\nvar path = session.GetFilePath(\"report.pdf\");\nawait File.WriteAllBytesAsync(path, reportBytes);\n\n// Or create directly from data\nvar path2 = await session.CreateFileAsync(byteData);\nvar path3 = await session.CreateFileAsync(stream);\n\n// Session dispose → all files/dirs cleaned up automatically"
     },
     {
-      "title": "File Generator",
+      "title": "File generator",
       "language": "csharp",
       "code": "// Random-bytes files\nvar file = session.Generator.CreateRandomFile(FileSizeUnitInfo.Megabyte, 1);\nvar files = session.Generator.CreateRandomFiles(5, FileSizeUnitInfo.Kilobyte, 64);\n\n// Named random files (name selector per index)\nvar named = session.Generator.CreateRandomFiles(3, 1024, i => $\"chunk_{i}.bin\");\n\n// Structured content\nvar txt = session.Generator.CreateTextFile(lines: 100, charsPerLine: 80);\nvar csv = session.Generator.CreateCsvFile(rows: 500, columns: 10);\nvar json = session.Generator.CreateJsonFile(depth: 3, keysPerObject: 5);\n\n// Zip archive\nvar zip = session.Generator.CreateZipFile(TempDirectorySpec.Flat(10, 1024));\n\n// Simulated directory tree\nvar dir = session.Generator.SimulateDirectory(TempDirectorySpec.Flat(20, 512));"
     },
@@ -95,7 +95,7 @@
   "sections": [
     {
       "type": "paragraph",
-      "title": "File Generator",
+      "title": "File generator",
       "text": "Access via `session.Generator`:"
     },
     {
@@ -105,27 +105,27 @@
     },
     {
       "type": "paragraph",
-      "title": "Storage Providers",
-      "text": "All I/O is delegated through `IIOTempStorageProvider`, making the storage backend fully swappable. Two implementations are included; register a custom one via DI to use any other backend. Each provider exposes `PathStyle` (`Host` for real disk, `Posix` for in-memory/remote); service/session/generator path combine, normalize, and jail checks go through `PathHelpers` with that style."
+      "title": "Storage providers",
+      "text": "All I/O goes through `IIOTempStorageProvider`. Two implementations ship with the package. Register a custom one via DI for any other backend. Each provider exposes `PathStyle` (`Host` for real disk, `Posix` for in-memory/remote). Service, session, and generator path combine, normalize, and jail checks go through `PathHelpers` with that style."
     },
     {
       "type": "markdown",
-      "title": "Storage Providers — FileSystemIOTempStorageProvider (default)",
+      "title": "FileSystemIOTempStorageProvider (default)",
       "body": "Delegates to `System.IO` with `PathStyle.Host`. Used automatically when no `IIOTempStorageProvider` is registered.\n\n```csharp\n// Implicit — no registration needed\nservices.AddIOTempService();\n```"
     },
     {
       "type": "markdown",
-      "title": "Storage Providers — InMemoryIOTempStorageProvider",
+      "title": "InMemoryIOTempStorageProvider",
       "body": "Backed by a `ConcurrentDictionary` with `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; suitable for Blazor WASM and unit tests.\nAll data lives for the lifetime of the provider instance.\n\n```csharp\n// Blazor WASM (Program.cs)\nbuilder.Services.AddSingleton<IIOTempStorageProvider>(new InMemoryIOTempStorageProvider());\nbuilder.Services.AddIOTempService();\n\n// xUnit / NUnit — direct construction\nvar storage = new InMemoryIOTempStorageProvider();\nvar options = new IOTempSessionOptions { RootDirectory = storage.RootPath };\nusing var session = new IOTempSession(options, storageProvider: storage);\n```"
     },
     {
       "type": "markdown",
-      "title": "Storage Providers — SFTP (`Lyo.IO.Temp.Sftp`)",
+      "title": "SFTP (`Lyo.IO.Temp.Sftp`)",
       "body": "Use the shipped SFTP provider for remote temp storage:\n\n```csharp\nservices.AddIOTempSftpStorageProvider(o =>\n{\n    o.Host = \"sftp.example.com\";\n    o.Username = \"lyo\";\n    o.Password = secret;\n    o.RootRemoteDirectory = \"/tmp/lyo\";\n    o.HostKeyPolicy = SftpHostKeyPolicy.FingerprintAllowList;\n    o.AllowedHostKeyFingerprints.Add(\"SHA256:...\");\n});\nservices.AddIOTempService();\n```\n\nSee package `Lyo.IO.Temp.Sftp` (backed by `Lyo.Sftp.Client`)."
     },
     {
       "type": "markdown",
-      "title": "Storage Providers — Custom Provider",
+      "title": "Custom provider",
       "body": "Implement `IIOTempStorageProvider` once to use any backend (FTP, Azure Blob, etc.):\n\n```csharp\npublic sealed class FtpIOTempStorageProvider : IIOTempStorageProvider\n{\n    // implement RootPath, PathStyle, DirectoryExists, CreateDirectory, WriteAllBytes, OpenRead, ...\n}\n\n// Register it before AddIOTempService\nservices.AddSingleton<IIOTempStorageProvider>(new FtpIOTempStorageProvider(...));\nservices.AddIOTempService();\n```\n\nThe provider interface covers: `PathStyle`, directory create/delete/enumerate, file touch/read/write/append/copy/move/delete, streaming open (read, create, append), file metadata (length,\ncreation time), async variants of all write operations, and an `EnsureDirectoryAccessible` hook (used for R/W probing; may be a no-op for in-memory providers)."
     },
     {

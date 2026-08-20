@@ -1,38 +1,38 @@
 # Lyo.Tts
 
-Contracts and shared behaviour for text-to-speech in Lyo: provider-agnostic interfaces, a non-generic façade, and a base service with bulk synthesis, metrics hooks, and lifecycle events.
+Contracts and shared TTS behavior: provider-agnostic interfaces, a non-generic facade, and a base service with bulk synthesis, metrics, and lifecycle events.
 
 **Target frameworks:** `netstandard2.0;net10.0`
 
-## Contracts at a glance
+## Contracts
 
-| Interface | Surface |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `ITtsService` | Non-generic façade — `Task<TtsSynthesisResult> SynthesizeAsync(string text, string? voiceId = null, CancellationToken ct = default)`. |
-| `ITtsService<TRequest>` where `TRequest : TtsRequest` | Full provider surface: string overload, fully typed request, write-to-file, write-to-stream, bulk, `TestConnectionAsync`. |
+| Interface | Methods |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `ITtsService` | Non-generic facade. `Task<TtsSynthesisResult> SynthesizeAsync(string text, string? voiceId = null, CancellationToken ct = default)`. |
+| `ITtsService<TRequest>` where `TRequest : TtsRequest` | Typed methods: string overload, fully typed request, write-to-file, write-to-stream, bulk, `TestConnectionAsync`. |
 
-`ITtsService` is intentionally tiny — host code that only needs "string in → audio bytes out" depends on
-it without caring which provider is wired up. Provider packages ship a small `*TtsAppService` adapter
+`ITtsService` is intentionally tiny. Host code that only needs string-in, audio-bytes-out depends on
+it without caring which provider is registered. Provider packages ship a small `*TtsAppService` adapter
 (holding the typed service) and register `ITtsService` via that adapter alongside `ITtsService<TRequest>`.
 
 ## Provider DI matrix
 
 | Provider package | `ITtsService<TRequest>` | `ITtsService` (non-generic) | App-service adapter | DI entry points |
-| ------------------------------------------------------------- | --------------------------------- | ------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------------------------- | --------------------------------- | ----------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md) | `ITtsService<AwsPollyTtsRequest>` | (via `AwsPollyTtsAppService`) | `AwsPollyTtsAppService` | `AddAwsPollyTtsService(Action<AwsPollyOptions>)`, `AddAwsPollyTtsServiceFromConfiguration(IConfiguration, string?)`, `AddAmazonPollyFromConfiguration(IConfiguration, string?)` |
 | [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md) | `ITtsService<TypecastTtsRequest>` | (via `TypecastTtsAppService`) | `TypecastTtsAppService` | `AddTypecastTtsService(Action<TypecastOptions>?)`, `AddTypecastTtsServiceFromConfiguration(IConfiguration, string?)` (requires `TypecastClient` to be registered first) |
-| [`Lyo.Tts.WindowsSpeech`](../Lyo.Tts.WindowsSpeech/README.md) | `ITtsService<WindowsTtsRequest>` | — no `WindowsSpeechTtsAppService` ships yet | (none) | `AddWindowsSpeechTtsService(Action<TtsServiceOptions>?)`, `AddWindowsSpeechTtsService(TtsServiceOptions)` |
+| [`Lyo.Tts.WindowsSpeech`](../Lyo.Tts.WindowsSpeech/README.md) | `ITtsService<WindowsTtsRequest>` | No `WindowsSpeechTtsAppService` ships yet | (none) | `AddWindowsSpeechTtsService(Action<TtsServiceOptions>?)`, `AddWindowsSpeechTtsService(TtsServiceOptions)` |
 
-`AwsPolly` and `Typecast` register **both** `ITtsService<TRequest>` and the non-generic `ITtsService`; the
+`AwsPolly` and `Typecast` register both `ITtsService<TRequest>` and the non-generic `ITtsService`. The
 non-generic interface is backed by the `*TtsAppService` adapter so the same singleton handles both calls.
-`WindowsSpeech` currently registers only the typed interface — code that depends on the non-generic
+`WindowsSpeech` currently registers only the typed interface. Code that depends on the non-generic
 `ITtsService` will not resolve when WindowsSpeech is the only TTS provider registered.
 
 ## Request types
 
-- `AwsPollyTtsRequest` — Polly voice, engine, sample rate, output format, etc.
-- `TypecastTtsRequest` — model id, voice id, language, format, prosody.
-- `WindowsTtsRequest` — voice id, `Volume`, `SpeechRate`, optional `OutputFormat` (WAV output is enforced by SAPI regardless).
+- `AwsPollyTtsRequest`. Polly voice, engine, sample rate, output format, and related fields.
+- `TypecastTtsRequest`. Model id, voice id, language, format, prosody.
+- `WindowsTtsRequest`. Voice id, `Volume`, `SpeechRate`, optional `OutputFormat` (WAV output is enforced by SAPI regardless).
 
 ## Base class (`TtsServiceBase<TRequest>`)
 
@@ -69,13 +69,13 @@ Providers typically remap these to a namespaced prefix (`tts.awspolly.*`, `tts.t
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Lyo.Tts.Models` — (direct, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Tts.Models` (direct, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

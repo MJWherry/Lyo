@@ -1,8 +1,8 @@
 {
   "id": "scripts.nuget",
   "name": "NuGet pack tooling",
-  "tagline": "Discover, build, and pack Lyo.* packages with git change detection.",
-  "description": "SDK-style `dotnet pack` for libraries under Lyo.Net. Fingerprints each project directory so unchanged packages are skipped. Refreshes tooling READMEs via tooling-docs before packing.",
+  "tagline": "Discover, build, and pack selected Lyo.* packages with git change detection.",
+  "description": "SDK-style `dotnet pack` for libraries under Lyo.Net. Packs only the projects you name or that changed. No ProjectReference walk. Pins Lyo package dependencies to last published versions. Fingerprints each project directory so unchanged packages are skipped. Refreshes tooling READMEs via tooling-docs before packing.",
   "commands": [
     {
       "cmd": "python3 scripts/nuget/build_nuget.py",
@@ -18,21 +18,26 @@
     },
     {
       "cmd": "python3 scripts/nuget/build_nuget.py --release --changed-since",
-      "blurb": "Release-pack projects changed since the latest git tag (or HEAD~1)"
+      "blurb": "Release-pack projects whose directory changed since the latest git tag (or HEAD~1)"
     },
     {
       "cmd": "python3 scripts/nuget/build_nuget.py --release -v 1.0.0 Lyo.Encryption",
-      "blurb": "Release-pack one package and its Lyo ProjectReference deps"
+      "blurb": "Release-pack one package only (does not restamp Common)"
     },
     {
       "cmd": "python3 scripts/nuget/build_nuget.py -f Lyo.Encryption",
-      "blurb": "Force rebuild ignoring change detection"
+      "blurb": "Force rebuild of Encryption ignoring change detection"
+    },
+    {
+      "cmd": "python3 scripts/nuget/ci_pack.py --scope named --packages Lyo.Encryption --version 1.2.0 --channel preview",
+      "blurb": "CI helper: same pack with SemVer / preview suffix handling"
     }
   ],
   "notes": [
-    "Local packs append the SemVer prerelease label preview (1.0.0-preview). Use --release when deploying so the version is used as-is",
-    "--changed-since [REF] packs only projects whose directory changed since REF (latest tag or HEAD~1 when omitted). Shared Directory.Build/Packages.props or Lyo.Net/assets/icon.{png,svg} changes select all packages",
-    "Publish from GitHub Actions: Actions → Publish - NuGet. Repo setup is in docs/publishing.md (nuget.org Trusted Publishing + NUGET_USER secret)",
+    "Local packs append the SemVer prerelease label preview (1.0.0-preview). Use --release when publishing a stable version so the version is used as-is",
+    "Selection is named patterns, --changed-since hits, or all packable Lyo.* projects. No upstream or downstream graph walk. Shared Directory.Build/Packages.props or Lyo.Net/assets/icon.{png,svg} changes select all packages",
+    "Nupkg Lyo ProjectReferences are pinned to last published (.build-state, nuget.org, GitHub Packages) unless that project is also in the pack set",
+    "GitHub Actions: Actions → CI - Pipeline. Branch model and feeds are in docs/ci.md. nuget.org Trusted Publishing setup is in docs/publishing.md (workflow publish-nuget.yml, Environment empty, secret NUGET_USER)",
     "NUGET_OUTPUT_DIR defaults to ~/nuget-local; state file is $NUGET_OUTPUT_DIR/.build-state",
     "BUILD_CONFIG defaults to Release",
     "build_nuget.py renders tooling READMEs once, then packs with SkipToolingDocsOnPack so each nupkg does not re-run tooling-docs"

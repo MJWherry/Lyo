@@ -2,15 +2,15 @@
   "id": "Lyo.TextEncoding",
   "name": "Lyo.TextEncoding",
   "area": "Core",
-  "tagline": "Binary codecs (Base64 / Base64Url / Hex) and charset encode/decode/convert with CodePages, detection, PEM/MIME, and injectable façades.",
-  "description": "Span-first binary↔text codecs and character-set helpers for buffers, streams, and files. Two injectable services — **`IBinaryEncodingService`** and **`ICharsetEncodingService`** — plus static **`BinaryEncoding`** / **`CharsetEncoding`**. Namespace is **`Lyo.TextEncoding`** so **`System.Text.Encoding`** needs no alias. Code pages via **`System.Text.Encoding.CodePages`**. Hex casing uses **`TextLetterCase`** from **`Lyo.Common`**.",
+  "tagline": "Binary codecs (Base64 / Base64Url / Hex) and charset encode/decode/convert with CodePages, detection, PEM/MIME, and injectable services.",
+  "description": "Span-first binary-to-text codecs and character-set helpers for buffers, streams, and files. Two injectable services, `IBinaryEncodingService` and `ICharsetEncodingService`, plus static `BinaryEncoding` / `CharsetEncoding`. Namespace is `Lyo.TextEncoding` so `System.Text.Encoding` needs no alias. Code pages via `System.Text.Encoding.CodePages`. Hex casing uses `TextLetterCase` from `Lyo.Common`.",
   "features": [
-    "**`IBinaryEncodingService` / `BinaryEncoding`** — Base64, Base64Url, Hex; streaming decode; MIME line wrap; PEM helpers; **`TryEncode` / `TryDecode`**",
-    "**`ICharsetEncodingService` / `CharsetEncoding`** — CodePages resolve, sync/async stream convert, **`EmitBom`**, **`CharsetConvertingStream`**",
-    "**`CharsetInfo`** — curated well-known catalog + **`Custom(...)`**; **`WellKnown`** for pickers",
-    "**Detection** — BOM, UTF-8 heuristic, text declarations; non-seekable **`ConsumedPrefix`** + **`CreateReplayStream`**",
-    "**Fallbacks** — optional **`EncoderFallback` / `DecoderFallback`** (clones BCL encodings; never mutates singletons)",
-    "**DI** — **`AddLyoBinaryEncoding`**, **`AddLyoCharsetEncoding`**, **`AddLyoTextEncoding`**"
+    "**`IBinaryEncodingService` / `BinaryEncoding`.** Base64, Base64Url, Hex. Streaming decode, MIME line wrap, PEM helpers, `TryEncode` / `TryDecode`.",
+    "**`ICharsetEncodingService` / `CharsetEncoding`.** CodePages resolve, sync/async stream convert, `EmitBom`, `CharsetConvertingStream`.",
+    "**`CharsetInfo`.** Well-known catalog plus `Custom(...)`. `WellKnown` for pickers.",
+    "**Detection.** BOM, UTF-8 heuristic, text declarations. Non-seekable `ConsumedPrefix` + `CreateReplayStream`.",
+    "**Fallbacks.** Optional `EncoderFallback` / `DecoderFallback`. Clones BCL encodings. Never mutates singletons.",
+    "**DI.** `AddLyoBinaryEncoding`, `AddLyoCharsetEncoding`, `AddLyoTextEncoding`."
   ],
   "examples": [
     {

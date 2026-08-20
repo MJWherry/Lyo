@@ -2,22 +2,22 @@
   "id": "Lyo.KeyStore.Aws",
   "name": "Lyo.KeyStore.Aws",
   "area": "Security",
-  "tagline": "**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.KeyStore.IKeyStore`** and **`Lyo.KeyStore.IKeyInventoryStore`**, so admin UIs and key-rotation jobs…",
-  "description": "**`AwsKeyStore`** (an `IAmazonSecretsManager` client + secret-name prefix) implements both **`Lyo.KeyStore.IKeyStore`** and **`Lyo.KeyStore.IKeyInventoryStore`**, so admin UIs and\nkey-rotation jobs can both encrypt against it and enumerate available `keyId`s / versions.\n\nThe backing secret is stored as JSON (`{ \"<keyId>\": \"plaintext-or-derived-material\", ... }`) under a single secret per prefix. Logical version strings map onto AWS `VersionId`\nstages; unresolved version requests fall through to `AWSCURRENT`. String values run through key derivation so callers receive cryptographic-length KEK bytes usable by\n`AesGcmEncryptionService` and the other symmetric services in `Lyo.Encryption`.",
+  "tagline": "`AwsKeyStore` takes an `IAmazonSecretsManager` client and a secret-name prefix. It implements `Lyo.KeyStore.IKeyStore` and `Lyo.KeyStore.IKeyInventoryStore`, so admin UIs and key-rotation jobs can encrypt against it and list `keyId`s and versions.",
+  "description": "`AwsKeyStore` takes an `IAmazonSecretsManager` client and a secret-name prefix. It implements `Lyo.KeyStore.IKeyStore` and `Lyo.KeyStore.IKeyInventoryStore`, so admin UIs and key-rotation jobs can encrypt against it and list `keyId`s and versions.\n\nThe backing secret is stored as JSON (`{ \"<keyId>\": \"plaintext-or-derived-material\", ... }`) under a single secret per prefix. Logical version strings map onto AWS `VersionId` stages. Unresolved version requests fall through to `AWSCURRENT`. String values run through key derivation so callers receive cryptographic-length KEK bytes usable by `AesGcmEncryptionService` and the other symmetric services in `Lyo.Encryption`.",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "list",
-      "title": "`AwsKeyStore` API",
+      "title": "AwsKeyStore methods",
       "items": [
-        "**`IKeyStore`** — `GetKey`, `GetCurrentKey`, `GetCurrentVersion`, `AddKey`, `UpdateKey`, `HasKey`, metadata, salt-for-version (all sync + async variants).",
-        "**`IKeyInventoryStore`** — `GetAvailableKeyIdsAsync(CancellationToken)`, `GetAvailableVersionsAsync(string keyId, CancellationToken)` so listings, rotation reports, and DEK migrations can pivot off the live store rather than a local index."
+        "`IKeyStore.` `GetKey`, `GetCurrentKey`, `GetCurrentVersion`, `AddKey`, `UpdateKey`, `HasKey`, metadata, salt-for-version. Sync and async variants.",
+        "`IKeyInventoryStore.` `GetAvailableKeyIdsAsync(CancellationToken)`, `GetAvailableVersionsAsync(string keyId, CancellationToken)` so listings, rotation reports, and DEK migrations can pivot off the live store rather than a local index."
       ]
     },
     {
       "type": "table",
-      "title": "Options — `AwsKeyStoreOptions`",
+      "title": "AwsKeyStoreOptions",
       "headers": [
         "Property",
         "Default",
@@ -73,7 +73,7 @@
         ],
         [
           "`services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix)` / `<TKeyStore>`",
-          "Register a full keyed `ITwoKeyEncryptionService` stack using `AwsKeyStore` + paired `AesGcmEncryptionService` for both DEK and KEK."
+          "Register a keyed `ITwoKeyEncryptionService` stack using `AwsKeyStore` plus paired `AesGcmEncryptionService` for both DEK and KEK."
         ],
         [
           "`services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix, AwsKeyStoreOptions?)`",
@@ -84,15 +84,15 @@
           "Bind `AwsKeyStoreOptions` from configuration and wire the keyed two-key stack in one call."
         ]
       ],
-      "trail": "Note that `AddAwsKeyStore(Func<...>)` registers `AwsKeyStore` as a concrete singleton only (no `IKeyStore` indirection); `AddAwsKeyStoreFromConfiguration` and the two-key\nextensions also register `IKeyStore` so the rest of `Lyo.Encryption` can resolve it generically."
+      "trail": "`AddAwsKeyStore(Func<...>)` registers `AwsKeyStore` as a concrete singleton only, no `IKeyStore` indirection. `AddAwsKeyStoreFromConfiguration` and the two-key extensions also register `IKeyStore` so `Lyo.Encryption` can resolve it."
     },
     {
       "type": "list",
       "title": "See also",
       "items": [
-        "[`Lyo.KeyStore`](../Lyo.KeyStore/README.md) — interfaces and local store.",
-        "[`Lyo.Encryption`](../Lyo.Encryption/README.md) — encryption services that consume `IKeyStore`.",
-        "[`../README.md`](../README.md) — encryption umbrella (algorithms, stream formats, threat model)."
+        "[`Lyo.KeyStore`](../Lyo.KeyStore/README.md). Interfaces and local store.",
+        "[`Lyo.Encryption`](../Lyo.Encryption/README.md). Encryption services that consume `IKeyStore`.",
+        "[`../README.md`](../README.md). Encryption guide: algorithms, stream formats, threat model."
       ]
     }
   ],

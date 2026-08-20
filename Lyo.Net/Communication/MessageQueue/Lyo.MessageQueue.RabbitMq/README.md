@@ -1,14 +1,14 @@
 # Lyo.MessageQueue.RabbitMq
 
-Concrete `IMqService` (`RabbitMqService`) using `RabbitMQ.Client`, also surfaced as `IRabbitMqService` when you need RabbitMQ-specific knobs (exchanges) that are not part of the shared abstraction.
+`IMqService` implementation (`RabbitMqService`) on `RabbitMQ.Client`. Also registered as `IRabbitMqService` when you need RabbitMQ-specific methods (exchanges) that are not part of the shared contract.
 
 ## Features
 
-- `RabbitMqOptions` singleton (registered via an explicit `Action<RabbitMqOptions>` or bound from configuration. Default section name: `RabbitMqOptions.SectionName = "RabbitMqOptions"`.
+- `RabbitMqOptions` singleton (registered via an explicit `Action<RabbitMqOptions>` or bound from configuration). Default section name: `RabbitMqOptions.SectionName = "RabbitMqOptions"`.
 - `IConnectionFactory` singleton built from those options with:
 - Host / virtual host / port / credentials from options.
 - `ClientProvidedName` set to `MachineName - ApplicationName (EnvironmentName)` so the connection is identifiable in the RabbitMQ management UI.
-- `ClientProperties` populated from the `connectionProperties` dictionary you pass to the extension (rich connection metadata — container id, build sha, etc.).
+- `ClientProperties` populated from the `connectionProperties` dictionary you pass to the extension (container id, build sha, and similar keys).
 - `RabbitMqService` registered as a singleton, exposed under all three types: itself, `IRabbitMqService`, and `IMqService`.
 
 ## Examples
@@ -35,22 +35,22 @@ services.SetupRabbitMqService(
 
 ## Registration
 
-- `RabbitMqOptions` singleton (registered via an explicit `Action<RabbitMqOptions>` or bound from configuration. Default section name: `RabbitMqOptions.SectionName = "RabbitMqOptions"`.
+- `RabbitMqOptions` singleton (registered via an explicit `Action<RabbitMqOptions>` or bound from configuration). Default section name: `RabbitMqOptions.SectionName = "RabbitMqOptions"`.
 - `IConnectionFactory` singleton built from those options with:
 - Host / virtual host / port / credentials from options.
 - `ClientProvidedName` set to `MachineName - ApplicationName (EnvironmentName)` so the connection is identifiable in the RabbitMQ management UI.
-- `ClientProperties` populated from the `connectionProperties` dictionary you pass to the extension (rich connection metadata — container id, build sha, etc.).
+- `ClientProperties` populated from the `connectionProperties` dictionary you pass to the extension (container id, build sha, and similar keys).
 - `RabbitMqService` registered as a singleton, exposed under all three types: itself, `IRabbitMqService`, and `IMqService`.
 
 ## `RabbitMqOptions`
 
 | Property | Type | Default | Purpose |
 | ------------------------- | ------------------------------------ | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Host` | `string` | — required | AMQP host name. |
+| `Host` | `string` | required | AMQP host name. |
 | `Port` | `int` | `5672` | AMQP port. |
 | `VirtualHost` | `string` | `/` | RabbitMQ vhost. |
-| `Username` / `Password` | `string` | — required | AMQP and Management API credentials. |
-| `AdminUrl` | `string` | — **required** | Base URL of the RabbitMQ Management HTTP API (e.g. `http://host:15672`). Used to construct `HttpClient.BaseAddress = "{AdminUrl}/api/"`; `ClearQueue`, `PeekQueueMessages`, and the queue-statistics APIs call into it. |
+| `Username` / `Password` | `string` | required | AMQP and Management API credentials. |
+| `AdminUrl` | `string` | required | Base URL of the RabbitMQ Management HTTP API (e.g. `http://host:15672`). Used to construct `HttpClient.BaseAddress = "{AdminUrl}/api/"`; `ClearQueue`, `PeekQueueMessages`, and the queue-statistics APIs call into it. |
 | `EnableMetrics` | `bool` | `false` | When `false`, the injected `IMetrics` is replaced with `NullMetrics.Instance`. |
 | `ProcessingLimit` | `int` | `0` | Global maximum concurrent messages per queue. `0` means no limit. Enforced as broker prefetch + channel dispatch concurrency + in-process semaphore (see below). |
 | `QueueProcessingLimits` | `Dictionary<string, int>?` | `null` | Per-queue overrides of `ProcessingLimit` (queue name → limit). Example: `{ "job.run.cs": 1, "job.run.reports": 10 }`. |
@@ -68,13 +68,13 @@ services.SetupRabbitMqService(
 `SubscribeToQueue` resolves the queue's limit (`QueueProcessingLimits[queue]`, falling back to
 `ProcessingLimit`; `0` = unlimited) and enforces it at three levels:
 
-1. **Broker prefetch** — `BasicQosAsync(0, limit, false)` on the dedicated subscription channel, so the
+1. **Broker prefetch.** `BasicQosAsync(0, limit, false)` on the dedicated subscription channel, so the
    broker only delivers `limit` unacked messages to this consumer. Real backpressure: excess messages stay
    on the server and are available to other consumers.
-2. **Channel dispatch concurrency** — the subscription channel is created with
+2. **Channel dispatch concurrency.** The subscription channel is created with
    `consumerDispatchConcurrency = limit`, so the client actually runs up to `limit` handler invocations in
    parallel (the RabbitMQ.Client 7.x default is 1, i.e. strictly sequential).
-3. **In-process semaphore** — a `SemaphoreSlim(limit)` guards handler execution as a final in-process
+3. **In-process semaphore.** A `SemaphoreSlim(limit)` guards handler execution as a final in-process
    guarantee.
 
 ```json
@@ -94,32 +94,32 @@ flowchart LR
 
 ## Connection recovery
 
-With `AutomaticRecovery` on (the default), the RabbitMQ client transparently reconnects after a network drop, re-opens channels, re-declares topology, and restores consumers. The service keeps its consumer bookkeeping across the drop and logs/metrics the transition (`mq.connection.lost` → `mq.connection.recovered`). With recovery disabled, a lost connection clears all consumers — the process must reconnect and resubscribe itself. `DisconnectAsync` no longer poisons the instance: connect → disconnect → connect on the same `RabbitMqService` works; disposal (`DisposeAsync`) is final.
+With `AutomaticRecovery` on (the default), the RabbitMQ client reconnects after a network drop, re-opens channels, re-declares topology, and restores consumers. The service keeps its consumer bookkeeping across the drop and logs/metrics the transition (`mq.connection.lost` then `mq.connection.recovered`). With recovery disabled, a lost connection clears all consumers. The process must reconnect and resubscribe itself. `DisconnectAsync` no longer poisons the instance: connect, disconnect, connect on the same `RabbitMqService` works. Disposal (`DisposeAsync`) is final.
 
 ## Delayed messages
 
 `SendToQueueDelayed(queueName, data, delay)` (on `IRabbitMqService`, also exposed through the
 `IDelayedMqService` capability interface in `Lyo.MessageQueue`) delivers a message after a delay with no
-broker plugin: the message is published to a companion wait queue `{queue}.wait` declared with
+broker plugin. The message is published to a companion wait queue `{queue}.wait` declared with
 `x-dead-letter-exchange: ""` / `x-dead-letter-routing-key: {queue}` and a per-message TTL equal to the
 delay. When the TTL fires, the broker dead-letters the message onto the real queue. Wait-queue
 declarations are cached per service instance. `QueueWorkerBase` uses this automatically for retry backoff
 when its `RequeueDelay` is set (see the [Lyo.MessageQueue README](../Lyo.MessageQueue/README.md)).
 
-> Note: TTL expiry is FIFO per wait queue — a long-delay message queued ahead of a short-delay one delays
+> Note: TTL expiry is FIFO per wait queue. A long-delay message queued ahead of a short-delay one delays
 > the latter. For the retry-backoff use case (delays in the same order of magnitude) this is fine.
 
 ## Broker-level DLQ auto-wiring
 
-`CreateQueueWithDlq(queueName, durable, dlqName, arguments, ct)` declares `{queue}.dlq` (durable) and the main queue with `x-dead-letter-exchange: ""` / `x-dead-letter-routing-key: {queue}.dlq`. This catches broker-side rejections the application never sees: nack without requeue, per-queue TTL expiry, and queue overflow. It complements (does not replace) `QueueWorkerBase`'s application-level DLQ routing. > **Caveat:** RabbitMQ cannot change arguments on an existing queue. Declaring over an existing queue with > different arguments fails with `PRECONDITION_FAILED`; the helper logs a clear error telling you to delete > and recreate the queue.
+`CreateQueueWithDlq(queueName, durable, dlqName, arguments, ct)` declares `{queue}.dlq` (durable) and the main queue with `x-dead-letter-exchange: ""` / `x-dead-letter-routing-key: {queue}.dlq`. This catches broker-side rejections the application never sees: nack without requeue, per-queue TTL expiry, and queue overflow. It complements (does not replace) `QueueWorkerBase`'s application-level DLQ routing. > **Caveat:** RabbitMQ cannot change arguments on an existing queue. Declaring over an existing queue with different arguments fails with `PRECONDITION_FAILED`. The helper logs a clear error telling you to delete and recreate the queue.
 
 ## Queue statistics
 
-`GetQueueInfoAsync(queueName, ct)` and `GetAllQueuesInfoAsync(ct)` (on `IRabbitMqService`) query the Management API (`GET /api/queues/{vhost}[/{name}]`) and return the shared `MessageQueueInfo` record — message counts, ready/unacked, consumer count, state, plus publish/deliver rates in `AdditionalProperties` when the broker reports them. The `RabbitMqWorkbench` Blazor component surfaces these in its **Stats** tab. Statistics update on the management emission interval (~5s), so counts can lag slightly behind broker state.
+`GetQueueInfoAsync(queueName, ct)` and `GetAllQueuesInfoAsync(ct)` (on `IRabbitMqService`) query the Management API (`GET /api/queues/{vhost}[/{name}]`) and return the shared `MessageQueueInfo` record. Message counts, ready/unacked, consumer count, state, plus publish/deliver rates in `AdditionalProperties` when the broker reports them. The `RabbitMqWorkbench` Blazor component shows these in its **Stats** tab. Statistics update on the management emission interval (~5s), so counts can lag slightly behind broker state.
 
-## Capabilities mapping
+## Capabilities
 
-| Abstract call | RabbitMQ behaviour |
+| Abstract call | RabbitMQ behavior |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `CreateQueue` | Declares queues with durability / exclusivity / auto-delete flags plus a broker `arguments` dictionary. |
 | `DeleteQueue` | Deletes a queue, optionally guarded by `ifUnused` / `ifEmpty`. |
@@ -133,17 +133,17 @@ when its `RequeueDelay` is set (see the [Lyo.MessageQueue README](../Lyo.Message
 | `CreateQueueWithDlq` (RabbitMQ only) | Declares `{queue}.dlq` and wires the main queue's dead-letter arguments (see below). |
 | `GetQueueInfoAsync` / `GetAllQueuesInfoAsync` (RabbitMQ only) | Live queue statistics via the Management API (see below). |
 
-Because Rabbit features evolve quickly (streams, quorum queues), anything advanced tends to funnel through
-`CreateQueue`’s `arguments` bag; inspect `RabbitMqService` for the defaults you rely on before upgrading
+Because Rabbit features evolve quickly (streams, quorum queues), anything advanced tends to go through
+`CreateQueue`'s `arguments` bag. Inspect `RabbitMqService` for the defaults you rely on before upgrading
 `RabbitMQ.Client`.
 
 ## Hosted services and workers
 
-Pair with `QueueWorkerBase` from [`Lyo.MessageQueue`](../Lyo.MessageQueue/README.md): workers deserialize JSON payloads, reuse the envelope helpers, integrate DLQ / `maxRequeueCount`, and drain gracefully on `IHostedService` shutdown. The publish helper `IMqService.SendToQueueWithEnvelopeAsync` is the recommended way to publish typed payloads to a queue consumed by such a worker. Schedulers (`Lyo.Job.Scheduler`) commonly publish triggers here while separate worker processes consume.
+Pair with `QueueWorkerBase` from [`Lyo.MessageQueue`](../Lyo.MessageQueue/README.md). Workers deserialize JSON payloads, reuse the envelope helpers, integrate DLQ / `maxRequeueCount`, and drain on `IHostedService` shutdown. Publish typed payloads with `IMqService.SendToQueueWithEnvelopeAsync` when a `QueueWorkerBase` consumer is on the other end. Schedulers (`Lyo.Job.Scheduler`) commonly publish triggers here while separate worker processes consume.
 
 ## Blazor tooling
 
-[`Lyo.MessageQueue.RabbitMq.Web.Components`](../Lyo.MessageQueue.RabbitMq.Web.Components/README.md) layers a UI on top of the same service registrations for internal dashboards.
+[`Lyo.MessageQueue.RabbitMq.Web.Components`](../Lyo.MessageQueue.RabbitMq.Web.Components/README.md) adds a UI on the same service registrations for internal dashboards.
 
 ## Testing
 
@@ -151,26 +151,26 @@ Pair with `QueueWorkerBase` from [`Lyo.MessageQueue`](../Lyo.MessageQueue/README
 
 ## See also
 
-- [`Lyo.MessageQueue`](../Lyo.MessageQueue/README.md) — the underlying contract, envelopes, and worker base.
-- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md) — worker results and the `Metadata["requeue"]` pattern.
-- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md) — counters and timers emitted by the service and `QueueWorkerBase`.
-- [`Lyo.Testing.Containers`](../../../Core/Testing/Lyo.Testing.Containers/README.md) — RabbitMQ testcontainer + fixture for integration tests.
+- [`Lyo.MessageQueue`](../Lyo.MessageQueue/README.md). The underlying contract, envelopes, and worker base.
+- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md). Worker results and the `Metadata["requeue"]` pattern.
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md). Counters and timers emitted by the service and `QueueWorkerBase`.
+- [`Lyo.Testing.Containers`](../../../Core/Testing/Lyo.Testing.Containers/README.md). RabbitMQ testcontainer and fixture for integration tests.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.MessageQueue` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `RabbitMQ.Client` `7.2.1` — (direct, third-party)
-- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
-- `Lyo.Health` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.MessageQueue` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `RabbitMQ.Client` `7.2.1` (direct, third-party)
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Lyo.Health` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

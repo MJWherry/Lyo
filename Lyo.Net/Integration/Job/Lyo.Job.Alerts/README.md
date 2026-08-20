@@ -1,6 +1,6 @@
 # Lyo.Job.Alerts
 
-Hosted **`JobAlertConsumer`** that subscribes to the `job.notifications.alert` routing key on the `job.events` exchange, deserializes **`JobAlertEvent`** payloads, and dispatches them through **`INotificationPublisher`** (in-process handlers) and/or an optional **HTTP webhook**.
+Hosted `JobAlertConsumer` that subscribes to the `job.notifications.alert` routing key on the `job.events` exchange, deserializes `JobAlertEvent` payloads, and dispatches them through `INotificationPublisher` (in-process handlers) and/or an optional HTTP webhook.
 
 Alert producers include `JobService` (SLA breaches), `JobScheduler` (failures, circuit breaker), and `JobMaintenanceService` (dead jobs, SLA scans) via `IJobEventPublisher.PublishAlertAsync`.
 
@@ -29,7 +29,7 @@ services.AddJobAlerts(o => {
 
 ## Registration
 
-Requires `IMqService` to be registered and connected. `INotificationPublisher` is optional — when absent, only the webhook path runs (if configured).
+Requires `IMqService` to be registered and connected. `INotificationPublisher` is optional. When absent, only the webhook path runs (if configured).
 
 ## Configuration (`JobAlertsOptions.SectionName` = `"JobAlerts"`)
 
@@ -37,7 +37,7 @@ Requires `IMqService` to be registered and connected. `INotificationPublisher` i
 | ----------------- | ------- | --------------------------------------------------- |
 | `AlertWebhookUrl` | `null` | When set, each alert is POSTed as JSON to this URL. |
 
-Per-definition `AlertWebhookUrl` on `JobDefinition` is persisted for custom integrations but is **not** read by `JobAlertConsumer` — only `JobAlertsOptions.AlertWebhookUrl` (or
+Per-definition `AlertWebhookUrl` on `JobDefinition` is persisted for custom integrations but is **not** read by `JobAlertConsumer`. Only `JobAlertsOptions.AlertWebhookUrl` (or
 `INotificationPublisher` handlers) dispatch alerts from this package.
 
 ## Alert types (`JobAlertType`)
@@ -85,24 +85,24 @@ Transient dispatch failures requeue the message (`HandleMessageAsync` returns `t
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Job.Models` — (direct, lyo)
-- `Lyo.MessageQueue` — (direct, lyo)
-- `Lyo.Notification` — (direct, lyo)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Http` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (direct, microsoft)
-- `Lyo.Api.Models` — (transitive, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Health` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Lyo.Schedule.Models` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Diagnostics.DiagnosticSource` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Job.Models` (direct, lyo)
+- `Lyo.MessageQueue` (direct, lyo)
+- `Lyo.Notification` (direct, lyo)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Diagnostics.DiagnosticSource` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

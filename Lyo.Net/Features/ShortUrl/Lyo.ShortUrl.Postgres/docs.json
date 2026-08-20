@@ -3,7 +3,7 @@
   "name": "Lyo.ShortUrl.Postgres",
   "area": "Features",
   "tagline": "EF Core schema and DbContext registration for a PostgreSQL-backed short-URL store.",
-  "description": "EF Core schema and DbContext registration for a PostgreSQL-backed short-URL store.\n\n> **Heads up — there is no `PostgresShortUrlService` / `PostgresShortUrlStore` in this package.** It deliberately ships only the database surface (DbContext, entities,\n> migrations, options, and DI helpers for the context). To get an `IShortUrlService` that talks to this schema, plug your own implementation on top of `ShortUrlDbContext` (or\n> use the in-box `Lyo.ShortUrl.ShortUrlService` for id-only generation; it does **not** persist anything).",
+  "description": "EF Core schema and DbContext registration for a PostgreSQL-backed short-URL store.\n\n> There is no `PostgresShortUrlService` / `PostgresShortUrlStore` in this package. It ships the database pieces (DbContext, entities,\n> migrations, options, and DI helpers for the context). To get an `IShortUrlService` that talks to this schema, implement one on `ShortUrlDbContext` (or\n> use `Lyo.ShortUrl.ShortUrlService` for id-only generation. That class does not persist anything).",
   "features": [],
   "examples": [
     {
@@ -18,11 +18,11 @@
       "title": "What ships",
       "items": [
         "`ShortUrlDbContext` + `ShortUrlDbContextFactory` under `Database/`, with `DbSet<ShortUrlEntity>` and `DbSet<UrlClickEntity>`. The default schema is `\"url\"`.",
-        "`ShortUrlEntity` — the canonical short-link row: string-keyed `Id` (max 100 chars) used as the short code, `LongUrl` (≤ 1024), optional `CustomAlias`, `CreatedTimestamp` / `UpdatedTimestamp` / `ExpirationDate` / `LastAccessedDate`, `ClickCount`, `IsActive`, and a `Clicks` navigation. Includes a `FromShortenRequest(...)` factory and a `BuildShortUrl(baseUrl)` helper that mirrors `Lyo.ShortUrl.ShortUrlService`’s `BaseUrl` behaviour.",
-        "`UrlClickEntity` — append-only click log row (`ShortUrlId` FK, `ClickedAt`, optional `IpAddress` / `UserAgent` / `Referrer`).",
+        "`ShortUrlEntity`. The canonical short-link row: string-keyed `Id` (max 100 chars) used as the short code, `LongUrl` (≤ 1024), optional `CustomAlias`, `CreatedTimestamp` / `UpdatedTimestamp` / `ExpirationDate` / `LastAccessedDate`, `ClickCount`, `IsActive`, and a `Clicks` navigation. Includes a `FromShortenRequest(...)` factory and a `BuildShortUrl(baseUrl)` helper that mirrors `Lyo.ShortUrl.ShortUrlService`'s `BaseUrl` behaviour.",
+        "`UrlClickEntity`. Append-only click log row (`ShortUrlId` FK, `ClickedAt`, optional `IpAddress` / `UserAgent` / `Referrer`).",
         "`*EntityConfiguration` Fluent API mappings under the same folder.",
         "`PostgresShortUrlOptions` (`SectionName = \"PostgresShortUrl\"`, `Schema = \"url\"`, `ConnectionString`, `EnableAutoMigrations`).",
-        "`Constants.Metrics` names (`urlshortener.postgres.statistics.duration`, `.delete.duration`, `.update.duration`) — reserved for downstream service implementations.",
+        "`Constants.Metrics` names (`urlshortener.postgres.statistics.duration`, `.delete.duration`, `.update.duration`), reserved for downstream service implementations.",
         "`InitialCreate` migration under `Migrations/`."
       ]
     },
@@ -40,14 +40,14 @@
         ],
         [
           "`AddShortUrlDbContext(Action<DbContextOptionsBuilder>)`",
-          "Bare `AddDbContext<ShortUrlDbContext>(...)` — bring your own provider configuration."
+          "Bare `AddDbContext<ShortUrlDbContext>(...)`. Bring your own provider configuration."
         ],
         [
           "`AddShortUrlDbContextFactory(Action<PostgresShortUrlOptions>)` *(plus `(options)` and `FromConfiguration` overloads)*",
           "Registers `IOptions<PostgresShortUrlOptions>`, `AddPostgresMigrations<ShortUrlDbContext, PostgresShortUrlOptions>()`, and `IDbContextFactory<ShortUrlDbContext>` (`UseNpgsql` + migrations history under the `url` schema)."
         ]
       ],
-      "trail": "There is intentionally no `AddPostgresShortUrlStore` / `AddPostgresShortUrlService` — see the note at the top of this README. Wire your own service on top of the factory, for\nexample:"
+      "trail": "There is intentionally no `AddPostgresShortUrlStore` / `AddPostgresShortUrlService`. See the note at the top of this README. Wire your own service on top of the factory, for\nexample:"
     },
     {
       "type": "table",

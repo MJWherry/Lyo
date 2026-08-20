@@ -2,8 +2,8 @@
   "id": "Lyo.Rating.Postgres",
   "name": "Lyo.Rating.Postgres",
   "area": "Features",
-  "tagline": "PostgreSQL implementation of `Lyo.Rating` using Entity Framework Core. Persists ratings to the `rating.rating` table and reactions to `rating.rating_reaction` (schema constant…",
-  "description": "PostgreSQL implementation of `Lyo.Rating` using Entity Framework Core. Persists ratings to the `rating.rating` table and reactions to `rating.rating_reaction` (schema constant: `PostgresRatingOptions.Schema = \"rating\"`) with migrations support. Ratings have **subject** / **actor** (`for_entity_*` / `from_entity_*`) and an optional rating-axis **Subject** field (e.g. `\"scary\"`, `\"action\"`). Multiple ratings per entity per user are allowed — one per subject, where `subject = null` is the general rating. `Value` is optional (a review can be text-only), and reactions (`Like` / `Dislike`) are kept in a sibling table while their counts are cached back onto the parent rating.\n\n`PostgresRatingStore` implements `IRatingStore` and `Lyo.Health.IHealth` (`HealthCheckName = \"rating-postgres\"`), so registering the store also wires up a liveness probe.",
+  "tagline": "PostgreSQL implementation of `Lyo.Rating` using Entity Framework Core. Persists ratings to `rating.rating` and reactions to `rating.rating_reaction`.",
+  "description": "PostgreSQL implementation of `Lyo.Rating` using Entity Framework Core. Persists ratings to the `rating.rating` table and reactions to `rating.rating_reaction` (`PostgresRatingOptions.Schema = \"rating\"`) and ships migrations. Ratings have **subject** / **actor** (`for_entity_*` / `from_entity_*`) and an optional rating-axis Subject field (e.g. `\"scary\"`, `\"action\"`). Multiple ratings per entity per user are allowed, one per subject, where `subject = null` is the general rating. `Value` is optional (a review can be text-only). Reactions (`Like` / `Dislike`) live in a sibling table. Counts are cached on the parent rating.\n\n`PostgresRatingStore` implements `IRatingStore` and `Lyo.Health.IHealth` (`HealthCheckName = \"rating-postgres\"`). Registering the store also registers a liveness probe.",
   "features": [],
   "examples": [
     {
@@ -42,10 +42,10 @@
       "type": "list",
       "title": "DI extensions",
       "items": [
-        "`AddRatingDbContextFactory(Action<PostgresRatingOptions>)` / `AddRatingDbContextFactory(PostgresRatingOptions)` — register only the `IDbContextFactory<RatingDbContext>`.",
-        "`AddRatingDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresRatingOptions.SectionName)` — same, bound from configuration (default section: `PostgresRating`).",
-        "`AddPostgresRatingStore(Action<PostgresRatingOptions>)` / `AddPostgresRatingStore(PostgresRatingOptions)` — register the DbContext factory **and** the `IRatingStore` singleton.",
-        "`AddPostgresRatingStoreFromConfiguration(IConfiguration, string sectionName = PostgresRatingOptions.SectionName)` — register the store using configuration binding."
+        "`AddRatingDbContextFactory(Action<PostgresRatingOptions>)` / `AddRatingDbContextFactory(PostgresRatingOptions)` register only the `IDbContextFactory<RatingDbContext>`.",
+        "`AddRatingDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresRatingOptions.SectionName)` same, bound from configuration (default section: `PostgresRating`).",
+        "`AddPostgresRatingStore(Action<PostgresRatingOptions>)` / `AddPostgresRatingStore(PostgresRatingOptions)` register the DbContext factory **and** the `IRatingStore` singleton.",
+        "`AddPostgresRatingStoreFromConfiguration(IConfiguration, string sectionName = PostgresRatingOptions.SectionName)` register the store using configuration binding."
       ]
     },
     {
@@ -55,21 +55,21 @@
     },
     {
       "type": "markdown",
-      "title": "Entity Reference",
+      "title": "Entity reference",
       "body": "Uses `Lyo.EntityReference.Models.EntityRef` with generic or string-based creation:\n\n```csharp\n// Generic: uses typeof(T).FullName, keys joined with \":\"\nvar forDocket = EntityRef.For<Docket>(docketId);\nvar fromUser = EntityRef.For<User>(123);\nvar composite = EntityRef.For<Order>(\"ord-1\", \"line-2\");\n\n// String-based\nvar forEntity = EntityRef.ForGuid(\"Docket\", docketGuid);\nvar fromEntity = EntityRef.ForKey(\"User\", \"123\");\n```"
     },
     {
       "type": "list",
       "title": "Schema",
       "items": [
-        "**rating.rating** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, `metadata` (jsonb), plus rating-specific `subject` (nullable), `title` (nullable), `value` (nullable `decimal`), `message`, `like_count`, `dislike_count`, and `updated_timestamp`.",
-        "**rating.rating_reaction** — `id` (uuid); subject `for_entity_*` (always `\"Rating\"` + parent id); actor `from_entity_*`; `tenant_id` (nullable uuid, inherited from the parent rating at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`), `created_timestamp`."
+        "**rating.rating.** `EntityRelationEntityBase`: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, `metadata` (jsonb), plus rating-specific `subject` (nullable), `title` (nullable), `value` (nullable `decimal`), `message`, `like_count`, `dislike_count`, and `updated_timestamp`.",
+        "**rating.rating_reaction.** `id` (uuid); subject `for_entity_*` (always `\"Rating\"` + parent id); actor `from_entity_*`; `tenant_id` (nullable uuid, inherited from the parent rating at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`), `created_timestamp`."
       ]
     },
     {
       "type": "markdown",
       "title": "Tenancy",
-      "body": "`PostgresRatingStore` accepts an optional `Guid? tenantId` on every read/write\nmethod and resolves it through `TenancyResolver` under the policy configured in\n`PostgresRatingOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when\nunset). The rating `tenant_id` column is non-null, so only `SingleTenantDefault`\nand `MultiTenantStrict` modes are valid — `SystemOnly` is rejected at store\nconstruction. Reactions inherit the parent rating's `TenantId` on insert so the\nreaction sub-table stays consistent with its parent. See\n[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)\nfor the full policy matrix and `appsettings.json` snippet.\n\n```json\n{\n  \"PostgresRating\": {\n    \"ConnectionString\": \"Host=localhost;Database=lyo;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
+      "body": "`PostgresRatingStore` accepts an optional `Guid? tenantId` on every read/write\nmethod and resolves it through `TenancyResolver` under the policy configured in\n`PostgresRatingOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when\nunset). The rating `tenant_id` column is non-null, so only `SingleTenantDefault`\nand `MultiTenantStrict` modes are valid. `SystemOnly` is rejected at store\nconstruction. Reactions inherit the parent rating's `TenantId` on insert so the\nreaction sub-table stays consistent with its parent. See\n[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)\nfor the policy matrix and `appsettings.json` snippet.\n\n```json\n{\n  \"PostgresRating\": {\n    \"ConnectionString\": \"Host=localhost;Database=lyo;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
     }
   ],
   "links": [],

@@ -1,27 +1,28 @@
-# k6 Framework: Person Query API
+# k6 person query API
 
-Reusable k6 framework for `TestApi` person querying with multiple workload profiles and query shapes based on your `QueryRequest` model.
+k6 tests for `TestApi` person queries. Workload profiles and query shapes follow the `QueryRequest` model.
 
-Shared reusable API code lives outside k6 in:
+Shared API client code lives outside k6:
+
 - `packages/typescript/lyo-api-client`
 - `packages/typescript/lyo-person-api-client`
 
-`k6/framework-person` contains test orchestration only.
+`k6/framework-person` is orchestration only.
 
-## Production Matrix
+## Production matrix
 
-Four axes (cartesian product = **90 cells** by default):
+Four axes. Cartesian product is **90 cells** by default:
 
 | Axis | Values |
 |------|--------|
-| **Endpoint** | `query` (`/person/QueryConcrete`), `queryproject` (`/person/QueryProject`), `queryroot` (`POST /Query`) |
-| **Profile** | `load`, `stress`, `spike`, `soak`, `ceiling` |
-| **Intensity** | `low`, `med`, `high` |
-| **Cache** | `uncached` (varied shapes), `cached` (`CACHE_HIT_MODE` pins shapes) |
+| Endpoint | `query` (`/person/QueryConcrete`), `queryproject` (`/person/QueryProject`), `queryroot` (`POST /Query`) |
+| Profile | `load`, `stress`, `spike`, `soak`, `ceiling` |
+| Intensity | `low`, `med`, `high` |
+| Cache | `uncached` (varied shapes), `cached` (`CACHE_HIT_MODE` pins shapes) |
 
-Every cell pins **`RANDOM_SEED=20260623`**. Results are named `{endpoint}_{profile}_{intensity}_{cached|uncached}.summary.json`.
+Every cell pins `RANDOM_SEED=20260623`. Results are named `{endpoint}_{profile}_{intensity}_{cached|uncached}.summary.json`.
 
-Still **15 scenario stubs** (endpoint × profile only); intensity + cache are env-driven. `run_all.py` expands the product via `MatrixPlanner`.
+There are still 15 scenario stubs (endpoint × profile only). Intensity and cache come from env. `run_all.py` expands the product via `MatrixPlanner`.
 
 ### Intensity presets (SoT: `lib/intensityPresets.js`)
 
@@ -41,9 +42,9 @@ For each of `query`, `queryproject`, `queryroot`:
 |---------|-----------|----------|--------|
 | load / stress / spike / soak / ceiling | low \| med \| high | cell | cell |
 
-Day-run tip: `python3 k6/framework-person/run_all.py nonsoak med uncached` (12 cells). Full product is long — soak dominates.
+Day-run tip: `python3 k6/framework-person/run_all.py nonsoak med uncached` (12 cells). The full product is long. Soak dominates.
 
-### OOP layout (reusable composition)
+### OOP layout
 
 ```
 scenario stub → ScenarioFactory.create(MatrixCell)
@@ -55,34 +56,33 @@ scenario stub → ScenarioFactory.create(MatrixCell)
 run_all.py → MatrixPlanner → K6ProcessRunner(cell.to_env())
 ```
 
-JS: `lib/matrixCell.js`, `intensityPresets.js`, `cacheModePolicy.js`, `scenarioFactory.js`, `profiles.js` (`ProfileOptionsBuilder`).  
+JS: `lib/matrixCell.js`, `intensityPresets.js`, `cacheModePolicy.js`, `scenarioFactory.js`, `profiles.js` (`ProfileOptionsBuilder`).
 Python: `matrix/axes.py`, `cell.py`, `planner.py`, `runner.py`.
 
-## Benchmarks & “modern standards”
+## Benchmarks and modern standards
 
-Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). `build_manifests.py` normalizes the raw `*.summary.json` into the unified `lyo.bench/v1` schema (`type: "load"` — cases / scenarios / rollups / SLO / grades; see [`Lyo.Benchmark.Models`](../../Lyo.Net/Core/Benchmark/Lyo.Benchmark.Models/README.md)). It also attaches a per-case `cases` block (query structure: where clauses, filters, sort, includes, selection field count) from the `K6_CASE_META` map in `build_manifests.py` — keep that map in sync with [`lib/cases.js`](lib/cases.js) / [`lib/queryFactory.js`](lib/queryFactory.js) when cases change, so the dashboard explains what each scenario actually tested. The **authoritative review** is the HTML dashboard:
+Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). `build_manifests.py` normalizes the raw `*.summary.json` into the unified `lyo.bench/v1` schema (`type: "load"`, plus cases, scenarios, rollups, SLO, and grades; see [`Lyo.Benchmark.Models`](../../Lyo.Net/Core/Benchmark/Lyo.Benchmark.Models/README.md)). It also attaches a per-case `cases` block (query structure: where clauses, filters, sort, includes, selection field count) from the `K6_CASE_META` map in `build_manifests.py`. Keep that map in sync with [`lib/cases.js`](lib/cases.js) / [`lib/queryFactory.js`](lib/queryFactory.js) when cases change, or the dashboard will describe the wrong shape. Read the HTML dashboard:
 
-- **[Benchmark dashboard](../../docs/benchmarks/index.html)** — open after `build_manifests.py`, then click the **Query API (k6)** report
-- Stub / refresh notes: [`K6_BENCHMARK_ANALYSIS.md`](../../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)
+- **[Benchmark dashboard](../../docs/benchmarks/index.html).** Open after `build_manifests.py`, then click the Query API (k6) report.
+- Stub and refresh notes: [`K6_BENCHMARK_ANALYSIS.md`](../../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)
 
-**Latest full suite analyzed there (July 2026, 12-suite matrix incl. root `/Query`)**: `k6/framework-person/results/20260726-235847/` (the June 2026 `prod-like-20260624-234715` 8-suite archive and earlier April 2026 5-scenario archives are retained for historical comparison).
+Latest full suite on that dashboard (July 2026, 12-suite matrix including root `/Query`): `k6/framework-person/results/20260726-235847/`. The June 2026 `prod-like-20260624-234715` 8-suite archive and earlier April 2026 5-scenario archives stay around for comparison.
 
-At a high level (local laptop, API + Postgres + k6 colocated — pessimistic vs split infra). **`Lyo.TestApi`** uses **`CacheOptions:QueryCacheTagGranularity`** = **`Broad`** (default) for these numbers:
+These numbers are from a local laptop with API, Postgres, and k6 on the same machine. That is pessimistic versus split infra. `Lyo.TestApi` uses `CacheOptions:QueryCacheTagGranularity` = `Broad` (default) for these numbers:
 
 | Bucket | What to expect in the wild | This stack (see analysis) |
 |--------|----------------------------|---------------------------|
-| Small/medium JSON reads, filters, sorts, projections | Public APIs often target **p95 ~100–300 ms**; internal microservices often **~50–150 ms** | Baseline/filter/subquery cases **~14–22 ms p95** under load; projections **~6–51 ms p95**; root joins **~5–46 ms p95** on the July 2026 run |
-| Thin DB→JSON gateways (PostgREST, Hasura) | Often **~5–30 ms** p95 for simple reads on small data | Competitive **order of magnitude** for comparable shapes and sizes (root flat select **~5 ms p95**, scalar computed projection **~6 ms p95**) |
-| GraphQL (Hasura vs hand-written resolvers) | Hasura: similar to thin gateways; Apollo/Hot Chocolate/gqlgen: **~40 ms–seconds** depending on N+1 and DataLoader | Analysis separates **gateway GraphQL** from **resolver-heavy GraphQL**; see industry tables |
-| ORM-heavy APIs (typical EF/Django/Rails) | Often **50–400 ms** for non-trivial reads | **Lower** than “typical ORM” bands in the analysis for the scenarios tested |
-| Large payloads / deep graphs | Dominated by **bytes and join depth** — compare after pagination, not a single global SLO | Heavy-include **~96–119 ms avg** at steady state (spike/soak); **~659 ms avg** under 40-VU stress with **99.98%** checks |
+| Small/medium JSON reads, filters, sorts, projections | Public APIs often target **p95 ~100-300 ms**; internal microservices often **~50-150 ms** | Baseline/filter/subquery cases **~14-22 ms p95** under load; projections **~6-51 ms p95**; root joins **~5-46 ms p95** on the July 2026 run |
+| Thin DB→JSON gateways (PostgREST, Hasura) | Often **~5-30 ms** p95 for simple reads on small data | Same order of magnitude for comparable shapes and sizes (root flat select **~5 ms p95**, scalar computed projection **~6 ms p95**) |
+| GraphQL (Hasura vs hand-written resolvers) | Hasura: similar to thin gateways; Apollo/Hot Chocolate/gqlgen: **~40 ms-seconds** depending on N+1 and DataLoader | Analysis separates **gateway GraphQL** from **resolver-heavy GraphQL**; see industry tables |
+| ORM-heavy APIs (typical EF/Django/Rails) | Often **50-400 ms** for non-trivial reads | **Lower** than "typical ORM" bands in the analysis for the scenarios tested |
+| Large payloads / deep graphs | Dominated by **bytes and join depth**. Compare after pagination, not a single global SLO | Heavy-include **~96-119 ms avg** at steady state (spike/soak); **~659 ms avg** under 40-VU stress with **99.98%** checks |
 
-Treat any table as **directional**: dataset size, indexes, cache keys, and hardware dominate absolute milliseconds.
+Milliseconds in this table move with dataset size, indexes, cache keys, and hardware.
 
-**Dataset (current benchmark DB, approximate)**: `person` **~176k**, `address` **~1.1m**, `contact_address` **~1.1m**, `phone_number` **~631k**, `contact_phone_number` **~668k**,
-`email_address` **~384k**, `contact_email_address` **~397k** — not a tiny seed database. Scenarios still use **bounded `Start`/`Amount`**; they do not load the full graph.
+**Dataset (current benchmark DB, approximate).** `person` **~176k**, `address` **~1.1m**, `contact_address` **~1.1m**, `phone_number` **~631k**, `contact_phone_number` **~668k**, `email_address` **~384k**, `contact_email_address` **~397k**. Not a tiny seed database. Scenarios still use bounded `Start`/`Amount`. They do not load the full graph.
 
-**TestApi host**: k6 runs against **`Lyo.TestApi`**, which wires **`ILyoMapper`** to **Mapster** (`MapsterLyoMapper`). Object mapping adds CPU and allocations compared to hand-written maps or another mapper; production APIs that skip or minimize mapping might see different end-to-end latency than these results.
+**TestApi host.** k6 hits `Lyo.TestApi`, which wires `ILyoMapper` to Mapster (`MapsterLyoMapper`). Object mapping adds CPU and allocations versus hand-written maps or another mapper. Production APIs that skip or minimize mapping can show different end-to-end latency.
 
 ## What this covers
 
@@ -91,7 +91,7 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
   - `stress` (ramping VUs)
   - `spike` (ramping arrival rate burst)
   - `soak` (long-running leak watch)
-  - `ceiling` (saturation: staggered constant-arrival-rate steps that climb until the server can no longer keep up; zero iteration sleep, no pass/fail thresholds — each step is its own k6 scenario so the summary carries per-step p95/dropped-iterations and the dashboard reports the highest dropped-free rate as the measured ceiling)
+  - `ceiling` (saturation). Staggered constant-arrival-rate steps climb until the server cannot keep up. Zero iteration sleep, no pass/fail thresholds. Each step is its own k6 scenario, so the summary has per-step p95 and dropped iterations. The dashboard reports the highest dropped-free rate as the measured ceiling.
 - Query shapes:
   - baseline pagination
   - filter groups + multi-sort
@@ -99,31 +99,31 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
   - complex `QueryNode` tree
   - `QueryNode` + `SubQuery` (two-phase style)
   - heavy includes (cache-bypass or cache-hit mode)
-  - QueryProject projection and computed fields (scenarios 06–07)
+  - QueryProject projection and computed fields (scenarios 06-07)
   - root `POST /Query` From/Joins shapes (flat, left join, chained joins, chained + exact count)
 
 ## Directory layout
 
 - `lib/`
-  - `matrixAxes.js` / `matrixCell.js` — cell identity (endpoint × profile × intensity × cache × seed)
-  - `intensityPresets.js` — low/med/high numeric tables (SoT)
-  - `cacheModePolicy.js` — cached vs uncached paging / RNG policy
-  - `scenarioFactory.js` — composes cell → runnable k6 scenario
-  - `profiles.js` — `ProfileOptionsBuilder` (presets → k6 options)
-  - `env.js` env parsing helpers
-  - `client.js` HTTP execution + validation checks/metrics
-  - `metrics.js` custom k6 metrics
-  - `config.js` matrix config schema and selectors
-  - `cases.js` endpoint-aware query case registry
-  - `k6Transport.js` transport adapter for shared TS API client
-  - `matrixRunner.js` thin legacy wrapper → `ScenarioFactory`
-  - `workloadShape.js` seeded RNG / sort helpers
-  - `personModels.js` shared field names and source-type constants
-  - `queryFactory.js` `QueryConcreteReq` body builders (`/person/QueryConcrete`)
-  - `projectionQueries.js` `ProjectionQueryReq` body builders (`/person/QueryProject`)
-  - `rootQueries.js` root query body builders (`POST /Query` — From/Joins sparse projection)
+  - `matrixAxes.js` / `matrixCell.js`. Cell identity (endpoint × profile × intensity × cache × seed)
+  - `intensityPresets.js`. low/med/high numeric tables (SoT)
+  - `cacheModePolicy.js`. Cached vs uncached paging / RNG policy
+  - `scenarioFactory.js`. Composes a cell into a runnable k6 scenario
+  - `profiles.js`. `ProfileOptionsBuilder` (presets → k6 options)
+  - `env.js`. Env parsing helpers
+  - `client.js`. HTTP execution plus validation checks/metrics
+  - `metrics.js`. Custom k6 metrics
+  - `config.js`. Matrix config schema and selectors
+  - `cases.js`. Endpoint-aware query case registry
+  - `k6Transport.js`. Transport adapter for the shared TS API client
+  - `matrixRunner.js`. Thin legacy wrapper around `ScenarioFactory`
+  - `workloadShape.js`. Seeded RNG / sort helpers
+  - `personModels.js`. Shared field names and source-type constants
+  - `queryFactory.js`. `QueryConcreteReq` body builders (`/person/QueryConcrete`)
+  - `projectionQueries.js`. `ProjectionQueryReq` body builders (`/person/QueryProject`)
+  - `rootQueries.js`. Root query body builders (`POST /Query`, From/Joins sparse projection)
 - `matrix/` (Python)
-  - `axes.py` / `cell.py` / `planner.py` / `runner.py` — cartesian expansion + k6 process invoke
+  - `axes.py` / `cell.py` / `planner.py` / `runner.py`. Cartesian expansion and k6 process invoke
 - `scenarios/`
   - `query_load.js`
   - `query_stress.js`
@@ -141,7 +141,7 @@ Treat any table as **directional**: dataset size, indexes, cache keys, and hardw
   - `queryproject_ceiling.js`
   - `queryroot_ceiling.js`
   - (legacy scenarios retained for migration compatibility)
-- `run_all.py` strict matrix runner with package-build preflight (see also [TOOLING.md](TOOLING.md))
+- `run_all.py`. Strict matrix runner with package-build preflight (see also [TOOLING.md](TOOLING.md))
 
 ## Quick start
 
@@ -189,8 +189,8 @@ MODE=smoke python3 k6/framework-person/run_all.py query load med
 
 - Core:
   - `BASE_URL` (default `http://localhost:5251`)
-  - `ENDPOINT_PATH` (default `/person/QueryConcrete`) — full entity queries only
-  - `QUERY_PROJECT_PATH` (default `/person/QueryProject`) — projection scenarios (01 case 3, 03, 04 case 2, 06, 07)
+  - `ENDPOINT_PATH` (default `/person/QueryConcrete`). Full entity queries only
+  - `QUERY_PROJECT_PATH` (default `/person/QueryProject`). Projection scenarios (01 case 3, 03, 04 case 2, 06, 07)
   - `TOKEN` (optional bearer token)
   - `SLEEP_SECONDS`
 - Matrix control:
@@ -199,7 +199,7 @@ MODE=smoke python3 k6/framework-person/run_all.py query load med
   - `INTENSITY` (`low|med|high`, default `med` when running a stub directly; `run_all.py` expands all three unless filtered)
   - `CACHE_MODE` (`uncached|cached`) preferred cache axis; `CACHE_HIT_MODE` (`true|false`) legacy equivalent
   - Cached mode pins request shapes (fixed `Start=0`/`Amount=amountMin`, round-robin cases, no include/Select/sort randomization) so each case hits one query-cache key
-  - `RANDOM_SEED` (integer, default `20260623`) — always pinned by `run_all.py` for every cell
+  - `RANDOM_SEED` (integer, default `20260623`). Always pinned by `run_all.py` for every cell
   - `MATRIX_CASES` (`all` or comma-separated case ids; applies to matrix suites). Default is `baseline,filter_sort,complex_querynode,query_with_subquery,realistic_include` for `query` load, otherwise `all`.
   - `MATRIX_AMOUNT_MIN`, `MATRIX_AMOUNT_MAX`, `MATRIX_START_MAX` (global matrix overrides)
   - Fairness default: both `/person/QueryConcrete` and `/person/QueryProject` use the same matrix pagination range unless you explicitly override endpoint-specific values.
@@ -208,7 +208,7 @@ MODE=smoke python3 k6/framework-person/run_all.py query load med
   - `CASE_WEIGHT_<CASE_ID>` (e.g. `CASE_WEIGHT_PROJECTION_NESTED=2.0`) set case weights
   - `CASE_WEIGHT_<ENDPOINT>_<PROFILE>_<CASE_ID>` (most specific override; e.g. `CASE_WEIGHT_QUERYPROJECT_SPIKE_PROJECTION_UNIFIED=3.0`)
 - Query behavior:
-  - `TOTAL_COUNT_MODE` (`None`, `HasMore`, `Exact`) — default `None`. `HasMore` is the in-between: fetches one extra row to detect more pages (no `COUNT`). `Exact` runs an extra `COUNT(*)` and can roughly double query time.
+  - `TOTAL_COUNT_MODE` (`None`, `HasMore`, `Exact`). Default `None`. `HasMore` is the in-between: fetches one extra row to detect more pages (no `COUNT`). `Exact` runs an extra `COUNT(*)` and can roughly double query time.
   - `INCLUDE_FILTER_MODE` (`Full`, `MatchedOnly`)
   - `INCLUDES` (comma separated include paths)
   - `SELECT_FIELDS` (comma separated projection field paths for `QueryProject`; use `SourceEntityType`, not `Source`)
@@ -273,8 +273,8 @@ k6 run \
 ## Notes
 
 - Query paths use entity property names (e.g. `SourceEntityType`). Values are full `EntityRef` type names such as `Lyo.Endato.Postgres.Database.EndatoPsPersonEntity` (Person Search) and `Lyo.Endato.Postgres.Database.EndatoCePersonEntity` (Contact Enrichment). JSON responses from `/person/QueryConcrete` expose the mapped field as `source` on `PersonRes`.
-- `QueryProject` keeps `Include` empty by design in these workloads; navigation loading is derived from `Select` (and where-clause collection paths) by the API.
-- Query and QueryProject generators now share seeded randomization and probability controls so cross-endpoint comparisons can use matched shape distributions (nav branches, sort count, sort direction mix).
+- `QueryProject` keeps `Include` empty by design in these workloads. The API derives navigation loading from `Select` and where-clause collection paths.
+- Query and QueryProject generators share seeded randomization and probability controls so cross-endpoint comparisons can use matched shape distributions (nav branches, sort count, sort direction mix).
 - Matrix suites emit per-case tagged success metrics: `status_success_rate`, `latency_success_rate`, `shape_success_rate`, and per-case `query_duration`.
 - Scenarios that send `Select` post to `/person/QueryProject` via shared person client routing.
-- Legacy mixed scenarios still exist for migration/backward compatibility, but production execution should use dedicated matrix suites.
+- Legacy mixed scenarios still exist for migration. Matrix suites are what you want for a real run.

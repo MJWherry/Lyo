@@ -3,14 +3,14 @@
   "name": "Lyo.Geolocation.Models",
   "area": "Core",
   "tagline": "Neutral data contracts for `Lyo.Geolocation` and `Lyo.Geolocation.Postgres`.",
-  "description": "Neutral data contracts for [`Lyo.Geolocation`](../Lyo.Geolocation/README.md) and [`Lyo.Geolocation.Postgres`](../Lyo.Geolocation.Postgres/README.md).\n\nNo HTTP stacks and **no vendor client packages** — hosts that only need DTOs can reference this project alone.",
+  "description": "Neutral data contracts for [`Lyo.Geolocation`](../Lyo.Geolocation/README.md) and [`Lyo.Geolocation.Postgres`](../Lyo.Geolocation.Postgres/README.md).\n\nNo HTTP stacks and no vendor client packages. Hosts that only need DTOs can reference this project alone.",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "paragraph",
       "title": "Provenance",
-      "text": "[`Addresses.Address`](Addresses/Address.cs) implements **`IEntitySourceDerived`** (`ICollection<EntitySourceRecord> Sources`, optional **`LocallyModifiedAt`**). Persisted via [ `address_source`](../Lyo.Geolocation.Postgres/README.md): - Owner identity on parent **`address`** (`address_id` FK) - **`source_entity_*`** + **`imported_at`** — external source (e.g. `GoogleMapsPlace` + place id) The **`source_entity_type`** string is chosen by the **importing application** (e.g. `Lyo.Google.Geolocation.Client`), not this package. Use * *`EntitySourceRecord.From(source, importedAt)`** when mapping vendor DTOs before persist."
+      "text": "[`Addresses.Address`](Addresses/Address.cs) implements `IEntitySourceDerived` (`ICollection<EntitySourceRecord> Sources`, optional `LocallyModifiedAt`). Persisted via [`address_source`](../Lyo.Geolocation.Postgres/README.md). Owner identity is on the parent `address` (`address_id` FK). `source_entity_*` + `imported_at` hold the external source, for example `GoogleMapsPlace` plus a place id. The `source_entity_type` string is chosen by the importing application (for example `Lyo.Google.Geolocation.Client`), not this package. Use `EntitySourceRecord.From(source, importedAt)` when mapping vendor DTOs before persist."
     },
     {
       "type": "table",
@@ -21,16 +21,16 @@
       ],
       "rows": [
         [
-          "**`Coordinates.GeoCoordinate`**",
-          "Latitude / longitude (+ optional altitude, accuracy, timestamp)."
+          "`Coordinates.GeoCoordinate`",
+          "Latitude / longitude plus optional altitude, accuracy, timestamp."
         ],
         [
-          "**`BoundingBox`**",
+          "`BoundingBox`",
           "Southwest/Northeast pair with `Center`, `Contains`, `Intersects`, `Expand`, factories."
         ]
       ],
-      "lead": "**Coordinates & geometry**",
-      "trail": "**Addresses**\n\n| Type | Role |\n|--------------------------------|------------------------------------------------------------------------------------------|\n| **`Addresses.Address`** | Unified US + international address; Endato-shaped optional enrichment fields; `Sources`. |\n| **`Addresses.ContactAddress`** | Person ↔ address junction (used by People flows). |\n\n**Geocoding, routing, places, distance** — see existing sections in prior docs (`GeocodeResult`, `Route`, `Place`, …)."
+      "lead": "**Coordinates and geometry**",
+      "trail": "**Addresses**\n\n| Type | Role |\n|--------------------------------|------------------------------------------------------------------------------------------|\n| `Addresses.Address` | Unified US + international address. Endato-shaped optional enrichment fields. `Sources`. |\n| `Addresses.ContactAddress` | Person to address junction, used by People flows. |\n\n**Geocoding, routing, places, distance.** See `GeocodeResult`, `Route`, `Place`, and the other types in this package."
     }
   ],
   "links": [],

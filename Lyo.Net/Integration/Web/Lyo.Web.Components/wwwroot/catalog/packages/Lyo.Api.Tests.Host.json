@@ -17,18 +17,18 @@
       "type": "list",
       "title": "What it ships",
       "items": [
-        "**`Program`** ([`Program.cs`](Program.cs)) — top-level statements that build the host. The empty `Lyo.Api.Tests.Host.Program` class at the bottom is the entry-point type required by `WebApplicationFactory<Program>`.",
-        "**`MapsterLyoMapper`** ([`MapsterLyoMapper.cs`](MapsterLyoMapper.cs)) — the `ILyoMapper` implementation registered for tests; thin Mapster adapter so request/response DTOs map end-to-end."
+        "`Program` ([`Program.cs`](Program.cs)). Top-level statements that build the host. The empty `Lyo.Api.Tests.Host.Program` class at the bottom is the entry-point type required by `WebApplicationFactory<Program>`.",
+        "`MapsterLyoMapper` ([`MapsterLyoMapper.cs`](MapsterLyoMapper.cs)). The `ILyoMapper` implementation registered for tests; thin Mapster adapter so request/response DTOs map end-to-end."
       ]
     },
     {
       "type": "list",
       "title": "Registered services",
       "items": [
-        "**CSV / XLSX / Formatter** (`AddCsvService`, `AddXlsxService`, `AddFormatterService`) — required by export and computed fields.",
+        "**CSV / XLSX / Formatter** (`AddCsvService`, `AddXlsxService`, `AddFormatterService`). Required by export and computed fields.",
         "**Response compression** (Brotli + Gzip, `Fastest` level) and **request decompression**.",
         "**JSON** via `LyoJsonSerializerOptions.ApplyTo` so `ICachePayloadSerializer` (registered by `AddLyoQueryServices`) matches the wire format.",
-        "**Local cache** (`AddLocalCache`) and **`AddLyoQueryServices`**.",
+        "**Local cache** (`AddLocalCache`) and `AddLyoQueryServices`.",
         "**Job persistence** through `AddPostgresJobManagementFromConfiguration` (PostgreSQL `Lyo.Job` schema; configured via `appsettings.json`).",
         "**Export service** for `JobContext`.",
         "**Mapster** (`TypeAdapterConfig` + `IMapper` + `ILyoMapper` ↔ `MapsterLyoMapper`).",
@@ -37,10 +37,10 @@
     },
     {
       "type": "list",
-      "title": "Endpoint surfaces",
+      "title": "Endpoints",
       "items": [
-        "**Typed builder** at `/api/Job/Definition` — uses `CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>` with `AllowAnonymous`, `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`, `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.",
-        "**Dynamic builder** at `api/Job` — `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` ensuring a `Guid.NewGuid()` PK when callers omit `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults."
+        "**Typed builder** at `/api/Job/Definition`. Uses `CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>` with `AllowAnonymous`, `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`, `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.",
+        "**Dynamic builder** at `api/Job`. `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` setting a `Guid.NewGuid()` PK when callers omit `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults."
       ]
     },
     {

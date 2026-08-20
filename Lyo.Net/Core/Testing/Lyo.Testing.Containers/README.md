@@ -1,12 +1,12 @@
 # Lyo.Testing.Containers
 
-xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover **PostgreSQL** and **RabbitMQ** — other backends can be added by following the same shape.
+xUnit v3 fixtures around Testcontainers. The shipped helpers start and dispose PostgreSQL and RabbitMQ containers. Other backends can follow the same shape.
 
-> **Internal-only:** `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects; do not pack it.
+Internal-only: `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects. Do not pack it.
 
 ## Examples
 
-### Quick start — xUnit v3 class fixture
+### xUnit v3 class fixture
 
 ```csharp
 using Lyo.Testing.Containers;
@@ -59,16 +59,16 @@ await broker.StartAsync(ct);
 var (host, port, adminUrl) = (broker.Host, broker.Port, broker.AdminUrl);
 ```
 
-## Public surface
+## Types
 
 | Type | Role |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`PostgresTestContainer`** | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`. |
-| **`PostgresContainerOptions`** | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, etc. |
-| **`PostgresContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`. |
-| **`RabbitMqTestContainer`** | `IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`. |
-| **`RabbitMqContainerOptions`** | `Image` (defaults to `rabbitmq:4-management-alpine` — must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook. |
-| **`RabbitMqContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown. |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PostgresTestContainer` | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`. |
+| `PostgresContainerOptions` | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, and similar. |
+| `PostgresContainerFixtureBase` | Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`. |
+| `RabbitMqTestContainer` | `IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`. |
+| `RabbitMqContainerOptions` | `Image` (defaults to `rabbitmq:4-management-alpine`, which must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook. |
+| `RabbitMqContainerFixtureBase` | Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown. |
 
 ## Sharing one container across an assembly
 
@@ -102,18 +102,18 @@ The management HTTP API (`AdminUrl`) is exposed so peek and queue-statistics ope
 
 ## See also
 
-- **`Lyo.Testing`** — shared assertion / fake / time-control helpers used by tests across the solution.
-- **Testcontainers for .NET** documentation — for advanced builder configuration (volumes, networks, wait strategies).
+- `Lyo.Testing`. Shared assertion, fake, and time-control helpers used by tests across the solution.
+- Testcontainers for .NET documentation. Builder configuration (volumes, networks, wait strategies).
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Testcontainers.PostgreSql` `4.13.0` — (direct, third-party)
-- `Testcontainers.RabbitMq` `4.13.0` — (direct, third-party)
-- `xunit.v3.extensibility.core` `3.2.2` — (direct, third-party)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Testcontainers.PostgreSql` `4.13.0` (direct, third-party)
+- `Testcontainers.RabbitMq` `4.13.0` (direct, third-party)
+- `xunit.v3.extensibility.core` `3.2.2` (direct, third-party)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

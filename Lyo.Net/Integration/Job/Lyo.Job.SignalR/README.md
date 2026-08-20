@@ -1,6 +1,6 @@
 # Lyo.Job.SignalR
 
-SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`** records to all connected **`JobHub`** clients — enabling Blazor or JavaScript dashboards to refresh without polling.
+SignalR live job dashboard. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes `JobHubEvent` records to connected `JobHub` clients so Blazor or JavaScript dashboards can refresh without polling.
 
 ## Examples
 
@@ -35,7 +35,7 @@ Requires `IMqService` (same broker as `AddMqJobEventPublisher`). Register before
 
 ## Client usage
 
-Connect to the hub and listen for **`JobEvent`**: `JobHub.Ping()` returns `"pong"` for connectivity checks.
+Connect to the hub and listen for `JobEvent`: `JobHub.Ping()` returns `"pong"` for connectivity checks.
 
 ## Broadcast events
 
@@ -73,7 +73,7 @@ Pair with [`Lyo.Job.Web.Components`](../Lyo.Job.Web.Components/README.md) for th
 
 ## Configuration
 
-This package has no dedicated options type — it uses the host's SignalR and MQ configuration. Ensure CORS and WebSocket policies allow dashboard clients to reach the mapped hub path.
+This package has no dedicated options type. It uses the host's SignalR and MQ configuration. Ensure CORS and WebSocket policies allow dashboard clients to reach the mapped hub path.
 
 ## Metrics
 
@@ -83,21 +83,21 @@ The broadcaster does not emit dedicated metrics. Monitor underlying job metrics 
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Job.Models` — (direct, lyo)
-- `Lyo.MessageQueue` — (direct, lyo)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (direct, microsoft)
-- `Lyo.Api.Models` — (transitive, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Health` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Lyo.Schedule.Models` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Diagnostics.DiagnosticSource` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Job.Models` (direct, lyo)
+- `Lyo.MessageQueue` (direct, lyo)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Diagnostics.DiagnosticSource` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

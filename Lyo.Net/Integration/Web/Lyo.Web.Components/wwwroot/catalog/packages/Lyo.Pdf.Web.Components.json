@@ -2,8 +2,8 @@
   "id": "Lyo.Pdf.Web.Components",
   "name": "Lyo.Pdf.Web.Components",
   "area": "Data",
-  "tagline": "Reusable Blazor / MudBlazor components for PDF workflows: an HTML → PDF workbench, a PDF annotation workbench, and a low-level annotator (`LyoPdfAnnotator`) that lets end-users draw bounding-box…",
-  "description": "Reusable Blazor / MudBlazor components for PDF workflows: an HTML → PDF workbench, a PDF annotation workbench, and a low-level annotator (`LyoPdfAnnotator`) that lets end-users draw bounding-box regions on a PDF and emit `PdfBoundingBox` payloads.\n\nTargets `net10.0`. Razor SDK with `FrameworkReference Microsoft.AspNetCore.App` and `MudBlazor` 9.3+.",
+  "tagline": "Blazor / MudBlazor PDF workbenches: HTML to PDF, annotation, and `LyoPdfAnnotator` for drawing bounding-box regions that emit `PdfBoundingBox`.",
+  "description": "Blazor / MudBlazor components for PDF workflows: an HTML to PDF workbench, a PDF annotation workbench, and `LyoPdfAnnotator` so a user can draw bounding-box regions on a PDF and emit `PdfBoundingBox` payloads.\n\nTargets `net10.0`. Razor SDK with `FrameworkReference Microsoft.AspNetCore.App` and `MudBlazor` 9.3+.",
   "features": [],
   "examples": [
     {
@@ -17,18 +17,18 @@
       "type": "list",
       "title": "Components",
       "items": [
-        "`HtmlToPdfWorkbench.razor` — paste HTML or upload an `.html` / `.htm` / `.txt` file, then convert it to a PDF via `IWebRendererService`.",
-        "`PdfAnnotationWorkbench.razor` — wraps `LyoPdfAnnotator` and renders a live table of saved annotations and their extracted payloads.",
-        "`PdfAnnotator/LyoPdfAnnotator.razor` (+ `LyoPdfAnnotator.razor.cs`, `LyoPdfAnnotatorResultsView.razor`) — drawing surface and result list. Exposes `AnnotationsChanged` and `AnnotationsSaved` callbacks."
+        "`HtmlToPdfWorkbench.razor`. Paste HTML or upload an `.html` / `.htm` / `.txt` file, then convert it to a PDF via `IWebRendererService`.",
+        "`PdfAnnotationWorkbench.razor`. Wraps `LyoPdfAnnotator` and renders a live table of saved annotations and their extracted payloads.",
+        "`PdfAnnotator/LyoPdfAnnotator.razor` (+ `LyoPdfAnnotator.razor.cs`, `LyoPdfAnnotatorResultsView.razor`). Drawing canvas and result list. Exposes `AnnotationsChanged` and `AnnotationsSaved` callbacks."
       ]
     },
     {
       "type": "list",
       "title": "Annotator services",
       "items": [
-        "`IPdfAnnotatorService` (`BrowserPdfAnnotator` implementation) — returns `IReadOnlyDictionary<string, PdfBoundingBox>` after the user finishes annotating a PDF supplied as `Stream`, `byte[]`, or file path (`AnnotateAsync` / `AnnotateFileAsync`).",
-        "`LyoPdfAnnotatorController` — scoped controller used by the Blazor components.",
-        "`LyoPdfAnnotationResult` — payload emitted per saved region: `Key`, `BoundingBoxSummary`, `ExtractionType` (`BoundingBoxText`, `KeyValue`, `Table`), `ExtractedText`, optional `KeyValuePairs` / `TableRows`, `KnownKeys`, `TableHeaders`, `YTolerance`, `KeyValueLayout` (`PdfKeyValueLayout`), `InferFormattingFlags` (`PdfInferFormattingFlags`), `KeyValueInferDelimiters`, `TableKeyColumnLabel`, `ColumnCount`, and `ColumnTexts`."
+        "`IPdfAnnotatorService` (`BrowserPdfAnnotator`). Returns `IReadOnlyDictionary<string, PdfBoundingBox>` after the user finishes annotating a PDF supplied as `Stream`, `byte[]`, or file path (`AnnotateAsync` / `AnnotateFileAsync`).",
+        "`LyoPdfAnnotatorController`. Scoped controller used by the Blazor components.",
+        "`LyoPdfAnnotationResult`. Payload emitted per saved region: `Key`, `BoundingBoxSummary`, `ExtractionType` (`BoundingBoxText`, `KeyValue`, `Table`), `ExtractedText`, optional `KeyValuePairs` / `TableRows`, `KnownKeys`, `TableHeaders`, `YTolerance`, `KeyValueLayout` (`PdfKeyValueLayout`), `InferFormattingFlags` (`PdfInferFormattingFlags`), `KeyValueInferDelimiters`, `TableKeyColumnLabel`, `ColumnCount`, and `ColumnTexts`."
       ]
     },
     {
@@ -103,7 +103,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -159,6 +175,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -184,6 +208,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -242,6 +274,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -270,6 +311,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration",
       "kind": "package",
       "version": "10.0.5",
@@ -280,6 +330,15 @@
     },
     {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

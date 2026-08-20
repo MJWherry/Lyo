@@ -2,8 +2,8 @@
   "id": "Lyo.Tts.Typecast",
   "name": "Lyo.Tts.Typecast",
   "area": "Communication",
-  "tagline": "Lyo.Typecast.Client–backed synthesis: `TypecastTtsService` resolves audio via `TypecastClient`, supports optional voice catalog loading for validation (`LoadVoicesAsync`), bulk flows from `Lyo.Tts`…",
-  "description": "[Lyo.Typecast.Client](../../../Integration/Typecast/Lyo.Typecast.Client/README.md)–backed synthesis: `TypecastTtsService` resolves audio via `TypecastClient`, supports optional\nvoice catalog loading for validation (`LoadVoicesAsync`), bulk flows from [`Lyo.Tts`](../Lyo.Tts/README.md), and Typecast-namespaced metrics.\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "tagline": "Typecast TTS via `Lyo.Typecast.Client`. `TypecastTtsService` synthesizes audio through `TypecastClient`, can load the voice catalog for validation (`LoadVoicesAsync`), and uses the bulk pipeline and Typecast-namespaced metrics from `Lyo.Tts`.",
+  "description": "Typecast TTS via [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md). `TypecastTtsService` synthesizes audio through `TypecastClient`, can load the\nvoice catalog for validation (`LoadVoicesAsync`), and uses the bulk pipeline and Typecast-namespaced metrics from [`Lyo.Tts`](../Lyo.Tts/README.md).\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
   "features": [],
   "examples": [
     {
@@ -24,7 +24,7 @@
     {
       "type": "markdown",
       "title": "Dependency injection",
-      "body": "Both `AddTypecastTtsService` and `AddTypecastTtsServiceFromConfiguration` register:\n\n- `TypecastTtsService` (singleton; subclass of `TtsServiceBase<TypecastTtsRequest>`).\n- `ITtsService<TypecastTtsRequest>` resolved from the singleton above.\n- `TypecastTtsAppService` — a thin adapter that converts `TtsResult<TypecastTtsRequest>` into\n  `TtsSynthesisResult`.\n- `ITtsService` (non-generic) backed by `TypecastTtsAppService`, so consumers that only depend on the\n  simple contract can resolve it directly.\n\n`DefaultVoiceId`, `DefaultModel`, `MaxTextLength`, and bulk limits come from `TypecastOptions` (which\ninherits shared fields from [`TtsServiceOptions`](../Lyo.Tts.Models/README.md)). `TypecastTtsService`\nrequires a registered `TypecastClient` — register it first via `AddTypecastClientFromConfiguration` (or\n`AddTypecastClient`) from [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md)."
+      "body": "Both `AddTypecastTtsService` and `AddTypecastTtsServiceFromConfiguration` register:\n\n- `TypecastTtsService` (singleton; subclass of `TtsServiceBase<TypecastTtsRequest>`).\n- `ITtsService<TypecastTtsRequest>` resolved from the singleton above.\n- `TypecastTtsAppService` converts `TtsResult<TypecastTtsRequest>` into\n  `TtsSynthesisResult`.\n- `ITtsService` (non-generic) backed by `TypecastTtsAppService`, so consumers that only depend on the\n  simple contract can resolve it directly.\n\n`DefaultVoiceId`, `DefaultModel`, `MaxTextLength`, and bulk limits come from `TypecastOptions` (which\ninherits shared fields from [`TtsServiceOptions`](../Lyo.Tts.Models/README.md)). `TypecastTtsService`\nrequires a registered `TypecastClient`. Register it first via `AddTypecastClientFromConfiguration` or\n`AddTypecastClient` from [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md)."
     },
     {
       "type": "paragraph",
@@ -34,7 +34,7 @@
     {
       "type": "paragraph",
       "title": "Builder overload caveat",
-      "text": "There is an overload named `SynthesizeToFileAsync(TypecastTtsRequestBuilder, …)` on `TypecastTtsService` that **does not write to disk**—it only builds a request and returns audio bytes. Use the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …)` with `builder.Build()` when you need a file."
+      "text": "There is an overload named `SynthesizeToFileAsync(TypecastTtsRequestBuilder, …)` on `TypecastTtsService` that does not write to disk. It only builds a request and returns audio bytes. Use the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …)` with `builder.Build()` when you need a file."
     }
   ],
   "links": [],

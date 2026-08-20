@@ -29,24 +29,24 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## Dependency injection
 
-See [`Lyo.Compression`](../Lyo.Compression/README.md) for the registration overview, `ICompressionResolver`, and configuration file example. **File storage reads:** register `AddXzCompressor()` when stored metadata may reference XZ; reads dispatch through `ICompressionResolver` by `CompressionAlgorithm` metadata.
+See [`Lyo.Compression`](../Lyo.Compression/README.md) for registration, ICompressionResolver, and the configuration file example. File storage reads: register AddXzCompressor() when stored metadata may reference XZ. Reads dispatch through ICompressionResolver by CompressionAlgorithm metadata.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Compression` — (direct, lyo)
-- `Joveler.Compression.XZ` `5.0.2` — (direct, third-party)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Lyo.Streams` — (transitive, lyo)
-- `EasyCompressor` `2.1.0` — (transitive, third-party)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Compression` (direct, lyo)
+- `Joveler.Compression.XZ` `5.0.2` (direct, third-party)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Lyo.Streams` (transitive, lyo)
+- `EasyCompressor` `2.1.0` (transitive, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

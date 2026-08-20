@@ -1,4 +1,4 @@
-# Compression Benchmarks Summary
+# Compression benchmarks summary
 
 The interactive review lives in the HTML dashboard (auto-loaded from latest BenchmarkDotNet CSV artifacts):
 

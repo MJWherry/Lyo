@@ -1,0 +1,48 @@
+# Reusable: push packed nupkgs to GitHub Packages.
+name: Publish - GitHub Packages
+
+on:
+  workflow_call:
+    inputs:
+      artifact_name:
+        required: false
+        type: string
+        default: nuget-packages
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download nupkgs
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: artifacts/nuget
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: Push to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          pkgs=(artifacts/nuget/*.nupkg)
+          if [ ${#pkgs[@]} -eq 0 ]; then
+            echo "No nupkgs to push"
+            exit 0
+          fi
+          owner="${GITHUB_REPOSITORY_OWNER}"
+          source="https://nuget.pkg.github.com/${owner}/index.json"
+          dotnet nuget push "artifacts/nuget/*.nupkg" \
+            --api-key "${GITHUB_TOKEN}" \
+            --source "${source}" \
+            --skip-duplicate

@@ -3,7 +3,7 @@
   "name": "Lyo.Job.Models",
   "area": "Integration",
   "tagline": "Shared DTOs, builders, enums, metrics constants, distributed-tracing helpers, and message-queue contracts for the Lyo job-management subsystem.",
-  "description": "Shared DTOs, builders, enums, metrics constants, distributed-tracing helpers, and message-queue contracts for the Lyo job-management subsystem. Consumed by `Lyo.Job.Postgres` (the API host), `Lyo.Job.Scheduler`, `Lyo.Job.Worker`, `Lyo.Job.Alerts`, `Lyo.Job.SignalR`, and any Blazor / client code that talks to the job service.\n\nMulti-targets `netstandard2.0` and `net10.0` so the same DTOs flow through legacy callers and modern .NET hosts.\n\nThis package is a **contract library** — it has no `AddXxx` DI registration. Hosts reference it for DTOs, builders, metrics constants, and `IJobEventPublisher`; wire persistence via [`Lyo.Job.Postgres`](../Lyo.Job.Postgres/README.md), scheduling via [`Lyo.Job.Scheduler`](../Lyo.Job.Scheduler/README.md), and workers via [ `Lyo.Job.Worker`](../Lyo.Job.Worker/README.md).",
+  "description": "Shared DTOs, builders, enums, metrics constants, distributed-tracing helpers, and message-queue contracts for the Lyo job-management subsystem. Consumed by `Lyo.Job.Postgres` (the API host), `Lyo.Job.Scheduler`, `Lyo.Job.Worker`, `Lyo.Job.Alerts`, `Lyo.Job.SignalR`, and any Blazor / client code that talks to the job service.\n\nMulti-targets `netstandard2.0` and `net10.0` so the same DTOs flow through legacy callers and modern .NET hosts.\n\nThis package is a contract library. It has no `AddXxx` DI registration. Hosts reference it for DTOs, builders, metrics constants, and `IJobEventPublisher`. Wire persistence via [`Lyo.Job.Postgres`](../Lyo.Job.Postgres/README.md), scheduling via [`Lyo.Job.Scheduler`](../Lyo.Job.Scheduler/README.md), and workers via [`Lyo.Job.Worker`](../Lyo.Job.Worker/README.md).",
   "features": [],
   "examples": [
     {
@@ -20,14 +20,14 @@
   "sections": [
     {
       "type": "table",
-      "title": "Production hardening model",
+      "title": "Hardening model",
       "headers": [
         "Concern",
         "Where it lives"
       ],
       "rows": [
         [
-          "Priority (0–9)",
+          "Priority (0 to 9)",
           "`JobDefinitionReq.Priority`, `JobRunReq.Priority`"
         ],
         [
@@ -92,34 +92,34 @@
         ],
         [
           "Parallel restrictions",
-          "`JobParallelRestrictionReq` — blocks schedule when related definitions are Queued/Running"
+          "**`JobParallelRestrictionReq`.** blocks schedule when related definitions are Queued/Running"
         ],
         [
           "Dry run",
-          "`JobRunReq.DryRun`, `JobRunBuilder.AsDryRun()` — validate without persisting or publishing"
+          "`JobRunReq.DryRun`, `JobRunBuilder.AsDryRun()`. Validate without persisting or publishing"
         ],
         [
           "Dispatch suppression",
-          "`JobRunReq.SuppressDispatch` — persist the run as `Queued` without the immediate MQ publish (caller owns dispatch: scheduler delayed retries, workflow step ordering); a future `ScheduledSlotUtc` suppresses implicitly"
+          "**`JobRunReq.SuppressDispatch`.** persist the run as `Queued` without the immediate MQ publish (caller owns dispatch: scheduler delayed retries, workflow step ordering); a future `ScheduledSlotUtc` suppresses implicitly"
         ],
         [
           "Delayed dispatch",
-          "`JobRunReq.ScheduledSlotUtc` — slot idempotency for scheduled runs, and the due time for delayed retries picked up by maintenance redispatch"
+          "**`JobRunReq.ScheduledSlotUtc`.** slot idempotency for scheduled runs, and the due time for delayed retries picked up by maintenance redispatch"
         ],
         [
           "Parameter validation",
-          "`JobParameterReq.Required`, `ValidationRegex`, `MinLength`, `MaxLength`, `AllowedValues` — enforced in `JobService`"
+          "`JobParameterReq.Required`, `ValidationRegex`, `MinLength`, `MaxLength`, `AllowedValues`. Enforced in `JobService`"
         ],
         [
           "Parameter options",
-          "`JobParameterReq.Options` — JSON picker source (static items or root `QueryReq`); `Value` remains the default/selected scalar"
+          "`JobParameterReq.Options`. JSON picker source (static items or root `QueryReq`); `Value` remains the default/selected scalar"
         ]
       ],
       "lead": "Definitions, schedules, and runs carry the knobs that power priority dispatch, retention, misfire handling, exponential backoff, idempotency, rate limiting, SLA tracking, alerting,\nblackout calendars, batch fan-out, workflows, encryption markers, and audit correlation:"
     },
     {
       "type": "table",
-      "title": "Production hardening model — `JobDefinitionReq` defaults",
+      "title": "`JobDefinitionReq` defaults",
       "headers": [
         "Property",
         "Default"
@@ -255,7 +255,7 @@
     {
       "type": "markdown",
       "title": "Builders (`Builders/`)",
-      "body": "Fluent factories for assembling request DTOs without dropping into raw initializers.\n\n- **`JobDefinitionBuilder`** — `New(name)`, `SetDescription`, `SetType`, `ForCSharpWorker` / `ForPythonWorker`, `AsImportInCSharp`, schedule/parameter/trigger/restriction helpers,\n  email-parameter helpers. `WithBlackoutCalendar` / `AddBlackoutWindow` set a definition-level default cascaded to every schedule (by id or inline). `Build()` returns\n  `JobDefinitionReq`.\n- **`JobScheduleBuilder`** — `EveryDay`, `Weekdays`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval`, cron helpers, `WithMisfirePolicy`, `WithBlackoutCalendar`,\n  `AddBlackoutWindow`, `Build()` → `JobScheduleReq`.\n- **`JobBlackoutCalendarBuilder`** — `AddBlackoutWindow(...)` with `JobBlackoutPolicy` (`Skip` / `Defer`); `AddBlackoutHoliday(HolidayInfo, ...)` / `AddBlackoutHolidays(...)` /\n  `AddFederalHolidayBlackouts()` expand `Lyo.DateAndTime.HolidayInfo` records into concrete dated windows at build time. `Build()` → `JobBlackoutCalendarReq`.\n- **`JobScheduleBuilder.WithBlackoutCalendar`** — per-schedule override: link by `Guid`, or inline create via `Action<JobBlackoutCalendarBuilder>`.\n- **`JobWorkflowBuilder`** — ordered steps with `DependsOnStepIds` and `JobWorkflowFailurePolicy`. `Build()` → `JobWorkflowReq`.\n- **`JobTriggerBuilder`**, **`JobRunBuilder`**, **`JobRunResultBuilder`** — as before; `JobRunBuilder` supports `AddEncryptedParameter`."
+      "body": "Fluent factories for assembling request DTOs without dropping into raw initializers.\n\n- `JobDefinitionBuilder`. `New(name)`, `SetDescription`, `SetType`, `ForCSharpWorker` / `ForPythonWorker`, `AsImportInCSharp`, schedule/parameter/trigger/restriction helpers,\n email-parameter helpers. `WithBlackoutCalendar` / `AddBlackoutWindow` set a definition-level default cascaded to every schedule (by id or inline). `Build()` returns\n `JobDefinitionReq`.\n- `JobScheduleBuilder`. `EveryDay`, `Weekdays`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval`, cron helpers, `WithMisfirePolicy`, `WithBlackoutCalendar`,\n `AddBlackoutWindow`, `Build()` → `JobScheduleReq`.\n- `JobBlackoutCalendarBuilder`. `AddBlackoutWindow(...)` with `JobBlackoutPolicy` (`Skip` / `Defer`); `AddBlackoutHoliday(HolidayInfo, ...)` / `AddBlackoutHolidays(...)` /\n `AddFederalHolidayBlackouts()` expand `Lyo.DateAndTime.HolidayInfo` records into concrete dated windows at build time. `Build()` → `JobBlackoutCalendarReq`.\n- **`JobScheduleBuilder.WithBlackoutCalendar`.** per-schedule override: link by `Guid`, or inline create via `Action<JobBlackoutCalendarBuilder>`.\n- **`JobWorkflowBuilder`.** ordered steps with `DependsOnStepIds` and `JobWorkflowFailurePolicy`. `Build()` → `JobWorkflowReq`.\n- `JobTriggerBuilder`, `JobRunBuilder`, `JobRunResultBuilder`. As before; `JobRunBuilder` supports `AddEncryptedParameter`."
     },
     {
       "type": "table",
@@ -283,7 +283,7 @@
         ],
         [
           "`JobMisfirePolicy`",
-          "`Skip`, `RunOnce` — missed schedule slots"
+          "`Skip`, `RunOnce`. Missed schedule slots"
         ],
         [
           "`JobRetryBackoffType`",
@@ -291,7 +291,7 @@
         ],
         [
           "`JobBlackoutPolicy`",
-          "`Skip`, `Defer` — calendar windows"
+          "`Skip`, `Defer`. Calendar windows"
         ],
         [
           "`JobAlertType`",
@@ -314,16 +314,16 @@
     {
       "type": "paragraph",
       "title": "Distributed tracing (`JobTracing`)",
-      "text": "`ActivitySource` name: **`Lyo.Job`**. Helpers: `StartCreateRun`, `StartRun`, `FinishRun`, `StartWorkerExecution` (links to queue envelope `TraceId`), `TryParseParentContext`. Register the source in your host OpenTelemetry / `ActivityListener` pipeline so spans from `Lyo.Job.Postgres`, `Lyo.Job.Worker`, and the scheduler correlate."
+      "text": "`ActivitySource` name: `Lyo.Job`. Helpers: `StartCreateRun`, `StartRun`, `FinishRun`, `StartWorkerExecution` (links to queue envelope `TraceId`), `TryParseParentContext`. Register the source in your host OpenTelemetry / `ActivityListener` pipeline so spans from `Lyo.Job.Postgres`, `Lyo.Job.Worker`, and the scheduler correlate."
     },
     {
       "type": "list",
       "title": "Event publisher (`Events/IJobEventPublisher`)",
       "items": [
-        "`PublishRunCreatedAsync(runId, workerType, priority = 0)` — priority honored when the broker queue supports `x-max-priority`.",
+        "**`PublishRunCreatedAsync(runId, workerType, priority = 0)`.** priority honored when the broker queue supports `x-max-priority`.",
         "`PublishRunStartedAsync`, `PublishRunFinishedAsync`, `PublishRunCancelledAsync`, `PublishDefinitionUpdatedAsync`.",
-        "**`PublishAlertAsync(definitionId, runId, alertType, message)`** — routes to `job.notifications.alert`.",
-        "Subscribers: definition updates, run completions, run cancellations. `SubscribeToRunCancellationsAsync` must broadcast to **every** subscribed instance (implementations use per-instance exclusive queues, `job.run.{workerType}.cancel.{instanceId}`) — a shared competing-consumer queue would silently lose cancellations for scaled-out worker types."
+        "**`PublishAlertAsync(definitionId, runId, alertType, message)`.** routes to `job.notifications.alert`.",
+        "Subscribers: definition updates, run completions, run cancellations. `SubscribeToRunCancellationsAsync` must broadcast to **every** subscribed instance (implementations use per-instance exclusive queues, `job.run.{workerType}.cancel.{instanceId}`). A shared competing-consumer queue would silently lose cancellations for scaled-out worker types."
       ]
     },
     {
@@ -333,7 +333,7 @@
     },
     {
       "type": "table",
-      "title": "Metrics (`Constants.Metrics`) — `job.scheduler.*`",
+      "title": "Metrics (`Constants.Metrics`). `job.scheduler.*`",
       "headers": [
         "Metric",
         "Description"
@@ -395,7 +395,7 @@
     },
     {
       "type": "table",
-      "title": "Metrics (`Constants.Metrics`) — `job.service.*`",
+      "title": "Metrics (`Constants.Metrics`). `job.service.*`",
       "headers": [
         "Metric",
         "Description"
@@ -453,7 +453,7 @@
     },
     {
       "type": "table",
-      "title": "Metrics (`Constants.Metrics`) — `job.worker.*`",
+      "title": "Metrics (`Constants.Metrics`). `job.worker.*`",
       "headers": [
         "Metric",
         "Description"
@@ -496,7 +496,7 @@
     },
     {
       "type": "table",
-      "title": "Metrics (`Constants.Metrics`) — `job.maintenance.*`",
+      "title": "Metrics (`Constants.Metrics`). `job.maintenance.*`",
       "headers": [
         "Metric",
         "Description"
@@ -534,7 +534,7 @@
     },
     {
       "type": "table",
-      "title": "Metrics (`Constants.Metrics`) — `job.sla.*`",
+      "title": "Metrics (`Constants.Metrics`). `job.sla.*`",
       "headers": [
         "Metric",
         "Description"
@@ -549,7 +549,7 @@
     {
       "type": "paragraph",
       "title": "Constants",
-      "text": "`Constants.Mq` — topology including `JobAlertRoutingKey` (`job.notifications.alert`) and `WaitQueueSuffix` / `QueueGetJobRunCreatedWait`. `Constants.Rest.Job` — CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunChildren`, `DefinitionsLatestRuns`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …)."
+      "text": "**`Constants.Mq`.** topology including `JobAlertRoutingKey` (`job.notifications.alert`) and `WaitQueueSuffix` / `QueueGetJobRunCreatedWait`. `Constants.Rest.Job`. CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunChildren`, `DefinitionsLatestRuns`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …)."
     },
     {
       "type": "paragraph",
@@ -560,8 +560,8 @@
       "type": "list",
       "title": "Extensions",
       "items": [
-        "`JobScheduleExtensions.ToScheduleDefinition(...)` — converts schedule DTOs to `Lyo.Schedule.Models.ScheduleDefinition`.",
-        "`JobRunParameterExtensions` — typed getters on parameter/result lists."
+        "`JobScheduleExtensions.ToScheduleDefinition(...)`. Converts schedule DTOs to `Lyo.Schedule.Models.ScheduleDefinition`.",
+        "**`JobRunParameterExtensions`.** typed getters on parameter/result lists."
       ]
     }
   ],

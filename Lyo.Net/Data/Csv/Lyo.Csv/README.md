@@ -1,6 +1,6 @@
 # Lyo.Csv
 
-Owned implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md). `CsvService` composes a `CsvWriter` and `CsvReader` over an internal field tokenizer/writer and cached type binder. Multi-targets `net10.0;netstandard2.0`; async, streaming, and option-based overloads are only available on `net10.0`.
+Owned implementation of [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md). CsvService composes a CsvWriter and CsvReader over an internal field tokenizer/writer and cached type binder. Multi-targets `net10.0;netstandard2.0`. Async, streaming, and option-based overloads are only available on `net10.0`.
 
 ## Features
 
@@ -175,8 +175,7 @@ UTF-8 export of 100,000 sample rows in tens of milliseconds.
 
 ## Output targets
 
-Each export path is available as file / stream / `TextWriter` / string / byte array
-overloads, in sync (all TFMs) and async (`net10.0`) flavors:
+Each export path is available as file / stream / `TextWriter` / string / byte array overloads, in sync (all TFMs) and async (`net10.0`) variants:
 
 ```csharp
 csv.ExportToCsv(rows, "out.csv");
@@ -201,15 +200,13 @@ IReadOnlyList<Result<DataTable>> results =
     await csv.BatchParseFilesAsDataTableAsync(paths, hasHeaderRow: true, hasFooterRow: true, ct);
 ```
 
-If you do not supply an `HttpClient` to the constructor, a fresh one is created per URL
-call and disposed afterward; production callers should inject one via DI.
-Pass `hasFooterRow: true` when the last physical row should become `DataTable.Footer` (default `false`).
+If you do not supply an `HttpClient` to the constructor, a fresh one is created per URL call and disposed afterward. Inject one via DI. Pass `hasFooterRow: true` when the last physical row should become `DataTable.Footer` (default `false`).
 
 ## Dialect defaults
 
-Default `CsvOptions` use comma delimiter, RFC doubled quotes, header row on, blank-line skip, field trim, and `DetectColumnCountChanges` (throws `CsvBadDataException` on uneven rows). Header names match properties case-insensitively after trim; rename with `[CsvColumn]`. Prefer typed/`IAsyncEnumerable` streams for large files — `Parse*AsDataTable*` materializes the full grid. <!-- LYO_README_SYNC:BEGIN -->
+Default CsvOptions use comma delimiter, RFC doubled quotes, header row on, blank-line skip, field trim, and DetectColumnCountChanges (throws CsvBadDataException on uneven rows). Header names match properties case-insensitively after trim. Rename with [CsvColumn]. Prefer typed or IAsyncEnumerable streams for large files. Parse*AsDataTable* materializes the entire grid. <!-- LYO_README_SYNC:BEGIN -->
 
-## Public API (generated)
+## Public types
 
 - `CsvErrorCodes`
 - `CsvService`
@@ -228,16 +225,16 @@ Copyright © Lyo
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Csv.Models` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Microsoft.Extensions.Configuration` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options` `10.0.5` — (direct, microsoft)
-- `System.Text.Encoding.CodePages` `10.0.5` — (direct, microsoft)
-- `Lyo.DataTable.Models` — (transitive, lyo)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Csv.Models` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Microsoft.Extensions.Configuration` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)
+- `System.Text.Encoding.CodePages` `10.0.5` (direct, microsoft)
+- `Lyo.DataTable.Models` (transitive, lyo)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

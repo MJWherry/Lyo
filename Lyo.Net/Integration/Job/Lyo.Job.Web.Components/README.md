@@ -1,12 +1,12 @@
 # Lyo.Job.Web.Components
 
-Blazor / MudBlazor dashboard for the Lyo job-management stack. Drop `JobManagement` into a host page for Statistics, Definitions, Schedules, Runs (with **progress** and **SLA breach** indicators), **worker registry**, and **workflow** views — all using an injected `IApiClient` and configurable base route prefix.
+Blazor / MudBlazor dashboard for the Lyo job stack. Add `JobManagement` to a host page for Statistics, Definitions, Schedules, Runs (progress and SLA breach indicators), worker registry, and workflow views. Uses an injected `IApiClient` and a configurable base route prefix.
 
-Pair with [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for a live-updating dashboard that receives `JobEvent` broadcasts without polling.
+Pair with [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for a live dashboard that receives `JobEvent` broadcasts without polling.
 
-All components target server-side or interactive Blazor in `net10.0` and pull in MudBlazor `>= 9.3`.
+Targets server-side or interactive Blazor on `net10.0` and pulls in MudBlazor `>= 9.3`.
 
-This package is a **Razor component library** — it has no `AddXxx` DI registration. The host must already register `IApiClient` (and optionally [ `Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for live updates).
+This package is a Razor component library. It has no `AddXxx` DI registration. The host must already register `IApiClient` (and optionally [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for live updates).
 
 ## Examples
 
@@ -77,17 +77,17 @@ See [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for event types (`run.crea
 
 Every grid / view accepts `IApiClient` and route parameters so components can be hosted independently of the full shell.
 
-## Production hardening in the UI
+## UI features
 
 | Feature | Where surfaced |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Progress | `JobRunGrid` progress column; `JobRunDetailView` linear bar + message |
 | SLA | `JobRunDetailView` breach indicator when `SlaBreached == true` |
 | Alerting | Definition/run alert flags in detail view |
-| Queue resync | `JobRunGrid` **Resync RabbitMQ** toolbar — `POST Job/Run/Resync` (scoped when a definition filter is set) |
+| Queue resync | `JobRunGrid` **Resync RabbitMQ** toolbar. `POST Job/Run/Resync` (scoped when a definition filter is set) |
 | Worker registry | **Workers** tab (`JobWorkerInstanceGrid`) |
 | Workflows | **Workflows** tab (`JobWorkflowView`) |
-| Schedules / blackout calendars | **Schedules** tab — add/remove schedules, enable toggle, timezone dropdown defaulting to the browser zone, local date pickers, inline blackout calendar/windows, misfire/cron fields |
+| Schedules / blackout calendars | **Schedules** tab. Add/remove schedules, enable toggle, timezone dropdown defaulting to the browser zone, local date pickers, inline blackout calendar/windows, misfire/cron fields |
 | Dry run | `RunJobDialog` can pass `DryRun` for validate-only runs (no worker dispatch) |
 
 ## `JobColorHelper`
@@ -107,52 +107,52 @@ Static helper for consistent visual treatment of job state, result, and log leve
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Api.Client` — (direct, lyo)
-- `Lyo.Job.Models` — (direct, lyo)
-- `Lyo.Scheduler` — (direct, lyo)
-- `Lyo.Web.Components` — (direct, lyo)
-- `Lyo.Web.Components.Export` — (direct, lyo)
-- `Lyo.Web.Components.Export.Csv` — (direct, lyo)
-- `Lyo.Web.Components.Export.Xlsx` — (direct, lyo)
-- `MudBlazor` `9.3` — (direct, third-party)
-- `Lyo.Api.Models` — (transitive, lyo)
-- `Lyo.Cache` — (transitive, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.Compression` — (transitive, lyo)
-- `Lyo.DataTable.Models` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Diagnostic` — (transitive, lyo)
-- `Lyo.Encryption` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Health` — (transitive, lyo)
-- `Lyo.IO.Temp` — (transitive, lyo)
-- `Lyo.KeyStore` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.PackageMetadata` — (transitive, lyo)
-- `Lyo.Query` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Lyo.Schedule.Models` — (transitive, lyo)
-- `Lyo.Streams` — (transitive, lyo)
-- `Lyo.Validation` — (transitive, lyo)
-- `Blazored.LocalStorage` `4.5.0` — (transitive, third-party)
-- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
-- `EasyCompressor` `2.1.0` — (transitive, third-party)
-- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
-- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Caching.Memory` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
-- `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)
-- `System.Diagnostics.DiagnosticSource` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Api.Client` (direct, lyo)
+- `Lyo.Job.Models` (direct, lyo)
+- `Lyo.Scheduler` (direct, lyo)
+- `Lyo.Web.Components` (direct, lyo)
+- `Lyo.Web.Components.Export` (direct, lyo)
+- `Lyo.Web.Components.Export.Csv` (direct, lyo)
+- `Lyo.Web.Components.Export.Xlsx` (direct, lyo)
+- `MudBlazor` `9.3` (direct, third-party)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Cache` (transitive, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Compression` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.Encryption` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
+- `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.KeyStore` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.Query` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
+- `Lyo.Streams` (transitive, lyo)
+- `Lyo.Validation` (transitive, lyo)
+- `Blazored.LocalStorage` `4.5.0` (transitive, third-party)
+- `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
+- `EasyCompressor` `2.1.0` (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Caching.Memory` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
+- `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
+- `System.Diagnostics.DiagnosticSource` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

@@ -4,17 +4,17 @@ Interfaces and value types for the Lyo XLSX stack. Defines the contract implemen
 
 ## Interfaces
 
-- `IXlsxService` — façade that exposes `Writer`, `Reader`, and the full read / write / convert / HTML / batch / multi-sheet surface.
-- `IXlsxWriter` — write enumerables, selected `PropertyInfo` columns, custom column-name dictionaries, formatter delegates, multi-sheet workbooks (`IReadOnlyDictionary<string, IEnumerable<T>>`), row/column dictionaries (`useFooterRow` peels last row as bold footer), and `Lyo.DataTable.Models.DataTable` snapshots (always appends `Footer` + formats at row `-2` when present) to file, `Stream`, or byte array. `CreateDocumentWriter` opens an incremental multi-sheet session. Sync overloads work on all targets; async, `IAsyncEnumerable<T>` export, custom-header, and formatter overloads are gated on `!NETSTANDARD2_0`.
-- `IXlsxReader` — parse worksheets of files, streams, and byte arrays as a row/column dictionary or `Lyo.DataTable.Models.DataTable` (wrapped in `Result<T>`; `useFooterRow` peels the last body row into `Footer`). `ParseXlsx*AsDataTable` is values + merge spans only; `ParseXlsx*AsDataTableWithFormatting` also fills the table's sparse format map. Sheet control via `ListSheetNames`, by-name / by-index overloads, and `ParseXlsx*AsAllSheets` / `…WithFormatting`. On `net10.0`, forward-only `IAsyncEnumerable` streaming (`ParseXlsx*RowsStreamingAsync`, typed `ParseXlsx*StreamingAsync`) uses ExcelDataReader without materializing the sheet. Async overloads are gated on `!NETSTANDARD2_0`.
-- `IXlsxDocumentWriter` — disposable incremental writing session: each `AddSheet` / `AddSheetFromDataTable` / `AddSheetFromDictionary` call streams one worksheet; dispose finalizes the workbook. On `net10.0`, `AddSheetAsync` accepts `IAsyncEnumerable<T>`. Sheet names are unique per session (case-insensitive).
+- `IXlsxService`. Exposes `Writer`, `Reader`, and the read / write / convert / HTML / batch / multi-sheet methods.
+- `IXlsxWriter`. Write enumerables, selected `PropertyInfo` columns, custom column-name dictionaries, formatter delegates, multi-sheet workbooks (`IReadOnlyDictionary<string, IEnumerable<T>>`), row/column dictionaries (`useFooterRow` peels last row as bold footer), and `Lyo.DataTable.Models.DataTable` snapshots (always appends `Footer` + formats at row `-2` when present) to file, `Stream`, or byte array. `CreateDocumentWriter` opens an incremental multi-sheet session. Sync overloads work on all targets. Async, `IAsyncEnumerable<T>` export, custom-header, and formatter overloads are gated on `!NETSTANDARD2_0`.
+- `IXlsxReader`. Parse worksheets of files, streams, and byte arrays as a row/column dictionary or `Lyo.DataTable.Models.DataTable` (wrapped in `Result<T>`; `useFooterRow` peels the last body row into `Footer`). `ParseXlsx*AsDataTable` is values + merge spans only. `ParseXlsx*AsDataTableWithFormatting` also fills the table's sparse format map. Sheet control via `ListSheetNames`, by-name / by-index overloads, and `ParseXlsx*AsAllSheets` / `…WithFormatting`. On `net10.0`, forward-only `IAsyncEnumerable` streaming (`ParseXlsx*RowsStreamingAsync`, typed `ParseXlsx*StreamingAsync`) uses ExcelDataReader without materializing the sheet. Async overloads are gated on `!NETSTANDARD2_0`.
+- `IXlsxDocumentWriter`. Disposable incremental writing session: each `AddSheet` / `AddSheetFromDataTable` / `AddSheetFromDictionary` call streams one worksheet. Dispose finalizes the workbook. On `net10.0`, `AddSheetAsync` accepts `IAsyncEnumerable<T>`. Sheet names are unique per session (case-insensitive).
 
 ## Models
 
-- `XlsxCellValue` — sealed record with textual `Value` plus merge spans (`ColSpan`, `RowSpan`). Formatting uses `Lyo.DataTable.Models.DataTableCellFormat` on the `DataTable` map, not this type.
-- `XlsxOptions` — includes nested `DataTablePoolingOptions` (`PoolValues`, `PoolFormats`, `PoolingCellThreshold`, default 512).
-- `XlsxCellValueExtensions` — maps `XlsxCellValue` to a thin `IDataTableCell`.
-- `XlsxExportResult` / `XlsxParseResult` — result envelopes used by the higher-level helpers.
+- `XlsxCellValue`. Sealed record with textual `Value` plus merge spans (`ColSpan`, `RowSpan`). Formatting uses `Lyo.DataTable.Models.DataTableCellFormat` on the `DataTable` map, not this type.
+- `XlsxOptions`. Nested `DataTablePoolingOptions` (`PoolValues`, `PoolFormats`, `PoolingCellThreshold`, default 512).
+- `XlsxCellValueExtensions`. Maps `XlsxCellValue` to a thin `IDataTableCell`.
+- `XlsxExportResult` / `XlsxParseResult`. Result envelopes used by the higher-level helpers.
 
 ## Multi-targeting
 
@@ -24,10 +24,10 @@ Targets `netstandard2.0;net10.0`. Async, custom-header, and formatter overloads 
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.DataTable.Models` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.DataTable.Models` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

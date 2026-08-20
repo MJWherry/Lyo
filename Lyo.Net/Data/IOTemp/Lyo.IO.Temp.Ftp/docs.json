@@ -5,9 +5,9 @@
   "tagline": "FTP-backed IIOTempStorageProvider for Lyo.IO.Temp.",
   "description": "Implements `IIOTempStorageProvider` over `Lyo.Ftp.Client` with `PathStyle.Posix`. Register with `AddIOTempFtpStorageProvider` before `AddIOTempService`.",
   "features": [
-    "**FTP temp storage** — sessions and service dirs live under the remote root jail.",
-    "**PathStyle.Posix** — portable path math via `Lyo.Common.Pathing`.",
-    "**DI** — `AddIOTempFtpStorageProvider` / `FromConfiguration`."
+    "**FTP temp storage.** Sessions and service dirs live under the remote root jail.",
+    "**PathStyle.Posix.** Portable path math via `Lyo.Common.Pathing`.",
+    "**DI.** `AddIOTempFtpStorageProvider` / `FromConfiguration`."
   ],
   "examples": [
     {

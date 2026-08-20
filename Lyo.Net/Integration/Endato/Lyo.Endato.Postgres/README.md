@@ -18,9 +18,9 @@ services.AddEndatoDbContextFactory(o => {
 
 ## What ships
 
-- **`EndatoDbContext`** ([`Database/EndatoDbContext.cs`](Database/EndatoDbContext.cs)) and `EndatoDbContextFactory` for design-time tooling.
-- **`PostgresEndatoOptions`** ([`PostgresEndatoOptions.cs`](PostgresEndatoOptions.cs)) — `IPostgresMigrationConfig`. Section `"PostgresEndato"`. Properties: `ConnectionString`,
-  `EnableAutoMigrations` (default `false`); `Schema = "endato"` is constant.
+- `EndatoDbContext` ([`Database/EndatoDbContext.cs`](Database/EndatoDbContext.cs)) and `EndatoDbContextFactory` for design-time tooling.
+- `PostgresEndatoOptions` ([`PostgresEndatoOptions.cs`](PostgresEndatoOptions.cs)). `IPostgresMigrationConfig`. Section `"PostgresEndato"`. Properties: `ConnectionString`,
+ `EnableAutoMigrations` (default `false`); `Schema = "endato"` is constant.
 - **Migrations** under [`Migrations/`](Migrations).
 
 The two domains (Person Search and Contact Enrichment) are intentionally split into separate entity groups so caching either source is independent:
@@ -32,7 +32,7 @@ The two domains (Person Search and Contact Enrichment) are intentionally split i
 
 `OnModelCreating` sets `HasDefaultSchema("endato")` and applies each entity configuration; the migrations history table is also written to the `endato` schema.
 
-## DI surface ([`Extensions.cs`](Extensions.cs))
+## DI registration ([`Extensions.cs`](Extensions.cs))
 
 All registrations are extension methods on `IServiceCollection` (declared inside `extension(IServiceCollection services)` blocks):
 
@@ -48,12 +48,12 @@ All registrations are extension methods on `IServiceCollection` (declared inside
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Postgres` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.EntityFrameworkCore` `10.0.5` — (transitive, microsoft)
-- `Microsoft.EntityFrameworkCore.Design` `10.0.5` — (transitive, microsoft)
-- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options` `10.0.5` — (transitive, microsoft)
-- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` — (transitive, third-party)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Postgres` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)

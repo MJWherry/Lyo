@@ -2,8 +2,8 @@
   "id": "Lyo.ContactUs.Postgres",
   "name": "Lyo.ContactUs.Postgres",
   "area": "Features",
-  "tagline": "PostgreSQL + EF Core implementation of `Lyo.ContactUs.IContactUsService` (`PostgresContactUsService`) backed by `ContactUsDbContext`, `PostgresContactUsOptions`, and…",
-  "description": "PostgreSQL + EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../Lyo.ContactUs/README.md) (`PostgresContactUsService`) backed by `ContactUsDbContext`,\n`PostgresContactUsOptions`, and `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>` for auto-applied schema upgrades on host startup.",
+  "tagline": "PostgreSQL + EF Core implementation of `Lyo.ContactUs.IContactUsService` (`PostgresContactUsService`) via `ContactUsDbContext` and `PostgresContactUsOptions`.",
+  "description": "PostgreSQL + EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../Lyo.ContactUs/README.md) (`PostgresContactUsService`) via `ContactUsDbContext`,\n`PostgresContactUsOptions`, and `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>` so the host can apply schema upgrades on startup.",
   "features": [],
   "examples": [],
   "sections": [
@@ -12,7 +12,7 @@
       "title": "What ships",
       "items": [
         "`ContactUsDbContext` + `ContactUsDbContextFactory` under `Database/`, with a single `DbSet<ContactSubmissionEntity>` (name / email / subject / message / phone / company / created timestamp; lengths mirror `ContactUsRequest`).",
-        "`PostgresContactUsService` — `ContactUsServiceBase` subclass that persists each submission via the registered `IDbContextFactory<ContactUsDbContext>`, logs the new id, and implements `TestConnectionAsync` by issuing `Database.CanConnectAsync(...)`.",
+        "`PostgresContactUsService`. `ContactUsServiceBase` subclass that persists each submission via the registered `IDbContextFactory<ContactUsDbContext>`, logs the new id, and implements `TestConnectionAsync` by issuing `Database.CanConnectAsync(...)`.",
         "`PostgresContactUsOptions` (`SectionName = \"PostgresContactUs\"`, `Schema = \"contact\"`, `ConnectionString`, `EnableAutoMigrations`).",
         "`InitialCreate` migration under `Migrations/`."
       ]
@@ -31,7 +31,7 @@
         ],
         [
           "`AddContactUsDbContext(Action<DbContextOptionsBuilder>)`",
-          "Bare `AddDbContext<ContactUsDbContext>(...)` — bring your own provider configuration."
+          "Bare `AddDbContext<ContactUsDbContext>(...)` bring your own provider configuration."
         ],
         [
           "`AddContactUsDbContextFactory(Action<PostgresContactUsOptions>)` *(plus `(options)` and `FromConfiguration` overloads)*",

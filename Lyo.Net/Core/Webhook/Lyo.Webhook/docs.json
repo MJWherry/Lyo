@@ -2,15 +2,15 @@
   "id": "Lyo.Webhook",
   "name": "Lyo.Webhook",
   "area": "Core",
-  "tagline": "Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and counters**, and…",
-  "description": "Inbound webhook verification for ASP.NET Core: **raw body + headers**, **HMAC helpers**, a **fluent `MapWebhook().Verify().Handle()`** pipeline, **`Lyo.Metrics` timings and\ncounters**, and **structured logging** via `Microsoft.Extensions.Logging`.\n\nProvider-specific algorithms (e.g. Twilio) live in separate packages such as **Lyo.Webhook.Twilio**.",
+  "tagline": "Inbound webhook verification for ASP.NET Core: raw body and headers, HMAC helpers, `MapWebhook().Verify().Handle()`, and `Lyo.Metrics` timings.",
+  "description": "Inbound webhook verification for ASP.NET Core: raw body and headers, HMAC helpers, a fluent `MapWebhook().Verify().Handle()` pipeline, `Lyo.Metrics` timings and\ncounters, and structured logging via `Microsoft.Extensions.Logging`.\n\nProvider-specific algorithms (e.g. Twilio) live in separate packages such as `Lyo.Webhook.Twilio`.",
   "features": [
-    "**Abstractions**: `IWebhookSignatureVerifier`, `WebhookVerificationContext`, `WebhookVerificationResult`",
-    "**Crypto helpers**: `WebhookCrypto` (HMAC-SHA256 / SHA1, constant-time compare, hex parse)",
-    "**ASP.NET Core**: read raw body, header dictionary, public URL, optional **form-urlencoded** parameters for signed form posts",
-    "**Fluent routes**: `MapWebhook(\"/path\").Verify(verifier).Handle(...)` or `HandleJson<T>(...)`",
-    "**Metrics** (`Lyo.Metrics`): `lyo.webhook.request.duration`, `lyo.webhook.verification.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON parse failures, handler errors",
-    "**Logging**: category **`Lyo.Webhook`** (debug for incoming requests, warning on failed verification / bad JSON, error on handler exceptions)"
+    "**Abstractions.** `IWebhookSignatureVerifier`, `WebhookVerificationContext`, `WebhookVerificationResult`.",
+    "**Crypto.** `WebhookCrypto` (HMAC-SHA256 / SHA1, constant-time compare, hex parse).",
+    "**ASP.NET Core.** Read raw body, header dictionary, public URL, optional form-urlencoded parameters for signed form posts.",
+    "**Fluent routes.** `MapWebhook(\"/path\").Verify(verifier).Handle(...)` or `HandleJson<T>(...)`.",
+    "**Metrics.** `lyo.webhook.request.duration`, `lyo.webhook.verification.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON parse failures, handler errors.",
+    "**Logging.** Category `Lyo.Webhook` (debug for incoming requests, warning on failed verification / bad JSON, error on handler exceptions)."
   ],
   "examples": [
     {
@@ -28,12 +28,12 @@
     {
       "type": "paragraph",
       "title": "Registration",
-      "text": "Register **`Lyo.Metrics`** and logging in your host (same as other Lyo services): At runtime the webhook pipeline resolves **`IMetrics`** and **`ILoggerFactory`** from **`HttpContext.RequestServices`**. If **`IMetrics`** is missing, **`NullMetrics`** is used; if **`ILoggerFactory`** is missing, **`NullLogger`** is used."
+      "text": "Register `Lyo.Metrics` and logging in your host. At runtime the webhook pipeline resolves `IMetrics` and `ILoggerFactory` from `HttpContext.RequestServices`. If `IMetrics` is missing, `NullMetrics` is used. If `ILoggerFactory` is missing, `NullLogger` is used."
     },
     {
       "type": "markdown",
       "title": "Fluent mapping",
-      "body": "- Failed signature → **401**\n- Invalid JSON (when using `HandleJson`) → **400**\n- Metric tag **`route`** = route pattern string (keep cardinality low)"
+      "body": "- Failed signature returns 401\n- Invalid JSON (when using `HandleJson`) returns 400\n- Metric tag `route` is the route pattern string (keep cardinality low)"
     },
     {
       "type": "paragraph",
@@ -44,7 +44,7 @@
       "type": "list",
       "title": "Target framework",
       "items": [
-        "**net10.0** only (same line as the rest of this solution)."
+        "net10.0 only."
       ]
     }
   ],

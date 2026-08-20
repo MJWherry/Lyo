@@ -2,8 +2,8 @@
   "id": "Lyo.Web.Automation.Playwright",
   "name": "Lyo.Web.Automation.Playwright",
   "area": "Integration",
-  "tagline": "Playwright implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, manages session-scoped browser contexts, and exposes the same…",
-  "description": "Playwright implementation of the engine-agnostic `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, manages session-scoped browser contexts, and exposes\nthe same tab/frame/dialog/keyboard/locator surface as [`Lyo.Web.Automation.Selenium`](../Lyo.Web.Automation.Selenium/README.md) so JSON automation plans and scripted runners\nbehave identically across both engines.",
+  "tagline": "Playwright implementation of the `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, manages session-scoped browser contexts, and matches the Selenium helpers.",
+  "description": "Playwright implementation of the `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, manages session-scoped browser contexts, and exposes\nthe same tab, frame, dialog, keyboard, and locator helpers as [`Lyo.Web.Automation.Selenium`](../Lyo.Web.Automation.Selenium/README.md) so JSON automation plans and scripted runners\nbehave the same on both engines.",
   "features": [],
   "examples": [
     {
@@ -15,28 +15,28 @@
   "sections": [
     {
       "type": "list",
-      "title": "Surface — Browser ([`Browser/`](Browser))",
+      "title": "Browser ([`Browser/`](Browser))",
       "items": [
-        "**`PlaywrightBrowser`** — concrete `IWebAutomationBrowser` (`StartBrowserAsync` boots Playwright, optionally a persistent context, and a default page); composes `PlaywrightBrowserTabs`, `PlaywrightDialogs`, `PlaywrightKeyboard`, `PlaywrightFrameNavigator`, `PlaywrightFrameSelectors`, `PlaywrightCookieJar`, `PlaywrightHeaderStore`.",
-        "**`PlaywrightBrowserTabInfo`** / **`PlaywrightTabManager`** — engine-native tab info and management.",
-        "**`BrowserUrlRedaction`** — query/fragment redaction used in logs when `MaskSensitiveUrlsInLogs` is set.",
-        "**`PlaywrightWebAutomationElement`** — `IWebAutomationElement` adapter on top of Playwright `ILocator` (`ClickAsync`, `SendKeysAsync` with `Fill` / `PressSequentially`, `SendKeysRawAsync`, attribute reads, etc.).",
-        "**`PlaywrightLocatorFactory`** ([`PlaywrightLocatorFactory.cs`](PlaywrightLocatorFactory.cs)) — converts `Lyo.Web.Automation` element specs to Playwright locators."
+        "**`PlaywrightBrowser`.** concrete `IWebAutomationBrowser` (`StartBrowserAsync` boots Playwright, optionally a persistent context, and a default page); composes `PlaywrightBrowserTabs`, `PlaywrightDialogs`, `PlaywrightKeyboard`, `PlaywrightFrameNavigator`, `PlaywrightFrameSelectors`, `PlaywrightCookieJar`, `PlaywrightHeaderStore`.",
+        "`PlaywrightBrowserTabInfo` / `PlaywrightTabManager`. Engine-native tab info and management.",
+        "**`BrowserUrlRedaction`.** query/fragment redaction used in logs when `MaskSensitiveUrlsInLogs` is set.",
+        "`PlaywrightWebAutomationElement`. `IWebAutomationElement` adapter on top of Playwright `ILocator` (`ClickAsync`, `SendKeysAsync` with `Fill` / `PressSequentially`, `SendKeysRawAsync`, attribute reads, etc.).",
+        "`PlaywrightLocatorFactory` ([`PlaywrightLocatorFactory.cs`](PlaywrightLocatorFactory.cs)). Converts `Lyo.Web.Automation` element specs to Playwright locators."
       ]
     },
     {
       "type": "list",
-      "title": "Surface — Service ([`Service/`](Service))",
+      "title": "Service ([`Service/`](Service))",
       "items": [
-        "**`IPlaywrightBrowserService`** — singleton factory: `CreateSession(PlaywrightSessionOptions?)`, `ActiveSessionCount`, `Dispose`.",
-        "**`IPlaywrightBrowserSession`** — scoped session.",
-        "**`PlaywrightExecutionContext`** / `PlaywrightExecutionContextFactory` — wiring used by the automation runners.",
-        "**`PlaywrightMetricTags`** — metric-tag constants."
+        "**`IPlaywrightBrowserService`.** singleton factory: `CreateSession(PlaywrightSessionOptions?)`, `ActiveSessionCount`, `Dispose`.",
+        "**`IPlaywrightBrowserSession`.** scoped session.",
+        "`PlaywrightExecutionContext` / `PlaywrightExecutionContextFactory`. Wiring used by the automation runners.",
+        "**`PlaywrightMetricTags`.** metric-tag constants."
       ]
     },
     {
       "type": "table",
-      "title": "Surface — Configuration ([`Configuration/`](Configuration))",
+      "title": "Configuration ([`Configuration/`](Configuration))",
       "headers": [
         "Property",
         "Default",
@@ -125,7 +125,7 @@
         ],
         [
           "`Clone()`",
-          "—",
+          "n/a",
           "Deep copy used to derive session-specific options."
         ]
       ],

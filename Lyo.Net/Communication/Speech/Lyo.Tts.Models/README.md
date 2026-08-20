@@ -1,6 +1,6 @@
 # Lyo.Tts.Models
 
-Shared **requests**, **results**, **options**, and **event payloads** for Lyo text-to-speech. Provider assemblies reference this package instead of coupling to each other.
+Shared TTS requests, results, options, and event payloads. Provider packages reference this instead of each other.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
@@ -21,9 +21,9 @@ Implementations normally derive a typed request from `TtsRequest` (for example A
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `System.Text.Json` `10.0.5` — (direct, microsoft, netstandard2.0)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

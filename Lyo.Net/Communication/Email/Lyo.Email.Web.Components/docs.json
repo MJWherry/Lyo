@@ -2,8 +2,8 @@
   "id": "Lyo.Email.Web.Components",
   "name": "Lyo.Email.Web.Components",
   "area": "Communication",
-  "tagline": "Blazor (MudBlazor) workbench component for sending email through an injected `IEmailService`.",
-  "description": "Blazor (MudBlazor) workbench component for sending email through an injected `IEmailService`.",
+  "tagline": "Blazor (MudBlazor) workbench for sending email through an injected `IEmailService`.",
+  "description": "Blazor (MudBlazor) workbench for sending email through an injected `IEmailService`.",
   "features": [],
   "examples": [],
   "sections": [
@@ -11,12 +11,12 @@
       "type": "list",
       "title": "Components",
       "items": [
-        "`EmailWorkbench` — full compose-and-send experience for the email service:",
+        "`EmailWorkbench` composes and sends mail through the email service.",
         "To / Cc / Bcc chip inputs with email-format validation.",
         "From address and From name overrides.",
-        "Subject, rich-text HTML body via `LyoRichTextEditor`, and a plain-text/raw-HTML fallback editor.",
-        "Attachment uploads via `LyoFileUpload` (configured for up to five files, with progress and event callbacks for `Started`, `Progress`, `Completed`, `Cancelled`, and `Failed`).",
-        "\"Send\" action that delegates to `IEmailService.SendEmailAsync(EmailRequestBuilder)` and reports success/failure through `ISnackbar`."
+        "Subject, HTML body via `LyoRichTextEditor`, and a plain-text or raw-HTML fallback editor.",
+        "Attachment uploads via `LyoFileUpload` (up to five files, with progress and callbacks for `Started`, `Progress`, `Completed`, `Cancelled`, and `Failed`).",
+        "`Send` calls `IEmailService.SendEmailAsync(EmailRequestBuilder)` and reports the outcome through `ISnackbar`."
       ]
     },
     {
@@ -70,7 +70,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -134,6 +150,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -159,6 +183,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -217,6 +249,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -245,7 +286,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

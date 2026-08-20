@@ -1,6 +1,6 @@
 # Lyo.ShortUrl
 
-Core abstractions for URL shortening: an `IShortUrlService` contract, a `ShortUrlServiceBase` that handles validation / metrics / error-code mapping, a default `ShortUrlService` that **generates** short codes (no storage), a fluent `UrlShortenBuilder`, and DTOs for shorten / expand / statistics results.
+URL shortening contracts: `IShortUrlService`, `ShortUrlServiceBase` for validation / metrics / error-code mapping, a default `ShortUrlService` that generates short codes (no storage), a fluent `UrlShortenBuilder`, and DTOs for shorten / expand / statistics results.
 
 ## Examples
 
@@ -44,7 +44,7 @@ var result = await shortUrlService.ShortenAsync(builder, ct);
 }
 ```
 
-## Surface — `IShortUrlService`
+## `IShortUrlService`
 
 - `Task<UrlShortenResult> ShortenAsync(string longUrl, string? customAlias = null, DateTime? expirationDate = null, CancellationToken ct = default)`
 - `Task<UrlShortenResult> ShortenAsync(UrlShortenBuilder builder, CancellationToken ct = default)`
@@ -54,38 +54,38 @@ var result = await shortUrlService.ShortenAsync(builder, ct);
 - `Task<UrlShortenResult> UpdateAsync(string shortUrl, string newLongUrl, CancellationToken ct = default)`
 - `Task<bool> TestConnectionAsync(CancellationToken ct = default)`
 
-## Surface — `ShortUrlServiceBase`
+## `ShortUrlServiceBase`
 
 - Validates inputs (`longUrl` non-empty; `expirationDate` strictly in the future; HTTP → HTTPS rewrite when `Options.EnforceHttps == true`).
 - Wraps `ShortenAsync` / `ExpandAsync` in metrics timers + counters keyed off `MetricNames` (override `CreateMetricNamesDictionary()` to rebrand).
 - Maps `OperationCanceledException` → `SHORTURL_OPERATION_CANCELLED`, other exceptions → `SHORTURL_*_FAILED` codes.
 - Provides default `NotSupportedException` throws for `GetStatisticsAsync`, `DeleteAsync`, `UpdateAsync`, `TestConnectionAsync`, `ShortenCoreAsync`, and `ExpandCoreAsync` so partial implementations only override what they support.
 
-## Surface — `ShortUrlService` (in-box)
+## `ShortUrlService` (in-box)
 
 - `ShortenCoreAsync` validates the custom alias against `Options.AllowCustomAliases` / `MinAliasLength` / `MaxAliasLength` and delegates to `IShortUrlGenerator.Generate` when none is supplied, then returns `UrlShortenResult.FromSuccess(...)` with `BaseUrl/{id}` (or just `{id}` when `BaseUrl` is empty).
-- `ExpandCoreAsync`, `GetStatisticsAsync`, and `UpdateAsync` return an error result with `SHORTURL_EXPAND_FAILED` / `SHORTURL_GET_STATISTICS_FAILED` / `SHORTURL_UPDATE_FAILED` — they explicitly require a storage-backed implementation.
+- `ExpandCoreAsync`, `GetStatisticsAsync`, and `UpdateAsync` return an error result with `SHORTURL_EXPAND_FAILED` / `SHORTURL_GET_STATISTICS_FAILED` / `SHORTURL_UPDATE_FAILED`. They explicitly require a storage-backed implementation.
 - `DeleteAsync` throws `NotSupportedException` for the same reason.
 - `TestConnectionAsync` always returns `true` (no backend to probe).
 
-## Surface — `IShortUrlGenerator` / `ShortUrlGenerator`
+## `IShortUrlGenerator` / `ShortUrlGenerator`
 
-- `string Generate(int? length = null)` — returns a base-62 string (`a-zA-Z0-9`) of the requested length. The default `ShortUrlGenerator` uses `RandomNumberGenerator` and an 8-character default length.
+- `string Generate(int? length = null)` returns a base-62 string (`a-zA-Z0-9`) of the requested length. The default `ShortUrlGenerator` uses `RandomNumberGenerator` and an 8-character default length.
 
-## Surface — `UrlShortenBuilder`
+## `UrlShortenBuilder`
 
-- `SetLongUrl(string longUrl, bool enforceHttps = false)` — runs through `UriHelpers.GetValidWebUri` (throws `InvalidFormatException` on invalid URLs); when `enforceHttps`, HTTP becomes HTTPS.
-- `SetCustomAlias(string? alias)` — must match `^[a-zA-Z0-9\-]+$`; passing `null`/whitespace clears the alias.
-- `SetExpirationDate(DateTime? date)` — must be in the future (or `null`).
-- `Clear()` — resets the builder.
+- `SetLongUrl(string longUrl, bool enforceHttps = false)` runs through `UriHelpers.GetValidWebUri` (throws `InvalidFormatException` on invalid URLs); when `enforceHttps`, HTTP becomes HTTPS.
+- `SetCustomAlias(string? alias)` must match `^[a-zA-Z0-9\-]+$`; passing `null`/whitespace clears the alias.
+- `SetExpirationDate(DateTime? date)` must be in the future (or `null`).
+- `Clear()` resets the builder.
 - `Build()` returns `(LongUrl, CustomAlias, ExpirationDate)`; throws if `LongUrl` was never set.
-- `UrlShortenBuilder.New()` — convenience factory.
+- `UrlShortenBuilder.New()` convenience factory.
 
-## Surface — Error codes (`ShortUrlErrorCodes`)
+## Error codes (`ShortUrlErrorCodes`)
 
 `SHORTURL_SHORTEN_FAILED`, `SHORTURL_EXPAND_FAILED`, `SHORTURL_GET_STATISTICS_FAILED`, `SHORTURL_DELETE_FAILED`, `SHORTURL_UPDATE_FAILED`, `SHORTURL_OPERATION_CANCELLED`, `SHORTURL_URL_NOT_FOUND`, `SHORTURL_URL_EXPIRED`, `SHORTURL_INVALID_URL`, `SHORTURL_ALIAS_ALREADY_EXISTS`, `SHORTURL_CUSTOM_ALIAS_NOT_ALLOWED`, `SHORTURL_INVALID_ALIAS_LENGTH`.
 
-## Surface — `ShortUrlServiceOptions`
+## `ShortUrlServiceOptions`
 
 | Member | Default | Notes |
 | ----------------------- | ------------------- | -------------------------------------------------------------------------------- |
@@ -112,13 +112,13 @@ var result = await shortUrlService.ShortenAsync(builder, ct);
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

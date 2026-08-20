@@ -1,13 +1,13 @@
 # Lyo.MessageQueue
 
-Portable **queue + exchange** abstraction (`IMqService`) so schedulers, workers, and gateways can compile against **one contract** while swapping RabbitMQ—or future brokers—behind **`Lyo.MessageQueue.*` implementations**.
+`IMqService` is the queue and exchange contract. Schedulers, workers, and gateways compile against one interface and swap RabbitMQ or later brokers behind `Lyo.MessageQueue.*` implementations.
 
-Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity alongside DB/cache checks.
+Implements `Lyo.Health.IHealth` so dashboards can ping broker connectivity alongside DB/cache checks.
 
-## Contract highlights (`IMqService`)
+## `IMqService`
 
-- **`ConnectAsync` / `DisconnectAsync`** establish sessions.
-- **`IsConnected`** — synchronous snapshot for guards.
+- `ConnectAsync` / `DisconnectAsync` open and close sessions.
+- `IsConnected` is a synchronous snapshot for guards.
 
 ## Messaging envelopes (`QueueMessageEnvelope<T>`)
 
@@ -16,26 +16,26 @@ Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity a
 shaped like `{ Payload, RequeueCount, … }` vs raw DTO JSON so you can:
 
 - Attach `RequeueCount` / identifiers / timestamps without wrapping every caller manually.
-- Migrate legacy producers that still emit bare JSON objects — the first requeue from a legacy message
+- Migrate legacy producers that still emit bare JSON objects. The first requeue from a legacy message
   is automatically wrapped in an envelope by `QueueWorkerBase` so subsequent requeues count correctly.
 
 `MessageProcessingExceptionHandling` (`IgnoreAndRemoveFromQueue`, `ThrowAndRemoveFromQueue`,
 `RequeueOnException`) is the shared enum implementations expose for tuning how thrown exceptions in
-message handlers are mapped to ack/nack/requeue semantics.
+message handlers map to ack/nack/requeue.
 
-## Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`)
+## `QueueWorkerBase`
 
-- Implements `IHostedService` + `IDisposable` + `IHealth` — `StartAsync` connects (if needed) and calls `SubscribeToQueue`; `StopAsync` cancels and waits up to `DrainTimeoutMs` (default `30_000` ms) for in-flight messages before returning.
+- Implements `IHostedService` + `IDisposable` + `IHealth`. `StartAsync` connects if needed and calls `SubscribeToQueue`. `StopAsync` cancels and waits up to `DrainTimeoutMs` (default `30_000` ms) for in-flight messages before returning.
 - Parses messages via the envelope-aware `DeserializeMessage` helper.
 - Executes your abstract `DoWorkAsync(TRequest, CancellationToken) → Task<TResult>`.
 - Applies requeue heuristics: an optional `Metadata["requeue"]` bool on the result overrides the default `!IsSuccess` requeue.
 - Supports `maxRequeueCount` + optional DLQ publish (`dlqName`); when the count is exceeded, the original message bytes are forwarded to the DLQ if configured, otherwise the message is dropped at Error level.
 - Optional retry backoff via the public `RequeueDelay` property: when set and the transport implements `IDelayedMqService`, each counted requeue is republished with a broker-side delay of `RequeueDelay × attempt` (linear backoff), so a failing message cannot burn through its retry budget in milliseconds. Transports without delay support republish immediately.
 
-## Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`) — Envelope retry flow
+## Envelope retry flow
 
-Every failure path acks the original delivery and republishes a counted copy — a bad message or a
-repeatedly-throwing `DoWorkAsync` can never spin in an infinite broker redelivery loop:
+Every failure path acks the original delivery and republishes a counted copy. A bad message or a
+repeatedly-throwing `DoWorkAsync` cannot loop forever on broker redelivery:
 
 ```mermaid
 flowchart LR
@@ -49,10 +49,10 @@ flowchart LR
     cap -->|no| dlq[Ack + route to DLQ or drop]
 ```
 
-## Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`) — `QueueWorkerOptions`
+## `QueueWorkerOptions`
 
-Shared defaults resolved by DI registration paths (e.g. `AddJobWorker` / `AddJobWorkerFromConfiguration`,
-section name `"QueueWorkerOptions"`) — the `QueueWorkerBase` constructor signature stays unchanged:
+Shared defaults resolved by DI registration paths (for example `AddJobWorker` / `AddJobWorkerFromConfiguration`,
+section name `"QueueWorkerOptions"`). The `QueueWorkerBase` constructor signature stays unchanged:
 
 | Property | Type | Default | Purpose |
 | ------------------------ | ----------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -67,46 +67,46 @@ section name `"QueueWorkerOptions"`) — the `QueueWorkerBase` constructor signa
     - `queue.worker.running` (gauge; `1` while running, `0` after stop)
     - Error records on `queue.worker.message.processing.error` and `queue.worker.message.deserialization.error`
 
-This is the **production-grade** path for long-running consumers in Lyo’s own job/email stacks.
+This is the hosted-consumer path used by Lyo job and email workers.
 
-## Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`) — Health and diagnostics surface
+## Health and diagnostics
 
-- `MqServiceHealth` — `Queues` and `Connections` collections.
-- `MessageQueueInfo(Name, State?, Type?, Messages, MessagesReady, MessagesUnacknowledged, Consumers, AdditionalProperties)` — generic per-queue snapshot.
-- `ConnectionInfo(User, UserProvidedName?, State, VHost)` — generic connection snapshot.
-- `QueuePeekMessage(Payload, PayloadEncoding?, Exchange?, RoutingKey?, MessageCount?, Redelivered)` — what `PeekQueueMessages` returns.
+- `MqServiceHealth`. `Queues` and `Connections` collections.
+- `MessageQueueInfo(Name, State?, Type?, Messages, MessagesReady, MessagesUnacknowledged, Consumers, AdditionalProperties)`. Per-queue snapshot.
+- `ConnectionInfo(User, UserProvidedName?, State, VHost)`. Connection snapshot.
+- `QueuePeekMessage(Payload, PayloadEncoding?, Exchange?, RoutingKey?, MessageCount?, Redelivered)`. What `PeekQueueMessages` returns.
 
-## Operational guidance
+## Operations
 
-- Treat **`byte[]`** as **opaque at the interface**—sign and compress at the app layer if payloads leave a trust zone.
-- **Idempotency**: requeue storms happen when handlers throw—make side effects idempotent or persist processing tokens.
-- **Health**: implementors should ensure **`IHealth`** surfaces broker reachability; don’t lie “healthy” when `IsConnected()` is false unless you intend lazy connect.
+- Treat `byte[]` as opaque at the interface. Sign and compress at the app layer if payloads leave a trust zone.
+- **Idempotency.** Requeue storms happen when handlers throw. Make side effects idempotent or persist processing tokens.
+- **Health.** Implementors should make `IHealth` report broker reachability. Do not report healthy when `IsConnected()` is false unless you intend a lazy connect.
 
 ## Implementations & UI
 
 | Package | Role |
-| --------------------------------------------------------------------- | ------------------------------------------------------------ |
-| [`Lyo.MessageQueue.RabbitMq`](../Lyo.MessageQueue.RabbitMq/README.md) | Production **`RabbitMQ.Client`** driver + DI helpers. |
-| **`Lyo.MessageQueue.Web.Components`** | Blazor UX for queue inspection/management in internal tools. |
-| **`Lyo.MessageQueue.RabbitMq.Web.Components`** | Rabbit-specific components + wiring. |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [`Lyo.MessageQueue.RabbitMq`](../Lyo.MessageQueue.RabbitMq/README.md) | `RabbitMQ.Client` driver and DI helpers. |
+| `Lyo.MessageQueue.Web.Components` | Blazor UI for queue inspection and management in internal tools. |
+| `Lyo.MessageQueue.RabbitMq.Web.Components` | Rabbit-specific components and wiring. |
 
 ## Related
 
-- [`Lyo.Job.Scheduler`](../../../Integration/Job/Lyo.Job.Scheduler/README.md) — often pairs with queues for fan-out triggers.
-- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md) — uniform health reporting.
+- [`Lyo.Job.Scheduler`](../../../Integration/Job/Lyo.Job.Scheduler/README.md). Often pairs with queues for fan-out triggers.
+- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md). Shared health reporting.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Health` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Health` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

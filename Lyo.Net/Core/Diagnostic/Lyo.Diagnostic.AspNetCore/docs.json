@@ -2,8 +2,8 @@
   "id": "Lyo.Diagnostic.AspNetCore",
   "name": "Lyo.Diagnostic.AspNetCore",
   "area": "Core",
-  "tagline": "ASP.NET Core integration for **Lyo.Diagnostic**: scoped **breadcrumb** trails per request and **exception recording** to the in-memory error inbox plus structured logging, without replacing your…",
-  "description": "ASP.NET Core integration for **Lyo.Diagnostic**: scoped **breadcrumb** trails per request and **exception recording** to the in-memory error inbox plus structured logging, without replacing your existing problem-details middleware.",
+  "tagline": "ASP.NET Core integration for `Lyo.Diagnostic`. Scoped breadcrumb trails per request and exception recording to the in-memory error inbox plus structured logging, without replacing existing problem-details middleware.",
+  "description": "ASP.NET Core integration for `Lyo.Diagnostic`. Scoped breadcrumb trails per request and exception recording to the in-memory error inbox plus structured logging, without replacing existing problem-details middleware.",
   "features": [],
   "examples": [
     {
@@ -22,9 +22,9 @@
       "type": "list",
       "title": "Pipeline ordering",
       "items": [
-        "This middleware sits **closer to route handlers** and runs **first when an exception unwinds**.",
-        "It **records** the failure and calls **`IStructuredLogEnricher`**, then **rethrows**.",
-        "Outer middleware can still build **Problem Details** / HTTP error bodies."
+        "This middleware sits closer to route handlers and runs first when an exception unwinds.",
+        "It records the failure and calls `IStructuredLogEnricher`, then rethrows.",
+        "Outer middleware can still build Problem Details / HTTP error bodies."
       ]
     },
     {
@@ -60,12 +60,12 @@
     {
       "type": "markdown",
       "title": "Breadcrumbs in a controller",
-      "body": "Inject `IBreadcrumbTrail` (scoped) and add entries before risky work:\n\n\n\nDo **not** put secrets or PII in breadcrumb data. See the **`Lyo.Diagnostic`** README."
+      "body": "Inject `IBreadcrumbTrail` (scoped) and add entries before risky work:\n\n\n\nDo not put secrets or PII in breadcrumb data. See the `Lyo.Diagnostic` README."
     },
     {
       "type": "paragraph",
       "title": "Lyo.Api",
-      "text": "`Lyo.Api` exposes **`AddLyoApiDiagnosticRecording`** as a convenience wrapper around **`AddLyoDiagnosticsWeb`**."
+      "text": "`Lyo.Api` exposes `AddLyoApiDiagnosticRecording` as a wrapper around `AddLyoDiagnosticsWeb`."
     }
   ],
   "links": [],

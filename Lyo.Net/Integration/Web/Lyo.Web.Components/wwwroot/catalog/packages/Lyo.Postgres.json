@@ -3,7 +3,7 @@
   "name": "Lyo.Postgres",
   "area": "Data",
   "tagline": "Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.).",
-  "description": "Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.). The package is a thin **`IHostedService`** that runs **`DbContext.Database.MigrateAsync`** at host startup when the consumer’s options opt in.\n\n> Out of scope: this package does **not** ship health checks, design-time `IDesignTimeDbContextFactory` helpers, or connection-string builders. Those live in the consumer > libraries (e.g. `Lyo.Audit.Postgres`, `Lyo.Email.Postgres`) when needed.",
+  "description": "Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.). A thin `IHostedService` runs `DbContext.Database.MigrateAsync` at host startup when the consumer's options opt in.\n\n> Out of scope: this package does not ship health checks, design-time `IDesignTimeDbContextFactory` helpers, or connection-string builders. Those live in the consumer > libraries (e.g. `Lyo.Audit.Postgres`, `Lyo.Email.Postgres`) when needed.",
   "features": [],
   "examples": [
     {
@@ -15,22 +15,22 @@
   "sections": [
     {
       "type": "table",
-      "title": "Public API",
+      "title": "Types",
       "headers": [
         "Type",
         "Role"
       ],
       "rows": [
         [
-          "**`IPostgresMigrationConfig`**",
-          "Contract for options classes that want to opt into hosted migrations. Members: `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`."
+          "`IPostgresMigrationConfig`",
+          "Options contract for hosted migrations. Members: `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`."
         ],
         [
-          "**`PostgresMigrationHostedService<TContext, TOptions>`**",
+          "`PostgresMigrationHostedService<TContext, TOptions>`",
           "`IHostedService` that, on `StartAsync`, scopes a fresh `TContext` over the configured connection string, runs `CREATE SCHEMA IF NOT EXISTS \"<Schema>\"`, then `MigrateAsync`."
         ],
         [
-          "**`Extensions.AddPostgresMigrations<TContext, TOptions>()`**",
+          "`Extensions.AddPostgresMigrations<TContext, TOptions>()`",
           "Registers the hosted service. Both type parameters are constrained: `TContext : DbContext`, `TOptions : class, IPostgresMigrationConfig`."
         ]
       ],

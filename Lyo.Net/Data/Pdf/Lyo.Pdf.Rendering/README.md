@@ -1,6 +1,6 @@
 # Lyo.Pdf.Rendering
 
-Rasterizes PDF pages to PNG via [PDFtoImage](https://www.nuget.org/packages/PDFtoImage) (PDFium + Skia under the hood; `bblanchon.PDFium` native packages). Targets `net10.0`.
+Rasterizes PDF pages to PNG via [PDFtoImage](https://www.nuget.org/packages/PDFtoImage) (PDFium + Skia; `bblanchon.PDFium` native packages). Targets `net10.0`.
 
 ## Examples
 
@@ -54,12 +54,12 @@ Pass the document `password` argument when the PDF is protected. Pages are 1-bas
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `PDFtoImage` `5.2.1` — (direct, third-party)
-- `SixLabors.ImageSharp` `3.1.12` — (direct, third-party)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `PDFtoImage` `5.2.1` (direct, third-party)
+- `SixLabors.ImageSharp` `3.1.12` (direct, third-party)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

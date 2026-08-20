@@ -2,12 +2,12 @@
   "id": "Lyo.Translation.Aws",
   "name": "Lyo.Translation.Aws",
   "area": "Communication",
-  "tagline": "Amazon Translate implementation of `ITranslationService`: translate text, bounded **bulk** translation, pragmatic **language detection**, and **`ListLanguages`** connection checks.",
-  "description": "[Amazon Translate](https://docs.aws.amazon.com/translate/) implementation of [`ITranslationService`](../Lyo.Translation/README.md): translate text, bounded **bulk** translation, pragmatic **language detection**, and **`ListLanguages`** connection checks.\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "tagline": "Amazon Translate implementation of `ITranslationService`. Translates text, runs bounded bulk translation, infers language via a Translate call, and probes connectivity with `ListLanguages`.",
+  "description": "[Amazon Translate](https://docs.aws.amazon.com/translate/) implementation of [`ITranslationService`](../Lyo.Translation/README.md). Translates text, runs bounded bulk translation, infers language via a Translate call, and probes connectivity with `ListLanguages`.\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
   "features": [],
   "examples": [
     {
-      "title": "Registration (dependency injection)",
+      "title": "Register with DI",
       "language": "csharp",
       "code": "using Lyo.Translation.Aws;\nusing Microsoft.Extensions.DependencyInjection;\n\n// From configuration section \"AwsTranslationOptions\" — also registers IAmazonTranslate from the\n// same section if no IAmazonTranslate is already in the container.\nservices.AddAwsTranslationServiceFromConfiguration(configuration);\n\n// Inline configuration\nservices.AddAwsTranslationService(o =>\n{\n    o.Region = \"us-east-1\";\n    // Prefer IAM/instance profile when possible instead of keys\n});\n\n// Pre-built options instance\nservices.AddAwsTranslationService(new AwsTranslationOptions { Region = \"us-east-1\" });"
     }
@@ -15,8 +15,8 @@
   "sections": [
     {
       "type": "markdown",
-      "title": "Registration (dependency injection)",
-      "body": "`AddAwsTranslationService` and `AddAwsTranslationServiceFromConfiguration` register:\n\n- `AwsTranslationOptions` (singleton).\n- `AwsTranslationService` (singleton; subclass of `TranslationServiceBase`).\n- `ITranslationService` resolved from `AwsTranslationService`.\n\n`AddAwsTranslationServiceFromConfiguration` also bootstraps `IAmazonTranslate` from\n`AwsTranslationOptions` if no `IAmazonTranslate` is already registered. The other two overloads do\n**not** register an `IAmazonTranslate`; bring your own if you want explicit credentials or sharing.\nThe service constructor accepts an optional `IAmazonTranslate` and resolves one from DI when present.\n\nEnsure `AwsTranslationOptions` (and optionally `IAmazonTranslate`) agree on region and credentials."
+      "title": "Register with DI",
+      "body": "`AddAwsTranslationService` and `AddAwsTranslationServiceFromConfiguration` register:\n\n- `AwsTranslationOptions` (singleton).\n- `AwsTranslationService` (singleton; subclass of `TranslationServiceBase`).\n- `ITranslationService` resolved from `AwsTranslationService`.\n\n`AddAwsTranslationServiceFromConfiguration` also registers `IAmazonTranslate` from\n`AwsTranslationOptions` if no `IAmazonTranslate` is already registered. The other two overloads do\nnot register an `IAmazonTranslate`. Bring your own if you want explicit credentials or sharing.\nThe service constructor accepts an optional `IAmazonTranslate` and resolves one from DI when present.\n\n`AwsTranslationOptions` and `IAmazonTranslate` should agree on region and credentials."
     },
     {
       "type": "table",
@@ -58,7 +58,7 @@
     },
     {
       "type": "table",
-      "title": "Behaviour notes",
+      "title": "Behavior notes",
       "headers": [
         "Feature",
         "Detail"

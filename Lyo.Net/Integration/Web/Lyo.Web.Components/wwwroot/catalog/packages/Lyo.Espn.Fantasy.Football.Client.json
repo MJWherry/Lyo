@@ -15,7 +15,7 @@
   "sections": [
     {
       "type": "table",
-      "title": "Surface",
+      "title": "Managers",
       "headers": [
         "Property",
         "Manager",
@@ -186,6 +186,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

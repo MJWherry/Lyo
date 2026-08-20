@@ -1,11 +1,11 @@
 # Lyo.Discord.Bot
 
-Library (not an executable) that runs a **DSharpPlus** Discord bot and **upserts** guild data into your Lyo API (`Lyo.Discord.Client` → PostgreSQL-backed `Discord/*` endpoints). Use it as a **base** so host apps (e.g. `Lyo.TestConsole`) configure the Discord token under **`DiscordBot`**, the Lyo API HTTP client under **`LyoDiscordClient`**, resolve services from DI, and call `RunAsync`.
+Library (not an executable) that runs a DSharpPlus Discord bot and upserts guild data into your Lyo API (`Lyo.Discord.Client` to PostgreSQL-backed `Discord/*` endpoints). Use it as a base so host apps (e.g. `Lyo.TestConsole`) configure the Discord token under `DiscordBot`, the Lyo API HTTP client under `LyoDiscordClient`, resolve services from DI, and call `RunAsync`.
 
 ## Features
 
-- `LyoDiscordBotOptions` (from **`DiscordBot`**)
-- `LyoDiscordClientOptions` (from **`LyoDiscordClient`**) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client for upserts)
+- `LyoDiscordBotOptions` (from `DiscordBot`)
+- `LyoDiscordClientOptions` (from `LyoDiscordClient`) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client for upserts)
 - `IGuildDatabaseSyncService` / `GuildDatabaseSyncService`
 - `LyoDiscordBot` (singleton) and `LyoDiscordBotBase` (same instance)
 
@@ -28,20 +28,19 @@ await bot.RunAsync(cancellationToken);
 
 ## Configuration
 
-**`DiscordBot`** (→ `LyoDiscordBotOptions`): Discord-only settings.
+`DiscordBot` (→ `LyoDiscordBotOptions`): Discord-only settings.
 
 | Property | Description |
 | --------- | ----------------------------------------------- |
 | `Token` | Discord bot token. |
 | `Intents` | Optional. Gateway intents; default is `Guilds \ |
 
-**`LyoDiscordClient`** (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits *
-*`ApiClientOptions`** — set **`BaseUrl`** (default `http://localhost:5092/` if omitted), plus compression, **`AcceptEncodings`**, **`EnsureStatusCode`**, etc.
+`LyoDiscordClient` (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits `ApiClientOptions`. Set `BaseUrl` (default `http://localhost:5092/` if omitted), plus compression, `AcceptEncodings`, `EnsureStatusCode`, etc.
 
 ## Registration
 
-- `LyoDiscordBotOptions` (from **`DiscordBot`**)
-- `LyoDiscordClientOptions` (from **`LyoDiscordClient`**) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client for upserts)
+- `LyoDiscordBotOptions` (from `DiscordBot`)
+- `LyoDiscordClientOptions` (from `LyoDiscordClient`) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client for upserts)
 - `IGuildDatabaseSyncService` / `GuildDatabaseSyncService`
 - `LyoDiscordBot` (singleton) and `LyoDiscordBotBase` (same instance)
 
@@ -77,11 +76,11 @@ so the in-process bot reads the latest values without an extra API round-trip.
 
 Derive from `LyoDiscordBotBase` and register your type with `AddLyoDiscordBot<MyBot>(configuration)`.
 
-- **`ConfigureDiscordConfiguration`** — adjust `DiscordConfiguration` (e.g. intents).
-- **`ConfigureDiscordClient`** — register DSharpPlus extensions (e.g. [CommandsNext](https://github.com/DSharpPlus/DSharpPlus), slash commands, interactivity). Call **before**
-  handlers are wired.
-- **`RegisterDefaultSyncHandlers`** — override if you need to change sync behavior; call `base.RegisterDefaultSyncHandlers(client)` to keep database sync.
-- **`RegisterAdditionalHandlers`** — subscribe to other gateway events.
+- **`ConfigureDiscordConfiguration`.** adjust `DiscordConfiguration` (e.g. intents).
+- **`ConfigureDiscordClient`.** register DSharpPlus extensions (e.g. [CommandsNext](https://github.com/DSharpPlus/DSharpPlus), slash commands, interactivity). Call **before**
+ handlers are wired.
+- **`RegisterDefaultSyncHandlers`.** override if you need to change sync behavior; call `base.RegisterDefaultSyncHandlers(client)` to keep database sync.
+- **`RegisterAdditionalHandlers`.** subscribe to other gateway events.
 
 Example sketch:
 
@@ -105,51 +104,51 @@ public sealed class MyBot : LyoDiscordBotBase
 
 ## Packages
 
-- **DSharpPlus** — gateway and REST helpers used by the bot host.
-- **Lyo.Discord.Client** — HTTP upserts to your Lyo API.
+- **DSharpPlus**. gateway and REST helpers used by the bot host.
+- **Lyo.Discord.Client**. HTTP upserts to your Lyo API.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Cache` — (direct, lyo)
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Diff` — (direct, lyo)
-- `Lyo.Discord.Client` — (direct, lyo)
-- `Lyo.Notification` — (direct, lyo)
-- `DSharpPlus` `4.5.2` — (direct, third-party)
-- `DSharpPlus.CommandsNext` `4.5.2` — (direct, third-party)
-- `DSharpPlus.Interactivity` `4.5.2` — (direct, third-party)
-- `DSharpPlus.SlashCommands` `4.5.2` — (direct, third-party)
-- `Microsoft.Extensions.DependencyInjection` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Lyo.Api.Client` — (transitive, lyo)
-- `Lyo.Api.Models` — (transitive, lyo)
-- `Lyo.Compression` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Diagnostic` — (transitive, lyo)
-- `Lyo.Discord.Models` — (transitive, lyo)
-- `Lyo.Encryption` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.Health` — (transitive, lyo)
-- `Lyo.KeyStore` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.PackageMetadata` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Lyo.Streams` — (transitive, lyo)
-- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
-- `EasyCompressor` `2.1.0` — (transitive, third-party)
-- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
-- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Caching.Memory` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
-- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Cache` (direct, lyo)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Diff` (direct, lyo)
+- `Lyo.Discord.Client` (direct, lyo)
+- `Lyo.Notification` (direct, lyo)
+- `DSharpPlus` `4.5.2` (direct, third-party)
+- `DSharpPlus.CommandsNext` `4.5.2` (direct, third-party)
+- `DSharpPlus.Interactivity` `4.5.2` (direct, third-party)
+- `DSharpPlus.SlashCommands` `4.5.2` (direct, third-party)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Api.Client` (transitive, lyo)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Compression` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.Discord.Models` (transitive, lyo)
+- `Lyo.Encryption` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
+- `Lyo.KeyStore` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Lyo.Streams` (transitive, lyo)
+- `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
+- `EasyCompressor` `2.1.0` (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Caching.Memory` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

@@ -2,8 +2,8 @@
   "id": "Lyo.FFmpeg",
   "name": "Lyo.FFmpeg",
   "area": "Data",
-  "tagline": "FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from `Lyo.FFmpeg.Models`: **`IAudioPlayer`**, **`IAudioProber`**…",
-  "description": "FFmpeg integration for .NET. Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via **CliWrap**) behind three contracts from [`Lyo.FFmpeg.Models`](../Lyo.FFmpeg.Models/README.md): **`IAudioPlayer`**, **`IAudioProber`**, **`IAudioConverter`**. Includes a fluent **`FFmpegCommandBuilder`** for hand-rolled command lines and a temp-file helper for stream inputs (`FFmpegTempHelper`).",
+  "tagline": "Wraps the ffmpeg, ffprobe, and ffplay CLIs (via CliWrap) behind IAudioPlayer, IAudioProber, and IAudioConverter from Lyo.FFmpeg.Models.",
+  "description": "Wraps the `ffmpeg` / `ffprobe` / `ffplay` CLIs (via CliWrap) behind three contracts from [`Lyo.FFmpeg.Models`](../Lyo.FFmpeg.Models/README.md): IAudioPlayer, IAudioProber, IAudioConverter. Includes FFmpegCommandBuilder for hand-rolled command lines and FFmpegTempHelper for stream inputs.",
   "features": [],
   "examples": [
     {
@@ -17,7 +17,7 @@
       "code": "{\n  \"FFmpegOptions\": {\n    \"FFmpegPath\": \"/usr/bin/ffmpeg\",\n    \"FfprobePath\": \"/usr/bin/ffprobe\",\n    \"FfplayPath\": null,\n    \"DefaultCodec\": \"pcm_s16le\",\n    \"DefaultSampleRate\": 44100,\n    \"DefaultChannels\": 2,\n    \"DefaultFormat\": \"wav\",\n    \"DefaultOverwrite\": true,\n    \"DefaultNoVideo\": true,\n    \"EnableMetrics\": false,\n    \"SuppressFfplayOutput\": true,\n    \"ProcessOutputMode\": \"Suppress\",\n    \"GlobalArguments\": [\"-hide_banner\", \"-loglevel\", \"warning\"]\n  }\n}"
     },
     {
-      "title": "Configuration binding (2)",
+      "title": "AddFFmpegServicesFromConfiguration",
       "language": "csharp",
       "code": "services.AddFFmpegServicesFromConfiguration(builder.Configuration);"
     },
@@ -37,35 +37,35 @@
       ],
       "rows": [
         [
-          "**`FFmpegAudioPlayer`**",
-          "`IAudioPlayer` over `ffplay`; `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)`."
+          "FFmpegAudioPlayer",
+          "IAudioPlayer over ffplay. PlayAsync(filePath), PlayStreamAsync(stream), PlayBytesAsync(bytes)."
         ],
         [
-          "**`FFmpegAudioProber`**",
-          "`IAudioProber` over `ffprobe`; `ProbeAsync`, `ProbeStreamAsync`, `ProbeBytesAsync` → `AudioProbeResult` (duration, sample rate, channels, codec, bit rate, has-video/audio, raw `ffprobe` metadata)."
+          "FFmpegAudioProber",
+          "IAudioProber over ffprobe. ProbeAsync, ProbeStreamAsync, ProbeBytesAsync return AudioProbeResult (duration, sample rate, channels, codec, bit rate, has-video/audio, raw ffprobe metadata)."
         ],
         [
-          "**`FFmpegAudioConverter`**",
-          "`IAudioConverter` over `ffmpeg`; full matrix of file/stream/byte conversion overloads (`ConvertFileToFileAsync`, `ConvertFileToStreamAsync`, `ConvertStreamToBytesAsync`, etc.) and a request-shaped `ConvertAsync(AudioConversionRequest)`."
+          "FFmpegAudioConverter",
+          "IAudioConverter over ffmpeg. File, stream, and byte conversion overloads (ConvertFileToFileAsync, ConvertFileToStreamAsync, ConvertStreamToBytesAsync, and the rest) plus ConvertAsync(AudioConversionRequest)."
         ],
         [
-          "**`FFmpegCommandBuilder`**",
-          "Fluent builder for ad-hoc ffmpeg command lines: `WithInput/WithOutput`, `WithCodec`, `WithSampleRate`, `WithChannels`, `WithFormat`, `WithOverwrite`, `WithNoVideo`, `WithDefaults(FFmpegOptions)`, custom args."
+          "FFmpegCommandBuilder",
+          "Fluent builder for ad-hoc ffmpeg command lines: WithInput/WithOutput, WithCodec, WithSampleRate, WithChannels, WithFormat, WithOverwrite, WithNoVideo, WithDefaults(FFmpegOptions), custom args."
         ],
         [
-          "**`FFmpegProcessRunner`**",
-          "Internal runner that executes the built command line through CliWrap, applying `FFmpegOptions.GlobalArguments` and `ProcessOutputMode` (`Suppress`/`Passthrough`)."
+          "FFmpegProcessRunner",
+          "Internal runner that executes the built command line through CliWrap, applying FFmpegOptions.GlobalArguments and ProcessOutputMode (Suppress/Passthrough)."
         ],
         [
-          "**`FFmpegTempHelper`**",
-          "Materializes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path (cleaned up on disposal)."
+          "FFmpegTempHelper",
+          "Writes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path. Cleans up on disposal."
         ],
         [
-          "**`Extensions`**",
-          "DI: **`AddFFmpegServices()`**, **`AddFFmpegServices(Action<FFmpegOptions>)`**, **`AddFFmpegServicesFromConfiguration(IConfiguration, sectionName?)`**."
+          "Extensions",
+          "DI: AddFFmpegServices(), AddFFmpegServices(Action<FFmpegOptions>), AddFFmpegServicesFromConfiguration(IConfiguration, sectionName?)."
         ]
       ],
-      "trail": "Each `AddFFmpegServices*` overload registers `FFmpegAudioPlayer`/`FFmpegAudioProber`/`FFmpegAudioConverter` as **scoped** services and exposes them through both the concrete\ntype and their respective interfaces."
+      "trail": "Each AddFFmpegServices* overload registers FFmpegAudioPlayer, FFmpegAudioProber, and FFmpegAudioConverter as scoped services and exposes them through both the concrete type and their interfaces."
     },
     {
       "type": "list",

@@ -2,8 +2,8 @@
   "id": "Lyo.Authentication.Client",
   "name": "Lyo.Authentication.Client",
   "area": "Security",
-  "tagline": "Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host (typically a Blazor Server gateway or a server-rendered API consumer) into a Lyo authentication API without ever exposing tokens to…",
-  "description": "Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host (typically a Blazor Server gateway or a server-rendered API consumer) into a Lyo authentication API without ever exposing tokens to the browser.",
+  "tagline": "Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host, typically a Blazor Server gateway or a server-rendered API consumer, into a Lyo authentication API without ever exposing tokens to the browser.",
+  "description": "Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host, typically a Blazor Server gateway or a server-rendered API consumer, into a Lyo authentication API without ever exposing tokens to the browser.",
   "features": [],
   "examples": [
     {
@@ -31,17 +31,17 @@
     {
       "type": "markdown",
       "title": "What it does",
-      "body": "The Lyo API (running `Lyo.Authentication.OpenIdConnect.Endpoints.AuthEndpointsMapper`)\nhandles `/auth/login`, `/auth/callback`, `/auth/handoff/exchange`, `/auth/token`,\n`/auth/refresh`, `/auth/logout`, and `/auth/me`. It issues Lyo-signed JWTs after a\nsuccessful external login (Google, Keycloak, …).\n\nFor browser clients the callback redirects to\n`{returnUrl}?lyo_handoff=lyoh_…` instead of dropping tokens directly. This\npackage picks up the redirect on the consumer origin, exchanges the handoff code\nserver-to-server for the tokens, stashes them in a `LyoAuthSessionStore`,\nissues an HttpOnly cookie containing only the data-protected session id, and\nprojects the JWT claims into ASP.NET's `ClaimsPrincipal` and Blazor's\n`AuthenticationStateProvider`.\n\nOutbound API calls go through `LyoAuthDelegatingHandler` which injects\n`Authorization: Bearer <access_token>` and transparently refreshes on 401.\n\n```\nbrowser ── GET /auth/sign-in/google ─────────────► consumer (this lib)\n              ▲ 302 https://api/auth/login/google?returnUrl=https://consumer/auth/handoff\n              │\n              │\nconsumer ── GET /auth/login/google ─────────────► API\n              ▲ 302 https://accounts.google.com/...\n              │\n              │\nbrowser ── (Google) ─────────────────────────────► API /auth/callback/google\n              ▲ 302 https://consumer/auth/handoff?lyo_handoff=lyoh_...\n              │\n              │\nconsumer ── POST /auth/handoff/exchange ──────► API (server-to-server)\n              ◄──── {access_token, refresh_token}\n              │\n              │\nbrowser receives Set-Cookie: lyo_session=...\n```"
+      "body": "The Lyo API (running `Lyo.Authentication.OpenIdConnect.Endpoints.AuthEndpointsMapper`)\nhandles `/auth/login`, `/auth/callback`, `/auth/handoff/exchange`, `/auth/token`,\n`/auth/refresh`, `/auth/logout`, and `/auth/me`. It issues Lyo-signed JWTs after a\nsuccessful external login (Google, Keycloak, and others).\n\nFor browser clients the callback redirects to\n`{returnUrl}?lyo_handoff=lyoh_...` instead of dropping tokens directly. This\npackage picks up the redirect on the consumer origin, exchanges the handoff code\nserver-to-server for the tokens, stashes them in a `LyoAuthSessionStore`,\nissues an HttpOnly cookie containing only the data-protected session id, and\nprojects the JWT claims into ASP.NET's `ClaimsPrincipal` and Blazor's\n`AuthenticationStateProvider`.\n\nOutbound API calls go through `LyoAuthDelegatingHandler`, which injects\n`Authorization: Bearer <access_token>` and refreshes on 401.\n\n```\nbrowser ── GET /auth/sign-in/google ─────────────► consumer (this lib)\n              ▲ 302 https://api/auth/login/google?returnUrl=https://consumer/auth/handoff\n              │\n              │\nconsumer ── GET /auth/login/google ─────────────► API\n              ▲ 302 https://accounts.google.com/...\n              │\n              │\nbrowser ── (Google) ─────────────────────────────► API /auth/callback/google\n              ▲ 302 https://consumer/auth/handoff?lyo_handoff=lyoh_...\n              │\n              │\nconsumer ── POST /auth/handoff/exchange ──────► API (server-to-server)\n              ◄──── {access_token, refresh_token}\n              │\n              │\nbrowser receives Set-Cookie: lyo_session=...\n```"
     },
     {
       "type": "paragraph",
       "title": "Quick start",
-      "text": "In the consuming host's `Program.cs`: `appsettings.json`: On the API side, add the consumer's origin to the allow-list: Then in your UI:"
+      "text": "Register in the consuming host's `Program.cs`. Bind `appsettings.json`. On the API side, add the consumer's origin to the allow-list. Then in your UI:"
     },
     {
       "type": "paragraph",
       "title": "API client flow (no browser)",
-      "text": "For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `POST /auth/refresh` directly on the API. Both return JSON `{access_token, expires_in, refresh_token, token_type}`. This package isn't needed for that flow — it exists purely to bridge the browser handoff into a server-managed session."
+      "text": "For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `POST /auth/refresh` directly on the API. Both return JSON `{access_token, expires_in, refresh_token, token_type}`. This package isn't needed for that flow. It exists to bridge the browser handoff into a server-managed session."
     },
     {
       "type": "list",
@@ -56,7 +56,7 @@
       "type": "list",
       "title": "Security checklist",
       "items": [
-        "Cookies are `HttpOnly`, `Secure` (when the request is HTTPS), `SameSite=Lax`, and carry only the data-protected session id — never tokens.",
+        "Cookies are `HttpOnly`, `Secure` (when the request is HTTPS), `SameSite=Lax`, and carry only the data-protected session id. Never tokens.",
         "The handoff code is single-use, TTL-bounded (default 30s), and bound to the consumer's `Origin` header on the exchange.",
         "Tokens never appear in URL fragments, server logs, or the browser DOM.",
         "Sign-out revokes the refresh token at the API and clears the local session."
@@ -140,6 +140,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

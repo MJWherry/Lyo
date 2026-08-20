@@ -2,8 +2,8 @@
   "id": "Lyo.Tag.Postgres",
   "name": "Lyo.Tag.Postgres",
   "area": "Features",
-  "tagline": "PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists tags to the `tag.tag` table (schema constant: `PostgresTagOptions.Schema = \"tag\"`) with migrations support.",
-  "description": "PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists\ntags to the `tag.tag` table (schema constant: `PostgresTagOptions.Schema = \"tag\"`)\nwith migrations support. Tags carry **subject** / optional **actor** (`for_entity_*` / `from_entity_*`) and are uniquely keyed by\n`(for_entity_type, for_entity_id, name, tag_type, slug)` per tenant.\n\n`PostgresTagStore` implements `ITagStore` and `Lyo.Health.IHealth`\n(`HealthCheckName = \"tag-postgres\"`), so registering the store also wires up a\nliveness probe.",
+  "tagline": "PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists tags to the `tag.tag` table (`PostgresTagOptions.Schema = \"tag\"`) and ships migrations.",
+  "description": "PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists\ntags to the `tag.tag` table (`PostgresTagOptions.Schema = \"tag\"`)\nand ships migrations. Tags carry **subject** / optional **actor** (`for_entity_*` / `from_entity_*`) and are uniquely keyed by\n`(for_entity_type, for_entity_id, name, tag_type, slug)` per tenant.\n\n`PostgresTagStore` implements `ITagStore` and `Lyo.Health.IHealth`\n(`HealthCheckName = \"tag-postgres\"`). Registering the store also registers a\nliveness probe.",
   "features": [],
   "examples": [
     {
@@ -22,7 +22,7 @@
       "code": "services.AddPostgresTagStoreFromConfiguration(configuration);"
     },
     {
-      "title": "Example: Tag a docket as urgent",
+      "title": "Example: tag a docket as urgent",
       "language": "csharp",
       "code": "// Add tag (idempotent – no-op if already exists)\nawait tagStore.AddTagAsync(\n    EntityRef.ForGuid(\"Docket\", docketId),\n    \"urgent\",\n    EntityRef.ForKey(\"User\", userId.ToString()));\n\n// Get all tags for an entity\nvar tags = await tagStore.GetTagsForEntityAsync(EntityRef.ForGuid(\"Docket\", docketId));\n\n// Find all dockets with \"urgent\" tag\nvar urgentDockets = await tagStore.GetEntitiesWithTagAsync(\"urgent\", \"Docket\");\n\n// Remove a tag\nawait tagStore.RemoveTagAsync(EntityRef.ForGuid(\"Docket\", docketId), \"urgent\");\n\n// Remove all tags from an entity\nawait tagStore.RemoveAllTagsForEntityAsync(EntityRef.ForGuid(\"Docket\", docketId));"
     },
@@ -37,10 +37,10 @@
       "type": "list",
       "title": "DI extensions",
       "items": [
-        "`AddTagDbContextFactory(Action<PostgresTagOptions>)` / `AddTagDbContextFactory(PostgresTagOptions)` — register only the `IDbContextFactory<TagDbContext>` (useful when consuming the schema directly from migrations or another store).",
-        "`AddTagDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` — same, but bound from configuration.",
-        "`AddPostgresTagStore(Action<PostgresTagOptions>)` / `AddPostgresTagStore(PostgresTagOptions)` — register the DbContext factory **and** the `ITagStore` singleton.",
-        "`AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` — register the store using configuration binding. The default section name is `PostgresTag`."
+        "`AddTagDbContextFactory(Action<PostgresTagOptions>)` / `AddTagDbContextFactory(PostgresTagOptions)` register only the `IDbContextFactory<TagDbContext>` (useful when consuming the schema directly from migrations or another store).",
+        "`AddTagDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` same, but bound from configuration.",
+        "`AddPostgresTagStore(Action<PostgresTagOptions>)` / `AddPostgresTagStore(PostgresTagOptions)` register the DbContext factory **and** the `ITagStore` singleton.",
+        "`AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` register the store using configuration binding. The default section name is `PostgresTag`."
       ]
     },
     {
@@ -50,14 +50,14 @@
     },
     {
       "type": "markdown",
-      "title": "Entity Reference",
+      "title": "Entity reference",
       "body": "Uses `Lyo.EntityReference.Models.EntityRef` with generic or string-based creation:\n\n```csharp\n// Generic: uses typeof(T).FullName, keys joined with \":\"\nvar forDocket = EntityRef.For<Docket>(docketId);\nvar fromUser = EntityRef.For<User>(123);\n\n// String-based\nvar forEntity = EntityRef.ForGuid(\"Docket\", docketGuid);\nvar fromEntity = EntityRef.ForKey(\"User\", \"123\");\n```"
     },
     {
       "type": "list",
       "title": "Schema",
       "items": [
-        "**tag.tag** – `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `name`, `slug`, `tag_type`, `tenant_id` (uuid), lifecycle from **`EntityRelationEntityBase`**, plus tag-specific indexes",
+        "**tag.tag.** `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar 128/256), `name`, `slug`, `tag_type`, `tenant_id` (uuid), lifecycle from `EntityRelationEntityBase`, plus tag-specific indexes",
         "Unique index on (for_entity_type, for_entity_id, tag)",
         "Index on (for_entity_type, for_entity_id)",
         "Index on tag"
@@ -66,7 +66,7 @@
     {
       "type": "markdown",
       "title": "Tenancy",
-      "body": "`PostgresTagStore` accepts an optional `Guid? tenantId` on every read/write\nmethod (mirroring `IFavoriteStore`) and resolves it through `TenancyResolver`\nunder the policy configured in `PostgresTagOptions.Tenancy` (inheriting from\n`EntityRefOptions.Mode` when unset). The `tenant_id` column is non-null, so only\n`SingleTenantDefault` and `MultiTenantStrict` modes are valid — `SystemOnly` is\nrejected at store construction. The store applies a `WhereTenant` filter on\nevery query. See\n[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)\nfor the full policy matrix and `appsettings.json` snippet.\n\n```json\n{\n  \"PostgresTag\": {\n    \"ConnectionString\": \"Host=localhost;Database=lyo;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
+      "body": "`PostgresTagStore` accepts an optional `Guid? tenantId` on every read/write\nmethod (mirroring `IFavoriteStore`) and resolves it through `TenancyResolver`\nunder the policy configured in `PostgresTagOptions.Tenancy` (inheriting from\n`EntityRefOptions.Mode` when unset). The `tenant_id` column is non-null, so only\n`SingleTenantDefault` and `MultiTenantStrict` modes are valid. `SystemOnly` is\nrejected at store construction. The store applies a `WhereTenant` filter on\nevery query. See\n[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)\nfor the policy matrix and `appsettings.json` snippet.\n\n```json\n{\n  \"PostgresTag\": {\n    \"ConnectionString\": \"Host=localhost;Database=lyo;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
     }
   ],
   "links": [],

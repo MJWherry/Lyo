@@ -1,25 +1,25 @@
 # Lyo.Sms
 
-A production-ready SMS library for .NET with extensible architecture for multiple providers.
+SMS contracts and shared send pipeline. Providers (`Lyo.Sms.Twilio`, and others) implement `SmsServiceBase`.
 
 ## Features
 
-- **Clean API** - Fluent builder pattern for constructing messages
-- **Phone Number Validation** - Automatic validation and normalization to E.164 format
-- **Bulk Messaging** - Efficient bulk SMS sending with rate limiting and BulkSmsBuilder
-- **Error handling** — Failures surface as `Result<SmsRequest>` (bulk: `BulkResult<SmsRequest>`); add retries/timeouts yourself (see provider packages, e.g. Twilio README “Resilience”).
-- **Custom Exceptions** - InvalidFormatException and ArgumentOutsideRangeException for better error messages
-- **Logging** - Built-in logging support via Microsoft.Extensions.Logging
-- **Dependency Injection** - Full support for .NET dependency injection
-- **Async/Await** - Fully asynchronous API with cancellation token support
-- **Message Querying** - Query messages by various filter criteria
-- **Extensible Architecture** - Abstract base class (SmsServiceBase) for easy provider implementation
-- **Configurable Limits** - Configurable bulk SMS limits, message length limits, and concurrency limits
-- **Events** - Events for message sending, message sent, bulk sending, and bulk sent
+- **SmsMessageBuilder.** Fluent builder for constructing messages.
+- **Phone numbers.** Validation and normalization toward E.164.
+- **Bulk.** Bulk send with rate limiting and `BulkSmsBuilder`.
+- **Results.** Failures return `Result<SmsRequest>` (bulk: `BulkResult<SmsRequest>`). Add retries or timeouts yourself. See provider packages, for example the Twilio README on resilience.
+- **Exceptions.** `InvalidFormatException` and `ArgumentOutsideRangeException`.
+- **Logging.** Logs through Microsoft.Extensions.Logging.
+- **DI.** Provider packages register `ISmsService`.
+- **Async.** Methods take `CancellationToken`.
+- **Query.** `GetMessagesAsync` with `SmsMessageQueryFilter`.
+- **SmsServiceBase.** Abstract base for new providers.
+- **Limits.** Configurable bulk caps, message length, and concurrency.
+- **Events.** `MessageSending`, `MessageSent`, `BulkSending`, `BulkSent`.
 
 ## Examples
 
-### 1. Configure Options
+### Configure options
 
 ```csharp
 var options = new ProviderOptions // Replace with your provider's options class
@@ -31,7 +31,7 @@ var options = new ProviderOptions // Replace with your provider's options class
 };
 ```
 
-### 3. Use the Service
+### Send an SMS
 
 ```csharp
 public class MyService
@@ -64,7 +64,7 @@ public class MyService
 }
 ```
 
-### Using the Builder Pattern
+### SmsMessageBuilder
 
 ```csharp
 var builder = SmsMessageBuilder
@@ -76,7 +76,7 @@ var builder = SmsMessageBuilder
 var result = await _smsService.SendAsync(builder);
 ```
 
-### Sending Bulk Messages
+### Send bulk messages
 
 ```csharp
 var messages = new[]
@@ -97,7 +97,7 @@ foreach (var result in results)
 }
 ```
 
-### Sending Bulk Messages (2)
+### BulkSmsBuilder
 
 ```csharp
 var bulkBuilder = BulkSmsBuilder
@@ -133,7 +133,7 @@ foreach (var result in bulkResult.Results)
 }
 ```
 
-### Querying Messages
+### Query messages
 
 ```csharp
 var filter = new SmsMessageQueryFilter
@@ -151,7 +151,7 @@ foreach (var message in result.Items)
 // Cursor-based pagination: use result.NextCursor as DateSentBefore for next page when result.HasMore
 ```
 
-### Getting a Message by ID
+### Get a message by id
 
 ```csharp
 var message = await _smsService.GetMessageByIdAsync("SM1234567890abcdef");
@@ -162,7 +162,7 @@ if (message.IsSuccess)
 }
 ```
 
-### Testing Connection
+### Test connection
 
 ```csharp
 var isConnected = await _smsService.TestConnectionAsync();
@@ -172,7 +172,7 @@ if (isConnected)
 }
 ```
 
-### Using Events
+### MessageSending
 
 ```csharp
 _smsService.MessageSending += (sender, args) =>
@@ -182,7 +182,7 @@ _smsService.MessageSending += (sender, args) =>
 };
 ```
 
-### Using Events (2)
+### MessageSent
 
 ```csharp
 _smsService.MessageSent += (sender, args) =>
@@ -199,7 +199,7 @@ _smsService.MessageSent += (sender, args) =>
 };
 ```
 
-### Using Events (3)
+### BulkSending
 
 ```csharp
 _smsService.BulkSending += (sender, args) =>
@@ -208,7 +208,7 @@ _smsService.BulkSending += (sender, args) =>
 };
 ```
 
-### Using Events (4)
+### BulkSent
 
 ```csharp
 _smsService.BulkSent += (sender, args) =>
@@ -222,7 +222,7 @@ _smsService.BulkSent += (sender, args) =>
 };
 ```
 
-### Using Events (5)
+### Subscribe to events
 
 ```csharp
 public class SmsNotificationService
@@ -273,7 +273,7 @@ public class SmsNotificationService
 }
 ```
 
-### Exception Handling Examples
+### Exception handling
 
 ```csharp
 try
@@ -307,71 +307,70 @@ catch (ArgumentOutsideRangeException ex)
 dotnet test
 ```
 
-## 1. Configure Options
+## Configure options
 
 Each provider will have its own options class that inherits from `SmsServiceOptions`:
 
-## 2. Register Services
+## Register services
 
 Register the provider-specific service using the provider's extension methods. Each provider will have its own registration methods.
 
-## 3. Use the Service
+## Use the service
 
-The contract is `ISmsService<TResult>` where `TResult : Result<SmsRequest>`. **`ISmsService`** is shorthand for `ISmsService<Result<SmsRequest>>`. Twilio surfaces * *`TwilioSmsResult`** as **`TResult`** when you want provider-specific fields.
+The contract is `ISmsService<TResult>` where `TResult : Result<SmsRequest>`. `ISmsService` is shorthand for `ISmsService<Result<SmsRequest>>`. Twilio uses `TwilioSmsResult` as `TResult` when you want provider-specific fields.
 
-## Sending Bulk Messages
+## Send bulk messages
 
-#### Using IEnumerable of Builders
+#### Using IEnumerable of builders
 
-#### Using BulkSmsBuilder (Recommended)
+#### Using BulkSmsBuilder
 
-## Using Events
+## Events
 
-The SMS service provides events for monitoring message operations:
+The SMS service raises events around send operations:
 
-#### MessageSending Event
+#### MessageSending
 
-Fired before each message is sent (including during bulk operations):
+Fired before each message is sent, including during bulk operations:
 
-#### MessageSent Event
+#### MessageSent
 
 Fired after each message is sent (success or failure):
 
-#### BulkSending Event
+#### BulkSending
 
-Fired before a bulk send operation starts:
+Fired before a bulk send starts:
 
-#### BulkSent Event
+#### BulkSent
 
-Fired after a bulk send operation completes:
+Fired after a bulk send completes:
 
-#### Complete Event Example
+#### Complete event example
 
-**Note**: Events fire even when operations fail, allowing you to track all SMS operations regardless of success or
-failure.
+Events fire even when operations fail, so you can track every attempt.
 
-## Phone Number Formats
+## Phone number formats
 
-- **E.164**: `+1234567890`
-- **US Format**: `(555) 123-4567`
-- **US Format**: `555-123-4567`
-- **US Format**: `555.123.4567`
-- **US Format**: `5551234567` (assumes US country code +1)
+- **E.164.** `+1234567890`
+- **US.** `(555) 123-4567`
+- **US.** `555-123-4567`
+- **US.** `555.123.4567`
+- **US.** `5551234567` (assumes US country code +1)
 
-## Message Limits
+## Message limits
 
-- **Maximum Length**: 1600 characters (10 segments of 160 characters each) - configurable via `MaxMessageBodyLength`
-- Messages longer than 160 characters are automatically split into multiple segments
-- The library validates message length before sending
-- **Bulk SMS Limit**: Maximum number of messages per bulk operation (default: 1000) - configurable via `MaxBulkSmsLimit`
-- **BulkSmsBuilder Limit**: Can set per-builder limit using `SetMaxLimit()` method
+- **Maximum length.** 1600 characters (10 segments of 160 characters each), configurable via `MaxMessageBodyLength`.
+- Messages longer than 160 characters are split into multiple segments.
+- The library validates message length before sending.
+- **Bulk SMS limit.** Maximum messages per bulk operation (default 1000), configurable via `MaxBulkSmsLimit`.
+- **BulkSmsBuilder limit.** Per-builder cap via `SetMaxLimit()`.
 
-## Error Handling
+## Error handling
 
-The stack surfaces structured **`Result`** errors and validates inputs early (builders / normalization). Providers may attach error codes on specialized result types.
+The stack returns structured `Result` errors and validates inputs early (builders / normalization). Providers may attach error codes on specialized result types.
 
-- **No built-in retries**: callers or HTTP layers should implement policy if needed
-- **Error codes**: `SmsErrorCodes` (in `Lyo.Sms`) attaches the following constants to failed results raised by `SmsServiceBase`:
+- **No built-in retries.** Callers or HTTP layers should implement policy if needed.
+- **Error codes.** `SmsErrorCodes` (in `Lyo.Sms`) attaches the following constants to failed results raised by `SmsServiceBase`:
 
 | Constant | Value | Raised when |
 | -------------------- | --------------------- | -------------------------------------------------------------- |
@@ -380,12 +379,12 @@ The stack surfaces structured **`Result`** errors and validates inputs early (bu
 | `OperationCancelled` | `OPERATION_CANCELLED` | The bulk send was cancelled via `CancellationToken`. |
 | `MissingFromNumber` | `MISSING_FROM_NUMBER` | No `From` number was provided or configured. |
 
-Providers attach their own codes on derived result types (e.g. `TwilioSmsResult.TwilioErrorCode`).
-- **Exception Details**: Full exception information available in results
-- **Logging**: All operations are logged for debugging
-- **Custom Exceptions**:
-    - `InvalidFormatException` - Thrown when phone number format is invalid (includes valid format examples)
-    - `ArgumentOutsideRangeException` - Thrown when values are outside allowed ranges (e.g., message length)
+Providers attach their own codes on derived result types (for example `TwilioSmsResult.TwilioErrorCode`).
+- **Exception details.** Full exception information is available in results.
+- **Logging.** Operations are logged.
+- **Custom exceptions:**
+    - `InvalidFormatException`. Thrown when a phone number format is invalid (includes valid format examples).
+    - `ArgumentOutsideRangeException`. Thrown when values are outside allowed ranges (for example message length).
 
 ```csharp
 var result = await _smsService.SendSmsAsync("+1234567890", "Hello");
@@ -412,17 +411,17 @@ if (!result.IsSuccess)
 }
 ```
 
-## Rate Limiting
+## Rate limiting
 
-- **Concurrent Requests**: Limited to 10 concurrent requests (configurable via `BulkSmsConcurrencyLimit`)
-- **Automatic Throttling**: Built-in semaphore-based throttling
-- **Non-blocking**: Uses async/await for efficient resource usage
-- **Bulk Limits**: Maximum number of messages per bulk operation (configurable via `MaxBulkSmsLimit`)
-- **Per-Builder Limits**: BulkSmsBuilder supports `SetMaxLimit()` to restrict messages at the builder level
+- **Concurrent requests.** Limited to 10 concurrent requests (configurable via `BulkSmsConcurrencyLimit`).
+- **Throttling.** `SemaphoreSlim` caps concurrency.
+- **Async.** Methods take `CancellationToken`.
+- **Bulk limits.** Maximum messages per bulk operation (configurable via `MaxBulkSmsLimit`).
+- **Per-builder limits.** `BulkSmsBuilder` supports `SetMaxLimit()` to restrict messages at the builder level.
 
 ## Logging
 
-The library uses Microsoft.Extensions.Logging for all logging:
+The library uses Microsoft.Extensions.Logging:
 
 ```csharp
 services.AddLogging(builder =>
@@ -434,9 +433,9 @@ services.AddLogging(builder =>
 
 Log levels:
 
-- **Information**: Successful operations, message details
-- **Warning**: Retries, long messages
-- **Error**: Failures, exceptions
+- **Information.** Successful operations, message details
+- **Warning.** Retries, long messages
+- **Error.** Failures, exceptions
 
 ## Metrics
 
@@ -454,7 +453,7 @@ Log levels:
 | `BulkSendFailure` | `sms.bulk.send.failure` | Counter |
 | `BulkSendLastDurationMs` | `sms.bulk.send.last_duration_ms` | Gauge |
 
-## Convenience MMS overloads
+## MMS overloads
 
 `ISmsService<TResult>` exposes typed MMS convenience methods that wrap the builder:
 
@@ -476,20 +475,20 @@ is omitted, and route through the same `SendCoreAsync` path as `SendSmsAsync`.
 
 ## Architecture
 
-- **Lyo.Sms**: Core interfaces and models (provider-agnostic)
-- `ISmsService` - Main service interface
-- `SmsServiceBase` - Abstract base class providing common bulk SMS functionality
-- `SmsServiceOptions` - Base options class with common configuration properties
-- `SmsMessageBuilder` - Builder for individual messages
-- `BulkSmsBuilder` - Builder for bulk SMS operations
-- `SmsMessageQueryFilter` - Generic filter for querying messages
-- **Provider Packages**: Provider-specific implementations (e.g., `Lyo.Sms.Twilio`)
-- Provider-specific service class - Inherits from `SmsServiceBase`, implements provider-specific methods
-- Provider-specific options class - Inherits from `SmsServiceOptions`, adds provider-specific properties
+- **Lyo.Sms.** Core interfaces and models (provider-agnostic).
+- `ISmsService`. Main service interface.
+- `SmsServiceBase`. Abstract base class with shared bulk SMS behavior.
+- `SmsServiceOptions`. Base options with shared configuration.
+- `SmsMessageBuilder`. Builder for individual messages.
+- `BulkSmsBuilder`. Builder for bulk SMS operations.
+- `SmsMessageQueryFilter`. Filter for querying messages.
+- **Provider packages.** Provider-specific implementations (for example `Lyo.Sms.Twilio`).
+- Provider service class inherits from `SmsServiceBase` and implements provider methods.
+- Provider options class inherits from `SmsServiceOptions` and adds provider properties.
 
-## Architecture — Extending for New Providers
+## Adding a provider
 
-To add support for a new SMS provider, simply:
+To add a new SMS provider:
 
 1. Create an options class inheriting from `SmsServiceOptions`:
 
@@ -501,9 +500,7 @@ public class MyProviderOptions : SmsServiceOptions
 }
 ```
 
-2. Implement **`SmsServiceBase<TResult>`**. Override **`SendCoreAsync`** (the actual provider call after **`SmsRequest`** is built), **`GetMessageByIdAsync`**, **`GetMessagesAsync`
-   **, **`TestConnectionCoreAsync`**, and **`CreateFailure`**. Everything else on **`ISmsService`** (**`SendSmsAsync`**, **`SendBulkAsync`**, events, concurrency throttling,
-   metrics hooks) stays in the base.
+2. Implement `SmsServiceBase<TResult>`. Override `SendCoreAsync` (the provider call after `SmsRequest` is built), `GetMessageByIdAsync`, `GetMessagesAsync`, `TestConnectionCoreAsync`, and `CreateFailure`. Everything else on `ISmsService` (`SendSmsAsync`, `SendBulkAsync`, events, concurrency throttling, metrics hooks) stays in the base.
 
 ```csharp
 public class MyProviderSmsService : SmsServiceBase<Result<SmsRequest>>
@@ -529,7 +526,7 @@ public class MyProviderSmsService : SmsServiceBase<Result<SmsRequest>>
 }
 ```
 
-Richer **`TResult`** types (Twilio **`TwilioSmsResult`**) substitute **`SmsServiceBase<TwilioSmsResult>`** — see [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md).
+Richer `TResult` types (Twilio `TwilioSmsResult`) substitute `SmsServiceBase<TwilioSmsResult>`. See [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md).
 
 3. Create extension methods for dependency injection:
 
@@ -553,19 +550,19 @@ public static class Extensions
 }
 ```
 
-All bulk SMS operations, rate limiting, and common functionality are automatically provided by the base class!
+`SmsServiceBase` already implements bulk send, rate limiting, events, and metrics.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Lyo.Result` — (direct, lyo)
-- `Lyo.Sms.Models` — (direct, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Result` (direct, lyo)
+- `Lyo.Sms.Models` (direct, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

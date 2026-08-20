@@ -1,0 +1,78 @@
+# Reusable: pack selected Lyo.* nupkgs and upload artifacts.
+name: Pack
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      channel:
+        required: true
+        type: string
+      scope:
+        required: true
+        type: string
+      packages:
+        required: false
+        type: string
+        default: ""
+      since:
+        required: false
+        type: string
+        default: ""
+      force:
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      NUGET_OUTPUT_DIR: ${{ github.workspace }}/artifacts/nuget
+      BUILD_CONFIG: Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Lyo
+        uses: ./.github/actions/setup-lyo
+
+      - name: Pack
+        env:
+          SCOPE: ${{ inputs.scope }}
+          PACKAGES: ${{ inputs.packages }}
+          SINCE: ${{ inputs.since }}
+          VERSION: ${{ inputs.version }}
+          CHANNEL: ${{ inputs.channel }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+          extra=()
+          if [ "$FORCE" = "true" ]; then
+            extra+=(--force)
+          fi
+          python3 scripts/nuget/ci_pack.py \
+            --scope "$SCOPE" \
+            --packages "$PACKAGES" \
+            --since "$SINCE" \
+            --version "$VERSION" \
+            --channel "$CHANNEL" \
+            "${extra[@]}"
+
+      - name: Upload nupkgs
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            artifacts/nuget/*.nupkg
+            artifacts/nuget/*.snupkg
+          if-no-files-found: warn

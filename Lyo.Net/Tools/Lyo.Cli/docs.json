@@ -4,15 +4,15 @@
   "name": "Lyo.Cli",
   "area": "Tools",
   "tagline": "Installable `lyo` command-line tool for encryption, encoding, compression, hashing, IDs, query build/exec, and CSV/XLSX.",
-  "description": "dotnet tool (`PackAsTool`, command name `lyo`) that wraps Lyo libraries. **crypt** is encryption (Lyo.Encryption); **enc** is binary/charset encoding (Lyo.TextEncoding). **compress**/**decompress**, **hash**/**checksum**, **id**, **query build|exec**, and **csv**/**xlsx** cover the rest. No dedicated CLI test project — parsing uses System.CommandLine; library behavior is covered by package tests.",
+  "description": "dotnet tool (`PackAsTool`, command name `lyo`) that wraps Lyo libraries. **crypt** is encryption (Lyo.Encryption); **enc** is binary/charset encoding (Lyo.TextEncoding). **compress**/**decompress**, **hash**/**checksum**, **id**, **query build|exec**, and **csv**/**xlsx** cover the rest. No dedicated CLI test project. Parsing uses System.CommandLine; library behavior is covered by package tests.",
   "features": [
-    "**crypt** — single-key encrypt/decrypt (aesgcm default; file or pipe)",
-    "**enc** — base64 / base64url / hex encode/decode; charset convert/detect",
-    "**compress** / **decompress** — all Lyo.Compression algorithms (brotli default)",
-    "**hash** / **checksum** — SHA-2/MD5, HMAC-SHA256, CRC/Adler, sparse fingerprint; `-o`, `-c/--copy`, `-q/--quiet`",
-    "**id** — ULID, KSUID, NanoID, GUID variants, Snowflake; `-n/--count` for bulk; `-c/--copy` clipboard",
-    "**query build|exec** — Lyo.Query.Models builders + Lyo.Api.Client POST",
-    "**csv** / **xlsx** — merge, split, convert, stats (xlsx→csv native; csv→xlsx via DataTable glue)"
+    "**crypt.** Single-key encrypt/decrypt (aesgcm default; file or pipe)",
+    "**enc.** Base64 / base64url / hex encode/decode; charset convert/detect",
+    "**compress** / **decompress.** All Lyo.Compression algorithms (brotli default)",
+    "**hash** / **checksum.** SHA-2/MD5, HMAC-SHA256, CRC/Adler, sparse fingerprint; `-o`, `-c/--copy`, `-q/--quiet`",
+    "**id.** ULID, KSUID, NanoID, GUID variants, Snowflake; `-n/--count` for bulk; `-c/--copy` clipboard",
+    "**query build|exec.** Lyo.Query.Models builders + Lyo.Api.Client POST",
+    "**csv** / **xlsx.** Merge, split, convert, stats (xlsx→csv native; csv→xlsx via DataTable glue)"
   ],
   "examples": [
     {

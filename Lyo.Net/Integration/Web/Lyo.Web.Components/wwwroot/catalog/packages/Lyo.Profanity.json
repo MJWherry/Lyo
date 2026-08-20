@@ -2,13 +2,13 @@
   "id": "Lyo.Profanity",
   "name": "Lyo.Profanity",
   "area": "Features",
-  "tagline": "File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement strategies.",
-  "description": "File-based profanity filter service that detects and replaces profane words in text. Supports multiple languages, regex patterns, plain word lists, and configurable replacement strategies.",
+  "tagline": "File-based profanity filter. Detects and replaces profane words. Multiple languages, regex patterns, plain word lists, and configurable replacement strategies.",
+  "description": "File-based profanity filter. Detects and replaces profane words. Multiple languages, regex patterns, plain word lists, and configurable replacement strategies.",
   "features": [
-    "**Word sources** – JSON file, HTTP URL, or per-language `WordsByLanguage`",
-    "**Format support** – Structured JSON (`[{ id, match, tags, severity, exceptions }]`), plain array `[\"word1\", \"word2\"]`, or plain newline-separated text (one word per line)",
-    "**Replacement strategies** – `Remove`, `ReplaceWithChar`, `ReplaceWithWord`, `Mask`, `PreserveBoundary`, `DetectOnly`",
-    "**Per-language** – Load different word lists by BCP 47 / ISO 639-1 / ISO 639-3"
+    "**Word sources.** JSON file, HTTP URL, or per-language `WordsByLanguage`",
+    "**Format support.** Structured JSON (`[{ id, match, tags, severity, exceptions }]`), plain array `[\"word1\", \"word2\"]`, or plain newline-separated text (one word per line)",
+    "**Replacement strategies.** `Remove`, `ReplaceWithChar`, `ReplaceWithWord`, `Mask`, `PreserveBoundary`, `DetectOnly`",
+    "**Per-language.** Load different word lists by BCP 47 / ISO 639-1 / ISO 639-3"
   ],
   "examples": [
     {
@@ -33,7 +33,7 @@
       "rows": [
         [
           "`services.AddProfanityFilterService()`",
-          "Registers a default `FileProfanityFilterOptions` and `FileProfanityFilterService` (resolved as both itself and `IProfanityFilterService`). Useful for tests that just want the API surface."
+          "Registers a default `FileProfanityFilterOptions` and `FileProfanityFilterService` (resolved as both itself and `IProfanityFilterService`). Useful in tests that only need the methods."
         ],
         [
           "`services.AddProfanityFilterService(Action<FileProfanityFilterOptions> configure)`",
@@ -44,27 +44,27 @@
           "Same registration, binding options from the configuration section (default `\"ProfanityFilter\"`)."
         ]
       ],
-      "lead": "`Lyo.Profanity.Extensions` exposes three entry points on `IServiceCollection` — pick exactly one when wiring up the host:",
+      "lead": "`Lyo.Profanity.Extensions` exposes three entry points on `IServiceCollection`. Pick exactly one when wiring up the host:",
       "trail": "`FileProfanityFilterService` resolves an optional `ILogger<FileProfanityFilterService>`, an optional `IMetrics` (used only when `Options.EnableMetrics == true`), and an\noptional `HttpClient` (used when `WordsUrl` is configured)."
     },
     {
       "type": "list",
-      "title": "`IProfanityFilterService` surface",
+      "title": "`IProfanityFilterService` methods",
       "items": [
-        "`Filter(string? input, CancellationToken)` / `Filter(string? input, LanguageCodeInfo language, CancellationToken)` — synchronous filtering; returns `ProfanityFilterResult` (`FilteredText`, `HasProfanity`, `Matches`).",
-        "`FilterAsync(string? input, CancellationToken)` / `FilterAsync(string? input, LanguageCodeInfo language, CancellationToken)` — same as above, async.",
-        "`ContainsProfanity(string? input, CancellationToken)` / `ContainsProfanity(string? input, LanguageCodeInfo language, CancellationToken)` — fast boolean check, no replacement.",
-        "`ContainsProfanityAsync(string? input, CancellationToken)` / `ContainsProfanityAsync(string? input, LanguageCodeInfo language, CancellationToken)` — async variants.",
-        "`RefreshWords(CancellationToken)` / `RefreshWordsAsync(CancellationToken)` — reload from the configured file/URL. No-op when `Options.AllowRefresh` is false or the source doesn't support refresh."
+        "`Filter(string? input, CancellationToken)` / `Filter(string? input, LanguageCodeInfo language, CancellationToken)` synchronous filtering; returns `ProfanityFilterResult` (`FilteredText`, `HasProfanity`, `Matches`).",
+        "`FilterAsync(string? input, CancellationToken)` / `FilterAsync(string? input, LanguageCodeInfo language, CancellationToken)` same as above, async.",
+        "`ContainsProfanity(string? input, CancellationToken)` / `ContainsProfanity(string? input, LanguageCodeInfo language, CancellationToken)` fast boolean check, no replacement.",
+        "`ContainsProfanityAsync(string? input, CancellationToken)` / `ContainsProfanityAsync(string? input, LanguageCodeInfo language, CancellationToken)` async variants.",
+        "`RefreshWords(CancellationToken)` / `RefreshWordsAsync(CancellationToken)` reload from the configured file/URL. No-op when `Options.AllowRefresh` is false or the source doesn't support refresh."
       ]
     },
     {
       "type": "list",
       "title": "Word list formats",
       "items": [
-        "**Plain JSON array** — `[\"word1\", \"word2\"]` becomes default entries (`id == match == word`, `tags = []`, `severity = 1`, `exceptions = []`).",
-        "**Structured JSON** — `[{ \"id\": \"x\", \"match\": \"regex|word\", \"tags\": [], \"severity\": 1, \"exceptions\": [] }]`. `match` is compiled as a `Regex` and cached.",
-        "**Plain newline-separated text** — one word per line, same defaults as the plain JSON array."
+        "**Plain JSON array.** `[\"word1\", \"word2\"]` becomes default entries (`id == match == word`, `tags = []`, `severity = 1`, `exceptions = []`).",
+        "**Structured JSON.** `[{ \"id\": \"x\", \"match\": \"regex|word\", \"tags\": [], \"severity\": 1, \"exceptions\": [] }]`. `match` is compiled as a `Regex` and cached.",
+        "**Plain newline-separated text.** One word per line, same defaults as the plain JSON array."
       ]
     },
     {

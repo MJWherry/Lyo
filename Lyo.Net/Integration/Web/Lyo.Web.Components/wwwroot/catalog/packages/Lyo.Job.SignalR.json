@@ -2,8 +2,8 @@
   "id": "Lyo.Job.SignalR",
   "name": "Lyo.Job.SignalR",
   "area": "Integration",
-  "tagline": "SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`** records to all…",
-  "description": "SignalR **live job dashboard** for the Lyo job stack. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes **`JobHubEvent`** records to all connected **`JobHub`** clients — enabling Blazor or JavaScript dashboards to refresh without polling.",
+  "tagline": "SignalR live job dashboard. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes `JobHubEvent` records to connected `JobHub` clients.",
+  "description": "SignalR live job dashboard. `JobEventBroadcaster` subscribes to lifecycle and alert routing keys on the `job.events` exchange and pushes `JobHubEvent` records to connected `JobHub` clients so Blazor or JavaScript dashboards can refresh without polling.",
   "features": [],
   "examples": [
     {
@@ -26,7 +26,7 @@
     {
       "type": "paragraph",
       "title": "Client usage",
-      "text": "Connect to the hub and listen for **`JobEvent`**: `JobHub.Ping()` returns `\"pong\"` for connectivity checks."
+      "text": "Connect to the hub and listen for `JobEvent`: `JobHub.Ping()` returns `\"pong\"` for connectivity checks."
     },
     {
       "type": "table",
@@ -79,7 +79,7 @@
     {
       "type": "paragraph",
       "title": "Configuration",
-      "text": "This package has no dedicated options type — it uses the host's SignalR and MQ configuration. Ensure CORS and WebSocket policies allow dashboard clients to reach the mapped hub path."
+      "text": "This package has no dedicated options type. It uses the host's SignalR and MQ configuration. Ensure CORS and WebSocket policies allow dashboard clients to reach the mapped hub path."
     },
     {
       "type": "paragraph",

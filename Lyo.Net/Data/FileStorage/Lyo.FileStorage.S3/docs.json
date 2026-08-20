@@ -2,21 +2,21 @@
   "id": "Lyo.FileStorage.S3",
   "name": "Lyo.FileStorage.S3",
   "area": "Data",
-  "tagline": "S3-compatible storage for **Lyo.FileStorage** (AWS S3, **Backblaze B2**, MinIO, etc.) via **AWSSDK.S3**.",
-  "description": "S3-compatible storage for **Lyo.FileStorage** (AWS S3, **Backblaze B2**, MinIO, etc.) via **AWSSDK.S3**.",
+  "tagline": "S3-compatible storage for Lyo.FileStorage (AWS S3, Backblaze B2, MinIO, and others) via AWSSDK.S3.",
+  "description": "S3-compatible storage for Lyo.FileStorage (AWS S3, Backblaze B2, MinIO, and others) via AWSSDK.S3.",
   "features": [
-    "**S3 API** — same client for AWS and S3-compatible endpoints",
-    "**Multipart uploads** — keyed `S3MultipartUploadService` is registered with the same key when you call `S3FileStorageServiceBuilder.Build` (unless already registered); if no `IMultipartUploadSessionStore` is registered yet, an in-memory store is added (use `AddPostgresFileMetadataStoreKeyed(...).Build()` **before** S3 when using PostgreSQL so sessions use the DB). Part size is clamped to the S3 minimum (5 MiB) with an 8 MiB default; total upload limit aligns with `MaxUploadSizeBytes`. Server-side copy is used for the final commit (no download+re-upload round trip).",
-    "**Staged uploads** — keyed `S3StagedFileUploadService` is registered with the same key when you call `S3FileStorageServiceBuilder.Build` (unless already registered). Presigned PUT targets `.stage/{stageId}/object`; SSE headers flow through `S3UploadServerSideEncryption.BuildRequiredPutHeaders` like direct upload. Requires `IStagedFileUploadStore` ( Postgres/Sqlite or in-memory fallback).",
-    "**Streamed PUT spilling** — `S3UploadStream` keeps small payloads in memory and spills to a deletable temp file once it crosses 4 MiB, then uploads via single PUT under 64 MiB or multipart above that, aborting cleanly on any per-part failure",
-    "**Region Support** - Configurable AWS regions",
-    "**Custom Endpoints** - Support for S3-compatible services",
-    "**Key Prefixing** - Organized file storage with key prefixes via the shared `CloudObjectKeyBuilder`",
-    "**Automatic Path Organization** - Files organized by GUID prefixes (suffix is persisted in metadata so reads skip N+1 probes)",
-    "**IAM Role Support** - Works with IAM roles for authentication",
-    "**Diagnostics** — bucket key listing via `IFileStorageDiagnosticsService` (prefix-aware, combines `KeyPrefix`, normalized + traversal-guarded by `Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix`)",
-    "**Server-side copy, move & direct PUT** — `CopyFileAsync` (`CopyObject`), `MoveFileAsync` (`CopyObject` then delete source, same file id), `BeginDirectUploadAsync` / `CompleteDirectUploadAsync` (presigned PUT + finalize). `RequiredPutHeaders` is populated when SSE or a signed `Content-Type` applies, courtesy of `S3UploadServerSideEncryption.BuildRequiredPutHeaders`. `RenameFileAsync` updates display metadata only.",
-    "**Presigned GET options** — optional `ContentDisposition` / `ContentType` via `PreSignedReadUrlOptions` (S3 response header overrides). When the caller omits `pathPrefix`, the metadata-stored prefix is used as fallback."
+    "**S3 API.** Same client for AWS and S3-compatible endpoints.",
+    "**Multipart uploads.** Keyed S3MultipartUploadService is registered with the same key when you call S3FileStorageServiceBuilder.Build (unless already registered). If no IMultipartUploadSessionStore is registered yet, an in-memory store is added (use AddPostgresFileMetadataStoreKeyed(...).Build() before S3 when using PostgreSQL so sessions use the DB). Part size is clamped to the S3 minimum (5 MiB) with an 8 MiB default. Total upload limit aligns with MaxUploadSizeBytes. Server-side copy is used for the final commit (no download+re-upload round trip).",
+    "**Staged uploads.** Keyed S3StagedFileUploadService is registered with the same key when you call S3FileStorageServiceBuilder.Build (unless already registered). Presigned PUT targets `.stage/{stageId}/object`. SSE headers flow through S3UploadServerSideEncryption.BuildRequiredPutHeaders like direct upload. Requires IStagedFileUploadStore (Postgres/Sqlite or in-memory fallback).",
+    "**Streamed PUT spilling.** S3UploadStream keeps small payloads in memory and spills to a deletable temp file once it crosses 4 MiB, then uploads via single PUT under 64 MiB or multipart above that, aborting cleanly on any per-part failure.",
+    "**Region.** Configurable AWS regions.",
+    "**Custom endpoints.** S3-compatible services via ServiceUrl.",
+    "**Key prefixing.** Organized file storage with key prefixes via the shared CloudObjectKeyBuilder.",
+    "**Path organization.** Files organized by GUID prefixes. Suffix is persisted in metadata so reads skip N+1 probes.",
+    "**IAM roles.** Works with IAM roles for authentication.",
+    "**Diagnostics.** Bucket key listing via IFileStorageDiagnosticsService (prefix-aware, combines KeyPrefix, normalized and traversal-guarded by Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix).",
+    "**Server-side copy, move, and direct PUT.** CopyFileAsync (CopyObject), MoveFileAsync (CopyObject then delete source, same file id), BeginDirectUploadAsync / CompleteDirectUploadAsync (presigned PUT + finalize). RequiredPutHeaders is populated when SSE or a signed Content-Type applies, via S3UploadServerSideEncryption.BuildRequiredPutHeaders. RenameFileAsync updates display metadata only.",
+    "**Presigned GET options.** Optional ContentDisposition / ContentType via PreSignedReadUrlOptions (S3 response header overrides). When the caller omits pathPrefix, the metadata-stored prefix is used as fallback."
   ],
   "examples": [
     {
@@ -25,7 +25,7 @@
       "code": "using Lyo.FileStorage.S3;\nusing Lyo.FileStorage.Models;\n\nvar options = new S3FileStorageOptions\n{\n    BucketName = \"my-bucket\",\n    Region = \"us-east-1\",\n    KeyPrefix = \"app-files\", // Optional global prefix\n    AccessKeyId = \"your-key\", // Optional if using IAM roles\n    SecretAccessKey = \"your-secret\", // Optional if using IAM roles\n    // Optional SSE for new uploads, copies, streamed saves, multipart staging, and compatible presigned PUTs:\n    ServerSideEncryption = \"AES256\", // or \"aws:kms\" / \"aws:kms:dsse\"\n    ServerSideEncryptionAwsKmsKeyId = null // set CMK id/ARN when using KMS\n};\n\nvar metadataStore = new YourMetadataStore(); // Implement IFileMetadataStore\nvar service = new S3FileStorageService(options, metadataStore);"
     },
     {
-      "title": "`S3FileStorageServiceBuilder` — keyed registration",
+      "title": "S3FileStorageServiceBuilder keyed registration",
       "language": "csharp",
       "code": "services\n    .AddS3FileStorageServiceKeyed(\"client-files\")\n    .UseFileMetadataStore(\"postgres-filemetadatastore\")\n    .UseEncryptionService(\"two-key-aws\")\n    .ConfigureS3FileStorage(\"S3FileStorageOptions\")\n    .Build(configuration);"
     }
@@ -40,83 +40,83 @@
       ],
       "rows": [
         [
-          "**[`Lyo.FileStorage/README.md`](../Lyo.FileStorage/README.md)**",
-          "**`IFileStorageService`** contract, disk backend, **`FileStorageServiceBaseOptions`**, DTOs"
+          "[`Lyo.FileStorage/README.md`](../Lyo.FileStorage/README.md)",
+          "IFileStorageService contract, disk backend, FileStorageServiceBaseOptions, DTOs"
         ],
         [
-          "**`Lyo.FileStorage.AzureBlob/README.md`**",
+          "Lyo.FileStorage.AzureBlob/README.md",
           "Azure Blob analogue for SAS/direct-upload/copy"
         ],
         [
-          "**This file**",
-          "**`S3FileStorageService`**, **`S3FileStorageOptions`**, DI builders (**`AddS3FileStorageServiceKeyed*`**), SSE helpers"
+          "This file",
+          "S3FileStorageService, S3FileStorageOptions, DI builders (AddS3FileStorageServiceKeyed*), SSE helpers"
         ]
       ],
-      "trail": "Compression and encryption follow **`FileStorageServiceBase`**: optional **`ICompressionResolver`** (metadata-driven decompress on read; see [\n`Lyo.FileStorage` — Compression (resolver)](../Lyo.FileStorage/README.md#compression-resolver)) and **`ITwoKeyEncryptionService`**."
+      "trail": "Compression and encryption follow FileStorageServiceBase: optional ICompressionResolver (metadata-driven decompress on read; see [Lyo.FileStorage, Compression resolver](../Lyo.FileStorage/README.md#compression-resolver)) and ITwoKeyEncryptionService."
     },
     {
       "type": "table",
-      "title": "**`S3FileStorageOptions`** (extends **`FileStorageServiceBaseOptions`**)",
+      "title": "S3FileStorageOptions",
       "headers": [
         "Property",
         "Typical use"
       ],
       "rows": [
         [
-          "**`SectionName`**",
-          "Default appsettings subsection (`S3FileStorageOptions`)"
+          "SectionName",
+          "Default appsettings subsection (S3FileStorageOptions)"
         ],
         [
-          "**`BucketName`**, **`Region`**",
+          "BucketName, Region",
           "Target bucket / signing region"
         ],
         [
-          "**`AccessKeyId`**, **`SecretAccessKey`**",
-          "Static keys (optional). When both are set they win over `Profile`. Omit or leave empty/whitespace to use `Profile` or the machine default credential chain (env / shared credentials / IAM)"
+          "AccessKeyId, SecretAccessKey",
+          "Static keys (optional). When both are set they win over Profile. Omit or leave empty/whitespace to use Profile or the machine default credential chain (env / shared credentials / IAM)."
         ],
         [
-          "**`Profile`**",
-          "Named AWS profile from `~/.aws/credentials` / `~/.aws/config`. Used when static keys are omitted. If set but missing, client construction fails rather than falling back to `default`"
+          "Profile",
+          "Named AWS profile from ~/.aws/credentials / ~/.aws/config. Used when static keys are omitted. If set but missing, client construction fails rather than falling back to default."
         ],
         [
-          "**`ServiceUrl`**",
+          "ServiceUrl",
           "S3-compatible API base URL"
         ],
         [
-          "**`ProviderAccountId`**",
+          "ProviderAccountId",
           "Compatibility helpers (e.g. Cloudflare R2 account id)"
         ],
         [
-          "**`KeyPrefix`**",
+          "KeyPrefix",
           "Prepended logical folder for every object"
         ],
         [
-          "**`ServerSideEncryption`**, **`ServerSideEncryptionAwsKmsKeyId`**",
+          "ServerSideEncryption, ServerSideEncryptionAwsKmsKeyId",
           "SSE for streamed saves, multipart, copy, compatible presigned PUT"
         ],
         [
-          "**`EnableMetrics`**",
-          "Emit counters/histograms when **`IMetrics`** is registered"
+          "EnableMetrics",
+          "Emit counters/histograms when IMetrics is registered"
         ],
         [
-          "**Inherited (`FileStorageServiceBaseOptions`)**",
-          "Health probing, hashing, duplicates, **`MaxUploadSizeBytes`**, malware-scan gating, etc."
+          "Inherited (FileStorageServiceBaseOptions)",
+          "Health probing, hashing, duplicates, MaxUploadSizeBytes, malware-scan gating, etc."
         ]
       ]
     },
     {
       "type": "markdown",
-      "title": "S3-Compatible Services",
-      "body": "Set **`ServiceUrl`** (and usually **`ForcePathStyle`** is applied automatically when a custom URL is set):\n\n```csharp\nvar options = new S3FileStorageOptions\n{\n    BucketName = \"my-bucket\",\n    ServiceUrl = \"https://s3-compatible.example.com\",\n    AccessKeyId = \"your-key\",\n    SecretAccessKey = \"your-secret\"\n};\n```"
+      "title": "S3-compatible endpoints",
+      "body": "Set ServiceUrl (and usually ForcePathStyle is applied automatically when a custom URL is set):\n\n```csharp\nvar options = new S3FileStorageOptions\n{\n    BucketName = \"my-bucket\",\n    ServiceUrl = \"https://s3-compatible.example.com\",\n    AccessKeyId = \"your-key\",\n    SecretAccessKey = \"your-secret\"\n};\n```"
     },
     {
       "type": "paragraph",
-      "title": "S3-Compatible Services — Backblaze B2",
-      "text": "Use **`S3FileStorageBackblazeExtensions.ApplyBackblazeB2Defaults()`** so **`ServiceUrl`** becomes `https://s3.{region}.backblazeb2.com` when **`Region`** is set (e.g. `us-west-004`). Or call **`AddS3FileStorageServiceKeyedForBackblaze`** to bind the **`BackblazeFileStorage`** section (see * *`S3FileStorageBackblazeExtensions.BackblazeFileStorageConfigurationSectionName`**) and register the keyed storage builder."
+      "title": "Backblaze B2",
+      "text": "Use S3FileStorageBackblazeExtensions.ApplyBackblazeB2Defaults() so ServiceUrl becomes `https://s3.{region}.backblazeb2.com` when Region is set (e.g. `us-west-004`). Or call AddS3FileStorageServiceKeyedForBackblaze to bind the BackblazeFileStorage section (see S3FileStorageBackblazeExtensions.BackblazeFileStorageConfigurationSectionName) and register the keyed storage builder."
     },
     {
       "type": "table",
-      "title": "S3-Compatible Services — Other common S3-compatible providers",
+      "title": "Other S3-compatible providers",
       "headers": [
         "Provider",
         "Region / ids",
@@ -125,48 +125,48 @@
       ],
       "rows": [
         [
-          "**MinIO**",
-          "Set **`ServiceUrl`** to the MinIO server (host or full URL; scheme defaults to `http://` if omitted).",
-          "**`GetMinioServiceUrl`**, **`ApplyMinioDefaults`**",
-          "**`MinioFileStorageConfigurationSectionName`**"
+          "MinIO",
+          "Set ServiceUrl to the MinIO server (host or full URL; scheme defaults to http:// if omitted).",
+          "GetMinioServiceUrl, ApplyMinioDefaults",
+          "MinioFileStorageConfigurationSectionName"
         ],
         [
-          "**Wasabi**",
-          "**`Region`** = Wasabi region (e.g. `us-east-1`)",
-          "**`GetWasabiServiceUrl`**, **`ApplyWasabiDefaults`**",
-          "**`WasabiFileStorageConfigurationSectionName`**"
+          "Wasabi",
+          "Region = Wasabi region (e.g. us-east-1)",
+          "GetWasabiServiceUrl, ApplyWasabiDefaults",
+          "WasabiFileStorageConfigurationSectionName"
         ],
         [
-          "**DigitalOcean Spaces**",
-          "**`Region`** = region slug (e.g. `nyc3`)",
-          "**`GetDigitalOceanSpacesServiceUrl`**, **`ApplyDigitalOceanSpacesDefaults`**",
-          "**`DigitalOceanSpacesFileStorageConfigurationSectionName`**"
+          "DigitalOcean Spaces",
+          "Region = region slug (e.g. nyc3)",
+          "GetDigitalOceanSpacesServiceUrl, ApplyDigitalOceanSpacesDefaults",
+          "DigitalOceanSpacesFileStorageConfigurationSectionName"
         ],
         [
-          "**Cloudflare R2**",
-          "**`ProviderAccountId`** = R2 account id",
-          "**`GetCloudflareR2ServiceUrl`**, **`ApplyCloudflareR2Defaults`** (sets **`Region`** to `auto` if unset)",
-          "**`CloudflareR2FileStorageConfigurationSectionName`**"
+          "Cloudflare R2",
+          "ProviderAccountId = R2 account id",
+          "GetCloudflareR2ServiceUrl, ApplyCloudflareR2Defaults (sets Region to auto if unset)",
+          "CloudflareR2FileStorageConfigurationSectionName"
         ],
         [
-          "**Scaleway**",
-          "**`Region`** = `fr-par`, `nl-ams`, etc.",
-          "**`GetScalewayObjectStorageServiceUrl`**, **`ApplyScalewayDefaults`**",
-          "**`ScalewayFileStorageConfigurationSectionName`**"
+          "Scaleway",
+          "Region = fr-par, nl-ams, etc.",
+          "GetScalewayObjectStorageServiceUrl, ApplyScalewayDefaults",
+          "ScalewayFileStorageConfigurationSectionName"
         ],
         [
-          "**Linode**",
-          "**`Region`** = cluster id (e.g. `us-east-1`)",
-          "**`GetLinodeObjectStorageServiceUrl`**, **`ApplyLinodeObjectStorageDefaults`**",
-          "**`LinodeObjectStorageConfigurationSectionName`**"
+          "Linode",
+          "Region = cluster id (e.g. us-east-1)",
+          "GetLinodeObjectStorageServiceUrl, ApplyLinodeObjectStorageDefaults",
+          "LinodeObjectStorageConfigurationSectionName"
         ]
       ],
-      "lead": "**`S3FileStorageS3CompatibleExtensions`** provides endpoint URL builders, **`Apply*Defaults`** methods (set **`ServiceUrl`** from **`Region`** / **`ProviderAccountId`** when *\n*`ServiceUrl`** is not already set), and **`AddS3FileStorageServiceKeyedFor*`** helpers with default configuration section names.",
-      "trail": "Example (MinIO in code — same builder chain as other keyed S3 storage, e.g. **`UseFileMetadataStore`**, then **`Build(configuration)`**):\n\n```csharp\nservices.AddS3FileStorageServiceKeyedForMinio(\"files\", o => {\n    o.BucketName = \"my-bucket\";\n    o.ServiceUrl = \"localhost:9000\"; // or https://minio.example.com — scheme optional for host:port\n    o.AccessKeyId = \"...\";\n    o.SecretAccessKey = \"...\";\n})\n    .UseFileMetadataStore(\"your-metadata-store-key\")\n    .Build(configuration);\n```"
+      "lead": "S3FileStorageS3CompatibleExtensions provides endpoint URL builders, Apply*Defaults methods (set ServiceUrl from Region / ProviderAccountId when ServiceUrl is not already set), and AddS3FileStorageServiceKeyedFor* helpers with default configuration section names.",
+      "trail": "Example (MinIO in code, same builder chain as other keyed S3 storage, e.g. UseFileMetadataStore, then Build(configuration)):\n\n```csharp\nservices.AddS3FileStorageServiceKeyedForMinio(\"files\", o => {\n    o.BucketName = \"my-bucket\";\n    o.ServiceUrl = \"localhost:9000\"; // or https://minio.example.com — scheme optional for host:port\n    o.AccessKeyId = \"...\";\n    o.SecretAccessKey = \"...\";\n})\n    .UseFileMetadataStore(\"your-metadata-store-key\")\n    .Build(configuration);\n```"
     },
     {
       "type": "table",
-      "title": "`S3FileStorageServiceBuilder` — keyed registration",
+      "title": "S3FileStorageServiceBuilder",
       "headers": [
         "Method",
         "Purpose"
@@ -202,14 +202,14 @@
         ],
         [
           "`UseKeyStore(keyName)` / `ConfigureKeyStore(configSectionName)`",
-          "Reference an existing key store — actual key-store registration is performed by `Lyo.KeyStore` extensions."
+          "Reference an existing key store. Actual key-store registration is performed by `Lyo.KeyStore` extensions."
         ],
         [
           "`Build(IConfiguration configuration)`",
-          "Finalizes registration: ensures `IAmazonS3` (via `AddAmazonS3FromConfiguration`), an `IMultipartUploadSessionStore` (in-memory fallback), keyed `S3MultipartUploadService`, and keyed `S3StagedFileUploadService` when not already registered."
+          "Finalizes registration: registers `IAmazonS3` (via `AddAmazonS3FromConfiguration`), an `IMultipartUploadSessionStore` (in-memory fallback), keyed `S3MultipartUploadService`, and keyed `S3StagedFileUploadService` when not already registered."
         ]
       ],
-      "lead": "`AddS3FileStorageServiceKeyed(string keyName)` returns a fluent builder that owns the keyed `S3FileStorageService` + `IFileStorageService` registration plus any auxiliary services\nit touches:"
+      "lead": "AddS3FileStorageServiceKeyed(string keyName) returns a fluent builder that owns the keyed S3FileStorageService + IFileStorageService registration plus any auxiliary services it touches:"
     },
     {
       "type": "table",
@@ -237,7 +237,7 @@
         ],
         [
           "`S3FileStorageBackblazeExtensions.ApplyBackblazeB2Defaults()` and `S3FileStorageS3CompatibleExtensions.Apply*Defaults`",
-          "See the provider matrix below — they only set `ServiceUrl`/`Region` defaults when those fields are unset."
+          "See the provider matrix below. They only set `ServiceUrl`/`Region` defaults when those fields are unset."
         ]
       ]
     },
@@ -266,32 +266,28 @@
           "SSE-KMS with dual-layer (DSSE)."
         ]
       ],
-      "lead": "`Lyo.FileStorage.S3.S3UploadServerSideEncryption` is the shared helper that translates `ServerSideEncryption` + `ServerSideEncryptionAwsKmsKeyId` into the right AWS SDK enum,\napplies headers to `PutObjectRequest` / multipart `InitiateMultipartUploadRequest`, and (most importantly) emits `RequiredPutHeaders` on `DirectUploadBeginResult` so a browser PUT\nto the presigned URL carries the same SSE/Content-Type values that were used to sign the URL. Supported values:"
+      "lead": "Lyo.FileStorage.S3.S3UploadServerSideEncryption is the shared helper that translates ServerSideEncryption + ServerSideEncryptionAwsKmsKeyId into the right AWS SDK enum, applies headers to PutObjectRequest / multipart InitiateMultipartUploadRequest, and emits RequiredPutHeaders on DirectUploadBeginResult so a browser PUT to the presigned URL carries the same SSE/Content-Type values that were used to sign the URL. Supported values:"
     },
     {
       "type": "list",
-      "title": "Production Ready",
+      "title": "Notes",
       "items": [
-        "Handles S3-specific errors gracefully",
-        "Supports IAM role-based authentication",
-        "Efficient object key lookup",
-        "Proper resource disposal (**`Dispose()`** and **`IAsyncDisposable.DisposeAsync()`** when the service owns the **`IAmazonS3`** client)",
-        "Comprehensive error handling",
-        "Thread-safe operations"
+        "IAM role-based authentication is supported.",
+        "Dispose() and IAsyncDisposable.DisposeAsync() run when the service owns the IAmazonS3 client."
       ]
     },
     {
       "type": "list",
-      "title": "Error Handling",
+      "title": "Error handling",
       "items": [
-        "**404 Not Found**: Returns null or empty results instead of throwing",
-        "**Access Denied**: Clear error messages for permission issues",
-        "**Network Errors**: Retry logic should be handled at the application level"
+        "**404 Not Found.** Returns null or empty results instead of throwing.",
+        "**Access Denied.** Clear error messages for permission issues.",
+        "**Network Errors.** Retry logic should be handled at the application level."
       ]
     },
     {
       "type": "list",
-      "title": "File Organization",
+      "title": "Object key layout",
       "items": [
         "Format: `{KeyPrefix}/{guid-prefix-2}/{guid-prefix-2}/{guid}.{extension}`",
         "Example: `app-files/ab/cd/abcdef1234567890.ag`"
@@ -299,7 +295,7 @@
     },
     {
       "type": "paragraph",
-      "title": "Health Checks",
+      "title": "Health checks",
       "text": "`IFileStorageService` extends `IHealth`. Get health directly from the service: `await fileStorage.CheckHealthAsync()`."
     },
     {

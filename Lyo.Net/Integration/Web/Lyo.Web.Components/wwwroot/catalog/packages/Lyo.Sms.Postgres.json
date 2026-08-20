@@ -2,60 +2,59 @@
   "id": "Lyo.Sms.Postgres",
   "name": "Lyo.Sms.Postgres",
   "area": "Communication",
-  "tagline": "**EF Core + PostgreSQL** persistence for **outbound SMS logs** (`SmsLogEntity`). This package does **not** send SMS; it wires a **`SmsDbContext`** so workers or gateways can persist send outcomes…",
-  "description": "**EF Core + PostgreSQL** persistence for **outbound SMS logs** (`SmsLogEntity`). This package does **not** send SMS; it wires a **`SmsDbContext`** so workers or gateways can persist send outcomes after [`Lyo.Sms`](../Lyo.Sms/README.md) / [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md) completes.\n\n---",
+  "tagline": "EF Core PostgreSQL store for outbound SMS logs (`SmsLogEntity`). This package does not send SMS. It wires `SmsDbContext` so workers or gateways can persist send outcomes.",
+  "description": "EF Core PostgreSQL store for outbound SMS logs (`SmsLogEntity`). This package does not send SMS. It wires `SmsDbContext` so workers or gateways can persist send outcomes after [`Lyo.Sms`](../Lyo.Sms/README.md) / [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md) completes.",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "list",
-      "title": "Schema & entity",
+      "title": "Schema and entity",
       "items": [
-        "**Schema**: **`sms`** (see **`PostgresSmsOptions.Schema`** = `\"sms\"`).",
-        "**`SmsLogEntity`**: **`Id`** (guid), **`To`** / **`From`**, **`Body`**, **`MediaUrlsJson`** (MMS attachments serialized), **`IsSuccess`**, **`Message`**, **`ErrorMessage`**, * *`ElapsedTimeMs`**, **`MessageId`**, **`Status`**, **`ErrorCode`**, timeline fields (**`DateCreated`**, **`DateSent`**, **`DateUpdated`**), **`CreatedAt`**."
+        "**Schema.** `sms` (see `PostgresSmsOptions.Schema` = `\"sms\"`).",
+        "**`SmsLogEntity`.** `Id` (guid), `To` / `From`, `Body`, `MediaUrlsJson` (serialized MMS attachments), `IsSuccess`, `Message`, `ErrorMessage`, `ElapsedTimeMs`, `MessageId`, `Status`, `ErrorCode`, timeline fields (`DateCreated`, `DateSent`, `DateUpdated`), `CreatedAt`."
       ]
     },
     {
       "type": "table",
-      "title": "Configuration: **`PostgresSmsOptions`**",
+      "title": "`PostgresSmsOptions`",
       "headers": [
         "Member",
         "Meaning"
       ],
       "rows": [
         [
-          "**`SectionName`**",
-          "`\"PostgresSms\"` for **`IConfiguration`** binding"
+          "`SectionName`",
+          "`\"PostgresSms\"` for `IConfiguration` binding"
         ],
         [
-          "**`ConnectionString`**",
+          "`ConnectionString`",
           "Required"
         ],
         [
-          "**`EnableAutoMigrations`**",
+          "`EnableAutoMigrations`",
           "Honored via [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) migration host integration"
         ],
         [
-          "Implements **`IPostgresMigrationConfig`**",
-          "Schema = **`sms`**"
+          "Implements `IPostgresMigrationConfig`",
+          "Schema = `sms`"
         ]
-      ],
-      "trail": "---"
+      ]
     },
     {
       "type": "list",
-      "title": "Dependency injection (**`Extensions`**)",
+      "title": "Dependency injection",
       "items": [
-        "**`AddSmsDbContext(string connectionString)`** — registers **factory + scoped** **`SmsDbContext`** (scoped resolves a fresh context from `IDbContextFactory<SmsDbContext>`).",
-        "**`AddSmsDbContext`** (`Action<DbContextOptionsBuilder> configure`) — classic **`AddDbContext`** path.",
-        "**`AddSmsDbContextFactory(PostgresSmsOptions)`** / **`AddSmsDbContextFactory`** (`Action<PostgresSmsOptions>`) — singleton options + **`AddDbContextFactory`** with **`UseNpgsql` ** and migration history schema.",
-        "**`AddSmsDbContextFactoryFromConfiguration(IConfiguration, section = PostgresSmsOptions.SectionName)`** — binds **`PostgresSms`** (or override) then registers factory."
+        "`AddSmsDbContext(string connectionString)` registers a factory plus a scoped `SmsDbContext` (the scoped registration resolves a fresh context from `IDbContextFactory<SmsDbContext>`).",
+        "`AddSmsDbContext` (`Action<DbContextOptionsBuilder> configure`) registers via `AddDbContext`.",
+        "`AddSmsDbContextFactory(PostgresSmsOptions)` / `AddSmsDbContextFactory` (`Action<PostgresSmsOptions>`) register singleton options plus `AddDbContextFactory` with `UseNpgsql` and the migration history schema.",
+        "`AddSmsDbContextFactoryFromConfiguration(IConfiguration, section = PostgresSmsOptions.SectionName)` binds `PostgresSms` (or an override) then registers the factory."
       ]
     },
     {
       "type": "paragraph",
-      "title": "When to prefer **`Lyo.Sms.Twilio.Postgres`**",
-      "text": "If you rely on **`TwilioSmsResult`** (price, segments, account SID, direction), use [`Lyo.Sms.Twilio.Postgres`](../Lyo.Sms.Twilio.Postgres/README.md) (**`TwilioSmsLogEntity`**, keyed by Twilio message SID). ---"
+      "title": "When to prefer `Lyo.Sms.Twilio.Postgres`",
+      "text": "If you rely on `TwilioSmsResult` (price, segments, account SID, direction), use [`Lyo.Sms.Twilio.Postgres`](../Lyo.Sms.Twilio.Postgres/README.md) (`TwilioSmsLogEntity`, keyed by Twilio message SID)."
     }
   ],
   "links": [],

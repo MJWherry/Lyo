@@ -2,8 +2,8 @@
   "id": "Lyo.Comic.Web.Components",
   "name": "Lyo.Comic.Web.Components",
   "area": "Features",
-  "tagline": "Reusable Blazor components for browsing, previewing, and reading comic series — search panel, result grids/lists, browse cards, and a MangaFire-style tap-to-navigate reader.",
-  "description": "Reusable Blazor components for browsing, previewing, and reading comic series — search panel, result grids/lists, browse cards, and a MangaFire-style tap-to-navigate reader. The library is data-source agnostic: every component takes the data it needs as parameters and asks the host to provide async callbacks for fetching pages, resolving cover URLs, and emitting navigation events. There is no DI registration step.",
+  "tagline": "Blazor components for browsing, previewing, and reading comic series. Search panel, result grids and lists, browse cards, and a MangaFire-style tap-to-navigate reader.",
+  "description": "Blazor components for browsing, previewing, and reading comic series. Search panel, result grids and lists, browse cards, and a MangaFire-style tap-to-navigate reader. Components take the data they need as parameters. The host supplies async callbacks for fetching pages, resolving cover URLs, and navigation events. There is no DI registration step.",
   "features": [],
   "examples": [
     {
@@ -20,14 +20,14 @@
     },
     {
       "type": "table",
-      "title": "Component catalog — `ComicSearch` *(`ComicSearch.razor` + `.razor.cs` + `.razor.css`)*",
+      "title": "`ComicSearch` *(`ComicSearch.razor` + `.razor.cs` + `.razor.css`)*",
       "headers": [
         "Parameter (`[EditorRequired]` in **bold**)",
         "Purpose"
       ],
       "rows": [
         [
-          "**`Func<ComicSeriesQuery, CancellationToken, Task<IReadOnlyList<ComicSeries>>>? SearchFunc`**",
+          "`Func<ComicSeriesQuery, CancellationToken, Task<IReadOnlyList<ComicSeries>>>? SearchFunc`",
           "Host-supplied search callback. Receives the query built from the current filter state."
         ],
         [
@@ -56,7 +56,7 @@
     },
     {
       "type": "table",
-      "title": "Component catalog — `ComicBrowseResults` *(`ComicBrowseResults.razor` + `.razor.cs` + `.razor.css`)*",
+      "title": "`ComicBrowseResults` *(`ComicBrowseResults.razor` + `.razor.cs` + `.razor.css`)*",
       "headers": [
         "`ViewMode`",
         "CSS layout class"
@@ -84,12 +84,12 @@
     },
     {
       "type": "paragraph",
-      "title": "Component catalog — `ComicCard` *(`ComicCard.razor` + `.razor.cs`)*",
-      "text": "Thin adapter that maps a `ComicSeries` onto `ComicBrowseCard`. Computes `TypeBadge` from `Series.ComicType` (omitting `ComicType.Unknown`), wires cover / body / read / details taps to the corresponding events. Parameters: **`ComicSeries Series`** (`[EditorRequired]`), `string? CoverImageUrl`, `ComicBrowseViewMode ViewMode`, `EventCallback<ComicSeries> OnRead`, `EventCallback<ComicSeries> OnOpenSeries`."
+      "title": "`ComicCard` *(`ComicCard.razor` + `.razor.cs`)*",
+      "text": "Thin adapter that maps a `ComicSeries` onto `ComicBrowseCard`. Computes `TypeBadge` from `Series.ComicType` (omitting `ComicType.Unknown`), wires cover / body / read / details taps to the corresponding events. Parameters: `ComicSeries Series` (`[EditorRequired]`), `string? CoverImageUrl`, `ComicBrowseViewMode ViewMode`, `EventCallback<ComicSeries> OnRead`, `EventCallback<ComicSeries> OnOpenSeries`."
     },
     {
       "type": "table",
-      "title": "Component catalog — `ComicBrowseCard` *(`ComicBrowseCard.razor` + `.razor.cs` + `.razor.css`)*",
+      "title": "`ComicBrowseCard` *(`ComicBrowseCard.razor` + `.razor.cs` + `.razor.css`)*",
       "headers": [
         "Parameter",
         "Purpose"
@@ -148,19 +148,19 @@
     },
     {
       "type": "paragraph",
-      "title": "Component catalog — `BrowseListPanel` *(`BrowseListPanel.razor` + `.razor.cs` + `.razor.css`)*",
+      "title": "`BrowseListPanel` *(`BrowseListPanel.razor` + `.razor.cs` + `.razor.css`)*",
       "text": "Row variant rendered by `ComicBrowseCard` when the `ViewMode` is `ListNoImage` / `ListLine`. Parameters: `ComicBrowseViewMode Mode`, `string Title`, `string? Subtitle`, `string? DisplayDescription`, `string? TypeBadge`, `string? LanguageLine`, `int? PageCount`, `bool ShowReadActions`, `EventCallback PrimaryClicked`, `EventCallback ReadClicked`."
     },
     {
       "type": "table",
-      "title": "Component catalog — `ComicViewer` *(`ComicViewer.razor` + `.razor.cs` + `.razor.css`)*",
+      "title": "`ComicViewer` *(`ComicViewer.razor` + `.razor.cs` + `.razor.css`)*",
       "headers": [
         "Parameter",
         "Purpose"
       ],
       "rows": [
         [
-          "**`ComicSeries Series`** *(`[EditorRequired]`)*",
+          "`ComicSeries Series` (`[EditorRequired]`)",
           "The series being read."
         ],
         [
@@ -180,7 +180,7 @@
           "Total pages for the chapter; falls back to `ComicChapter.PageCount` when `0`."
         ],
         [
-          "**`Func<ComicSeries, ComicChapter, int, CancellationToken, Task<string?>>? LoadPageImageAsync`**",
+          "`Func<ComicSeries, ComicChapter, int, CancellationToken, Task<string?>>? LoadPageImageAsync`",
           "Host-supplied page loader. Return a URL or Base-64 data URI, or `null` if unavailable."
         ],
         [
@@ -200,15 +200,15 @@
           "Raised when the close button is tapped."
         ]
       ],
-      "lead": "MangaFire-style reader: page area, page counter, slider, chapter selector, previous / next chapter buttons, and a close button. Coordinates with\n`./_content/Lyo.Comic.Web.Components/scripts/comicViewer.js` for rapid keyboard / tap navigation, prefetches neighbor pages (radius 5 — widened to 8 after a \"jump\"), and falls\nback to the cover image while the first page resolves.",
-      "trail": "Public method: `Task ReloadPageAsync(int? forPage = null)` — re-fetches the displayed image; pass a value when calling immediately after updating local state because Blazor\nre-renders asynchronously. The component implements `IAsyncDisposable` so the JS module / `DotNetObjectReference` are torn down cleanly."
+      "lead": "MangaFire-style reader: page area, page counter, slider, chapter selector, previous / next chapter buttons, and a close button. Coordinates with\n`./_content/Lyo.Comic.Web.Components/scripts/comicViewer.js` for rapid keyboard / tap navigation, prefetches neighbor pages (radius 5, widened to 8 after a \"jump\"), and falls\nback to the cover image while the first page resolves.",
+      "trail": "Public method: `Task ReloadPageAsync(int? forPage = null)` re-fetches the displayed image; pass a value when calling immediately after updating local state because Blazor\nre-renders asynchronously. The component implements `IAsyncDisposable` so the JS module / `DotNetObjectReference` are torn down cleanly."
     },
     {
       "type": "list",
-      "title": "Component catalog — Other public types",
+      "title": "Other public types",
       "items": [
-        "`ComicBrowseViewMode` *(enum)* — `GridLarge`, `GridSmall`, `ListNoImage`, `ListLine`.",
-        "`ComicCoverUrls.Resolve(string? coverImageRef)` — utility that maps a `CoverImageRef` to a display URL: when the ref parses as a `Guid`, returns `/comic-files/{id:D}`; otherwise returns the ref as-is (so HTTPS URLs flow through unchanged)."
+        "`ComicBrowseViewMode` *(enum)*. `GridLarge`, `GridSmall`, `ListNoImage`, `ListLine`.",
+        "`ComicCoverUrls.Resolve(string? coverImageRef)` utility that maps a `CoverImageRef` to a display URL: when the ref parses as a `Guid`, returns `/comic-files/{id:D}`; otherwise returns the ref as-is (so HTTPS URLs flow through unchanged)."
       ]
     },
     {
@@ -220,10 +220,10 @@
       "type": "list",
       "title": "Project shape",
       "items": [
-        "**Target framework:** `net10.0`",
-        "**SDK:** `Microsoft.NET.Sdk.Razor`",
-        "**NuGet:** `MudBlazor [9.3,)` plus `Microsoft.AspNetCore.App` framework reference.",
-        "**Project references:** [`Lyo.Comic`](../Lyo.Comic/README.md), [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md), [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md)."
+        "**Target framework.** `net10.0`",
+        "**SDK.** `Microsoft.NET.Sdk.Razor`",
+        "**NuGet.** `MudBlazor [9.3,)` plus `Microsoft.AspNetCore.App` framework reference.",
+        "**Project references.** [`Lyo.Comic`](../Lyo.Comic/README.md), [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md), [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md)."
       ]
     }
   ],
@@ -272,7 +272,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -328,6 +344,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -353,6 +377,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -411,6 +443,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -430,7 +471,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

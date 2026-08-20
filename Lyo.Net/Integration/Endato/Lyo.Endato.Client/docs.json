@@ -3,7 +3,7 @@
   "name": "Lyo.Endato.Client",
   "area": "Integration",
   "tagline": "Typed HTTP client for the Endato data-enrichment REST API.",
-  "description": "Typed HTTP client for the [Endato](https://www.endato.com/) data-enrichment REST API.\n\n**Archetype C (vendor client).** Canonical people rows live in [`Lyo.People.Postgres`](../../../Core/People/Lyo.People.Postgres/README.md) (Archetype A); optional vendor cache in [\n`Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). Host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` /\n`EndatoCePerson` on **`source_entity_*`**). See [package layout](../../../docs/package-layout.md).\n\nSubclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and optional request compression behave the same as for any other Lyo HTTP client.",
+  "description": "Typed HTTP client for the [Endato](https://www.endato.com/) data-enrichment REST API.\n\n**Archetype C (vendor client).** Canonical people rows live in [`Lyo.People.Postgres`](../../../Core/People/Lyo.People.Postgres/README.md) (Archetype A); optional vendor cache in [\n`Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). Host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` /\n`EndatoCePerson` on `source_entity_*`). See [package layout](../../../docs/package-layout.md).\n\nSubclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and optional request compression behave the same as for any other Lyo HTTP client.",
   "features": [],
   "examples": [
     {
@@ -20,7 +20,7 @@
   "sections": [
     {
       "type": "table",
-      "title": "Surface",
+      "title": "Managers",
       "headers": [
         "Property",
         "Manager",
@@ -43,12 +43,12 @@
     },
     {
       "type": "markdown",
-      "title": "Surface — Request builders",
-      "body": "Person Search — see [Person Search properties](https://enformiongo.readme.io/reference/person-search-properties):\n\n```csharp\nvar query = PersonQueryBuilder.Create(\"Jane\", \"Doe\", age: 42)\n    .WithPhone(\"5125550100\")\n    .AddAddress(\"123 Main St\", county: \"Travis\")\n    .WithResultsPerPage(25)\n    .Build();\n\nvar response = await client.Persons.QueryPersonsAsync(query, ct);\n// or:\nvar response = await client.Persons.QueryPersonsAsync(\n    PersonQueryBuilder.Create(\"Jane\", \"Doe\", age: 42).WithPhone(\"5125550100\"), ct);\n```\n\nContact Enrichment — see [Contact Enrichment properties](https://enformiongo.readme.io/reference/contact-enrichment-properties). The API requires **at least two** of name, phone,\nemail, or address; `EnrichmentQueryBuilder.Build()` enforces that:\n\n```csharp\nvar query = EnrichmentQueryBuilder.Create(\"John\", \"Smith\")\n    .WithPhone(\"5125550100\")\n    .WithAddress(\"123 Main St\", \"Austin, TX 78701\")\n    .Build();\n\nvar response = await client.Enrichment.QueryEnrichmentAsync(query, ct);\n```"
+      "title": "Request builders",
+      "body": "Person Search. See [Person Search properties](https://enformiongo.readme.io/reference/person-search-properties):\n\n```csharp\nvar query = PersonQueryBuilder.Create(\"Jane\", \"Doe\", age: 42)\n    .WithPhone(\"5125550100\")\n    .AddAddress(\"123 Main St\", county: \"Travis\")\n    .WithResultsPerPage(25)\n    .Build();\n\nvar response = await client.Persons.QueryPersonsAsync(query, ct);\n// or:\nvar response = await client.Persons.QueryPersonsAsync(\n    PersonQueryBuilder.Create(\"Jane\", \"Doe\", age: 42).WithPhone(\"5125550100\"), ct);\n```\n\nContact Enrichment. See [Contact Enrichment properties](https://enformiongo.readme.io/reference/contact-enrichment-properties). The API requires **at least two** of name, phone,\nemail, or address; `EnrichmentQueryBuilder.Build()` enforces that:\n\n```csharp\nvar query = EnrichmentQueryBuilder.Create(\"John\", \"Smith\")\n    .WithPhone(\"5125550100\")\n    .WithAddress(\"123 Main St\", \"Austin, TX 78701\")\n    .Build();\n\nvar response = await client.Enrichment.QueryEnrichmentAsync(query, ct);\n```"
     },
     {
       "type": "paragraph",
-      "title": "Surface — Numeric fields",
+      "title": "Numeric fields",
       "text": "`EndatoClient` uses [`LyoJsonSerializerOptions`](../../../Core/Common/Lyo.Common/LyoJsonSerializerOptions.cs) (`AllowReadingFromString`), so latitude/longitude deserialize into `decimal?` whether the API sends JSON numbers or quoted strings."
     },
     {
@@ -191,6 +191,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

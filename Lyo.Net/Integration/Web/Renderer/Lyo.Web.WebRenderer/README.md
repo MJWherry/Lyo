@@ -10,11 +10,11 @@ Server-side rendering of Razor components and HTML→PDF conversion. Razor rende
 services.AddWebRendererServiceFromConfiguration(builder.Configuration);
 ```
 
-## Surface ([`IWebRendererService`](IWebRendererService.cs))
+## `IWebRendererService` methods
 
 The service exposes three families of operations plus three observability events.
 
-## Surface ([`IWebRendererService`](IWebRendererService.cs)) — Render Razor components
+## Render Razor components
 
 | Method (sync + `Async` overloads) | Result |
 | ------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -25,7 +25,7 @@ The service exposes three families of operations plus three observability events
 | `RenderToFile<T>(filePath, parameterDictionary?)` | Writes HTML to disk at `filePath`. |
 | `RenderToFile<T, TOptions>(filePath, options)` | Same, with typed options. |
 
-## Surface ([`IWebRendererService`](IWebRendererService.cs)) — HTML → PDF conversion
+## HTML to PDF conversion
 
 | Method (sync + `Async` overloads) | Result |
 | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -38,9 +38,9 @@ The service exposes three families of operations plus three observability events
 
 > The current interface only exposes Razor render and HTML→PDF; there is no in-process screenshot API. For raw screenshots, use PuppeteerSharp directly through `BrowserExePath`.
 
-## Surface ([`IWebRendererService`](IWebRendererService.cs)) — Events
+## Events
 
-`ComponentRendered`, `ComponentRenderedToBytes`, `ComponentSavedToFile` fire after the corresponding render operations and carry the resulting payload plus parameter and options snapshots — useful for downstream archival or diffing.
+`ComponentRendered`, `ComponentRenderedToBytes`, `ComponentSavedToFile` fire after the corresponding render operations and carry the resulting payload plus parameter and options snapshots, used for archival or diffing.
 
 ## Options ([`WebRenderOptions`](WebRenderOptions.cs))
 
@@ -58,18 +58,18 @@ Metrics emitted (see [`Constants.cs`](Constants.cs)) include `webrenderer.render
 
 ## DI registration ([`Extensions.cs`](Extensions.cs))
 
-This binds `WebRenderOptions` from `WebRenderOptions` (default section name) and registers: - A scoped `Microsoft.AspNetCore.Components.Web.HtmlRenderer` (resolved with the host’s `IServiceProvider` and `ILoggerFactory`). - A scoped `IWebRendererService` → `WebRendererService`, optionally consuming registered `ILogger<WebRendererService>` and `IMetrics`. Pass `configSectionName` to the extension if you need a non-default section name. There is currently no inline-options overload — register `WebRenderOptions` yourself before calling the extension if you need to bypass configuration.
+Binds `WebRenderOptions` from the `WebRenderOptions` configuration section and registers a scoped `Microsoft.AspNetCore.Components.Web.HtmlRenderer` (host `IServiceProvider` and `ILoggerFactory`) plus a scoped `IWebRendererService` → `WebRendererService`, optionally consuming registered `ILogger<WebRendererService>` and `IMetrics`. Pass `configSectionName` for a non-default section. There is no inline-options overload. Register `WebRenderOptions` yourself before calling the extension if you need to skip configuration.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Microsoft.AspNetCore.Components.Web` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Configuration` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `PuppeteerSharp` `24.0.0` — (direct, third-party)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Microsoft.AspNetCore.Components.Web` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `PuppeteerSharp` `24.0.0` (direct, third-party)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)

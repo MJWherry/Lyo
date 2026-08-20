@@ -1,13 +1,13 @@
 # Lyo.Audit
 
-Audit trail library with two distinct concepts: **AuditChange** (entity change tracking) and **AuditEvent** (events to log). `AuditChange` and `AuditEvent` are immutable records—once created they do not change. Both carry an `EntityRef` for the thing they are about plus an optional `EntityRef` for the actor that caused them. Includes `IAuditRecorder` for pluggable storage.
+Audit trail library with two records: `AuditChange` (entity change tracking) and `AuditEvent` (events to log). Both are immutable. Once created they do not change. Each carries an `EntityRef` for the subject plus an optional `EntityRef` for the actor. `IAuditRecorder` is the storage contract.
 
 ## Features
 
-- **AuditChange** (record) – Entity/property change: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property → old value), `ChangedProperties` (property → new value), optional `Actor` (`EntityRef?`)
-- **AuditEvent** (record) – An event to log: `Id` (Guid), `Subject` (`EntityRef`), `EventType`, `Timestamp`, optional `Message`, `Actor` (`EntityRef?`), and `Metadata`
-- **IAuditRecorder** – Interface with sync and async methods: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`, `RecordEvents`/`RecordEventsAsync` (implement to persist to database, log sink, etc.)
-- **NullAuditRecorder** – No-op implementation when auditing is not needed
+- **AuditChange.** Entity/property change record: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property to old value), `ChangedProperties` (property to new value), optional `Actor` (`EntityRef?`).
+- **AuditEvent.** Event to log: `Id` (Guid), `Subject` (`EntityRef`), `EventType`, `Timestamp`, optional `Message`, `Actor` (`EntityRef?`), and `Metadata`.
+- **IAuditRecorder.** Sync and async methods: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`, `RecordEvents`/`RecordEventsAsync`. Implement to persist to a database or log sink.
+- **NullAuditRecorder.** No-op implementation when auditing is not needed.
 
 ## Examples
 
@@ -70,7 +70,7 @@ Decorate domain types with `[EntityRefLogicalType("MyApp.Order")]` to keep the p
 
 ## PostgreSQL persistence
 
-Use **Lyo.Audit.Postgres** for PostgreSQL storage with EF Core migrations:
+Use `Lyo.Audit.Postgres` for PostgreSQL storage with EF Core migrations:
 
 ```xml
 <PackageReference Include="Lyo.Audit.Postgres" Version="1.0.22" />
@@ -83,16 +83,16 @@ services.AddPostgresAuditRecorder(new PostgresAuditOptions {
 });
 ```
 
-When `EnableAutoMigrations` is true, migrations run at **host startup** (via `IHostedService`), not during service registration. Ensure your app uses a host (e.g.
-`Host.CreateDefaultBuilder()` or `WebApplication.CreateBuilder()`).
+When `EnableAutoMigrations` is true, migrations run at host startup via `IHostedService`, not during service registration. The app must use a host such as
+`Host.CreateDefaultBuilder()` or `WebApplication.CreateBuilder()`.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.EntityReference.Models` — (direct, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.EntityReference.Models` (direct, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

@@ -1,6 +1,6 @@
 # Lyo.Discord.Client
 
-Typed HTTP client for the Discord REST surface exposed by `Lyo.Api` (the `Discord/*` group registered by [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md)). Wraps `Lyo.Api.Client.ApiClient` so all Lyo-API behavior — Accept-Encoding, request compression, problem-details parsing — comes for free.
+Typed HTTP client for the Discord REST endpoints exposed by `Lyo.Api` (the `Discord/*` group registered by [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md)). Wraps `Lyo.Api.Client.ApiClient` so Accept-Encoding, request compression, and problem-details parsing match other Lyo clients.
 
 ## Examples
 
@@ -16,7 +16,7 @@ services.AddDiscordClient(o => {
 });
 ```
 
-## Surface
+## Managers
 
 [`LyoDiscordClient`](LyoDiscordClient.cs) is the entry point. It subclasses `ApiClient` and exposes nine **manager** properties under `Managers/`:
 
@@ -38,7 +38,7 @@ Routes come from [`Lyo.Discord.Models.Constants.Rest.Discord`](../Lyo.Discord.Mo
 
 ## Options ([`LyoDiscordClientOptions`](LyoDiscordClientOptions.cs))
 
-Configuration section: `LyoDiscordClient` (shadows the base `ApiClient` section). Inherits all [`ApiClientOptions`](../../Api/Lyo.Api.Client/README.md#options-apiclientoptions) flags (`BaseUrl`, `EnsureStatusCode`, `AcceptEncodings`, `RequestCompression`, …). Default `BaseUrl` is `http://localhost:5251/` so it works against a locally-hosted Lyo API host out of the box; override for any other deployment.
+Configuration section: `LyoDiscordClient` (shadows the base `ApiClient` section). Inherits all [`ApiClientOptions`](../../Api/Lyo.Api.Client/README.md#options-apiclientoptions) flags (`BaseUrl`, `EnsureStatusCode`, `AcceptEncodings`, `RequestCompression`, …). Default `BaseUrl` is `http://localhost:5251/` so it targets a local Lyo API host. Override for any other deployment.
 
 ## DI registration ([`Extensions.cs`](Extensions.cs))
 
@@ -55,21 +55,22 @@ handler with auto-decompression enabled.
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Api.Client` — (direct, lyo)
-- `Lyo.Api.Models` — (direct, lyo)
-- `Lyo.Discord.Models` — (direct, lyo)
-- `Lyo.Query.Models` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Diagnostic` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.PackageMetadata` — (transitive, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)
+- `Lyo.Api.Client` (direct, lyo)
+- `Lyo.Api.Models` (direct, lyo)
+- `Lyo.Discord.Models` (direct, lyo)
+- `Lyo.Query.Models` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

@@ -16,28 +16,28 @@
       ],
       "rows": [
         [
-          "**`PrivacyWorkbench`**",
-          "Top-level workbench shell — composes the panels below into a side-by-side review layout."
+          "`PrivacyWorkbench`",
+          "Top-level workbench shell. Composes the panels below into a side-by-side review layout."
         ],
         [
-          "**`RedactionPolicyBuilderPanel`**",
+          "`RedactionPolicyBuilderPanel`",
           "Interactive `RedactionPolicyBuilder` editor: enable / disable categories, configure custom regex rules, tweak placeholders."
         ],
         [
-          "**`RedactionPresetToolbar`**",
-          "One-click presets (e.g. \"PII only\", \"Strict\", \"Permissive\") — emits a fully-built policy."
+          "`RedactionPresetToolbar`",
+          "One-click presets (e.g. \"PII only\", \"Strict\", \"Permissive\"). Emits a built policy."
         ],
         [
-          "**`TextRedactionPanel`**",
-          "Free-text input + preview of `ITextRedactor.Redact(...)` output and `RedactionOutcome` summary (categories matched, counts)."
+          "`TextRedactionPanel`",
+          "Free-text input plus preview of `ITextRedactor.Redact(...)` output and `RedactionOutcome` summary (categories matched, counts)."
         ],
         [
-          "**`JsonRedactionPanel`**",
-          "JSON input + preview of `IStructuredRedactor.Redact(...)` output with per-path redaction highlights."
+          "`JsonRedactionPanel`",
+          "JSON input plus preview of `IStructuredRedactor.Redact(...)` output with per-path redaction highlights."
         ],
         [
-          "**`PolicyFingerprintChip`**",
-          "Compact display of the active policy's name + fingerprint hash so reviewers can compare what was applied in production vs the workbench."
+          "`PolicyFingerprintChip`",
+          "Shows the active policy's name and fingerprint hash so reviewers can compare what was applied in production vs the workbench."
         ]
       ]
     },
@@ -92,7 +92,23 @@
       ]
     },
     {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -148,6 +164,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -173,6 +197,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -231,6 +263,15 @@
       ]
     },
     {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Konscious.Security.Cryptography.Argon2",
       "kind": "package",
       "version": "1.3.1",
@@ -250,7 +291,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

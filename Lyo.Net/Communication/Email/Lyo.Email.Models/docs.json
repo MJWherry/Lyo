@@ -9,24 +9,24 @@
   "sections": [
     {
       "type": "list",
-      "title": "What ships in this package — Request / result records",
+      "title": "Request and result records",
       "items": [
-        "`EmailRequest` — sender, recipients, subject and optional attachment metadata used as the `Result<EmailRequest>.Data` payload.",
-        "`EmailAttachment` — file name and bytes, plus optional `FileStorageId`, `TemplateId`, `ContentType`, and `MetadataJson` slots for audit and templating correlation. Attachment bytes are not persisted by the logging schema.",
-        "`EmailResult` — `Result<EmailRequest>` specialisation that adds `MessageId`, `SentDate`, and `SmtpResponse`. Constructed via `EmailResult.FromSuccess`, `EmailResult.FromException`, and `EmailResult.FromError`."
+        "`EmailRequest`. Sender, recipients, subject, and optional attachment metadata used as the `Result<EmailRequest>.Data` payload.",
+        "`EmailAttachment`. File name and bytes, plus optional `FileStorageId`, `TemplateId`, `ContentType`, and `MetadataJson` slots for audit and templating correlation. Attachment bytes are not persisted by the logging schema.",
+        "`EmailResult`. `Result<EmailRequest>` that adds `MessageId`, `SentDate`, and `SmtpResponse`. Constructed via `EmailResult.FromSuccess`, `EmailResult.FromException`, and `EmailResult.FromError`."
       ]
     },
     {
       "type": "list",
-      "title": "What ships in this package — Options",
+      "title": "Options",
       "items": [
-        "`EmailServiceOptions` — configuration for `EmailService` (host, port, SSL, default sender, optional SMTP credentials, metrics toggle, `BulkEmailConcurrencyLimit` (default `10`), `MaxBulkEmailLimit` (default `1000`), `MaxAttachmentCountPerEmail` (default `20`)). Section name constant: `EmailServiceOptions.SectionName = \"EmailServiceOptions\"`.",
-        "`EmailServiceOptionsValidator` — `IValidateOptions<EmailServiceOptions>` enforcing required `Host`, port range `1..65535`, required `DefaultFromAddress`/`DefaultFromName`, and `MaxAttachmentCountPerEmail > 0`."
+        "`EmailServiceOptions`. Configuration for `EmailService` (host, port, SSL, default sender, optional SMTP credentials, metrics toggle, `BulkEmailConcurrencyLimit` (default `10`), `MaxBulkEmailLimit` (default `1000`), `MaxAttachmentCountPerEmail` (default `20`)). Section name constant: `EmailServiceOptions.SectionName = \"EmailServiceOptions\"`.",
+        "`EmailServiceOptionsValidator`. `IValidateOptions<EmailServiceOptions>` that requires `Host`, port range `1..65535`, `DefaultFromAddress`/`DefaultFromName`, and `MaxAttachmentCountPerEmail > 0`."
       ]
     },
     {
       "type": "table",
-      "title": "What ships in this package — Error codes",
+      "title": "Error codes",
       "headers": [
         "Constant",
         "Value",
@@ -53,13 +53,13 @@
     },
     {
       "type": "list",
-      "title": "What ships in this package — Event arguments",
+      "title": "Event arguments",
       "items": [
-        "`EmailSendingEventArgs(EmailRequest EmailRequest)` — before a single send.",
-        "`EmailSentEventArgs(Result<EmailRequest> EmailResult)` — after a single send (success or failure).",
-        "`EmailBulkSendingEventArgs(IReadOnlyList<EmailRequest> BulkEmailMessage)` — before a bulk send begins.",
-        "`BulkEmailSentEventArgs(BulkResult<EmailRequest> BulkEmailResult)` — after a bulk send completes.",
-        "`ConnectionTestedEventArgs(bool IsSuccess, TimeSpan ElapsedTime, Exception? Exception)` — after `TestConnectionAsync` completes."
+        "`EmailSendingEventArgs(EmailRequest EmailRequest)`. Before a single send.",
+        "`EmailSentEventArgs(Result<EmailRequest> EmailResult)`. After a single send (success or failure).",
+        "`EmailBulkSendingEventArgs(IReadOnlyList<EmailRequest> BulkEmailMessage)`. Before a bulk send begins.",
+        "`BulkEmailSentEventArgs(BulkResult<EmailRequest> BulkEmailResult)`. After a bulk send completes.",
+        "`ConnectionTestedEventArgs(bool IsSuccess, TimeSpan ElapsedTime, Exception? Exception)`. After `TestConnectionAsync` completes."
       ]
     },
     {

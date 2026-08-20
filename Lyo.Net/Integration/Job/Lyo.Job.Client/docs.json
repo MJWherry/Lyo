@@ -2,8 +2,8 @@
   "id": "Lyo.Job.Client",
   "name": "Lyo.Job.Client",
   "area": "Integration",
-  "tagline": "Typed HTTP client for the Lyo Job API. Wraps `IApiClient` with run lifecycle and worker-instance endpoints from `Lyo.Job.Models.Constants.Rest.Job`.",
-  "description": "Typed HTTP client for the Lyo Job API. Wraps `IApiClient` with run lifecycle and worker-instance endpoints from `Lyo.Job.Models.Constants.Rest.Job`.",
+  "tagline": "Typed HTTP client for the Lyo Job API. Wraps `IApiClient` with run lifecycle methods (`StartAsync`, `LogAsync`, `FinishAsync`, `RequeueAsync`) and worker-instance endpoints from `Lyo.Job.Models.Constants.Rest.Job`.",
+  "description": "Typed HTTP client for the Lyo Job API. Wraps `IApiClient` with run lifecycle methods (`StartAsync`, `LogAsync`, `FinishAsync`, `RequeueAsync`) and worker-instance endpoints from `Lyo.Job.Models.Constants.Rest.Job`.",
   "features": [],
   "examples": [
     {

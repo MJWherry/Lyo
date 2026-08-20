@@ -2,8 +2,8 @@
   "id": "Lyo.Api.Reporting",
   "name": "Lyo.Api.Reporting",
   "area": "Integration",
-  "tagline": "Authenticated HTTP surface for Lyo Reporting. Postgres stays service-only (`ReportService` + EF); this package owns `BuildReportingGroup`.",
-  "description": "Authenticated HTTP surface for Lyo Reporting. Postgres stays service-only (`ReportService` + EF); this package owns `BuildReportingGroup`.",
+  "tagline": "Authenticated HTTP endpoints for Lyo Reporting. Postgres stays service-only (`ReportService` + EF). This package owns `BuildReportingGroup`.",
+  "description": "Authenticated HTTP endpoints for Lyo Reporting. Postgres stays service-only (`ReportService` + EF). This package owns `BuildReportingGroup`.",
   "features": [],
   "examples": [
     {
@@ -58,7 +58,7 @@
           "`GET Reporting/Generation/{id}/Download` (mapped only when `DownloadStreamFactory` is set)"
         ]
       ],
-      "trail": "When every surface shares one policy, use `ReportingApiOptions.WithAuth(auth, downloadStreamFactory)` instead of setting all four properties.\n\nAll auth surfaces default to `EndpointAuth.RequireAuthorization()` (authenticated user). **Breaking change:** previously the defaults were `null` (endpoint fell through to the\nbuilder/host default); anonymous access now requires an explicit `EndpointAuth.Anonymous()` per surface. Setting a property to `null` restores the old fall-through behavior, but\nprefer explicit values for production Worker/Discord hosts."
+      "trail": "When every auth slot shares one policy, use `ReportingApiOptions.WithAuth(auth, downloadStreamFactory)` instead of setting all four properties.\n\nAll auth slots default to `EndpointAuth.RequireAuthorization()` (authenticated user). **Breaking change:** previously the defaults were `null` (endpoint fell through to the\nbuilder/host default); anonymous access now requires an explicit `EndpointAuth.Anonymous()` per slot. Setting a property to `null` restores the old fall-through behavior, but\nprefer explicit values for Worker and Discord hosts."
     },
     {
       "type": "paragraph",
@@ -87,7 +87,7 @@
     {
       "type": "paragraph",
       "title": "Sensitive field protection",
-      "text": "`QueryProject` and projected `Export` read raw entities and bypass the response mapper's masking, so the reporting surfaces deny selecting `EncryptedValue`/`Value` on parameter paths (including nested paths like `Parameters.EncryptedValue` and computed-field templates) via `DeniedSelectFields`. `QueryConcrete`/`Get` map through the response types, which mask parameter values (`***` for encrypted-backed values, `EncryptedValue` never returned)."
+      "text": "`QueryProject` and projected `Export` read raw entities and bypass the response mapper's masking, so the reporting endpoints deny selecting `EncryptedValue`/`Value` on parameter paths (including nested paths like `Parameters.EncryptedValue` and computed-field templates) via `DeniedSelectFields`. `QueryConcrete`/`Get` map through the response types, which mask parameter values (`***` for encrypted-backed values, `EncryptedValue` never returned)."
     },
     {
       "type": "paragraph",
@@ -97,7 +97,7 @@
     {
       "type": "markdown",
       "title": "Worker flow",
-      "body": "Workers call `IReportingClient.Generations.GenerateAsync` with a bearer token that satisfies `GenerateAuth`:\n\n\n\nData providers, renderers, and FileStorage hooks run on the API host — not in the worker process."
+      "body": "Workers call `IReportingClient.Generations.GenerateAsync` with a bearer token that satisfies `GenerateAuth`:\n\n\n\nData providers, renderers, and FileStorage hooks run on the API host. Not in the worker process."
     }
   ],
   "links": [],

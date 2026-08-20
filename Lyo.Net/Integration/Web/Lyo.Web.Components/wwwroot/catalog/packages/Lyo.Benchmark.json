@@ -2,8 +2,8 @@
   "id": "Lyo.Benchmark",
   "name": "Lyo.Benchmark",
   "area": "Core",
-  "tagline": "Benchmark-only helpers shared by every `*.Benchmarks` executable — the BenchmarkDotNet analogue of `Lyo.Testing`.",
-  "description": "Benchmark-only helpers shared by every `*.Benchmarks` executable — the BenchmarkDotNet analogue of [`Lyo.Testing`](../../Lyo.Testing/Lyo.Testing.csproj). References [`Lyo.Benchmark.Models`](../Lyo.Benchmark.Models/README.md) + BenchmarkDotNet (+ Testcontainers), so the consumer-facing models stay dependency-light while the suites share one config, entry point, exporter, and data/container helpers.\n\n`net10.0`, not packable.",
+  "tagline": "Benchmark-only helpers shared by every `*.Benchmarks` executable. The BenchmarkDotNet analogue of `Lyo.Testing`.",
+  "description": "Benchmark-only helpers shared by every `*.Benchmarks` executable. The BenchmarkDotNet analogue of [`Lyo.Testing`](../../Lyo.Testing/Lyo.Testing.csproj). References [`Lyo.Benchmark.Models`](../Lyo.Benchmark.Models/README.md) plus BenchmarkDotNet and Testcontainers. Consumer-facing models stay dependency-light. Suites share one config, entry point, exporter, and data/container helpers.\n\n`net10.0`, not packable.",
   "features": [],
   "examples": [
     {
@@ -16,7 +16,7 @@
     {
       "type": "markdown",
       "title": "What a benchmark project needs",
-      "body": "That's it — no per-class `[SimpleJob]` / `[MemoryDiagnoser]`. `BenchmarkEntry.Run` discovers the\nbenchmarks in the entry assembly and runs them under `LyoBenchmarkConfig.Default`, which adds a\ndefault job, the memory diagnoser, and the `LyoBenchmarkExporter`."
+      "body": "That's it. No per-class `[SimpleJob]` / `[MemoryDiagnoser]`. `BenchmarkEntry.Run` discovers the\nbenchmarks in the entry assembly and runs them under `LyoBenchmarkConfig.Default`, which adds a\ndefault job, the memory diagnoser, and the `LyoBenchmarkExporter`."
     },
     {
       "type": "table",
@@ -28,7 +28,7 @@
       "rows": [
         [
           "`BenchmarkEntry`",
-          "`Run(args)` — `BenchmarkSwitcher` over the entry assembly with the shared config."
+          "`Run(args)` starts a `BenchmarkSwitcher` over the entry assembly with the shared config."
         ],
         [
           "`LyoBenchmarkConfig`",
@@ -44,7 +44,7 @@
         ],
         [
           "`[BenchmarkDescription(\"…\")]`",
-          "Class or method narrative — copied into the group / measurement `description` so reports explain what each benchmark exercises."
+          "Class or method narrative. Copied into the group / measurement `description` so reports explain what each benchmark exercises."
         ],
         [
           "`[BenchmarkParameter(\"DataSize\", Unit = \"bytes\", Description = \"…\")]`",
@@ -52,7 +52,7 @@
         ],
         [
           "`[BenchmarkDataShape(typeof(SampleRecord))]`",
-          "Names the row/model type. The exporter reflects over it to emit a `DatasetDescriptor` (columns, CLR types, scalar/object/collection kind, nesting depth), capturing data structure — including nested complexity — instead of just a row count."
+          "Names the row/model type. The exporter reflects over it to emit a `DatasetDescriptor` (columns, CLR types, scalar/object/collection kind, nesting depth), capturing data structure, including nested complexity, instead of just a row count."
         ],
         [
           "`[BenchmarkSla(MaxMeanMs = …, MinThroughputMbps = …, MaxAllocatedKb = …, Standard = \"…\")]`",
@@ -83,17 +83,17 @@
     },
     {
       "type": "paragraph",
-      "title": "Output — Why data shape is reflected, not collected at runtime",
+      "title": "Why data shape is reflected, not collected at runtime",
       "text": "BenchmarkDotNet runs each benchmark in a **separate child process**, so static state populated in a benchmark's `[GlobalSetup]` is invisible to the exporter (which runs in the host process). Auto-derivation is therefore driven by `[BenchmarkDataShape(typeof(T))]`: the exporter has the benchmark `Type` in the host process and reflects over the named `T` there, producing an accurate `DatasetDescriptor` without crossing the process boundary."
     },
     {
       "type": "markdown",
-      "title": "Output — SLAs / business standards",
-      "body": "`[BenchmarkSla]` attaches an authored budget and the business-standard reasoning behind it so a number\ncan be judged against an expectation rather than read in isolation:\n\n* **Latency** — `MaxMeanMs` / `MaxMeanUs` / `MaxMeanNs` (use whichever unit reads best).\n* **Throughput** — `MinThroughputMbps` for size-based suites; the exporter derives MB/s from the\n  benchmark mean and the byte size in `SizeParam` (default `DataSize`).\n* **Allocation** — `MaxAllocatedKb`.\n* **`Standard`** — free text citing the norm (e.g. \"SHA-256 on AES-NI hardware should sustain >= 200 MB/s\").\n\nEach declared budget is graded `Miss` (over budget), `Exceeds` (comfortably under — mean ≤ 50% of the\nlatency/alloc budget or throughput ≥ 1.5× the target), or `Meets`. Verdicts land on every\n`BenchmarkMeasurement` and `ComparisonRow`; one worst-case row per benchmark is aggregated into the\nreport's `slo` list so micro reports get the same SLA summary section the k6 load reports already have."
+      "title": "SLAs / business standards",
+      "body": "`[BenchmarkSla]` attaches an authored budget and the business-standard reasoning behind it so a number\ncan be judged against an expectation rather than read in isolation:\n\n* **Latency.** `MaxMeanMs` / `MaxMeanUs` / `MaxMeanNs` (use whichever unit reads best).\n* **Throughput.** `MinThroughputMbps` for size-based suites. The exporter derives MB/s from the\n  benchmark mean and the byte size in `SizeParam` (default `DataSize`).\n* **Allocation.** `MaxAllocatedKb`.\n* **`Standard`.** Free text citing the norm, for example \"SHA-256 on AES-NI hardware should sustain >= 200 MB/s\".\n\nEach declared budget is graded `Miss` (over budget), `Exceeds` (comfortably under, mean ≤ 50% of the\nlatency/alloc budget or throughput ≥ 1.5× the target), or `Meets`. Verdicts land on every\n`BenchmarkMeasurement` and `ComparisonRow`. One worst-case row per benchmark is aggregated into the\nreport's `slo` list so micro reports get the same SLA summary section the k6 load reports already have."
     },
     {
       "type": "paragraph",
-      "title": "Output — Running: always `--join`",
+      "title": "Running: always `--join`",
       "text": "`python3 scripts/benchmarks/run_dotnet.py` passes `--join` so every benchmark class in a suite produces **one** joined `Summary`, and the exporter writes a single `<name>.lyobench.json` covering all groups + the comparison table. Without `--join`, `BenchmarkSwitcher` emits one `Summary` per class and the exporter (which writes a fixed `<name>.lyobench.json`) keeps only the last class."
     }
   ],

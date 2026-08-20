@@ -50,11 +50,11 @@
         ]
       ],
       "lead": "Extends `ApiClientOptions`, so it inherits the standard HTTP transport knobs (`BaseUrl`, timeouts, retry, etc.).",
-      "trail": "JSON is serialized with snake_case naming, case-insensitive read, and `WhenWritingNull` ignore — matching Typecast's API."
+      "trail": "JSON is serialized with snake_case naming, case-insensitive read, and `WhenWritingNull` ignore, matching Typecast's API."
     },
     {
       "type": "table",
-      "title": "`TypecastClient` — `TextToSpeechManager`",
+      "title": "`TypecastClient` `TextToSpeechManager`",
       "headers": [
         "Method",
         "Endpoint",
@@ -70,7 +70,7 @@
     },
     {
       "type": "table",
-      "title": "`TypecastClient` — `VoiceManager`",
+      "title": "`TypecastClient` `VoiceManager`",
       "headers": [
         "Method",
         "Endpoint",
@@ -93,12 +93,12 @@
       "type": "list",
       "title": "Request models",
       "items": [
-        "`TypecastTtsRequest` (extends `Lyo.Tts.Models.TtsRequest`) — `VoiceId`, `Text`, `Model` (defaults to `TypecastModel.SsfmV30`), `Language` (`LanguageCodeInfo`, serialised as ISO 639-3), `Prompt`, `Output`, `Seed`, computed `AudioFormat`.",
-        "`Prompt` — emotion / style settings (including the `\"smart\"` mode with optional `previous_text` / `next_text` context).",
-        "`OutputSettings` — volume / pitch / tempo / audio format.",
-        "`VoiceListReq` — optional `Model`, `Gender`, `Age`, `UseCases` filters.",
-        "Enums under `Enums/` — `Gender`, `AgeGroup`, `TypecastModel`.",
-        "Response models under `Models/Voices/Response/` — `Voice`, `VoiceModel`."
+        "**`TypecastTtsRequest`.** Extends `Lyo.Tts.Models.TtsRequest`. Fields: `VoiceId`, `Text`, `Model` (defaults to `TypecastModel.SsfmV30`), `Language` (`LanguageCodeInfo`, serialized as ISO 639-3), `Prompt`, `Output`, `Seed`, computed `AudioFormat`.",
+        "**`Prompt`.** emotion / style settings (including the `\"smart\"` mode with optional `previous_text` / `next_text` context).",
+        "**`OutputSettings`.** volume / pitch / tempo / audio format.",
+        "**`VoiceListReq`.** optional `Model`, `Gender`, `Age`, `UseCases` filters.",
+        "**Enums under `Enums/`.** `Gender`, `AgeGroup`, `TypecastModel`.",
+        "**Response models under `Models/Voices/Response/`.** `Voice`, `VoiceModel`."
       ]
     },
     {

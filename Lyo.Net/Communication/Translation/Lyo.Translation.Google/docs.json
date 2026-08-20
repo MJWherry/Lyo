@@ -2,8 +2,8 @@
   "id": "Lyo.Translation.Google",
   "name": "Lyo.Translation.Google",
   "area": "Communication",
-  "tagline": "Google Translate implementation of `ITranslationService` for the Lyo stack. `GoogleTranslationService` extends `TranslationServiceBase` and talks to the Google Cloud Translation v2 REST API over HTTP.",
-  "description": "Google Translate implementation of `ITranslationService` for the Lyo stack. `GoogleTranslationService`\nextends `TranslationServiceBase` and talks to the Google Cloud Translation v2 REST API over HTTP.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
+  "tagline": "Google Cloud Translation v2 implementation of `ITranslationService`. `GoogleTranslationService` extends `TranslationServiceBase` and calls the REST API over HTTP.",
+  "description": "Google Cloud Translation v2 implementation of `ITranslationService`. `GoogleTranslationService`\nextends `TranslationServiceBase` and calls the REST API over HTTP.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
   "features": [],
   "examples": [
     {
@@ -17,8 +17,8 @@
       "type": "list",
       "title": "Dependency injection",
       "items": [
-        "`AddGoogleTranslationService(Action<GoogleTranslationOptions> configure)` — inline configuration.",
-        "`AddGoogleTranslationService(GoogleTranslationOptions options)` — pre-built options instance."
+        "`AddGoogleTranslationService(Action<GoogleTranslationOptions> configure)` takes inline configuration.",
+        "`AddGoogleTranslationService(GoogleTranslationOptions options)` takes a pre-built options instance."
       ]
     },
     {
@@ -35,13 +35,13 @@
           "`ApiKey`",
           "`string?`",
           "`null`",
-          "Google Cloud API key. Required by `TranslateCoreAsync` — the service throws when missing."
+          "Google Cloud API key. Required by `TranslateCoreAsync`. The service throws when it is missing."
         ],
         [
           "`ProjectId`",
           "`string?`",
           "`null`",
-          "GCP project id (used when integrating with service-account-style auth)."
+          "GCP project id, used with service-account auth."
         ],
         [
           "`ServiceAccountJsonPath`",
@@ -61,7 +61,7 @@
     },
     {
       "type": "table",
-      "title": "Behaviour notes",
+      "title": "Behavior notes",
       "headers": [
         "Area",
         "Detail"
@@ -77,7 +77,7 @@
         ],
         [
           "Detection",
-          "`TranslateCoreAsync` surfaces the API's `detectedSourceLanguage` via `LanguageCodeInfo.FromISO639_1` when present."
+          "`TranslateCoreAsync` maps the API's `detectedSourceLanguage` through `LanguageCodeInfo.FromISO639_1` when present."
         ],
         [
           "Metrics",
@@ -85,7 +85,7 @@
         ],
         [
           "Disposal",
-          "The HTTP client created by the service is disposed by `Dispose`; an externally-supplied `HttpClient` is also disposed when passed in, so prefer injecting a long-lived client via DI and letting the consumer manage its lifetime."
+          "`Dispose` disposes the HTTP client the service created. An externally supplied `HttpClient` is also disposed when passed in, so prefer injecting a long-lived client via DI and letting the consumer manage its lifetime."
         ]
       ]
     }

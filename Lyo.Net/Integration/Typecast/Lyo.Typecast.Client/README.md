@@ -54,15 +54,15 @@ Extends `ApiClientOptions`, so it inherits the standard HTTP transport knobs (`B
 | `BaseUrl` | Defaults to `https://api.typecast.ai`. |
 | `SectionName` | `"TypecastClient"`. Used by `AddTypecastClientFromConfiguration` as the default section. |
 
-JSON is serialized with snake_case naming, case-insensitive read, and `WhenWritingNull` ignore — matching Typecast's API.
+JSON is serialized with snake_case naming, case-insensitive read, and `WhenWritingNull` ignore, matching Typecast's API.
 
-## `TypecastClient` — `TextToSpeechManager`
+## `TypecastClient` `TextToSpeechManager`
 
 | Method | Endpoint | Returns |
 | ----------------------------------------------------------- | ------------------------- | ---------------------------- |
 | `SynthesizeAsync(TypecastTtsRequest request, ct = default)` | `POST /v1/text-to-speech` | `byte[]` (WAV or MP3 audio). |
 
-## `TypecastClient` — `VoiceManager`
+## `TypecastClient` `VoiceManager`
 
 | Method | Endpoint | Returns |
 | ------------------------------------------------------------- | -------------------------- | ---------------------------------- |
@@ -71,12 +71,12 @@ JSON is serialized with snake_case naming, case-insensitive read, and `WhenWriti
 
 ## Request models
 
-- `TypecastTtsRequest` (extends `Lyo.Tts.Models.TtsRequest`) — `VoiceId`, `Text`, `Model` (defaults to `TypecastModel.SsfmV30`), `Language` (`LanguageCodeInfo`, serialised as ISO 639-3), `Prompt`, `Output`, `Seed`, computed `AudioFormat`.
-- `Prompt` — emotion / style settings (including the `"smart"` mode with optional `previous_text` / `next_text` context).
-- `OutputSettings` — volume / pitch / tempo / audio format.
-- `VoiceListReq` — optional `Model`, `Gender`, `Age`, `UseCases` filters.
-- Enums under `Enums/` — `Gender`, `AgeGroup`, `TypecastModel`.
-- Response models under `Models/Voices/Response/` — `Voice`, `VoiceModel`.
+- **`TypecastTtsRequest`.** Extends `Lyo.Tts.Models.TtsRequest`. Fields: `VoiceId`, `Text`, `Model` (defaults to `TypecastModel.SsfmV30`), `Language` (`LanguageCodeInfo`, serialized as ISO 639-3), `Prompt`, `Output`, `Seed`, computed `AudioFormat`.
+- **`Prompt`.** emotion / style settings (including the `"smart"` mode with optional `previous_text` / `next_text` context).
+- **`OutputSettings`.** volume / pitch / tempo / audio format.
+- **`VoiceListReq`.** optional `Model`, `Gender`, `Age`, `UseCases` filters.
+- **Enums under `Enums/`.** `Gender`, `AgeGroup`, `TypecastModel`.
+- **Response models under `Models/Voices/Response/`.** `Voice`, `VoiceModel`.
 
 ## `TypecastTtsRequestBuilder`
 
@@ -113,22 +113,22 @@ var audio = await client.TextToSpeech.SynthesizeAsync(request, ct);
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Api.Client` — (direct, lyo)
-- `Lyo.Tts.Models` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (direct, microsoft)
-- `Lyo.Api.Models` — (transitive, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Diagnostic` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.PackageMetadata` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft)
+- `Lyo.Api.Client` (direct, lyo)
+- `Lyo.Tts.Models` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

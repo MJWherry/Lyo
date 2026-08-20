@@ -1,6 +1,6 @@
 # Lyo.Authentication.Web.Components.Wasm
 
-Blazor WebAssembly host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Implements the same login / debug / profile pages over a **pure-browser** auth flow — no consumer-side server, no HttpOnly cookie. Tokens live in `Blazored.LocalStorage` and the browser talks directly to the Lyo API.
+Blazor WebAssembly host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Implements the same login / debug / profile pages over a pure-browser auth flow. No consumer-side server, no HttpOnly cookie. Tokens live in `Blazored.LocalStorage` and the browser talks directly to the Lyo API.
 
 ## Examples
 
@@ -73,15 +73,15 @@ browser ── POST /auth/handoff/exchange { code } ──► API
 | `WasmAuthSignInLauncher` | `IAuthSignInLauncher` implementation. Sign-in 302s to the API; sign-out revokes the refresh token and clears local state. |
 | `WasmAuthUserClient` | `IAuthUserClient` implementation against `/auth/me` and `/auth/users/{id}`. |
 | `WasmAuthSessionAccessor` | `IAuthSessionAccessor` implementation used by the debug page. |
-| `Pages/WasmAuthHandoffPage` | Route `/auth/handoff` — redeems the `?lyo_handoff=...` code and stores the tokens. |
+| `Pages/WasmAuthHandoffPage` | Route `/auth/handoff`. Redeems the `?lyo_handoff=...` code and stores the tokens. |
 
 ## Quick start
 
-In the consuming WASM host's `Program.cs`: `appsettings.json` (served from the WASM client's `wwwroot/`): On the API side, the WASM origin **must** appear in `LyoOidcBff.AllowedReturnOrigins`:
+Register in the consuming WASM host's `Program.cs`. Serve `appsettings.json` from the WASM client's `wwwroot/`. On the API side, the WASM origin must appear in `LyoOidcBff.AllowedReturnOrigins`:
 
 ## Outbound API calls
 
-Add the delegating handler to any of your own typed clients so they automatically carry the bearer:
+Add the delegating handler to any of your own typed clients so they carry the bearer:
 
 ```csharp
 builder.Services
@@ -89,52 +89,59 @@ builder.Services
     .AddHttpMessageHandler<WasmAuthDelegatingHandler>();
 ```
 
-## Caveats vs. the Server adapter
+## Caveats vs. the server adapter
 
-- Tokens live in **LocalStorage** on the browser. That's the standard SPA trade-off; XSS hijacks the session. If you can't accept that, use the Server (BFF) adapter instead, which stores tokens server-side and only puts a data-protected session id in the cookie.
-- No cross-tab broadcast: a sign-out in one tab doesn't drop the session in another. (Possible follow-up via the LocalStorage `storage` event.)
+- Tokens live in LocalStorage on the browser. That is the standard SPA trade-off. XSS hijacks the session. If you cannot accept that, use the Server (BFF) adapter instead, which stores tokens server-side and only puts a data-protected session id in the cookie.
+- No cross-tab broadcast: a sign-out in one tab does not drop the session in another. Possible follow-up via the LocalStorage `storage` event.
 - The handoff exchange happens in the browser (`fetch`), so the WASM origin must be in the API's allow-list.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Authentication.Web.Components` — (direct, lyo)
-- `Lyo.Diagnostic` — (direct, lyo)
-- `Blazored.LocalStorage` `4.5.0` — (direct, third-party)
-- `Microsoft.AspNetCore.Components.WebAssembly` `10.0.5` — (direct, microsoft)
-- `Lyo.Api.Client` — (transitive, lyo)
-- `Lyo.Api.Models` — (transitive, lyo)
-- `Lyo.Authentication.Models` — (transitive, lyo)
-- `Lyo.Common` — (transitive, lyo)
-- `Lyo.DataTable.Models` — (transitive, lyo)
-- `Lyo.DateAndTime` — (transitive, lyo)
-- `Lyo.Encryption` — (transitive, lyo)
-- `Lyo.Exceptions` — (transitive, lyo)
-- `Lyo.Hashing` — (transitive, lyo)
-- `Lyo.IO.Temp` — (transitive, lyo)
-- `Lyo.KeyStore` — (transitive, lyo)
-- `Lyo.Metrics` — (transitive, lyo)
-- `Lyo.PackageMetadata` — (transitive, lyo)
-- `Lyo.Query.Models` — (transitive, lyo)
-- `Lyo.Result` — (transitive, lyo)
-- `Lyo.Streams` — (transitive, lyo)
-- `Lyo.Validation` — (transitive, lyo)
-- `Lyo.Web.Components` — (transitive, lyo)
-- `BouncyCastle.Cryptography` `2.6.2` — (transitive, third-party, netstandard2.0)
-- `Konscious.Security.Cryptography.Argon2` `1.3.1` — (transitive, third-party)
-- `Microsoft.AspNetCore.Components.Authorization` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft, net10.0, netstandard2.0)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Http` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
-- `MudBlazor` `9.3` — (transitive, third-party)
-- `System.Buffers` `4.6.1` — (transitive, microsoft, netstandard2.0)
-- `System.ComponentModel.Annotations` `5.0.0` — (transitive, microsoft)
-- `System.IO.Hashing` `10.0.5` — (transitive, microsoft, net10.0)
-- `System.Memory` `4.6.3` — (transitive, microsoft, netstandard2.0)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
-- `System.Threading.Tasks.Extensions` `4.6.3` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Authentication.Web.Components` (direct, lyo)
+- `Lyo.Diagnostic` (direct, lyo)
+- `Blazored.LocalStorage` `4.5.0` (direct, third-party)
+- `Microsoft.AspNetCore.Components.WebAssembly` `10.0.5` (direct, microsoft)
+- `Lyo.Api.Client` (transitive, lyo)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Authentication.Models` (transitive, lyo)
+- `Lyo.Cache` (transitive, lyo)
+- `Lyo.Common` (transitive, lyo)
+- `Lyo.Compression` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Encryption` (transitive, lyo)
+- `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
+- `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.KeyStore` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.Query` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Lyo.Streams` (transitive, lyo)
+- `Lyo.Validation` (transitive, lyo)
+- `Lyo.Web.Components` (transitive, lyo)
+- `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
+- `EasyCompressor` `2.1.0` (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
+- `Microsoft.AspNetCore.Components.Authorization` `10.0.5` (transitive, microsoft)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Caching.Memory` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `MudBlazor` `9.3` (transitive, third-party)
+- `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
+- `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

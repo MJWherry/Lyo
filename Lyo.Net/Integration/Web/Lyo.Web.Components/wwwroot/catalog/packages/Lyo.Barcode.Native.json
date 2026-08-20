@@ -2,16 +2,16 @@
   "id": "Lyo.Barcode.Native",
   "name": "Lyo.Barcode.Native",
   "area": "Data",
-  "tagline": "Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency.",
-  "description": "Native **`IBarcodeService`** implementation for **`Lyo.Barcode`** with no third-party barcode generator dependency. Encodes **Code 128** (subset B, ASCII 32–127), rasterizes to **BMP** (SixLabors.ImageSharp) or **SVG**, optionally renders a **human-readable caption** under the bars (font-backed), and decodes images via **`BarcodeZxingRead`** (ZXing.Net + ImageSharp) through **`ReadFromImageAsync`**.",
+  "tagline": "IBarcodeService implementation for Lyo.Barcode. No third-party barcode generator.",
+  "description": "IBarcodeService implementation for Lyo.Barcode. No third-party barcode generator. Encodes Code 128 (subset B, ASCII 32 to 127), rasterizes to BMP (SixLabors.ImageSharp) or SVG, optionally draws a human-readable caption under the bars, and decodes images via BarcodeZxingRead (ZXing.Net and ImageSharp) through ReadFromImageAsync.",
   "features": [
-    "**Encode:** Code 128 subset B end-to-end (start/checksum/stop computed in `Code128Encoder`); other symbologies return `BARCODE_UNSUPPORTED_SYMBOLOGY`.",
-    "**Render:** **BMP** (`BarcodeFormat.Bmp`) and **SVG** (`BarcodeFormat.Svg`) via `BarcodeImageRenderer`.",
-    "**Quiet zone:** clamped to at least the ISO minimum (10 modules).",
-    "**Caption:** when `BarcodeOptions.ShowHumanReadableTextBelow` is set, BMP output draws the payload below the bars using `BarcodeBmpCaptionRenderer` (`SixLabors.Fonts` / `SixLabors.ImageSharp.Drawing`).",
-    "**Border:** `BarcodeOptions.ShowBorder` + `BorderWidthPixels` + `BorderColorHex` add a frame; output grows by `2 × BorderWidthPixels` on each axis. SVG draws an outer fill plus inner background rect; BMP composites strips. Width is clamped between `BarcodeServiceOptions.MinBorderWidthPixels` and `MaxBorderWidthPixels` (defaults **1–64**). `BorderColorHex` must be `#RGB` or `#RRGGBB`.",
-    "**Decode:** `ReadFromImageAsync(byte[])` delegates to **`BarcodeZxingRead.Decode`** (Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix).",
-    "**Metrics / logging / cancellation:** when `BarcodeServiceOptions.EnableMetrics` is true and an `IMetrics` is registered, generation timings and success/failure/cancellation counters under `Lyo.Barcode.Constants.Metrics` are emitted."
+    "Code 128 subset B end-to-end. Start, checksum, and stop are computed in Code128Encoder. Other symbologies return BARCODE_UNSUPPORTED_SYMBOLOGY.",
+    "BMP (BarcodeFormat.Bmp) and SVG (BarcodeFormat.Svg) via BarcodeImageRenderer.",
+    "Quiet zone is clamped to at least the ISO minimum of 10 modules.",
+    "When BarcodeOptions.ShowHumanReadableTextBelow is set, BMP output draws the payload below the bars using BarcodeBmpCaptionRenderer (SixLabors.Fonts / SixLabors.ImageSharp.Drawing).",
+    "BarcodeOptions.ShowBorder, BorderWidthPixels, and BorderColorHex add a frame. Output grows by 2 × BorderWidthPixels on each axis. SVG draws an outer fill plus inner background rect. BMP composites strips. Width is clamped between BarcodeServiceOptions.MinBorderWidthPixels and MaxBorderWidthPixels (defaults 1 to 64). BorderColorHex must be #RGB or #RRGGBB.",
+    "ReadFromImageAsync(byte[]) delegates to BarcodeZxingRead.Decode (Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix).",
+    "When BarcodeServiceOptions.EnableMetrics is true and an IMetrics is registered, generation timings and success, failure, and cancellation counters under Lyo.Barcode.Constants.Metrics are emitted."
   ],
   "examples": [
     {
@@ -30,8 +30,8 @@
       "type": "list",
       "title": "DI registration",
       "items": [
-        "`AddNativeBarcodeService(BarcodeServiceOptions options)` — explicit options instance.",
-        "`AddNativeBarcodeServiceFromConfiguration(IConfiguration, sectionName?)` — binds `BarcodeServiceOptions` from the **`BarcodeService`** section by default (`BarcodeServiceOptions.SectionName`); skipped if the options were already registered."
+        "AddNativeBarcodeService(BarcodeServiceOptions options). Options instance.",
+        "AddNativeBarcodeServiceFromConfiguration(IConfiguration, sectionName?). Binds BarcodeServiceOptions from the BarcodeService section by default (BarcodeServiceOptions.SectionName). Skipped if the options were already registered."
       ]
     }
   ],

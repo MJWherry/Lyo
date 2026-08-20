@@ -4,14 +4,14 @@ A thin wrapper around Polly for resilience pipelines with configuration-from-app
 
 ## Features
 
-- **Default pipelines** – `lyo-basic` and `lyo-http` with sensible retry and timeout; use without config
-- Load resilience pipelines from `appsettings.json` (or any `IConfiguration` source)
-- Support for Retry, Timeout, and CircuitBreaker strategies
-- Built-in logging for retries, timeouts, and circuit breaker state changes
-- **Resilience for actions** – `IResilientExecutor` uses default pipeline by default; specify pipeline name to override
-- **Result-type support** – pass `isSuccess` predicate to retry when methods return failed Result instead of throwing
-- **Resilience for HttpClient** – `AddLyoResilienceHandler()` uses default; or pass pipeline name
-- Integrates with `Polly.Extensions` and `ResiliencePipelineProvider<string>` for DI
+- **Default pipelines.** `lyo-basic` and `lyo-http` with retry and timeout. Usable without config.
+- Load resilience pipelines from `appsettings.json` (or any `IConfiguration` source).
+- Retry, Timeout, and CircuitBreaker strategies.
+- Logging for retries, timeouts, and circuit breaker state changes.
+- **Actions.** `IResilientExecutor` uses the default pipeline. Pass a pipeline name to override.
+- **Result types.** Pass an `isSuccess` predicate to retry when methods return a failed Result instead of throwing.
+- **HttpClient.** `AddLyoResilienceHandler()` uses the default pipeline, or pass a pipeline name.
+- Wires `Polly.Extensions` and `ResiliencePipelineProvider<string>` into DI.
 
 ## Examples
 
@@ -153,8 +153,8 @@ public class MyService
 
 ## Configuration
 
-- **Nested under service options** (recommended) – resilience config lives in a `Resilience` subsection of your options (e.g. `TwilioOptions:Resilience`). Use `AddLyoResiliencePipelinesFromOptions("TwilioOptions")`.
-- **Standalone section** – use `AddLyoResiliencePipelines("Lyo:ResiliencePipelines")` or any custom section path.
+- **Nested under service options** (recommended). Resilience config lives in a `Resilience` subsection of your options (e.g. `TwilioOptions:Resilience`). Use `AddLyoResiliencePipelinesFromOptions("TwilioOptions")`.
+- **Standalone section.** Use `AddLyoResiliencePipelines("Lyo:ResiliencePipelines")` or any custom section path.
 
 ## Strategy subsections
 
@@ -169,9 +169,9 @@ public class MyService
 Apply resilience at **one level only** to avoid exponential retries:
 
 | Use case | Use this | Do NOT |
-| -------------------------------- | ------------------------------------------- | ---------------------------------------------------------- |
-| **HTTP calls** | `AddLyoResilienceHandler` on the HttpClient | `IResilientExecutor` around code that uses that HttpClient |
-| **Non-HTTP** (DB, SDK, file I/O) | `IResilientExecutor` | — |
+| ---------------------------- | ------------------------------------------- | ---------------------------------------------------------- |
+| HTTP calls | `AddLyoResilienceHandler` on the HttpClient | `IResilientExecutor` around code that uses that HttpClient |
+| Non-HTTP (DB, SDK, file I/O) | `IResilientExecutor` | |
 
 Wrapping HttpClient-using code with `IResilientExecutor` when that HttpClient already has `AddLyoResilienceHandler` causes nested resilience: each outer retry can trigger multiple
 inner retries, leading to exponential retry counts.
@@ -204,19 +204,19 @@ All metrics include a `pipeline` tag with the pipeline name.
 
 ## Logging
 
-- **Retry**: Warning on each retry with attempt number and delay
-- **Timeout**: Warning when an operation times out
-- **CircuitBreaker**: Warning when opened; Info when closed or half-opened
+- **Retry.** Warning on each retry with attempt number and delay.
+- **Timeout.** Warning when an operation times out.
+- **CircuitBreaker.** Warning when opened. Info when closed or half-opened.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Lyo.Metrics` — (direct, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Http` `10.0.5` — (direct, microsoft)
-- `Polly` `8.7.0` — (direct, third-party)
-- `Polly.Extensions` `8.7.0` — (direct, third-party)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (transitive, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (transitive, microsoft)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
+- `Polly` `8.7.0` (direct, third-party)
+- `Polly.Extensions` `8.7.0` (direct, third-party)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)

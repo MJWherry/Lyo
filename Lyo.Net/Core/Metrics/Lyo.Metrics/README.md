@@ -1,17 +1,17 @@
 # Lyo.Metrics
 
-A flexible, thread-safe metrics library for .NET applications with support for multiple metric types and implementations.
+Thread-safe counters, gauges, histograms, timings, errors, and events, with in-memory, OpenTelemetry, and null implementations.
 
 ## Features
 
-- **Thread-Safe**: Built with `ConcurrentDictionary` and proper locking mechanisms
-- **Multiple Metric Types**: Counters, Gauges, Histograms, Timings, Errors, Events
-- **Multiple Implementations**: In-memory, OpenTelemetry, and Null (for testing)
-- **Memory Efficient**: Bounded collections, automatic cleanup, configurable limits
-- **Production Ready**: Comprehensive error handling, overflow protection, resource management
-- **Flexible Configuration**: Sampling, tag validation, cleanup intervals
-- **Dependency Injection**: First-class support for .NET DI containers
-- **Type Flexible**: Accepts `IConvertible` for numeric values (int, long, float, decimal, etc.)
+- **Concurrency.** `ConcurrentDictionary` plus per-key locks.
+- **Metric types.** Counters, gauges, histograms, timings, errors, events.
+- **Implementations.** `MetricsService` (in-memory), `OpenTelemetryMetrics`, and `NullMetrics` for tests.
+- **Bounds.** `MaxEventQueueSize`, `MaxHistogramValues`, and key-lock cleanup on `KeyLockCleanupIntervalMinutes`.
+- **Safety.** Overflow protection on counters and bounded collections.
+- **Options.** `SamplingRate`, `ValidateTags`, `InvalidTagCharacters`, `ThrowOnConversionErrors`.
+- **DI.** `AddLyoMetrics`, `AddLyoMetricsFromConfiguration`, `AddNullMetrics`.
+- **Values.** Accepts `IConvertible` numbers (int, long, float, decimal, and similar).
 
 ## Examples
 
@@ -53,7 +53,7 @@ catch (Exception ex)
 }
 ```
 
-### Dependency Injection
+### Dependency injection
 
 ```csharp
 using Lyo.Metrics;
@@ -122,7 +122,7 @@ var options = new MetricsOptions
 var metrics = new MetricsService(options);
 ```
 
-### Dependency Injection Configuration
+### DI configuration
 
 ```csharp
 // Basic registration
@@ -150,7 +150,7 @@ services.AddLyoMetricsFromConfiguration(configuration);
 services.AddLyoMetricsFromConfiguration(configuration, configSectionName: "MyMetrics");
 ```
 
-### ASP.NET Core Integration
+### ASP.NET Core
 
 ```csharp
 public class Startup
@@ -192,7 +192,7 @@ public class MyController : ControllerBase
 }
 ```
 
-### Background Service Integration
+### Background service
 
 ```csharp
 public class MyBackgroundService : BackgroundService
@@ -257,7 +257,7 @@ metrics.RecordEvent("file.uploaded", fileSizeBytes);
 metrics.RecordEvent("user.login", tags: [("provider", "google")]);
 ```
 
-### Get Counter Value
+### Get counter value
 
 ```csharp
 var metrics = new MetricsService();
@@ -267,7 +267,7 @@ metrics.IncrementCounter("requests.total", tags: [("method", "GET")]);
 var count = metrics.GetCounterValue("requests.total", tags: [("method", "GET")]);
 ```
 
-### Get Gauge Value
+### Get gauge value
 
 ```csharp
 metrics.RecordGauge("cache.size", 1500);
@@ -279,7 +279,7 @@ if (size.HasValue)
 }
 ```
 
-### Get Histogram
+### Get histogram
 
 ```csharp
 metrics.RecordHistogram("response.size", 1024);
@@ -296,7 +296,7 @@ if (histogram != null)
 }
 ```
 
-### Get Events
+### Get events
 
 ```csharp
 // Get events (default: last 1000)
@@ -309,13 +309,13 @@ foreach (var evt in events)
 }
 ```
 
-### Clear Metrics
+### Clear metrics
 
 ```csharp
 metrics.Clear(); // Clears all counters, gauges, histograms, and events
 ```
 
-### Export Snapshot
+### Export snapshot
 
 ```csharp
 var snapshot = metrics.Export();
@@ -329,7 +329,7 @@ Console.WriteLine($"Histograms: {snapshot.Histograms.Count}");
 var json = JsonSerializer.Serialize(snapshot);
 ```
 
-### 1. Use Meaningful Metric Names
+### Meaningful metric names
 
 ```csharp
 // Good
@@ -341,7 +341,7 @@ metrics.IncrementCounter("c1");
 metrics.RecordGauge("x");
 ```
 
-### 2. Use Tags for Dimensions
+### Tags for dimensions
 
 ```csharp
 // Good - use tags for filtering/grouping
@@ -352,7 +352,7 @@ metrics.IncrementCounter("requests.get.200.users");
 metrics.IncrementCounter("requests.get.200.products");
 ```
 
-### 4. Use Sampling for High-Volume Metrics
+### Sampling for high-volume metrics
 
 ```csharp
 var options = new MetricsOptions
@@ -361,7 +361,7 @@ var options = new MetricsOptions
 };
 ```
 
-### 5. Use Timers for Operations
+### Timers for operations
 
 ```csharp
 // Good - automatic timing
@@ -383,7 +383,7 @@ finally
 }
 ```
 
-### 6. Handle Errors Gracefully
+### Record errors
 
 ```csharp
 try
@@ -397,9 +397,9 @@ catch (Exception ex)
 }
 ```
 
-## Metric Types — Counters
+## Counters
 
-Counters are monotonic values that only increase (or decrease). They're perfect for tracking totals, rates, and
+`IncrementCounter` and `DecrementCounter` record monotonic totals. Use them for request counts, bytes processed, or
 occurrences.
 
 ```csharp
@@ -416,9 +416,9 @@ metrics.DecrementCounter("items.in_queue", 5);
 metrics.IncrementCounter("requests.total", tags: [("method", "POST"), ("endpoint", "/api/users")]);
 ```
 
-## Metric Types — Gauges
+## Gauges
 
-Gauges represent a current value at a point in time. They're perfect for tracking current state like cache size, queue
+`RecordGauge` stores the last value for a name and tag set. Use it for cache size, queue
 length, or memory usage.
 
 ```csharp
@@ -432,10 +432,10 @@ metrics.RecordGauge("memory.usage_mb", 512.5);
 metrics.RecordGauge("queue.length", 42, tags: [("queue_name", "email_queue")]);
 ```
 
-## Metric Types — Histograms
+## Histograms
 
-Histograms track the distribution of values. They're perfect for tracking response times, sizes, or any numeric
-distribution.
+`RecordHistogram` appends a numeric sample to a bounded value list. Use it for response sizes or other numeric
+distributions.
 
 ```csharp
 // Record a value
@@ -449,7 +449,7 @@ metrics.RecordHistogram("response.size_bytes", 4096);
 metrics.RecordHistogram("response.size_bytes", 2048, tags: [("endpoint", "/api/data")]);
 ```
 
-## Metric Types — Timings
+## Timings
 
 Timings are a special case of histograms for measuring duration. Use the `Timer` class for automatic timing.
 
@@ -477,13 +477,13 @@ using (metrics.StartTimer("database.query", tags: [("table", "users")]))
 
 Configure the behavior of `MetricsService`:
 
-## Dependency Injection Configuration
+## DI configuration
 
 The `IServiceCollection` registrations live in `Lyo.Metrics.Extensions` and cover: parameterless, `Action<MetricsOptions>`, `Action<IServiceProvider, MetricsOptions>`, `Func<IServiceProvider, MetricsOptions>`, and `AddLyoMetricsFromConfiguration(IConfiguration, string configSectionName = "MetricsOptions")`. `AddNullMetrics()` registers `NullMetrics` for the same `IMetrics` contract.
 
-## Implementations — MetricsService (In-Memory)
+## MetricsService (in-memory)
 
-The default implementation that stores metrics in memory. Perfect for single-instance applications or development.
+Default `IMetrics` implementation. Stores counters, gauges, histograms, and events in process memory.
 
 ```csharp
 var metrics = new MetricsService();
@@ -491,25 +491,24 @@ var metrics = new MetricsService();
 var metrics = new MetricsService(new MetricsOptions { ... });
 ```
 
-**Features:**
+**Behavior.**
 
-- Fast, in-memory storage
-- Thread-safe operations
+- In-memory storage
+- Thread-safe recorders
 - Bounded collections
-- Automatic cleanup
-- Export to snapshot
+- Key-lock cleanup on the configured interval
+- `Export()` snapshot
 
-**Use when:**
+**When to use.**
 
-- Single-instance applications
-- Development/testing
-- Simple metrics requirements
-- No need for distributed observability
+- One process
+- Development or tests
+- No remote exporter
 
-## Implementations — OpenTelemetryMetrics
+## OpenTelemetryMetrics
 
-Implementation that exports metrics to OpenTelemetry. Perfect for production deployments requiring distributed
-observability.
+`IMetrics` implementation that exports through OpenTelemetry. Use it when you scrape Prometheus, send OTLP, or otherwise
+collect from multiple processes.
 
 ```csharp
 using Lyo.Metrics.OpenTelemetry;
@@ -525,25 +524,21 @@ services.AddLyoMetricsWithOpenTelemetry("MyApp.Metrics", configureMeterProvider:
 });
 ```
 
-**Features:**
+**Behavior.**
 
-- OpenTelemetry standard
-- Multiple exporters (Console, Prometheus, OTLP, etc.)
-- Distributed observability
-- Production-grade
+- OpenTelemetry instruments
+- Console, Prometheus, and OTLP exporters
 
-**Use when:**
+**When to use.**
 
-- Production deployments
-- Multiple instances/services
-- Integration with monitoring systems (Prometheus, Grafana, etc.)
-- Need for distributed tracing/observability
+- Multiple instances
+- Prometheus, Grafana, or an OTLP collector
 
-See [Lyo.Metrics.OpenTelemetry README](../Lyo.Metrics.OpenTelemetry/README.md) for more details.
+See [Lyo.Metrics.OpenTelemetry README](../Lyo.Metrics.OpenTelemetry/README.md).
 
-## Implementations — NullMetrics
+## NullMetrics
 
-No-op implementation for testing or when metrics are optional. The class is a singleton (`NullMetrics.Instance`) with a private constructor; use the DI extension or
+No-op `IMetrics` for tests or when recording is optional. The class is a singleton (`NullMetrics.Instance`) with a private constructor. Use the DI extension or
 the static instance directly.
 
 ```csharp
@@ -552,17 +547,17 @@ services.AddNullMetrics();
 IMetrics metrics = NullMetrics.Instance;
 ```
 
-**Features:**
+**Behavior.**
 
-- Zero overhead
+- No recording
 - No exceptions
-- `StartTimer` returns `default(MetricsTimer)` — disposal is a no-op, so `using (metrics.StartTimer(...))` allocates nothing
+- `StartTimer` returns `default(MetricsTimer)`. Disposal is a no-op, so `using (metrics.StartTimer(...))` allocates nothing.
 
-**Use when:**
+**When to use.**
 
-- Unit testing
+- Unit tests
 - Optional metrics
-- Disabling metrics without code changes
+- Turn recording off without changing call sites
 
 ## Statistics on histograms (`MathExtensions`)
 
@@ -596,7 +591,7 @@ var pearr = metrics.GetHistogramPearsonCorrelation(
                 "service_a.latency", "service_b.latency");
 ```
 
-## Best Practices — 3. Limit Tag Cardinality
+## Limit tag cardinality
 
 Avoid high-cardinality tags (like user IDs) that create too many unique metric combinations.
 
@@ -608,7 +603,7 @@ metrics.IncrementCounter("requests.total", tags: [("method", "GET"), ("status", 
 metrics.IncrementCounter("requests.total", tags: [("user_id", userId)]); // Thousands of unique values!
 ```
 
-## Thread Safety
+## Thread safety
 
 All implementations are thread-safe and can be used concurrently from multiple threads:
 
@@ -620,17 +615,17 @@ Parallel.ForEach(items, item =>
 });
 ```
 
-## Performance Considerations
+## Performance
 
-- **Sampling**: Use `SamplingRate < 1.0` for high-volume metrics
-- **Tag Cardinality**: Limit the number of unique tag combinations
-- **Histogram Size**: Configure `MaxHistogramValues` appropriately
-- **Event Queue**: Limit `MaxEventQueueSize` based on memory constraints
+- **Sampling.** Use `SamplingRate < 1.0` for high-volume metrics.
+- **Tag cardinality.** Limit unique tag combinations.
+- **Histogram size.** Set `MaxHistogramValues`.
+- **Event queue.** Set `MaxEventQueueSize` from available memory.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Exceptions` — (direct, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` — (direct, microsoft)
+- `Lyo.Exceptions` (direct, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)

@@ -2,22 +2,16 @@
 
 Run the Lyo BenchmarkDotNet suites or the xUnit test projects inside a container, in the background, with configurable CPU/memory limits.
 
-A single `run` service is driven by **`TARGET`**, which selects projects by group, exact name, or a list. The same `TARGET` decides both what the image **compiles** and what the
-container **runs**, so every image is lean — it only contains the projects you asked for. The source is baked in (multi-stage build copies the artifacts and warmed NuGet cache into
-the final .NET 10 SDK + python3 image), so the host source tree is **never** mounted for building and a container run can never write to your host `obj/bin` (no more broken
-`.slnx`). Notes:
+A single `run` service is driven by **`TARGET`**, which selects projects by group, exact name, or a list. The same `TARGET` decides both what the image **compiles** and what the container **runs**, so every image is lean. It only contains the projects you asked for. The source is baked in (multi-stage build copies the artifacts and warmed NuGet cache into the final .NET 10 SDK + python3 image), so the host source tree is **never** mounted for building and a container run can never write to your host `obj/bin` (no more broken `.slnx`). Notes:
 
-- `Tools/` apps (`Lyo.TestApi`, `Lyo.TestConsole`, `Lyo.Gateway`, ...) and the whole-solution build are never compiled — only the selected `*.Benchmarks` /
-  `*.Tests` projects (and their dependencies).
+- `Tools/` apps (`Lyo.TestApi`, `Lyo.TestConsole`, `Lyo.Gateway`, ...) and the whole-solution build are never compiled. Only the selected `*.Benchmarks` / `*.Tests` projects (and their dependencies).
 - The **Tesseract OCR native libs are installed automatically** only when a selected project needs them (the OCR test). No flag to set.
-- Source changes require a rebuild to take effect (`python3 scripts/docker/run.py
-  --build-only <target>`, or `docker compose build run`). Per-target images keep the build small.
-- The SDK is in the final image on purpose: BenchmarkDotNet compiles a small per-run executable, so the SDK is needed at runtime too.
+- Source changes require a rebuild to take effect (`python3 scripts/docker/run.py --build-only <target>`, or `docker compose build run`). Per-target images keep the build small.
+- The SDK is in the final image on purpose. BenchmarkDotNet compiles a small per-run executable, so the SDK is needed at runtime too.
 
 ## TARGET grammar
 
-`TARGET` is a space- or comma-separated list of tokens (see
-[`scripts/docker/resolve_targets.py`](../scripts/docker/resolve_targets.py)):
+`TARGET` is a space- or comma-separated list of tokens (see [`scripts/docker/resolve_targets.py`](../scripts/docker/resolve_targets.py)):
 
 | Token                            | Resolves to                                                                     |
 |----------------------------------|---------------------------------------------------------------------------------|
@@ -28,9 +22,7 @@ the final .NET 10 SDK + python3 image), so the host source tree is **never** mou
 | `'*.Benchmarks'`, `'Lyo.Lock.*'` | a glob over project file names (matches runnable `*.Tests`/`*.Benchmarks` only) |
 | `path/to/Foo.csproj`             | that exact csproj                                                               |
 
-Globs are shell wildcards matched against the project file name (`*`, `?`, `[...]`);
-`.csproj` is appended if you omit it. Quote them (`'*.Benchmarks'`) so your shell doesn't expand them before the runner sees them. To build a non-runnable library, pass its exact
-name or `path/to/Foo.csproj`.
+Globs are shell wildcards matched against the project file name (`*`, `?`, `[...]`). `.csproj` is appended if you omit it. Quote them (`'*.Benchmarks'`) so your shell doesn't expand them before the runner sees them. To build a non-runnable library, pass its exact name or `path/to/Foo.csproj`.
 
 ## Setup
 
@@ -89,17 +81,15 @@ docker logs -f <container-id>
 
 Mounted back to the host:
 
-- `docs/benchmarks/data/` — aggregated dashboard manifests (`encryption.json`, …)
-- `docs/benchmarks/history/` — timestamped snapshots for the portfolio Snapshot dropdown
+- `docs/benchmarks/data/` : aggregated dashboard manifests (`encryption.json`, …)
+- `docs/benchmarks/history/` : timestamped snapshots for the portfolio Snapshot dropdown
 
-After a benchmark run, `scripts/benchmarks/build_manifests.py` (invoked automatically)
-writes both, and the runner `chown`s them to `HOST_UID:HOST_GID`. Open
-`docs/benchmarks/index.html` or the portfolio `/benchmarks/<suite>` page.
+After a benchmark run, `scripts/benchmarks/build_manifests.py` (invoked automatically) writes both, and the runner `chown`s them to `HOST_UID:HOST_GID`. Open `docs/benchmarks/index.html` or the portfolio `/benchmarks/<suite>` page.
 
 Everything else stays inside the container and is discarded with `--rm`:
 
 - Per-suite raw `BenchmarkDotNet.Artifacts/` (consumed by the manifest builder before exit).
-- `dotnet test` results (`TestResults/`); pass/fail is reported via the exit code and `docker compose logs`.
+- `dotnet test` results (`TestResults/`). Pass/fail is reported via the exit code and `docker compose logs`.
 
 ## Configuration
 
@@ -120,12 +110,10 @@ Set in `.env` (see `.env.example` for the full list):
 
 ## Testcontainers / Docker-backed suites
 
-The host Docker socket is mounted (`/var/run/docker.sock`) so suites that use Testcontainers (`cache`, `query`, `lock` benchmarks and all `*.Postgres`/Redis tests) can spin up
-sibling Redis/Postgres containers.
+The host Docker socket is mounted (`/var/run/docker.sock`) so suites that use Testcontainers (`cache`, `query`, `lock` benchmarks and all `*.Postgres`/Redis tests) can spin up sibling Redis/Postgres containers.
 
 Caveats:
 
-- Sibling containers spawned via the socket run on the host and are **not**
-  bound by `CPU_LIMIT` / `MEM_LIMIT` (those constrain only the runner).
-- Constraining CPU changes absolute BenchmarkDotNet numbers; keep limits fixed for run-to-run comparability.
+- Sibling containers spawned via the socket run on the host and are **not** bound by `CPU_LIMIT` / `MEM_LIMIT` (those constrain only the runner).
+- Constraining CPU changes absolute BenchmarkDotNet numbers. Keep limits fixed for run-to-run comparability.
 - To run fully isolated without Docker-backed work, pass `--no-docker` (benchmark suites only run their in-process classes).

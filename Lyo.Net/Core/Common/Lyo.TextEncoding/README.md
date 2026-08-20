@@ -1,15 +1,15 @@
 # Lyo.TextEncoding
 
-Span-first binary↔text codecs and character-set helpers for buffers, streams, and files. Two injectable services — **`IBinaryEncodingService`** and **`ICharsetEncodingService`** — plus static **`BinaryEncoding`** / **`CharsetEncoding`**. Namespace is **`Lyo.TextEncoding`** so **`System.Text.Encoding`** needs no alias. Code pages via **`System.Text.Encoding.CodePages`**. Hex casing uses **`TextLetterCase`** from **`Lyo.Common`**.
+Span-first binary-to-text codecs and character-set helpers for buffers, streams, and files. Two injectable services, `IBinaryEncodingService` and `ICharsetEncodingService`, plus static `BinaryEncoding` / `CharsetEncoding`. Namespace is `Lyo.TextEncoding` so `System.Text.Encoding` needs no alias. Code pages via `System.Text.Encoding.CodePages`. Hex casing uses `TextLetterCase` from `Lyo.Common`.
 
 ## Features
 
-- **`IBinaryEncodingService` / `BinaryEncoding`** — Base64, Base64Url, Hex; streaming decode; MIME line wrap; PEM helpers; **`TryEncode` / `TryDecode`**
-- **`ICharsetEncodingService` / `CharsetEncoding`** — CodePages resolve, sync/async stream convert, **`EmitBom`**, **`CharsetConvertingStream`**
-- **`CharsetInfo`** — curated well-known catalog + **`Custom(...)`**; **`WellKnown`** for pickers
-- **Detection** — BOM, UTF-8 heuristic, text declarations; non-seekable **`ConsumedPrefix`** + **`CreateReplayStream`**
-- **Fallbacks** — optional **`EncoderFallback` / `DecoderFallback`** (clones BCL encodings; never mutates singletons)
-- **DI** — **`AddLyoBinaryEncoding`**, **`AddLyoCharsetEncoding`**, **`AddLyoTextEncoding`**
+- **`IBinaryEncodingService` / `BinaryEncoding`.** Base64, Base64Url, Hex. Streaming decode, MIME line wrap, PEM helpers, `TryEncode` / `TryDecode`.
+- **`ICharsetEncodingService` / `CharsetEncoding`.** CodePages resolve, sync/async stream convert, `EmitBom`, `CharsetConvertingStream`.
+- **`CharsetInfo`.** Well-known catalog plus `Custom(...)`. `WellKnown` for pickers.
+- **Detection.** BOM, UTF-8 heuristic, text declarations. Non-seekable `ConsumedPrefix` + `CreateReplayStream`.
+- **Fallbacks.** Optional `EncoderFallback` / `DecoderFallback`. Clones BCL encodings. Never mutates singletons.
+- **DI.** `AddLyoBinaryEncoding`, `AddLyoCharsetEncoding`, `AddLyoTextEncoding`.
 
 ## Examples
 
@@ -56,10 +56,10 @@ converting.Write(src);
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common` — (direct, lyo)
-- `Lyo.Exceptions` — (direct, lyo)
-- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` — (direct, microsoft)
-- `System.Memory` `4.6.3` — (direct, microsoft, netstandard2.0)
-- `System.Text.Encoding.CodePages` `10.0.5` — (direct, microsoft)
-- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` — (transitive, microsoft)
-- `System.Text.Json` `10.0.5` — (transitive, microsoft, netstandard2.0)
+- `Lyo.Common` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `System.Memory` `4.6.3` (direct, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

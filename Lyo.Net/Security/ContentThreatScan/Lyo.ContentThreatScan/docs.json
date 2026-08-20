@@ -2,8 +2,8 @@
   "id": "Lyo.ContentThreatScan",
   "name": "Lyo.ContentThreatScan",
   "area": "Security",
-  "tagline": "Heuristic scanning and numeric disposition scoring for **readable text** payloads (scripts, markup, suspicious SQL-ish patterns).",
-  "description": "Heuristic scanning and numeric disposition scoring for **readable text** payloads (scripts, markup, suspicious SQL-ish patterns).",
+  "tagline": "Heuristic scanning and numeric disposition scoring for readable text payloads: scripts, markup, suspicious SQL-ish patterns.",
+  "description": "Heuristic scanning and numeric disposition scoring for readable text payloads: scripts, markup, suspicious SQL-ish patterns.",
   "features": [],
   "examples": [],
   "sections": [
@@ -17,7 +17,7 @@
       "rows": [
         [
           "`IContentThreatScanner` / `DefaultContentThreatScanner`",
-          "UTF-8–bounded sample rules and per-category scoring. Required ctor arg: `ContentThreatHeuristicOptions`."
+          "UTF-8-bounded sample rules and per-category scoring. Required ctor arg: `ContentThreatHeuristicOptions`."
         ],
         [
           "`ContentThreatAssessment`",
@@ -57,7 +57,7 @@
         ],
         [
           "`IContentThreatReputationPipeline`",
-          "Optional lookups (implementations live in **Lyo.ContentThreatScan.Intel**)."
+          "Optional lookups. Implementations live in `Lyo.ContentThreatScan.Intel`."
         ],
         [
           "`ContentThreatAssessmentComposer`",
@@ -73,12 +73,12 @@
     {
       "type": "paragraph",
       "title": "File storage bridge",
-      "text": "The **[Lyo.FileStorage](../../../Data/FileStorage/Lyo.FileStorage/)** package includes `ContentThreatMalwareScanner` implementing `IFileMalwareScanner` by composing heuristics, optional reputation, thresholds, and `FileScanThreatLevel`."
+      "text": "The [Lyo.FileStorage](../../../Data/FileStorage/Lyo.FileStorage/) package includes `ContentThreatMalwareScanner` implementing `IFileMalwareScanner` by composing heuristics, optional reputation, thresholds, and `FileScanThreatLevel`."
     },
     {
       "type": "paragraph",
       "title": "Registration (typical DI)",
-      "text": "Wire `IContentThreatScanner` as `DefaultContentThreatScanner`. For lookup-only reputation, register **`IContentThreatReputationPipeline`**: - **`NullContentThreatReputationPipeline.Instance`** — no outbound calls. For HTTP-backed reputation, prefer a **typed / named `HttpClient`** registered against `DefaultContentThreatReputationPipeline` plus `ReputationPipelineOptions` bound from configuration (timeouts, failure dispositions, API keys). Do not enable unsolicited request-body middleware in consuming apps unless policy explicitly calls for it."
+      "text": "Wire `IContentThreatScanner` as `DefaultContentThreatScanner`. For lookup-only reputation, register `IContentThreatReputationPipeline`. `NullContentThreatReputationPipeline.Instance` makes no outbound calls. For HTTP-backed reputation, prefer a typed / named `HttpClient` registered against `DefaultContentThreatReputationPipeline` plus `ReputationPipelineOptions` bound from configuration (timeouts, failure dispositions, API keys). Do not enable unsolicited request-body middleware in consuming apps unless policy explicitly calls for it."
     }
   ],
   "links": [],
