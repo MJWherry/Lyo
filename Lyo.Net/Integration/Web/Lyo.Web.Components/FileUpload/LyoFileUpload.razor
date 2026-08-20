@@ -201,14 +201,10 @@
                 }
             }
             else if (HasActiveUploads()) {
-                <MudChip T="string"
-                         Color="Color.Primary"
-                         Variant="Variant.Filled"
+                <LyoChip Color="Color.Primary"
                          Size="Size.Medium"
                          Icon="@Icons.Material.Filled.CloudUpload"
-                         Ripple="false"
-                         Class="d-flex align-center"
-                >
+                         Class="d-flex align-center">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Style="overflow:hidden; max-width: 100%;">
                         <MudText Typo="Typo.body2">@GetUploadingSummaryText()</MudText>
                     </MudStack>
@@ -218,7 +214,7 @@
                                    Size="Size.Small"
                                    OnClick="CancelAllUploads"
                                    aria-label="Cancel all uploads"/>
-                </MudChip>
+                </LyoChip>
             }
         }
     </MudStack>

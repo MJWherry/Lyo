@@ -1,7 +1,7 @@
 @inject ISnackbar Snackbar
 
 <MudStack Spacing="2">
-    <JobParameterTable Title="Job Parameters" Items="@_rows" ShowRequired ShowAllowMultiple ShowOptionsEditor ApiClient="ApiClient"
+    <JobParameterTable Title="Job Parameters" Items="@_rows" ShowRequired ShowAllowMultiple ShowOptionsEditor AllowReorder ApiClient="ApiClient"
                        OnChanged="@(() => _dirty = true)"/>
 
     @if (_dirty) {
@@ -40,7 +40,7 @@
         if (_loaded)
             return;
 
-        _rows = (JobParameters ?? []).Select(p => new JobParameterEditRow {
+        _rows = (JobParameters ?? []).OrderBy(p => p.Order).ThenBy(p => p.Key).Select(p => new JobParameterEditRow {
                 Id = p.Id,
                 Key = p.Key,
                 Type = p.Type,
@@ -50,7 +50,8 @@
                 AllowMultiple = p.AllowMultiple,
                 IsEncrypted = p.EncryptedValue is { Length: > 0 },
                 AllowedValues = p.AllowedValues,
-                Options = p.Options
+                Options = p.Options,
+                Order = p.Order
             })
             .ToList();
 
@@ -76,7 +77,8 @@
                         Required = newRow.Required,
                         AllowMultiple = newRow.AllowMultiple,
                         AllowedValues = newRow.AllowedValues,
-                        Options = newRow.Options
+                        Options = newRow.Options,
+                        Order = newRow.Order
                     });
 
                 if (created?.Data is { } data) {
@@ -98,7 +100,8 @@
                     Required = existingRow.Required,
                     AllowMultiple = existingRow.AllowMultiple,
                     AllowedValues = existingRow.AllowedValues,
-                    Options = existingRow.Options
+                    Options = existingRow.Options,
+                    Order = existingRow.Order
                 };
 
                 await ApiClient.PostAsAsync<UpdateRequest<JobParameterReq>, UpdateResult<JobParameterRes>>($"{ParameterRoute}/Update", new(data, existingRow.Id!.Value));

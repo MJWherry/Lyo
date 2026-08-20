@@ -83,7 +83,7 @@ Use **[CI - Pipeline](ci.md)** (`pipeline.yml`) for everyday pack and publish:
 - Run workflow on `dev`. nuget.org **preview** (`1.2.0-preview.<run>`).
 - Run workflow on a feature branch. Artifacts only unless you set `destination`.
 
-The [Publish - NuGet](../.github/workflows/publish-nuget.yml) workflow is the OIDC push job (filename locked for Trusted Publishing) plus an emergency pack+push dispatch. `--skip-duplicate` ignores nupkgs that already exist on nuget.org at that version.
+The [Publish - NuGet](../.github/workflows/publish-nuget.yml) workflow is the OIDC push job (filename locked for Trusted Publishing). Everyday publishes go through [CI - Pipeline](ci.md), which packs once and only calls this file to push. Emergency pack+push is **Actions → Publish - NuGet → Run workflow** only. [`ci_push.py`](../scripts/nuget/ci_push.py) still skips a nupkg that already exists (HTTP 409), but the job **fails** if every package was a duplicate or any push hit a non-duplicate error. A glob `dotnet nuget push --skip-duplicate` can finish green after only Conflicts. That hid the emergency 1.0.0 republish.
 
 ### One-time repo / nuget.org setup
 
@@ -98,14 +98,14 @@ Do **not** put a long-lived NuGet API key in GitHub secrets. nuget.org is moving
    - **Policy owner:** your nuget.org user (or an org you belong to). That owner will own every new `Lyo.*` id this job publishes.
 3. **GitHub secret `NUGET_USER`.** Repo **Settings → Secrets and variables → Actions → New repository secret**. Value is your **nuget.org profile username**, not your email. The `NuGet/login` action sends it with the OIDC token.
 4. **First run.** Actions → **CI - Pipeline** on `dev`, `dry_run=true`, `scope=named`, one package (e.g. `Lyo.Common`) to confirm pack. Then the same with `dry_run=false` to push a nuget.org prerelease. A new policy on a private repo stays provisionally active for 7 days until the first successful push. After that it locks to this repo.
-5. **Version.** Local `python3 scripts/nuget/build_nuget.py` produces `1.0.0-preview`. Pipeline preview produces `1.0.0-preview.<run>`. Auto-`main` produces a stable `X.Y.Z`. If that version is already on nuget.org, the push is skipped (`--skip-duplicate`).
+5. **Version.** Local `python3 scripts/nuget/build_nuget.py` produces `1.0.0-preview`. Pipeline preview produces `1.0.0-preview.<run>`. Auto-`main` produces a stable `X.Y.Z`. A single package that is already on nuget.org is skipped. If the whole set is already there, the push job fails.
 6. **Optional:** [reserve the `Lyo.` prefix](https://learn.microsoft.com/en-us/nuget/nuget-org/id-prefix-reservation) on nuget.org so only your account can publish `Lyo.*`. Needs a verified domain.
 
 Emergency local push (short-lived API key from nuget.org **API Keys**, glob `Lyo.*`, Push only):
 
 ```bash
 NUGET_OUTPUT_DIR=./artifacts/nuget python3 scripts/nuget/build_nuget.py --release -v 1.0.0 Lyo.Encryption
-dotnet nuget push artifacts/nuget/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+python3 scripts/nuget/ci_push.py --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" artifacts/nuget
 ```
 
 ## Environment variables

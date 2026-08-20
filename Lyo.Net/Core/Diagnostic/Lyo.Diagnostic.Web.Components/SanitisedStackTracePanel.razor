@@ -4,11 +4,11 @@
 else {
     <MudStack Spacing="2">
         <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-            <MudChip T="string" Text="@($"Fingerprint: {Trace.Fingerprint}")" Size="Size.Small"/>
-            <MudChip T="string" Text="@($"Frames: {Trace.Frames.Count}")" Size="Size.Small"/>
-            <MudChip T="string" Text="@($"Crash confidence: {Trace.CrashSiteConfidence}")" Size="Size.Small"/>
+            <LyoChip Label="@($"Fingerprint: {Trace.Fingerprint}")"/>
+            <LyoChip Label="@($"Frames: {Trace.Frames.Count}")"/>
+            <LyoChip Label="@($"Crash confidence: {Trace.CrashSiteConfidence}")"/>
             @if (Trace.HasRecursion) {
-                <MudChip T="string" Text="Recursion" Size="Size.Small" Color="Color.Warning"/>
+                <LyoChip Color="Color.Warning" Label="Recursion"/>
             }
         </MudStack>
         @if (!string.IsNullOrWhiteSpace(Trace.CrashSite)) {

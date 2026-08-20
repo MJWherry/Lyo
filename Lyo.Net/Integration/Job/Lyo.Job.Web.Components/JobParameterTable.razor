@@ -1,4 +1,13 @@
+@using Microsoft.AspNetCore.Components.Web
+
 <MudStack Spacing="2">
+    @if (AllowReorder) {
+        <style>
+            .job-param-drop-target {
+                box-shadow: inset 0 3px 0 0 var(--mud-palette-primary);
+            }
+        </style>
+    }
     <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
         <MudText Typo="Typo.h6">@Title</MudText>
         <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
@@ -16,6 +25,10 @@
     <MudSimpleTable Dense Hover Elevation="0" Style="table-layout: fixed; width: 100%;">
         <thead>
         <tr>
+            @if (AllowReorder) {
+                <th style="width: 36px;"></th>
+                <th style="width: 36px;">#</th>
+            }
             @if (HasDetails) {
                 <th style="width: 40px;"></th>
             }
@@ -27,9 +40,30 @@
         </tr>
         </thead>
         <tbody>
-        @foreach (var row in Items) {
+        @for (var i = 0; i < Items.Count; i++) {
+            var index = i;
+            var row = Items[index];
             var expanded = IsExpanded(row);
-            <tr>
+            <tr class="@(AllowReorder ? GetDropRowClass(index) : null)"
+                style="@(AllowReorder ? GetDraggingRowStyle(index) : null)"
+                @ondragover:preventDefault="AllowReorder"
+                @ondragenter="@(() => OnDragEnterRow(index))"
+                @ondrop="@(() => OnRowDrop(index))"
+                @ondrop:preventDefault="AllowReorder">
+                @if (AllowReorder) {
+                    <td style="text-align: center;">
+                        <span draggable="true"
+                              title="Drag to reorder"
+                              @ondragstart="@(e => OnRowDragStart(e, index))"
+                              @ondragend="@OnDragEnd"
+                              style="display: inline-flex; align-items: center; cursor: grab; user-select: none;">
+                            <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mud-text-secondary"/>
+                        </span>
+                    </td>
+                    <td style="text-align: center;">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@(row.Order + 1)</MudText>
+                    </td>
+                }
                 @if (HasDetails) {
                     <td style="text-align: center;">
                         <MudIconButton Icon="@(expanded ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)"
@@ -65,7 +99,7 @@
                 </td>
                 <td>
                     @if (row.IsEncrypted) {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">Encrypted</MudChip>
+                        <LyoChip Color="Color.Warning" Label="Encrypted"/>
                     }
                     else if (HasPicker(row) && ApiClient is not null) {
                         <LyoParameterOptionsSelect ApiClient="ApiClient"
@@ -91,7 +125,7 @@
                 </td>
                 <td style="text-align: right; white-space: nowrap;">
                     @if (row.IsNew) {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Success">New</MudChip>
+                        <LyoChip Color="Color.Success" Label="New"/>
                     }
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete parameter"
                                    OnClick="@(() => DeleteRow(row))"/>
@@ -203,11 +237,18 @@
     [Parameter]
     public EventCallback OnChanged { get; set; }
 
+    /// <summary>Show a drag handle and # column so definition parameters can be reordered. Off for schedule overrides.</summary>
+    [Parameter]
+    public bool AllowReorder { get; set; }
+
     private readonly HashSet<JobParameterEditRow> _expanded = [];
+
+    private int? _dragSourceIndex;
+    private int? _dragOverIndex;
 
     private bool HasDetails => ShowRequired || ShowAllowMultiple || ShowEnabled || ShowOptionsEditor;
 
-    private int ColSpan => (HasDetails ? 1 : 0) + 5;
+    private int ColSpan => (HasDetails ? 1 : 0) + (AllowReorder ? 2 : 0) + 5;
 
     private Dictionary<string, string?> SiblingMap => Items.ToDictionary(r => r.Key, r => r.Value, StringComparer.OrdinalIgnoreCase);
 
@@ -267,7 +308,12 @@
     {
         var used = Items.Select(i => i.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var next = InheritFrom?.FirstOrDefault(p => !used.Contains(p.Key));
-        var row = new JobParameterEditRow { IsNew = true, Key = next?.Key ?? $"Param{Items.Count + 1}", Type = next?.Type ?? JobParameterType.String };
+        var row = new JobParameterEditRow {
+            IsNew = true,
+            Key = next?.Key ?? $"Param{Items.Count + 1}",
+            Type = next?.Type ?? JobParameterType.String,
+            Order = Items.Count == 0 ? 0 : Items.Max(r => r.Order) + 1
+        };
         ApplyInherit(row);
         Items.Add(row);
         if (HasDetails)
@@ -281,8 +327,60 @@
     {
         Items.Remove(row);
         _expanded.Remove(row);
+        ReindexOrders();
         if (OnChanged.HasDelegate)
             await OnChanged.InvokeAsync();
+    }
+
+    private string GetDropRowClass(int index) => _dragOverIndex == index && _dragSourceIndex is int d && d != index ? "job-param-drop-target" : "";
+
+    private string GetDraggingRowStyle(int index) => _dragSourceIndex == index ? "opacity: 0.55;" : "";
+
+    private void OnRowDragStart(DragEventArgs e, int index)
+    {
+        _dragSourceIndex = index;
+        _dragOverIndex = null;
+        if (e.DataTransfer != null)
+            e.DataTransfer.EffectAllowed = "move";
+    }
+
+    private void OnDragEnterRow(int index)
+    {
+        if (_dragSourceIndex is int from && from != index)
+            _dragOverIndex = index;
+    }
+
+    private void OnDragEnd()
+    {
+        _dragSourceIndex = null;
+        _dragOverIndex = null;
+    }
+
+    private async Task OnRowDrop(int dropIndex)
+    {
+        if (_dragSourceIndex is not int fromIdx)
+            return;
+
+        OnDragEnd();
+        if (fromIdx < 0 || fromIdx >= Items.Count || dropIndex < 0 || dropIndex >= Items.Count || fromIdx == dropIndex)
+            return;
+
+        var item = Items[fromIdx];
+        Items.RemoveAt(fromIdx);
+        var insertAt = dropIndex;
+        if (insertAt > fromIdx)
+            insertAt--;
+
+        Items.Insert(insertAt, item);
+        ReindexOrders();
+        if (OnChanged.HasDelegate)
+            await OnChanged.InvokeAsync();
+    }
+
+    private void ReindexOrders()
+    {
+        for (var i = 0; i < Items.Count; i++)
+            Items[i].Order = i;
     }
 
 }

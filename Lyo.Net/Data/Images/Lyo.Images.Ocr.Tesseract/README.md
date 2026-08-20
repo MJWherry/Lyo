@@ -92,7 +92,7 @@ probes.
 
   Adjust the relative path from your `.csproj` to `Data/Images/` (three levels works from `Apps/Comic/Lyo.Comic.Api/`).
 
-`Lyo.Images.Ocr.Tesseract.Tests` sets the property (the library does not, because compile/pack must not require distro Tesseract). Hosts outside `Data/Images/` need `Import` plus the property, otherwise the
+`Lyo.Images.Ocr.Tesseract.Tests` sets the property (the library does not, because compile/pack must not require distro Tesseract). AfterBuild passes `--allow-missing`, so a machine without those apt packages can still compile. Hosts outside `Data/Images/` need `Import` plus the property, otherwise the
 symlink step never runs.
 
 **Manual / CI-only.** Run the script yourself after `dotnet build` / `dotnet publish` when you do not use that property:

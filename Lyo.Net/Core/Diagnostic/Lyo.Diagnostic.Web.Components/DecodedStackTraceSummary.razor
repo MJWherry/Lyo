@@ -5,12 +5,12 @@ else {
     <MudGrid Spacing="2">
         <MudItem xs="12">
             <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                <MudChip T="string" Text="@($"Fingerprint: {Trace.Fingerprint}")" Size="Size.Small"/>
-                <MudChip T="string" Text="@($"Frames: {Trace.TotalFrameCount}")" Size="Size.Small"/>
-                <MudChip T="string" Text="@($"User: {Trace.UserFrameCount} | System: {Trace.SystemFrameCount}")" Size="Size.Small"/>
-                <MudChip T="string" Text="@($"Crash confidence: {Trace.CrashSiteConfidence}")" Size="Size.Small" Color="Color.Primary"/>
+                <LyoChip Label="@($"Fingerprint: {Trace.Fingerprint}")"/>
+                <LyoChip Label="@($"Frames: {Trace.TotalFrameCount}")"/>
+                <LyoChip Label="@($"User: {Trace.UserFrameCount} | System: {Trace.SystemFrameCount}")"/>
+                <LyoChip Color="Color.Primary" Label="@($"Crash confidence: {Trace.CrashSiteConfidence}")"/>
                 @if (Trace.HasRecursion) {
-                    <MudChip T="string" Text="Recursion detected" Size="Size.Small" Color="Color.Warning"/>
+                    <LyoChip Color="Color.Warning" Label="Recursion detected"/>
                 }
             </MudStack>
         </MudItem>
@@ -27,7 +27,7 @@ else {
                 <MudText Typo="Typo.subtitle2" Class="mb-1">User namespaces</MudText>
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                     @foreach (var ns in Trace.UserNamespaces) {
-                        <MudChip T="string" Text="@ns" Size="Size.Small" Variant="Variant.Outlined"/>
+                        <LyoChip Variant="Variant.Outlined" Label="@ns"/>
                     }
                 </MudStack>
             </MudItem>

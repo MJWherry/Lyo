@@ -5,7 +5,7 @@
 <MudStack Spacing="2">
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
         <MudText Typo="Typo.subtitle1">@(ResultPhase ? "Saved extraction results" : "Live template regions")</MudText>
-        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Rows.Count} region(s)")</MudChip>
+        <LyoChip Color="Color.Primary" Variant="Variant.Outlined" Label="@($"{Rows.Count} region(s)")"/>
     </MudStack>
 
     <MudText Typo="Typo.caption" Color="Color.Secondary">
@@ -23,9 +23,7 @@
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100">
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                 <MudText Typo="Typo.subtitle2">@row.Key</MudText>
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
-                                    @GetExtractionSummary(row)
-                                </MudChip>
+                                <LyoChip Variant="Variant.Outlined" Color="Color.Primary" Label="@GetExtractionSummary(row)"/>
                             </MudStack>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">@row.BoundingBoxSummary</MudText>
                         </MudStack>

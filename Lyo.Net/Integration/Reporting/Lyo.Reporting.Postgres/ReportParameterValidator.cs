@@ -54,6 +54,9 @@ internal static class ReportParameterValidator
 
             foreach (var runParam in provided) {
                 var value = runParam.Value ?? string.Empty;
+                if (string.IsNullOrEmpty(value))
+                    continue;
+
                 if (defParam.MinLength.HasValue && value.Length < defParam.MinLength.Value)
                     errors.Add($"Parameter '{defParam.Key}' must be at least {defParam.MinLength} characters.");
 

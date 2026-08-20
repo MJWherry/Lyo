@@ -46,6 +46,7 @@ public static class SetupEndpoints
                 .BuildDirectFileUploadEndpoint()
                 .BuildFileStorageWorkbenchFileMetadataQuery();
 
+            app.MapCacheEndpoints("Cache", b => b.AllowAnonymous());
             return app;
         }
 

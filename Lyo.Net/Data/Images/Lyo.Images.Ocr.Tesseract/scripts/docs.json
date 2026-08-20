@@ -15,7 +15,7 @@
   ],
   "notes": [
     "Apt: libtesseract5 + libleptonica-dev (or libleptonica6) + tesseract-ocr-eng for eng.traineddata",
-    "MSBuild opt-in: PrepareTesseractLinuxNativeLibs=true on test/host projects (not packable libraries) runs this script after Build on Linux",
+    "MSBuild opt-in: PrepareTesseractLinuxNativeLibs=true on test/host projects (not packable libraries) runs this script after Build on Linux with --allow-missing so compile does not require distro Tesseract",
     "Pass the TFM folder (.../net10.0), not .../x64"
   ],
   "readmePath": "Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/scripts/README.md"

@@ -79,9 +79,9 @@ Also emits inherited `queue.worker.*` metrics from the message-queue worker base
 ## Worker features
 
 | Feature | Implementation |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Priority queues** | Worker declares `x-max-priority=10`; run priority from definition / `JobRunReq`. |
-| **Worker registry** | `POST Job/WorkerInstance` on start (soft-fail if the Job API is down); periodic PATCH with `InFlightCount`; re-register on missing id / heartbeat `404`; `Stopped` on shutdown. |
+| **Worker registry** | `POST Job/WorkerInstance` on start (soft-fail if the Job API is down) with system info (CPU, memory, OS/runtime) and queue subscriptions; periodic PATCH with `InFlightCount` plus live working-set/GC; re-register on missing id / heartbeat `404`; `Stopped` on shutdown. Host extras via `GetWorkerMetadata()`. |
 | **Progress** | Heartbeat PATCH includes `ProgressPercent` / `ProgressMessage`; `ctx.ReportProgressAsync(percent, message)`. |
 | **Batch jobs** | `ctx.CreateChildRunsAsync(JobCreateChildRunsReq)` → `POST Job/Run/{parentId}/Children`. |
 | **Encryption** | Decrypts `EncryptedValue` parameters when `IJobParameterEncryptionService` is registered. |
@@ -148,12 +148,12 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Api.Client` (direct, lyo)
 - `Lyo.Api.Models` (direct, lyo)
+- `Lyo.Common` (direct, lyo)
 - `Lyo.Job.Client` (direct, lyo)
 - `Lyo.Job.Models` (direct, lyo)
 - `Lyo.MessageQueue` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
-- `Lyo.Common` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)

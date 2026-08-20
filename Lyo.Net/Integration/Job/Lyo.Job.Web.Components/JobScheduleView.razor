@@ -19,12 +19,10 @@
                                          Class="@(_selected?.Id == s.Id ? "mud-primary" : "")" Style="cursor:pointer;">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
                                     <div @onclick:stopPropagation="true">
-                                        <MudChip T="string" Size="Size.Small"
+                                        <LyoChip Label="@s.Type.ToString()"
                                                  Color="@(s.Enabled ? Color.Success : Color.Error)"
                                                  Icon="@(s.Enabled ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
-                                                 OnClick="@(() => ToggleSchedule(s))" Style="cursor:pointer;">
-                                            @s.Type
-                                        </MudChip>
+                                                 OnClick="@(() => ToggleSchedule(s))" Style="cursor:pointer;"/>
                                     </div>
                                     <MudText Typo="Typo.body2">@(s.Description ?? s.ToString())</MudText>
                                 </MudStack>

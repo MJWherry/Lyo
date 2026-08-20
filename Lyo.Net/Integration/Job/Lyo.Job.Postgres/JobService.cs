@@ -327,7 +327,7 @@ public class JobService(
     /// <c>Cancelling</c> from a queued-run cancel, or <c>Finished</c>) is rejected so redelivered dispatch messages never execute a run twice. This is a worker-trusted endpoint: the
     /// returned run has encrypted parameter values decrypted so workers can execute with real values (all other read endpoints stay masked).
     /// </summary>
-    public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> StartedJobRun(Guid jobRunId)
+    public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> StartedJobRun(Guid jobRunId, JobRunStartedReq? request = null)
     {
         using var activity = JobTracing.StartRun(jobRunId);
         if (!eventPublisher.IsConnected())
@@ -339,16 +339,30 @@ public class JobService(
 
         var startedAt = DateTime.UtcNow;
         var slaBreached = CheckStartSla(existing, startedAt);
+        Guid? workerInstanceId = request?.WorkerInstanceId;
+        string? workerMachineName = null;
+        int? workerProcessId = null;
 
         // Compare-and-swap: only a Queued run may start. The WHERE clause makes the transition atomic, so a redelivered dispatch message
         // (or a second worker instance) loses the race instead of double-executing, and a Cancelling queued run is never resurrected.
         await using var db = await dbFactory.CreateDbContextAsync().ConfigureAwait(false);
+        if (workerInstanceId is { } instanceId) {
+            var worker = await db.JobWorkerInstances.AsNoTracking().FirstOrDefaultAsync(w => w.Id == instanceId).ConfigureAwait(false);
+            if (worker != null) {
+                workerMachineName = worker.MachineName;
+                workerProcessId = worker.ProcessId;
+            }
+        }
+
         var updatedRows = await db.JobRuns.Where(r => r.Id == jobRunId && r.State == JobState.Queued)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(r => r.State, JobState.Running)
                 .SetProperty(r => r.StartedTimestamp, startedAt)
                 .SetProperty(r => r.UpdatedTimestamp, startedAt)
-                .SetProperty(r => r.SlaBreached, r => r.SlaBreached || slaBreached))
+                .SetProperty(r => r.SlaBreached, r => r.SlaBreached || slaBreached)
+                .SetProperty(r => r.WorkerInstanceId, workerInstanceId)
+                .SetProperty(r => r.WorkerMachineName, workerMachineName)
+                .SetProperty(r => r.WorkerProcessId, workerProcessId))
             .ConfigureAwait(false);
 
         if (updatedRows == 0) {
@@ -867,6 +881,10 @@ public class JobService(
 
             foreach (var runParam in provided) {
                 var value = runParam.Value ?? string.Empty;
+                // Optional dropdowns post "" when nothing is selected. Treat that as unset, not a failed AllowedValues match.
+                if (string.IsNullOrEmpty(value))
+                    continue;
+
                 if (defParam.MinLength.HasValue && value.Length < defParam.MinLength.Value)
                     errors.Add($"Parameter '{defParam.Key}' must be at least {defParam.MinLength} characters.");
 

@@ -143,9 +143,7 @@
                             <MudSelectItem Value="@uniqueValue.Value">
                                 <div class="d-flex justify-space-between align-center" style="width: 100%;">
                                     <span>@(FormatValue(uniqueValue.Value, _currentProperty.ValueFormatter))</span>
-                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Class="ma-0 ml-2">
-                                        @uniqueValue.Count.ToString("N0")
-                                    </MudChip>
+                                    <LyoChip Variant="Variant.Text" Class="ma-0 ml-2" Label="@uniqueValue.Count.ToString("N0")"/>
                                 </div>
                             </MudSelectItem>
                         }

@@ -75,7 +75,7 @@
         "**`ParamOptions/LyoParameterOptionsEditor`.** Edits static key/label lists or root `QueryReq` via `QueryRootForm` for the `Options` column.",
         "**`Validation/LyoValidationWrapper`.** Wraps a field with validation message rendering.",
         "**`LyoDataGrid` / `LyoDataGridProjected`.** Data grids with filtering, bulk actions, and export menu items via [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).",
-        "**`JsonViewDialog` + `LyoElementRoot`.** Utility dialog and the element-id root used by every component.",
+        "**`JsonViewDialog` + `LyoElementRoot`.** Utility dialog and the element-id root used by every component. Optional `Path` and `Chips` render in the header (grid Dev request/response).",
         "**`Dialog/LyoDialog`.** Shared popup chrome (scrollable body, save/close). Header always has a raw-JSON debug button (`DebugData`). Click opens `JsonViewDialog`. Use `LyoDialogPresets` for size."
       ]
     },

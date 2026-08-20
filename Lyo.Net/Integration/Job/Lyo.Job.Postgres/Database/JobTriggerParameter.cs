@@ -8,11 +8,11 @@ public class JobTriggerParameter
 
     public Guid JobTriggerId { get; set; }
 
-    [MaxLength(100)]
+    [MaxLength(3000)]
     public string? Description { get; set; }
 
     [Required]
-    [MaxLength(50)]
+    [MaxLength(100)]
     public string Key { get; set; } = null!;
 
     [Required]

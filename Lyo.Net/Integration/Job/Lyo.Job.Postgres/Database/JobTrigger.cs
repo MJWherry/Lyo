@@ -11,17 +11,17 @@ public class JobTrigger
     public Guid TriggersJobDefinitionId { get; set; }
 
     [Required]
-    [MaxLength(25)]
+    [MaxLength(100)]
     public string TriggerJobResultKey { get; set; } = null!;
 
     [Required]
     [MaxLength(20)]
     public string TriggerComparator { get; set; } = null!;
 
-    [MaxLength(50)]
+    [MaxLength(200)]
     public string? TriggerJobResultValue { get; set; }
 
-    [MaxLength(100)]
+    [MaxLength(3000)]
     public string? Description { get; set; }
 
     public bool Enabled { get; set; }

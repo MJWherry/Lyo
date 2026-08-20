@@ -12,7 +12,7 @@ public class JobWorkflowStep
     public Guid JobDefinitionId { get; set; }
 
     [Required]
-    [MaxLength(100)]
+    [MaxLength(200)]
     public string StepName { get; set; } = null!;
 
     public int StepOrder { get; set; }

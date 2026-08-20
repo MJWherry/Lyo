@@ -45,7 +45,7 @@
                             <MudText Typo="Typo.body2">@row.Schedule.Id.ToString()[..8]…</MudText>
                         </td>
                         <td>
-                            <MudChip T="string" Text="@row.Schedule.Type.ToString()" Size="Size.Small" Color="Color.Primary"/>
+                            <LyoChip Label="@row.Schedule.Type.ToString()" Color="Color.Primary"/>
                         </td>
                         <td>@(row.Schedule.Description ?? "—")</td>
                         <td>

@@ -8,16 +8,16 @@
 else {
     <MudStack Spacing="2">
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-            <MudChip T="string" Size="Size.Small" Color="Color.Default">@Response.Persons.Count person(s)</MudChip>
+            <LyoChip Label="@($"{Response.Persons.Count} person(s)")"/>
             @if (Response.Pagination != null) {
-                <MudChip T="string" Size="Size.Small" Color="Color.Info">Page @Response.Pagination.CurrentPageNumber / @Response.Pagination.TotalPages</MudChip>
+                <LyoChip Color="Color.Info" Label="@($"Page {Response.Pagination.CurrentPageNumber} / {Response.Pagination.TotalPages}")"/>
             }
             @if (Response.Counts != null) {
-                <MudChip T="string" Size="Size.Small" Color="Color.Default">Expected @Response.Counts.ExpectedCount</MudChip>
+                <LyoChip Label="@($"Expected {Response.Counts.ExpectedCount}")"/>
             }
-            <MudChip T="string" Size="Size.Small" Color="Color.Default">@Response.TotalRequestExecutionTimeMs ms</MudChip>
+            <LyoChip Label="@($"{Response.TotalRequestExecutionTimeMs} ms")"/>
             @if (Response.IsError) {
-                <MudChip T="string" Size="Size.Small" Color="Color.Error">Error</MudChip>
+                <LyoChip Color="Color.Error" Label="Error"/>
             }
             <MudText Typo="Typo.caption" Color="Color.Secondary">@Response.RequestId</MudText>
         </MudStack>
@@ -50,9 +50,8 @@ else {
                         @context.PhoneNumbers.Count phones, @context.EmailAddresses.Count emails, @context.Addresses.Count addresses
                     </MudTd>
                     <MudTd>
-                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
-                            <MudMenuItem OnClick="@(() => ShowPersonJson(context))">View JSON</MudMenuItem>
-                        </MudMenu>
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                                       OnClick="@(() => ShowPerson(context))"/>
                     </MudTd>
                 </RowTemplate>
                 <ChildRowContent>
@@ -88,11 +87,10 @@ else {
     [Parameter]
     public PersonQueryResponse? Response { get; set; }
 
-    private async Task ShowPersonJson(PersonResult person)
+    private async Task ShowPerson(PersonResult person)
     {
-        await Task.Yield();
-        var parameters = new DialogParameters<JsonViewDialog<PersonResult>> { { i => i.Data, person } };
-        await DialogService.ShowAsync(typeof(JsonViewDialog<PersonResult>), person.FullName, parameters, LyoDialogPresets.Medium);
+        var parameters = new DialogParameters<EndatoPersonView> { { d => d.Person, person } };
+        await DialogService.ShowAsync<EndatoPersonView>(person.FullName, parameters, LyoDialogPresets.Large);
     }
 
 }

@@ -21,6 +21,8 @@ using Lyo.MessageQueue;
 using Lyo.Postgres;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -386,8 +388,9 @@ public static class Extensions
             .WithName("CreateJobRun");
 
         app.MapPost(
-                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Started", async (Guid id, JobService jobService) => {
-                    var (run, error) = await jobService.StartedJobRun(id).ConfigureAwait(false);
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Started",
+                async (Guid id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] JobRunStartedReq? req, JobService jobService) => {
+                    var (run, error) = await jobService.StartedJobRun(id, req).ConfigureAwait(false);
                     return error is null ? Results.Ok(run) : ProblemResult(error);
                 })
             .WithTags("Job")

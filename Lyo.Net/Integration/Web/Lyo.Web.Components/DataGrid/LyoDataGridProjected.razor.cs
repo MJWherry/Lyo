@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
@@ -101,6 +102,10 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     [Parameter]
     public int[] AutoRefreshIntervalsSeconds { get; init; } = [1, 3, 5, 10, 25, 30];
 
+    /// <summary>When true, AutoRefresh starts enabled (user can still stop it). Seeded once on first init.</summary>
+    [Parameter]
+    public bool AutoRefreshEnabled { get; set; }
+
     [Parameter]
     public required LyoDataGridFeatureFlags Features { get; init; } = LyoDataGridFeatureFlags.All;
 
@@ -143,6 +148,8 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     /// <summary>Quick search properties from <see cref="QuickSearchProperties" /> or column names, always unioned with leaf <c>Id</c> fields.</summary>
     private IReadOnlyList<string> EffectiveQuickSearchProperties => _columnRegistry.GetQuickSearchProperties(QuickSearchProperties);
 
+    private string QuickSearchPlaceholder => _columnRegistry.GetQuickSearchPlaceholder(QuickSearchProperties);
+
     [Parameter]
     public IReadOnlyList<FilterPropertyDefinition> FilterPropertyDefinitions { get; init; } = [];
 
@@ -173,6 +180,12 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     public ProjectedQueryRes<object?>? CurrentResults { get; private set; }
 
     public HashSet<object?> SelectedItems { get; private set; } = [];
+
+    private string? _lastQueryPath;
+
+    private long? _lastQueryElapsedMs;
+
+    private int? _lastQueryStatusCode;
 
     private string? CurrentQuickSearchText => HasFeature(LyoDataGridFeatureFlags.Searchable) && !string.IsNullOrWhiteSpace(_searchText) ? _searchText : null;
 
@@ -252,7 +265,13 @@ public partial class LyoDataGridProjected : IDataGridExportHost
         return fields.Concat(keyPaths).Distinct(StringComparer.OrdinalIgnoreCase);
     }
 
-    protected override async Task OnInitializedAsync() => await LoadClientState();
+    protected override async Task OnInitializedAsync()
+    {
+        _autoRefreshEnabled = AutoRefreshEnabled;
+        await LoadClientState();
+        if (_autoRefreshEnabled)
+            StartAutoRefresh();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -489,8 +508,21 @@ public partial class LyoDataGridProjected : IDataGridExportHost
             var queryBuilder = GetQuery(offset, pageSize);
             CurrentQuery = queryBuilder.Build();
             var route = GetDataRoute();
-            CurrentResults = await ApiClient.PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(route, CurrentQuery, ct: _cts.Token);
-            QueryError = CurrentResults.Error;
+            _lastQueryPath = route;
+            var s = Stopwatch.StartNew();
+            try {
+                CurrentResults = await ApiClient.PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(route, CurrentQuery, ct: _cts.Token);
+                _lastQueryStatusCode = 200;
+                QueryError = DataGridQueryError.FromQueryResult(CurrentResults.IsSuccess, CurrentResults.Error);
+            }
+            catch (ApiException ex) {
+                _lastQueryStatusCode = ex.StatusCode;
+                throw;
+            }
+            finally {
+                s.Stop();
+                _lastQueryElapsedMs = s.ElapsedMilliseconds;
+            }
             var gridData = new GridData<object?> { Items = CurrentResults.Items ?? [], TotalItems = CurrentResults.Total ?? 0 };
             if (_savedSelectedKeys?.Any() == true && KeySelector != null && CurrentResults.Items != null) {
                 var restoredItems = new HashSet<object?>();
@@ -508,11 +540,12 @@ public partial class LyoDataGridProjected : IDataGridExportHost
 
             return gridData;
         }
-        catch (TaskCanceledException) {
+        catch (OperationCanceledException) when (_cts.IsCancellationRequested) {
             return new() { Items = [], TotalItems = 0 };
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Error running query");
+            QueryError = DataGridQueryError.FromException(ex);
             StopAutoRefresh();
             return new() { Items = [], TotalItems = 0 };
         }
@@ -768,12 +801,26 @@ public partial class LyoDataGridProjected : IDataGridExportHost
 
     private bool HasFeature(LyoDataGridFeatureFlags feature) => Features.HasFeature(feature);
 
-    private async Task ShowInJsonDialog(object? data, string? title = "Json Viewer")
+    private async Task ShowRequestDialog()
+        => await ShowInJsonDialog(CurrentQuery, "Request", GetDataRoute());
+
+    private async Task ShowResponseDialog()
+        => await ShowInJsonDialog(
+            CurrentResults, "Response", _lastQueryPath,
+            DataGridDevChips.ForResponse(
+                _lastQueryElapsedMs, _lastQueryStatusCode, CurrentResults?.Items?.Count, CurrentResults?.Total, CurrentResults?.QueryScore, CurrentResults?.HasMore));
+
+    private async Task ShowInJsonDialog(object? data, string? title = "Json Viewer", string? path = null, IReadOnlyList<JsonViewChip>? chips = null)
     {
         // Let the menu popover finish closing so it does not intercept clicks on the dialog.
         await Task.Yield();
         await Task.Delay(10);
-        var parameters = new DialogParameters<JsonViewDialog<object?>> { { i => i.Data, data } };
+        var parameters = new DialogParameters<JsonViewDialog<object?>> {
+            { i => i.Data, data },
+            { i => i.Title, title },
+            { i => i.Path, path },
+            { i => i.Chips, chips }
+        };
         await DialogService.ShowAsync(typeof(JsonViewDialog<object?>), title, parameters, LyoDialogPresets.Medium);
     }
 }

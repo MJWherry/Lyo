@@ -171,6 +171,35 @@ public sealed class LocalCacheService : ICacheService
 
     public async Task InvalidateAllCachedQueriesAsync() => await InvalidateCacheItemByTag("queries").ConfigureAwait(false);
 
+    public async Task ClearAsync()
+    {
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var keys = _items.Keys.Where(static i => i.Type == CacheItemTypeEnum.Key).Select(static i => i.Name).ToArray();
+            foreach (var key in keys)
+                _memoryCache.Remove(key);
+
+            var count = _items.Count;
+            _items.Clear();
+            _keyToTags.Clear();
+            _tagToKeys.Clear();
+            stopwatch.Stop();
+            _metrics.RecordGauge(Constants.Metrics.CacheSize, 0);
+            _metrics.IncrementCounter(Constants.Metrics.ClearSuccess, count);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error clearing cache");
+            _metrics.RecordError(Constants.Metrics.ClearSuccess, ex, [(Constants.Metrics.Tags.Operation, "ClearAsync")]);
+            throw;
+        }
+
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
     public async ValueTask<TValue?> GetOrSetAsync<TValue>(
         string key,
         Func<CancellationToken, Task<TValue?>> factory,

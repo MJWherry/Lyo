@@ -14,13 +14,13 @@
                     }
                     <MudStack Row="true" Spacing="1" Class="mt-1" Wrap="Wrap.Wrap">
                         @if (!string.IsNullOrWhiteSpace(TypeBadge)) {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@TypeBadge</MudChip>
+                            <LyoChip Variant="Variant.Outlined" Label="@TypeBadge"/>
                         }
                         @if (!string.IsNullOrWhiteSpace(LanguageLine)) {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@LanguageLine.ToUpperInvariant()</MudChip>
+                            <LyoChip Variant="Variant.Outlined" Label="@LanguageLine.ToUpperInvariant()"/>
                         }
                         @if (PageCount is int pc2 && pc2 > 0) {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@pc2 pages</MudChip>
+                            <LyoChip Variant="Variant.Outlined" Label="@($"{pc2} pages")"/>
                         }
                     </MudStack>
                 </MudStack>

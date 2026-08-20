@@ -36,6 +36,23 @@ public sealed class ReportParameterValidatorTests
         Assert.Empty(ReportParameterValidator.Validate(def, [new("Code", ReportParameterType.String, "AB")]));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    public void Validate_skips_allowed_values_when_optional_value_is_unset(string? value)
+    {
+        var def = new List<ReportDefinitionParameter> {
+            new() {
+                Key = "Direction",
+                Type = nameof(ReportParameterType.String),
+                Required = false,
+                AllowedValues = """["inbound","outbound"]"""
+            }
+        };
+
+        Assert.Empty(ReportParameterValidator.Validate(def, [new("Direction", ReportParameterType.String, value)]));
+    }
+
     [Fact]
     public void Validate_enforces_numeric_allowed_values_json()
     {

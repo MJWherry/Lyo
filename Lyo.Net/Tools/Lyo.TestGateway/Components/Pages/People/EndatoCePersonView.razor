@@ -1,0 +1,183 @@
+<LyoDialog DebugData="@Person">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Person.FullName) ? "Endato enrichment person" : Person.FullName)</MudText>
+    </TitleContent>
+    <TitleChips>
+        @if (PersonViewHelpers.Age(Person.DateOfBirth) is { } age) {
+            <LyoChip Variant="Variant.Outlined" Label="@($"Age {age}")"/>
+        }
+        <LyoChip Variant="Variant.Outlined" Label="@($"{Person.Addresses.Count} addresses")"/>
+        <LyoChip Variant="Variant.Outlined" Label="@($"{Person.PhoneNumbers.Count} phones")"/>
+        <LyoChip Variant="Variant.Outlined" Label="@($"{Person.EmailAddresses.Count} emails")"/>
+    </TitleChips>
+    <ChildContent>
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Overview">
+                <div class="pa-2">
+                    <MudExpansionPanels MultiExpansion="true" Elevation="0" Outlined="true" Dense="true">
+                        <MudExpansionPanel Text="Name" Expanded="true">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField T="string" Label="First Name" Value="@PersonViewHelpers.Field(Person.FirstName)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField T="string" Label="Middle Name" Value="@PersonViewHelpers.Field(Person.MiddleName)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudTextField T="string" Label="Last Name" Value="@PersonViewHelpers.Field(Person.LastName)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                            </MudGrid>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="Info">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6" md="3">
+                                    <MudTextField T="string" Label="DoB" Value="@PersonViewHelpers.FormatDate(Person.DateOfBirth)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6" md="3">
+                                    <MudTextField T="string" Label="Age" Value="@PersonViewHelpers.AgeLabel(Person.DateOfBirth)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                </MudItem>
+                            </MudGrid>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="Metadata">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6" md="6">
+                                    <LyoIdField Label="ID" Value="@Person.Id"/>
+                                </MudItem>
+                            </MudGrid>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Addresses ({Person.Addresses.Count})")">
+                <div class="pa-2">
+                    @if (Person.Addresses.Count == 0) {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No addresses</MudText>
+                    }
+                    else {
+                        <MudStack Spacing="2">
+                            @foreach (var address in Person.Addresses) {
+                                <LyoExpandableCard>
+                                    <Summary>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <LyoIdField Label="ID" Value="@address.Id"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="9">
+                                            <MudTextField T="string" Label="Street" Value="@PersonViewHelpers.Field(address.Street)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                    </Summary>
+                                    <ChildContent>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudTextField T="string" Label="Unit" Value="@PersonViewHelpers.Field(address.Unit)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudTextField T="string" Label="City" Value="@PersonViewHelpers.Field(address.City)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="3" md="2">
+                                            <MudTextField T="string" Label="State" Value="@PersonViewHelpers.Field(address.State)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="3" md="2">
+                                            <MudTextField T="string" Label="ZIP" Value="@PersonViewHelpers.Field(address.Zipcode)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudTextField T="string" Label="Reported" Value="@PersonViewHelpers.FormatDateRange(address.FirstReportedDate, address.LastReportedDate)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <LyoIdField Label="Person ID" Value="@address.EndatoCePersonId"/>
+                                        </MudItem>
+                                    </ChildContent>
+                                </LyoExpandableCard>
+                            }
+                        </MudStack>
+                    }
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Phones ({Person.PhoneNumbers.Count})")">
+                <div class="pa-2">
+                    @if (Person.PhoneNumbers.Count == 0) {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No phone numbers</MudText>
+                    }
+                    else {
+                        <MudStack Spacing="2">
+                            @foreach (var phone in Person.PhoneNumbers) {
+                                <LyoExpandableCard>
+                                    <Summary>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <LyoIdField Label="ID" Value="@phone.Id"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="5">
+                                            <MudTextField T="string" Label="Number" Value="@PersonViewHelpers.FormatPhone(phone.Number)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudSelect T="string" Label="Type" Value="@phone.Type" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                                @foreach (var type in PhoneTypes) {
+                                                    <MudSelectItem Value="@type">@type</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                    </Summary>
+                                    <ChildContent>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <MudTextField T="string" Label="Reported" Value="@PersonViewHelpers.FormatDateRange(phone.FirstReportedDate, phone.LastReportedDate)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <LyoIdField Label="Person ID" Value="@phone.EndatoCePersonId"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="4" Class="d-flex align-end">
+                                            <LyoChip Spec="@LyoChips.FromBool(phone.IsConnected, "Connected", "Disconnected", Color.Success, Color.Default)" Variant="Variant.Outlined"/>
+                                        </MudItem>
+                                    </ChildContent>
+                                </LyoExpandableCard>
+                            }
+                        </MudStack>
+                    }
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Emails ({Person.EmailAddresses.Count})")">
+                <div class="pa-2">
+                    @if (Person.EmailAddresses.Count == 0) {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No email addresses</MudText>
+                    }
+                    else {
+                        <MudStack Spacing="2">
+                            @foreach (var email in Person.EmailAddresses) {
+                                <LyoExpandableCard>
+                                    <Summary>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <LyoIdField Label="ID" Value="@email.Id"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="9">
+                                            <MudTextField T="string" Label="Email" Value="@PersonViewHelpers.Field(email.Email)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                    </Summary>
+                                    <ChildContent>
+                                        <MudItem xs="12" sm="6" md="4">
+                                            <LyoIdField Label="Person ID" Value="@email.EndatoCePersonId"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="8" Class="d-flex flex-wrap gap-1 align-end">
+                                            @if (email.IsValidated) {
+                                                <LyoChip Variant="Variant.Outlined" Color="Color.Success" Label="Validated"/>
+                                            }
+                                            @if (email.IsBusiness) {
+                                                <LyoChip Variant="Variant.Outlined" Label="Business"/>
+                                            }
+                                        </MudItem>
+                                    </ChildContent>
+                                </LyoExpandableCard>
+                            }
+                        </MudStack>
+                    }
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </ChildContent>
+</LyoDialog>
+
+@code {
+
+    [Parameter]
+    [EditorRequired]
+    public EndatoCePersonRes Person { get; set; } = null!;
+
+    private IReadOnlyList<string> PhoneTypes => PersonViewHelpers.PhoneTypeOptions(null, Person.PhoneNumbers.Select(p => p.Type));
+
+}

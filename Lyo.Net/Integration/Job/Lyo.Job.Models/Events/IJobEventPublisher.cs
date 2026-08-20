@@ -70,5 +70,9 @@ public interface IJobEventPublisher
     /// <param name="workerType">The worker type — used to derive the subscription name.</param>
     /// <param name="handler">Called with the <see cref="Guid" /> of the run that should be cancelled. Instances not executing that run simply ignore it.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default);
+    /// <param name="instanceSuffix">
+    /// Optional per-instance suffix for the exclusive cancel queue (<c>job.run.{workerType}.cancel.{suffix}</c>). When omitted, the implementation generates one. Workers that
+    /// report the cancel queue in instance metadata should pass a suffix they already know.
+    /// </param>
+    Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null);
 }

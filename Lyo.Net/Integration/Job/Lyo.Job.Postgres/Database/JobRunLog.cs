@@ -13,7 +13,7 @@ public class JobRunLog
     public string Level { get; set; } = null!;
 
     [Required]
-    [MaxLength(1000)]
+    [MaxLength(3000)]
     public string Message { get; set; } = null!;
 
     [MaxLength(16_384)]

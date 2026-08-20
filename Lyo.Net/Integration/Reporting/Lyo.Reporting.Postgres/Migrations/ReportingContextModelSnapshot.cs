@@ -128,8 +128,8 @@ namespace Lyo.Reporting.Postgres.Migrations
                         .HasColumnName("created_timestamp");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<byte[]>("EncryptedValue")
@@ -138,8 +138,8 @@ namespace Lyo.Reporting.Postgres.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("key");
 
                     b.Property<int?>("MaxLength")
@@ -211,8 +211,8 @@ namespace Lyo.Reporting.Postgres.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
                         .HasColumnName("created_by");
 
                     b.Property<DateTime>("CreatedTimestamp")
@@ -292,8 +292,8 @@ namespace Lyo.Reporting.Postgres.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<byte[]>("EncryptedValue")
@@ -302,8 +302,8 @@ namespace Lyo.Reporting.Postgres.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("key");
 
                     b.Property<Guid>("ReportGenerationId")

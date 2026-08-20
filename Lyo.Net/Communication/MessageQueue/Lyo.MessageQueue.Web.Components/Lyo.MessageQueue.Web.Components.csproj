@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

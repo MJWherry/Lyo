@@ -106,7 +106,7 @@
         ],
         [
           "**Worker registry**",
-          "`POST Job/WorkerInstance` on start (soft-fail if the Job API is down); periodic PATCH with `InFlightCount`; re-register on missing id / heartbeat `404`; `Stopped` on shutdown."
+          "`POST Job/WorkerInstance` on start (soft-fail if the Job API is down) with system info (CPU, memory, OS/runtime) and queue subscriptions; periodic PATCH with `InFlightCount` plus live working-set/GC; re-register on missing id / heartbeat `404`; `Stopped` on shutdown. Host extras via `GetWorkerMetadata()`."
         ],
         [
           "**Progress**",
@@ -214,6 +214,14 @@
       ]
     },
     {
+      "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Job.Client",
       "kind": "lyo",
       "tags": [
@@ -252,14 +260,6 @@
       "tags": [
         "direct",
         "microsoft"
-      ]
-    },
-    {
-      "name": "Lyo.Common",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
       ]
     },
     {

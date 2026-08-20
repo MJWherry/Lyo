@@ -1,6 +1,9 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
+using System.Reflection;
 using Lyo.Api.Client;
+using Lyo.Common.SystemInformation;
 using Lyo.Api.Models.Builders;
 using Lyo.Job.Client;
 using Lyo.Job.Models;
@@ -35,9 +38,11 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     /// <summary>Result metadata that tells <see cref="QueueWorkerBase{TRequest,TResult}" /> not to requeue the message even though the result is a failure.</summary>
     private static readonly IReadOnlyDictionary<string, object> NoRequeueMetadata = new Dictionary<string, object> { ["requeue"] = false };
 
+    private readonly string? _dlqName;
     private readonly IJobEventPublisher _eventPublisher;
 
     private readonly IJobClient _jobClient;
+    private readonly int? _maxRequeueCount;
     private readonly IJobParameterEncryptionService? _parameterEncryption;
 
     /// <summary>
@@ -46,8 +51,10 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     /// </summary>
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _runCancellationSources = new();
 
+    private string? _cancelQueueName;
     private string? _progressMessage;
     private int? _progressPercent;
+    private IReadOnlyDictionary<string, string?>? _staticSystemMetadata;
     private CancellationTokenSource? _workerHeartbeatCts;
     private Task? _workerHeartbeatTask;
 
@@ -86,6 +93,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         _jobClient = jobClient;
         _eventPublisher = eventPublisher;
         _parameterEncryption = parameterEncryption;
+        _maxRequeueCount = maxRequeueCount;
+        _dlqName = dlqName;
         WorkerType = workerType;
     }
 
@@ -96,8 +105,10 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         if (!IsRunning)
             throw new InvalidOperationException($"Failed to subscribe to worker queue '{QueueName}'.");
 
+        var cancelSuffix = Guid.NewGuid().ToString("N");
+        _cancelQueueName = Constants.Mq.QueueGetJobRunCancelInstance(WorkerType, cancelSuffix);
         await RegisterWorkerInstanceAsync(ct).ConfigureAwait(false);
-        await _eventPublisher.SubscribeToRunCancellationsAsync(WorkerType, OnCancelAsync, ct).ConfigureAwait(false);
+        await _eventPublisher.SubscribeToRunCancellationsAsync(WorkerType, OnCancelAsync, ct, cancelSuffix).ConfigureAwait(false);
         _workerHeartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _workerHeartbeatTask = RunWorkerInstanceHeartbeatAsync(_workerHeartbeatCts.Token);
     }
@@ -144,7 +155,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
 
         JobRunRes startedRun;
         try {
-            startedRun = await _jobClient.Runs.StartAsync(runId, RunIncludes, ct).ConfigureAwait(false);
+            startedRun = await _jobClient.Runs.StartAsync(
+                runId, RunIncludes, ct, _workerInstanceId is { } instanceId ? new JobRunStartedReq { WorkerInstanceId = instanceId } : null).ConfigureAwait(false);
         }
         catch (ApiException ex) when (ex.StatusCode == 400) {
             // The Started CAS rejected the transition: the run is not Queued (duplicate delivery already running/finished it, or it was
@@ -234,6 +246,9 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     /// <summary>Implement this to perform the actual work. Use <paramref name="ctx" /> to read parameters, add results, check the cancellation token, and log messages.</summary>
     protected abstract Task ExecuteAsync(IJobWorkerContext ctx);
 
+    /// <summary>Host-supplied keys merged into the instance metadata bag on register and heartbeat. Built-in system info and queue subscriptions are always included.</summary>
+    protected virtual IReadOnlyDictionary<string, string?>? GetWorkerMetadata() => null;
+
     private async Task RegisterWorkerInstanceAsync(CancellationToken ct)
     {
         try {
@@ -245,7 +260,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
                 State = JobWorkerInstanceState.Running,
                 InFlightCount = 0,
                 StartedTimestamp = now,
-                LastHeartbeatUtc = now
+                LastHeartbeatUtc = now,
+                Metadata = BuildWorkerMetadata()
             };
 
             var result = await _jobClient.WorkerInstances.RegisterAsync(req, ct).ConfigureAwait(false);
@@ -260,6 +276,88 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
             Logger.LogWarning(ex, "Failed to register worker instance for {WorkerType}", WorkerType);
         }
     }
+
+    private IReadOnlyDictionary<string, string?> BuildWorkerMetadata()
+    {
+        var metadata = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pair in GetStaticSystemMetadata())
+            metadata[pair.Key] = pair.Value;
+
+        OverlayLiveProcessStats(metadata);
+        OverlayWorkerQueueMetadata(metadata);
+        var extra = GetWorkerMetadata();
+        if (extra == null)
+            return metadata;
+
+        foreach (var pair in extra) {
+            if (string.IsNullOrWhiteSpace(pair.Key))
+                continue;
+            metadata[pair.Key] = pair.Value;
+        }
+
+        return metadata;
+    }
+
+    private IReadOnlyDictionary<string, string?> GetStaticSystemMetadata()
+    {
+        if (_staticSystemMetadata is not null)
+            return _staticSystemMetadata;
+
+        var hardware = SystemInfoCollector.GetHardwareInfo();
+        var software = SystemInfoCollector.GetSoftwareInfo();
+        _staticSystemMetadata = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase) {
+            [Constants.WorkerMetadata.Os] = software.OsDescription,
+            [Constants.WorkerMetadata.OsPlatform] = software.OsPlatform,
+            [Constants.WorkerMetadata.OsVersion] = software.OsVersion,
+            [Constants.WorkerMetadata.Framework] = software.FrameworkDescription,
+            [Constants.WorkerMetadata.RuntimeIdentifier] = software.RuntimeIdentifier,
+            [Constants.WorkerMetadata.ClrVersion] = software.ClrVersion,
+            [Constants.WorkerMetadata.ProcessArchitecture] = hardware.ProcessArchitecture,
+            [Constants.WorkerMetadata.OsArchitecture] = hardware.OsArchitecture,
+            [Constants.WorkerMetadata.ProcessorCount] = hardware.ProcessorCount.ToString(CultureInfo.InvariantCulture),
+            [Constants.WorkerMetadata.CpuModel] = hardware.CpuModel,
+            [Constants.WorkerMetadata.TotalPhysicalMemoryBytes] = FormatInt64(hardware.TotalPhysicalMemoryBytes),
+            [Constants.WorkerMetadata.IsServerGc] = software.IsServerGC.ToString(),
+            [Constants.WorkerMetadata.ProcessName] = software.ProcessName,
+            [Constants.WorkerMetadata.AssemblyVersion] = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+        };
+        return _staticSystemMetadata;
+    }
+
+    private void OverlayLiveProcessStats(Dictionary<string, string?> metadata)
+    {
+        try {
+            using var process = Process.GetCurrentProcess();
+            metadata[Constants.WorkerMetadata.WorkingSetBytes] = FormatInt64(process.WorkingSet64);
+        }
+        catch {
+            /* process metrics are best-effort */
+        }
+
+        try {
+            metadata[Constants.WorkerMetadata.GcHeapBytes] = FormatInt64(GC.GetGCMemoryInfo().HeapSizeBytes);
+        }
+        catch {
+            metadata[Constants.WorkerMetadata.GcHeapBytes] = FormatInt64(GC.GetTotalMemory(false));
+        }
+    }
+
+    private void OverlayWorkerQueueMetadata(Dictionary<string, string?> metadata)
+    {
+        metadata[Constants.WorkerMetadata.Queue] = QueueName;
+        metadata[Constants.WorkerMetadata.WaitQueue] = Constants.Mq.QueueGetJobRunCreatedWait(WorkerType);
+        metadata[Constants.WorkerMetadata.CancelQueue] = _cancelQueueName;
+        metadata[Constants.WorkerMetadata.Dlq] = _dlqName;
+        metadata[Constants.WorkerMetadata.MaxRequeueCount] = _maxRequeueCount?.ToString(CultureInfo.InvariantCulture);
+        metadata[Constants.WorkerMetadata.HeartbeatInterval] = HeartbeatInterval.ToString();
+        if (RequeueDelay is { } delay)
+            metadata[Constants.WorkerMetadata.RequeueDelay] = delay.ToString();
+
+        string[] subscriptions = _cancelQueueName is { Length: > 0 } ? [QueueName, _cancelQueueName] : [QueueName];
+        metadata[Constants.WorkerMetadata.Subscriptions] = string.Join(", ", subscriptions);
+    }
+
+    private static string? FormatInt64(long? value) => value?.ToString(CultureInfo.InvariantCulture);
 
     private async Task DeregisterWorkerInstanceAsync(CancellationToken ct)
     {
@@ -287,7 +385,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
             }
 
             try {
-                await _jobClient.WorkerInstances.HeartbeatAsync(_workerInstanceId.Value, InFlightCount, ct).ConfigureAwait(false);
+                await _jobClient.WorkerInstances.HeartbeatAsync(_workerInstanceId.Value, InFlightCount, ct, BuildWorkerMetadata()).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 break;

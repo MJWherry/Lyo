@@ -11,7 +11,7 @@ public class JobBlackoutWindow
     public Guid JobBlackoutCalendarId { get; set; }
 
     [Required]
-    [MaxLength(100)]
+    [MaxLength(200)]
     public string Name { get; set; } = null!;
 
     [Required]

@@ -9,7 +9,7 @@ public class JobSchedule
 
     public Guid JobDefinitionId { get; set; }
 
-    [MaxLength(100)]
+    [MaxLength(3000)]
     public string? Description { get; set; }
 
     [Required]

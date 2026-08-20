@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
@@ -19,10 +20,14 @@ public sealed class JobWorkerInstanceClient(IApiClient client, string? routePref
 
     public Task PatchAsync(PatchRequest patch, CancellationToken ct = default) => client.PatchAsAsync<PatchRequest, object>(Route, patch, ct: ct);
 
-    public Task HeartbeatAsync(Guid instanceId, int inFlightCount, CancellationToken ct = default)
+    /// <summary>Patches heartbeat fields. When <paramref name="metadata"/> is supplied it replaces the stored bag (used to refresh working set / GC heap).</summary>
+    public Task HeartbeatAsync(Guid instanceId, int inFlightCount, CancellationToken ct = default, IReadOnlyDictionary<string, string?>? metadata = null)
     {
-        var patch = PatchRequestBuilder.ForId(instanceId).SetProperty("LastHeartbeatUtc", DateTime.UtcNow).SetProperty("InFlightCount", inFlightCount).Build();
-        return PatchAsync(patch, ct);
+        var patch = PatchRequestBuilder.ForId(instanceId).SetProperty("LastHeartbeatUtc", DateTime.UtcNow).SetProperty("InFlightCount", inFlightCount);
+        if (metadata is { Count: > 0 })
+            patch.SetProperty("MetadataJson", JsonSerializer.Serialize(metadata));
+
+        return PatchAsync(patch.Build(), ct);
     }
 
     public Task StopAsync(Guid instanceId, CancellationToken ct = default)

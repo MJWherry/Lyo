@@ -24,7 +24,7 @@
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudTextField @bind-Value="_createdBy" Label="Created By" Variant="Variant.Outlined" Margin="Margin.Dense" Required MaxLength="50"/>
+                <MudTextField @bind-Value="_createdBy" Label="Created By" Variant="Variant.Outlined" Margin="Margin.Dense" Required MaxLength="128"/>
             </MudItem>
             <MudItem xs="12" md="6" Class="d-flex align-center">
                 <MudSwitch T="bool" @bind-Value="_allowTriggers" Label="Allow Triggers" Color="Color.Primary" Size="Size.Small"/>
@@ -138,7 +138,9 @@
     private void OnDefinitionChanged(JobDefinitionRes? def)
     {
         _selectedDef = def;
-        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel { Param = p, Value = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == JobParameterType.Bool ? "false" : null }).ToList();
+        _paramModels = (def?.JobParameters ?? []).OrderBy(p => p.Order).ThenBy(p => p.Key)
+            .Select(p => new ParamModel { Param = p, Value = !string.IsNullOrEmpty(p.Value) ? p.Value : p.Type == JobParameterType.Bool ? "false" : null })
+            .ToList();
         RebuildSiblingMap();
     }
 
@@ -184,11 +186,15 @@
                     }
                 }
 
+                var value = string.IsNullOrWhiteSpace(p.Value) ? null : p.Value;
+                if (value is null && !p.Param.Required && p.Param.Type != JobParameterType.Bool)
+                    continue;
+
                 runParams.Add(
                     new() {
                         Key = p.Param.Key,
                         Type = p.Param.Type,
-                        Value = p.Value,
+                        Value = value,
                         Description = p.Param.Description
                     });
             }

@@ -11,6 +11,8 @@ Usage:
   python3 scripts/nuget/build_nuget.py -f Lyo.Encryption
   python3 scripts/nuget/build_nuget.py --release --changed-since
   python3 scripts/nuget/build_nuget.py --release --changed-since v1.0.0
+  python3 scripts/nuget/build_nuget.py --compile-only Lyo.Encryption
+  python3 scripts/nuget/build_nuget.py --pack-only Lyo.Encryption
 
 Local packs append the SemVer prerelease label ``preview`` (e.g. 1.0.0-preview)
 so they are distinct from release packages. Pass --release when publishing so
@@ -368,6 +370,11 @@ def build_project(csproj_file: Path, *, version: str, config: str, incremental: 
     return ok
 
 
+def has_build_output(csproj_file: Path, config: str) -> bool:
+    bin_dir = csproj_file.parent / "bin" / config
+    return bin_dir.is_dir() and any(bin_dir.rglob("*.dll"))
+
+
 def pack_project(
     csproj_file: Path,
     *,
@@ -410,12 +417,16 @@ class Builder:
         config: str,
         output_dir: Path,
         dep_targets: Path | None,
+        do_compile: bool = True,
+        do_pack: bool = True,
     ) -> None:
         self.version = version
         self.force = force
         self.config = config
         self.output_dir = output_dir
         self.dep_targets = dep_targets
+        self.do_compile = do_compile
+        self.do_pack = do_pack
         self.state_file = output_dir / ".build-state"
         self.visited: set[Path] = set()
         self.failed: set[Path] = set()
@@ -444,30 +455,37 @@ class Builder:
             self.visited.add(csproj_file)
             return True
 
-        if source_changed:
-            if not build_project(csproj_file, version=self.version, config=self.config, incremental=False):
-                self.failed.add(csproj_file)
-                self.visited.add(csproj_file)
-                return False
-        else:
-            print_pack_only(f"{name} — source unchanged, rebuilding for new version {self.version} then packing")
-            if not build_project(csproj_file, version=self.version, config=self.config, incremental=True):
-                self.failed.add(csproj_file)
-                self.visited.add(csproj_file)
-                return False
-
-        if not pack_project(
-            csproj_file,
-            version=self.version,
-            config=self.config,
-            output_dir=self.output_dir,
-            dep_targets=self.dep_targets,
-        ):
+        if self.do_compile:
+            if source_changed:
+                if not build_project(csproj_file, version=self.version, config=self.config, incremental=False):
+                    self.failed.add(csproj_file)
+                    self.visited.add(csproj_file)
+                    return False
+            else:
+                print_pack_only(f"{name} — source unchanged, rebuilding for new version {self.version}")
+                if not build_project(csproj_file, version=self.version, config=self.config, incremental=True):
+                    self.failed.add(csproj_file)
+                    self.visited.add(csproj_file)
+                    return False
+        elif not has_build_output(csproj_file, self.config):
+            print_error(f"{name} has no {self.config} build output; run --compile-only first")
             self.failed.add(csproj_file)
             self.visited.add(csproj_file)
             return False
 
-        save_project_state(self.state_file, name, compute_project_hash(project_dir), self.version)
+        if self.do_pack:
+            if not pack_project(
+                csproj_file,
+                version=self.version,
+                config=self.config,
+                output_dir=self.output_dir,
+                dep_targets=self.dep_targets,
+            ):
+                self.failed.add(csproj_file)
+                self.visited.add(csproj_file)
+                return False
+            save_project_state(self.state_file, name, compute_project_hash(project_dir), self.version)
+
         if source_changed:
             self.built.append(name)
         else:
@@ -494,6 +512,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Pack a release version with no prerelease label (for deploy/publish). Local packs default to VERSION-preview.",
     )
     parser.add_argument("-f", "--force", action="store_true", help="Force build ignoring change detection")
+    phase = parser.add_mutually_exclusive_group()
+    phase.add_argument("--compile-only", action="store_true", help="Build selected projects; do not pack")
+    phase.add_argument("--pack-only", action="store_true", help="Pack selected projects without compiling (requires prior --compile-only)")
     parser.add_argument(
         "--changed-since",
         nargs="?",
@@ -520,6 +541,10 @@ def main(argv: list[str] | None = None) -> int:
         print_info(f"Changed since: {changed_since}")
     if args.force:
         print_warning("Change detection disabled (--force)")
+    if args.compile_only:
+        print_info("Compile only (no pack)")
+    if args.pack_only:
+        print_info("Pack only (no compile)")
     print()
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -574,6 +599,8 @@ def main(argv: list[str] | None = None) -> int:
         config=config,
         output_dir=output_dir,
         dep_targets=dep_targets,
+        do_compile=not args.pack_only,
+        do_pack=not args.compile_only,
     )
     failed_projects: list[str] = []
     for project in projects_to_build:
@@ -585,8 +612,15 @@ def main(argv: list[str] | None = None) -> int:
 
     print()
     print_info("Build Summary:")
-    print_success(f"Built and packed (source changed): {len(builder.built)} package(s)")
-    print_pack_only(f"Rebuild + pack (new version, same source): {len(builder.pack_only)} package(s)")
+    if args.compile_only:
+        print_success(f"Built (source changed): {len(builder.built)} package(s)")
+        print_pack_only(f"Rebuilt for new version (same source): {len(builder.pack_only)} package(s)")
+    elif args.pack_only:
+        print_success(f"Packed (source changed): {len(builder.built)} package(s)")
+        print_pack_only(f"Packed new version (same source): {len(builder.pack_only)} package(s)")
+    else:
+        print_success(f"Built and packed (source changed): {len(builder.built)} package(s)")
+        print_pack_only(f"Rebuild + pack (new version, same source): {len(builder.pack_only)} package(s)")
     print_skip(f"Skipped (source and version unchanged): {len(builder.skipped)} package(s)")
     for name in builder.pack_only:
         print(f"  - {name}")

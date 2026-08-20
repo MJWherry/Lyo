@@ -1,10 +1,30 @@
 .lyo-dialog-title {
+    flex: 1 1 auto;
+    min-width: 0;
     width: 100%;
 }
 
 .lyo-dialog-title-text {
     min-width: 0;
     flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.lyo-dialog-title-text ::deep .mud-typography {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lyo-dialog-title-chips {
+    width: 100%;
+    min-width: 0;
+    padding-bottom: 8px;
+}
+
+.lyo-dialog-title-chips:not(:has(.mud-chip)) {
+    display: none;
+    padding: 0;
 }
 
 .lyo-dialog-content {

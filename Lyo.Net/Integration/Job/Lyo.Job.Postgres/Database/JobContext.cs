@@ -57,8 +57,8 @@ public partial class JobContext : DbContext
             entity.ToTable("job_blackout_calendar");
             entity.HasIndex(e => e.Name, "ix_job_blackout_calendar_name");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
-            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
+            entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasColumnName("enabled");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
@@ -70,7 +70,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.JobBlackoutCalendarId, "ix_job_blackout_window_job_blackout_calendar_id");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.JobBlackoutCalendarId).HasColumnName("job_blackout_calendar_id");
-            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
+            entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
             entity.Property(e => e.DayFlags).HasMaxLength(51).HasColumnName("day_flags");
             entity.Property(e => e.StartDateUtc).HasColumnType("timestamp with time zone").HasColumnName("start_date_utc");
             entity.Property(e => e.EndDateUtc).HasColumnType("timestamp with time zone").HasColumnName("end_date_utc");
@@ -94,9 +94,9 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasColumnName("enabled");
-            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
-            entity.Property(e => e.Type).HasMaxLength(25).HasColumnName("type");
-            entity.Property(e => e.WorkerType).HasMaxLength(50).HasColumnName("worker_type");
+            entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
+            entity.Property(e => e.Type).HasMaxLength(64).HasColumnName("type");
+            entity.Property(e => e.WorkerType).HasMaxLength(100).HasColumnName("worker_type");
             entity.Property(e => e.MaxRetryCount).HasDefaultValue(0).HasColumnName("max_retry_count");
             entity.Property(e => e.RetryBackoffSeconds).HasDefaultValue(0).HasColumnName("retry_backoff_seconds");
             entity.Property(e => e.RetryBackoffType).HasMaxLength(12).HasDefaultValue(nameof(JobRetryBackoffType.Linear)).HasColumnName("retry_backoff_type");
@@ -126,11 +126,11 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.DataEncryptionKeyVersion).HasColumnName("data_encryption_key_version");
             entity.Property(e => e.EncryptedDataEncryptionKey).HasColumnName("encrypted_data_encryption_key");
-            entity.Property(e => e.OriginalFilename).HasMaxLength(100).HasColumnName("original_filename");
+            entity.Property(e => e.OriginalFilename).HasMaxLength(255).HasColumnName("original_filename");
             entity.Property(e => e.OriginalHash).HasColumnName("original_hash");
             entity.Property(e => e.OriginalSize).HasColumnName("original_size");
-            entity.Property(e => e.SourceDirectory).HasMaxLength(150).HasColumnName("source_directory");
-            entity.Property(e => e.SourceFilename).HasMaxLength(50).HasColumnName("source_filename");
+            entity.Property(e => e.SourceDirectory).HasMaxLength(500).HasColumnName("source_directory");
+            entity.Property(e => e.SourceFilename).HasMaxLength(255).HasColumnName("source_filename");
             entity.Property(e => e.SourceHash).HasColumnName("source_hash");
             entity.Property(e => e.SourceSize).HasColumnName("source_size");
             entity.Property(e => e.UploadTimestamp).HasColumnType("timestamp with time zone").HasColumnName("upload_timestamp");
@@ -173,7 +173,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.EncryptedValue).HasColumnName("encrypted_value");
             entity.Property(e => e.JobDefinitionId).HasColumnName("job_definition_id");
-            entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
+            entity.Property(e => e.Key).HasMaxLength(100).HasColumnName("key");
             entity.Property(e => e.Required).HasDefaultValue(true).HasColumnName("required");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
             entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
@@ -182,6 +182,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.MaxLength).HasColumnName("max_length");
             entity.Property(e => e.AllowedValues).HasMaxLength(1000).HasColumnName("allowed_values");
             entity.Property(e => e.Options).HasColumnType("text").HasColumnName("options");
+            entity.Property(e => e.Order).HasDefaultValue(0).HasColumnName("sort_order");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
             entity.HasOne(d => d.JobDefinition)
@@ -201,7 +202,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.TriggeredByJobRunId, "ix_job_run_triggered_by_job_run_id");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.AllowTriggers).HasColumnName("allow_triggers");
-            entity.Property(e => e.CreatedBy).HasMaxLength(50).HasColumnName("created_by");
+            entity.Property(e => e.CreatedBy).HasMaxLength(128).HasColumnName("created_by");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.FinishedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("finished_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
@@ -218,7 +219,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.LastHeartbeatUtc).HasColumnType("timestamp with time zone").HasColumnName("last_heartbeat_utc");
             entity.Property(e => e.Priority).HasDefaultValue(0).HasColumnName("priority");
             entity.Property(e => e.ProgressPercent).HasColumnName("progress_percent");
-            entity.Property(e => e.ProgressMessage).HasMaxLength(500).HasColumnName("progress_message");
+            entity.Property(e => e.ProgressMessage).HasMaxLength(2000).HasColumnName("progress_message");
             entity.Property(e => e.IdempotencyKey).HasMaxLength(128).HasColumnName("idempotency_key");
             entity.Property(e => e.DryRun).HasDefaultValue(false).HasColumnName("dry_run");
             entity.Property(e => e.SlaBreached).HasDefaultValue(false).HasColumnName("sla_breached");
@@ -227,6 +228,10 @@ public partial class JobContext : DbContext
             entity.Property(e => e.BatchIndex).HasColumnName("batch_index");
             entity.Property(e => e.BatchTotal).HasColumnName("batch_total");
             entity.Property(e => e.DefinitionAuditVersion).HasColumnName("definition_audit_version");
+            entity.Property(e => e.WorkerInstanceId).HasColumnName("worker_instance_id");
+            entity.Property(e => e.WorkerMachineName).HasMaxLength(200).HasColumnName("worker_machine_name");
+            entity.Property(e => e.WorkerProcessId).HasColumnName("worker_process_id");
+            entity.HasIndex(e => e.WorkerInstanceId, "ix_job_run_worker_instance_id");
             entity.HasIndex(e => new { e.JobDefinitionId, e.IdempotencyKey })
                 .HasFilter("idempotency_key IS NOT NULL")
                 .IsUnique()
@@ -264,7 +269,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Context).HasMaxLength(16_384).HasColumnName("context");
             entity.Property(e => e.JobRunId).HasColumnName("job_run_id");
             entity.Property(e => e.Level).HasMaxLength(13).HasColumnName("level");
-            entity.Property(e => e.Message).HasMaxLength(1000).HasColumnName("message");
+            entity.Property(e => e.Message).HasMaxLength(3000).HasColumnName("message");
             entity.Property(e => e.StackTrace).HasMaxLength(16384).HasColumnName("stack_trace");
             entity.Property(e => e.Timestamp).HasColumnType("timestamp with time zone").HasColumnName("timestamp");
             entity.HasOne(d => d.JobRun)
@@ -283,7 +288,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.EncryptedValue).HasColumnName("encrypted_value");
             entity.Property(e => e.JobRunId).HasColumnName("job_run_id");
-            entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
+            entity.Property(e => e.Key).HasMaxLength(100).HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
             entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
             entity.HasOne(d => d.JobRun)
@@ -300,7 +305,7 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.Key, "ix_job_run_result_key");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.JobRunId).HasColumnName("job_run_id");
-            entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
+            entity.Property(e => e.Key).HasMaxLength(100).HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
             entity.Property(e => e.Value).HasMaxLength(16_384).HasColumnName("value");
             entity.HasOne(d => d.JobRun)
@@ -355,7 +360,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasDefaultValue(true).HasColumnName("enabled");
             entity.Property(e => e.JobScheduleId).HasColumnName("job_schedule_id");
-            entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
+            entity.Property(e => e.Key).HasMaxLength(100).HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
             entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
@@ -378,8 +383,8 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Enabled).HasColumnName("enabled");
             entity.Property(e => e.JobDefinitionId).HasColumnName("job_definition_id");
             entity.Property(e => e.TriggerComparator).HasMaxLength(20).HasColumnName("trigger_comparator");
-            entity.Property(e => e.TriggerJobResultKey).HasMaxLength(25).HasColumnName("trigger_job_result_key");
-            entity.Property(e => e.TriggerJobResultValue).HasMaxLength(50).HasColumnName("trigger_job_result_value");
+            entity.Property(e => e.TriggerJobResultKey).HasMaxLength(100).HasColumnName("trigger_job_result_key");
+            entity.Property(e => e.TriggerJobResultValue).HasMaxLength(200).HasColumnName("trigger_job_result_value");
             entity.Property(e => e.TriggersJobDefinitionId).HasColumnName("triggers_job_definition_id");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
@@ -405,7 +410,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasDefaultValue(true).HasColumnName("enabled");
             entity.Property(e => e.JobTriggerId).HasColumnName("job_trigger_id");
-            entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
+            entity.Property(e => e.Key).HasMaxLength(100).HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
             entity.Property(e => e.Value).HasMaxLength(3000).HasColumnName("value");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
@@ -423,13 +428,14 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.WorkerType, "ix_job_worker_instance_worker_type");
             entity.HasIndex(e => e.LastHeartbeatUtc, "ix_job_worker_instance_last_heartbeat_utc");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.WorkerType).HasMaxLength(50).HasColumnName("worker_type");
-            entity.Property(e => e.MachineName).HasMaxLength(100).HasColumnName("machine_name");
+            entity.Property(e => e.WorkerType).HasMaxLength(100).HasColumnName("worker_type");
+            entity.Property(e => e.MachineName).HasMaxLength(200).HasColumnName("machine_name");
             entity.Property(e => e.ProcessId).HasColumnName("process_id");
             entity.Property(e => e.State).HasMaxLength(10).HasColumnName("state");
             entity.Property(e => e.InFlightCount).HasDefaultValue(0).HasColumnName("in_flight_count");
             entity.Property(e => e.StartedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("started_timestamp");
             entity.Property(e => e.LastHeartbeatUtc).HasColumnType("timestamp with time zone").HasColumnName("last_heartbeat_utc");
+            entity.Property(e => e.MetadataJson).HasColumnType("jsonb").HasColumnName("metadata_json");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         });
@@ -439,8 +445,8 @@ public partial class JobContext : DbContext
             entity.ToTable("job_workflow");
             entity.HasIndex(e => e.Name, "ix_job_workflow_name");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
-            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
+            entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
+            entity.Property(e => e.Description).HasMaxLength(3000).HasColumnName("description");
             entity.Property(e => e.Enabled).HasColumnName("enabled");
             entity.Property(e => e.CreatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
             entity.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
@@ -454,7 +460,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.JobWorkflowId).HasColumnName("job_workflow_id");
             entity.Property(e => e.JobDefinitionId).HasColumnName("job_definition_id");
-            entity.Property(e => e.StepName).HasMaxLength(100).HasColumnName("step_name");
+            entity.Property(e => e.StepName).HasMaxLength(200).HasColumnName("step_name");
             entity.Property(e => e.StepOrder).HasColumnName("step_order");
             entity.Property(e => e.DependsOnStepIds).HasColumnName("depends_on_step_ids");
             entity.Property(e => e.FailurePolicy).HasMaxLength(20).HasDefaultValue(nameof(JobWorkflowFailurePolicy.Stop)).HasColumnName("failure_policy");

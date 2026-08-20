@@ -33,6 +33,9 @@ public interface ICacheService : IHealth
     /// <summary>Removes all entries tagged for general list/query caching (implementation-defined tag, e.g. <c>queries</c>).</summary>
     Task InvalidateAllCachedQueriesAsync();
 
+    /// <summary>Removes every cached entry and tag index for this process. Does not dump or enumerate a remote Redis store.</summary>
+    Task ClearAsync();
+
     /// <summary>Gets or sets a cached value. Factory returns value only; use <paramref name="extraTags" /> for tags.</summary>
     /// <typeparam name="TValue">Cached value type.</typeparam>
     /// <param name="key">Cache key.</param>

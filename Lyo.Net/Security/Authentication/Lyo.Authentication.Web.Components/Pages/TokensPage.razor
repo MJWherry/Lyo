@@ -138,7 +138,7 @@
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                             <MudIcon Icon="@Icons.Material.Filled.VpnKey" Color="Color.Success"/>
                             <MudText Typo="Typo.h6">@_lastIssued.Record.DisplayName</MudText>
-                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@_lastIssued.Record.Kind</MudChip>
+                            <LyoChip Color="Color.Primary" Variant="Variant.Outlined" Label="@_lastIssued.Record.Kind"/>
                         </MudStack>
                         <MudText Typo="Typo.body2">
                             Copy this token now — it will <strong>never be shown again</strong>. Lyo only stores its SHA-256 hash.
@@ -213,7 +213,7 @@
                                         <MudText HtmlTag="div" Typo="Typo.caption" Color="Color.Secondary"><code>@token.Id</code></MudText>
                                     </td>
                                     <td>
-                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@token.Kind</MudChip>
+                                        <LyoChip Variant="Variant.Outlined" Label="@token.Kind"/>
                                     </td>
                                     <td>@token.Ring</td>
                                     <td>
@@ -223,7 +223,7 @@
                                         else {
                                             <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                                                 @foreach (var scope in token.Scopes) {
-                                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">@scope</MudChip>
+                                                    <LyoChip Label="@scope"/>
                                                 }
                                             </MudStack>
                                         }
@@ -232,15 +232,13 @@
                                     <td>@(token.ExpiresAt?.ToString("u") ?? "—")</td>
                                     <td>
                                         @if (token.RevokedAt is not null) {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Error">
-                                                Revoked
-                                            </MudChip>
+                                            <LyoChip Color="Color.Error" Label="Revoked"/>
                                         }
                                         else if (!active) {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Warning">Expired</MudChip>
+                                            <LyoChip Color="Color.Warning" Label="Expired"/>
                                         }
                                         else {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Success">Active</MudChip>
+                                            <LyoChip Color="Color.Success" Label="Active"/>
                                         }
                                     </td>
                                     <td>

@@ -4,7 +4,7 @@
     }
     else {
         var fp = RedactionPolicyFingerprint.ComputeSha256HexPrefix(Policy);
-        <MudChip T="string" Text="@fp" Size="Size.Small" Variant="Variant.Outlined" title="@($"Fingerprint: {fp}")"/>
+        <LyoChip Variant="Variant.Outlined" Label="@fp" Title="@($"Fingerprint: {fp}")"/>
     }
 </span>
 

@@ -82,10 +82,10 @@
                                             @item.Header
                                         </MudText>
                                         @if (item.IsCustom) {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text" Text="custom"/>
+                                            <LyoChip Color="Color.Secondary" Variant="Variant.Text" Label="custom"/>
                                         }
                                         @if (item.UncheckedByDefault) {
-                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="mud-text-secondary" Text="hidden in grid"/>
+                                            <LyoChip Variant="Variant.Outlined" Class="mud-text-secondary" Label="hidden in grid"/>
                                         }
                                     </MudStack>
                                     <MudText Typo="Typo.caption" Class="mud-text-secondary">@item.Value</MudText>
@@ -108,9 +108,8 @@
                                                    Disabled="@(index == AllItems.Count - 1)"
                                                    Title="Move down"/>
                                 </MudStack>
-                                <MudChip T="string" Size="Size.Small"
-                                         Color="@(item.IsSelected ? Color.Success : Color.Default)"
-                                         Text="@(item.IsSelected ? "✓" : "○")"/>
+                                <LyoChip Color="@(item.IsSelected ? Color.Success : Color.Default)"
+                                         Label="@(item.IsSelected ? "✓" : "○")"/>
                             </div>
                         }
                     </MudPaper>

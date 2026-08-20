@@ -1,0 +1,44 @@
+@namespace Lyo.Web.Components.Form
+
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-expandable-card">
+    <MudPaper Elevation="0" Outlined="true" Class="pa-3">
+        <div class="d-flex align-end gap-2">
+            <div class="flex-grow-1" style="min-width: 0;">
+                <MudGrid Spacing="2">
+                    @Summary
+                </MudGrid>
+            </div>
+            <MudIconButton Icon="@(_expanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                           Size="Size.Medium"
+                           Class="mb-1"
+                           title="@(_expanded ? "Collapse details" : "Expand details")"
+                           aria-label="@(_expanded ? "Collapse details" : "Expand details")"
+                           OnClick="Toggle"/>
+        </div>
+        @if (_expanded) {
+            <MudGrid Spacing="2" Class="mt-2">
+                @ChildContent
+            </MudGrid>
+        }
+    </MudPaper>
+</LyoElementRoot>
+
+@code {
+
+    /// <summary>Optional HTML <c>id</c> override for the root node.</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    /// <summary>Primary row fields. Stays visible when the card is collapsed.</summary>
+    [Parameter]
+    public RenderFragment? Summary { get; set; }
+
+    /// <summary>Extra fields shown after the trailing expand arrow is opened.</summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private bool _expanded;
+
+    private void Toggle() => _expanded = !_expanded;
+
+}

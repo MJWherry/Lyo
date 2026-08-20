@@ -1,0 +1,110 @@
+@namespace Lyo.Web.Components.Cache
+@using Lyo.Api.Client
+@using Lyo.Api.Models.Common.Request
+@using Lyo.Api.Models.Common.Response
+@using Lyo.Api.Models.Enums
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Models
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="@GridKey"
+                      Route="@Route"
+                      Features="@GridFeatures"
+                      KeySelector="GetKey"
+                      KeySelectFields="@KeyFields"
+                      QuickSearchProperties="@QuickSearchFields"
+                      FilterPropertyDefinitions="@_filters"
+                      RowMenuControls="@GetRowMenuControls()">
+    <LeftControls>
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.DeleteSweep"
+                   OnClick="ClearAllAsync">
+            Clear all
+        </MudButton>
+    </LeftControls>
+    <Columns>
+        <LyoProjectedColumn Field="Type" Title="Type" QuickSearchPropertyName="Type">
+            <CellContent Context="item">
+                @{
+                    var typeText = ProjectedValueHelper.GetDisplayValue(item, "Type");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<CacheItemTypeEnum>(typeText, CacheColorHelper.ForType, CacheColorHelper.TypeIcon))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name"/>
+        <LyoProjectedColumn Field="Created" Title="Created" Timestamp="LyoTimestampKind.Absolute"/>
+    </Columns>
+</LyoDataGridProjected>
+
+@code {
+    private static readonly string[] KeyFields = ["Type", "Name"];
+    private static readonly string[] QuickSearchFields = ["Name", "Type"];
+    private const LyoDataGridFeatureFlags GridFeatures =
+        LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable | LyoDataGridFeatureFlags.AutoRefresh
+        | LyoDataGridFeatureFlags.BulkMenu | LyoDataGridFeatureFlags.BulkDelete;
+
+    private readonly List<FilterPropertyDefinition> _filters = [
+        new("Type", "Type"),
+        new("Name", "Name"),
+        new("Created", "Created")
+    ];
+
+    private LyoDataGridProjected? _dataGrid;
+
+    [Parameter]
+    [EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter]
+    public string Route { get; set; } = "Cache";
+
+    [Parameter]
+    public string GridKey { get; set; } = "CacheGrid";
+
+    private static object[] GetKey(object? item)
+    {
+        if (item == null)
+            return [];
+
+        var type = ProjectedValueHelper.GetValue(item, "Type");
+        var name = ProjectedValueHelper.GetValue(item, "Name");
+        return type == null || name == null ? [] : [type, name];
+    }
+
+    private RenderFragment<object?> GetRowMenuControls()
+        => row => @<MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteRowAsync(row))">Delete</MudMenuItem>;
+
+    private async Task ClearAllAsync()
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Clear cache", "Remove every cached entry on this API process?", yesText: "Clear", cancelText: "Cancel");
+        if (confirmed != true)
+            return;
+
+        var result = await ApiClient.PostAsAsync<CacheMutationRes>($"{Route.TrimEnd('/')}/Clear");
+        Snackbar.Add($"Cleared {result.RemovedCount} cache item(s).", Severity.Success);
+        if (_dataGrid != null)
+            await _dataGrid.RefreshData();
+    }
+
+    private async Task DeleteRowAsync(object? row)
+    {
+        var key = GetKey(row);
+        var name = ProjectedValueHelper.GetDisplayValue(row, "Name");
+        if (key.Length == 0 || _dataGrid == null)
+            return;
+
+        var confirmed = await DialogService.ShowMessageBoxAsync("Delete", $"Remove '{name}'?", yesText: "Delete", cancelText: "Cancel");
+        if (confirmed != true)
+            return;
+
+        await ApiClient.DeleteAsAsync<DeleteRequest, DeleteResult<object?>>(Route.TrimEnd('/'), new() { Keys = [key] });
+        Snackbar.Add("Deleted.", Severity.Success);
+        await _dataGrid.RefreshData();
+    }
+}

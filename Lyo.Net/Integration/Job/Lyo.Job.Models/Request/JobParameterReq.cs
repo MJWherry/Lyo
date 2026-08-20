@@ -39,5 +39,8 @@ public sealed class JobParameterReq
     /// <summary>JSON picker source (static items or root QueryReq). Null = no options picker; scalar <see cref="Value" /> remains the default.</summary>
     public string? Options { get; set; }
 
+    /// <summary>Display order among parameters on this definition. Lower values appear first.</summary>
+    public int Order { get; set; }
+
     public override string ToString() => $"({Type}) {Key}={Value}, {Description}";
 }

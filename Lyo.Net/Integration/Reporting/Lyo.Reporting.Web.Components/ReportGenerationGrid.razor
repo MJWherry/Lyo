@@ -59,10 +59,9 @@
                 @{
                     var (started, finished) = GetTimestamps(cell.Item);
                 }
-                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForDuration(started, finished)"
-                         Icon="@(started is not null && finished is null ? Icons.Material.Filled.Timer : null)">
-                    @ReportColorHelper.FormatDurationFromDates(started, finished)
-                </MudChip>
+                <LyoChip Color="@ReportColorHelper.ForDuration(started, finished)"
+                         Icon="@(started is not null && finished is null ? Icons.Material.Filled.Timer : null)"
+                         Label="@ReportColorHelper.FormatDurationFromDates(started, finished)"/>
             </CellTemplate>
         </TemplateColumn>
         <LyoProjectedColumn Field="Format" Title="Format" Align="Align.Center" HeaderStyle="width: 90px;">
@@ -70,9 +69,7 @@
                 @{
                     var formatText = ProjectedValueHelper.GetDisplayValue(item, "Format");
                 }
-                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForFormat(formatText)">
-                    @(string.IsNullOrWhiteSpace(formatText) ? "—" : formatText)
-                </MudChip>
+                <LyoChip Spec="@(LyoChips.FromEnum<ReportFormat>(formatText, ReportColorHelper.ForFormat))"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="Status" Title="Status" Align="Align.Center" HeaderStyle="width: 110px;">
@@ -80,9 +77,7 @@
                 @{
                     var statusText = ProjectedValueHelper.GetDisplayValue(item, "Status");
                 }
-                <MudChip T="string" Size="Size.Small" Color="@ReportColorHelper.ForStatus(statusText)">
-                    @(string.IsNullOrWhiteSpace(statusText) ? "—" : statusText)
-                </MudChip>
+                <LyoChip Spec="@(LyoChips.FromEnum<ReportGenerationStatus>(statusText, ReportColorHelper.ForStatus))"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="CreatedBy" Title="Created By"/>

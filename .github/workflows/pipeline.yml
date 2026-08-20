@@ -3,6 +3,9 @@
 # Every other branch, including dev, is Actions → Run workflow.
 # Tests are scaffolded in _test.yml but not called (see commented job).
 name: CI - Pipeline
+# Same shape as job titles (CI - {branch} - v{version}). run-name is frozen at
+# dispatch, so empty version uses preview.{run_number} (off main) or #{run_number}.
+run-name: "${{ format('CI - {0} - {1}{2}', github.ref_name, github.event_name == 'workflow_dispatch' && inputs.version && format('v{0}{1}', inputs.version, (github.ref_name != 'main' || inputs.channel == 'preview') && !contains(inputs.version, '-') && format('-preview.{0}', github.run_number) || '') || github.ref_name != 'main' && format('preview.{0}', github.run_number) || format('#{0}', github.run_number), github.event_name == 'workflow_dispatch' && inputs.dry_run && ' dry-run' || '') }}"
 
 on:
   push:
@@ -29,7 +32,7 @@ on:
         type: string
         default: ""
       version:
-        description: "SemVer (required off main). Preview gets -preview.<run_number> unless already labeled."
+        description: "SemVer. Empty = latest v* tag (patch-bump) or the tag on HEAD. Preview adds -preview.<run_number>."
         required: false
         type: string
         default: ""
@@ -84,6 +87,7 @@ permissions:
 
 jobs:
   resolve:
+    name: Resolve CI - ${{ github.ref_name }}
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.cfg.outputs.version }}
@@ -122,7 +126,8 @@ jobs:
 
   build:
     needs: resolve
-    if: ${{ needs.resolve.outputs.do_build == 'true' }}
+    if: ${{ needs.resolve.outputs.do_build == 'true' && needs.resolve.outputs.do_pack != 'true' }}
+    name: Build CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
     uses: ./.github/workflows/_build.yml
     with:
       version: ${{ needs.resolve.outputs.version }}
@@ -142,6 +147,7 @@ jobs:
   pack:
     needs: [resolve, build]
     if: ${{ always() && needs.resolve.result == 'success' && needs.resolve.outputs.do_pack == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    name: Pack CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
     uses: ./.github/workflows/_pack.yml
     with:
       version: ${{ needs.resolve.outputs.version }}
@@ -154,6 +160,7 @@ jobs:
   publish-nuget:
     needs: [resolve, pack]
     if: ${{ always() && needs.pack.result == 'success' && needs.resolve.outputs.do_publish_nuget == 'true' }}
+    name: Publish CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
     uses: ./.github/workflows/publish-nuget.yml
     permissions:
       contents: read
@@ -162,13 +169,16 @@ jobs:
     with:
       artifact_name: nuget-packages
       dry_run: false
+      version: ${{ needs.resolve.outputs.version }}
 
   publish-github:
     needs: [resolve, pack]
     if: ${{ always() && needs.pack.result == 'success' && needs.resolve.outputs.do_publish_github == 'true' }}
+    name: Publish GH CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
     uses: ./.github/workflows/_publish-github.yml
     permissions:
       contents: read
       packages: write
     with:
       artifact_name: nuget-packages
+      version: ${{ needs.resolve.outputs.version }}

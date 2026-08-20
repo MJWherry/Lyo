@@ -3,13 +3,9 @@
     <MudText Typo="Typo.h6" Class="mb-2">Result</MudText>
 
     <MudStack Row="true" Spacing="2" Class="mb-3">
-        <MudChip T="string" Color="@(Connected ? Color.Success : Color.Default)">
-            @(Connected ? "Connected" : "Disconnected")
-        </MudChip>
+        <LyoChip Spec="@LyoChips.FromBool(Connected, "Connected", "Disconnected", Color.Success, Color.Default)"/>
         @if (LastHealth != null) {
-            <MudChip T="string" Color="@(LastHealth.IsHealthy ? Color.Success : Color.Warning)">
-                @(LastHealth.IsHealthy ? "Healthy" : "Unhealthy")
-            </MudChip>
+            <LyoChip Spec="@LyoChips.FromBool(LastHealth.IsHealthy, "Healthy", "Unhealthy", Color.Success, Color.Warning)"/>
         }
     </MudStack>
 

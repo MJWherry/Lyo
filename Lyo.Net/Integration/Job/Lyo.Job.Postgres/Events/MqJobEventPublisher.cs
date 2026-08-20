@@ -117,12 +117,13 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
         => _mqService.SubscribeToQueue(Constants.Mq.QueueJobRunFinish, handler, ct);
 
     /// <inheritdoc />
-    public async Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default)
+    public async Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null)
     {
         // Cancellations are broadcast through the exchange to a per-instance exclusive queue. A shared per-worker-type queue would be a
         // competing-consumer queue: with scaled-out workers only one instance would receive each cancel, and if it is not the instance
         // executing the run the cancellation is silently lost.
-        var queueName = Constants.Mq.QueueGetJobRunCancelInstance(workerType, Guid.NewGuid().ToString("N"));
+        var suffix = string.IsNullOrWhiteSpace(instanceSuffix) ? Guid.NewGuid().ToString("N") : instanceSuffix;
+        var queueName = Constants.Mq.QueueGetJobRunCancelInstance(workerType, suffix);
         if (!await _mqService.CreateQueue(queueName, false, true, true, null, ct).ConfigureAwait(false))
             throw new InvalidOperationException($"Failed to declare per-instance cancellation queue '{queueName}'.");
 

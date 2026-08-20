@@ -20,7 +20,8 @@ public sealed record JobParameterRes(
     int? MinLength = null,
     int? MaxLength = null,
     string? AllowedValues = null,
-    string? Options = null)
+    string? Options = null,
+    int Order = 0)
 {
     public override string ToString() => $"Id={Id.Truncated(4, 4)} DefinitionId={JobDefinitionId.Truncated()} ({Type}) {Key}={Value} ({Description})";
 }

@@ -53,7 +53,7 @@
                                 else {
                                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
                                         @foreach (var tag in SelectedVoiceTags) {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Default">@tag</MudChip>
+                                            <LyoChip Label="@tag"/>
                                         }
                                     </MudStack>
                                 }

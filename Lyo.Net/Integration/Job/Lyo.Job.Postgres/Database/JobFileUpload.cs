@@ -14,7 +14,7 @@ public class JobFileUpload
     public DateTime? UpdatedTimestamp { get; set; }
 
     [Required]
-    [MaxLength(100)]
+    [MaxLength(255)]
     public string OriginalFilename { get; set; } = null!;
 
     public long OriginalSize { get; set; }
@@ -22,11 +22,11 @@ public class JobFileUpload
     public byte[] OriginalHash { get; set; } = null!;
 
     [Required]
-    [MaxLength(150)]
+    [MaxLength(500)]
     public string SourceDirectory { get; set; } = null!;
 
     [Required]
-    [MaxLength(50)]
+    [MaxLength(255)]
     public string SourceFilename { get; set; } = null!;
 
     public long SourceSize { get; set; }

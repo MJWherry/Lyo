@@ -85,15 +85,10 @@
                     <MudPaper Class="pa-4" Outlined="true">
                         <MudStack Spacing="2">
                             <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                                <MudChip T="string" Color="@(HeldPermitCount == 0 ? Color.Default : Color.Success)">
-                                    @(HeldPermitCount == 0 ? "No Permits Held" : $"{HeldPermitCount} Permits Held")
-                                </MudChip>
-                                <MudChip T="string" Color="@(_busy ? Color.Warning : Color.Success)">
-                                    @(_busy ? "Busy" : "Idle")
-                                </MudChip>
-                                <MudChip T="string" Color="@(MetricsStore == null ? Color.Warning : Color.Success)">
-                                    @(MetricsStore == null ? "Metrics Unavailable" : "Metrics Enabled")
-                                </MudChip>
+                                <LyoChip Color="@(HeldPermitCount == 0 ? Color.Default : Color.Success)"
+                                         Label="@(HeldPermitCount == 0 ? "No Permits Held" : $"{HeldPermitCount} Permits Held")"/>
+                                <LyoChip Spec="@LyoChips.FromBool(_busy, "Busy", "Idle", Color.Warning, Color.Success)"/>
+                                <LyoChip Spec="@LyoChips.FromBool(MetricsStore != null, "Metrics Enabled", "Metrics Unavailable", Color.Success, Color.Warning)"/>
                             </MudStack>
 
                             @if (!string.IsNullOrWhiteSpace(_statusMessage)) {

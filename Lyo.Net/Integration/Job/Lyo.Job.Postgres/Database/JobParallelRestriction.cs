@@ -10,7 +10,7 @@ public class JobParallelRestriction
 
     public Guid OtherJobDefinitionId { get; set; }
 
-    [MaxLength(100)]
+    [MaxLength(3000)]
     public string? Description { get; set; }
 
     public bool Enabled { get; set; }

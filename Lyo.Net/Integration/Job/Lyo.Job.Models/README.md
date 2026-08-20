@@ -1,6 +1,6 @@
 # Lyo.Job.Models
 
-Shared DTOs, builders, enums, metrics constants, distributed-tracing helpers, and message-queue contracts for the Lyo job-management subsystem. Consumed by `Lyo.Job.Postgres` (the API host), `Lyo.Job.Scheduler`, `Lyo.Job.Worker`, `Lyo.Job.Alerts`, `Lyo.Job.SignalR`, and any Blazor / client code that talks to the job service.
+Shared DTOs, builders, enums, metrics constants, distributed-tracing helpers, and message-queue contracts for the Lyo job-management subsystem. Consumed by `Lyo.Job.Postgres` (the API host), `Lyo.Job.Scheduler`, `Lyo.Job.Worker`, `Lyo.Job.Alerts`, and any Blazor / client code that talks to the job service.
 
 Multi-targets `netstandard2.0` and `net10.0` so the same DTOs flow through legacy callers and modern .NET hosts.
 
@@ -54,7 +54,7 @@ blackout calendars, batch fan-out, workflows, encryption markers, and audit corr
 | Encryption | `JobParameterReq.EncryptedValue`, `IJobParameterEncryptionService` |
 | Audit | `JobDefinitionRes.DefinitionVersion`, `JobRunRes.DefinitionAuditVersion` |
 | Tracing | `JobRunReq.TraceId`, `JobTracing` (`ActivitySource` name `Lyo.Job`) |
-| Worker registry | `JobWorkerInstanceReq` / `JobWorkerInstanceRes` |
+| Worker registry | `JobWorkerInstanceReq` / `JobWorkerInstanceRes` (`Metadata` bag; built-in keys in `Constants.WorkerMetadata`) |
 | Progress | `JobRunRes.ProgressPercent`, `ProgressMessage` |
 | Parallel restrictions | **`JobParallelRestrictionReq`.** blocks schedule when related definitions are Queued/Running |
 | Dry run | `JobRunReq.DryRun`, `JobRunBuilder.AsDryRun()`. Validate without persisting or publishing |
@@ -166,7 +166,19 @@ Fluent factories for assembling request DTOs without dropping into raw initializ
 - **`PublishRunCreatedAsync(runId, workerType, priority = 0)`.** priority honored when the broker queue supports `x-max-priority`.
 - `PublishRunStartedAsync`, `PublishRunFinishedAsync`, `PublishRunCancelledAsync`, `PublishDefinitionUpdatedAsync`.
 - **`PublishAlertAsync(definitionId, runId, alertType, message)`.** routes to `job.notifications.alert`.
-- Subscribers: definition updates, run completions, run cancellations. `SubscribeToRunCancellationsAsync` must broadcast to **every** subscribed instance (implementations use per-instance exclusive queues, `job.run.{workerType}.cancel.{instanceId}`). A shared competing-consumer queue would silently lose cancellations for scaled-out worker types.
+- Subscribers: definition updates, run completions, run cancellations. `SubscribeToRunCancellationsAsync` must broadcast to **every** subscribed instance (implementations use per-instance exclusive queues, `job.run.{workerType}.cancel.{instanceId}`). A shared competing-consumer queue would silently lose cancellations for scaled-out worker types. Workers may pass `instanceSuffix` so the exclusive cancel queue name is known for instance metadata.
+
+## Worker instance metadata (`Constants.WorkerMetadata`)
+
+`JobWorkerInstanceReq.Metadata` is a string bag. `JobWorkerBase` fills built-in keys on register and heartbeat; host extras from `GetWorkerMetadata()` merge last.
+
+| Keys | Kind | Source |
+| ------------------------------------------------------------------------------- | ------ | -------------------------------------------------------- |
+| `os`, `osPlatform`, `osVersion`, `framework`, `runtimeIdentifier`, `clrVersion` | System | OS / runtime |
+| `processorCount`, `cpuModel`, `processArchitecture`, `osArchitecture` | System | CPU |
+| `totalPhysicalMemoryBytes`, `workingSetBytes`, `gcHeapBytes` | System | Memory. Working set and GC heap refresh on heartbeat |
+| `queue`, `cancelQueue`, `waitQueue`, `dlq`, `subscriptions` | Worker | Queues this instance consumes (plus wait/DLQ companions) |
+| `maxRequeueCount`, `heartbeatInterval`, `requeueDelay` | Worker | Worker SDK settings |
 
 ## Metrics (`Constants.Metrics`)
 

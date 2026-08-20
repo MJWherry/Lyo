@@ -2,6 +2,11 @@
 
 <MudDialog Class="lyo-dialog" TitleContent="@GetTitleContent()">
     <DialogContent>
+        @if (TitleChips != null) {
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="lyo-dialog-title-chips">
+                @TitleChips
+            </MudStack>
+        }
         <div class="lyo-dialog-content" style="@ContentStyle">
             @ChildContent
         </div>
@@ -30,9 +35,13 @@
     [Parameter]
     public string? Title { get; set; }
 
-    /// <summary>Custom header markup; takes precedence over <see cref="Title" />. Use for status chips next to the title.</summary>
+    /// <summary>Custom header markup; takes precedence over <see cref="Title" />. Title row only — put chips in <see cref="TitleChips" />.</summary>
     [Parameter]
     public RenderFragment? TitleContent { get; set; }
+
+    /// <summary>Status chips rendered as a wrap row under the title header (above the body) so they do not collide with the debug / close buttons.</summary>
+    [Parameter]
+    public RenderFragment? TitleChips { get; set; }
 
     /// <summary>
     /// Payload shown by the header debug button as pretty-printed JSON (typically the API response or row that opened this popup).
@@ -74,7 +83,7 @@
     public string SaveText { get; set; } = "Save";
 
     private RenderFragment GetTitleContent()
-        => @<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="lyo-dialog-title">
+        => @<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="lyo-dialog-title">
                <div class="lyo-dialog-title-text">
                    @if (TitleContent != null) {
                        @TitleContent

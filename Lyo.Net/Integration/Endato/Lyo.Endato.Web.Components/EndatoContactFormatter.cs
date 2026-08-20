@@ -65,6 +65,10 @@ internal static class EndatoContactFormatter
         return DateTime.MinValue;
     }
 
+    /// <summary>Formats a US 10-digit number as <c>NXX-NXX-XXXX</c>; otherwise returns the trimmed original.</summary>
+    public static string FormatNumber(string? number)
+        => FormatPhoneNumber(number);
+
     private static string FormatPhoneNumber(string? number)
     {
         if (string.IsNullOrWhiteSpace(number))

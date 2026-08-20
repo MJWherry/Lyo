@@ -175,6 +175,44 @@ public static class Constants
         }
     }
 
+    /// <summary>Built-in keys written to <c>JobWorkerInstanceReq.Metadata</c> by <c>JobWorkerBase</c>.</summary>
+    public static class WorkerMetadata
+    {
+        public const string Os = "os";
+        public const string OsPlatform = "osPlatform";
+        public const string OsVersion = "osVersion";
+        public const string Framework = "framework";
+        public const string RuntimeIdentifier = "runtimeIdentifier";
+        public const string ClrVersion = "clrVersion";
+        public const string ProcessArchitecture = "processArchitecture";
+        public const string OsArchitecture = "osArchitecture";
+        public const string ProcessorCount = "processorCount";
+        public const string CpuModel = "cpuModel";
+        public const string TotalPhysicalMemoryBytes = "totalPhysicalMemoryBytes";
+        public const string WorkingSetBytes = "workingSetBytes";
+        public const string GcHeapBytes = "gcHeapBytes";
+        public const string IsServerGc = "isServerGc";
+        public const string ProcessName = "processName";
+        public const string AssemblyVersion = "assemblyVersion";
+        public const string Queue = "queue";
+        public const string WaitQueue = "waitQueue";
+        public const string CancelQueue = "cancelQueue";
+        public const string Dlq = "dlq";
+        public const string Subscriptions = "subscriptions";
+        public const string MaxRequeueCount = "maxRequeueCount";
+        public const string HeartbeatInterval = "heartbeatInterval";
+        public const string RequeueDelay = "requeueDelay";
+
+        /// <summary>Host/runtime keys (CPU, memory, OS). Everything else is worker/queue metadata or a host extra.</summary>
+        public static readonly string[] SystemKeys = [
+            Os, OsPlatform, OsVersion, Framework, RuntimeIdentifier, ClrVersion, ProcessArchitecture, OsArchitecture, ProcessorCount, CpuModel, TotalPhysicalMemoryBytes,
+            WorkingSetBytes, GcHeapBytes, IsServerGc, ProcessName, AssemblyVersion
+        ];
+
+        /// <summary>Whether <paramref name="key" /> is a built-in system-info key.</summary>
+        public static bool IsSystemKey(string? key) => key is not null && SystemKeys.Contains(key, StringComparer.OrdinalIgnoreCase);
+    }
+
     /// <summary>Data keys and identifiers.</summary>
     public static class Data
     {

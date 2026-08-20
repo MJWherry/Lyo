@@ -1,7 +1,9 @@
 @using Lyo.Cache
 @using Lyo.Health
 @using Lyo.Metrics
+@using Lyo.Web.Components.Cache
 @using CacheConstants = Lyo.Cache.Constants
+@inject IApiClient ApiClient
 @inject ICacheService CacheService
 @inject IMetrics Metrics
 @inject ISnackbar Snackbar
@@ -66,15 +68,9 @@
                     <MudPaper Class="pa-4" Outlined="true">
                         <MudStack Spacing="2">
                             <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                                <MudChip T="string" Color="@(_busy ? Color.Warning : Color.Success)">
-                                    @(_busy ? "Busy" : "Idle")
-                                </MudChip>
-                                <MudChip T="string" Color="@(MetricsStore == null ? Color.Warning : Color.Success)">
-                                    @(MetricsStore == null ? "Metrics Unavailable" : "Metrics Enabled")
-                                </MudChip>
-                                <MudChip T="string" Color="@(_items.Count == 0 ? Color.Default : Color.Primary)">
-                                    @_items.Count Cached Items
-                                </MudChip>
+                                <LyoChip Spec="@LyoChips.FromBool(_busy, "Busy", "Idle", Color.Warning, Color.Success)"/>
+                                <LyoChip Spec="@LyoChips.FromBool(MetricsStore != null, "Metrics Enabled", "Metrics Unavailable", Color.Success, Color.Warning)"/>
+                                <LyoChip Color="@(_items.Count == 0 ? Color.Default : Color.Primary)" Label="@($"{_items.Count} Cached Items")"/>
                             </MudStack>
 
                             @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
@@ -249,6 +245,14 @@
                 </MudStack>
             </MudItem>
         </MudGrid>
+
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudText Typo="Typo.h6" Class="mb-2">API cache</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                L1 snapshot from the remote API process (`POST Cache/QueryProject`). This is not the local workbench cache above.
+            </MudText>
+            <CacheGrid ApiClient="ApiClient"/>
+        </MudPaper>
     </MudStack>
 </MudPaper>
 

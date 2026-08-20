@@ -2,11 +2,11 @@
 
 Blazor / MudBlazor dashboard for the Lyo job stack. Add `JobManagement` to a host page for Statistics, Definitions, Schedules, Runs (progress and SLA breach indicators), worker registry, and workflow views. Uses an injected `IApiClient` and a configurable base route prefix.
 
-Pair with [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for a live dashboard that receives `JobEvent` broadcasts without polling.
+The Workers datagrid uses REST heartbeats plus optional AutoRefresh (on by default) for live registry updates.
 
 Targets server-side or interactive Blazor on `net10.0` and pulls in MudBlazor `>= 9.3`.
 
-This package is a Razor component library. It has no `AddXxx` DI registration. The host must already register `IApiClient` (and optionally [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for live updates).
+This package is a Razor component library. It has no `AddXxx` DI registration. The host must already register `IApiClient`.
 
 ## Examples
 
@@ -15,18 +15,7 @@ This package is a Razor component library. It has no `AddXxx` DI registration. T
 ```mermaid
 flowchart LR
     UI[JobManagement tabs] --> API[IApiClient → Job API]
-    UI -. optional .-> SR[SignalR JobHub]
-    SR --> MQ[job.events exchange]
-    MQ --> API
-```
-
-### Live dashboard (SignalR)
-
-```csharp
-// Program.cs
-services.AddJobSignalR();
-var app = builder.Build();
-app.MapJobHub(); // default /hubs/job
+    API --> MQ[job.events exchange]
 ```
 
 ## Top-level entry point
@@ -44,17 +33,6 @@ app.MapJobHub(); // default /hubs/job
 
 `JobManagement` renders tabbed `MudTabs`: Statistics, Definitions, Schedules, Runs, Workers, Workflows.
 
-## Live dashboard (SignalR)
-
-For real-time run/alert/definition updates, register SignalR in the host and subscribe from your page:
-
-```javascript
-// Client-side (example)
-connection.on("JobEvent", (evt) => { /* refresh grids or patch rows */ });
-```
-
-See [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for event types (`run.created`, `run.finished`, `alert`, …).
-
 ## Component catalog
 
 | Component | Role |
@@ -69,9 +47,10 @@ See [`Lyo.Job.SignalR`](../Lyo.Job.SignalR/README.md) for event types (`run.crea
 | `JobScheduleView` | Inline schedule editor: add/remove, enable toggle, atomic day/month flags, timezone picker (defaults to the browser IANA id), local start/end date pickers stored as UTC midnight in that zone, blackout calendar, schedule-parameter overrides (query-root pickers inherited from definition parameters). Times stay wall-clock `TimeOnly` values. |
 | `JobBlackoutCalendarEditor` | Create/unlink a schedule blackout calendar and CRUD its windows (recurring days or dated range, Skip/Defer). |
 | `JobTriggerView` | Trigger relationships between definitions. |
-| `JobRunGrid` | Runs with state pills, **progress bar** column, drill-down, **Resync RabbitMQ** (republish queued runs missing from the broker). |
-| `JobRunDetailView` | Parameters, results, logs, **progress**, **SLA breach** chip, alert flags, re-run. |
-| `JobWorkerInstanceGrid` | Live worker registry (type, machine, PID, in-flight, heartbeat). |
+| `JobRunGrid` | Runs with state pills, **worker** column (machine:pid + instance id), drill-down, **Resync RabbitMQ** (republish queued runs missing from the broker). |
+| `JobRunDetailView` | Overview (identity/timing/context), parameters, results, logs ordered by time, **progress**, **SLA** chip, re-run. |
+| `JobWorkerInstanceGrid` | Worker datagrid (type, machine, PID, state chips, in-flight, heartbeat, metadata). AutoRefresh on by default. |
+| `JobWorkerInstanceView` | Worker detail popup: identity, CPU/memory, queue subscriptions, plus System and Worker metadata tabs. |
 | `JobWorkflowView` | Workflow picker + ordered step diagram. |
 | `RunJobDialog` | Ad-hoc run with parameter overrides; Options / AllowedValues render as MudSelect with live sibling binding. |
 
@@ -97,6 +76,7 @@ Static helper for consistent visual treatment of job state, result, and log leve
 | Member | Returns / behavior |
 | -------------------------------------------- | ---------------------------------------------------------------------- |
 | `ForState(JobState)` | MudBlazor `Color` mapping. |
+| `ForWorkerState(JobWorkerInstanceState)` | Running→Success, Draining→Warning, Stopped→Default. |
 | `ForResult(JobRunResult?)` | Success / warning / error colors. |
 | `ForLogLevel(JobLogLevel)` | Trace/Debug→Default, Info→Info, Warning→Warning, Error/Critical→Error. |
 | `StateIcon` / `ResultIcon` | Material icon names. |

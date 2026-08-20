@@ -164,7 +164,8 @@ internal sealed class FakeEventPublisher : IJobEventPublisher
 
     public Task SubscribeToRunCompletionsAsync(Func<byte[], Task<bool>> handler, CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default) => Task.CompletedTask;
+    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null)
+        => Task.CompletedTask;
 }
 
 /// <summary>Fake MQ implementing <see cref="IDelayedMqService" /> so the scheduler chooses the delayed-envelope dispatch path; records the delayed sends.</summary>

@@ -4,8 +4,10 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Records;
 using Lyo.Job.Client;
+using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
+using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Tests.Postgres;
 using Lyo.Job.Worker;
@@ -30,6 +32,7 @@ public class JobWorkerBaseRegistrationTests
             Assert.True(api.RegisterAttempts >= 2);
             Assert.Equal(1, api.SuccessfulRegisters);
             Assert.True(api.HeartbeatCount >= 1);
+            AssertRegisteredMetadata(api.LastRegisterRequest?.Metadata);
         }
         finally {
             await worker.StopAsync(TestContext.Current.CancellationToken);
@@ -55,7 +58,35 @@ public class JobWorkerBaseRegistrationTests
         }
     }
 
+    [Fact]
+    public async Task StartAsync_RegistersSystemInfoAndQueueSubscriptions()
+    {
+        var api = new ControllableWorkerInstanceApiClient();
+        var worker = CreateWorker(api);
+        try {
+            await worker.StartAsync(TestContext.Current.CancellationToken);
+            AssertRegisteredMetadata(api.LastRegisterRequest?.Metadata);
+        }
+        finally {
+            await worker.StopAsync(TestContext.Current.CancellationToken);
+        }
+    }
+
     private static TestJobWorker CreateWorker(ControllableWorkerInstanceApiClient api) => new(new FakeMqService(), new JobClient(api), new FakeJobEventPublisher(), "cs");
+
+    private static void AssertRegisteredMetadata(IReadOnlyDictionary<string, string?>? metadata)
+    {
+        Assert.NotNull(metadata);
+        Assert.False(string.IsNullOrWhiteSpace(metadata[Constants.WorkerMetadata.Os]));
+        Assert.False(string.IsNullOrWhiteSpace(metadata[Constants.WorkerMetadata.Framework]));
+        Assert.True(int.Parse(metadata[Constants.WorkerMetadata.ProcessorCount]!) > 0);
+        Assert.Equal(Constants.Mq.QueueGetJobRunCreated("cs"), metadata[Constants.WorkerMetadata.Queue]);
+        Assert.Equal(Constants.Mq.QueueGetJobRunCreatedWait("cs"), metadata[Constants.WorkerMetadata.WaitQueue]);
+        Assert.StartsWith(Constants.Mq.QueueGetJobRunCancel("cs") + ".", metadata[Constants.WorkerMetadata.CancelQueue], StringComparison.Ordinal);
+        Assert.Contains(metadata[Constants.WorkerMetadata.Queue]!, metadata[Constants.WorkerMetadata.Subscriptions], StringComparison.Ordinal);
+        Assert.Contains(Constants.WorkerMetadata.WorkingSetBytes, metadata.Keys);
+        Assert.Contains(Constants.WorkerMetadata.GcHeapBytes, metadata.Keys);
+    }
 
     private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout, CancellationToken ct)
     {
@@ -97,6 +128,8 @@ public class JobWorkerBaseRegistrationTests
         public int HeartbeatCount { get; private set; }
 
         public int Heartbeat404Count { get; private set; }
+
+        public JobWorkerInstanceReq? LastRegisterRequest { get; private set; }
 
         public void Dispose() { }
 
@@ -161,7 +194,21 @@ public class JobWorkerBaseRegistrationTests
             var id = Guid.NewGuid();
             SuccessfulRegisters++;
             var now = DateTime.UtcNow;
-            var created = new CreateResult<JobWorkerInstanceRes>(true, new(id, "cs", "host", 1, JobWorkerInstanceState.Running, 0, now, now), null);
+            LastRegisterRequest = request as JobWorkerInstanceReq;
+            var created = new CreateResult<JobWorkerInstanceRes>(
+                true,
+                new() {
+                    Id = id,
+                    WorkerType = "cs",
+                    MachineName = "host",
+                    ProcessId = 1,
+                    State = JobWorkerInstanceState.Running,
+                    InFlightCount = 0,
+                    StartedTimestamp = now,
+                    LastHeartbeatUtc = now,
+                    CreatedTimestamp = now
+                },
+                null);
             return Task.FromResult((TResult)(object)created);
         }
 

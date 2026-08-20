@@ -1,0 +1,169 @@
+@using System.Globalization
+
+<LyoDialog DebugData="@Instance">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Instance.MachineName) ? "Worker instance" : $"{Instance.MachineName} · {Instance.WorkerType}")</MudText>
+    </TitleContent>
+    <TitleChips>
+        <LyoChip Spec="@(LyoChips.FromEnum<JobWorkerInstanceState>(Instance.State.ToString(), JobColorHelper.ForWorkerState, JobColorHelper.WorkerStateIcon))"/>
+        <LyoChip Color="@(Instance.InFlightCount > 0 ? Color.Info : Color.Default)" Label="@($"{Instance.InFlightCount} in flight")"/>
+        @if (JobColorHelper.IsHeartbeatStale(Instance.LastHeartbeatUtc)) {
+            <LyoChip Color="Color.Error" Label="Stale"/>
+        }
+        else {
+            <LyoChip Color="Color.Success" Variant="Variant.Outlined" Label="Heartbeat ok"/>
+        }
+    </TitleChips>
+    <ChildContent>
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-3">
+            <MudTabPanel Text="Overview">
+                <MudGrid Class="pa-1" Spacing="2">
+                    <MudItem xs="12" sm="6" md="4">
+                        <LyoIdField Label="ID" Value="@Instance.Id"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudTextField T="string" Label="Worker Type" Value="@Instance.WorkerType" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudTextField T="string" Label="Machine" Value="@Instance.MachineName" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField T="string" Label="PID" Value="@Instance.ProcessId.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField T="string" Label="In Flight" Value="@Instance.InFlightCount.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Started</MudText>
+                            <LyoTimestamp Value="@Instance.StartedTimestamp" Kind="LyoTimestampKind.Absolute"/>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Last Heartbeat</MudText>
+                            <LyoTimestamp Value="@Instance.LastHeartbeatUtc" Kind="LyoTimestampKind.Relative"/>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudTextField T="string" Label="CPU" Value="@CpuSummary" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudTextField T="string" Label="Memory" Value="@MemorySummary" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudTextField T="string" Label="Working Set" Value="@WorkingSetSummary" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField T="string" Label="Queue Subscriptions" Value="@SubscriptionsSummary" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"System ({_systemPairs.Count})")">
+                @MetadataTable(_systemPairs)
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Worker ({_workerPairs.Count})")">
+                @MetadataTable(_workerPairs)
+            </MudTabPanel>
+        </MudTabs>
+    </ChildContent>
+</LyoDialog>
+
+@code {
+
+    [Parameter]
+    [EditorRequired]
+    public JobWorkerInstanceRes Instance { get; set; } = null!;
+
+    private List<KeyValuePair<string, string?>> _systemPairs = [];
+    private List<KeyValuePair<string, string?>> _workerPairs = [];
+
+    private string CpuSummary => Combine(Meta(Constants.WorkerMetadata.ProcessorCount) is { } count ? $"{count} logical" : null, Meta(Constants.WorkerMetadata.CpuModel));
+
+    private string MemorySummary => FormatBytes(Meta(Constants.WorkerMetadata.TotalPhysicalMemoryBytes));
+
+    private string WorkingSetSummary {
+        get {
+            var workingSet = FormatBytes(Meta(Constants.WorkerMetadata.WorkingSetBytes));
+            var gcHeap = FormatBytes(Meta(Constants.WorkerMetadata.GcHeapBytes));
+            if (workingSet == "—" && gcHeap == "—")
+                return "—";
+            return gcHeap == "—" ? workingSet : $"{workingSet} working / {gcHeap} GC";
+        }
+    }
+
+    private string SubscriptionsSummary => Meta(Constants.WorkerMetadata.Subscriptions) ?? Meta(Constants.WorkerMetadata.Queue) ?? "—";
+
+    protected override void OnParametersSet()
+    {
+        var pairs = Instance.Metadata?.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase).ToList() ?? [];
+        _systemPairs = pairs.Where(p => Constants.WorkerMetadata.IsSystemKey(p.Key)).ToList();
+        _workerPairs = pairs.Where(p => !Constants.WorkerMetadata.IsSystemKey(p.Key)).ToList();
+    }
+
+    private string? Meta(string key)
+    {
+        if (Instance.Metadata is null)
+            return null;
+
+        return Instance.Metadata.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
+    }
+
+    private static string Combine(string? left, string? right)
+    {
+        if (string.IsNullOrWhiteSpace(left))
+            return string.IsNullOrWhiteSpace(right) ? "—" : right!;
+        return string.IsNullOrWhiteSpace(right) ? left : $"{left} · {right}";
+    }
+
+    private RenderFragment MetadataTable(IReadOnlyList<KeyValuePair<string, string?>> pairs) => __builder =>
+    {
+        if (pairs.Count == 0) {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">None</MudText>
+            return;
+        }
+
+        <MudSimpleTable Dense="true" Hover="true" Elevation="0">
+            <thead>
+            <tr>
+                <th>Key</th>
+                <th>Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var pair in pairs) {
+                <tr>
+                    <td>@pair.Key</td>
+                    <td title="@pair.Value">@FormatMetadataValue(pair.Key, pair.Value)</td>
+                </tr>
+            }
+            </tbody>
+        </MudSimpleTable>
+    };
+
+    private static string FormatMetadataValue(string key, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "—";
+        if (key.EndsWith("Bytes", StringComparison.OrdinalIgnoreCase))
+            return FormatBytes(value);
+        return value;
+    }
+
+    private static string FormatBytes(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw) || !long.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var bytes) || bytes < 0)
+            return "—";
+
+        string[] units = ["B", "KiB", "MiB", "GiB", "TiB"];
+        var value = (double)bytes;
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1) {
+            value /= 1024;
+            unit++;
+        }
+
+        return unit == 0 ? $"{bytes} {units[unit]}" : $"{value:0.##} {units[unit]}";
+    }
+
+}

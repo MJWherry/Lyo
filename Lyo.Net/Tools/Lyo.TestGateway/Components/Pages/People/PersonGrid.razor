@@ -1,3 +1,5 @@
+@using Lyo.Api.Models.Common.Response
+@using Lyo.Query.Models.Common.Request
 @using Lyo.Web.Components.DataGrid
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
@@ -22,6 +24,14 @@
         </LyoDataGridExportMenu>
     </BulkExportControls>
     <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="Open person"
+                               OnClick="@(() => OpenPerson(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
         <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;" Identifier="true"/>
         <LyoProjectedColumn Field="FirstName" Title="Firstname" QuickSearchPropertyName="Firstname"/>
         <LyoProjectedColumn Field="MiddleName" Title="Middlename"/>
@@ -37,9 +47,9 @@
 @code {
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("FirstName"), FilterPropertyDefinition.FromDatabase("LastName", "last_name", "person", "people")];
 
-    private readonly IEnumerable<string> _includes = [];
-
     private LyoDataGridProjected? _dataGrid;
+
+    private static readonly string[] PersonIncludes = ["ContactAddresses.Address", "ContactPhoneNumbers.PhoneNumber", "ContactEmailAddresses.EmailAddress"];
 
     private static object[] GetKey(object? item)
     {
@@ -51,26 +61,34 @@
     }
 
     private RenderFragment<object?> GetRowMenuControls()
-        => person => @<MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenEditor(person))">Edit</MudMenuItem>;
+        => person => @<MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => OpenPerson(person))">Open</MudMenuItem>;
 
-    private async Task OpenEditor(object? person)
+    private async Task OpenPerson(object? person)
     {
-        if (person == null)
-            return;
-
-        var id = ProjectedValueHelper.GetValue(person, "Id");
-        if (id == null)
-            return;
-
-        var personRes = await ApiClient.GetAsAsync<PersonRes>($"{Constants.Person.Route}/{id}");
+        var personRes = await LoadPerson(person);
         if (personRes == null)
             return;
 
-        var dialogParameters = new DialogParameters<PersonForm> { { i => i.Person, personRes } };
-        var dialog = await DialogService.ShowAsync<PersonForm>($"Edit {personRes.FullName}", dialogParameters, LyoDialogPresets.Large);
+        var parameters = new DialogParameters<PersonView> { { d => d.Person, personRes } };
+        var dialog = await DialogService.ShowAsync<PersonView>(personRes.FullName, parameters, LyoDialogPresets.Large);
         var result = await dialog.Result;
-        if (!result.Canceled && _dataGrid is not null)
+        if (result is { Canceled: false } && _dataGrid is not null)
             await _dataGrid.RefreshData();
+    }
+
+    private async Task<PersonRes?> LoadPerson(object? person)
+    {
+        if (person == null)
+            return null;
+
+        var id = ProjectedValueHelper.GetValue(person, "Id");
+        if (id == null)
+            return null;
+
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<PersonRes>>(
+            $"{Constants.Person.Route}/QueryConcrete",
+            new() { Keys = [[id]], Amount = 1, Include = [..PersonIncludes] });
+        return res?.Items?.FirstOrDefault() ?? await ApiClient.GetAsAsync<PersonRes>($"{Constants.Person.Route}/{id}");
     }
 
 }

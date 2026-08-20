@@ -39,13 +39,9 @@
             <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
                 @foreach (var (item, i) in Items.Select((s, idx) => (s, idx))) {
                     var index = i;
-                    <MudChip T="string"
-                             Size="Size.Small"
-                             Variant="Variant.Filled"
-                             Color="Color.Primary"
-                             OnClose="@(() => RemoveSort(index))">
-                        @FormatChipText(item)
-                    </MudChip>
+                    <LyoChip Color="Color.Primary"
+                             OnClose="@(() => RemoveSort(index))"
+                             Label="@FormatChipText(item)"/>
                 }
             </MudStack>
         }

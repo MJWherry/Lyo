@@ -37,8 +37,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("created_timestamp");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<bool>("Enabled")
@@ -47,8 +47,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<DateTime?>("UpdatedTimestamp")
@@ -101,8 +101,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<string>("Policy")
@@ -227,8 +227,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<int>("Priority")
@@ -265,8 +265,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("character varying(25)")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("type");
 
                     b.Property<DateTime?>("UpdatedTimestamp")
@@ -275,8 +275,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("WorkerType")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("worker_type");
 
                     b.HasKey("Id")
@@ -310,8 +310,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("OriginalFilename")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
                         .HasColumnName("original_filename");
 
                     b.Property<byte[]>("OriginalHash")
@@ -325,14 +325,14 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("SourceDirectory")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
                         .HasColumnName("source_directory");
 
                     b.Property<string>("SourceFilename")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
                         .HasColumnName("source_filename");
 
                     b.Property<byte[]>("SourceHash")
@@ -445,8 +445,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("key");
 
                     b.Property<int?>("MaxLength")
@@ -460,6 +460,12 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Property<string>("Options")
                         .HasColumnType("text")
                         .HasColumnName("options");
+
+                    b.Property<int>("Order")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sort_order");
 
                     b.Property<bool>("Required")
                         .ValueGeneratedOnAdd()
@@ -519,8 +525,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
                         .HasColumnName("created_by");
 
                     b.Property<DateTime>("CreatedTimestamp")
@@ -573,8 +579,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("priority");
 
                     b.Property<string>("ProgressMessage")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("progress_message");
 
                     b.Property<int?>("ProgressPercent")
@@ -629,6 +635,19 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
 
+                    b.Property<Guid?>("WorkerInstanceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("worker_instance_id");
+
+                    b.Property<string>("WorkerMachineName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("worker_machine_name");
+
+                    b.Property<int?>("WorkerProcessId")
+                        .HasColumnType("integer")
+                        .HasColumnName("worker_process_id");
+
                     b.HasKey("Id")
                         .HasName("pk_job_run");
 
@@ -655,6 +674,8 @@ namespace Lyo.Job.Postgres.Migrations
                     b.HasIndex(new[] { "State" }, "ix_job_run_state");
 
                     b.HasIndex(new[] { "TriggeredByJobRunId" }, "ix_job_run_triggered_by_job_run_id");
+
+                    b.HasIndex(new[] { "WorkerInstanceId" }, "ix_job_run_worker_instance_id");
 
                     b.ToTable("job_run", "job");
                 });
@@ -684,8 +705,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Message")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("message");
 
                     b.Property<string>("StackTrace")
@@ -730,8 +751,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("key");
 
                     b.Property<string>("Type")
@@ -769,8 +790,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("key");
 
                     b.Property<string>("Type")
@@ -928,8 +949,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("key");
 
                     b.Property<string>("Type")
@@ -990,13 +1011,13 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("TriggerJobResultKey")
                         .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("character varying(25)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("trigger_job_result_key");
 
                     b.Property<string>("TriggerJobResultValue")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("trigger_job_result_value");
 
                     b.Property<Guid>("TriggersJobDefinitionId")
@@ -1048,8 +1069,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("key");
 
                     b.Property<string>("Type")
@@ -1101,9 +1122,13 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("MachineName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("machine_name");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata_json");
 
                     b.Property<int>("ProcessId")
                         .HasColumnType("integer")
@@ -1125,8 +1150,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("WorkerType")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("worker_type");
 
                     b.HasKey("Id")
@@ -1152,8 +1177,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("created_timestamp");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
                         .HasColumnName("description");
 
                     b.Property<bool>("Enabled")
@@ -1162,8 +1187,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<DateTime?>("UpdatedTimestamp")
@@ -1310,8 +1335,8 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Property<string>("StepName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("step_name");
 
                     b.Property<int>("StepOrder")
