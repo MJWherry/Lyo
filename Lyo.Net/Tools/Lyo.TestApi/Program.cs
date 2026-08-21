@@ -102,7 +102,7 @@ builder.Services.Configure<QueryOptions>(builder.Configuration.GetSection("Query
 builder.Services.ConfigureMapster();
 var connStr = builder.Configuration.GetConnectionString("Postgres") ?? "Host=localhost;Port=5437;Database=postgres;Username=root_remote;Password=password";
 builder.Services.SetupRabbitMqServiceFromConfiguration(builder.Configuration, []);
-builder.Services.AddMqJobEventPublisher();
+builder.Services.AddMqJobEventPublisherFromConfiguration(builder.Configuration);
 builder.Services.AddPostgresJobManagement(opts => {
     opts.ConnectionString = connStr;
     opts.EnableAutoMigrations = true;
@@ -180,6 +180,7 @@ builder.Services.AddS3FileStorageServiceKeyed(Constants.FileStorageWorkbench.Ser
     .UseEncryptionService(Constants.FileStorageWorkbench.ServiceKey)
     .ConfigureS3FileStorage()
     .Build(builder.Configuration);
+builder.Services.AddFileStorageArchiveServiceKeyed(Constants.FileStorageWorkbench.ServiceKey);
 
 builder.Services.AddFileOperationContextAccessor();
 builder.Services.AddPostgresFileAuditSink();

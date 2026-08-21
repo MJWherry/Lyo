@@ -1,0 +1,131 @@
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="5" md="4">
+                <MudTextField T="string"
+                              Label="Subject entity type"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              @bind-Value="_typeDraft"
+                              OnKeyDown="OnToolbarKeyDown"/>
+            </MudItem>
+            <MudItem xs="12" sm="5" md="4">
+                <MudTextField T="string"
+                              Label="Subject entity id"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              HelperText="Required for Resolved and bindings (e.g. gateway:local)."
+                              @bind-Value="_idDraft"
+                              OnKeyDown="OnToolbarKeyDown"/>
+            </MudItem>
+            <MudItem xs="12" sm="2" md="4" Class="d-flex align-end">
+                <MudStack Row="true" Spacing="1" Class="mb-1">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Check"
+                               OnClick="ApplyScope">
+                        Apply
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="Refresh">
+                        Refresh
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTabs @bind-ActivePanelIndex="_tabIndex" Color="Color.Primary" SliderColor="Color.Secondary">
+        <MudTabPanel Text="Definitions">
+            <ConfigDefinitionGrid Store="Store"
+                                  SubjectEntityType="@_subjectEntityType"
+                                  DataVersion="_dataVersion"
+                                  OnChanged="Refresh"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Resolved">
+            <ConfigResolvedView Store="Store"
+                                SubjectEntityType="@_subjectEntityType"
+                                SubjectEntityId="@_subjectEntityId"
+                                DataVersion="_dataVersion"
+                                OnChanged="Refresh"
+                                OnViewRevisions="HandleViewRevisions"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Revisions">
+            <ConfigRevisionList Store="Store"
+                                BindingId="_selectedBindingId"
+                                DataVersion="_dataVersion"
+                                OnChanged="Refresh"/>
+        </MudTabPanel>
+    </MudTabs>
+</MudStack>
+
+@code {
+
+    /// <summary>Config store used for all definition, binding, resolve, and revision calls. Required. Hosts inject the store and pass it in.</summary>
+    [Parameter]
+    [EditorRequired]
+    public IConfigStore Store { get; set; } = null!;
+
+    /// <summary>Initial subject entity type. Defaults to <see cref="AppConfigEntity.AppEntityType" />.</summary>
+    [Parameter]
+    public string InitialSubjectEntityType { get; set; } = AppConfigEntity.AppEntityType;
+
+    /// <summary>Initial subject entity id (string; app routes use <c>kind:id</c>).</summary>
+    [Parameter]
+    public string? InitialSubjectEntityId { get; set; }
+
+    private string _typeDraft = AppConfigEntity.AppEntityType;
+    private string _idDraft = "";
+    private string _subjectEntityType = AppConfigEntity.AppEntityType;
+    private string _subjectEntityId = "";
+    private int _tabIndex;
+    private int _dataVersion;
+    private Guid? _selectedBindingId;
+    private bool _initialized;
+
+    protected override void OnParametersSet()
+    {
+        if (_initialized)
+            return;
+
+        _typeDraft = string.IsNullOrWhiteSpace(InitialSubjectEntityType) ? AppConfigEntity.AppEntityType : InitialSubjectEntityType.Trim();
+        _idDraft = InitialSubjectEntityId?.Trim() ?? "";
+        _subjectEntityType = _typeDraft;
+        _subjectEntityId = _idDraft;
+        _initialized = true;
+    }
+
+    private void ApplyScope()
+    {
+        var type = _typeDraft.Trim();
+        if (string.IsNullOrWhiteSpace(type)) {
+            Snackbar.Add("Subject entity type is required.", Severity.Warning);
+            return;
+        }
+
+        _subjectEntityType = type;
+        _subjectEntityId = _idDraft.Trim();
+        _dataVersion++;
+    }
+
+    private void Refresh() => _dataVersion++;
+
+    private void HandleViewRevisions(Guid bindingId)
+    {
+        _selectedBindingId = bindingId;
+        _tabIndex = 2;
+        _dataVersion++;
+    }
+
+    private void OnToolbarKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            ApplyScope();
+    }
+
+}

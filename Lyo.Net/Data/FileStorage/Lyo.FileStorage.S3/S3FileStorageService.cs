@@ -112,7 +112,15 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
     {
         var sw = Stopwatch.StartNew();
         try {
-            await _s3Client.GetBucketLocationAsync(new GetBucketLocationRequest { BucketName = _options.BucketName }, ct).ConfigureAwait(false);
+            // GetBucketLocation needs s3:GetBucketLocation, which object-only IAM often lacks. A GetObject on a missing key uses s3:GetObject
+            // (the same permission as streamed downloads) and 404 means the bucket is reachable.
+            var probeKey = GetObjectKey(Guid.Empty, "", ".lyo-health");
+            try {
+                using var response = await _s3Client.GetObjectAsync(
+                    new GetObjectRequest { BucketName = _options.BucketName, Key = probeKey, ByteRange = new ByteRange(0, 0) }, ct).ConfigureAwait(false);
+            }
+            catch (AmazonS3Exception ex) when (IsMissingObject(ex)) { }
+
             sw.Stop();
             return HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { ["bucket"] = _options.BucketName });
         }
@@ -121,6 +129,10 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
             return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
         }
     }
+
+    private static bool IsMissingObject(AmazonS3Exception ex)
+        => string.Equals(ex.ErrorCode, "NoSuchKey", StringComparison.OrdinalIgnoreCase)
+            || (ex.StatusCode == HttpStatusCode.NotFound && !string.Equals(ex.ErrorCode, "NoSuchBucket", StringComparison.OrdinalIgnoreCase));
 
     /// <inheritdoc />
     public override Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
@@ -574,11 +586,7 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
         var expirationTime = expiration ?? TimeSpan.FromHours(1);
         ArgumentHelpers.ThrowIfNotInRange(expirationTime, TimeSpan.Zero, TimeSpan.FromDays(7));
         var resolvedPrefix = pathPrefix ?? meta.PathPrefix;
-        var objectKey = await FindObjectKeyAsync(fileId, resolvedPrefix, ct).ConfigureAwait(false);
-        if (objectKey == null) {
-            Logger.LogWarning("File {FileId} not found in S3, cannot generate pre-signed URL", fileId);
-            throw new FileNotFoundException($"File with ID {fileId} was not found in storage.");
-        }
+        var objectKey = CloudObjectKeyBuilder.FromMetadata(fileId, meta.SourceFileName, resolvedPrefix, _options.KeyPrefix);
 
         try {
             var request = new GetPreSignedUrlRequest {
@@ -627,13 +635,11 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
 
     private async Task<string?> FindObjectKeyAsync(Guid fileId, string? pathPrefix = null, CancellationToken ct = default)
     {
-        // Hot-path optimization: if metadata is available for this fileId, try the suffix derived from its SourceFileName first to avoid the N+1 HEAD probes.
+        // Metadata already records SourceFileName; do not HEAD the hinted key. Many IAM policies allow GetObject but deny HeadObject,
+        // and S3 also returns 403 (not 404) when ListBucket is missing — that used to abort key resolution entirely.
         var hintedSuffix = await TryGetSuffixHintFromMetadataAsync(fileId, ct).ConfigureAwait(false);
-        if (hintedSuffix != null) {
-            var hintedKey = GetObjectKey(fileId, hintedSuffix, pathPrefix);
-            if (await ObjectExistsAsync(hintedKey, ct).ConfigureAwait(false))
-                return hintedKey;
-        }
+        if (hintedSuffix != null)
+            return GetObjectKey(fileId, hintedSuffix, pathPrefix);
 
         var baseKey = GetObjectKey(fileId, "", pathPrefix);
         if (await ObjectExistsAsync(baseKey, ct).ConfigureAwait(false))

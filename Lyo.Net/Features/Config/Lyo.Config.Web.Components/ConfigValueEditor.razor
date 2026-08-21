@@ -1,0 +1,112 @@
+@using System.Text.Json
+@using System.Text.Json.Nodes
+
+<MudStack Spacing="2">
+    <MudTextField T="string"
+                  Label="Value type name"
+                  Variant="Variant.Outlined"
+                  Margin="Margin.Dense"
+                  Immediate="true"
+                  Disabled="@ReadOnly"
+                  HelperText="CLR FullName stored on ConfigValue.TypeName (must match the definition ForValueType)."
+                  Value="@Value.TypeName"
+                  ValueChanged="OnTypeNameChanged"/>
+    <JsonEditor T="JsonNode"
+                @key="@_editorKey"
+                Value="@_node"
+                ValueChanged="OnNodeChanged"
+                JsonOptions="@EditorJsonOptions"
+                Editable="@(!ReadOnly)"
+                AllowTreeEditing="@(!ReadOnly)"
+                DefaultViewMode="JsonEditorViewMode.Tree"
+                ParseErrorChanged="OnParseErrorChanged"
+                EditorSurfaceHeight="@EditorSurfaceHeight"/>
+</MudStack>
+
+@code {
+
+    /// <summary>Typed JSON wrapper being edited. Required when this editor is shown.</summary>
+    [Parameter]
+    [EditorRequired]
+    public ConfigValue Value { get; set; } = null!;
+
+    /// <summary>Raised after TypeName or Json changes.</summary>
+    [Parameter]
+    public EventCallback<ConfigValue> ValueChanged { get; set; }
+
+    /// <summary>When true, type name and JSON are read-only.</summary>
+    [Parameter]
+    public bool ReadOnly { get; set; }
+
+    /// <summary>Height of the JSON editor surface.</summary>
+    [Parameter]
+    public string EditorSurfaceHeight { get; set; } = "320px";
+
+    /// <summary>Raised when the JSON editor parse state changes. True means the current JSON is invalid.</summary>
+    [Parameter]
+    public EventCallback<bool> ParseErrorChanged { get; set; }
+
+    private static readonly JsonSerializerOptions EditorJsonOptions = CreateEditorOptions();
+
+    private JsonNode? _node;
+    private string? _lastJson;
+    private int _editorKey;
+    private bool _hasParseError;
+
+    /// <summary>True when the JSON editor currently has a parse error.</summary>
+    public bool HasParseError => _hasParseError;
+
+    protected override void OnParametersSet()
+    {
+        if (string.Equals(_lastJson, Value.Json, StringComparison.Ordinal))
+            return;
+
+        _lastJson = Value.Json;
+        _node = TryParse(Value.Json);
+        _editorKey++;
+    }
+
+    private static JsonSerializerOptions CreateEditorOptions()
+    {
+        var options = new JsonSerializerOptions(ConfigJsonSerializerOptions.Default) { WriteIndented = true };
+        return options;
+    }
+
+    private static JsonNode? TryParse(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json) || json == "null")
+            return null;
+
+        try {
+            return JsonNode.Parse(json);
+        }
+        catch (JsonException) {
+            return null;
+        }
+    }
+
+    private async Task OnTypeNameChanged(string typeName)
+    {
+        Value.TypeName = typeName;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private async Task OnNodeChanged(JsonNode? node)
+    {
+        _node = node;
+        Value.Json = node == null ? "null" : node.ToJsonString(EditorJsonOptions);
+        _lastJson = Value.Json;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private async Task OnParseErrorChanged(string? error)
+    {
+        var hasError = !string.IsNullOrWhiteSpace(error);
+        if (_hasParseError == hasError)
+            return;
+
+        _hasParseError = hasError;
+        await ParseErrorChanged.InvokeAsync(hasError);
+    }
+
+}

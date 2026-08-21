@@ -1,0 +1,254 @@
+@namespace Lyo.MessageQueue.RabbitMq.Web.Components
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+        <MudAutocomplete T="MessageExchangeInfo"
+                         Placeholder="Exchange"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Dense="true"
+                         Clearable="true"
+                         ResetValueOnEmptyText="true"
+                         CoerceText="false"
+                         OpenOnFocus="true"
+                         MaxItems="200"
+                         Style="min-width: 320px; flex-grow: 1;"
+                         Value="@SelectedExchange"
+                         ValueChanged="OnExchangeChanged"
+                         ToStringFunc="ExchangeName"
+                         SearchFunc="SearchExchanges">
+            <ItemTemplate>
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center" Style="width: 100%;">
+                    <MudText Typo="Typo.body2">@ExchangeDisplay(context.Name)</MudText>
+                    <MudSpacer/>
+                    <LyoChip Spec="@RabbitMqColorHelper.ExchangeTypeChip(context.Type)"/>
+                    <LyoChip Spec="@RabbitMqColorHelper.DurableChip(context.Durable)"/>
+                    @if (RabbitMqColorHelper.AutoDeleteChip(context.AutoDelete) is { } autoDelete) {
+                        <LyoChip Spec="@autoDelete"/>
+                    }
+                    @if (RabbitMqColorHelper.InternalChip(context.Internal) is { } internalChip) {
+                        <LyoChip Spec="@internalChip"/>
+                    }
+                </MudStack>
+            </ItemTemplate>
+        </MudAutocomplete>
+        <MudSwitch T="bool"
+                   Color="Color.Primary"
+                   Label="Show defaults"
+                   Value="@ShowDefaults"
+                   ValueChanged="ShowDefaultsChanged"/>
+        <MudButton Variant="Variant.Filled"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="OnRefresh"
+                   Disabled="@Busy">Refresh</MudButton>
+    </MudStack>
+
+    @if (VisibleExchanges.Count == 0) {
+        <MudText Typo="Typo.body2" Color="Color.Secondary">No exchanges. Create one on Manage, or show broker defaults.</MudText>
+    }
+
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="4" AlignItems="AlignItems.Start">
+        <MudStack Spacing="1" Style="min-width: 240px; flex: 1;">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Info</MudText>
+            @if (SelectedExchange is { } selected) {
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                    <LyoChip Spec="@RabbitMqColorHelper.ExchangeTypeChip(selected.Type)"/>
+                    <LyoChip Spec="@RabbitMqColorHelper.DurableChip(selected.Durable)"/>
+                    @if (RabbitMqColorHelper.AutoDeleteChip(selected.AutoDelete) is { } autoDelete) {
+                        <LyoChip Spec="@autoDelete"/>
+                    }
+                    @if (RabbitMqColorHelper.InternalChip(selected.Internal) is { } internalChip) {
+                        <LyoChip Spec="@internalChip"/>
+                    }
+                </MudStack>
+            }
+            else {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Pick an exchange.</MudText>
+            }
+        </MudStack>
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Quick actions</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Outlined"
+                           Size="Size.Small"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           Disabled="@(Busy || SelectedExchange is null || RabbitMqColorHelper.IsDefaultExchange(SelectedExchange.Name))"
+                           OnClick="@DeleteSelectedAsync">Delete</MudButton>
+                <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                               Size="Size.Small"
+                               title="Copy name"
+                               Disabled="@(SelectedExchange is null || string.IsNullOrEmpty(SelectedExchange.Name))"
+                               OnClick="@CopySelectedNameAsync"/>
+            </MudStack>
+        </MudStack>
+    </MudStack>
+
+    <MudTabs Rounded="true" Elevation="0" Outlined="true">
+        <MudTabPanel Text="Send">
+            <MudStack Spacing="3" Class="pt-3">
+                @if (string.IsNullOrWhiteSpace(SelectedName)) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Pick an exchange to publish.</MudText>
+                }
+                else {
+                    @DetailContent
+                }
+            </MudStack>
+        </MudTabPanel>
+        <MudTabPanel Text="Manage">
+            <MudStack Spacing="3" Class="pt-3">
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="OnCreate" Disabled="@Busy">Create exchange</MudButton>
+                <MudDivider/>
+                <MudText Typo="Typo.subtitle2">Bind a queue</MudText>
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudAutocomplete T="string"
+                                     Placeholder="Queue"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Dense="true"
+                                     Clearable="true"
+                                     ResetValueOnEmptyText="true"
+                                     CoerceText="false"
+                                     OpenOnFocus="true"
+                                     MaxItems="200"
+                                     Style="min-width: 220px;"
+                                     Value="@BindQueueName"
+                                     ValueChanged="BindQueueNameChanged"
+                                     SearchFunc="SearchBindQueues"/>
+                    <MudTextField T="string"
+                                  Placeholder="Routing key"
+                                  Margin="Margin.Dense"
+                                  Variant="Variant.Outlined"
+                                  Style="min-width: 160px;"
+                                  Value="@RoutingKey"
+                                  ValueChanged="RoutingKeyChanged"/>
+                    <MudButton Variant="Variant.Outlined"
+                               Disabled="@(Busy || SelectedExchange is null)"
+                               OnClick="OnBind">Bind</MudButton>
+                </MudStack>
+            </MudStack>
+        </MudTabPanel>
+    </MudTabs>
+</MudStack>
+
+@code {
+
+    /// <summary>Live exchange snapshots from the management API.</summary>
+    [Parameter]
+    [EditorRequired]
+    public IReadOnlyList<MessageExchangeInfo> Exchanges { get; set; } = [];
+
+    /// <summary>Queue names for the bind dropdown.</summary>
+    [Parameter]
+    public IReadOnlyList<string> QueueNames { get; set; } = [];
+
+    /// <summary>When true, unnamed and <c>amq.*</c> exchanges are listed.</summary>
+    [Parameter]
+    public bool ShowDefaults { get; set; }
+
+    /// <summary>Raised when the defaults toggle changes.</summary>
+    [Parameter]
+    public EventCallback<bool> ShowDefaultsChanged { get; set; }
+
+    /// <summary>Selected exchange name. Empty when none is selected.</summary>
+    [Parameter]
+    public string SelectedName { get; set; } = "";
+
+    /// <summary>Raised when the selected exchange changes.</summary>
+    [Parameter]
+    public EventCallback<string> SelectedNameChanged { get; set; }
+
+    /// <summary>Disables toolbar and row actions while an operation is in flight.</summary>
+    [Parameter]
+    public bool Busy { get; set; }
+
+    /// <summary>Queue name used by the bind form.</summary>
+    [Parameter]
+    public string BindQueueName { get; set; } = "";
+
+    /// <summary>Raised when the bind queue name changes.</summary>
+    [Parameter]
+    public EventCallback<string> BindQueueNameChanged { get; set; }
+
+    /// <summary>Routing key used by publish and bind.</summary>
+    [Parameter]
+    public string RoutingKey { get; set; } = "";
+
+    /// <summary>Raised when the routing key changes.</summary>
+    [Parameter]
+    public EventCallback<string> RoutingKeyChanged { get; set; }
+
+    /// <summary>Publish editor rendered on the Send tab.</summary>
+    [Parameter]
+    public RenderFragment? DetailContent { get; set; }
+
+    /// <summary>Refresh the exchange list.</summary>
+    [Parameter]
+    public EventCallback OnRefresh { get; set; }
+
+    /// <summary>Open the create-exchange dialog.</summary>
+    [Parameter]
+    public EventCallback OnCreate { get; set; }
+
+    /// <summary>Delete the selected exchange (parent confirms). Disabled for broker defaults.</summary>
+    [Parameter]
+    public EventCallback<MessageExchangeInfo> OnDelete { get; set; }
+
+    /// <summary>Bind the bind-form queue to the selected exchange.</summary>
+    [Parameter]
+    public EventCallback OnBind { get; set; }
+
+    private IReadOnlyList<MessageExchangeInfo> VisibleExchanges
+        => ShowDefaults ? Exchanges : Exchanges.Where(e => !RabbitMqColorHelper.IsDefaultExchange(e.Name)).ToList();
+
+    private MessageExchangeInfo? SelectedExchange
+        => string.IsNullOrWhiteSpace(SelectedName) ? null : VisibleExchanges.FirstOrDefault(e => e.Name == SelectedName);
+
+    private Task OnExchangeChanged(MessageExchangeInfo? exchange)
+        => SelectedNameChanged.InvokeAsync(exchange?.Name ?? "");
+
+    private Task DeleteSelectedAsync()
+        => SelectedExchange is { } exchange ? OnDelete.InvokeAsync(exchange) : Task.CompletedTask;
+
+    private async Task CopySelectedNameAsync()
+    {
+        if (SelectedExchange is null || string.IsNullOrEmpty(SelectedExchange.Name))
+            return;
+
+        await Js.SendToClipboard(SelectedExchange.Name);
+        Snackbar.Add("Copied exchange name", Severity.Info);
+    }
+
+    private Task<IEnumerable<MessageExchangeInfo>> SearchExchanges(string? value, CancellationToken ct)
+    {
+        IEnumerable<MessageExchangeInfo> items = VisibleExchanges.Where(e => !string.IsNullOrEmpty(e.Name));
+        if (!string.IsNullOrWhiteSpace(value)) {
+            var term = value.Trim();
+            items = items.Where(e => e.Name.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return Task.FromResult(items);
+    }
+
+    private Task<IEnumerable<string>> SearchBindQueues(string? value, CancellationToken ct)
+        => Task.FromResult(FilterNames(QueueNames, value));
+
+    private static IEnumerable<string> FilterNames(IEnumerable<string> names, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return names;
+
+        var term = value.Trim();
+        return names.Where(n => n.Contains(term, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string ExchangeDisplay(string? name)
+        => string.IsNullOrEmpty(name) ? "(default)" : name;
+
+    private static string ExchangeName(MessageExchangeInfo? exchange)
+        => exchange is null ? "" : ExchangeDisplay(exchange.Name);
+
+}

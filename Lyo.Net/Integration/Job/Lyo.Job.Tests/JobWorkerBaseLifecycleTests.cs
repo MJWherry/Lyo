@@ -168,6 +168,13 @@ public class JobWorkerBaseLifecycleTests
 
         public Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         {
+            if (uri.Contains("/Started", StringComparison.OrdinalIgnoreCase)) {
+                if (StartException is not null)
+                    throw StartException;
+
+                return Task.FromResult((TResult)(object)BuildRun(JobState.Running));
+            }
+
             if (uri.Contains("/Finished", StringComparison.OrdinalIgnoreCase)) {
                 FinishAttempts++;
                 if (FinishException is not null)

@@ -1,6 +1,10 @@
 using System.Globalization;
 using System.Text.Json;
-using Lyo.FileStorage;
+using Lyo.Exceptions;
+using Lyo.FileMetadataStore.Models;
+using Lyo.Query.Models.Builders;
+using Lyo.Query.Models.Common;
+using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.DataGrid;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
@@ -8,8 +12,31 @@ namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
 /// <summary>Helpers for reading file ids from projected query rows (dynamic JSON / Guid).</summary>
 public static class FileStorageGridRowHelper
 {
+    /// <summary>QueryProject condition for rows that are not tombstones (<c>DeletedAt</c> is null and availability is not Deleted).</summary>
+    public static WhereClause CreateActiveFilesWhere()
+        => WhereClauseBuilder.And(static b => b.Equals("DeletedAt", null).NotEquals("Availability", nameof(FileAvailability.Deleted)));
+
+    /// <summary>
+    /// AND-combines <see cref="CreateActiveFilesWhere" /> onto <paramref name="query" /> so tombstones stay out of File and Tree listings.
+    /// Does not drop search or column filters already on the builder.
+    /// </summary>
+    public static void ExcludeDeleted(ProjectionQueryReqBuilder query)
+    {
+        ArgumentHelpers.ThrowIfNull(query);
+        var existing = query.Build().WhereClause;
+        var active = CreateActiveFilesWhere();
+        query.AddWhere(existing == null ? active : WhereClauseBuilder.CombineAs(GroupOperatorEnum.And, existing, active));
+    }
+
     /// <summary>Returns whether the projected row represents a soft-deleted metadata tombstone.</summary>
-    public static bool IsRowDeleted(object? row) => !string.IsNullOrWhiteSpace(GetDeletedAtDisplay(row));
+    public static bool IsRowDeleted(object? row)
+    {
+        if (!string.IsNullOrWhiteSpace(GetDeletedAtDisplay(row)))
+            return true;
+
+        var availability = ProjectedValueHelper.GetDisplayValue(row, "Availability");
+        return string.Equals(availability, nameof(FileAvailability.Deleted), StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>UTC tombstone timestamp display, or empty when the file is active.</summary>
     public static string GetDeletedAtDisplay(object? row)
@@ -99,6 +126,36 @@ public static class FileStorageGridRowHelper
         if (!TryGetFileIdFromRow(row, out var fileId))
             return null;
 
-        return CloudObjectKeyBuilder.FromMetadata(fileId, GetSourceFileNameFromRow(row), GetPathPrefixFromRow(row));
+        return BuildExpectedStorageKey(fileId, GetSourceFileNameFromRow(row), GetPathPrefixFromRow(row));
+    }
+
+    /// <summary>Same layout as the storage engine: <c>[pathPrefix or shard]/{fileId:N}{suffix}</c>, with no global storage prefix.</summary>
+    private static string BuildExpectedStorageKey(Guid fileId, string? sourceFileName, string? pathPrefix)
+    {
+        var idString = fileId.ToString("N");
+        var suffix = InferTrailingSuffixAfterFileId(fileId, sourceFileName);
+        var parts = new List<string>(3);
+        if (!string.IsNullOrWhiteSpace(pathPrefix))
+            parts.Add(pathPrefix);
+        else {
+            parts.Add(idString[..2]);
+            parts.Add(idString.Substring(2, 2));
+        }
+
+        parts.Add(idString + suffix);
+        return string.Join("/", parts);
+    }
+
+    private static string InferTrailingSuffixAfterFileId(Guid fileId, string? sourceFileName)
+    {
+        if (string.IsNullOrEmpty(sourceFileName))
+            return "";
+
+        var n = fileId.ToString("N");
+        if (sourceFileName.StartsWith(n, StringComparison.Ordinal))
+            return sourceFileName[n.Length..];
+
+        var dash = fileId.ToString();
+        return sourceFileName.StartsWith(dash, StringComparison.OrdinalIgnoreCase) ? sourceFileName[dash.Length..] : "";
     }
 }

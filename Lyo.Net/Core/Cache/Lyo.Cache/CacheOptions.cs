@@ -82,12 +82,11 @@ public class CacheOptions
         }
 
         // Return the most specific pattern (longest pattern string)
-        if (matchingPatterns.Count > 0) {
-            var bestMatch = matchingPatterns.OrderByDescending(p => p.Pattern.Length).First();
-            return TimeSpan.FromMinutes(bestMatch.Minutes);
-        }
+        if (matchingPatterns.Count <= 0)
+            return DefaultExpiration;
 
-        return DefaultExpiration;
+        var bestMatch = matchingPatterns.OrderByDescending(p => p.Pattern.Length).First();
+        return TimeSpan.FromMinutes(bestMatch.Minutes);
     }
 
     /// <summary>Gets the expiration timeout for a specific type, or returns the default expiration if not configured.</summary>

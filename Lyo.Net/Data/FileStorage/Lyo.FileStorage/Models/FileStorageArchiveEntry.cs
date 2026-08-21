@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.FileStorage.Models;
 
 /// <summary>One stored file to include in an archive, with its relative path inside the zip.</summary>
@@ -6,4 +8,9 @@ namespace Lyo.FileStorage.Models;
 /// Relative zip path using <c>/</c> separators (e.g. <c>Vol. 01/Ch. 001/001</c>). When null or whitespace, the service uses the stored original file name. When the last
 /// segment has no extension, the service appends one from metadata.
 /// </param>
-public readonly record struct FileStorageArchiveEntry(Guid Id, string? ZipPath = null);
+[DebuggerDisplay("{ToString(),nq}")]
+public readonly record struct FileStorageArchiveEntry(Guid Id, string? ZipPath = null)
+{
+    /// <inheritdoc />
+    public override string ToString() => $"FileStorageArchiveEntry: Id={Id}, ZipPath={ZipPath ?? "(default)"}";
+}

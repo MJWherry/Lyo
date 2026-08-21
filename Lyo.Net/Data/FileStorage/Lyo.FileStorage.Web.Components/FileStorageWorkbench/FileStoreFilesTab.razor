@@ -4,6 +4,8 @@
 
 <MudGrid Class="mt-1">
     <MudItem xs="12">
+<MudTabs Rounded="true" Elevation="0" Class="mb-2">
+            <MudTabPanel Text="Stream">
         <MudPaper Class="pa-4 mb-4" Outlined="true">
             <MudStack Spacing="2">
                 <MudText Typo="Typo.h6">Upload &amp; save</MudText>
@@ -52,17 +54,7 @@
                     <MudSwitch T="bool" @bind-Value="_saveCompress" Color="Color.Primary" Label="Compress"/>
                     <MudSwitch T="bool" @bind-Value="_saveEncrypt" Color="Color.Primary" Label="Encrypt"/>
                     @if (_saveEncrypt) {
-                        <MudSelect T="string"
-                                   Margin="Margin.Dense"
-                                   Variant="Variant.Outlined"
-                                   Label="Key id"
-                                   Style="min-width: 180px; max-width: min(100%, 280px);"
-                                   Value="_saveKeyId"
-                                   ValueChanged="OnSaveKeyIdChanged">
-                            @foreach (var keyId in Workbench.AvailableKeyIds) {
-                                <MudSelectItem T="string" Value="@keyId">@keyId</MudSelectItem>
-                            }
-                        </MudSelect>
+                        <FileStoreKeyIdField Label="Key id" AutoSelectSingle="true" @bind-Value="_saveKeyId"/>
                     }
                 </MudStack>
 
@@ -79,13 +71,24 @@
                     </MudItem>
                     <MudItem xs="12" sm="4" Class="d-flex align-end">
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="SaveFileAsync"
-                                   Disabled="@(_fileBusy || Workbench.FileStorage == null || _uploadedFile == null)">
+                                   Disabled="@(_fileBusy || _uploadedFile == null)">
                             @(_fileBusy ? "Uploading..." : "Upload")
                         </MudButton>
                     </MudItem>
                 </MudGrid>
             </MudStack>
         </MudPaper>
+            </MudTabPanel>
+            <MudTabPanel Text="Direct">
+                <FileStoreProtocolUploads Mode="FileStoreProtocolUploadMode.Direct"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Staged">
+                <FileStoreProtocolUploads Mode="FileStoreProtocolUploadMode.Staged"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Multipart">
+                <FileStoreProtocolUploads Mode="FileStoreProtocolUploadMode.Multipart"/>
+            </MudTabPanel>
+        </MudTabs>
 
         <MudTabs @bind-ActivePanelIndex="_cryptoOpsTab" Rounded="true" Elevation="0" Class="crypto-ops-tabs mb-2">
             <MudTabPanel Text="DEK"/>
@@ -98,60 +101,29 @@
                         <MudText Typo="Typo.h6">@CryptoOpsMigrationTitle</MudText>
                         <MudGrid>
                             <MudItem xs="12" sm="6">
-                                <MudSelect T="string"
-                                           Label="Source key id"
-                                           HelperText="@(Workbench.AvailableKeyIds.Count == 0 ? "No available keys found." : "Required.")"
-                                           Value="_migrationSourceKeyId"
-                                           ValueChanged="OnMigrationSourceKeyIdChanged">
-                                    @foreach (var keyId in Workbench.AvailableKeyIds) {
-                                        <MudSelectItem T="string" Value="@keyId">@keyId</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <FileStoreKeyIdField Label="Source key id" HelperText="Required." @bind-Value="_migrationSourceKeyId"/>
                             </MudItem>
                             <MudItem xs="12" sm="6">
-                                <MudSelect T="string"
-                                           Label="Source key version"
-                                           HelperText="Leave blank to migrate all source versions."
-                                           Value="_migrationSourceKeyVersion"
-                                           ValueChanged="OnMigrationSourceKeyVersionChanged"
-                                           Disabled="@string.IsNullOrWhiteSpace(_migrationSourceKeyId)">
-                                    <MudSelectItem T="string" Value="@string.Empty">All versions</MudSelectItem>
-                                    @foreach (var version in GetKnownVersions(_migrationSourceKeyId)) {
-                                        <MudSelectItem T="string" Value="@version">@version</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <MudTextField T="string"
+                                              Label="Source key version"
+                                              HelperText="Leave blank to migrate all source versions."
+                                              @bind-Value="_migrationSourceKeyVersion"/>
                             </MudItem>
                             <MudItem xs="12" sm="6">
-                                <MudSelect T="string"
-                                           Label="Target key id"
-                                           HelperText="Leave blank to keep the source key id."
-                                           Value="_migrationTargetKeyId"
-                                           ValueChanged="OnMigrationTargetKeyIdChanged">
-                                    <MudSelectItem T="string" Value="@string.Empty">Source key</MudSelectItem>
-                                    @foreach (var keyId in Workbench.AvailableKeyIds) {
-                                        <MudSelectItem T="string" Value="@keyId">@keyId</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <FileStoreKeyIdField Label="Target key id" HelperText="Leave blank to keep the source key id." @bind-Value="_migrationTargetKeyId"/>
                             </MudItem>
                             <MudItem xs="12" sm="6">
-                                <MudSelect T="string"
-                                           Label="Target key version"
-                                           HelperText="Leave blank to use the current version."
-                                           Value="_migrationTargetKeyVersion"
-                                           ValueChanged="OnMigrationTargetKeyVersionChanged"
-                                           Disabled="@string.IsNullOrWhiteSpace(_migrationTargetKeyId)">
-                                    <MudSelectItem T="string" Value="@string.Empty">Current version</MudSelectItem>
-                                    @foreach (var version in GetKnownVersions(_migrationTargetKeyId)) {
-                                        <MudSelectItem T="string" Value="@version">@version</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <MudTextField T="string"
+                                              Label="Target key version"
+                                              HelperText="Leave blank to use the current version."
+                                              @bind-Value="_migrationTargetKeyVersion"/>
                             </MudItem>
                             <MudItem xs="12" sm="6">
                                 <MudNumericField T="int" Label="Batch size" Immediate="true" @bind-Value="_migrationBatchSize"/>
                             </MudItem>
                             <MudItem xs="12" sm="6" Class="d-flex align-end">
                                 <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="MigrateDeksAsync"
-                                           Disabled="@(_fileBusy || Workbench.FileStorage == null)">
+                                           Disabled="@_fileBusy">
                                     Run Migration
                                 </MudButton>
                             </MudItem>
@@ -208,36 +180,20 @@
                                               ValidationErrorMessage="Enter a valid file id. Comma-separated and newline-separated paste is supported."/>
                             </MudItem>
                             <MudItem xs="12" sm="6">
-                                <MudSelect T="string"
-                                           Label="Target key id"
-                                           HelperText="Leave blank to keep each file on its current key id."
-                                           Value="_rotationTargetKeyId"
-                                           ValueChanged="OnRotationTargetKeyIdChanged">
-                                    <MudSelectItem T="string" Value="@string.Empty">Keep current key</MudSelectItem>
-                                    @foreach (var keyId in Workbench.AvailableKeyIds) {
-                                        <MudSelectItem T="string" Value="@keyId">@keyId</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <FileStoreKeyIdField Label="Target key id" HelperText="Leave blank to keep each file on its current key id." @bind-Value="_rotationTargetKeyId"/>
                             </MudItem>
                             <MudItem xs="12" sm="6">
-                                <MudSelect T="string"
-                                           Label="Target key version"
-                                           HelperText="Leave blank to keep each file's current version, or use the current version of the chosen target key."
-                                           Value="_rotationTargetKeyVersion"
-                                           ValueChanged="OnRotationTargetKeyVersionChanged"
-                                           Disabled="@string.IsNullOrWhiteSpace(_rotationTargetKeyId)">
-                                    <MudSelectItem T="string" Value="@string.Empty">Default</MudSelectItem>
-                                    @foreach (var version in GetKnownVersions(_rotationTargetKeyId)) {
-                                        <MudSelectItem T="string" Value="@version">@version</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <MudTextField T="string"
+                                              Label="Target key version"
+                                              HelperText="Leave blank to keep each file's current version, or use the current version of the chosen target key."
+                                              @bind-Value="_rotationTargetKeyVersion"/>
                             </MudItem>
                             <MudItem xs="12" sm="6">
                                 <MudNumericField T="int" Label="Batch size" Immediate="true" @bind-Value="_rotationBatchSize"/>
                             </MudItem>
                             <MudItem xs="12" sm="6" Class="d-flex align-end">
                                 <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="RotateDeksAsync"
-                                           Disabled="@(_fileBusy || Workbench.FileStorage == null)">
+                                           Disabled="@_fileBusy">
                                     Rotate DEKs
                                 </MudButton>
                             </MudItem>

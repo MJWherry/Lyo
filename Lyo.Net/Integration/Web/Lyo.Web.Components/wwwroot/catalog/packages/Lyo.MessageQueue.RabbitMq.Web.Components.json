@@ -16,23 +16,15 @@
       ],
       "rows": [
         [
-          "**Exchange**",
-          "Create/delete exchanges, bind queues"
+          "**Queues**",
+          "Type-to-filter dropdown (name + flag chips in the list). **Info** shows durable/state/type chips plus ready/unacked/consumers. **Quick actions** peek/clear/delete/copy. Inner **Send** tab: wrap/priority/delay/send. Inner **Manage** tab: create and bind."
         ],
         [
-          "**Queue**",
-          "Create (optionally with DLQ + `x-max-priority`), peek, clear, delete; single-queue info via management API"
-        ],
-        [
-          "**Publish**",
-          "Send to queue/exchange (envelope wrap, priority, delayed delivery)"
-        ],
-        [
-          "**Stats**",
-          "All-queue statistics with optional name filter, manual refresh, and auto-refresh polling"
+          "**Exchanges**",
+          "Type-to-filter dropdown (name + type/durable chips). `amq.*` and the unnamed default are hidden unless Show defaults is on. **Info** and **Quick actions** sit side by side. Inner **Send** tab: wrap/priority/delay/routing key/send. Inner **Manage** tab: create and bind."
         ]
       ],
-      "lead": "`RabbitMqWorkbench.razor` is an internal dashboard for the full `IRabbitMqService` API:",
+      "lead": "`RabbitMqWorkbench` is a list-select dashboard for the full `IRabbitMqService` API. Queue and exchange snapshots load on first render. Auto-refresh stays on the queue toolbar.",
       "trail": "Queue creation supports:\n\n- **`x-max-priority`.** Numeric max priority (same pattern as job workers use for `job.run.{workerType}` queues).\n- **DLQ auto-wiring.** `CreateQueueWithDlq` with optional custom DLQ name.\n\nPublishing supports:\n\n- **`SendToQueueWithPriority`.** Envelope publish with priority (requires a priority-enabled queue).\n- **`SendToQueueDelayed`.** Broker-side delay via TTL + dead-letter wait queues."
     }
   ],
@@ -64,6 +56,14 @@
       ]
     },
     {
+      "name": "Lyo.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "MudBlazor",
       "kind": "package",
       "version": "9.3",
@@ -73,7 +73,71 @@
       ]
     },
     {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -89,7 +153,31 @@
       ]
     },
     {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -105,6 +193,30 @@
       ]
     },
     {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
@@ -113,7 +225,88 @@
       ]
     },
     {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Blazored.LocalStorage",
+      "kind": "package",
+      "version": "4.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
       "tags": [
@@ -127,11 +320,22 @@
       "version": "10.0.5",
       "tags": [
         "transitive",
-        "microsoft"
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
       ]
     },
     {
       "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
       "kind": "package",
       "version": "10.0.5",
       "tags": [
@@ -167,6 +371,35 @@
       ]
     },
     {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
       "name": "System.Memory",
       "kind": "package",
       "version": "4.6.3",
@@ -180,6 +413,16 @@
       "name": "System.Text.Json",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
       "tags": [
         "transitive",
         "microsoft",

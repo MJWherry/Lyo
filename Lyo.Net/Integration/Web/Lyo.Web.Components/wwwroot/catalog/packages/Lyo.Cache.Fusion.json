@@ -22,6 +22,11 @@
       "text": "Fusion registration reuses the same payload stack as local cache. `ICachePayloadSerializer` writes JSON bytes by default. `ICachePayloadCodec` can compress and, on .NET 10+, encrypt. See `CacheOptions.Payload` in the `Lyo.Cache` README. `GetOrSetPayloadAsync` / `GetOrSetPayloadAsync<T>` behave the same on local cache and Fusion."
     },
     {
+      "type": "paragraph",
+      "title": "L1 item snapshot",
+      "text": "`Items` is this process's Fusion L1 list (Set/Remove/Expire events), not a Redis SCAN. Framed payload writes set `CacheItem.Encrypted`, `Compressed`, and `SizeBytes`. Keys also carry `Expires` from the remembered TTL (sliding hits re-Set and refresh it). Other nodes can write L2 keys that never show up here until this process loads them."
+    },
+    {
       "type": "table",
       "title": "Registration (`FusionCacheServiceExtensions`)",
       "headers": [

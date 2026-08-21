@@ -101,16 +101,17 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     /// <inheritdoc />
     public override async Task StartAsync(CancellationToken ct = default)
     {
-        await base.StartAsync(ct).ConfigureAwait(false);
-        if (!IsRunning)
-            throw new InvalidOperationException($"Failed to subscribe to worker queue '{QueueName}'.");
-
+        // Register before consuming the dispatch queue so the first in-flight start already has an instance id.
         var cancelSuffix = Guid.NewGuid().ToString("N");
         _cancelQueueName = Constants.Mq.QueueGetJobRunCancelInstance(WorkerType, cancelSuffix);
         await RegisterWorkerInstanceAsync(ct).ConfigureAwait(false);
         await _eventPublisher.SubscribeToRunCancellationsAsync(WorkerType, OnCancelAsync, ct, cancelSuffix).ConfigureAwait(false);
         _workerHeartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _workerHeartbeatTask = RunWorkerInstanceHeartbeatAsync(_workerHeartbeatCts.Token);
+
+        await base.StartAsync(ct).ConfigureAwait(false);
+        if (!IsRunning)
+            throw new InvalidOperationException($"Failed to subscribe to worker queue '{QueueName}'.");
     }
 
     async Task IHostedService.StopAsync(CancellationToken cancellationToken) => await StopWorkerAsync(cancellationToken).ConfigureAwait(false);
@@ -155,8 +156,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
 
         JobRunRes startedRun;
         try {
-            startedRun = await _jobClient.Runs.StartAsync(
-                runId, RunIncludes, ct, _workerInstanceId is { } instanceId ? new JobRunStartedReq { WorkerInstanceId = instanceId } : null).ConfigureAwait(false);
+            startedRun = await _jobClient.Runs.StartAsync(runId, RunIncludes, ct, BuildRunStartedRequest()).ConfigureAwait(false);
         }
         catch (ApiException ex) when (ex.StatusCode == 400) {
             // The Started CAS rejected the transition: the run is not Queued (duplicate delivery already running/finished it, or it was
@@ -359,6 +359,22 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
 
     private static string? FormatInt64(long? value) => value?.ToString(CultureInfo.InvariantCulture);
 
+    private JobRunStartedReq BuildRunStartedRequest()
+        => new() {
+            WorkerInstanceId = _workerInstanceId,
+            MachineName = Environment.MachineName,
+            ProcessId = Environment.ProcessId
+        };
+
+    private void ApplyWorkerSnapshot(PatchRequestBuilder patch)
+    {
+        if (_workerInstanceId is { } instanceId)
+            patch.SetProperty("WorkerInstanceId", instanceId);
+
+        patch.SetProperty("WorkerMachineName", Environment.MachineName);
+        patch.SetProperty("WorkerProcessId", Environment.ProcessId);
+    }
+
     private async Task DeregisterWorkerInstanceAsync(CancellationToken ct)
     {
         if (!_workerInstanceId.HasValue || _workerInstanceId.Value == Guid.Empty)
@@ -423,6 +439,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
 
                 if (_progressMessage is not null)
                     patch.SetProperty("ProgressMessage", _progressMessage);
+
+                ApplyWorkerSnapshot(patch);
 
                 await _jobClient.Runs.PatchAsync(runId, patch.Build(), ct).ConfigureAwait(false);
                 Metrics.IncrementCounter(Constants.Metrics.Worker.HeartbeatSent);

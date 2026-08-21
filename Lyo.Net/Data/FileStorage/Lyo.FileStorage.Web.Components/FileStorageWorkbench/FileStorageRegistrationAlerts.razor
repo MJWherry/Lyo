@@ -1,32 +1,20 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
 
-<MudGrid>
-    <MudItem xs="12" md="6">
-        <MudAlert Severity="@(string.IsNullOrEmpty(FileStorageImplementationName) ? Severity.Warning : Severity.Success)" Dense="true" Variant="Variant.Outlined">
-            File storage: @(FileStorageImplementationName ?? "not resolved")<br/>
-            <span>@FileStorageResolutionDescription</span>
-        </MudAlert>
-    </MudItem>
-    <MudItem xs="12" md="6">
-        <MudAlert Severity="@(string.IsNullOrEmpty(KeyStoreImplementationName) ? Severity.Warning : Severity.Success)" Dense="true" Variant="Variant.Outlined">
-            Keystore: @(KeyStoreImplementationName ?? "not resolved")<br/>
-            <span>@KeyStoreResolutionDescription</span>
-        </MudAlert>
-    </MudItem>
-</MudGrid>
+<MudAlert Severity="@Severity" Dense="true" Variant="Variant.Outlined">
+    File storage API: @(ApiHealthy ? "reachable" : "unreachable")<br/>
+    <span>@ApiHealthDescription</span>
+</MudAlert>
 
 @code {
 
     [Parameter]
-    public string? FileStorageImplementationName { get; set; }
+    public bool ApiHealthy { get; set; }
 
     [Parameter]
-    public string FileStorageResolutionDescription { get; set; } = "";
+    public bool StorageHealthy { get; set; }
 
     [Parameter]
-    public string? KeyStoreImplementationName { get; set; }
+    public string ApiHealthDescription { get; set; } = "";
 
-    [Parameter]
-    public string KeyStoreResolutionDescription { get; set; } = "";
-
+    private Severity Severity => !ApiHealthy ? Severity.Warning : StorageHealthy ? Severity.Success : Severity.Info;
 }

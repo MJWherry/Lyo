@@ -1,24 +1,24 @@
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
 @using Lyo.Reporting.Web.Components
-@using FsConstants = Models.Constants.FileStorageWorkbench
 
 <ReportManagement BaseRoute="@_baseRoute"
                   DownloadFileAsync="DownloadFileAsync"
                   ViewFileUrlAsync="ViewFileUrlAsync"/>
 
 @code {
+    private string _apiBase = "http://localhost:5251";
     private string _baseRoute = "Reporting";
 
     protected override void OnInitialized()
     {
-        var baseUrl = (Configuration["JobDashboard:BaseApiUrl"] ?? Configuration["ApiClient:BaseUrl"] ?? "http://localhost:5251").TrimEnd('/');
-        _baseRoute = $"{baseUrl}/Reporting";
+        _apiBase = (Configuration["JobDashboard:BaseApiUrl"] ?? Configuration["ApiClient:BaseUrl"] ?? "http://localhost:5251").TrimEnd('/');
+        _baseRoute = $"{_apiBase}/Reporting";
     }
 
     private Task DownloadFileAsync(Guid fileId, string? fileName, CancellationToken ct)
     {
-        var url = $"/{FsConstants.ProxyDownloadRoute}/{fileId:D}";
+        var url = $"{_apiBase}/{Models.Constants.FileStorageWorkbench.ApiRoutePrefix}/files/{fileId:D}/download";
         if (!string.IsNullOrWhiteSpace(fileName))
             url += $"?fileName={Uri.EscapeDataString(fileName)}";
 
@@ -26,6 +26,7 @@
         return Task.CompletedTask;
     }
 
-    private Task<string?> ViewFileUrlAsync(Guid fileId, CancellationToken ct) => Task.FromResult<string?>(Navigation.ToAbsoluteUri($"/{FsConstants.ProxyDownloadRoute}/{fileId:D}").ToString());
+    private Task<string?> ViewFileUrlAsync(Guid fileId, CancellationToken ct)
+        => Task.FromResult<string?>($"{_apiBase}/{Models.Constants.FileStorageWorkbench.ApiRoutePrefix}/files/{fileId:D}/download?inline=true");
 
 }

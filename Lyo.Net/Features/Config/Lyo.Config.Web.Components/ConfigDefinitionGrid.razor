@@ -1,0 +1,182 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudStack Spacing="2" Class="mt-3">
+    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Disabled="@(string.IsNullOrWhiteSpace(SubjectEntityType) || _loading)"
+                   OnClick="OpenCreateAsync">
+            New definition
+        </MudButton>
+        @if (!string.IsNullOrWhiteSpace(SubjectEntityType)) {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">@_items.Count definition(s) for @SubjectEntityType</MudText>
+        }
+    </MudStack>
+
+    @if (string.IsNullOrWhiteSpace(SubjectEntityType)) {
+        <MudAlert Severity="Severity.Info" Dense="true">Apply a subject entity type to list definitions.</MudAlert>
+    }
+    else if (_loadError != null) {
+        <MudAlert Severity="Severity.Error" Dense="true">@_loadError</MudAlert>
+    }
+    else {
+        <MudTable Items="_items" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Loading="_loading">
+            <HeaderContent>
+                <MudTh></MudTh>
+                <MudTh>Key</MudTh>
+                <MudTh>Value type</MudTh>
+                <MudTh>Required</MudTh>
+                <MudTh>Default</MudTh>
+                <MudTh>Updated</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Actions">
+                    <MudStack Row="true" Spacing="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Size="Size.Small"
+                                       title="Edit definition"
+                                       OnClick="@(() => OpenEditAsync(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Size="Size.Small"
+                                       Color="Color.Error"
+                                       title="Delete definition"
+                                       OnClick="@(() => DeleteAsync(context))"/>
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Key">
+                    <MudText Typo="Typo.body2">@context.Key</MudText>
+                    @if (!string.IsNullOrWhiteSpace(context.Description)) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Description</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Value type">
+                    <LyoTruncatedText Text="@context.ForValueType"/>
+                </MudTd>
+                <MudTd DataLabel="Required">
+                    <LyoChip Spec="@LyoChips.FromBool(context.IsRequired, "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+                </MudTd>
+                <MudTd DataLabel="Default">
+                    <LyoChip Spec="@LyoChips.FromBool(context.DefaultValue != null, "Default", "None", Color.Info, Color.Default)"/>
+                </MudTd>
+                <MudTd DataLabel="Updated">
+                    <LyoTimestamp Value="@(context.UpdatedTimestamp ?? context.CreatedTimestamp)" Kind="LyoTimestampKind.Absolute"/>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No definitions for this entity type.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</MudStack>
+
+@code {
+
+    /// <summary>Config store used to list and delete definitions.</summary>
+    [Parameter]
+    [EditorRequired]
+    public IConfigStore Store { get; set; } = null!;
+
+    /// <summary>Entity type whose definitions are listed. Empty skips the load.</summary>
+    [Parameter]
+    public string SubjectEntityType { get; set; } = "";
+
+    /// <summary>Incremented by the shell when the operator applies a new scope or asks for a refresh.</summary>
+    [Parameter]
+    public int DataVersion { get; set; }
+
+    /// <summary>Raised after a successful create, edit, or delete so sibling tabs can reload.</summary>
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    private IReadOnlyList<ConfigDefinitionRecord> _items = [];
+    private bool _loading;
+    private string? _loadError;
+    private string? _loadedType;
+    private int _loadedVersion = int.MinValue;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.Equals(_loadedType, SubjectEntityType, StringComparison.Ordinal) && _loadedVersion == DataVersion)
+            return;
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loadedType = SubjectEntityType;
+        _loadedVersion = DataVersion;
+        if (string.IsNullOrWhiteSpace(SubjectEntityType)) {
+            _items = [];
+            _loadError = null;
+            return;
+        }
+
+        _loading = true;
+        _loadError = null;
+        try {
+            _items = await Store.GetDefinitionsAsync(SubjectEntityType.Trim());
+        }
+        catch (Exception ex) {
+            _items = [];
+            _loadError = ex.Message;
+        }
+        finally {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenCreateAsync()
+    {
+        var parameters = new DialogParameters<ConfigDefinitionView> {
+            { d => d.Store, Store },
+            { d => d.SubjectEntityType, SubjectEntityType.Trim() }
+        };
+        var dialog = await DialogService.ShowAsync<ConfigDefinitionView>("New definition", parameters, LyoDialogPresets.Large);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await NotifyChangedAsync();
+    }
+
+    private async Task OpenEditAsync(ConfigDefinitionRecord definition)
+    {
+        var parameters = new DialogParameters<ConfigDefinitionView> {
+            { d => d.Store, Store },
+            { d => d.Definition, definition },
+            { d => d.SubjectEntityType, SubjectEntityType.Trim() }
+        };
+        var dialog = await DialogService.ShowAsync<ConfigDefinitionView>("Edit definition", parameters, LyoDialogPresets.Large);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await NotifyChangedAsync();
+    }
+
+    private async Task DeleteAsync(ConfigDefinitionRecord definition)
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Delete definition",
+            $"Delete '{definition.Key}'? Bindings and revision history for this key are removed (cascade).",
+            yesText: "Delete",
+            cancelText: "Cancel");
+        if (confirmed != true)
+            return;
+
+        try {
+            await Store.DeleteDefinitionAsync(definition.Id);
+            Snackbar.Add($"Deleted '{definition.Key}'.", Severity.Success);
+            await NotifyChangedAsync();
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task NotifyChangedAsync()
+    {
+        await ReloadAsync();
+        await OnChanged.InvokeAsync();
+    }
+
+}

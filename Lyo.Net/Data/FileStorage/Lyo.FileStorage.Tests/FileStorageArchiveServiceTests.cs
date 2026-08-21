@@ -103,8 +103,27 @@ public sealed class FileStorageArchiveServiceTests : IDisposable
     {
         using var storage = CreateStorage();
         var svc = new FileStorageArchiveService(storage, _archiveTemp, new FileStorageArchiveOptions(), _loggerFactory.CreateLogger<FileStorageArchiveService>());
-        await Assert.ThrowsAsync<FileNotFoundException>(
+        var ex = await Assert.ThrowsAsync<FileNotFoundException>(
             () => svc.CreateArchiveAsync([new(Guid.NewGuid())], ct: TestContext.Current.CancellationToken));
+        Assert.Contains("available to archive", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CreateArchiveAsync_DeletedFile_SkippedWhenOthersPresent()
+    {
+        using var storage = CreateStorage();
+        var keptBytes = TestData.Create(16);
+        var kept = await storage.SaveFileAsync(keptBytes, "keep.txt", ct: TestContext.Current.CancellationToken);
+        var removed = await storage.SaveFileAsync(TestData.Create(16, TestData.Seed ^ 3), "gone.txt", ct: TestContext.Current.CancellationToken);
+        Assert.True(await storage.DeleteFileAsync(removed.Id, ct: TestContext.Current.CancellationToken));
+        var svc = new FileStorageArchiveService(storage, _archiveTemp, new FileStorageArchiveOptions(), _loggerFactory.CreateLogger<FileStorageArchiveService>());
+
+        var archive = await svc.CreateArchiveAsync(
+            [new(removed.Id), new(kept.Id)], "partial.zip", TestContext.Current.CancellationToken);
+        var unzipped = ReadZip(archive.Stream);
+        Assert.Single(unzipped);
+        Assert.Equal(keptBytes, unzipped["keep.txt"]);
+        await archive.Stream.DisposeAsync();
     }
 
     [Fact]

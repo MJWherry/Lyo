@@ -22,8 +22,8 @@ public interface IFileMetadataStore
     Task SaveMetadataAsync(Guid fileId, FileStoreResult metadata, CancellationToken ct = default);
 
     /// <summary>
-    /// Soft-deletes metadata: sets deletion timestamp instead of removing the row. Subsequent <see cref="GetMetadataAsync" /> and duplicate lookups omit tombstones; idempotent
-    /// deletes return false if already logically deleted.
+    /// Soft-deletes metadata: sets deletion timestamp and <see cref="FileAvailability.Deleted" /> instead of removing the row. Subsequent
+    /// <see cref="GetMetadataAsync" /> and duplicate lookups omit tombstones; idempotent deletes return false if already logically deleted.
     /// </summary>
     /// <param name="fileId">The unique identifier of the file</param>
     /// <param name="ct">Cancellation token</param>

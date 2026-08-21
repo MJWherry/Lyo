@@ -1,19 +1,17 @@
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Dynamic;
 using Lyo.Api.Export;
+using Lyo.Api.FileStorage;
 using Lyo.Api.Reporting;
 using Lyo.Api.Services.Crud;
 using Lyo.Common.Identifiers;
 using Lyo.Discord.Postgres;
 using Lyo.Endato.Postgres.Database;
-using Lyo.FileMetadataStore.Models;
-using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage.Abstractions;
 using Lyo.Job.Postgres;
 using Lyo.People.Models;
 using Lyo.People.Postgres.Database;
 using Lyo.Sms.Twilio.Postgres.Database;
-using Lyo.TestApi.FileStorageWorkbench;
 using Lyo.TestApi.Person.Request;
 using Lyo.TestApi.Person.Response;
 
@@ -42,21 +40,9 @@ public static class SetupEndpoints
                 .BuildDiscordGroup()
                 //.BuildRecipientGroup()
                 .BuildTwilioGroup()
-                .BuildFileStorageWorkbenchGroup()
-                .BuildDirectFileUploadEndpoint()
-                .BuildFileStorageWorkbenchFileMetadataQuery();
+                .BuildFileStorageApi();
 
             app.MapCacheEndpoints("Cache", b => b.AllowAnonymous());
-            return app;
-        }
-
-        private WebApplication BuildFileStorageWorkbenchFileMetadataQuery()
-        {
-            app.CreateReadOnlyBuilder<FileMetadataStoreDbContext, FileMetadataEntity, FileMetadataEntity, string>(Constants.FileStorageWorkbench.FileMetadata, "FileMetadata")
-                .AllowAnonymous()
-                .WithReadOnlyEndpoints()
-                .Build();
-
             return app;
         }
 

@@ -16,6 +16,8 @@ public static class Constants
 
         public const string FileStorageWorkbench = "filestorage-workbench";
 
+        public const string KeyStoreWorkbench = "keystore-workbench";
+
         public const string HtmlToPdf = "html-to-pdf";
 
         public const string RabbitMq = "rabbitmq";
@@ -60,5 +62,7 @@ public static class Constants
         public const string IdGenerator = "id-generator";
 
         public const string Endato = "endato";
+
+        public const string Config = "config";
     }
 }

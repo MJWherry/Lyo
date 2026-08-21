@@ -1,0 +1,200 @@
+@inject ISnackbar Snackbar
+
+<LyoDialog Busy="@_saving" OnSave="SaveAsync" SaveDisabled="@(!_canSave)" DebugData="@_edit">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(IsNew ? "New definition" : _edit.Key)</MudText>
+    </TitleContent>
+    <TitleChips>
+        <LyoChip Spec="@LyoChips.FromBool(_edit.IsRequired, "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+        @if (!IsNew) {
+            <LyoChip Spec="@LyoChips.FromBool(_edit.DefaultValue != null, "Has default", "No default", Color.Info, Color.Default)"/>
+        }
+    </TitleChips>
+    <ChildContent>
+        <LyoForm TModel="ConfigDefinitionRecord" Model="_edit" ShowActions="false" HasChangesChanged="@(v => _formHasChanges = v)" @ref="_form">
+            <MudGrid Spacing="2" Class="pa-1">
+                @if (!IsNew) {
+                    <MudItem xs="12" sm="6" md="4">
+                        <LyoIdField Label="ID" Value="@_edit.Id"/>
+                    </MudItem>
+                }
+                <MudItem xs="12" sm="6" md="4">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="string"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.SubjectEntityType)"
+                                  Label="Subject entity type"
+                                  AllowEditing="@IsNew"/>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="string"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.Key)"
+                                  Label="Key"
+                                  AllowEditing="@IsNew"/>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="6">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="string"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.ForValueType)"
+                                  Label="Value type (CLR FullName)"
+                                  AllowEditing="true"
+                                  OnValueChanged="@(_ => SyncDefaultTypeName())"/>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="bool"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.IsRequired)"
+                                  Label="Required"
+                                  AllowEditing="true"
+                                  OnValueChanged="@(_ => StateHasChanged())"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="string?"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.Description)"
+                                  Label="Description"
+                                  AllowEditing="true"
+                                  AllowMultiline="true"
+                                  Lines="2"/>
+                </MudItem>
+            </MudGrid>
+        </LyoForm>
+        <MudSwitch T="bool"
+                   Color="Color.Primary"
+                   Label="Include default value"
+                   Value="@_includeDefault"
+                   ValueChanged="OnIncludeDefaultChanged"
+                   Class="mt-2"/>
+        @if (_includeDefault && _edit.DefaultValue != null) {
+            <ConfigValueEditor Value="_edit.DefaultValue"
+                               ValueChanged="OnDefaultValueChanged"
+                               ParseErrorChanged="OnParseErrorChanged"
+                               EditorSurfaceHeight="280px"/>
+        }
+    </ChildContent>
+</LyoDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    /// <summary>Config store used to save the definition.</summary>
+    [Parameter]
+    [EditorRequired]
+    public IConfigStore Store { get; set; } = null!;
+
+    /// <summary>Existing definition to edit. Null creates a new one.</summary>
+    [Parameter]
+    public ConfigDefinitionRecord? Definition { get; set; }
+
+    /// <summary>Prefill for new definitions (the toolbar entity type).</summary>
+    [Parameter]
+    public string SubjectEntityType { get; set; } = AppConfigEntity.AppEntityType;
+
+    private LyoForm<ConfigDefinitionRecord>? _form;
+    private ConfigDefinitionRecord _edit = new();
+    private bool _formHasChanges;
+    private bool _valueDirty;
+    private bool _jsonParseError;
+    private bool _includeDefault;
+    private bool _saving;
+    private bool _initialized;
+
+    private bool IsNew => Definition == null || Definition.Id == default;
+
+    private bool _canSave => !_saving && !_jsonParseError && (_formHasChanges || _valueDirty || IsNew);
+
+    protected override void OnParametersSet()
+    {
+        if (_initialized)
+            return;
+
+        _edit = Definition == null ? NewDefinition() : Clone(Definition);
+        _includeDefault = _edit.DefaultValue != null;
+        _initialized = true;
+    }
+
+    private ConfigDefinitionRecord NewDefinition()
+        => new() {
+            SubjectEntityType = string.IsNullOrWhiteSpace(SubjectEntityType) ? AppConfigEntity.AppEntityType : SubjectEntityType.Trim(),
+            ForValueType = ConfigValue.GetTypeName(typeof(System.Text.Json.Nodes.JsonObject))
+        };
+
+    private static ConfigDefinitionRecord Clone(ConfigDefinitionRecord src)
+        => new() {
+            Id = src.Id,
+            SubjectEntityType = src.SubjectEntityType,
+            Key = src.Key,
+            ForValueType = src.ForValueType,
+            Description = src.Description,
+            IsRequired = src.IsRequired,
+            DefaultValue = CloneValue(src.DefaultValue),
+            CreatedTimestamp = src.CreatedTimestamp,
+            UpdatedTimestamp = src.UpdatedTimestamp
+        };
+
+    private static ConfigValue? CloneValue(ConfigValue? src)
+        => src == null ? null : new() { TypeName = src.TypeName, Json = src.Json };
+
+    private void SyncDefaultTypeName()
+    {
+        if (_edit.DefaultValue != null)
+            _edit.DefaultValue.TypeName = _edit.ForValueType;
+    }
+
+    private void OnIncludeDefaultChanged(bool include)
+    {
+        _includeDefault = include;
+        _valueDirty = true;
+        if (include) {
+            _edit.DefaultValue ??= new() { TypeName = _edit.ForValueType, Json = "{}" };
+            SyncDefaultTypeName();
+        }
+        else {
+            _edit.DefaultValue = null;
+            _jsonParseError = false;
+        }
+    }
+
+    private void OnDefaultValueChanged(ConfigValue value)
+    {
+        _edit.DefaultValue = value;
+        _valueDirty = true;
+    }
+
+    private void OnParseErrorChanged(bool hasError) => _jsonParseError = hasError;
+
+    private async Task SaveAsync()
+    {
+        if (!_includeDefault)
+            _edit.DefaultValue = null;
+
+        try {
+            _edit.Validate();
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or ArgumentNullException or FormatException) {
+            Snackbar.Add(ex.Message, Severity.Error);
+            return;
+        }
+
+        _saving = true;
+        try {
+            await Store.SaveDefinitionAsync(_edit);
+            Snackbar.Add($"Saved '{_edit.Key}'.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally {
+            _saving = false;
+        }
+    }
+
+}

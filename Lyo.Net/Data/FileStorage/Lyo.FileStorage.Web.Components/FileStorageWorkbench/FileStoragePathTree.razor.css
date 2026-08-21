@@ -1,0 +1,21 @@
+.file-storage-tree-panel {
+    min-height: 28rem;
+    max-height: min(70vh, 48rem);
+    overflow: auto;
+}
+
+.file-storage-tree-item-drag {
+    cursor: grab;
+    flex: 1;
+    min-width: 0;
+}
+
+.file-storage-tree-item {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-storage-tree-drop-target {
+    outline: 1px dashed var(--mud-palette-primary);
+    border-radius: 4px;
+}

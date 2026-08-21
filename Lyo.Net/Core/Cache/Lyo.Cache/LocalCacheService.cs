@@ -19,7 +19,7 @@ public sealed class LocalCacheService : ICacheService
     private const string TagPrefix = "__tag:";
 
     private readonly bool _enabled;
-    private readonly ConcurrentDictionary<CacheItem, byte> _items = new();
+    private readonly ConcurrentDictionary<CacheItem, CacheItem> _items = new();
 
     /// <summary>Bidirectional tag index: cache key → tag set (inner dict keys are tags, O(1) membership).</summary>
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _keyToTags = new();
@@ -33,6 +33,9 @@ public sealed class LocalCacheService : ICacheService
 
     /// <summary>Bidirectional tag index: tag → cache key set (inner dict keys are normalized cache keys).</summary>
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _tagToKeys = new();
+
+    /// <summary>Per-key TTL used to stamp and refresh <see cref="CacheItem.Expires" /> (sliding hits reset from last access).</summary>
+    private readonly ConcurrentDictionary<string, (TimeSpan Duration, CacheExpirationMode Mode)> _ttls = new(StringComparer.Ordinal);
 
     /// <summary>Initializes a new <see cref="LocalCacheService" />.</summary>
     /// <param name="memoryCache">Backing Microsoft cache instance.</param>
@@ -59,7 +62,7 @@ public sealed class LocalCacheService : ICacheService
         _payloadSerializer = payloadSerializer;
     }
 
-    public IReadOnlyCollection<CacheItem> Items => _items.Keys.ToList().AsReadOnly();
+    public IReadOnlyCollection<CacheItem> Items => _items.Values.ToList().AsReadOnly();
 
     /// <inheritdoc />
     public string HealthCheckName => "cache";
@@ -97,6 +100,7 @@ public sealed class LocalCacheService : ICacheService
             var normalizedKey = key.ToLowerInvariant();
             TagIndexRemoveKey(normalizedKey);
             _memoryCache.Remove(normalizedKey);
+            ForgetTtl(normalizedKey);
             _items.TryRemove(CacheItem.Key(normalizedKey), out var _);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.RemoveDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -126,6 +130,7 @@ public sealed class LocalCacheService : ICacheService
             foreach (var key in keysSnapshot) {
                 TagIndexRemoveKey(key);
                 _memoryCache.Remove(key);
+                ForgetTtl(key);
                 _items.TryRemove(CacheItem.Key(key), out var _);
             }
 
@@ -186,6 +191,7 @@ public sealed class LocalCacheService : ICacheService
             _items.Clear();
             _keyToTags.Clear();
             _tagToKeys.Clear();
+            _ttls.Clear();
             stopwatch.Stop();
             _metrics.RecordGauge(Constants.Metrics.CacheSize, 0);
             _metrics.IncrementCounter(Constants.Metrics.ClearSuccess, count);
@@ -213,7 +219,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -251,7 +257,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -289,7 +295,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -329,7 +335,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -361,7 +367,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -394,7 +400,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -428,7 +434,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -463,7 +469,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -495,7 +501,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -532,7 +538,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -571,7 +577,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -609,7 +615,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out TValue? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out TValue? cached) && cached is not null) {
                 stopwatch.Stop();
                 _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                 _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -692,7 +698,7 @@ public sealed class LocalCacheService : ICacheService
 
         try {
             var normalizedKey = key.ToLowerInvariant();
-            return _memoryCache.TryGetValue(normalizedKey, out value);
+            return TryGetTracked(normalizedKey, out value);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Error reading cache value for key {CacheKey}", key);
@@ -725,7 +731,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out byte[]? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
                 try {
                     var decoded = _payloadCodec.Decode(cached);
                     stopwatch.Stop();
@@ -784,7 +790,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out byte[]? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
                 try {
                     var decoded = _payloadCodec.Decode(cached);
                     stopwatch.Stop();
@@ -866,7 +872,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out byte[]? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
                 CacheEntryEnvelope? decoded = null;
                 try {
                     decoded = _payloadCodec.Decode(cached);
@@ -932,7 +938,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out byte[]? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
                 try {
                     var decoded = _payloadCodec.Decode(cached);
                     stopwatch.Stop();
@@ -985,7 +991,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out byte[]? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
                 try {
                     var decoded = _payloadCodec.Decode(cached);
                     stopwatch.Stop();
@@ -1036,7 +1042,7 @@ public sealed class LocalCacheService : ICacheService
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (_memoryCache.TryGetValue(normalizedKey, out byte[]? cached) && cached != null) {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
                 try {
                     var decoded = _payloadCodec.Decode(cached);
                     stopwatch.Stop();
@@ -1135,7 +1141,7 @@ public sealed class LocalCacheService : ICacheService
 
         try {
             var normalizedKey = key.ToLowerInvariant();
-            if (!_memoryCache.TryGetValue(normalizedKey, out byte[]? raw) || raw == null)
+            if (!TryGetTracked(normalizedKey, out byte[]? raw) || raw is null)
                 return false;
 
             envelope = _payloadCodec.Decode(raw);
@@ -1211,13 +1217,46 @@ public sealed class LocalCacheService : ICacheService
 
         entryOptions.RegisterPostEvictionCallback((_, _, _, _) => {
             TagIndexRemoveKey(normalizedKey);
+            ForgetTtl(normalizedKey);
             _items.TryRemove(CacheItem.Key(normalizedKey), out var _);
         });
 
         _memoryCache.Set(normalizedKey, value, entryOptions);
-        _items.TryAdd(CacheItem.Key(normalizedKey), 0);
+        _ttls[normalizedKey] = (duration, mode);
+        var expires = DateTime.UtcNow.Add(duration);
+        UpsertItem(
+            value is byte[] stored
+                ? CacheItem.FromStoredBytes(normalizedKey, stored, expires: expires)
+                : CacheItem.Key(normalizedKey, encrypted: false, compressed: false, expires: expires));
         TagIndexAdd(normalizedKey, tagList);
     }
+
+    private void UpsertItem(CacheItem item)
+        => _items.AddOrUpdate(item, item, (_, existing) => item with { Created = existing.Created });
+
+    private bool TryGetTracked<T>(string normalizedKey, out T? value)
+    {
+        if (!_memoryCache.TryGetValue(normalizedKey, out value))
+            return false;
+
+        if (value is not null)
+            TouchSlidingExpires(normalizedKey);
+
+        return true;
+    }
+
+    private void TouchSlidingExpires(string normalizedKey)
+    {
+        if (!_ttls.TryGetValue(normalizedKey, out var policy) || policy.Mode != CacheExpirationMode.Sliding)
+            return;
+
+        if (!_items.TryGetValue(CacheItem.Key(normalizedKey), out var existing))
+            return;
+
+        UpsertItem(existing with { Expires = DateTime.UtcNow.Add(policy.Duration) });
+    }
+
+    private void ForgetTtl(string normalizedKey) => _ttls.TryRemove(normalizedKey, out _);
 
     /// <summary>Bidirectional index: associate a cache key with normalized tags (O(1) per tag).</summary>
     private void TagIndexAdd(string normalizedKey, string[] normalizedTags)
@@ -1229,7 +1268,7 @@ public sealed class LocalCacheService : ICacheService
         foreach (var tag in normalizedTags) {
             tagSet[tag] = 0;
             _tagToKeys.GetOrAdd(tag, static _ => new(StringComparer.Ordinal))[normalizedKey] = 0;
-            _items.TryAdd(CacheItem.Tag(TagPrefix + tag), 0);
+            UpsertItem(CacheItem.Tag(TagPrefix + tag));
         }
     }
 

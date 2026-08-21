@@ -83,7 +83,7 @@
       "items": [
         "**`CrudMetadata`.** Success payload fragments (timestamps, concurrency tokens if the host sets them).",
         "**`FileUpload` / `FileUploadRes`.** File pipeline results.",
-        "`CacheItem` (record + `CacheItemTypeEnum` `Key` / `Tag`). Describes server cache entries surfaced by introspection endpoints; helpers `CacheItem.Key(name)` / `CacheItem.Tag(name)` build instances and the record's `GetHashCode` / `ToString` are stable for set membership.",
+        "`CacheItem` (record + `CacheItemTypeEnum` `Key` / `Tag`). L1 snapshot rows from cache introspection: `Name`, `Type`, `Created`, `Expires`, plus `Encrypted` / `Compressed` / `SizeBytes` on keys. Helpers `CacheItem.Key(name)` / `CacheItem.Tag(name)` build instances. Equality / `GetHashCode` stay name+type so set membership ignores storage flags and timestamps.",
         "**`Constants.ApiErrorCodes`.** Stable `errors[].code` strings on problem responses (`Unknown`, `InvalidQuery`, `InvalidField`, `InvalidPaging`, `NotFound`, `Forbidden`, `Cancelled`, `SqlException`, `MessageQueueConnectionIssue`, `Conflict`, `ExceedMaxBulkSize`, and the rest of the enum)."
       ]
     },
@@ -102,7 +102,7 @@
     {
       "type": "paragraph",
       "title": "Caching and diagnostics",
-      "text": "`CacheItem` and `CacheItemTypeEnum` describe server cache introspection endpoints (internal tools and load tests). `QueryRequestScorer` and `QueryRequestScoreBreakdown` feed explain endpoints for query planning. Pair them with scoring fields on `ResultFactory` outputs and server logs."
+      "text": "`CacheItem` and `CacheItemTypeEnum` describe this process's L1 cache introspection (not Redis L2). Payload keys can carry `Encrypted`, `Compressed`, `SizeBytes`, and `Expires`. `QueryRequestScorer` and `QueryRequestScoreBreakdown` feed explain endpoints for query planning. Pair them with scoring fields on `ResultFactory` outputs and server logs."
     },
     {
       "type": "paragraph",

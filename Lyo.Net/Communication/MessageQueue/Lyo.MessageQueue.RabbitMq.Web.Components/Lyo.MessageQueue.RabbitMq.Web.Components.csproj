@@ -10,6 +10,7 @@
         <ProjectReference Include="..\Lyo.MessageQueue.RabbitMq\Lyo.MessageQueue.RabbitMq.csproj"/>
         <ProjectReference Include="..\Lyo.MessageQueue.Web.Components\Lyo.MessageQueue.Web.Components.csproj"/>
         <ProjectReference Include="..\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

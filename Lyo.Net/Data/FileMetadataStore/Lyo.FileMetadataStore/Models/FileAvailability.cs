@@ -16,5 +16,8 @@ public enum FileAvailability
     Rejected = 3,
 
     /// <summary>Placeholder metadata recorded; backing object not finalized (direct/client upload).</summary>
-    PendingDirectUpload = 4
+    PendingDirectUpload = 4,
+
+    /// <summary>Metadata is a tombstone (<c>DeletedAt</c> is set). Not readable; omitted from normal listings.</summary>
+    Deleted = 5
 }

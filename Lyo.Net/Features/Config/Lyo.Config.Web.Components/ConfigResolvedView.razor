@@ -1,0 +1,206 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudStack Spacing="2" Class="mt-3">
+    @if (string.IsNullOrWhiteSpace(SubjectEntityType) || string.IsNullOrWhiteSpace(SubjectEntityId)) {
+        <MudAlert Severity="Severity.Info" Dense="true">Apply a subject entity type and id to resolve config.</MudAlert>
+    }
+    else if (_loading) {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
+    }
+    else {
+        @if (_resolveError != null) {
+            <MudAlert Severity="Severity.Warning" Dense="true">@_resolveError</MudAlert>
+        }
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary">@_items.Count key(s) for @SubjectEntityType / @SubjectEntityId</MudText>
+        <MudTable Items="_items" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+            <HeaderContent>
+                <MudTh></MudTh>
+                <MudTh>Key</MudTh>
+                <MudTh>Source</MudTh>
+                <MudTh>Required</MudTh>
+                <MudTh>Value</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                @{
+                    var source = ConfigColorHelper.ResolveSource(context);
+                }
+                <MudTd DataLabel="Actions">
+                    <MudStack Row="true" Spacing="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Size="Size.Small"
+                                       title="Edit binding"
+                                       OnClick="@(() => OpenBindingAsync(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Size="Size.Small"
+                                       Color="Color.Error"
+                                       Disabled="@(context.Binding == null)"
+                                       title="Clear binding"
+                                       OnClick="@(() => ClearBindingAsync(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.History"
+                                       Size="Size.Small"
+                                       Disabled="@(context.Binding == null)"
+                                       title="Revision history"
+                                       OnClick="@(() => ViewRevisionsAsync(context))"/>
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Key">
+                    <MudText Typo="Typo.body2">@context.Definition.Key</MudText>
+                    @if (!string.IsNullOrWhiteSpace(context.Definition.Description)) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Definition.Description</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Source">
+                    <LyoChip Spec="@LyoChips.Of(ConfigColorHelper.SourceLabel(source), ConfigColorHelper.ForSource(source))"/>
+                </MudTd>
+                <MudTd DataLabel="Required">
+                    <LyoChip Spec="@LyoChips.FromBool(context.Definition.IsRequired, "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+                </MudTd>
+                <MudTd DataLabel="Value">
+                    <LyoTruncatedText Text="@(context.Value?.Json)"/>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No definitions for this entity type.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</MudStack>
+
+@code {
+
+    /// <summary>Config store used to resolve and mutate bindings.</summary>
+    [Parameter]
+    [EditorRequired]
+    public IConfigStore Store { get; set; } = null!;
+
+    /// <summary>Entity type to resolve.</summary>
+    [Parameter]
+    public string SubjectEntityType { get; set; } = "";
+
+    /// <summary>Entity id to resolve.</summary>
+    [Parameter]
+    public string SubjectEntityId { get; set; } = "";
+
+    /// <summary>Incremented by the shell when the operator applies a new scope or asks for a refresh.</summary>
+    [Parameter]
+    public int DataVersion { get; set; }
+
+    /// <summary>Raised after a successful binding save or delete.</summary>
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    /// <summary>Raised when the operator opens revision history for a binding.</summary>
+    [Parameter]
+    public EventCallback<Guid> OnViewRevisions { get; set; }
+
+    private IReadOnlyList<ResolvedConfigItemRecord> _items = [];
+    private bool _loading;
+    private string? _resolveError;
+    private string? _loadedType;
+    private string? _loadedId;
+    private int _loadedVersion = int.MinValue;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.Equals(_loadedType, SubjectEntityType, StringComparison.Ordinal)
+            && string.Equals(_loadedId, SubjectEntityId, StringComparison.Ordinal)
+            && _loadedVersion == DataVersion)
+            return;
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loadedType = SubjectEntityType;
+        _loadedId = SubjectEntityId;
+        _loadedVersion = DataVersion;
+        _resolveError = null;
+        _items = [];
+        if (string.IsNullOrWhiteSpace(SubjectEntityType) || string.IsNullOrWhiteSpace(SubjectEntityId))
+            return;
+
+        _loading = true;
+        try {
+            var entity = EntityRef.ForKey(SubjectEntityType.Trim(), SubjectEntityId.Trim());
+            try {
+                var resolved = await Store.LoadConfigAsync(entity, null);
+                _items = resolved.Items;
+            }
+            catch (InvalidOperationException ex) {
+                _resolveError = ex.Message;
+                _items = await BuildFallbackItemsAsync(entity);
+            }
+        }
+        catch (Exception ex) {
+            _resolveError = ex.Message;
+            _items = [];
+        }
+        finally {
+            _loading = false;
+        }
+    }
+
+    private async Task<IReadOnlyList<ResolvedConfigItemRecord>> BuildFallbackItemsAsync(EntityRef entity)
+    {
+        var defs = await Store.GetDefinitionsAsync(entity.EntityType);
+        var bindings = await Store.GetBindingsAsync(entity, null);
+        return defs.Select(d => new ResolvedConfigItemRecord {
+            Definition = d,
+            Binding = bindings.FirstOrDefault(b => b.DefinitionId == d.Id)
+        }).ToList();
+    }
+
+    private async Task OpenBindingAsync(ResolvedConfigItemRecord item)
+    {
+        var parameters = new DialogParameters<ConfigBindingView> {
+            { d => d.Store, Store },
+            { d => d.Definition, item.Definition },
+            { d => d.SubjectEntityType, SubjectEntityType.Trim() },
+            { d => d.SubjectEntityId, SubjectEntityId.Trim() },
+            { d => d.Binding, item.Binding }
+        };
+        var dialog = await DialogService.ShowAsync<ConfigBindingView>($"Binding · {item.Definition.Key}", parameters, LyoDialogPresets.Large);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await NotifyChangedAsync();
+    }
+
+    private async Task ClearBindingAsync(ResolvedConfigItemRecord item)
+    {
+        if (item.Binding == null)
+            return;
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Clear binding",
+            $"Remove the binding for '{item.Definition.Key}'? The resolved value falls back to the definition default when one exists.",
+            yesText: "Clear",
+            cancelText: "Cancel");
+        if (confirmed != true)
+            return;
+
+        try {
+            await Store.DeleteBindingAsync(item.Binding.Id, null);
+            Snackbar.Add($"Cleared binding '{item.Definition.Key}'.", Severity.Success);
+            await NotifyChangedAsync();
+        }
+        catch (InvalidOperationException ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private Task ViewRevisionsAsync(ResolvedConfigItemRecord item)
+        => item.Binding == null ? Task.CompletedTask : OnViewRevisions.InvokeAsync(item.Binding.Id);
+
+    private async Task NotifyChangedAsync()
+    {
+        await ReloadAsync();
+        await OnChanged.InvokeAsync();
+    }
+
+}

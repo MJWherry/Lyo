@@ -26,7 +26,7 @@ public sealed class CacheEndpointTests
         cache.Set("beta-key", "b", ["beta-tag"]);
         cache.Set("gamma-key", "c", ["gamma-tag"]);
         var query = ProjectionQueryReqBuilder.New()
-            .AddSelects("Name", "Type", "Created")
+            .AddSelects("Name", "Type", "Created", "Expires", "Encrypted", "Compressed", "SizeBytes")
             .AddWhere(w => w.Equals("Type", CacheItemTypeEnum.Key))
             .AddSort("Name", SortDirection.Asc)
             .SetPagination(1, 1)
@@ -39,9 +39,34 @@ public sealed class CacheEndpointTests
         Assert.True(result.HasMore);
         var row = Assert.IsType<Dictionary<string, object?>>(result.Items![0]);
         Assert.Equal("beta-key", row["Name"]?.ToString(), ignoreCase: true);
+        Assert.True(row.ContainsKey("Encrypted"));
+        Assert.True(row.ContainsKey("Compressed"));
+        Assert.True(row.ContainsKey("SizeBytes"));
+        Assert.True(row.ContainsKey("Expires"));
+        Assert.NotNull(row["Expires"]);
         // WhereClause compiles through ICacheService.GetOrSet; that is not the admin QueryProject payload.
         Assert.Contains(cache.Items, i => string.Equals(i.Name, "beta-key", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(cache.Items, i => i.Name.Contains("QueryProject", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void QueryProjected_ContainsOnName_FiltersKeys()
+    {
+        var (cache, service) = CreateQueryService();
+        cache.Set("alpha-key", "a");
+        cache.Set("beta-key", "b");
+        var query = ProjectionQueryReqBuilder.New()
+            .AddSelects("Name", "Type")
+            .AddWhere(w => w.Contains("Name", "beta"))
+            .AddSort("Name", SortDirection.Asc)
+            .SetPagination(0, 25)
+            .Build();
+
+        var result = service.QueryProjected(query);
+        Assert.True(result.IsSuccess, result.Error?.Detail);
+        var names = result.Items!.Select(i => Assert.IsType<Dictionary<string, object?>>(i)["Name"]?.ToString()).ToList();
+        Assert.Contains(names, n => string.Equals(n, "beta-key", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(names, n => string.Equals(n, "alpha-key", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

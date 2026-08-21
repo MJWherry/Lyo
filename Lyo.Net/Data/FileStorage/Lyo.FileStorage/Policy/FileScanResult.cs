@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.FileStorage.Policy;
 
 public enum FileScanThreatLevel
@@ -7,4 +9,9 @@ public enum FileScanThreatLevel
     Threat = 2
 }
 
-public sealed record FileScanResult(FileScanThreatLevel ThreatLevel, string? Detail = null);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record FileScanResult(FileScanThreatLevel ThreatLevel, string? Detail = null)
+{
+    /// <inheritdoc />
+    public override string ToString() => $"FileScanResult: {ThreatLevel}{(Detail == null ? "" : $", {Detail}")}";
+}

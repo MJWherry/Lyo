@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-20T19:21:15.527018+00:00",
-  "packageCount": 217,
+  "generatedAt": "2026-08-21T23:53:36.955720+00:00",
+  "packageCount": 221,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -1079,7 +1079,7 @@
       "area": "Data",
       "topic": "Lyo.FileStorage",
       "name": "Lyo.FileStorage.Web.Components",
-      "tagline": "Blazor Server / Interactive UI for Lyo.FileStorage. Workbench grids and dialogs for file metadata, expected storage keys, download access links, and two-key encryption keys.",
+      "tagline": "Blazor Server / Interactive UI for Lyo.FileStorage. Workbench tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1460,6 +1460,16 @@
       ]
     },
     {
+      "id": "Lyo.Config.Web.Components",
+      "area": "Features",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config.Web.Components",
+      "tagline": "Blazor / MudBlazor dashboard for Lyo.Config. Add ConfigManagement to a host page for definitions, resolved bindings, and revision revert against IConfigStore.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.ContactUs",
       "area": "Features",
       "topic": "Lyo.ContactUs",
@@ -1645,6 +1655,27 @@
       "name": "Lyo.Api.Export",
       "tagline": "Optional export for Lyo.Api. Registers the Export CRUD endpoint and `IExportService<TContext>`.",
       "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.FileStorage",
+      "area": "Integration",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.FileStorage",
+      "tagline": "HTTP endpoints for Lyo file storage. Hosts map BuildFileStorageApi after registering a keyed IFileStorageService stack.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.FileStorage.Models",
+      "area": "Integration",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.FileStorage.Models",
+      "tagline": "HTTP request and response DTOs for the file-storage API. No dependency on Lyo.FileStorage.",
+      "targetFrameworks": [
+        "netstandard2.0",
         "net10.0"
       ]
     },
@@ -2222,6 +2253,16 @@
       "topic": "Lyo.KeyStore",
       "name": "Lyo.KeyStore.Aws",
       "tagline": "`AwsKeyStore` takes an `IAmazonSecretsManager` client and a secret-name prefix. It implements `Lyo.KeyStore.IKeyStore` and `Lyo.KeyStore.IKeyInventoryStore`, so admin UIs and key-rotation jobs can encrypt against it and list `keyId`s and versions.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.KeyStore.Web.Components",
+      "area": "Security",
+      "topic": "Lyo.KeyStore",
+      "name": "Lyo.KeyStore.Web.Components",
+      "tagline": "In-process Blazor workbench for IKeyStore. Lists key ids and versions, adds from a string, rotates, and sets current. No HTTP, no raw key bytes.",
       "targetFrameworks": [
         "net10.0"
       ]

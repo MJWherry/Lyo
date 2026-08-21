@@ -1,0 +1,135 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudStack Spacing="2" Class="mt-3">
+    @if (BindingId is null) {
+        <MudAlert Severity="Severity.Info" Dense="true">Open History on a resolved binding to inspect and revert revisions.</MudAlert>
+    }
+    else if (_loadError != null) {
+        <MudAlert Severity="Severity.Error" Dense="true">@_loadError</MudAlert>
+    }
+    else {
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">@_items.Count revision(s) for binding</MudText>
+            <LyoIdField Compact="true" Value="@BindingId"/>
+        </MudStack>
+        <MudAlert Severity="Severity.Info" Dense="true">Revert copies that snapshot and appends a new revision so history stays linear.</MudAlert>
+        <MudTable Items="_items" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Loading="_loading">
+            <HeaderContent>
+                <MudTh></MudTh>
+                <MudTh>Revision</MudTh>
+                <MudTh>Created</MudTh>
+                <MudTh>Value</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Actions">
+                    <MudButton Size="Size.Small"
+                               Variant="Variant.Outlined"
+                               Color="Color.Warning"
+                               Disabled="@_busy"
+                               OnClick="@(() => RevertAsync(context))">
+                        Revert
+                    </MudButton>
+                </MudTd>
+                <MudTd DataLabel="Revision">@context.Revision</MudTd>
+                <MudTd DataLabel="Created">
+                    <LyoTimestamp Value="@context.CreatedTimestamp" Kind="LyoTimestampKind.Absolute"/>
+                </MudTd>
+                <MudTd DataLabel="Value">
+                    <LyoTruncatedText Text="@context.Value.Json"/>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No revisions for this binding.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</MudStack>
+
+@code {
+
+    /// <summary>Config store used to list and revert revisions.</summary>
+    [Parameter]
+    [EditorRequired]
+    public IConfigStore Store { get; set; } = null!;
+
+    /// <summary>Binding whose history is shown. Null shows the empty hint.</summary>
+    [Parameter]
+    public Guid? BindingId { get; set; }
+
+    /// <summary>Incremented by the shell when the operator applies a new scope or asks for a refresh.</summary>
+    [Parameter]
+    public int DataVersion { get; set; }
+
+    /// <summary>Raised after a successful revert so sibling tabs can reload.</summary>
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    private IReadOnlyList<ConfigBindingRevisionRecord> _items = [];
+    private bool _loading;
+    private bool _busy;
+    private string? _loadError;
+    private Guid? _loadedId;
+    private int _loadedVersion = int.MinValue;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedId == BindingId && _loadedVersion == DataVersion)
+            return;
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loadedId = BindingId;
+        _loadedVersion = DataVersion;
+        _loadError = null;
+        _items = [];
+        if (BindingId is not { } id)
+            return;
+
+        _loading = true;
+        try {
+            _items = await Store.GetBindingRevisionsAsync(id, null);
+        }
+        catch (Exception ex) {
+            _loadError = ex.Message;
+        }
+        finally {
+            _loading = false;
+        }
+    }
+
+    private async Task RevertAsync(ConfigBindingRevisionRecord revision)
+    {
+        if (BindingId is not { } id)
+            return;
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Revert binding",
+            $"Revert to revision {revision.Revision}? A new revision is appended so this action is auditable.",
+            yesText: "Revert",
+            cancelText: "Cancel");
+        if (confirmed != true)
+            return;
+
+        _busy = true;
+        try {
+            await Store.RevertBindingToRevisionAsync(id, revision.Revision, null);
+            Snackbar.Add($"Reverted to revision {revision.Revision}.", Severity.Success);
+            await ReloadAsync();
+            await OnChanged.InvokeAsync();
+        }
+        catch (InvalidOperationException ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+}

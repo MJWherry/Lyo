@@ -80,10 +80,11 @@
                     </MudNavGroup>
                     <MudNavGroup Title="Documents & Files"
                                  Icon="@Icons.Material.Filled.Description"
-                                 Expanded="@IsExpanded(Constants.Page.FileService, Constants.Page.FileStorageWorkbench, Constants.Page.HtmlToPdf, Constants.Page.PdfAnnotator, Constants.Page.QrCodeGenerator, Constants.Page.BarcodeGenerator, Constants.Page.RichTextEditor, Constants.Page.SpriteSheetAnimator, Constants.Page.ImageWorkbench, Constants.Page.TextDiff, Constants.Page.CsvXlsx, Constants.Page.Formatter)">
+                                 Expanded="@IsExpanded(Constants.Page.FileService, Constants.Page.FileStorageWorkbench, Constants.Page.KeyStoreWorkbench, Constants.Page.HtmlToPdf, Constants.Page.PdfAnnotator, Constants.Page.QrCodeGenerator, Constants.Page.BarcodeGenerator, Constants.Page.RichTextEditor, Constants.Page.SpriteSheetAnimator, Constants.Page.ImageWorkbench, Constants.Page.TextDiff, Constants.Page.CsvXlsx, Constants.Page.Formatter)">
                         <MudNavLink Href="@Constants.Page.CsvXlsx" Icon="@Icons.Material.Filled.TableChart">CSV / XLSX</MudNavLink>
                         <MudNavLink Href="@Constants.Page.FileService" Icon="@Icons.Material.Filled.EnhancedEncryption">Encryption/Compression</MudNavLink>
                         <MudNavLink Href="@Constants.Page.FileStorageWorkbench" Icon="@Icons.Material.Filled.Storage">File Storage Workbench</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.KeyStoreWorkbench" Icon="@Icons.Material.Filled.VpnKey">Key Store</MudNavLink>
                         <MudNavLink Href="@Constants.Page.HtmlToPdf" Icon="@Icons.Material.Filled.PictureAsPdf">Html -> Pdf</MudNavLink>
                         <MudNavLink Href="@Constants.Page.PdfAnnotator" Icon="@Icons.Material.Filled.PictureAsPdf">Pdf Annotator</MudNavLink>
                         <MudNavLink Href="@Constants.Page.QrCodeGenerator" Icon="@Icons.Material.Filled.QrCode">QRCode Generator</MudNavLink>
@@ -95,8 +96,9 @@
                     </MudNavGroup>
                     <MudNavGroup Title="Infrastructure"
                                  Icon="@Icons.Material.Filled.SettingsEthernet"
-                                 Expanded="@IsExpanded(Constants.Page.RabbitMq, Constants.Page.Metrics, Constants.Page.Locks, Constants.Page.Cache, Constants.Page.Jobs, Constants.Page.Reports, Constants.Page.Schedule, Constants.Page.Diagnostics, Constants.Page.PrivacyRedaction)">
+                                 Expanded="@IsExpanded(Constants.Page.RabbitMq, Constants.Page.Metrics, Constants.Page.Locks, Constants.Page.Cache, Constants.Page.Jobs, Constants.Page.Reports, Constants.Page.Schedule, Constants.Page.Diagnostics, Constants.Page.PrivacyRedaction, Constants.Page.Config)">
                         <MudNavLink Href="@Constants.Page.Cache" Icon="@Icons.Material.Filled.Storage">Cache</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.Config" Icon="@Icons.Material.Filled.Tune">Config</MudNavLink>
                         <MudNavLink Href="@Constants.Page.Jobs" Icon="@Icons.Material.Filled.Work">Jobs</MudNavLink>
                         <MudNavLink Href="@Constants.Page.Reports" Icon="@Icons.Material.Filled.Assessment">Reports</MudNavLink>
                         <MudNavLink Href="@Constants.Page.Locks" Icon="@Icons.Material.Filled.Lock">Locks</MudNavLink>

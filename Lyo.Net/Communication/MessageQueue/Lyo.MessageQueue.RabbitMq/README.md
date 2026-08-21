@@ -115,7 +115,7 @@ when its `RequeueDelay` is set (see the [Lyo.MessageQueue README](../Lyo.Message
 
 ## Queue statistics
 
-`GetQueueInfoAsync(queueName, ct)` and `GetAllQueuesInfoAsync(ct)` (on `IRabbitMqService`) query the Management API (`GET /api/queues/{vhost}[/{name}]`) and return the shared `MessageQueueInfo` record. Message counts, ready/unacked, consumer count, state, plus publish/deliver rates in `AdditionalProperties` when the broker reports them. The `RabbitMqWorkbench` Blazor component shows these in its **Stats** tab. Statistics update on the management emission interval (~5s), so counts can lag slightly behind broker state.
+`GetQueueInfoAsync(queueName, ct)` and `GetAllQueuesInfoAsync(ct)` (on `IRabbitMqService`) query the Management API (`GET /api/queues/{vhost}[/{name}]`) and return the shared `MessageQueueInfo` record. Message counts, ready/unacked, consumer count, and state are first-class. AMQP flags (`durable`, `exclusive`, `auto_delete`), `x-*` arguments (DLQ, max-priority), and publish/deliver rates land in `AdditionalProperties` (see `Constants.QueueInfoProperties`). `GetExchangeInfoAsync` / `GetAllExchangesInfoAsync` do the same for exchanges (`GET /api/exchanges/{vhost}[/{name}]`). The `RabbitMqWorkbench` Blazor component lists queues and exchanges with these flags as chips. Statistics update on the management emission interval (~5s), so counts can lag slightly behind broker state.
 
 ## Capabilities
 
@@ -131,7 +131,8 @@ when its `RequeueDelay` is set (see the [Lyo.MessageQueue README](../Lyo.Message
 | `CreateExchange` / `DeleteExchange` (RabbitMQ only, on `IRabbitMqService`) | Direct exchange declaration / deletion. |
 | `SendToQueueDelayed` (RabbitMQ only) | Delayed delivery via TTL + dead-letter wait queues (see below). |
 | `CreateQueueWithDlq` (RabbitMQ only) | Declares `{queue}.dlq` and wires the main queue's dead-letter arguments (see below). |
-| `GetQueueInfoAsync` / `GetAllQueuesInfoAsync` (RabbitMQ only) | Live queue statistics via the Management API (see below). |
+| `GetQueueInfoAsync` / `GetAllQueuesInfoAsync` (RabbitMQ only) | Live queue statistics via the Management API. AMQP flags and `x-*` arguments go in `AdditionalProperties` (see below). |
+| `GetExchangeInfoAsync` / `GetAllExchangesInfoAsync` (RabbitMQ only) | Live exchange listing via the Management API (`GET /api/exchanges/{vhost}[/{name}]`). |
 
 Because Rabbit features evolve quickly (streams, quorum queues), anything advanced tends to go through
 `CreateQueue`'s `arguments` bag. Inspect `RabbitMqService` for the defaults you rely on before upgrading

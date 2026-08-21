@@ -1,0 +1,74 @@
+@namespace Lyo.FileStorage.Web.Components.FileMetadata
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@using Lyo.FileStorage.Web.Components.FileStorageWorkbench
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="Client"
+                      GridKey="@GridKey"
+                      Route="@ResolvedQueryRoute"
+                      KeySelector="@FileStorageGridRowHelper.GetFileRowKey"
+                      KeySelectFields="@KeySelectFields"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@FileStorageGridRowHelper.ExcludeDeleted">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <BulkMenuItems>
+        <MudMenuItem Icon="@Icons.Material.Filled.Download" OnClick="@BulkDownloadAsync">Download zip</MudMenuItem>
+    </BulkMenuItems>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" Disabled="@IsDeleted(item)" OnClick="@(() => ViewAsync(item))">View</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Info" OnClick="@(() => ViewMetadataAsync(item))">View metadata</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Download" Disabled="@IsDeleted(item)" OnClick="@(() => DownloadAsync(item))">Download</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Link" Disabled="@IsDeleted(item)" OnClick="@(() => CreateLinkAsync(item))">Create access link</MudMenuItem>
+    </RowMenuControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View"
+                                   Disabled="@IsDeleted(cell.Item)"
+                                   OnClick="@(() => ViewAsync(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" Size="Size.Small" title="View metadata"
+                                   OnClick="@(() => ViewMetadataAsync(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" title="Download"
+                                   Disabled="@IsDeleted(cell.Item)"
+                                   OnClick="@(() => DownloadAsync(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="OriginalFileName" Title="Name" QuickSearchPropertyName="OriginalFileName"/>
+        <LyoProjectedColumn Field="OriginalFileSize" Title="Size">
+            <CellContent Context="item">
+                @FormatSize(item)
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="PathPrefix" Title="Path prefix" QuickSearchPropertyName="PathPrefix"/>
+        <LyoProjectedColumn Field="ContentType" Title="Type">
+            <CellContent Context="item">
+                <LyoChip Spec="@FileStorageColorHelper.FileTypeChip(item)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="DataEncryptionKeyAlgorithm" Title="Encryption">
+            <CellContent Context="item">
+                <LyoChip Spec="@FileStorageColorHelper.EncryptionChip(item)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="CompressionAlgorithm" Title="Compression">
+            <CellContent Context="item">
+                <LyoChip Spec="@FileStorageColorHelper.CompressionChip(item)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Timestamp" Title="Saved" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="Id" Title="ID" HiddenByDefault="true" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;" Identifier="true"/>
+    </Columns>
+</LyoDataGridProjected>

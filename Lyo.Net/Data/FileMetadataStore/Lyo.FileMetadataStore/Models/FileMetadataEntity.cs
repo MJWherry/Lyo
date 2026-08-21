@@ -89,6 +89,8 @@ public sealed class FileMetadataEntity
         var availability = FileAvailability.Available;
         if (!string.IsNullOrEmpty(Availability) && Enum.TryParse<FileAvailability>(Availability, out var av))
             availability = av;
+        if (DeletedAt != null)
+            availability = FileAvailability.Deleted;
 
         return new(
             Guid.Parse(Id), OriginalFileName, OriginalFileSize, OriginalFileHash, SourceFileName, SourceFileSize, SourceFileHash, IsCompressed, compressionAlgorithm,
@@ -124,10 +126,17 @@ public sealed class FileMetadataEntity
             HashAlgorithm = result.HashAlgorithm?.ToString(),
             ContentType = result.ContentType,
             TenantId = result.TenantId,
-            Availability = result.Availability.ToString(),
+            Availability = result.DeletedAt.HasValue ? nameof(FileAvailability.Deleted) : result.Availability.ToString(),
             DeletedAt = result.DeletedAt.HasValue ? DateTime.SpecifyKind(result.DeletedAt.Value, DateTimeKind.Utc) : null,
             OwnerId = result.OwnerId
         };
+
+    /// <summary>Records a logical delete: sets <see cref="DeletedAt" /> (UTC) and <see cref="Availability" /> to <see cref="FileAvailability.Deleted" />.</summary>
+    public void MarkDeleted()
+    {
+        DeletedAt = DateTime.UtcNow;
+        Availability = nameof(FileAvailability.Deleted);
+    }
 
     public override string ToString() => $"FileMetadataEntity: {Id}, {OriginalFileName}, size={OriginalFileSize}, encrypted={IsEncrypted}, compressed={IsCompressed}";
 }

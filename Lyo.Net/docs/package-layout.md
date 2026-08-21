@@ -157,6 +157,8 @@ Stays under `Communication/Translation/`.
 | `Lyo.Api` | E | `Integration/Api/` | - | - | |
 | `Lyo.Api.Client` | E | `Integration/Api/` | - | - | Shared HTTP base for C clients |
 | `Lyo.Api.Models` | E | `Integration/Api/` | - | - | |
+| `Lyo.Api.FileStorage.Models` | E | `Integration/Api/` | - | - | HTTP DTOs for file-storage API; referenced by API + clients |
+| `Lyo.Api.FileStorage` | E | `Integration/Api/` | - | - | File-storage workbench HTTP + FileMetadata QueryProject |
 | `Lyo.Api.Export*` | E | `Integration/Api/` | - | - | |
 | `Lyo.Web.*` | E | `Integration/Web/` | - | - | |
 | `Lyo.Job.*` | E | `Integration/Job/` | - | - | Job domain lives here, not Core |
@@ -193,6 +195,7 @@ Stays under `Communication/Translation/`.
 | `Lyo.Encryption` + algorithm packages | E/B | `Security/Encryption/` | - | - | |
 | `Lyo.KeyStore` | E/B | `Security/KeyStore/` | - | - | |
 | `Lyo.KeyStore.Aws` | B | `Security/KeyStore/` | - | - | AWS Secrets Manager provider |
+| `Lyo.KeyStore.Web.Components` | B | `Security/KeyStore/` | - | - | In-process IKeyStore workbench (no HTTP) |
 | `Lyo.ContentThreatScan` | B | `Security/ContentThreatScan/` | - | - | |
 | `Lyo.ContentThreatScan.Intel` | B | `Security/ContentThreatScan/` | - | - | |
 

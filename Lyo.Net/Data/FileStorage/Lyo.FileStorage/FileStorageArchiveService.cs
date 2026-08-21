@@ -44,7 +44,20 @@ public sealed class FileStorageArchiveService(
         var usedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var entry in unique) {
             ct.ThrowIfCancellationRequested();
-            var metadata = await _fileStorage.GetMetadataAsync(entry.Id, ct).ConfigureAwait(false);
+            FileStoreResult metadata;
+            try {
+                metadata = await _fileStorage.GetMetadataAsync(entry.Id, ct).ConfigureAwait(false);
+            }
+            catch (FileNotFoundException) {
+                _logger.LogInformation("Skipping missing or deleted file {FileId} in archive", entry.Id);
+                continue;
+            }
+
+            if (metadata.DeletedAt != null || metadata.Availability == FileAvailability.Deleted) {
+                _logger.LogInformation("Skipping deleted file {FileId} in archive", entry.Id);
+                continue;
+            }
+
             totalBytes += metadata.OriginalFileSize;
             if (totalBytes > _options.MaxTotalUncompressedBytes)
                 throw new FileStorageArchiveLimitException(
@@ -55,6 +68,9 @@ public sealed class FileStorageArchiveService(
             zipPath = EnsureUniquePath(zipPath, usedPaths, entry.Id);
             resolved.Add((entry.Id, zipPath, metadata));
         }
+
+        if (resolved.Count == 0)
+            throw new FileNotFoundException("None of the requested files are available to archive.");
 
         var downloadName = FileStorageArchivePath.SanitizeZipFileName(fileName);
         var session = _temp.CreateSession(

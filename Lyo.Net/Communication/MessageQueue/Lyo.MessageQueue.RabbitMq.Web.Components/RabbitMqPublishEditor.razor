@@ -1,0 +1,153 @@
+@namespace Lyo.MessageQueue.RabbitMq.Web.Components
+
+<MudStack Spacing="2">
+    <MudTextField T="string"
+                  Label="Message body"
+                  Lines="6"
+                  FullWidth="true"
+                  Margin="Margin.Dense"
+                  Variant="Variant.Outlined"
+                  Value="@MessageBody"
+                  ValueChanged="MessageBodyChanged"/>
+    @if (WrapInEnvelope) {
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+            <MudTextField T="string"
+                          Label="Message ID"
+                          Placeholder="new GUID"
+                          Margin="Margin.Dense"
+                          Variant="Variant.Outlined"
+                          Value="@EnvelopeMessageId"
+                          ValueChanged="EnvelopeMessageIdChanged"/>
+            <MudTextField T="string"
+                          Label="Trace ID"
+                          Margin="Margin.Dense"
+                          Variant="Variant.Outlined"
+                          Value="@EnvelopeTraceId"
+                          ValueChanged="EnvelopeTraceIdChanged"/>
+        </MudStack>
+    }
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+        <MudCheckBox T="bool"
+                     Dense="true"
+                     Label="Wrap body"
+                     Value="@WrapInEnvelope"
+                     ValueChanged="WrapInEnvelopeChanged"/>
+        <MudNumericField T="int"
+                         Placeholder="Priority"
+                         Min="0"
+                         Max="255"
+                         Margin="Margin.Dense"
+                         Variant="Variant.Outlined"
+                         Style="width: 110px;"
+                         Value="@MessagePriority"
+                         ValueChanged="MessagePriorityChanged"/>
+        @if (ShowDelay) {
+            <MudNumericField T="double"
+                             Placeholder="Delay (s)"
+                             Min="0"
+                             Max="86400"
+                             Margin="Margin.Dense"
+                             Variant="Variant.Outlined"
+                             Style="width: 120px;"
+                             Value="@SendDelaySeconds"
+                             ValueChanged="SendDelaySecondsChanged"/>
+        }
+        @if (ShowRoutingKey) {
+            <MudTextField T="string"
+                          Placeholder="Routing key"
+                          Margin="Margin.Dense"
+                          Variant="Variant.Outlined"
+                          Style="min-width: 160px;"
+                          Value="@RoutingKey"
+                          ValueChanged="RoutingKeyChanged"/>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnSend" Disabled="@Busy">@SendLabel</MudButton>
+        @if (ShowDelay) {
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OnSendDelayed" Disabled="@Busy">Send delayed</MudButton>
+        }
+    </MudStack>
+</MudStack>
+
+@code {
+
+    /// <summary>UTF-8 (or JSON) body published to the selected queue or exchange.</summary>
+    [Parameter]
+    public string MessageBody { get; set; } = "";
+
+    /// <summary>Raised when the body editor changes.</summary>
+    [Parameter]
+    public EventCallback<string> MessageBodyChanged { get; set; }
+
+    /// <summary>When true, the body is wrapped in <c>QueueMessageEnvelope</c> before publish.</summary>
+    [Parameter]
+    public bool WrapInEnvelope { get; set; }
+
+    /// <summary>Raised when envelope wrapping is toggled.</summary>
+    [Parameter]
+    public EventCallback<bool> WrapInEnvelopeChanged { get; set; }
+
+    /// <summary>Optional envelope message id.</summary>
+    [Parameter]
+    public string EnvelopeMessageId { get; set; } = "";
+
+    /// <summary>Raised when the envelope message id changes.</summary>
+    [Parameter]
+    public EventCallback<string> EnvelopeMessageIdChanged { get; set; }
+
+    /// <summary>Optional envelope trace id.</summary>
+    [Parameter]
+    public string EnvelopeTraceId { get; set; } = "";
+
+    /// <summary>Raised when the envelope trace id changes.</summary>
+    [Parameter]
+    public EventCallback<string> EnvelopeTraceIdChanged { get; set; }
+
+    /// <summary>AMQP priority 0–255. Zero means the broker default.</summary>
+    [Parameter]
+    public int MessagePriority { get; set; }
+
+    /// <summary>Raised when priority changes.</summary>
+    [Parameter]
+    public EventCallback<int> MessagePriorityChanged { get; set; }
+
+    /// <summary>When true, delay and Send delayed are shown (queue publish).</summary>
+    [Parameter]
+    public bool ShowDelay { get; set; }
+
+    /// <summary>Delay in seconds for delayed queue publish.</summary>
+    [Parameter]
+    public double SendDelaySeconds { get; set; }
+
+    /// <summary>Raised when delay changes.</summary>
+    [Parameter]
+    public EventCallback<double> SendDelaySecondsChanged { get; set; }
+
+    /// <summary>When true, the routing-key field is on the send row (exchange publish).</summary>
+    [Parameter]
+    public bool ShowRoutingKey { get; set; }
+
+    /// <summary>Routing key used when publishing to an exchange.</summary>
+    [Parameter]
+    public string RoutingKey { get; set; } = "";
+
+    /// <summary>Raised when the routing key changes.</summary>
+    [Parameter]
+    public EventCallback<string> RoutingKeyChanged { get; set; }
+
+    /// <summary>Label for the primary send button.</summary>
+    [Parameter]
+    public string SendLabel { get; set; } = "Send";
+
+    /// <summary>Disables send buttons while an operation is in flight.</summary>
+    [Parameter]
+    public bool Busy { get; set; }
+
+    /// <summary>Immediate publish.</summary>
+    [Parameter]
+    public EventCallback OnSend { get; set; }
+
+    /// <summary>Delayed publish (queue only).</summary>
+    [Parameter]
+    public EventCallback OnSendDelayed { get; set; }
+
+}

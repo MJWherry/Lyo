@@ -1,12 +1,19 @@
 @namespace Lyo.Web.Components.Cache
+@using System.Text.Json
 @using Lyo.Api.Client
 @using Lyo.Api.Models.Common.Request
 @using Lyo.Api.Models.Common.Response
 @using Lyo.Api.Models.Enums
+@using Lyo.Common.Conversion
+@using Lyo.Common.Records
 @using Lyo.Web.Components.DataGrid
 @using Lyo.Web.Components.Models
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+
+<MudAlert Severity="Severity.Info" Dense="true" Class="mb-2" Icon="@Icons.Material.Filled.Memory">
+    L1 only: this API process's in-memory cache. Redis L2 keys written by other services are not listed.
+</MudAlert>
 
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
@@ -28,7 +35,7 @@
         </MudButton>
     </LeftControls>
     <Columns>
-        <LyoProjectedColumn Field="Type" Title="Type" QuickSearchPropertyName="Type">
+        <LyoProjectedColumn Field="Type" Title="Type">
             <CellContent Context="item">
                 @{
                     var typeText = ProjectedValueHelper.GetDisplayValue(item, "Type");
@@ -36,14 +43,42 @@
                 <LyoChip Spec="@(LyoChips.FromEnum<CacheItemTypeEnum>(typeText, CacheColorHelper.ForType, CacheColorHelper.TypeIcon))"/>
             </CellContent>
         </LyoProjectedColumn>
-        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name"/>
-        <LyoProjectedColumn Field="Created" Title="Created" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name" MaxDisplayLength="150"/>
+        <LyoProjectedColumn Field="Encrypted" Title="Encrypted">
+            <CellContent Context="item">
+                @{
+                    var encrypted = GetNullableBool(item, "Encrypted");
+                }
+                <LyoChip Spec="@(LyoChips.FromBool(encrypted, "Yes", "No", Color.Warning, Color.Default))" Icon="@CacheColorHelper.EncryptedIcon(encrypted)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Compressed" Title="Compressed">
+            <CellContent Context="item">
+                @{
+                    var compressed = GetNullableBool(item, "Compressed");
+                }
+                <LyoChip Spec="@(LyoChips.FromBool(compressed, "Yes", "No", Color.Info, Color.Default))" Icon="@CacheColorHelper.CompressedIcon(compressed)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="SizeBytes" Title="Size">
+            <CellContent Context="item">
+                @FormatSize(item)
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Created" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+        <LyoProjectedColumn Field="Expires" Title="Expires" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
     </Columns>
+    <NoRecordsContent>
+        <div class="d-flex flex-column align-center pa-4">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="mb-2"/>
+            <MudText Typo="Typo.h6">@(_dataGrid?.QueryError is not null ? "Unable to load cache items" : "No cache items")</MudText>
+        </div>
+    </NoRecordsContent>
 </LyoDataGridProjected>
 
 @code {
     private static readonly string[] KeyFields = ["Type", "Name"];
-    private static readonly string[] QuickSearchFields = ["Name", "Type"];
+    private static readonly string[] QuickSearchFields = ["Name"];
     private const LyoDataGridFeatureFlags GridFeatures =
         LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable | LyoDataGridFeatureFlags.AutoRefresh
         | LyoDataGridFeatureFlags.BulkMenu | LyoDataGridFeatureFlags.BulkDelete;
@@ -51,7 +86,11 @@
     private readonly List<FilterPropertyDefinition> _filters = [
         new("Type", "Type"),
         new("Name", "Name"),
-        new("Created", "Created")
+        new("Encrypted", "Encrypted"),
+        new("Compressed", "Compressed"),
+        new("SizeBytes", "Size"),
+        new("Created", "Created"),
+        new("Expires", "Expires")
     ];
 
     private LyoDataGridProjected? _dataGrid;
@@ -76,13 +115,40 @@
         return type == null || name == null ? [] : [type, name];
     }
 
+    private static bool? GetNullableBool(object? item, string field)
+    {
+        var raw = ProjectedValueHelper.GetValue(item, field);
+        if (raw is null)
+            return null;
+        if (raw is bool b)
+            return b;
+        if (raw is JsonElement je) {
+            if (je.ValueKind is JsonValueKind.True)
+                return true;
+            if (je.ValueKind is JsonValueKind.False)
+                return false;
+            if (je.ValueKind is JsonValueKind.Null)
+                return null;
+        }
+
+        return TypeConversion.TryConvertTo<bool>(raw, out var converted) ? converted : null;
+    }
+
+    private static string FormatSize(object? item)
+    {
+        var raw = ProjectedValueHelper.GetValue(item, "SizeBytes");
+        return ProjectedValueHelper.TryGetInt64(raw, out var size)
+            ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false)
+            : "—";
+    }
+
     private RenderFragment<object?> GetRowMenuControls()
         => row => @<MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteRowAsync(row))">Delete</MudMenuItem>;
 
     private async Task ClearAllAsync()
     {
         var confirmed = await DialogService.ShowMessageBoxAsync(
-            "Clear cache", "Remove every cached entry on this API process?", yesText: "Clear", cancelText: "Cancel");
+            "Clear cache", "Remove every L1 entry this API process is tracking?", yesText: "Clear", cancelText: "Cancel");
         if (confirmed != true)
             return;
 
