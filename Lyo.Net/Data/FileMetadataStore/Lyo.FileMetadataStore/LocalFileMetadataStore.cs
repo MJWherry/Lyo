@@ -110,7 +110,7 @@ public class LocalFileMetadataStore : IFileMetadataStore
             }
 
             var options = new JsonSerializerOptions { WriteIndented = false };
-            var tombstoned = metadata with { DeletedAt = DateTime.UtcNow };
+            var tombstoned = metadata with { DeletedAt = DateTime.UtcNow, Availability = FileAvailability.Deleted };
             var serialized = JsonSerializer.Serialize(tombstoned, options);
 #if NETSTANDARD2_0
             File.WriteAllText(metadataPath, serialized);

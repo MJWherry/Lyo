@@ -25,7 +25,7 @@
         ],
         [
           "DeleteMetadataAsync(Guid)",
-          "Soft-delete: sets DeletedAt, row retained. Returns false if missing or already deleted. GetMetadataAsync and FindByHashAsync omit tombstones."
+          "Soft-delete: sets DeletedAt and Availability=Deleted, row retained. Returns false if missing or already deleted. GetMetadataAsync and FindByHashAsync omit tombstones."
         ],
         [
           "PurgeMetadataAsync(Guid)",
@@ -40,7 +40,7 @@
           "Key rotation audits. Active (not soft-deleted) metadata only, referencing a KMS/KEK logical key/version pair."
         ]
       ],
-      "trail": "FileStoreResult exposes optional DeletedAt (UTC) when present in storage. Callers treat metadata without it as active. GetMetadataAsync and FindByHashAsync omit tombstones. Admin grids and workbench QueryProject views may include soft-deleted rows and should gate mutating actions on DeletedAt."
+      "trail": "FileStoreResult exposes optional DeletedAt (UTC) when present in storage. Callers treat metadata without it as active. GetMetadataAsync and FindByHashAsync omit tombstones. Workbench QueryProject listings also omit tombstones."
     },
     {
       "type": "table",
@@ -69,6 +69,10 @@
         [
           "Rejected",
           "A scan or policy hard-rejected the content; reads always fail."
+        ],
+        [
+          "Deleted",
+          "Logical tombstone (`DeletedAt` is set). Reads fail; listings omit the row. Soft-delete sets this instead of leaving `Available`."
         ]
       ],
       "lead": "`FileStoreResult.Availability` propagates content gating decisions from the storage pipeline:"

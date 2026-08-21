@@ -24,20 +24,26 @@ internal static class CachePayloadFrame
 
     internal static void Parse(ReadOnlySpan<byte> frame, out byte flags, out ReadOnlySpan<byte> payload)
     {
-        if (frame.Length < HeaderLength)
-            throw new InvalidDataException("Cache payload frame is too short.");
+        if (!TryInspect(frame, out flags, out var payloadLength))
+            throw new InvalidDataException("Cache payload frame is invalid.");
 
-        if (!frame.StartsWith(Magic))
-            throw new InvalidDataException("Cache payload frame has invalid magic.");
+        payload = frame.Slice(HeaderLength, payloadLength);
+    }
+
+    /// <summary>Reads flags and payload length from a framed blob without throwing. False when magic, header, or length do not match.</summary>
+    internal static bool TryInspect(ReadOnlySpan<byte> frame, out byte flags, out int payloadLength)
+    {
+        flags = 0;
+        payloadLength = 0;
+        if (frame.Length < HeaderLength || !frame.StartsWith(Magic))
+            return false;
 
         flags = frame[4];
         var len = BinaryPrimitives.ReadUInt32LittleEndian(frame.Slice(5, 4));
         if (len > int.MaxValue - HeaderLength)
-            throw new InvalidDataException("Cache payload length is invalid.");
+            return false;
 
-        if (frame.Length != HeaderLength + (int)len)
-            throw new InvalidDataException("Cache payload frame length does not match header.");
-
-        payload = frame.Slice(HeaderLength, (int)len);
+        payloadLength = (int)len;
+        return frame.Length == HeaderLength + payloadLength;
     }
 }

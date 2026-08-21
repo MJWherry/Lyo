@@ -14,7 +14,7 @@ Interactive Blazor Server workbench for the Lyo platform. It hosts about 30 rout
 Every workbench page lives under `Components/Pages/` and uses `@attribute [Route("/" + Constants.Page.X)]` so route strings come from `Lyo.TestGateway.Constants.Page`.
 
 | Route | Page | Backed by |
-| ------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------------------------------------------------------------------------------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/` | `Home` | `AuthorizedPage` placeholder |
 | `/PeopleManagement` | `People/PeopleManagement` | `Lyo.Api.Client` against Gateway.Api `Person` CRUD |
 | `/query-builder` | `QueryBuilderExample` | `Lyo.Query.Web.Components` |
@@ -22,7 +22,8 @@ Every workbench page lives under `Components/Pages/` and uses `@attribute [Route
 | `/messaging`, `/translation`, `/tts`, `/profanity` | Sms/Email, Translate, TTS, Profanity | `Lyo.Email`, `Lyo.Sms.Twilio`, `Lyo.Translation.Aws`, `Lyo.Tts.Typecast`, `Lyo.Profanity` |
 | `/csv-xlsx` (legacy `/csv`, `/xlsx`) | `CsvTest` (single workbench, two tabs) | `Lyo.Csv`, `Lyo.Xlsx` |
 | `/file-service` | `FileToolsTest` | In-process compression + encryption demos |
-| `/filestorage-workbench` | `FileStorageWorkbenchPage` | Remote API workbench routes via `TestApi*` proxy services when `UseRemoteApiServices=true`. Hosts Files (upload/crypto), **Browser** (metadata + expected storage grids), and Keys tabs. |
+| `/filestorage-workbench` | `FileStorageWorkbenchPage` | Remote API via `IApiClient`. Hosts Files (stream/direct/staged/multipart upload + crypto) and Browser (metadata + expected storage grids). Keystore CRUD is not in this UI. |
+| `/keystore-workbench` | `KeyStoreWorkbenchPage` | In-process `IKeyStore` (`AddLocalKeyStore`). No HTTP. |
 | `/html-to-pdf` | `HtmlToPdfTest` | `Lyo.Web.WebRenderer` + `Lyo.Pdf` |
 | `/pdf-annotator` | `PdfAnnotationTest` | `Lyo.Pdf.Web.Components.PdfAnnotator` |
 | `/qr-code-generator`, `/barcode-generator` | `QrCodeTest`, `BarcodeTest` | `Lyo.QRCode`, `Lyo.Barcode.Native` |
@@ -31,18 +32,19 @@ Every workbench page lives under `Components/Pages/` and uses `@attribute [Route
 | `/text-diff` | `TextDiffTest` | `Lyo.Web.Components` diff viewer |
 | `/formatter` | `FormatterTest` | `Lyo.Formatter.Web.Components` live template editor + annotated preview (`AddFormatterService()`) |
 | `/rich-text-editor` | `RichTextEditorTest` | `Lyo.Web.Components` editor |
-| `/cache`, `/locks`, `/rabbitmq`, `/metrics`, `/schedule`, `/diagnostics`, `/jobs`, `/privacy-redaction` | Infrastructure workbenches | `Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.Privacy.Web.Components` |
+| `/cache`, `/locks`, `/rabbitmq`, `/metrics`, `/schedule`, `/diagnostics`, `/jobs`, `/config`, `/privacy-redaction` | Infrastructure workbenches | `Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.Config.Web.Components`, `Lyo.Privacy.Web.Components` |
 
 Constants are defined in `Lyo.TestGateway.Constants.Page` (workbench routes) and `Lyo.TestGateway.Models.Constants` (Person/FileStorageWorkbench API routes).
 
 ## Proxy routes
 
-- `GET /filestorage-download/{fileId:guid}?expiresHours=…` (`Constants.FileStorageWorkbench.ProxyDownloadRoute`). Requires `FileStorageWorkbench:UseRemoteApiServices=true` (alias `UseTestApiServices` still accepted). Asks the remote API for metadata; for plain files it requests `…/files/{id}/presigned-read` and 302s to the storage URL so bytes never cross the Gateway. For encrypted/compressed files it streams decrypted output from `…/files/{id}/download`, copying through `HttpResponseStream` and setting `Content-Length` from metadata so browser progress works.
+Downloads open the API `GET {ApiRoutePrefix}/files/{id}/download` URL. There is no Gateway download proxy.
 
 ## File storage workbench wiring
 
-- **Proxy mode (`UseRemoteApiServices = true`, the default in `appsettings.json`; `UseTestApiServices` is an accepted alias).** Registers keyed `IFileStorageService` → `TestApiFileStorageService` (also implements `IFileStorageDiagnosticsService` via `GET diagnostics/keys` for the Browser Exists column), keyed `IStagedFileUploadService` → `TestApiStagedFileUploadService`, keyed `IKeyStore` → `TestApiKeyStore`, and `IFileStorageWorkbenchQueryService` → `TestApiFileStorageWorkbenchQueryService`. All call back into the remote API (`ApiClient:BaseUrl`, typically `Lyo.Gateway.Api` on `:5251`) using `IApiClient`, prefixed by `ApiRoutePrefix` (default `Workbench/FileStorage`).
-- **In-process mode (`UseRemoteApiServices = false`, `AutoRegisterS3Services = true`).** Registers `AddTwoKeyEncryptionFromConfiguration` (KEK from `AwsKeyStoreConfigSection`), Postgres file metadata store (`MetadataStoreConfigSection`), and S3 file storage (`S3FileStorageConfigSection`), all keyed by `FileStorageServiceKey` / `MetadataStoreKey` so the same workbench page binds to a real backend.
+- Files and Browser call the remote API (`ApiClient:BaseUrl`) through `IApiClient` using `ApiRoutePrefix` (default `Workbench/FileStorage`).
+- `AddFileStorageWorkbenchSupport` binds `FileStorageWorkbenchOptions` (`ApiRoutePrefix`, `StreamUploadRelativePath`).
+- `AddLocalKeyStore()` feeds the in-process `/keystore-workbench` page (`Lyo.KeyStore.Web.Components`). That store is not the TestApi encryption KEK.
 
 ## Other services in `Program.cs`
 
@@ -50,18 +52,20 @@ Constants are defined in `Lyo.TestGateway.Constants.Page` (workbench routes) and
 - Communication: `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.
 - Web: `AddWebRendererServiceFromConfiguration`, `AddBlazoredLocalStorage`, `AddMudServices(...)`, `IIOTempService` rooted at `lyo-gateway-uploads`, `TestGatewayFileTransformer` for the file-tools workbench.
 - API client: `Configure<ApiClientOptions>(…ApiClientOptions.SectionName)`, `AddLyoApiClient`.
-- File workbench: `AddFileStorageWorkbenchSupport(builder.Configuration)`.
+- File workbench: `AddFileStorageWorkbenchSupport(builder.Configuration)`. Key store: `AddLocalKeyStore()`.
+- Config workbench: `AddPostgresConfigStoreFromConfiguration(builder.Configuration)` (`IConfigStore` for `/config`).
 
 ## Configuration sections
 
 `appsettings.json` ships placeholders for every section the host binds:
 
 | Section | Used by |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `ApiClient` | `Lyo.Api.Client` (`BaseUrl` → `Lyo.Gateway.Api`, typically `http://localhost:5251/`) |
 | `LyoAuthClient` | `AuthBaseUrl` → same Gateway.Api host for OIDC BFF handoff / refresh / logout |
-| `FileStorageWorkbench` | `AddFileStorageWorkbenchSupport` (`UseRemoteApiServices`; alias `UseTestApiServices`) |
-| `AwsKeyStore`, `S3FileStorageOptions`, `PostgresFileMetadataStore` | In-process S3 + metadata when `UseRemoteApiServices=false` |
+| `FileStorageWorkbench` | `AddFileStorageWorkbenchSupport` (`ApiRoutePrefix`, `StreamUploadRelativePath`) |
+| `AwsKeyStore` | Unused by TestGateway after in-process S3 was dropped; TestApi still uses it for file encryption |
+| `PostgresConfig` | `AddPostgresConfigStoreFromConfiguration` for the `/config` workbench (`IConfigStore`) |
 | `AwsTranslationOptions` | `AddAwsTranslationServiceFromConfiguration` |
 | `TypecastClient`, `TypecastOptions` | Typecast TTS workbench |
 | `EmailServiceOptions` | SMTP-based `Lyo.Email` |
@@ -90,6 +94,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Compression.Snappier` (direct, lyo)
 - `Lyo.Compression.Xz` (direct, lyo)
 - `Lyo.Compression.Zstd` (direct, lyo)
+- `Lyo.Config.Postgres` (direct, lyo)
+- `Lyo.Config.Web.Components` (direct, lyo)
 - `Lyo.Csv` (direct, lyo)
 - `Lyo.Diagnostic.Web.Components` (direct, lyo)
 - `Lyo.Email` (direct, lyo)
@@ -101,9 +107,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Endato.Client` (direct, lyo)
 - `Lyo.Endato.Web.Components` (direct, lyo)
 - `Lyo.FileMetadataStore` (direct, lyo)
-- `Lyo.FileMetadataStore.Postgres` (direct, lyo)
-- `Lyo.FileStorage` (direct, lyo)
-- `Lyo.FileStorage.S3` (direct, lyo)
 - `Lyo.FileStorage.Web.Components` (direct, lyo)
 - `Lyo.Formatter` (direct, lyo)
 - `Lyo.Formatter.Web.Components` (direct, lyo)
@@ -114,6 +117,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Job.Web.Components` (direct, lyo)
 - `Lyo.KeyStore` (direct, lyo)
 - `Lyo.KeyStore.Aws` (direct, lyo)
+- `Lyo.KeyStore.Web.Components` (direct, lyo)
 - `Lyo.Lock` (direct, lyo)
 - `Lyo.MessageQueue` (direct, lyo)
 - `Lyo.MessageQueue.RabbitMq` (direct, lyo)
@@ -147,11 +151,12 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Xlsx` (direct, lyo)
 - `Blazored.LocalStorage` `4.5.0` (direct, third-party)
 - `MudBlazor` `9.3` (direct, third-party)
+- `Lyo.Api.FileStorage.Models` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
 - `Lyo.Barcode` (transitive, lyo)
 - `Lyo.Barcode.Web.Components` (transitive, lyo)
-- `Lyo.ContentThreatScan` (transitive, lyo)
+- `Lyo.Config` (transitive, lyo)
 - `Lyo.Csv.Models` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
@@ -159,6 +164,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Diagnostic.AspNetCore` (transitive, lyo)
 - `Lyo.Email.Models` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)
+- `Lyo.EntityReference.Postgres` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Geolocation.Models` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
@@ -183,9 +189,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Typecast.Client` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Xlsx.Models` (transitive, lyo)
-- `AWSSDK.Core` `4.0.100.4` (transitive, third-party)
 - `AWSSDK.Polly` `4.0.100.3` (transitive, third-party)
-- `AWSSDK.S3` `4.0.101` (transitive, third-party)
 - `AWSSDK.SecretsManager` `4.0.100.3` (transitive, third-party)
 - `AWSSDK.Translate` `4.0.100.3` (transitive, third-party)
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)

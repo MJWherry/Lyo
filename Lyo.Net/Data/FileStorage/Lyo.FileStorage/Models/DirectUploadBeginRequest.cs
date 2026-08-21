@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.FileStorage.Models;
 
 /// <summary>Begins a client-side single PUT upload to object/blob storage.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DirectUploadBeginRequest
 {
     /// <summary>Original filename hint for metadata (optional).</summary>
@@ -20,4 +23,8 @@ public sealed record DirectUploadBeginRequest
 
     /// <summary>URL TTL; default one hour.</summary>
     public TimeSpan? UrlExpiration { get; init; }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"DirectUploadBeginRequest: OriginalFileName={OriginalFileName ?? "(none)"}, PathPrefix={PathPrefix ?? "(none)"}, DeclaredMaxSizeBytes={DeclaredMaxSizeBytes}";
 }

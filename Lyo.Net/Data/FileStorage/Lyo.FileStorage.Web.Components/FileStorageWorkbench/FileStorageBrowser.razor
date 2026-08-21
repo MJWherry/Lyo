@@ -8,8 +8,7 @@
     <MudStack Spacing="2">
         <MudText Typo="Typo.h6">File browser</MudText>
         <MudText Typo="Typo.caption" Color="Color.Secondary">
-            Postgres-backed rows from the Test API (<code>@Workbench.FileMetadataQueryRoute</code>/QueryProject), including soft-deleted tombstones.
-            <strong>View</strong> works for deleted rows; other row actions are disabled when <strong>Deleted at</strong> is set.
+            Postgres-backed rows from the Test API (<code>@Workbench.FileMetadataQueryRoute</code>/QueryProject). Soft-deleted files are omitted.
             The expected-storage view builds object keys from metadata (<code>PathPrefix</code> + <code>SourceFileName</code>).
         </MudText>
         <MudTabs Rounded="true" KeepPanelsAlive="true" Elevation="0">
@@ -23,14 +22,27 @@
                                       KeySelector="@FileStorageGridRowHelper.GetFileRowKey"
                                       KeySelectFields="@FileKeySelectFields"
                                       RowMenuControls="@RowMenu(false)"
-                                      BulkMenuItems="@MetadataBulkMenu">
+                                      BulkMenuItems="@MetadataBulkMenu"
+                                      BeforeQuery="@FileStorageGridRowHelper.ExcludeDeleted">
                     <Columns>
-                        <LyoProjectedColumn Field="DeletedAt" Title="Deleted at" FormattedValue="@FileStorageGridRowHelper.FormatDeletedAtCell"/>
                         <LyoProjectedColumn Field="OriginalFileName" Title="Name" QuickSearchPropertyName="OriginalFileName"/>
                         <LyoTypedProjectedColumn TValue="long" Field="OriginalFileSize" Title="Original size" Format="@(size => FileSizeUnitInfo.FormatBestFitAbbreviation(size))"/>
                         <LyoProjectedColumn Field="PathPrefix" Title="Path prefix" QuickSearchPropertyName="PathPrefix"/>
-                        <LyoProjectedColumn Field="DataEncryptionKeyAlgorithm" Title="Encryption"/>
-                        <LyoProjectedColumn Field="CompressionAlgorithm" Title="Compression"/>
+                        <LyoProjectedColumn Field="ContentType" Title="Type">
+                            <CellContent Context="item">
+                                <LyoChip Spec="@FileStorageColorHelper.FileTypeChip(item)"/>
+                            </CellContent>
+                        </LyoProjectedColumn>
+                        <LyoProjectedColumn Field="DataEncryptionKeyAlgorithm" Title="Encryption">
+                            <CellContent Context="item">
+                                <LyoChip Spec="@FileStorageColorHelper.EncryptionChip(item)"/>
+                            </CellContent>
+                        </LyoProjectedColumn>
+                        <LyoProjectedColumn Field="CompressionAlgorithm" Title="Compression">
+                            <CellContent Context="item">
+                                <LyoChip Spec="@FileStorageColorHelper.CompressionChip(item)"/>
+                            </CellContent>
+                        </LyoProjectedColumn>
                         <LyoProjectedColumn Field="Id" Title="Id" HiddenByDefault="true"/>
                         <LyoProjectedColumn Field="SourceFileName" Title="Stored as" QuickSearchPropertyName="SourceFileName" HiddenByDefault="true"/>
                         <LyoProjectedColumn Field="Timestamp" Title="Timestamp" HiddenByDefault="true"/>
@@ -49,7 +61,8 @@
                                       KeySelector="@FileStorageGridRowHelper.GetFileRowKey"
                                       KeySelectFields="@FileKeySelectFields"
                                       RowMenuControls="@RowMenu(true)"
-                                      BulkMenuItems="@StorageBulkMenu">
+                                      BulkMenuItems="@StorageBulkMenu"
+                                      BeforeQuery="@FileStorageGridRowHelper.ExcludeDeleted">
                     <Columns>
                         <TemplateColumn T="object?" Title="Expected key" Sortable="false" HeaderStyle="min-width: 18rem;" CellStyle="font-family: monospace; font-size: 0.8125rem;">
                             <CellTemplate Context="cell">
@@ -71,7 +84,6 @@
                         <LyoProjectedColumn Field="SourceFileName" Title="Stored as" QuickSearchPropertyName="SourceFileName"/>
                         <LyoProjectedColumn Field="OriginalFileName" Title="Name" HiddenByDefault="true"/>
                         <LyoProjectedColumn Field="Id" Title="Id" HiddenByDefault="true"/>
-                        <LyoProjectedColumn Field="DeletedAt" Title="Deleted at" FormattedValue="@FileStorageGridRowHelper.FormatDeletedAtCell" HiddenByDefault="true"/>
                     </Columns>
                 </LyoDataGridProjected>
             </MudTabPanel>
@@ -86,7 +98,7 @@
             var deleted = FileStorageGridRowHelper.IsRowDeleted(row);
             var actions = _actions!;
             return @<span style="display:contents">
-            <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => actions.ViewFromRowAsync(row))">View</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.Info" OnClick="@(() => actions.ViewFromRowAsync(row))">View metadata</MudMenuItem>
             <MudMenuItem Icon="@Icons.Material.Filled.Link" Disabled="@deleted" OnClick="@(() => actions.AccessLinkFromRowAsync(row))">Access link…</MudMenuItem>
             <MudMenuItem Icon="@Icons.Material.Filled.FileDownload" Disabled="@deleted" OnClick="@(() => actions.DownloadFromRowAsync(row))">Download</MudMenuItem>
             <MudMenuItem Icon="@Icons.Material.Filled.DriveFileMove" Disabled="@deleted" OnClick="@(() => actions.MoveFromRowAsync(row))">Move…</MudMenuItem>

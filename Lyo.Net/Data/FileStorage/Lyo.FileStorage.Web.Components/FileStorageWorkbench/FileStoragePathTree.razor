@@ -1,0 +1,341 @@
+@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+
+<MudPaper Outlined="true" Class="pa-2 file-storage-tree-panel">
+    <MudStack Spacing="1">
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Paths</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Disabled="@Busy" OnClick="Refresh" aria-label="Refresh tree"/>
+        </MudStack>
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+            <MudTextField T="string"
+                          Class="flex-grow-1"
+                          @bind-Value="_filter"
+                          Immediate="true"
+                          DebounceInterval="200"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Placeholder="Search"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Clearable="true"
+                          Disabled="@Busy"
+                          aria-label="Search paths"/>
+            <MudTooltip Text="@(_editMode ? "Done selecting" : "Select multiple for bulk actions")">
+                <MudIconButton Icon="@(_editMode ? Icons.Material.Filled.Close : Icons.Material.Filled.Edit)"
+                               Color="@(_editMode ? Color.Primary : Color.Default)"
+                               Size="Size.Small"
+                               Disabled="@Busy"
+                               OnClick="ToggleEdit"
+                               aria-label="Toggle bulk selection"/>
+            </MudTooltip>
+        </MudStack>
+        @if (_editMode) {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Check files or folders, then Move / Rotate DEKs / Delete / Download zip. A folder includes every file under it. Drag onto a folder to move.
+            </MudText>
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@BulkFileCount file(s)</MudText>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkMoveAsync">Move…</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkRotateAsync">Rotate DEKs…</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkDownloadAsync">Download zip</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkDeleteAsync">Delete</MudButton>
+            </MudStack>
+        }
+        @if (Truncated) {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-1">Listing was truncated at the QueryProject page cap.</MudAlert>
+        }
+        @if (Busy && Items.Count == 0) {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+        }
+        else if (DisplayItems.Count == 0) {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">No matching paths.</MudText>
+        }
+        else {
+            <MudTreeView T="FileStoragePathTreeNode"
+                         Items="@DisplayItems"
+                         Hover="true"
+                         Dense="true"
+                         Comparer="FileStoragePathTreeNodeKeyComparer.Instance"
+                         SelectionMode="@(_editMode ? SelectionMode.MultiSelection : SelectionMode.SingleSelection)"
+                         AutoSelectParent="false"
+                         SelectedValues="_checked"
+                         SelectedValuesChanged="OnCheckedChanged">
+                <ItemTemplate Context="treeItem">
+                    @if (treeItem.Value != null) {
+                        var node = treeItem.Value;
+                        <MudTreeViewItem @key="@node.Key"
+                                         Value="@node"
+                                         Text="@node.Name"
+                                         Items="@treeItem.Children"
+                                         Icon="@IconFor(node)"
+                                         IconColor="@IconColorFor(node)"
+                                         CanExpand="@treeItem.Expandable"
+                                         Expanded="@treeItem.Expanded"
+                                         ReadOnly="@(_editMode && node.IsDeleted)"
+                                         Selected="@(_editMode ? _checked.Contains(node) : Selected?.Key == node.Key)"
+                                         ExpandedChanged="@(expanded => OnExpandedAsync(node, expanded))"
+                                         OnClick="@(() => OnSelectAsync(node))">
+                            <BodyContent>
+                                <div class="@ItemClass(node)"
+                                     draggable="@(_editMode && !node.IsDeleted ? "true" : "false")"
+                                     @ondragstart="@(() => OnDragStart(node))"
+                                     @ondragover:preventDefault="@(_editMode && node.IsDirectory)"
+                                     @ondragenter="@(() => OnDragEnter(node))"
+                                     @ondragleave="@(() => OnDragLeave(node))"
+                                     @ondrop:preventDefault="@(_editMode && node.IsDirectory)"
+                                     @ondrop="@(() => OnDropAsync(node))">
+                                    <MudText Typo="Typo.body2"
+                                             Color="@(node.IsDeleted ? Color.Secondary : Color.Default)"
+                                             Style="@(node.IsDeleted ? "text-decoration: line-through;" : null)">
+                                        @node.Name
+                                        @if (node.IsPending) {
+                                            <span class="mud-text-secondary"> (new)</span>
+                                        }
+                                    </MudText>
+                                </div>
+                            </BodyContent>
+                        </MudTreeViewItem>
+                    }
+                </ItemTemplate>
+            </MudTreeView>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    /// <summary>Tree items bound to <see cref="MudTreeView{T}" />.</summary>
+    [Parameter]
+    [EditorRequired]
+    public IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> Items { get; set; } = [];
+
+    /// <summary>Currently selected node.</summary>
+    [Parameter]
+    public FileStoragePathTreeNode? Selected { get; set; }
+
+    /// <summary>Raised when the user clicks a node.</summary>
+    [Parameter]
+    public EventCallback<FileStoragePathTreeNode> SelectedChanged { get; set; }
+
+    /// <summary>Raised when a directory is expanded.</summary>
+    [Parameter]
+    public EventCallback<FileStoragePathTreeNode> FolderExpanded { get; set; }
+
+    /// <summary>Raised when the user collapses a directory (so expansion state can be stored).</summary>
+    [Parameter]
+    public EventCallback<FileStoragePathTreeNode> FolderCollapsed { get; set; }
+
+    /// <summary>Refresh button on the tree header.</summary>
+    [Parameter]
+    public EventCallback Refresh { get; set; }
+
+    /// <summary>True while QueryProject is running.</summary>
+    [Parameter]
+    public bool Busy { get; set; }
+
+    /// <summary>True when the current listing hit the page cap.</summary>
+    [Parameter]
+    public bool Truncated { get; set; }
+
+    /// <summary>Move / rotate / delete using the checked nodes (folders expand to descendant files).</summary>
+    [Parameter]
+    public EventCallback<IReadOnlyList<FileStoragePathTreeNode>> BulkMove { get; set; }
+
+    /// <summary>Rotate DEKs for checked nodes.</summary>
+    [Parameter]
+    public EventCallback<IReadOnlyList<FileStoragePathTreeNode>> BulkRotateDeks { get; set; }
+
+    /// <summary>Delete checked nodes.</summary>
+    [Parameter]
+    public EventCallback<IReadOnlyList<FileStoragePathTreeNode>> BulkDelete { get; set; }
+
+    /// <summary>Download checked active files as a zip archive.</summary>
+    [Parameter]
+    public EventCallback<IReadOnlyList<FileStoragePathTreeNode>> BulkDownload { get; set; }
+
+    /// <summary>Drag-and-drop onto a directory.</summary>
+    [Parameter]
+    public EventCallback<FileStoragePathTreeDrop> Dropped { get; set; }
+
+    private readonly HashSet<FileStoragePathTreeNode> _checked = new(FileStoragePathTreeNodeKeyComparer.Instance);
+    private FileStoragePathTreeNode? _dragNode;
+    private string? _dropKey;
+    private bool _editMode;
+    private string _filter = string.Empty;
+
+    private IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> DisplayItems => FilterTree(Items, _filter);
+
+    private int BulkFileCount => FileStoragePathTreeBuilder.CollectActiveFileIds(_checked).Count;
+
+    /// <inheritdoc />
+    protected override void OnParametersSet()
+    {
+        if (!_editMode || _checked.Count == 0)
+            return;
+
+        var keys = _checked.Select(static n => n.Key).ToHashSet(StringComparer.Ordinal);
+        _checked.Clear();
+        RemapChecked(Items, keys, _checked);
+    }
+
+    private static string IconFor(FileStoragePathTreeNode node)
+        => node.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.InsertDriveFile;
+
+    private static Color IconColorFor(FileStoragePathTreeNode node)
+        => node.IsDeleted ? Color.Warning : node.IsDirectory ? Color.Warning : Color.Default;
+
+    private Task OnSelectAsync(FileStoragePathTreeNode node) => SelectedChanged.InvokeAsync(node);
+
+    private Task OnExpandedAsync(FileStoragePathTreeNode node, bool expanded)
+        => expanded ? FolderExpanded.InvokeAsync(node) : FolderCollapsed.InvokeAsync(node);
+
+    private void ToggleEdit()
+    {
+        _editMode = !_editMode;
+        if (_editMode)
+            return;
+
+        _checked.Clear();
+        _dragNode = null;
+        _dropKey = null;
+    }
+
+    private Task OnCheckedChanged(IReadOnlyCollection<FileStoragePathTreeNode?> values)
+    {
+        _checked.Clear();
+        foreach (var node in values) {
+            if (node is { IsDeleted: false })
+                _checked.Add(node);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private IReadOnlyList<FileStoragePathTreeNode> CheckedSnapshot() => _checked.ToList();
+
+    private Task OnBulkMoveAsync() => BulkMove.InvokeAsync(CheckedSnapshot());
+
+    private Task OnBulkRotateAsync() => BulkRotateDeks.InvokeAsync(CheckedSnapshot());
+
+    private Task OnBulkDeleteAsync() => BulkDelete.InvokeAsync(CheckedSnapshot());
+
+    private Task OnBulkDownloadAsync() => BulkDownload.InvokeAsync(CheckedSnapshot());
+
+    private void OnDragStart(FileStoragePathTreeNode node)
+    {
+        _dragNode = node.IsDeleted ? null : node;
+    }
+
+    private void OnDragEnter(FileStoragePathTreeNode node)
+    {
+        if (_editMode && node.IsDirectory)
+            _dropKey = node.Key;
+    }
+
+    private void OnDragLeave(FileStoragePathTreeNode node)
+    {
+        if (_dropKey == node.Key)
+            _dropKey = null;
+    }
+
+    private Task OnDropAsync(FileStoragePathTreeNode target)
+    {
+        var dragged = _dragNode;
+        _dragNode = null;
+        _dropKey = null;
+        if (!_editMode || dragged == null || dragged.IsDeleted || !target.IsDirectory)
+            return Task.CompletedTask;
+
+        var sources = _checked.Contains(dragged) ? CheckedSnapshot() : (IReadOnlyList<FileStoragePathTreeNode>) [dragged];
+        sources = sources.Where(static s => !s.IsDeleted || s.IsDirectory).ToList();
+        return Dropped.InvokeAsync(new FileStoragePathTreeDrop(sources, target));
+    }
+
+    private string ItemClass(FileStoragePathTreeNode node)
+    {
+        var css = _editMode && !node.IsDeleted ? "file-storage-tree-item-drag" : "file-storage-tree-item";
+        if (_editMode && node.IsDirectory && _dropKey == node.Key)
+            css += " file-storage-tree-drop-target";
+        return css;
+    }
+
+    private static void RemapChecked(
+        IEnumerable<ITreeItemData<FileStoragePathTreeNode>> items, HashSet<string> keys, HashSet<FileStoragePathTreeNode> into)
+    {
+        foreach (var item in items) {
+            if (item.Value is { IsDeleted: false } && keys.Contains(item.Value.Key))
+                into.Add(item.Value);
+            if (item.Children is { Count: > 0 })
+                RemapChecked(item.Children, keys, into);
+        }
+    }
+
+    private static IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> FilterTree(
+        IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> items, string filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+            return items;
+
+        var needle = filter.Trim();
+        var kept = new List<TreeItemData<FileStoragePathTreeNode>>();
+        foreach (var item in items) {
+            if (TryKeep(item, needle, out var filtered))
+                kept.Add(filtered);
+        }
+
+        return kept;
+    }
+
+    private static bool TryKeep(ITreeItemData<FileStoragePathTreeNode> item, string needle, out TreeItemData<FileStoragePathTreeNode> filtered)
+    {
+        if (Matches(item.Value, needle)) {
+            filtered = Clone(item, expand: item.Children is { Count: > 0 });
+            return true;
+        }
+
+        var kept = new List<TreeItemData<FileStoragePathTreeNode>>();
+        if (item.Children is { Count: > 0 }) {
+            foreach (var child in item.Children) {
+                if (TryKeep(child, needle, out var childFiltered))
+                    kept.Add(childFiltered);
+            }
+        }
+
+        if (kept.Count == 0) {
+            filtered = null!;
+            return false;
+        }
+
+        filtered = new TreeItemData<FileStoragePathTreeNode> {
+            Value = item.Value,
+            Text = item.Text,
+            Icon = item.Icon,
+            Expandable = true,
+            Expanded = true,
+            Children = kept
+        };
+        return true;
+    }
+
+    private static TreeItemData<FileStoragePathTreeNode> Clone(ITreeItemData<FileStoragePathTreeNode> item, bool expand)
+    {
+        List<TreeItemData<FileStoragePathTreeNode>>? children = null;
+        if (item.Children is { Count: > 0 } source)
+            children = source.Select(child => Clone(child, expand: child.Expanded)).ToList();
+
+        return new TreeItemData<FileStoragePathTreeNode> {
+            Value = item.Value,
+            Text = item.Text,
+            Icon = item.Icon,
+            Expandable = children is { Count: > 0 },
+            Expanded = expand,
+            Children = children
+        };
+    }
+
+    private static bool Matches(FileStoragePathTreeNode? node, string needle)
+        => node != null
+           && (node.Name.Contains(needle, StringComparison.OrdinalIgnoreCase)
+               || (node.PathPrefix?.Contains(needle, StringComparison.OrdinalIgnoreCase) == true));
+
+}

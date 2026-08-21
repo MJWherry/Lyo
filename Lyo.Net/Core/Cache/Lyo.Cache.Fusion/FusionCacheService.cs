@@ -21,7 +21,8 @@ public sealed class FusionCacheService : ICacheService
 
     private readonly bool _enabled;
     private readonly IFusionCache _fusionCache;
-    private readonly ConcurrentDictionary<CacheItem, byte> _items = new();
+    private readonly ConcurrentDictionary<CacheItem, CacheItem> _items = new();
+    private readonly ConcurrentDictionary<string, CacheItem> _storageHints = new(StringComparer.Ordinal);
     private readonly ILogger<FusionCacheService> _logger;
     private readonly IMetrics _metrics;
     private readonly CacheOptions _options;
@@ -61,8 +62,16 @@ public sealed class FusionCacheService : ICacheService
                 if (args.Key.StartsWith(TagPrefix + TagPrefix))
                     return;
 
-                var item = args.Key.StartsWith(TagPrefix) ? CacheItem.Tag(args.Key) : CacheItem.Key(args.Key);
-                _items.TryAdd(item, 0);
+                CacheItem item;
+                var expires = ExpiresFromPolicy(args.Key);
+                if (args.Key.StartsWith(TagPrefix))
+                    item = CacheItem.Tag(args.Key);
+                else if (_storageHints.TryGetValue(args.Key, out var hint))
+                    item = hint with { Expires = expires ?? hint.Expires };
+                else
+                    item = CacheItem.Key(args.Key, encrypted: false, compressed: false, expires: expires);
+
+                UpsertItem(item);
                 _logger.LogDebug("Added {CacheType} {CacheKey}", item.Type, item.Name);
                 _metrics.RecordGauge(Constants.Metrics.CacheSize, _items.Count);
             }
@@ -119,6 +128,7 @@ public sealed class FusionCacheService : ICacheService
                 var count = _items.Count;
                 _items.Clear();
                 _entryPolicies.Clear();
+                _storageHints.Clear();
                 _logger.LogInformation("Cleared {CacheKeyCount} cache items", count);
                 _metrics.RecordGauge(Constants.Metrics.CacheSize, 0);
                 _metrics.IncrementCounter(Constants.Metrics.ClearSuccess, count);
@@ -130,7 +140,7 @@ public sealed class FusionCacheService : ICacheService
         };
     }
 
-    public IReadOnlyCollection<CacheItem> Items => _items.Keys.ToList().AsReadOnly();
+    public IReadOnlyCollection<CacheItem> Items => _items.Values.ToList().AsReadOnly();
 
     /// <inheritdoc />
     public string HealthCheckName => "cache";
@@ -781,6 +791,7 @@ public sealed class FusionCacheService : ICacheService
             if (cachedValue.HasValue) {
                 try {
                     var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    TrackStoredBytes(normalizedKey, cachedValue.Value);
                     RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                     stopwatch.Stop();
                     _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -799,7 +810,7 @@ public sealed class FusionCacheService : ICacheService
 
             var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
-            await _fusionCache.SetAsync(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()), token).ConfigureAwait(false);
+            await SetFramedAsync(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()), token).ConfigureAwait(false);
             RememberPolicy(normalizedKey, effectiveDuration, CacheExpirationMode.Absolute, extraTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -841,6 +852,7 @@ public sealed class FusionCacheService : ICacheService
             if (cachedValue.HasValue) {
                 try {
                     var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    TrackStoredBytes(normalizedKey, cachedValue.Value);
                     RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                     stopwatch.Stop();
                     _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -860,7 +872,7 @@ public sealed class FusionCacheService : ICacheService
             var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
             var mergedTags = MergeTags(factoryTags, extraTags);
-            await _fusionCache.SetAsync(normalizedKey, framed, opts, mergedTags, token).ConfigureAwait(false);
+            await SetFramedAsync(normalizedKey, framed, opts, mergedTags, token).ConfigureAwait(false);
             RememberPolicy(normalizedKey, effectiveDuration, CacheExpirationMode.Absolute, mergedTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -934,6 +946,7 @@ public sealed class FusionCacheService : ICacheService
                 if (decoded != null) {
                     try {
                         var deserialized = _payloadSerializer.Deserialize<TValue>(decoded.Payload);
+                        TrackStoredBytes(normalizedKey, cachedValue.Value);
                         RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                         stopwatch.Stop();
                         _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -958,7 +971,7 @@ public sealed class FusionCacheService : ICacheService
             var framed = _payloadCodec.Encode(plain);
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
             var mergedTags = MergeTags(factoryTags, extraTags);
-            await _fusionCache.SetAsync(normalizedKey, framed, opts, mergedTags, token).ConfigureAwait(false);
+            await SetFramedAsync(normalizedKey, framed, opts, mergedTags, token).ConfigureAwait(false);
             RememberPolicy(normalizedKey, effectiveDuration, CacheExpirationMode.Absolute, mergedTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -991,6 +1004,7 @@ public sealed class FusionCacheService : ICacheService
             if (cachedValue.HasValue) {
                 try {
                     var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    TrackStoredBytes(normalizedKey, cachedValue.Value);
                     RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                     stopwatch.Stop();
                     _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -1009,7 +1023,7 @@ public sealed class FusionCacheService : ICacheService
 
             var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
-            _fusionCache.Set(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()));
+            SetFramed(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()));
             RememberPolicy(normalizedKey, effectiveDuration, CacheExpirationMode.Absolute, extraTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -1046,6 +1060,7 @@ public sealed class FusionCacheService : ICacheService
             if (cachedValue.HasValue) {
                 try {
                     var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    TrackStoredBytes(normalizedKey, cachedValue.Value);
                     RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                     stopwatch.Stop();
                     _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -1063,7 +1078,7 @@ public sealed class FusionCacheService : ICacheService
                 return null;
 
             var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
-            await _fusionCache.SetAsync(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()), token).ConfigureAwait(false);
+            await SetFramedAsync(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()), token).ConfigureAwait(false);
             RememberPolicy(normalizedKey, opts.Duration, adapter.ExpirationMode, extraTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -1099,6 +1114,7 @@ public sealed class FusionCacheService : ICacheService
             if (cachedValue.HasValue) {
                 try {
                     var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    TrackStoredBytes(normalizedKey, cachedValue.Value);
                     RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
                     stopwatch.Stop();
                     _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -1116,7 +1132,7 @@ public sealed class FusionCacheService : ICacheService
                 return null;
 
             var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
-            _fusionCache.Set(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()));
+            SetFramed(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()));
             RememberPolicy(normalizedKey, opts.Duration, adapter.ExpirationMode, extraTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -1141,7 +1157,7 @@ public sealed class FusionCacheService : ICacheService
         try {
             var framed = _payloadCodec.Encode(plaintext);
             var normalizedKey = key.ToLowerInvariant();
-            _fusionCache.Set(normalizedKey, framed, null, tags?.Select(i => i.ToLowerInvariant()));
+            SetFramed(normalizedKey, framed, null, tags?.Select(i => i.ToLowerInvariant()));
             RememberPolicy(normalizedKey, _options.DefaultExpiration, CacheExpirationMode.Absolute, tags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -1173,7 +1189,7 @@ public sealed class FusionCacheService : ICacheService
             setupAction(adapter);
             var framed = _payloadCodec.Encode(plaintext);
             var normalizedKey = key.ToLowerInvariant();
-            _fusionCache.Set(normalizedKey, framed, opts, tags?.Select(i => i.ToLowerInvariant()));
+            SetFramed(normalizedKey, framed, opts, tags?.Select(i => i.ToLowerInvariant()));
             RememberPolicy(normalizedKey, opts.Duration, adapter.ExpirationMode, tags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
@@ -1202,6 +1218,7 @@ public sealed class FusionCacheService : ICacheService
             }
 
             envelope = _payloadCodec.Decode(cachedValue.Value);
+            TrackStoredBytes(normalizedKey, cachedValue.Value);
             RefreshSlidingIfNeeded(normalizedKey, cachedValue.Value);
             return true;
         }
@@ -1331,14 +1348,63 @@ public sealed class FusionCacheService : ICacheService
         => tags?.Select(static t => t.ToLowerInvariant()).Distinct().ToArray() ?? [];
 
     private void RememberPolicy(string normalizedKey, TimeSpan duration, CacheExpirationMode mode, IEnumerable<string>? tags)
-        => _entryPolicies[normalizedKey] = new(duration, mode, NormalizeTags(tags));
+    {
+        _entryPolicies[normalizedKey] = new(duration, mode, NormalizeTags(tags));
+        StampExpires(normalizedKey, duration);
+    }
+
+    private DateTime? ExpiresFromPolicy(string key)
+        => _entryPolicies.TryGetValue(key, out var policy) ? DateTime.UtcNow.Add(policy.Duration) : null;
+
+    private void StampExpires(string normalizedKey, TimeSpan duration)
+    {
+        var expires = DateTime.UtcNow.Add(duration);
+        if (_items.TryGetValue(CacheItem.Key(normalizedKey), out var existing)) {
+            UpsertItem(existing with { Expires = expires });
+            return;
+        }
+
+        if (_storageHints.TryGetValue(normalizedKey, out var hint)) {
+            UpsertItem(hint with { Expires = expires });
+            return;
+        }
+
+        UpsertItem(CacheItem.Key(normalizedKey, encrypted: false, compressed: false, expires: expires));
+    }
+
+    private void UpsertItem(CacheItem item)
+        => _items.AddOrUpdate(item, item, (_, existing) => item with { Created = existing.Created });
+
+    private void RememberStoredBytes(string normalizedKey, byte[] stored)
+        => _storageHints[normalizedKey] = CacheItem.FromStoredBytes(normalizedKey, stored);
+
+    private void TrackStoredBytes(string normalizedKey, byte[] stored)
+    {
+        RememberStoredBytes(normalizedKey, stored);
+        var expires = ExpiresFromPolicy(normalizedKey);
+        UpsertItem(CacheItem.FromStoredBytes(normalizedKey, stored, expires: expires));
+    }
+
+    private void SetFramed(string normalizedKey, byte[] framed, FusionCacheEntryOptions? opts, IEnumerable<string>? tags)
+    {
+        TrackStoredBytes(normalizedKey, framed);
+        _fusionCache.Set(normalizedKey, framed, opts, tags);
+    }
+
+    private ValueTask SetFramedAsync(string normalizedKey, byte[] framed, FusionCacheEntryOptions? opts, IEnumerable<string>? tags, CancellationToken token)
+    {
+        TrackStoredBytes(normalizedKey, framed);
+        return _fusionCache.SetAsync(normalizedKey, framed, opts, tags, token);
+    }
 
     private void ForgetPolicy(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
             return;
 
-        _entryPolicies.TryRemove(key.ToLowerInvariant(), out var _);
+        var normalized = key.ToLowerInvariant();
+        _entryPolicies.TryRemove(normalized, out var _);
+        _storageHints.TryRemove(normalized, out var _);
     }
 
     private void ForgetPoliciesByTag(string tag)
@@ -1368,6 +1434,7 @@ public sealed class FusionCacheService : ICacheService
 
         try {
             _fusionCache.Set(normalizedKey, value, new FusionCacheEntryOptions { Duration = policy.Duration }, policy.Tags);
+            StampExpires(normalizedKey, policy.Duration);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Error refreshing sliding cache entry for key {CacheKey}", normalizedKey);

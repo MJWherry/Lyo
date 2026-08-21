@@ -24,4 +24,12 @@ public static class CacheColorHelper
             CacheItemTypeEnum.Tag => Icons.Material.Filled.LocalOffer,
             var _ => Icons.Material.Filled.Help
         };
+
+    /// <summary>Lock icon when the payload is encrypted; open lock otherwise.</summary>
+    public static string EncryptedIcon(bool? encrypted)
+        => encrypted == true ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen;
+
+    /// <summary>Compress icon when the payload is compressed.</summary>
+    public static string CompressedIcon(bool? compressed)
+        => compressed == true ? Icons.Material.Filled.Compress : Icons.Material.Filled.DataObject;
 }

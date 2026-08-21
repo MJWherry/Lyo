@@ -48,6 +48,17 @@ public class JobRunClientTests
     }
 
     [Fact]
+    public async Task StartAsync_WhenMachineAndPidProvided_PostsThoseFields()
+    {
+        var runId = Guid.NewGuid();
+        await _relativeClient.StartAsync(
+            runId, request: new JobRunStartedReq { MachineName = "box-a", ProcessId = 99 }, ct: TestContext.Current.CancellationToken);
+        var body = Assert.IsType<JobRunStartedReq>(_api.LastBody);
+        Assert.Equal("box-a", body.MachineName);
+        Assert.Equal(99, body.ProcessId);
+    }
+
+    [Fact]
     public async Task FinishAsync_PostsToFinishedRoute()
     {
         var runId = Guid.NewGuid();

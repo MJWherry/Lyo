@@ -43,6 +43,7 @@
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Scheduler\Lyo.Job.Scheduler.csproj"/>
         <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Reporting\Lyo.Api.Reporting.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.FileStorage\Lyo.Api.FileStorage.csproj"/>
         <ProjectReference Include="..\..\Integration\Reporting\Lyo.Reporting.Postgres\Lyo.Reporting.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Reporting\Lyo.Reporting.Models\Lyo.Reporting.Models.csproj"/>
         <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue.RabbitMq\Lyo.MessageQueue.RabbitMq.csproj"/>

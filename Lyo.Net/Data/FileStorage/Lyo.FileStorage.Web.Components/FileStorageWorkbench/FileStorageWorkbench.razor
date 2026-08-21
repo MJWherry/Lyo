@@ -3,19 +3,16 @@
 <CascadingValue Value="this">
     <MudStack Spacing="3">
         <FileStorageWorkbenchHeader Title="@Title" Description="@Description"/>
-        <FileStorageRegistrationAlerts FileStorageImplementationName="@FileStorageImplementationName"
-                                       FileStorageResolutionDescription="@DescribeFileStorageResolution()"
-                                       KeyStoreImplementationName="@KeyStoreImplementationName"
-                                       KeyStoreResolutionDescription="@DescribeKeyStoreResolution()"/>
+        <FileStorageRegistrationAlerts ApiHealthy="@ApiHealthy" StorageHealthy="@StorageHealthy" ApiHealthDescription="@ApiHealthDescription"/>
         <MudTabs Rounded="true" KeepPanelsAlive="true">
             <MudTabPanel Text="Files">
                 <FileStoreFilesTab/>
             </MudTabPanel>
+            <MudTabPanel Text="Tree">
+                <FileStorageTreeBrowser/>
+            </MudTabPanel>
             <MudTabPanel Text="Browser">
                 <FileStorageBrowser/>
-            </MudTabPanel>
-            <MudTabPanel Text="Keys">
-                <FileStoreKeysTab/>
             </MudTabPanel>
         </MudTabs>
     </MudStack>

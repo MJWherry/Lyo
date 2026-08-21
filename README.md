@@ -165,7 +165,7 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.FileStorage.Ftp](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Ftp/README.md): FTP-backed IFileStorageService via Lyo.Ftp.Client.
 - [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): S3-compatible storage for Lyo.FileStorage (AWS S3, Backblaze B2, MinIO, and others) via AWSSDK.S3.
 - [Lyo.FileStorage.Sftp](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Sftp/README.md): SFTP-backed IFileStorageService via Lyo.Sftp.Client.
-- [Lyo.FileStorage.Web.Components](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Web.Components/README.md): Blazor Server / Interactive UI for Lyo.FileStorage. Workbench grids and dialogs for file metadata, expected storage keys, download access links, and two-key encryption keys.
+- [Lyo.FileStorage.Web.Components](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Web.Components/README.md): Blazor Server / Interactive UI for Lyo.FileStorage. Workbench tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.
 - [Lyo.FileSystemWatcher](Lyo.Net/Data/FileSystemWatcher/Lyo.FileSystemWatcher/README.md): Snapshot-based file watcher for .NET. Detects creates, deletes, changes, moves, and renames with debounce and SHA256 hashing.
 - [Lyo.Formatter](Lyo.Net/Data/Formatter/Lyo.Formatter/README.md): SmartFormat.NET templating for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting.
 - [Lyo.Formatter.Web.Components](Lyo.Net/Data/Formatter/Lyo.Formatter.Web.Components/README.md): Blazor pair for live SmartFormat editing: a debounced template box and an annotated preview that color-links `{keys}` to replacements. Works on WASM.
@@ -205,6 +205,7 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Comment.Postgres](Lyo.Net/Features/Comment/Lyo.Comment.Postgres/README.md): PostgreSQL implementation of `Lyo.Comment` using Entity Framework Core. Persists comments to `comment.comment` and reactions to `comment.comment_reaction`.
 - [Lyo.Config](Lyo.Net/Features/Config/Lyo.Config/README.md): Typed, definition-driven configuration for per-entity values (a Discord guild, a tenant). The abstract API lives here. PostgreSQL persistence is in `Lyo.Config.Postgres`.
 - [Lyo.Config.Postgres](Lyo.Net/Features/Config/Lyo.Config.Postgres/README.md): PostgreSQL + EF Core implementation of `Lyo.Config.IConfigStore` for typed configuration definitions and per-entity bindings.
+- [Lyo.Config.Web.Components](Lyo.Net/Features/Config/Lyo.Config.Web.Components/README.md): Blazor / MudBlazor dashboard for Lyo.Config. Add ConfigManagement to a host page for definitions, resolved bindings, and revision revert against IConfigStore.
 - [Lyo.ContactUs](Lyo.Net/Features/ContactUs/Lyo.ContactUs/README.md): Contact-form submission contracts. `IContactUsService` and `ContactUsServiceBase` handle validation, error-code mapping, and logging. Storage lives in sibling packages.
 - [Lyo.ContactUs.Postgres](Lyo.Net/Features/ContactUs/Lyo.ContactUs.Postgres/README.md): PostgreSQL + EF Core implementation of `Lyo.ContactUs.IContactUsService` (`PostgresContactUsService`) via `ContactUsDbContext` and `PostgresContactUsOptions`.
 - [Lyo.Favorite](Lyo.Net/Features/Favorite/Lyo.Favorite/README.md): Abstractions for "X favorited Y" relationships across any two entities. The API accepts `EntityRef` at the boundary.
@@ -226,6 +227,8 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Api](Lyo.Net/Integration/Api/Lyo.Api/README.md): Minimal-API library that maps EF Core entities to REST CRUD. `ApiEndpointBuilder` emits Query, Get, Create, Update, Patch, Delete, Upsert, bulk variants, and optional export.
 - [Lyo.Api.Client](Lyo.Net/Integration/Api/Lyo.Api.Client/README.md): HTTP client for Lyo minimal APIs: JSON in/out, gzip/brotli/deflate, query-string encoding for GET DTOs, file upload helpers, and `System.Text.Json` parity with server options when you wire them.
 - [Lyo.Api.Export](Lyo.Net/Integration/Api/Lyo.Api.Export/README.md): Optional export for Lyo.Api. Registers the Export CRUD endpoint and `IExportService<TContext>`.
+- [Lyo.Api.FileStorage](Lyo.Net/Integration/Api/Lyo.Api.FileStorage/README.md): HTTP endpoints for Lyo file storage. Hosts map BuildFileStorageApi after registering a keyed IFileStorageService stack.
+- [Lyo.Api.FileStorage.Models](Lyo.Net/Integration/Api/Lyo.Api.FileStorage.Models/README.md): HTTP request and response DTOs for the file-storage API. No dependency on Lyo.FileStorage.
 - [Lyo.Api.Models](Lyo.Net/Integration/Api/Lyo.Api.Models/README.md): Shared HTTP contract models for Lyo minimal APIs and their clients. Distinct from `Lyo.Query.Models` (filter trees + projection DTOs).
 - [Lyo.Api.Reporting](Lyo.Net/Integration/Api/Lyo.Api.Reporting/README.md): Authenticated HTTP endpoints for Lyo Reporting. Postgres stays service-only (`ReportService` + EF). This package owns `BuildReportingGroup`.
 - [Lyo.Api.Tests.Host](Lyo.Net/Integration/Api/Lyo.Api.Tests.Host/README.md): Reference ASP.NET Core minimal-API host used by `Lyo.Api.Tests` and other integration tests as a `WebApplicationFactory<Program>` target.
@@ -287,6 +290,7 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Hashing](Lyo.Net/Security/Hashing/Lyo.Hashing/README.md): Digests (SHA-256/384/512), optional MD5 for non-security fingerprints only, non-cryptographic checksums (CRC-32/CRC-32C/CRC-64/Adler-32), hexadecimal encoding (`HexEncoding`), incremental hashing (`HashingStream`), sparse file fingerprints (`SparseFileFingerprinter`), and injectable `IHashingService` / `HashingService`.
 - [Lyo.KeyStore](Lyo.Net/Security/KeyStore/Lyo.KeyStore/README.md): Key encryption key (KEK) storage and rotation contracts for `Lyo.Encryption`.
 - [Lyo.KeyStore.Aws](Lyo.Net/Security/KeyStore/Lyo.KeyStore.Aws/README.md): `AwsKeyStore` takes an `IAmazonSecretsManager` client and a secret-name prefix. It implements `Lyo.KeyStore.IKeyStore` and `Lyo.KeyStore.IKeyInventoryStore`, so admin UIs and key-rotation jobs can encrypt against it and list `keyId`s and versions.
+- [Lyo.KeyStore.Web.Components](Lyo.Net/Security/KeyStore/Lyo.KeyStore.Web.Components/README.md): In-process Blazor workbench for IKeyStore. Lists key ids and versions, adds from a string, rotates, and sets current. No HTTP, no raw key bytes.
 
 ### Tools
 

@@ -29,6 +29,10 @@ Entries have a duration and an expiration mode. Writes stamp the policy; reads h
 
 When `CacheOptions.Enabled` is `false`, `LocalCacheService` skips storage. Factories run on every call. `Set` / `SetPayload` are no-ops. `TryGetValue` / `TryGetPayload` return false. Invalidation calls return immediately. Use this for tests, local diagnostics, and dynamic cache-off toggles.
 
+## L1 item snapshot
+
+`ICacheService.Items` is this process's in-memory (L1) key and tag list, not a Redis dump. `CacheItem.Encrypted`, `Compressed`, and `SizeBytes` come from framed payload entries this process has written or decoded on a payload hit. Object `Set` / `GetOrSet` keys report encrypted/compressed as false and leave size unset. Keys also carry `Expires` (UTC instant from the entry TTL; sliding hits push it forward). Tags leave storage flags and `Expires` null. Other processes can write L2 keys that never appear here. There is no background L2 sync.
+
 ## Reflection / metadata TTLs
 
 `CacheOptions` exposes dedicated lifetimes used by reflection-heavy helpers in other Lyo packages so they can share a single cache instance:

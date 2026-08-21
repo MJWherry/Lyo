@@ -27,9 +27,15 @@ public interface IRabbitMqService : IMqService, IDelayedMqService, IPriorityMqSe
     /// <param name="ct">Cancellation token.</param>
     Task<bool> CreateQueueWithDlq(string queueName, bool durable = true, string? dlqName = null, IDictionary<string, object>? arguments = null, CancellationToken ct = default);
 
-    /// <summary>Gets live statistics for a queue via the management API (message counts, consumers, state). Returns null when the queue does not exist or the API call fails.</summary>
+    /// <summary>Gets live statistics for a queue via the management API (message counts, consumers, state). AMQP flags and <c>x-*</c> arguments land in <see cref="MessageQueueInfo.AdditionalProperties" />. Returns null when the queue does not exist or the API call fails.</summary>
     Task<MessageQueueInfo?> GetQueueInfoAsync(string queueName, CancellationToken ct = default);
 
     /// <summary>Gets live statistics for all queues on the configured virtual host via the management API.</summary>
     Task<IReadOnlyList<MessageQueueInfo>> GetAllQueuesInfoAsync(CancellationToken ct = default);
+
+    /// <summary>Gets a single exchange via the management API. Returns null when the exchange does not exist or the API call fails.</summary>
+    Task<MessageExchangeInfo?> GetExchangeInfoAsync(string exchangeName, CancellationToken ct = default);
+
+    /// <summary>Gets all exchanges on the configured virtual host via the management API (including broker defaults such as <c>amq.*</c>).</summary>
+    Task<IReadOnlyList<MessageExchangeInfo>> GetAllExchangesInfoAsync(CancellationToken ct = default);
 }

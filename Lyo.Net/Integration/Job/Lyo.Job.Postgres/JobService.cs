@@ -339,9 +339,9 @@ public class JobService(
 
         var startedAt = DateTime.UtcNow;
         var slaBreached = CheckStartSla(existing, startedAt);
-        Guid? workerInstanceId = request?.WorkerInstanceId;
-        string? workerMachineName = null;
-        int? workerProcessId = null;
+        var workerInstanceId = request?.WorkerInstanceId;
+        var workerMachineName = string.IsNullOrWhiteSpace(request?.MachineName) ? null : request.MachineName.Trim();
+        var workerProcessId = request?.ProcessId;
 
         // Compare-and-swap: only a Queued run may start. The WHERE clause makes the transition atomic, so a redelivered dispatch message
         // (or a second worker instance) loses the race instead of double-executing, and a Cancelling queued run is never resurrected.
@@ -349,8 +349,8 @@ public class JobService(
         if (workerInstanceId is { } instanceId) {
             var worker = await db.JobWorkerInstances.AsNoTracking().FirstOrDefaultAsync(w => w.Id == instanceId).ConfigureAwait(false);
             if (worker != null) {
-                workerMachineName = worker.MachineName;
-                workerProcessId = worker.ProcessId;
+                workerMachineName ??= worker.MachineName;
+                workerProcessId ??= worker.ProcessId;
             }
         }
 

@@ -6,14 +6,14 @@ namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
 /// <summary>Two QueryProject grids over file metadata: operator columns, and expected storage keys derived from those rows.</summary>
 public partial class FileStorageBrowser : ComponentBase, IDisposable
 {
-    private static readonly string[] FileKeySelectFields = ["Id", "SourceFileName", "PathPrefix"];
+    private static readonly string[] FileKeySelectFields = ["Id", "SourceFileName", "PathPrefix", "DeletedAt", "Availability"];
 
     private FileStorageBrowserActions? _actions;
     private HashSet<string> _existingKeys = new(StringComparer.Ordinal);
     private LyoDataGridProjected? _metadataGrid;
     private LyoDataGridProjected? _storageGrid;
 
-    /// <summary>Cascaded workbench host (API client, storage, key inventory, dialogs).</summary>
+    /// <summary>Cascaded workbench host (API client, dialogs).</summary>
     [CascadingParameter]
     public FileStorageWorkbench Workbench { get; set; } = default!;
 
@@ -46,17 +46,10 @@ public partial class FileStorageBrowser : ComponentBase, IDisposable
 
     private async Task LoadStorageKeysAsync()
     {
-        var dx = Workbench.Diagnostics;
-        if (dx == null) {
-            DiagnosticsAvailable = false;
-            _existingKeys = [];
-            return;
-        }
-
         try {
-            var keys = await dx.ListStorageKeysAsync(null, 10_000);
-            _existingKeys = keys.ToHashSet(StringComparer.Ordinal);
-            DiagnosticsAvailable = true;
+            var keys = await Workbench.ApiClient.GetAsAsync<List<string>>(Workbench.FilesApi("diagnostics/storage-keys?maxKeys=10000"));
+            _existingKeys = (keys ?? []).ToHashSet(StringComparer.Ordinal);
+            DiagnosticsAvailable = _existingKeys.Count > 0 || keys != null;
         }
         catch {
             DiagnosticsAvailable = false;

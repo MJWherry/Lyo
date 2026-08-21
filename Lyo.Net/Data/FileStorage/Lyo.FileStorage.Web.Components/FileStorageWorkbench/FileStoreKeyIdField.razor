@@ -1,0 +1,82 @@
+@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+
+@if (Ids.Count > 0) {
+    <MudSelect T="string"
+               Label="@Label"
+               HelperText="@ResolvedHelper"
+               Variant="Variant.Outlined"
+               Margin="Margin.Dense"
+               Dense="true"
+               Clearable="true"
+               Style="@Style"
+               Value="@Value"
+               ValueChanged="OnValueChanged">
+        @foreach (var id in Ids) {
+            <MudSelectItem T="string" Value="@id">@id</MudSelectItem>
+        }
+    </MudSelect>
+}
+else {
+    <MudTextField T="string"
+                  Label="@Label"
+                  HelperText="@ResolvedHelper"
+                  Variant="Variant.Outlined"
+                  Margin="Margin.Dense"
+                  Style="@Style"
+                  Value="@Value"
+                  ValueChanged="OnValueChanged"/>
+}
+
+@code {
+
+    [CascadingParameter]
+    public FileStorageWorkbench? Workbench { get; set; }
+
+    /// <summary>Optional explicit list. When unset, uses <see cref="FileStorageWorkbench.EncryptionKeyIds" />.</summary>
+    [Parameter]
+    public IReadOnlyList<string>? KeyIds { get; set; }
+
+    /// <summary>Select label.</summary>
+    [Parameter]
+    public string Label { get; set; } = "Key id";
+
+    /// <summary>Optional helper under the field. Defaults to a keystore hint.</summary>
+    [Parameter]
+    public string? HelperText { get; set; }
+
+    /// <summary>Inline CSS for the field.</summary>
+    [Parameter]
+    public string Style { get; set; } = "min-width: 180px; max-width: min(100%, 280px);";
+
+    /// <summary>Selected key id.</summary>
+    [Parameter]
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>Raised when the selected key id changes.</summary>
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>When true and the API returned exactly one id, select it automatically.</summary>
+    [Parameter]
+    public bool AutoSelectSingle { get; set; }
+
+    private IReadOnlyList<string> Ids => KeyIds ?? Workbench?.EncryptionKeyIds ?? [];
+
+    private string ResolvedHelper
+        => !string.IsNullOrWhiteSpace(HelperText)
+            ? HelperText
+            : Ids.Count > 0
+                ? "Pick a key from the API keystore."
+                : "No key ids from the API. Create a key in the keystore, then refresh.";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!AutoSelectSingle || !string.IsNullOrWhiteSpace(Value) || Ids.Count != 1)
+            return;
+
+        await OnValueChanged(Ids[0]);
+    }
+
+    private Task OnValueChanged(string value) => ValueChanged.InvokeAsync(value ?? string.Empty);
+
+}

@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.FileMetadataStore.Sqlite;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record CreateFileDownloadAccessLinkRequest(
     Guid FileId,
     DateTime? NotBeforeUtc = null,
@@ -7,9 +10,19 @@ public sealed record CreateFileDownloadAccessLinkRequest(
     DateTime? WindowStartUtc = null,
     DateTime? WindowEndUtc = null,
     int? MaxDownloads = null,
-    string? TenantId = null);
+    string? TenantId = null)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => $"CreateFileDownloadAccessLinkRequest: FileId={FileId}, ExpiresAtUtc={ExpiresAtUtc?.ToString("u") ?? "(none)"}, MaxDownloads={MaxDownloads?.ToString() ?? "(none)"}";
+}
 
-public sealed record CreateFileDownloadAccessLinkResult(Guid LinkId, string Token, DateTime CreatedUtc, DateTime? ExpiresAtUtc);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record CreateFileDownloadAccessLinkResult(Guid LinkId, string Token, DateTime CreatedUtc, DateTime? ExpiresAtUtc)
+{
+    /// <inheritdoc />
+    public override string ToString() => $"CreateFileDownloadAccessLinkResult: LinkId={LinkId}, CreatedUtc={CreatedUtc:u}, ExpiresAtUtc={ExpiresAtUtc?.ToString("u") ?? "(none)"}";
+}
 
 public enum FileDownloadAccessConsumeFailureReason
 {
@@ -23,9 +36,15 @@ public enum FileDownloadAccessConsumeFailureReason
     InvalidToken = 7
 }
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ConsumeFileDownloadAccessLinkResult(
     bool IsAllowed,
     Guid? FileId = null,
     Guid? LinkId = null,
     FileDownloadAccessConsumeFailureReason? FailureReason = null,
-    int? DownloadCount = null);
+    int? DownloadCount = null)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => $"ConsumeFileDownloadAccessLinkResult: IsAllowed={IsAllowed}, FileId={FileId?.ToString() ?? "(none)"}, FailureReason={FailureReason?.ToString() ?? "(none)"}";
+}

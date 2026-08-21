@@ -1,0 +1,142 @@
+@inject ISnackbar Snackbar
+
+<LyoDialog Busy="@_saving" OnSave="SaveAsync" SaveDisabled="@(!_canSave)" DebugData="@_edit">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@_edit.Key</MudText>
+    </TitleContent>
+    <TitleChips>
+        <LyoChip Spec="@LyoChips.FromBool(IsNew, "New binding", "Existing binding", Color.Info, Color.Success)"/>
+        <LyoChip Spec="@LyoChips.FromBool(Definition.IsRequired, "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+    </TitleChips>
+    <ChildContent>
+        <MudGrid Spacing="2" Class="pa-1">
+            @if (!IsNew) {
+                <MudItem xs="12" sm="6" md="4">
+                    <LyoIdField Label="Binding ID" Value="@_edit.Id"/>
+                </MudItem>
+            }
+            <MudItem xs="12" sm="6" md="4">
+                <MudTextField T="string" Label="Key" Value="@_edit.Key" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudTextField T="string" Label="Subject entity type" Value="@_edit.SubjectEntityType" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudTextField T="string" Label="Subject entity id" Value="@_edit.SubjectEntityId" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12">
+                <ConfigValueEditor Value="_edit.Value"
+                                   ValueChanged="OnValueChanged"
+                                   ParseErrorChanged="OnParseErrorChanged"
+                                   EditorSurfaceHeight="280px"/>
+            </MudItem>
+        </MudGrid>
+    </ChildContent>
+</LyoDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    /// <summary>Config store used to save the binding.</summary>
+    [Parameter]
+    [EditorRequired]
+    public IConfigStore Store { get; set; } = null!;
+
+    /// <summary>Definition this binding belongs to.</summary>
+    [Parameter]
+    [EditorRequired]
+    public ConfigDefinitionRecord Definition { get; set; } = null!;
+
+    /// <summary>Target entity type.</summary>
+    [Parameter]
+    [EditorRequired]
+    public string SubjectEntityType { get; set; } = "";
+
+    /// <summary>Target entity id.</summary>
+    [Parameter]
+    [EditorRequired]
+    public string SubjectEntityId { get; set; } = "";
+
+    /// <summary>Existing binding to edit. Null creates a new binding for the definition and entity.</summary>
+    [Parameter]
+    public ConfigBindingRecord? Binding { get; set; }
+
+    private ConfigBindingRecord _edit = new();
+    private bool _valueDirty;
+    private bool _jsonParseError;
+    private bool _saving;
+    private bool _initialized;
+
+    private bool IsNew => Binding == null || Binding.Id == default;
+
+    private bool _canSave => !_saving && !_jsonParseError && (_valueDirty || IsNew);
+
+    protected override void OnParametersSet()
+    {
+        if (_initialized)
+            return;
+
+        _edit = Binding == null ? NewBinding() : Clone(Binding);
+        _initialized = true;
+    }
+
+    private ConfigBindingRecord NewBinding()
+        => new() {
+            DefinitionId = Definition.Id,
+            Key = Definition.Key,
+            SubjectEntityType = SubjectEntityType.Trim(),
+            SubjectEntityId = SubjectEntityId.Trim(),
+            Value = CloneValue(Definition.DefaultValue) ?? new() { TypeName = Definition.ForValueType, Json = "{}" }
+        };
+
+    private static ConfigBindingRecord Clone(ConfigBindingRecord src)
+        => new() {
+            Id = src.Id,
+            DefinitionId = src.DefinitionId,
+            Key = src.Key,
+            SubjectEntityType = src.SubjectEntityType,
+            SubjectEntityId = src.SubjectEntityId,
+            Value = CloneValue(src.Value) ?? new(),
+            CreatedTimestamp = src.CreatedTimestamp,
+            UpdatedTimestamp = src.UpdatedTimestamp
+        };
+
+    private static ConfigValue? CloneValue(ConfigValue? src)
+        => src == null ? null : new() { TypeName = src.TypeName, Json = src.Json };
+
+    private void OnValueChanged(ConfigValue value)
+    {
+        _edit.Value = value;
+        _valueDirty = true;
+    }
+
+    private void OnParseErrorChanged(bool hasError) => _jsonParseError = hasError;
+
+    private async Task SaveAsync()
+    {
+        _edit.DefinitionId = Definition.Id;
+        _edit.Key = Definition.Key;
+        _edit.SubjectEntityType = SubjectEntityType.Trim();
+        _edit.SubjectEntityId = SubjectEntityId.Trim();
+        _edit.Value.TypeName = Definition.ForValueType;
+
+        _saving = true;
+        try {
+            await Store.SaveBindingAsync(_edit, null);
+            Snackbar.Add($"Saved binding '{_edit.Key}'.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (InvalidOperationException ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally {
+            _saving = false;
+        }
+    }
+
+}

@@ -66,9 +66,9 @@
         <LyoProjectedColumn Field="WorkerMachineName" Title="Worker" HeaderStyle="width: 180px;" CellStyle="white-space: nowrap;">
             <CellContent Context="item">
                 @{
-                    var machine = ProjectedValueHelper.GetDisplayValue(item, "WorkerMachineName");
-                    var pid = ProjectedValueHelper.GetDisplayValue(item, "WorkerProcessId");
-                    var workerId = ProjectedValueHelper.GetDisplayValue(item, "WorkerInstanceId");
+                    var machine = DisplayOrEmpty(item, "WorkerMachineName");
+                    var pid = DisplayOrEmpty(item, "WorkerProcessId");
+                    var workerId = DisplayOrEmpty(item, "WorkerInstanceId");
                 }
                 @if (string.IsNullOrWhiteSpace(machine) && string.IsNullOrWhiteSpace(workerId)) {
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>
@@ -119,8 +119,32 @@
         <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
         <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
         <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
-        <LyoProjectedColumn Field="WorkerInstanceId" Title="Worker ID" Identifier="true" HiddenByDefault="true"/>
-        <LyoProjectedColumn Field="WorkerProcessId" Title="Worker PID" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="WorkerInstanceId" Title="Worker ID" Identifier="true" HiddenByDefault="true">
+            <CellContent Context="item">
+                @{
+                    var workerId = DisplayOrEmpty(item, "WorkerInstanceId");
+                }
+                @if (string.IsNullOrWhiteSpace(workerId)) {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>
+                }
+                else {
+                    <LyoIdField Compact="true" Text="@workerId"/>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="WorkerProcessId" Title="Worker PID" HiddenByDefault="true">
+            <CellContent Context="item">
+                @{
+                    var pid = DisplayOrEmpty(item, "WorkerProcessId");
+                }
+                @if (string.IsNullOrWhiteSpace(pid)) {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>
+                }
+                else {
+                    @pid
+                }
+            </CellContent>
+        </LyoProjectedColumn>
         <LyoProjectedColumn Field="RetryAttempt" Title="Retry #" Align="Align.Center" HeaderStyle="width: 80px;" HiddenByDefault="true"/>
         <LyoProjectedColumn Field="JobRunResults.Count" Title="Results" Align="Align.Center" HeaderStyle="width: 80px;"/>
         <LyoProjectedColumn Field="JobRunLogs.Count" Title="Logs" Align="Align.Center" HeaderStyle="width: 80px;"/>
@@ -166,7 +190,7 @@
         new("JobDefinition.Name", "Definition"), new("State"), new("Result"), new("WorkerMachineName", "Worker"), new("WorkerInstanceId", "Worker ID")
     ];
 
-    private static readonly string[] _keySelectFields = ["Id", "StartedTimestamp", "FinishedTimestamp"];
+    private static readonly string[] _keySelectFields = ["Id", "StartedTimestamp", "FinishedTimestamp", "WorkerInstanceId", "WorkerProcessId", "WorkerMachineName"];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -194,6 +218,12 @@
 
         if (_dataGrid != null)
             await _dataGrid.RefreshData();
+    }
+
+    private static string DisplayOrEmpty(object? item, string field)
+    {
+        var value = ProjectedValueHelper.GetDisplayValue(item, field);
+        return string.IsNullOrWhiteSpace(value) || string.Equals(value, "null", StringComparison.OrdinalIgnoreCase) ? "" : value;
     }
 
     private static object[] GetKey(object? item)

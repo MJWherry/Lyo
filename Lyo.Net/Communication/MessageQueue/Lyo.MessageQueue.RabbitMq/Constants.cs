@@ -15,6 +15,28 @@ public static class Constants
     /// <summary>Suffix appended to a queue name to derive its companion dead-letter queue.</summary>
     public const string DeadLetterQueueSuffix = ".dlq";
 
+    /// <summary>Keys written into <see cref="MessageQueueInfo.AdditionalProperties" /> from the management API. AMQP declare flags and <c>x-*</c> arguments are not portable across brokers.</summary>
+    public static class QueueInfoProperties
+    {
+        /// <summary>Queue survives a broker restart.</summary>
+        public const string Durable = "durable";
+
+        /// <summary>Queue is exclusive to one connection.</summary>
+        public const string Exclusive = "exclusive";
+
+        /// <summary>Queue is deleted when unused.</summary>
+        public const string AutoDelete = "auto_delete";
+
+        /// <summary>Broker <c>x-max-priority</c>.</summary>
+        public const string MaxPriority = "x-max-priority";
+
+        /// <summary>Broker <c>x-dead-letter-routing-key</c>.</summary>
+        public const string DeadLetterRoutingKey = "x-dead-letter-routing-key";
+
+        /// <summary>Broker <c>x-dead-letter-exchange</c>.</summary>
+        public const string DeadLetterExchange = "x-dead-letter-exchange";
+    }
+
     /// <summary>Metric names and tags.</summary>
     public static class Metrics
     {

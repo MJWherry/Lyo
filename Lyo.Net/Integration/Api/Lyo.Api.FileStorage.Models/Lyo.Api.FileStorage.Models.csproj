@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>HTTP request and response DTOs for the Lyo file-storage API. Shared by Lyo.Api.FileStorage and clients.</Description>
+        <PackageTags>api file-storage models dto</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Api.FileStorage.Models.Tests"/>
+    </ItemGroup>
+
+</Project>

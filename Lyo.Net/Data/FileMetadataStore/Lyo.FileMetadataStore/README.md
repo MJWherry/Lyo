@@ -12,24 +12,25 @@ Clients depend on IFileMetadataStore only where they manipulate canonical Guid f
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GetMetadataAsync(Guid fileId) | Returns FileStoreResult. FileNotFoundException when the row is missing or logically deleted. Soft delete hides tombstones here. |
 | SaveMetadataAsync(Guid, FileStoreResult) | Insert or overwrite the row keyed by fileId. Implementations enforce uniqueness on hash and external keys. PostgresFileMetadataStore maps fields into columns. |
-| DeleteMetadataAsync(Guid) | Soft-delete: sets DeletedAt, row retained. Returns false if missing or already deleted. GetMetadataAsync and FindByHashAsync omit tombstones. |
+| DeleteMetadataAsync(Guid) | Soft-delete: sets DeletedAt and Availability=Deleted, row retained. Returns false if missing or already deleted. GetMetadataAsync and FindByHashAsync omit tombstones. |
 | PurgeMetadataAsync(Guid) | Hard-delete the metadata row, or the .meta JSON for the local store. Idempotent. Returns false when there was no record. Used by Lyo.FileStorage.DeleteFileAsync(..., FileDeletionMode.RemoveObjectAndPurgeMetadata) for retention and governance. |
 | FindByHashAsync(byte[] hash) | Duplicate detection shortcut. Ignores soft-deleted rows. Often combined with Lyo.Hashing. |
 | FindByKeyIdAndVersionAsync(string keyId, string? keyVersion) | Key rotation audits. Active (not soft-deleted) metadata only, referencing a KMS/KEK logical key/version pair. |
 
-FileStoreResult exposes optional DeletedAt (UTC) when present in storage. Callers treat metadata without it as active. GetMetadataAsync and FindByHashAsync omit tombstones. Admin grids and workbench QueryProject views may include soft-deleted rows and should gate mutating actions on DeletedAt.
+FileStoreResult exposes optional DeletedAt (UTC) when present in storage. Callers treat metadata without it as active. GetMetadataAsync and FindByHashAsync omit tombstones. Workbench QueryProject listings also omit tombstones.
 
 ## FileAvailability states
 
 `FileStoreResult.Availability` propagates content gating decisions from the storage pipeline:
 
 | State | Meaning |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | Available | Default; reads / presigned URLs / direct downloads are permitted. |
 | PendingScan | Saved but awaiting a malware/policy scan; `FileNotAvailableException` on read unless `AllowReadQuarantinedForAdmin` is set. |
 | PendingDirectUpload | Direct-upload `BeginDirectUploadAsync` has issued a PUT URL but `CompleteDirectUploadAsync` has not finalized. |
 | Quarantined | A scan flagged the content. Admin-only read may be allowed by storage policy. |
 | Rejected | A scan or policy hard-rejected the content; reads always fail. |
+| Deleted | Logical tombstone (`DeletedAt` is set). Reads fail; listings omit the row. Soft-delete sets this instead of leaving `Available`. |
 
 ## DekMigrationResult
 

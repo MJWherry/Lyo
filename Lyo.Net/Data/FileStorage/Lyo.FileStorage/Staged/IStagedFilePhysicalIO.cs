@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 
@@ -36,4 +37,10 @@ public interface IStagedFilePhysicalIO
 /// <summary>Presigned PUT contract returned from <see cref="IStagedFilePhysicalIO.GeneratePresignedPutUrlAsync" />.</summary>
 /// <param name="Url">Absolute PUT target for the client.</param>
 /// <param name="RequiredPutHeaders">Headers the client must send verbatim (SSE, content-type, Azure blob type, etc.).</param>
-public sealed record StagedPresignedPutResult(string Url, IReadOnlyDictionary<string, string>? RequiredPutHeaders);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record StagedPresignedPutResult(string Url, IReadOnlyDictionary<string, string>? RequiredPutHeaders)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => $"StagedPresignedPutResult: Url={Url}, HeaderCount={RequiredPutHeaders?.Count ?? 0}";
+}

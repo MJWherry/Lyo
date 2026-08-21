@@ -25,9 +25,13 @@ builder.HasOne(e => e.Chapter).WithMany(c => c.Pages) …
 Select: [ "Volumes.Count", "Chapters.Count" ]
 ```
 
+## Plans
+
+Phrases like “give me a plan”, “plan for …”, or “switch to plan mode” mean: switch to plan mode (if not already there), research, and produce a plan. Do not start implementing until the user confirms.
+
 ## Questions: answer only
 
-If the user asked a question (why, what, how, which, should I, …), **do not edit files**. Do not “fix it while explaining.” Answer the question. Wait for them to ask for a change.
+If the user asked a question (why, what, how, which, should I, …), implied they want feedback, or asked what you think / whether something looks right, **do not edit files**. That is not an implementation request. Answer the question. Wait for them to ask for a change.
 
 ## Long answers
 

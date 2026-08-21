@@ -17,18 +17,18 @@
         "**JSON.** `LyoJsonSerializerOptions.ApplyTo` + `AddLyoDateOnlyModelConverters` + `ReferenceHandler.IgnoreCycles` + `JsonIgnoreCondition.WhenWritingNull`.",
         "**Infra.** `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (registers `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster via `ConfigureMapster()`.",
         "**Locks.** `AddRedisLock` if `Redis:ConnectionString` (or `ConnectionStrings:Redis`) is set, otherwise `AddLocalLock()`.",
-        "**Messaging.** `SetupRabbitMqServiceFromConfiguration` + `AddMqJobEventPublisher` (job state changes flow through MQ).",
+        "**Messaging.** `SetupRabbitMqServiceFromConfiguration` + `AddMqJobEventPublisherFromConfiguration` (job state changes flow through MQ). `JobMqOptions:WorkerTypes` includes `example` so `job.run.example` is declared at startup for `Lyo.Job.Worker.Host`.",
         "**Postgres stores.** A single `ConnectionStrings:Postgres` is shared by `Job`, `People`, `TwilioSms`, `Discord`, `Config`, `Comic`, `FileMetadataStore`. Every `AddXxxDbContextFactory` is called with `EnableAutoMigrations = true` so a fresh database is brought up on first run.",
         "**CRUD/QueryConcrete.** `AddLyoCrudServices<TContext>()` for `JobContext`, `PeopleDbContext`, `TwilioSmsDbContext`, `FileMetadataStoreDbContext`; `AddLyoQueryServices()`; Person uses typed `CreateBuilder` at `/Person/*` plus root From/Joins `POST /Query` via `MapRootQueryEndpoints<PeopleDbContext>()`; Twilio uses `MapDynamicCrudEndpoints` ( includes `POST /Twilio/Query`); `AddLyoApiExport<TContext>()` + `AddCsvExport()` / `AddXlsxExport()` for `PeopleDbContext`, `DiscordDbContext`, `JobContext`; `AddPostgresSprocService<PeopleDbContext>()`.",
-        "**File storage.** `AddTwoKeyEncryptionFromConfiguration(…, Constants.FileStorageWorkbench.ServiceKey, \"AwsKeyStore\")` + `AddPostgresFileMetadataStoreKeyed(\"gateway-filestorage-metadata\")` reading `PostgresFileMetadataStore` (falls back to the shared Postgres connection if not set) + `AddS3FileStorageServiceKeyed(\"gateway-filestorage\")` chained with `UseFileMetadataStore`, `UseEncryptionService`, `ConfigureS3FileStorage()`.",
+        "**File storage.** `AddTwoKeyEncryptionFromConfiguration(…, Constants.FileStorageWorkbench.ServiceKey, \"AwsKeyStore\")` + `AddPostgresFileMetadataStoreKeyed(\"gateway-filestorage-metadata\")` reading `PostgresFileMetadataStore` (falls back to the shared Postgres connection if not set) + `AddS3FileStorageServiceKeyed(\"gateway-filestorage\")` chained with `UseFileMetadataStore`, `UseEncryptionService`, `ConfigureS3FileStorage()` + `AddFileStorageArchiveServiceKeyed` for `GET files/archive`.",
         "**Audit.** `AddPostgresFileAuditSink()` writes to the file metadata DB; `AddScoped<IFileAuditEventHandler, FileMetadataQueryCacheInvalidationHandler>` invalidates the `Lyo.Cache` QueryProject cache for `FileMetadataEntity` on successful `Save`/`Delete`/`MultipartComplete` and on any `MigrateDeks` / `RotateDeks` so workbench grids see fresh rows.",
-        "**Scheduler.** `AddJobScheduler()` is commented out; jobs are queued by MQ but not polled by this host."
+        "**Scheduler.** `AddJobScheduler()` is commented out; jobs are queued by MQ but not polled by this host. Run `Lyo.Job.Worker.Host` to consume `job.run.example`."
       ]
     },
     {
       "type": "markdown",
       "title": "`SetupCourtCanaryEndpoints` (root extension)",
-      "body": "`SetupEndpoints.cs` adds one extension method on `WebApplication` that chains every endpoint group:\n\n```text\nBuildJobGroup ← from Lyo.Job.Postgres (full job/job-run CRUD)\nBuildReportingGroup ← from Lyo.Api.Reporting (definitions CRUD, generations query/get/delete, Generate/Rerun/Download; anonymous in this host)\nBuildPersonGroup ← Person CRUD (Lyo.Api builder) + info/{schema}/{table}/{column}/GetUniqueCounts\nBuildDiscordGroup ← Discord dynamic CRUD\nBuildTwilioGroup ← Twilio dynamic CRUD (route prefix \"Twilio\")\nBuildFileStorageWorkbenchGroup ← MapGroup(\"Workbench/FileStorage\") (see below)\nBuildDirectFileUploadEndpoint ← POST upload/file (mirrors files/save-stream)\nBuildFileStorageWorkbenchFileMetadataQuery ← ReadOnly Lyo.Api builder over FileMetadataEntity at \"Workbench/FileStorage/FileMetadata\"\n```\n\nReporting uses `AddPostgresReportingManagement` + `AddLyoApiReporting` + `AddIOTempService`. Generate hooks save staged output via the keyed File Storage workbench service (\n`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup, generation delete, or definition delete).\n`ReportingApiOptions.DownloadStreamFactory` streams persisted outputs back from the same keyed `IFileStorageService`, which maps `GET Reporting/Generation/{id}/Download`.\nCSV/XLSX/JSON renderers are registered by default; HTML/PDF requires hosting `AddReportingWebRenderer` separately. Retention cleanup (`ReportRetentionService.CleanupAsync`) is\nregistered but not scheduled, set `PostgresReportingOptions.GenerationRetention` and trigger it from a job/scheduler to enable it.\n\nCustom Job endpoints exist because the dynamic CRUD route for `JobRun` does not expose Create/Cancel, those need to go through MQ via `JobService`.\n\nThe Person group uses `Lyo.Api` `CreateBuilder<…>` with `WithFlags(All | UpsertInheritCreate | UpsertInheritUpdate | PatchInheritsUpdate)`, a `BeforeCreate` that assigns\n`LyoGuid.CreateCombPostgres()`, plus `WithMetadata` / `WithProjectionComputedFields`. It also adds a `GET info/{schema}/{table}/{column}/GetUniqueCounts` route that invokes\n`StoredProcedures.Info.UniqueValuesWithCount` via `ISprocService`."
+      "body": "`SetupEndpoints.cs` adds one extension method on `WebApplication` that chains every endpoint group:\n\n```text\nBuildJobGroup ← from Lyo.Job.Postgres (full job/job-run CRUD)\nBuildReportingGroup ← from Lyo.Api.Reporting (definitions CRUD, generations query/get/delete, Generate/Rerun/Download; anonymous in this host)\nBuildPersonGroup ← Person CRUD (Lyo.Api builder) + info/{schema}/{table}/{column}/GetUniqueCounts\nBuildDiscordGroup ← Discord dynamic CRUD\nBuildTwilioGroup ← Twilio dynamic CRUD (route prefix \"Twilio\")\nBuildFileStorageApi ← from Lyo.Api.FileStorage (Workbench/FileStorage group, POST upload/file, FileMetadata QueryProject)\n```\n\nReporting uses `AddPostgresReportingManagement` + `AddLyoApiReporting` + `AddIOTempService`. Generate hooks save staged output via the keyed File Storage workbench service (\n`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup, generation delete, or definition delete).\n`ReportingApiOptions.DownloadStreamFactory` streams persisted outputs back from the same keyed `IFileStorageService`, which maps `GET Reporting/Generation/{id}/Download`.\nCSV/XLSX/JSON renderers are registered by default; HTML/PDF requires hosting `AddReportingWebRenderer` separately. Retention cleanup (`ReportRetentionService.CleanupAsync`) is\nregistered but not scheduled, set `PostgresReportingOptions.GenerationRetention` and trigger it from a job/scheduler to enable it.\n\nCustom Job endpoints exist because the dynamic CRUD route for `JobRun` does not expose Create/Cancel, those need to go through MQ via `JobService`.\n\nThe Person group uses `Lyo.Api` `CreateBuilder<…>` with `WithFlags(All | UpsertInheritCreate | UpsertInheritUpdate | PatchInheritsUpdate)`, a `BeforeCreate` that assigns\n`LyoGuid.CreateCombPostgres()`, plus `WithMetadata` / `WithProjectionComputedFields`. It also adds a `GET info/{schema}/{table}/{column}/GetUniqueCounts` route that invokes\n`StoredProcedures.Info.UniqueValuesWithCount` via `ISprocService`."
     },
     {
       "type": "table",
@@ -61,6 +61,16 @@
         ],
         [
           "`POST`",
+          "`files/move`",
+          "`MoveFileAsync(FileId, MoveFileRequest)`"
+        ],
+        [
+          "`POST`",
+          "`files/rename`",
+          "`RenameFileAsync(FileId, RenameFileRequest)`"
+        ],
+        [
+          "`POST`",
           "`files/{fileId:guid}/access-links`",
           "`IFileDownloadAccessService.CreateLinkAsync` → `{linkId, token, downloadUrl, presignedReadUrl}`"
         ],
@@ -72,7 +82,12 @@
         [
           "`GET`",
           "`files/{fileId:guid}/download`",
-          "Plain files: try `GetPreSignedReadUrlAsync` 302; encrypted/compressed or no presign: stream decrypted bytes"
+          "Plain files: try `GetPreSignedReadUrlAsync` 302 (honors `?inline=true` via Content-Disposition); encrypted/compressed or no presign: stream decrypted bytes"
+        ],
+        [
+          "`GET`",
+          "`files/archive?id=&id=`",
+          "`IFileStorageArchiveService.CreateArchiveAsync` (zip of decrypted files; optional `fileName`; 400 on archive caps)"
         ],
         [
           "`GET`",
@@ -93,11 +108,6 @@
           "`POST`",
           "`files/rotate-deks`",
           "`RotateDeksAsync(fileIds, targetKey)`"
-        ],
-        [
-          "`GET`",
-          "`files/search?searchText&keyId&keyVersion&take`",
-          "EF query against `FileMetadataEntity` filtered by ILike on filename/source/path, plus key id/version"
         ],
         [
           "`POST`",
@@ -147,7 +157,7 @@
         [
           "`POST`",
           "`multipart/begin`",
-          "`IMultipartUploadService.BeginAsync` from `BeginMultipartWorkbenchRequest`"
+          "`IMultipartUploadService.BeginAsync` from `BeginMultipartRequest`"
         ],
         [
           "`GET`",
@@ -166,72 +176,12 @@
         ],
         [
           "`GET`",
-          "`diagnostics/keys?prefix&maxKeys`",
+          "`diagnostics/storage-keys?prefix&maxKeys`",
           "`IFileStorageDiagnosticsService.ListStorageKeysAsync` clamped to 1 to 10 000; 501 if backend doesn't implement diagnostics"
-        ],
-        [
-          "`GET`",
-          "`keys/search?searchText&take`",
-          "Distinct `(KeyId, Version)` pairs that have files, with `IsCurrent`, `KeyMetadata`, `FileCount`"
-        ],
-        [
-          "`GET`",
-          "`keys/available`",
-          "`IKeyInventoryStore.GetAvailableKeyIdsAsync` (empty if store isn't `IKeyInventoryStore`)"
-        ],
-        [
-          "`GET`",
-          "`keys/{keyId}/versions`",
-          "`GetAvailableVersionsAsync`"
-        ],
-        [
-          "`GET`",
-          "`keys/{keyId}/raw?version`",
-          "`IKeyStore.GetKeyAsync` (raw bytes; intentionally exposed for the workbench)"
-        ],
-        [
-          "`GET`",
-          "`keys/{keyId}/exists?version`",
-          "`HasKeyAsync`"
-        ],
-        [
-          "`GET`",
-          "`keys/{keyId}/current-version`",
-          "`GetCurrentVersionAsync`"
-        ],
-        [
-          "`GET`",
-          "`keys/{keyId}/metadata/{version}`",
-          "`GetKeyMetadataAsync`"
-        ],
-        [
-          "`PUT`",
-          "`keys/{keyId}/metadata/{version}`",
-          "`SetKeyMetadataAsync(KeyMetadata)`"
-        ],
-        [
-          "`GET`",
-          "`keys/{keyId}/salt/{version}`",
-          "`GetSaltForVersionAsync`"
-        ],
-        [
-          "`POST`",
-          "`keys/add` / `keys/add-string`",
-          "`AddKeyAsync` / `AddKeyFromStringAsync`"
-        ],
-        [
-          "`POST`",
-          "`keys/update` / `keys/update-string`",
-          "`UpdateKeyAsync` / `UpdateKeyFromStringAsync`"
-        ],
-        [
-          "`POST`",
-          "`keys/set-current`",
-          "`SetCurrentVersionAsync(KeyId, Version)`"
         ]
       ],
-      "lead": "`FileStorageWorkbench/SetupFileStorageWorkbenchEndpoints.cs` mounts the workbench group at `Constants.FileStorageWorkbench.Route` (`Workbench/FileStorage`) with the\n`FileStorageWorkbench` OpenAPI tag. All endpoints resolve services as **keyed.** `IFileStorageService`, `IMultipartUploadService`, and `IKeyStore` (cast to `IKeyInventoryStore`\nwhere available) under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-filestorage`).",
-      "trail": "`access-links` returns relative paths (`Workbench/FileStorage/files/access/{token}/download` and `…/presigned-read`); both routes call\n`IFileDownloadAccessService.ValidateAndConsumeDownloadAsync(token, user, remoteIp)` and translate `FileDownloadAccessConsumeFailureReason` to 400/403/404/410/429 via\n`MapFailureStatusCode`.\n\nAfter every mutating call (`save`, `save-stream`, `direct-upload/complete`, `stage/commit`, `multipart/complete`, `copy`, `DELETE files/{id}`) the handler calls\n`cache.InvalidateQueryCacheAsync<FileMetadataEntity>()` so the read-only QueryProject endpoint stays consistent. `FileMetadataQueryCacheInvalidationHandler` performs the same\ninvalidation when audit events flow in from the file storage layer."
+      "lead": "`Lyo.Api.FileStorage.BuildFileStorageApi` maps the workbench group at `FileStorageApiOptions.Route` (`Workbench/FileStorage`) with the `FileStorageWorkbench` OpenAPI tag. All endpoints resolve services as **keyed** `IFileStorageService`, `IMultipartUploadService`, `IStagedFileUploadService`, and `IFileStorageArchiveService` under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-filestorage`). There are no `keys/*` routes.",
+      "trail": "`access-links` returns relative paths (`Workbench/FileStorage/files/access/{token}/download` and `…/presigned-read`); both routes call\n`IFileDownloadAccessService.ValidateAndConsumeDownloadAsync(token, user, remoteIp)` and translate `FileDownloadAccessConsumeFailureReason` to 400/403/404/410/429 via\n`MapFailureStatusCode`.\n\nAfter every mutating call (`save`, `save-stream`, `direct-upload/complete`, `stage/commit`, `multipart/complete`, `copy`, `move`, `rename`, `DELETE files/{id}`, `migrate-deks`, `rotate-deks`) the handler calls\n`cache.InvalidateQueryCacheAsync<FileMetadataEntity>()` so the read-only QueryProject endpoint stays consistent. `FileMetadataQueryCacheInvalidationHandler` performs the same\ninvalidation when audit events flow in from the file storage layer."
     },
     {
       "type": "paragraph",
@@ -246,7 +196,7 @@
     {
       "type": "paragraph",
       "title": "FileMetadata Query/QueryProject",
-      "text": "`BuildFileStorageWorkbenchFileMetadataQuery` registers a read-only Lyo.Api builder over `FileMetadataStoreDbContext` / `FileMetadataEntity` at `Constants.FileStorageWorkbench.FileMetadata` (`Workbench/FileStorage/FileMetadata`). The standard `/QueryConcrete` and `/QueryProject` routes are produced by `WithReadOnlyEndpoints()`, allowing anonymous access, the Gateway's `Lyo.Query.Web.Components` grids POST against this route directly."
+      "text": "`BuildFileStorageApi` also registers a read-only Lyo.Api builder over `FileMetadataStoreDbContext` / `FileMetadataEntity` at `FileStorageApiOptions.FileMetadataRoute` (`Workbench/FileStorage/FileMetadata`). The standard `/QueryConcrete` and `/QueryProject` routes are produced by `WithReadOnlyEndpoints()`, allowing anonymous access, the Gateway's `Lyo.Query.Web.Components` grids POST against this route directly."
     },
     {
       "type": "table",
@@ -285,6 +235,10 @@
           "Job dashboard wiring (scheduler itself is opt-in via the commented `AddJobScheduler()`)"
         ],
         [
+          "`JobMqOptions`",
+          "`WorkerTypes` includes `example` so `job.run.example` is provisioned for `Lyo.Job.Worker.Host`"
+        ],
+        [
           "`CacheOptions`",
           "`AddLocalCacheFromConfiguration` (query cache granularity, payload compression)"
         ]
@@ -320,6 +274,14 @@
     },
     {
       "name": "Lyo.Api.Export.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.FileStorage",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -671,6 +633,14 @@
     },
     {
       "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.FileStorage.Models",
       "kind": "lyo",
       "tags": [
         "transitive",

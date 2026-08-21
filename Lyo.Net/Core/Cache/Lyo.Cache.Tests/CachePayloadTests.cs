@@ -144,6 +144,84 @@ public class CachePayloadTests
         Encoding.UTF8.GetString(env.Payload.ToArray()).ShouldBe("hello-bytes");
     }
 
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
+    public void SetPayload_TracksCompressedSizeAndNotEncrypted(string mode)
+    {
+        var cache = CreateCache(
+            mode, o => {
+                o.Enabled = true;
+                o.Payload.AutoCompress = true;
+                o.Payload.AutoCompressMinSizeBytes = 64;
+                o.Payload.AutoEncrypt = false;
+            });
+
+        var key = $"payload-meta-{mode}-{Guid.NewGuid():N}";
+        var data = new byte[200];
+        cache.SetPayload(key, data);
+        var item = cache.Items.Single(i => i.Type == CacheItemTypeEnum.Key && string.Equals(i.Name, key, StringComparison.OrdinalIgnoreCase));
+        item.Encrypted.ShouldBe(false);
+        item.Compressed.ShouldBe(true);
+        item.SizeBytes.ShouldNotBeNull();
+        item.SizeBytes!.Value.ShouldBeGreaterThan(0);
+        item.SizeBytes.Value.ShouldBeLessThan(data.Length + 9);
+    }
+
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
+    public void Set_ObjectValue_TracksUnframedKey(string mode)
+    {
+        var cache = CreateCache(mode, o => o.Enabled = true);
+        var key = $"obj-meta-{mode}-{Guid.NewGuid():N}";
+        var tag = $"obj-meta-tag-{mode}-{Guid.NewGuid():N}";
+        cache.Set(key, "value", [tag]);
+        var keyItem = cache.Items.Single(i => i.Type == CacheItemTypeEnum.Key && string.Equals(i.Name, key, StringComparison.OrdinalIgnoreCase));
+        keyItem.Encrypted.ShouldBe(false);
+        keyItem.Compressed.ShouldBe(false);
+        keyItem.SizeBytes.ShouldBeNull();
+        keyItem.Expires.ShouldNotBeNull();
+        foreach (var tagItem in cache.Items.Where(i => i.Type == CacheItemTypeEnum.Tag)) {
+            tagItem.Encrypted.ShouldBeNull();
+            tagItem.Compressed.ShouldBeNull();
+            tagItem.SizeBytes.ShouldBeNull();
+            tagItem.Expires.ShouldBeNull();
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
+    public void Set_TracksExpiresFromDuration(string mode)
+    {
+        var cache = CreateCache(mode, o => o.Enabled = true);
+        var key = $"expires-{mode}-{Guid.NewGuid():N}";
+        var ttl = TimeSpan.FromMinutes(5);
+        var before = DateTime.UtcNow;
+        cache.Set(key, "value", ttl);
+        var after = DateTime.UtcNow;
+        var item = cache.Items.Single(i => i.Type == CacheItemTypeEnum.Key && string.Equals(i.Name, key, StringComparison.OrdinalIgnoreCase));
+        item.Expires.ShouldNotBeNull();
+        item.Expires!.Value.ShouldBeGreaterThanOrEqualTo(before.Add(ttl).AddSeconds(-1));
+        item.Expires.Value.ShouldBeLessThanOrEqualTo(after.Add(ttl).AddSeconds(1));
+    }
+
+    [Theory]
+    [MemberData(nameof(CacheImplementations))]
+    public void Set_WithSlidingExpiration_HitExtendsTrackedExpires(string mode)
+    {
+        var cache = CreateCache(mode, o => o.Enabled = true);
+        var key = $"expires-sliding-{mode}-{Guid.NewGuid():N}";
+        var ttl = TimeSpan.FromMinutes(5);
+        cache.Set(key, "value", o => o.SetSlidingExpiration(ttl));
+        var first = cache.Items.Single(i => i.Type == CacheItemTypeEnum.Key && string.Equals(i.Name, key, StringComparison.OrdinalIgnoreCase)).Expires;
+        first.ShouldNotBeNull();
+        Thread.Sleep(250);
+        cache.TryGetValue<string>(key, out var hit).ShouldBeTrue();
+        hit.ShouldBe("value");
+        var second = cache.Items.Single(i => i.Type == CacheItemTypeEnum.Key && string.Equals(i.Name, key, StringComparison.OrdinalIgnoreCase)).Expires;
+        second.ShouldNotBeNull();
+        (second!.Value - first!.Value).ShouldBeGreaterThan(TimeSpan.FromMilliseconds(100));
+    }
+
 #if NET10_0_OR_GREATER
     [Fact]
     public void CachePayloadCodec_encode_throws_when_auto_encrypt_without_encryption_service()

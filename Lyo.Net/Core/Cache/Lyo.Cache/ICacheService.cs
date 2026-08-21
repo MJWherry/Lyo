@@ -5,7 +5,10 @@ namespace Lyo.Cache;
 /// <summary>Cache service contract for get-or-set, invalidation, and tag-based operations.</summary>
 public interface ICacheService : IHealth
 {
-    /// <summary>Gets a read-only snapshot of all cached items. Thread-safe.</summary>
+    /// <summary>
+    /// This process's in-memory (L1) key and tag list. Thread-safe. Redis (L2) keys written by other processes are not listed until this process loads them.
+    /// Payload entries include <see cref="CacheItem.Encrypted" />, <see cref="CacheItem.Compressed" />, and <see cref="CacheItem.SizeBytes" />. Keys also carry <see cref="CacheItem.Expires" />.
+    /// </summary>
     IReadOnlyCollection<CacheItem> Items { get; }
 
     /// <summary>Removes the entry for <paramref name="key" /> from the cache and updates tag indexes.</summary>

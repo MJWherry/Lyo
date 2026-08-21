@@ -4,6 +4,7 @@ using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Json;
 using Lyo.Common;
+using Lyo.Common.Conversion;
 using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
@@ -776,6 +777,49 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
         }
     }
 
+    public async Task<MessageExchangeInfo?> GetExchangeInfoAsync(string exchangeName, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(exchangeName))
+            return null;
+
+        try {
+            var vhost = _options.VirtualHost == "/" ? "%2F" : Uri.EscapeDataString(_options.VirtualHost);
+            using var response = await _httpClient.GetAsync($"exchanges/{vhost}/{Uri.EscapeDataString(exchangeName)}", ct).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode) {
+                _logger.LogDebug("Exchange info request for {ExchangeName} returned {StatusCode}", exchangeName, response.StatusCode);
+                return null;
+            }
+
+            using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
+            return ParseExchangeInfo(doc.RootElement);
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Failed to get exchange info for {ExchangeName}", exchangeName);
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<MessageExchangeInfo>> GetAllExchangesInfoAsync(CancellationToken ct = default)
+    {
+        try {
+            var vhost = _options.VirtualHost == "/" ? "%2F" : Uri.EscapeDataString(_options.VirtualHost);
+            using var response = await _httpClient.GetAsync($"exchanges/{vhost}", ct).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
+            var results = new List<MessageExchangeInfo>();
+            foreach (var el in doc.RootElement.EnumerateArray())
+                results.Add(ParseExchangeInfo(el));
+
+            return results;
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Failed to get exchange info for all exchanges");
+            return [];
+        }
+    }
+
     public async Task<bool> SubscribeToQueue(string queueName, Func<byte[], Task<bool>> onMessage, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(queueName)) {
@@ -836,7 +880,7 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
     private BasicProperties CreateBasicProperties()
         => new() { Persistent = _options.PersistentMessages, MessageId = Guid.NewGuid().ToString("D"), Timestamp = new(DateTimeOffset.UtcNow.ToUnixTimeSeconds()) };
 
-    /// <summary>Maps a management API queue object to <see cref="MessageQueueInfo" />. Rates (when present) land in AdditionalProperties as messages/sec.</summary>
+    /// <summary>Maps a management API queue object to <see cref="MessageQueueInfo" />. AMQP flags, <c>x-*</c> arguments, and rates land in AdditionalProperties.</summary>
     private static MessageQueueInfo ParseQueueInfo(JsonElement el)
     {
         var additional = new Dictionary<string, object>();
@@ -854,6 +898,16 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
         if (el.TryGetProperty("memory", out var memory) && memory.ValueKind == JsonValueKind.Number)
             additional["memory_bytes"] = memory.GetInt64();
 
+        additional[Constants.QueueInfoProperties.Durable] = ReadBool(el, "durable");
+        additional[Constants.QueueInfoProperties.Exclusive] = ReadBool(el, "exclusive");
+        additional[Constants.QueueInfoProperties.AutoDelete] = ReadBool(el, "auto_delete");
+        if (ReadArguments(el) is { } arguments) {
+            foreach (var pair in arguments) {
+                if (!additional.ContainsKey(pair.Key))
+                    additional[pair.Key] = pair.Value;
+            }
+        }
+
         return new(
             el.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty, el.TryGetProperty("state", out var state) ? state.GetString() : null,
             el.TryGetProperty("type", out var type) ? type.GetString() : null,
@@ -861,6 +915,37 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
             el.TryGetProperty("messages_ready", out var ready) && ready.ValueKind == JsonValueKind.Number ? ready.GetInt64() : 0,
             el.TryGetProperty("messages_unacknowledged", out var unacked) && unacked.ValueKind == JsonValueKind.Number ? unacked.GetInt64() : 0,
             el.TryGetProperty("consumers", out var consumers) && consumers.ValueKind == JsonValueKind.Number ? consumers.GetInt32() : 0, additional);
+    }
+
+    /// <summary>Maps a management API exchange object to <see cref="MessageExchangeInfo" />.</summary>
+    private static MessageExchangeInfo ParseExchangeInfo(JsonElement el)
+        => new(
+            el.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty,
+            el.TryGetProperty("type", out var type) ? type.GetString() : null,
+            ReadBool(el, "durable"),
+            ReadBool(el, "auto_delete"),
+            ReadBool(el, "internal"),
+            ReadArguments(el) ?? new Dictionary<string, object>());
+
+    private static bool ReadBool(JsonElement el, string propertyName)
+        => el.TryGetProperty(propertyName, out var value) && TypeConversion.TryFromJsonElement<bool>(in value, out var parsed) && parsed;
+
+    private static Dictionary<string, object>? ReadArguments(JsonElement el)
+    {
+        if (!el.TryGetProperty("arguments", out var args) || args.ValueKind != JsonValueKind.Object)
+            return null;
+
+        Dictionary<string, object>? parsed = null;
+        foreach (var prop in args.EnumerateObject()) {
+            var value = TypeConversion.FromJsonElement(prop.Value);
+            if (value is null)
+                continue;
+
+            parsed ??= new();
+            parsed[prop.Name] = value;
+        }
+
+        return parsed;
     }
 
     /// <summary>

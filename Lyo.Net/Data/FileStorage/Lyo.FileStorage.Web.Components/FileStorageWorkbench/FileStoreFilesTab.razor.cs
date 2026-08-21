@@ -1,3 +1,4 @@
+using Lyo.Api.FileStorage.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.Web.Components.FileUpload;
@@ -54,16 +55,12 @@ public partial class FileStoreFilesTab : ComponentBase
         _stagingSession = null;
     }
 
-    private IReadOnlyList<string> GetKnownVersions(string? keyId) => Workbench.GetKnownVersionsForKey(keyId);
-
     private async Task OnClientFilePathReadyAsync(LocalBrowserFilePath file)
     {
         _uploadedFile = file;
         _saveOriginalFileName = file.FileName;
-        if (Workbench.FileStorage == null)
-            _uploadStatus = $"{file.FileName} staged in IO temp session (no storage service).";
-        else if (_saveEncrypt && string.IsNullOrWhiteSpace(_saveKeyId))
-            _uploadStatus = $"{file.FileName} staged in IO temp session — select a key id, then click Upload.";
+        if (_saveEncrypt && string.IsNullOrWhiteSpace(_saveKeyId))
+            _uploadStatus = $"{file.FileName} staged in IO temp session — enter a key id, then click Upload.";
         else
             _uploadStatus = $"{file.FileName} staged in IO temp session — click Upload to send to the API.";
 
@@ -112,13 +109,6 @@ public partial class FileStoreFilesTab : ComponentBase
 
     private async Task SaveFileAsync()
     {
-        var storage = Workbench.FileStorage;
-        if (storage == null) {
-            Workbench.SetStatus("No file storage service is registered for the workbench.", Severity.Warning);
-            _uploadStatus = "No file storage service.";
-            return;
-        }
-
         if (_uploadedFile == null) {
             Workbench.SetStatus("Choose a file first.", Severity.Warning);
             _uploadStatus = "No file selected.";
@@ -127,7 +117,7 @@ public partial class FileStoreFilesTab : ComponentBase
 
         if (_saveEncrypt && string.IsNullOrWhiteSpace(_saveKeyId)) {
             Workbench.SetStatus("Key id is required when encryption is enabled.", Severity.Warning);
-            _uploadStatus = "Select a key id for encrypted uploads.";
+            _uploadStatus = "Enter a key id for encrypted uploads.";
             return;
         }
 
@@ -135,9 +125,10 @@ public partial class FileStoreFilesTab : ComponentBase
         _uploadStatus = "Uploading to storage…";
         try {
             await InvokeAsync(StateHasChanged);
-            var result = await storage.SaveFileAsync(
-                _uploadedFile.FilePath, string.IsNullOrWhiteSpace(_saveOriginalFileName) ? _uploadedFile.FileName : _saveOriginalFileName, _saveCompress, _saveEncrypt,
-                _saveEncrypt ? _saveKeyId : null, string.IsNullOrWhiteSpace(_savePathPrefix) ? null : _savePathPrefix, _saveChunkSize);
+            var uri = Workbench.BuildSaveStreamUri(
+                string.IsNullOrWhiteSpace(_saveOriginalFileName) ? _uploadedFile.FileName : _saveOriginalFileName, _saveCompress, _saveEncrypt,
+                _saveEncrypt ? NullIfWhiteSpace(_saveKeyId) : null, string.IsNullOrWhiteSpace(_savePathPrefix) ? null : _savePathPrefix, _saveChunkSize);
+            var result = await Workbench.ApiClient.PostFileAsAsync<FileStoreResult>(uri, _uploadedFile.FilePath).ConfigureAwait(false);
 
             await Workbench.NotifyFilesChangedAsync();
 
@@ -155,12 +146,6 @@ public partial class FileStoreFilesTab : ComponentBase
 
     private async Task MigrateDeksAsync()
     {
-        var storage = Workbench.FileStorage;
-        if (storage == null) {
-            Workbench.SetStatus("No file storage service is registered for the workbench.", Severity.Warning);
-            return;
-        }
-
         if (string.IsNullOrWhiteSpace(_migrationSourceKeyId)) {
             Workbench.SetStatus($"Source key id is required for {CryptoOpsKind} migration.", Severity.Warning);
             return;
@@ -168,9 +153,13 @@ public partial class FileStoreFilesTab : ComponentBase
 
         _fileBusy = true;
         try {
-            _migrationResult = await storage.MigrateDeksAsync(
-                _migrationSourceKeyId, NullIfWhiteSpace(_migrationSourceKeyVersion), NullIfWhiteSpace(_migrationTargetKeyId), NullIfWhiteSpace(_migrationTargetKeyVersion),
-                _migrationBatchSize);
+            _migrationResult = await Workbench.ApiClient
+                .PostAsAsync<MigrateDeksRequest, DekMigrationResult>(
+                    Workbench.FilesApi("files/migrate-deks"),
+                    new(
+                        _migrationSourceKeyId, NullIfWhiteSpace(_migrationSourceKeyVersion), NullIfWhiteSpace(_migrationTargetKeyId),
+                        NullIfWhiteSpace(_migrationTargetKeyVersion), _migrationBatchSize))
+                .ConfigureAwait(false);
 
             Workbench.SetStatus(
                 _migrationResult.AllSucceeded ? $"{CryptoOpsKind} migration completed." : $"{CryptoOpsKind} migration completed with failures.",
@@ -187,18 +176,16 @@ public partial class FileStoreFilesTab : ComponentBase
 
     private async Task RotateDeksAsync()
     {
-        var storage = Workbench.FileStorage;
-        if (storage == null) {
-            Workbench.SetStatus("No file storage service is registered for the workbench.", Severity.Warning);
-            return;
-        }
-
         if (!TryParseRotationFileIds(out var fileIds))
             return;
 
         _fileBusy = true;
         try {
-            _rotationResult = await storage.RotateDeksAsync(fileIds, NullIfWhiteSpace(_rotationTargetKeyId), NullIfWhiteSpace(_rotationTargetKeyVersion), _rotationBatchSize);
+            _rotationResult = await Workbench.ApiClient
+                .PostAsAsync<RotateDeksRequest, DekMigrationResult>(
+                    Workbench.FilesApi("files/rotate-deks"),
+                    new(fileIds, NullIfWhiteSpace(_rotationTargetKeyId), NullIfWhiteSpace(_rotationTargetKeyVersion), _rotationBatchSize))
+                .ConfigureAwait(false);
             Workbench.SetStatus(
                 _rotationResult.AllSucceeded ? $"{CryptoOpsKind} rotation completed." : $"{CryptoOpsKind} rotation completed with failures.",
                 _rotationResult.AllSucceeded ? Severity.Success : Severity.Warning);
@@ -218,71 +205,7 @@ public partial class FileStoreFilesTab : ComponentBase
         return Task.CompletedTask;
     }
 
-    private Task OnSaveKeyIdChanged(string? value)
-    {
-        _saveKeyId = value ?? string.Empty;
-        if (_uploadedFile != null && Workbench.FileStorage != null && _saveEncrypt) {
-            _uploadStatus = string.IsNullOrWhiteSpace(_saveKeyId)
-                ? $"{_uploadedFile.FileName} staged in IO temp session — select a key id, then click Upload."
-                : $"{_uploadedFile.FileName} staged in IO temp session — click Upload to send to the API.";
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private Task OnMigrationSourceKeyIdChanged(string? value)
-    {
-        _migrationSourceKeyId = value ?? string.Empty;
-        NormalizeVersionSelection(_migrationSourceKeyId, ref _migrationSourceKeyVersion);
-        return Task.CompletedTask;
-    }
-
-    private Task OnMigrationSourceKeyVersionChanged(string? value)
-    {
-        _migrationSourceKeyVersion = value ?? string.Empty;
-        return Task.CompletedTask;
-    }
-
-    private Task OnMigrationTargetKeyIdChanged(string? value)
-    {
-        _migrationTargetKeyId = value ?? string.Empty;
-        NormalizeVersionSelection(_migrationTargetKeyId, ref _migrationTargetKeyVersion);
-        return Task.CompletedTask;
-    }
-
-    private Task OnMigrationTargetKeyVersionChanged(string? value)
-    {
-        _migrationTargetKeyVersion = value ?? string.Empty;
-        return Task.CompletedTask;
-    }
-
-    private Task OnRotationTargetKeyIdChanged(string? value)
-    {
-        _rotationTargetKeyId = value ?? string.Empty;
-        NormalizeVersionSelection(_rotationTargetKeyId, ref _rotationTargetKeyVersion);
-        return Task.CompletedTask;
-    }
-
-    private Task OnRotationTargetKeyVersionChanged(string? value)
-    {
-        _rotationTargetKeyVersion = value ?? string.Empty;
-        return Task.CompletedTask;
-    }
-
-    private void NormalizeVersionSelection(string? keyId, ref string version)
-    {
-        if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(keyId))
-            return;
-
-        if (!GetKnownVersions(keyId).Contains(version, StringComparer.Ordinal))
-            version = string.Empty;
-    }
-
-    protected override void OnParametersSet()
-    {
-        EnsureStagingSession();
-        NormalizeFileTabSelections();
-    }
+    protected override void OnParametersSet() => EnsureStagingSession();
 
     private void EnsureStagingSession()
     {
@@ -290,26 +213,6 @@ public partial class FileStoreFilesTab : ComponentBase
             return;
 
         _stagingSession = Workbench.TempService.CreateSession();
-    }
-
-    private void NormalizeFileTabSelections()
-    {
-        var ids = Workbench.AvailableKeyIds;
-        if (!string.IsNullOrWhiteSpace(_saveKeyId) && !ids.Contains(_saveKeyId, StringComparer.Ordinal))
-            _saveKeyId = string.Empty;
-
-        if (!string.IsNullOrWhiteSpace(_migrationSourceKeyId) && !ids.Contains(_migrationSourceKeyId, StringComparer.Ordinal))
-            _migrationSourceKeyId = string.Empty;
-
-        if (!string.IsNullOrWhiteSpace(_migrationTargetKeyId) && !ids.Contains(_migrationTargetKeyId, StringComparer.Ordinal))
-            _migrationTargetKeyId = string.Empty;
-
-        if (!string.IsNullOrWhiteSpace(_rotationTargetKeyId) && !ids.Contains(_rotationTargetKeyId, StringComparer.Ordinal))
-            _rotationTargetKeyId = string.Empty;
-
-        NormalizeVersionSelection(_migrationSourceKeyId, ref _migrationSourceKeyVersion);
-        NormalizeVersionSelection(_migrationTargetKeyId, ref _migrationTargetKeyVersion);
-        NormalizeVersionSelection(_rotationTargetKeyId, ref _rotationTargetKeyVersion);
     }
 
     private bool TryParseRotationFileIds(out IReadOnlyCollection<Guid> fileIds)

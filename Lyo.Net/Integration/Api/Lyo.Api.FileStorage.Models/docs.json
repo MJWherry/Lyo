@@ -1,0 +1,23 @@
+{
+  "id": "Lyo.Api.FileStorage.Models",
+  "name": "Lyo.Api.FileStorage.Models",
+  "area": "Integration",
+  "tagline": "HTTP request and response DTOs for the file-storage API. No dependency on Lyo.FileStorage.",
+  "description": "HTTP request and response DTOs for the file-storage API. `Lyo.Api.FileStorage` maps these onto `IFileStorageService`. Clients (`Lyo.FileStorage.Web.Components`) send them over `IApiClient` and do not reference the storage engine.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Client POST",
+      "language": "csharp",
+      "code": "await api.PostAsAsync<CopyFileRequest, FileStoreResult>(\n    \"Workbench/FileStorage/files/copy\",\n    new(sourceId, pathPrefix: \"archive\"));"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Api/Lyo.Api.FileStorage.Models/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

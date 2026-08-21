@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.FileStorage.Multipart;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MultipartUploadSessionRecord(
     Guid SessionId,
     string? TenantId,
@@ -16,4 +19,9 @@ public sealed record MultipartUploadSessionRecord(
     MultipartUploadProviderKind ProviderKind,
     string ProviderStateJson,
     long? DeclaredContentLength,
-    int PartSizeBytes);
+    int PartSizeBytes)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => $"MultipartUploadSessionRecord: SessionId={SessionId}, TargetFileId={TargetFileId}, Status={Status}, ProviderKind={ProviderKind}";
+}

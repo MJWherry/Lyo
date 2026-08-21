@@ -307,6 +307,17 @@ public partial class LyoFileUpload : IDisposable
             await RemoveFile(fileState);
     }
 
+    /// <summary>Removes a completed temp-path file from the list (same reference as passed to <see cref="OnClientFilePathReady" />).</summary>
+    public async Task RemoveClientFilePathAsync(LocalBrowserFilePath? clientFilePath)
+    {
+        if (clientFilePath == null)
+            return;
+
+        var fileState = _fileStates.FirstOrDefault(s => ReferenceEquals(s.ClientFilePath, clientFilePath));
+        if (fileState != null)
+            await RemoveFile(fileState);
+    }
+
     private async Task RemoveFile(LyoFileUploadState fileState)
     {
         _fileStates.Remove(fileState);

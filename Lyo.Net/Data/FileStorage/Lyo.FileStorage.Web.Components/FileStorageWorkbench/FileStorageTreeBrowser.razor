@@ -1,0 +1,39 @@
+@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+@implements IDisposable
+
+<MudPaper Class="pa-4 mt-1" Outlined="true">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.h6">Path tree</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            Virtual folders from FileMetadata <code>PathPrefix</code> (QueryProject). Files with no prefix sit under
+            <strong>@FileStoragePathTreeBuilder.RootDisplayName</strong>. New folders stay in the browser until a file is uploaded there.
+            Use the edit button next to search to multi-select and run bulk Move / Rotate DEKs / Delete / Download zip, or drag onto a folder to move.
+        </MudText>
+        <MudGrid Class="file-storage-tree-layout" Spacing="2">
+            <MudItem xs="12" md="4">
+                <FileStoragePathTree Items="_treeItems"
+                                     Selected="_selected"
+                                     SelectedChanged="OnSelectedAsync"
+                                     FolderExpanded="OnFolderExpandedAsync"
+                                     FolderCollapsed="OnFolderCollapsed"
+                                     Refresh="RefreshAsync"
+                                     Busy="_busy"
+                                     Truncated="_truncated"
+                                     BulkMove="OnBulkMoveAsync"
+                                     BulkRotateDeks="OnBulkRotateAsync"
+                                     BulkDelete="OnBulkDeleteAsync"
+                                     BulkDownload="OnBulkDownloadAsync"
+                                     Dropped="OnDroppedAsync"/>
+            </MudItem>
+            <MudItem xs="12" md="8">
+                @if (_actions != null) {
+                    <FileStoragePathInspector Actions="_actions"
+                                              Root="_root"
+                                              Selected="_selected"
+                                              SelectedChanged="OnSelectedAsync"
+                                              TreeChanged="RebuildTreeItems"/>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>

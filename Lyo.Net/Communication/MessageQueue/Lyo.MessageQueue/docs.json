@@ -68,7 +68,8 @@
       "title": "Health and diagnostics",
       "items": [
         "`MqServiceHealth`. `Queues` and `Connections` collections.",
-        "`MessageQueueInfo(Name, State?, Type?, Messages, MessagesReady, MessagesUnacknowledged, Consumers, AdditionalProperties)`. Per-queue snapshot.",
+        "`MessageQueueInfo(Name, State?, Type?, Messages, MessagesReady, MessagesUnacknowledged, Consumers, AdditionalProperties)`. Per-queue snapshot. AMQP declare flags (`durable`, `exclusive`, `auto_delete`) and `x-*` arguments are RabbitMQ-only and live in `AdditionalProperties`.",
+        "`MessageExchangeInfo(Name, Type?, Durable, AutoDelete, Internal, AdditionalProperties)`. Per-exchange snapshot.",
         "`ConnectionInfo(User, UserProvidedName?, State, VHost)`. Connection snapshot.",
         "`QueuePeekMessage(Payload, PayloadEncoding?, Exchange?, RoutingKey?, MessageCount?, Redelivered)`. What `PeekQueueMessages` returns."
       ]

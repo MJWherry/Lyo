@@ -17,13 +17,14 @@ using CacheSnapshotItem = Lyo.Cache.CacheItem;
 namespace Lyo.Api.Services.Cache;
 
 /// <summary>
-/// In-memory QueryProject over <see cref="ICacheService.Items" />. Never writes the admin query result back into the cache.
+/// In-memory QueryProject over this process's L1 <see cref="ICacheService.Items" />. Redis L2 keys written by other processes are not listed.
+/// Never writes the admin query result back into the cache.
 /// </summary>
 public sealed class CacheQueryService(ICacheService cache, IWhereClauseService filterService, IProjectionService projectionService, QueryOptions queryOptions)
 {
     private static readonly Expression<Func<CacheSnapshotItem, object?>> DefaultOrder = static i => i.Created;
 
-    private static readonly string[] DefaultSelectFields = ["Type", "Name", "Created"];
+    private static readonly string[] DefaultSelectFields = ["Type", "Name", "Encrypted", "Compressed", "SizeBytes", "Created", "Expires"];
 
     /// <summary>Known tag-index prefixes written into <see cref="ICacheService.Items" /> (<c>Lyo.Cache</c> local + Fusion).</summary>
     internal static readonly string[] TagNamePrefixes = ["__fc:t:", "__tag:"];
@@ -168,7 +169,15 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
             : cache.InvalidateCacheItem(item.Name);
 
     private static Dictionary<string, object?> ToRow(CacheSnapshotItem item)
-        => new(StringComparer.OrdinalIgnoreCase) { ["Type"] = item.Type.ToString(), ["Name"] = item.Name, ["Created"] = item.Created };
+        => new(StringComparer.OrdinalIgnoreCase) {
+            ["Type"] = item.Type.ToString(),
+            ["Name"] = item.Name,
+            ["Created"] = item.Created,
+            ["Expires"] = item.Expires,
+            ["Encrypted"] = item.Encrypted,
+            ["Compressed"] = item.Compressed,
+            ["SizeBytes"] = item.SizeBytes
+        };
 
     private static List<CacheSnapshotItem> FilterByKeys(IReadOnlyCollection<CacheSnapshotItem> items, IReadOnlyList<object[]> keys)
     {

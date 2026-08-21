@@ -51,6 +51,10 @@
     {
       "cmd": "python3 scripts/nuget/ci_summary.py --phase result --version 1.0.5 --branch main --job pack=success",
       "blurb": "Write a Markdown pipeline overview to stdout and $GITHUB_STEP_SUMMARY"
+    },
+    {
+      "cmd": "python3 scripts/nuget/unlist_nuget.py 1.0.5",
+      "blurb": "Unlist 1.0.5 on nuget.org for every packable Lyo.* package that has that version"
     }
   ],
   "notes": [
@@ -65,7 +69,8 @@
     "--compile-only and --pack-only are mutually exclusive. CI pack runs compile then pack --no-build on the same runner",
     "ci_push.py skips a nupkg that already exists (409 Conflict) but fails the job if every package was a duplicate or any push hit a non-duplicate error",
     "After a successful nuget.org release on main, pipeline.yml runs ci_tag.py to push v{version} so the next auto-main run patch-bumps from that tag",
-    "pipeline.yml writes a Markdown run overview via ci_summary.py to the Actions Summary tab (plan after Resolve, results after all jobs)"
+    "pipeline.yml writes a Markdown run overview via ci_summary.py to the Actions Summary tab (plan after Resolve, results after all jobs)",
+    "unlist_nuget.py delists matching versions on nuget.org (not a hard delete). Needs NUGET_API_KEY with Unlist; Trusted Publishing OIDC cannot unlist"
   ],
   "readmePath": "scripts/nuget/README.md"
 }

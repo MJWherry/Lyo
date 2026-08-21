@@ -184,7 +184,10 @@
                     </MudPaper>
 
                     <MudPaper Class="pa-4" Outlined="true">
-                        <MudText Typo="Typo.h6" Class="mb-3">Tracked Cache Items</MudText>
+                        <MudText Typo="Typo.h6" Class="mb-1">Tracked Cache Items</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3">
+                            L1 items this process has tracked. Not Redis.
+                        </MudText>
 
                         @if (_items.Count == 0) {
                             <MudText Typo="Typo.body2" Color="Color.Secondary">
@@ -197,6 +200,9 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Type</th>
+                                    <th>Encrypted</th>
+                                    <th>Compressed</th>
+                                    <th>Size</th>
                                     <th>Created</th>
                                 </tr>
                                 </thead>
@@ -205,6 +211,9 @@
                                     <tr>
                                         <td style="white-space: pre-wrap; word-break: break-word;">@item.Name</td>
                                         <td>@item.Type</td>
+                                        <td>@(item.Encrypted is null ? "—" : item.Encrypted == true ? "Yes" : "No")</td>
+                                        <td>@(item.Compressed is null ? "—" : item.Compressed == true ? "Yes" : "No")</td>
+                                        <td>@(item.SizeBytes is { } size ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false) : "—")</td>
                                         <td>@item.Created.ToString("u")</td>
                                     </tr>
                                 }

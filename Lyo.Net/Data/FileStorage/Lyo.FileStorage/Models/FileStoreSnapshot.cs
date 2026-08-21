@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.FileMetadataStore.Models;
 
 namespace Lyo.FileStorage.Models;
@@ -18,6 +19,7 @@ namespace Lyo.FileStorage.Models;
 /// <param name="Availability">Current availability state.</param>
 /// <param name="PathPrefix">Logical storage prefix used to namespace the object.</param>
 /// <param name="Timestamp">Last write timestamp.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStoreSnapshot(
     Guid Id,
     string OriginalFileName,
@@ -36,4 +38,8 @@ public sealed record FileStoreSnapshot(
         => new(
             m.Id, m.OriginalFileName ?? m.Id.ToString(), m.OriginalFileSize, m.SourceFileSize, m.IsCompressed, m.IsEncrypted, m.ContentType, m.TenantId, m.Availability,
             m.PathPrefix, m.Timestamp);
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"FileStoreSnapshot: {Id} {OriginalFileName} size={OriginalFileSize}{(IsCompressed ? " Compressed" : "")}{(IsEncrypted ? " Encrypted" : "")} {Availability}";
 }

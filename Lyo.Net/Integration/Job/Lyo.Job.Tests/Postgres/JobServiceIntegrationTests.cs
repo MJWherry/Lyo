@@ -141,6 +141,27 @@ public class JobServiceIntegrationTests
     }
 
     [Fact]
+    public async Task StartedJobRun_WhenMachineAndPidProvidedWithoutInstance_SnapshotsThose()
+    {
+        var runResult = await _fixture.CreateService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
+            new JobRunReq(_fixture.JobDefinitionId, "test-user", false),
+            ctx => {
+                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.State = JobState.Queued;
+                ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+        Assert.True(runResult.IsSuccess);
+
+        var (result, error) = await _fixture.JobService.StartedJobRun(
+            runResult.Data!.Id, new JobRunStartedReq { MachineName = "direct-host", ProcessId = 77 });
+        Assert.Null(error);
+        Assert.NotNull(result);
+        Assert.Null(result.WorkerInstanceId);
+        Assert.Equal("direct-host", result.WorkerMachineName);
+        Assert.Equal(77, result.WorkerProcessId);
+    }
+
+    [Fact]
     public async Task StartedJobRun_WhenJobNotFound_ReturnsError()
     {
         var jobService = _fixture.JobService;

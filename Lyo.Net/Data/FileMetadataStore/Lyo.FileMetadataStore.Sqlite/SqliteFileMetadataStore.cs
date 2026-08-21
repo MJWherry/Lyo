@@ -79,7 +79,7 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
             return false;
         }
 
-        entity.DeletedAt = DateTime.UtcNow;
+        entity.MarkDeleted();
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
         _logger.LogDebug("Soft-deleted metadata in database for file {FileId}", fileId);
         return true;
