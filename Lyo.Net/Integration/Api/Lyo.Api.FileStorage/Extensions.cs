@@ -22,7 +22,7 @@ using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Api.FileStorage;
 
-/// <summary>Maps file-storage workbench HTTP endpoints and the FileMetadata QueryProject surface.</summary>
+/// <summary>Maps file-storage HTTP endpoints and the FileMetadata QueryProject surface.</summary>
 public static class Extensions
 {
     /// <summary>
@@ -35,7 +35,7 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(app);
         options ??= new();
         options.Validate();
-        MapWorkbenchGroup(app, options);
+        MapFileStorageGroup(app, options);
         MapDirectUpload(app, options);
         MapFileMetadataQuery(app, options);
         return app;
@@ -67,11 +67,11 @@ public static class Extensions
             .WithTags("DirectFileUpload");
     }
 
-    private static void MapWorkbenchGroup(WebApplication app, FileStorageApiOptions options)
+    private static void MapFileStorageGroup(WebApplication app, FileStorageApiOptions options)
     {
         var route = options.Route.Trim().Trim('/');
         var serviceKey = options.ServiceKey;
-        var group = app.MapGroup(route).WithTags("FileStorageWorkbench");
+        var group = app.MapGroup(route).WithTags("FileStorage");
 
         group.MapGet(
             "health", async (IServiceProvider services, CancellationToken ct) => {
@@ -155,7 +155,7 @@ public static class Extensions
                     if (fileStorage is not LocalFileStorageService local)
                         throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, "Not implemented."));
 
-                    await local.ReceiveWorkbenchDirectPutAsync(fileId, http.Request.Body, ct).ConfigureAwait(false);
+                    await local.ReceiveDirectPutAsync(fileId, http.Request.Body, ct).ConfigureAwait(false);
                     return Results.NoContent();
                 })
             .DisableAntiforgery();
@@ -173,7 +173,7 @@ public static class Extensions
                     if (staged is not LocalStagedFileUploadService local)
                         throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, "Not implemented."));
 
-                    await local.ReceiveWorkbenchStagePutAsync(stageId, http.Request.Body, ct).ConfigureAwait(false);
+                    await local.ReceiveStagePutAsync(stageId, http.Request.Body, ct).ConfigureAwait(false);
                     return Results.NoContent();
                 })
             .DisableAntiforgery();

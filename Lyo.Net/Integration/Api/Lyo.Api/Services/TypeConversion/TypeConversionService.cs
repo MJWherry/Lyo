@@ -1,12 +1,14 @@
-using Lyo.Cache;
+using System.Collections.Concurrent;
 using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.TypeConversion;
 
 /// <inheritdoc cref="ITypeConversionService" />
-public sealed class TypeConversionService(ICacheService cache, CacheOptions cacheOptions) : ITypeConversionService
+public sealed class TypeConversionService : ITypeConversionService
 {
+    private static readonly ConcurrentDictionary<Type, EntityKeyMetadata> KeyMetadata = new();
+
     public IReadOnlyList<string> GetPrimaryKeyPropertyNames<TEntity>(DbContext context)
     {
         var keyMetadata = GetEntityKeyMetadataCached<TEntity>(context);
@@ -102,16 +104,12 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
     }
 
     private EntityKeyMetadata GetEntityKeyMetadataCached<TEntity>(DbContext context)
-    {
-        var cacheKey = $"EntityKeyMetadata_{typeof(TEntity).FullName}";
-        return cache.GetOrSet<EntityKeyMetadata>(
-            cacheKey, _ => {
-                var entityType = context.Model.FindEntityType(typeof(TEntity));
-                OperationHelpers.ThrowIfNull(entityType, $"Entity type {typeof(TEntity).Name} not found in model");
-                var primaryKey = entityType.FindPrimaryKey();
-                OperationHelpers.ThrowIfNull(primaryKey, $"No primary key defined for {typeof(TEntity).Name}");
-                var keyProperties = primaryKey.Properties.ToArray();
-                return new(keyProperties, primaryKey.Properties.Count);
-            }, cacheOptions.TypeMetadataExpiration)!;
-    }
+        => KeyMetadata.GetOrAdd(typeof(TEntity), static (_, ctx) => {
+            var entityType = ctx.Model.FindEntityType(typeof(TEntity));
+            OperationHelpers.ThrowIfNull(entityType, $"Entity type {typeof(TEntity).Name} not found in model");
+            var primaryKey = entityType.FindPrimaryKey();
+            OperationHelpers.ThrowIfNull(primaryKey, $"No primary key defined for {typeof(TEntity).Name}");
+            var keyProperties = primaryKey.Properties.ToArray();
+            return new(keyProperties, primaryKey.Properties.Count);
+        }, context);
 }

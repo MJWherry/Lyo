@@ -1,8 +1,8 @@
-@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 
 <CascadingValue Value="this">
     <MudStack Spacing="3">
-        <FileStorageWorkbenchHeader Title="@Title" Description="@Description"/>
+        <FileStorageManagementHeader Title="@Title" Description="@Description"/>
         <FileStorageRegistrationAlerts ApiHealthy="@ApiHealthy" StorageHealthy="@StorageHealthy" ApiHealthDescription="@ApiHealthDescription"/>
         <MudTabs Rounded="true" KeepPanelsAlive="true">
             <MudTabPanel Text="Files">

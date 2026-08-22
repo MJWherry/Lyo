@@ -133,6 +133,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
     private readonly ProjectedColumnRegistry _propertyColumnRegistry = new();
     private readonly CancellationTokenSource _cts = new();
+    private readonly TaskCompletionSource _restoreGate = new(TaskCreationOptions.RunContinuationsAsynchronously); // MudDataGrid loads in its first AfterRender; wait so sorts/page restore win.
 
     private MudDataGrid<T>? _dataGrid;
 
@@ -141,7 +142,11 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
     private MudTextField<string>? _searchField;
 
     // State
-    private bool _loading;
+    private bool _loading = true;
+
+    private int _loadEpoch;
+
+    private int _rowsPerPage = 25;
 
     private bool _stateRestored;
 
@@ -199,13 +204,11 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await base.OnAfterRenderAsync(firstRender);
-        if (!_stateRestored && _dataGrid != null) {
-            await RestoreGridState();
+        if (!_stateRestored) {
             _stateRestored = true;
-
-            // Trigger a reload to apply restored sorts and load initial data
-            await Task.Delay(50); // Small delay to ensure sorts are set
-            await _dataGrid.ReloadServerData();
+            if (_dataGrid != null)
+                await RestoreGridState();
+            _restoreGate.TrySetResult();
         }
 
         if (firstRender)
@@ -241,6 +244,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
     public void Dispose()
     {
         StopAutoRefresh();
+        _restoreGate.TrySetCanceled();
         _cts.Cancel();
         _cts.Dispose();
     }
@@ -251,6 +255,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
     private async Task LoadClientState()
     {
+        _rowsPerPage = PageSizes.Length > 0 ? PageSizes[0] : 25;
         try {
             var savedState = await ClientStore.GetGridStateAsync<T>(GridKey);
             if (savedState == null) {
@@ -263,7 +268,11 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
             _filterStates = savedState.FilterStates ?? [];
             _savedSorts = savedState.Sorts;
             _savedSelectedKeys = savedState.SelectedItemKeys;
-            SelectedItems = []; // Will be restored after data loads
+            SelectedItems = [];
+            if (savedState.Page > 0)
+                _gridCurrentPage = savedState.Page;
+            if (savedState.PageSize > 0)
+                _rowsPerPage = savedState.PageSize;
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Error loading client state");
@@ -273,29 +282,22 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
     private async Task RestoreGridState()
     {
+        if (_dataGrid is null)
+            return;
+
         try {
-            var savedState = await ClientStore.GetGridStateAsync<T>(GridKey);
-            if (savedState == null || _dataGrid == null)
-                return;
+            if (_gridCurrentPage > 0)
+                _dataGrid.CurrentPage = _gridCurrentPage;
 
-            // Restore pagination
-            if (savedState.Page > 0)
-                _gridCurrentPage = savedState.Page;
+            if (_rowsPerPage > 0)
+                await _dataGrid.SetRowsPerPageAsync(_rowsPerPage);
 
-            if (savedState.PageSize > 0)
-                await _dataGrid.SetRowsPerPageAsync(savedState.PageSize);
-
-            // Restore sorting by using SetSortAsync for each saved sort
-            if (_savedSorts?.Any() == true) {
+            if (_savedSorts?.Count > 0) {
                 foreach (var savedSort in _savedSorts.OrderBy(s => s.Index)) {
                     var sortDirection = savedSort.Descending ? SortDirection.Descending : SortDirection.Ascending;
-
-                    // Use SetSortAsync to properly restore the sort
                     await _dataGrid.SetSortAsync(savedSort.SortBy, sortDirection, x => GetPropertyValueForSort(x, savedSort.SortBy));
                 }
             }
-
-            StateHasChanged();
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Error restoring grid state");
@@ -428,19 +430,28 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
     private async Task<GridData<T>> LoadServerData(GridState<T> state, CancellationToken ct)
     {
+        try {
+            await _restoreGate.Task.WaitAsync(ct);
+        }
+        catch (OperationCanceledException) {
+            return new() { Items = [], TotalItems = 0 };
+        }
+
         MergeCurrentPageSelectionIntoTrackedKeys();
+        var loadEpoch = Interlocked.Increment(ref _loadEpoch);
         _loading = true;
         QueryError = null;
         await InvokeAsync(StateHasChanged);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, ct);
         try {
-            var pageSize = state.PageSize;
-            var offset = state.Page * pageSize;
+            var pageSize = _dataGrid is { RowsPerPage: > 0 } ? _dataGrid.RowsPerPage : state.PageSize;
+            var offset = (_dataGrid?.CurrentPage ?? state.Page) * pageSize;
             var queryBuilder = GetQuery(offset, pageSize);
             CurrentQuery = queryBuilder.Build();
             _lastQueryPath = QueryRoute;
             var s = Stopwatch.StartNew();
             try {
-                CurrentResults = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<T>>(QueryRoute, CurrentQuery, ct: _cts.Token);
+                CurrentResults = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<T>>(QueryRoute, CurrentQuery, ct: linkedCts.Token);
                 _lastQueryStatusCode = 200;
                 QueryError = DataGridQueryError.FromQueryResult(CurrentResults.IsSuccess, CurrentResults.Error);
             }
@@ -474,8 +485,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
 
             return gridData;
         }
-        catch (OperationCanceledException) when (_cts.IsCancellationRequested) {
-            Logger.LogInformation("Request cancelled");
+        catch (OperationCanceledException) {
             return new() { Items = [], TotalItems = 0 };
         }
         catch (Exception ex) {
@@ -485,7 +495,8 @@ public partial class LyoDataGrid<T> : IDataGridExportHost
             return new() { Items = [], TotalItems = 0 };
         }
         finally {
-            _loading = false;
+            if (loadEpoch == _loadEpoch)
+                _loading = false;
             await InvokeAsync(StateHasChanged);
             if ((_searchHadFocus || _refocusSearchAfterLoad) && _searchField != null) {
                 _refocusSearchAfterLoad = false;

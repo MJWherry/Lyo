@@ -64,12 +64,13 @@ public sealed class FusionCacheService : ICacheService
 
                 CacheItem item;
                 var expires = ExpiresFromPolicy(args.Key);
+                var tags = TagsFromPolicy(args.Key);
                 if (args.Key.StartsWith(TagPrefix))
                     item = CacheItem.Tag(args.Key);
                 else if (_storageHints.TryGetValue(args.Key, out var hint))
-                    item = hint with { Expires = expires ?? hint.Expires };
+                    item = hint with { Expires = expires ?? hint.Expires, Tags = tags ?? hint.Tags };
                 else
-                    item = CacheItem.Key(args.Key, encrypted: false, compressed: false, expires: expires);
+                    item = CacheItem.Key(args.Key, encrypted: false, compressed: false, expires: expires, tags: tags);
 
                 UpsertItem(item);
                 _logger.LogDebug("Added {CacheType} {CacheKey}", item.Type, item.Name);
@@ -1356,20 +1357,24 @@ public sealed class FusionCacheService : ICacheService
     private DateTime? ExpiresFromPolicy(string key)
         => _entryPolicies.TryGetValue(key, out var policy) ? DateTime.UtcNow.Add(policy.Duration) : null;
 
+    private IReadOnlyList<string>? TagsFromPolicy(string key)
+        => _entryPolicies.TryGetValue(key, out var policy) && policy.Tags.Length > 0 ? policy.Tags : null;
+
     private void StampExpires(string normalizedKey, TimeSpan duration)
     {
         var expires = DateTime.UtcNow.Add(duration);
+        var tags = TagsFromPolicy(normalizedKey);
         if (_items.TryGetValue(CacheItem.Key(normalizedKey), out var existing)) {
-            UpsertItem(existing with { Expires = expires });
+            UpsertItem(existing with { Expires = expires, Tags = tags ?? existing.Tags });
             return;
         }
 
         if (_storageHints.TryGetValue(normalizedKey, out var hint)) {
-            UpsertItem(hint with { Expires = expires });
+            UpsertItem(hint with { Expires = expires, Tags = tags ?? hint.Tags });
             return;
         }
 
-        UpsertItem(CacheItem.Key(normalizedKey, encrypted: false, compressed: false, expires: expires));
+        UpsertItem(CacheItem.Key(normalizedKey, encrypted: false, compressed: false, expires: expires, tags: tags));
     }
 
     private void UpsertItem(CacheItem item)
@@ -1382,7 +1387,7 @@ public sealed class FusionCacheService : ICacheService
     {
         RememberStoredBytes(normalizedKey, stored);
         var expires = ExpiresFromPolicy(normalizedKey);
-        UpsertItem(CacheItem.FromStoredBytes(normalizedKey, stored, expires: expires));
+        UpsertItem(CacheItem.FromStoredBytes(normalizedKey, stored, expires: expires, tags: TagsFromPolicy(normalizedKey)));
     }
 
     private void SetFramed(string normalizedKey, byte[] framed, FusionCacheEntryOptions? opts, IEnumerable<string>? tags)

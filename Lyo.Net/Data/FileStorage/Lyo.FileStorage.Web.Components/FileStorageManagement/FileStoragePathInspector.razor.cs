@@ -5,7 +5,7 @@ using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 /// <summary>Right-hand inspector for the Tree tab: directory upload / new folder, or file metadata and actions.</summary>
 public partial class FileStoragePathInspector : IAsyncDisposable
@@ -22,9 +22,9 @@ public partial class FileStoragePathInspector : IAsyncDisposable
     private IIOTempSession? _stagingSession;
     private string _uploadStatus = "No file selected.";
 
-    /// <summary>Cascaded workbench host (API, temp sessions, snackbar).</summary>
+    /// <summary>Cascaded parent (API, temp sessions, snackbar).</summary>
     [CascadingParameter]
-    public FileStorageWorkbench Workbench { get; set; } = default!;
+    public FileStorageManagement Host { get; set; } = default!;
 
     /// <summary>Shared mutation handlers.</summary>
     [Parameter]
@@ -99,7 +99,7 @@ public partial class FileStoragePathInspector : IAsyncDisposable
         if (_stagingSession != null)
             return;
 
-        _stagingSession = Workbench.TempService.CreateSession();
+        _stagingSession = Host.TempService.CreateSession();
     }
 
     private async Task LoadMetadataAsync(Guid fileId)
@@ -114,7 +114,7 @@ public partial class FileStoragePathInspector : IAsyncDisposable
         catch (Exception ex) {
             _metadata = null;
             _metadataStatus = ex.Message;
-            Workbench.SetStatus(ex.Message, Severity.Error);
+            Host.SetStatus(ex.Message, Severity.Error);
         }
         finally {
             _metadataBusy = false;
@@ -135,7 +135,7 @@ public partial class FileStoragePathInspector : IAsyncDisposable
             return;
 
         if (string.IsNullOrWhiteSpace(_newFolderName)) {
-            Workbench.SetStatus("Enter a folder name.", Severity.Warning);
+            Host.SetStatus("Enter a folder name.", Severity.Warning);
             return;
         }
 
@@ -146,7 +146,7 @@ public partial class FileStoragePathInspector : IAsyncDisposable
             await SelectedChanged.InvokeAsync(created);
         }
         catch (Exception ex) {
-            Workbench.SetStatus(ex.Message, Severity.Warning);
+            Host.SetStatus(ex.Message, Severity.Warning);
         }
     }
 
@@ -210,7 +210,7 @@ public partial class FileStoragePathInspector : IAsyncDisposable
     private async Task SaveFilesAsync()
     {
         if (_staged.Count == 0) {
-            Workbench.SetStatus("Choose a file first.", Severity.Warning);
+            Host.SetStatus("Choose a file first.", Severity.Warning);
             _uploadStatus = "No file selected.";
             return;
         }
@@ -220,7 +220,7 @@ public partial class FileStoragePathInspector : IAsyncDisposable
                 continue;
 
             _selectedStaged = staged;
-            Workbench.SetStatus($"Key id is required for {staged.OriginalFileName}.", Severity.Warning);
+            Host.SetStatus($"Key id is required for {staged.OriginalFileName}.", Severity.Warning);
             _uploadStatus = $"Enter a key id for {staged.OriginalFileName}.";
             return;
         }
@@ -237,23 +237,23 @@ public partial class FileStoragePathInspector : IAsyncDisposable
                 await InvokeAsync(StateHasChanged);
                 try {
                     var originalName = string.IsNullOrWhiteSpace(staged.OriginalFileName) ? staged.File.FileName : staged.OriginalFileName;
-                    var uri = Workbench.BuildSaveStreamUri(
+                    var uri = Host.BuildSaveStreamUri(
                         originalName, staged.Compress, staged.Encrypt, staged.Encrypt ? NullIfWhiteSpace(staged.KeyId) : null, pathPrefix, chunkSize: null);
-                    await Workbench.ApiClient.PostFileAsAsync<FileStoreResult>(uri, staged.File.FilePath).ConfigureAwait(true);
+                    await Host.ApiClient.PostFileAsAsync<FileStoreResult>(uri, staged.File.FilePath).ConfigureAwait(true);
                     uploaded++;
                     await InvokeAsync(() => RemoveStagedAsync(staged)).ConfigureAwait(true);
                 }
                 catch (Exception ex) {
                     failed++;
-                    Workbench.SetStatus($"{staged.OriginalFileName}: {ex.Message}", Severity.Error);
+                    Host.SetStatus($"{staged.OriginalFileName}: {ex.Message}", Severity.Error);
                 }
             }
 
             if (uploaded > 0)
-                await InvokeAsync(() => Workbench.NotifyFilesChangedAsync()).ConfigureAwait(true);
+                await InvokeAsync(() => Host.NotifyFilesChangedAsync()).ConfigureAwait(true);
 
             _uploadStatus = failed == 0 ? $"Uploaded {uploaded} file(s)." : $"Uploaded {uploaded} file(s); {failed} failed.";
-            Workbench.SetStatus(_uploadStatus, failed == 0 ? Severity.Success : Severity.Warning);
+            Host.SetStatus(_uploadStatus, failed == 0 ? Severity.Success : Severity.Warning);
         }
         finally {
             _fileBusy = false;

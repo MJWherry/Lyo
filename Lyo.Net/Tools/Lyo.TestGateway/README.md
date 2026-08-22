@@ -43,7 +43,7 @@ Downloads open the API `GET {ApiRoutePrefix}/files/{id}/download` URL. There is 
 ## File storage workbench wiring
 
 - Files and Browser call the remote API (`ApiClient:BaseUrl`) through `IApiClient` using `ApiRoutePrefix` (default `Workbench/FileStorage`).
-- `AddFileStorageWorkbenchSupport` binds `FileStorageWorkbenchOptions` (`ApiRoutePrefix`, `StreamUploadRelativePath`).
+- `AddFileStorageWorkbenchSupport` binds `FileStorageWebOptions` from the `FileStorageWorkbench` section (`ApiRoutePrefix`, `StreamUploadRelativePath`).
 - `AddLocalKeyStore()` feeds the in-process `/keystore-workbench` page (`Lyo.KeyStore.Web.Components`). That store is not the TestApi encryption KEK.
 
 ## Other services in `Program.cs`

@@ -1,6 +1,6 @@
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
-using Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+using Lyo.FileStorage.Web.Components.FileStorageManagement;
 using Lyo.Web.Components;
 using Lyo.Web.Components.DataGrid;
 using MudBlazor;

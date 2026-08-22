@@ -46,9 +46,9 @@ public partial class FileAccessLinkDialog
     [Parameter]
     public string? FileName { get; set; }
 
-    /// <summary>API group prefix, e.g. <c>Workbench/FileStorage</c>.</summary>
+    /// <summary>API group prefix, e.g. <c>FileStorage</c>.</summary>
     [Parameter]
-    public string ApiRoutePrefix { get; set; } = "Workbench/FileStorage";
+    public string ApiRoutePrefix { get; set; } = "FileStorage";
 
     /// <summary>
     /// Public origin used to build copyable URLs (no trailing slash). When null, uses <see cref="IApiClient" /> <c>BaseAddress</c>.
@@ -133,7 +133,7 @@ public partial class FileAccessLinkDialog
             return;
         }
 
-        var prefix = string.IsNullOrWhiteSpace(ApiRoutePrefix) ? "Workbench/FileStorage" : ApiRoutePrefix.Trim().TrimEnd('/');
+        var prefix = string.IsNullOrWhiteSpace(ApiRoutePrefix) ? "FileStorage" : ApiRoutePrefix.Trim().TrimEnd('/');
         var uri = $"{prefix}/files/{FileId:D}/access-links";
         var tenant = ShowAdvanced && !string.IsNullOrWhiteSpace(_tenantId) ? _tenantId.Trim() : null;
         _busy = true;

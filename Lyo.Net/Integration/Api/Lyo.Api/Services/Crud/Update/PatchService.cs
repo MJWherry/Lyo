@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.Mapping;
@@ -38,6 +39,8 @@ public class PatchService<TContext>(
     where TContext : DbContext
 {
     private const string PropertyCacheKeyPrefix = "PropertyCache_";
+
+    private static readonly ConcurrentDictionary<string, Dictionary<string, PropertyInfo>> PropertiesByType = new(StringComparer.Ordinal);
 
     public async Task<PatchResult<TResult>> PatchAsync<TDbModel, TResult>(
         PatchRequest request,
@@ -624,12 +627,13 @@ public class PatchService<TContext>(
     private Dictionary<string, PropertyInfo> GetCachedProperties(Type type)
     {
         var cacheKey = $"{PropertyCacheKeyPrefix}{type.FullName}";
-        return cache.GetOrSet<Dictionary<string, PropertyInfo>>(
-            cacheKey, _ => {
-                Logger.LogDebug("Caching property information for type {TypeName}", type.Name);
-                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
-                Logger.LogTrace("Cached {PropertyCount} properties for type {TypeName}", properties.Count, type.Name);
-                return properties;
-            }, cacheOptions.PropertyInfoExpiration)!;
+        return PropertiesByType.GetOrAdd(cacheKey, static (_, state) => {
+            var (self, t) = state;
+            self.Logger.LogDebug("Caching property information for type {TypeName}", t.Name);
+            var properties = t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+            self.Logger.LogTrace("Cached {PropertyCount} properties for type {TypeName}", properties.Count, t.Name);
+            return properties;
+        }, (this, type));
     }
 }

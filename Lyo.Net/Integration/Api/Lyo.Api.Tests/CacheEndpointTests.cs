@@ -26,7 +26,7 @@ public sealed class CacheEndpointTests
         cache.Set("beta-key", "b", ["beta-tag"]);
         cache.Set("gamma-key", "c", ["gamma-tag"]);
         var query = ProjectionQueryReqBuilder.New()
-            .AddSelects("Name", "Type", "Created", "Expires", "Encrypted", "Compressed", "SizeBytes")
+            .AddSelects("Name", "Type", "Created", "Expires", "Tags", "Encrypted", "Compressed", "SizeBytes")
             .AddWhere(w => w.Equals("Type", CacheItemTypeEnum.Key))
             .AddSort("Name", SortDirection.Asc)
             .SetPagination(1, 1)
@@ -44,6 +44,7 @@ public sealed class CacheEndpointTests
         Assert.True(row.ContainsKey("SizeBytes"));
         Assert.True(row.ContainsKey("Expires"));
         Assert.NotNull(row["Expires"]);
+        Assert.True(row.ContainsKey("Tags"));
         // WhereClause compiles through ICacheService.GetOrSet; that is not the admin QueryProject payload.
         Assert.Contains(cache.Items, i => string.Equals(i.Name, "beta-key", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(cache.Items, i => i.Name.Contains("QueryProject", StringComparison.OrdinalIgnoreCase));

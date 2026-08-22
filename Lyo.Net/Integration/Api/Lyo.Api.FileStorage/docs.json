@@ -9,14 +9,14 @@
     {
       "title": "Host setup",
       "language": "csharp",
-      "code": "app.BuildFileStorageApi(); // defaults: Workbench/FileStorage, keyed gateway-filestorage\n// or:\napp.BuildFileStorageApi(new FileStorageApiOptions {\n    Route = \"Workbench/FileStorage\",\n    ServiceKey = \"gateway-filestorage\"\n});"
+      "code": "app.BuildFileStorageApi(); // defaults: FileStorage, keyed gateway-filestorage\n// or:\napp.BuildFileStorageApi(new FileStorageApiOptions {\n    Route = \"FileStorage\",\n    ServiceKey = \"gateway-filestorage\"\n});"
     }
   ],
   "sections": [
     {
       "type": "paragraph",
       "title": "What this maps",
-      "text": "Workbench group at `FileStorageApiOptions.Route`: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `diagnostics/storage-keys`, `stage/*`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). Read-only FileMetadata QueryProject at `FileMetadataRoute`. There are no `keys/*` CRUD routes. Wire DTOs live in `Lyo.Api.FileStorage.Models`."
+      "text": "Route group at `FileStorageApiOptions.Route`: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `diagnostics/storage-keys`, `stage/*`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). Read-only FileMetadata QueryProject at `FileMetadataRoute`. There are no `keys/*` CRUD routes. Wire DTOs live in `Lyo.Api.FileStorage.Models`."
     }
   ],
   "links": [],

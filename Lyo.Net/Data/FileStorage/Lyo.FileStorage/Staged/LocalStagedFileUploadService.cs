@@ -85,7 +85,7 @@ public sealed class LocalStagedFileUploadService : IStagedFileUploadService
     }
 
     /// <summary>Accepts a raw HTTP PUT body for a pending staged upload.</summary>
-    public async Task ReceiveWorkbenchStagePutAsync(Guid stageId, Stream body, CancellationToken ct = default)
+    public async Task ReceiveStagePutAsync(Guid stageId, Stream body, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(body);
         var record = await _store.GetAsync(stageId, ct).ConfigureAwait(false);

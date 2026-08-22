@@ -24,7 +24,7 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
 {
     private static readonly Expression<Func<CacheSnapshotItem, object?>> DefaultOrder = static i => i.Created;
 
-    private static readonly string[] DefaultSelectFields = ["Type", "Name", "Encrypted", "Compressed", "SizeBytes", "Created", "Expires"];
+    private static readonly string[] DefaultSelectFields = ["Type", "Name", "Tags", "Encrypted", "Compressed", "SizeBytes", "Created", "Expires"];
 
     /// <summary>Known tag-index prefixes written into <see cref="ICacheService.Items" /> (<c>Lyo.Cache</c> local + Fusion).</summary>
     internal static readonly string[] TagNamePrefixes = ["__fc:t:", "__tag:"];
@@ -174,6 +174,7 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
             ["Name"] = item.Name,
             ["Created"] = item.Created,
             ["Expires"] = item.Expires,
+            ["Tags"] = item.Tags,
             ["Encrypted"] = item.Encrypted,
             ["Compressed"] = item.Compressed,
             ["SizeBytes"] = item.SizeBytes

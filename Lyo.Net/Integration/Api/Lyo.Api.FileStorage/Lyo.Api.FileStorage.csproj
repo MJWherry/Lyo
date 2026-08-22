@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <Description>HTTP API surface for Lyo file storage: workbench file routes, stream upload, archive, and FileMetadata QueryProject.</Description>
+        <Description>HTTP API surface for Lyo file storage: file routes, stream upload, archive, and FileMetadata QueryProject.</Description>
         <PackageTags>api file-storage aspnetcore</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>

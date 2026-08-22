@@ -180,11 +180,14 @@ public class CachePayloadTests
         keyItem.Compressed.ShouldBe(false);
         keyItem.SizeBytes.ShouldBeNull();
         keyItem.Expires.ShouldNotBeNull();
+        keyItem.Tags.ShouldNotBeNull();
+        keyItem.Tags!.ShouldContain(tag.ToLowerInvariant());
         foreach (var tagItem in cache.Items.Where(i => i.Type == CacheItemTypeEnum.Tag)) {
             tagItem.Encrypted.ShouldBeNull();
             tagItem.Compressed.ShouldBeNull();
             tagItem.SizeBytes.ShouldBeNull();
             tagItem.Expires.ShouldBeNull();
+            tagItem.Tags.ShouldBeNull();
         }
     }
 

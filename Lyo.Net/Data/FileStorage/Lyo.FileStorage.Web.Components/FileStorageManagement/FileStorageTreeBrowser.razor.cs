@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using SortDirection = Lyo.Common.Enums.SortDirection;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
-/// <summary>Workbench Tree tab: PathPrefix folder tree on the left, inspector on the right.</summary>
+/// <summary>Tree tab: PathPrefix folder tree on the left, inspector on the right.</summary>
 public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 {
     private static readonly string[] SelectFields = ["Id", "PathPrefix", "OriginalFileName", "OriginalFileSize", "DeletedAt", "Availability"];
@@ -23,18 +23,18 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
     private IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> _treeItems = [];
     private bool _truncated;
 
-    /// <summary>Cascaded workbench host (API client, dialogs).</summary>
+    /// <summary>Cascaded parent (API client, dialogs).</summary>
     [CascadingParameter]
-    public FileStorageWorkbench Workbench { get; set; } = default!;
+    public FileStorageManagement Host { get; set; } = default!;
 
     /// <inheritdoc />
-    public void Dispose() => Workbench.FilesChanged -= RefreshAsync;
+    public void Dispose() => Host.FilesChanged -= RefreshAsync;
 
     /// <inheritdoc />
     protected override async Task OnInitializedAsync()
     {
-        _actions = new FileStorageBrowserActions(Workbench, RefreshAsync);
-        Workbench.FilesChanged += RefreshAsync;
+        _actions = new FileStorageBrowserActions(Host, RefreshAsync);
+        Host.FilesChanged += RefreshAsync;
         _selected = _root;
         await LoadRootAsync().ConfigureAwait(true);
     }
@@ -57,7 +57,7 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
             ApplyTree();
         }
         catch (Exception ex) {
-            Workbench.SetStatus(ex.Message, Severity.Error);
+            Host.SetStatus(ex.Message, Severity.Error);
         }
         finally {
             _busy = false;
@@ -91,7 +91,7 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
     private async Task<(List<FileStoragePathTreeRow> Rows, bool Truncated)> QueryRowsAsync(WhereClause? where)
     {
         var rows = new List<FileStoragePathTreeRow>();
-        var route = Workbench.FileMetadataQueryRoute.Trim().Trim('/') + "/QueryProject";
+        var route = Host.FileMetadataQueryRoute.Trim().Trim('/') + "/QueryProject";
         for (var page = 0; page < FileStoragePathTreeBuilder.MaxPages; page++) {
             var builder = ProjectionQueryReqBuilder.New()
                 .SetPagination(page * FileStoragePathTreeBuilder.PageSize, FileStoragePathTreeBuilder.PageSize)
@@ -100,7 +100,7 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
             var active = FileStorageGridRowHelper.CreateActiveFilesWhere();
             builder.AddWhere(where == null ? active : WhereClauseBuilder.CombineAs(GroupOperatorEnum.And, active, where));
 
-            var result = await Workbench.ApiClient
+            var result = await Host.ApiClient
                 .PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(route, builder.Build())
                 .ConfigureAwait(true);
             if (result is not { IsSuccess: true }) {
@@ -178,18 +178,18 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 
         var liveTarget = FileStoragePathTreeBuilder.Find(_root, drop.Target.Key);
         if (liveTarget is not { IsDirectory: true }) {
-            Workbench.SetStatus("Drop target folder is no longer in the tree.", Severity.Warning);
+            Host.SetStatus("Drop target folder is no longer in the tree.", Severity.Warning);
             return;
         }
 
         var moves = FileStoragePathTreeBuilder.CollectMovesToDirectory(LiveNodes(drop.Sources), liveTarget);
         if (moves.Count == 0) {
-            Workbench.SetStatus("Cannot move into that folder (same path, or a folder into itself).", Severity.Warning);
+            Host.SetStatus("Cannot move into that folder (same path, or a folder into itself).", Severity.Warning);
             return;
         }
 
         var dest = drop.Target.PathPrefix ?? FileStoragePathTreeBuilder.RootDisplayName;
-        var confirm = await Workbench.DialogService.ShowMessageBoxAsync(
+        var confirm = await Host.DialogService.ShowMessageBoxAsync(
             "Move files", $"Move {moves.Count} file(s) into {drop.Target.Name} ({dest})?", "Move", cancelText: "Cancel");
         if (confirm != true)
             return;

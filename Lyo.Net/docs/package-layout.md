@@ -158,7 +158,7 @@ Stays under `Communication/Translation/`.
 | `Lyo.Api.Client` | E | `Integration/Api/` | - | - | Shared HTTP base for C clients |
 | `Lyo.Api.Models` | E | `Integration/Api/` | - | - | |
 | `Lyo.Api.FileStorage.Models` | E | `Integration/Api/` | - | - | HTTP DTOs for file-storage API; referenced by API + clients |
-| `Lyo.Api.FileStorage` | E | `Integration/Api/` | - | - | File-storage workbench HTTP + FileMetadata QueryProject |
+| `Lyo.Api.FileStorage` | E | `Integration/Api/` | - | - | File-storage HTTP + FileMetadata QueryProject |
 | `Lyo.Api.Export*` | E | `Integration/Api/` | - | - | |
 | `Lyo.Web.*` | E | `Integration/Web/` | - | - | |
 | `Lyo.Job.*` | E | `Integration/Job/` | - | - | Job domain lives here, not Core |

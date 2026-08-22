@@ -8,7 +8,7 @@ public static class FileStorageWorkbenchExtensions
 {
     public static IServiceCollection AddFileStorageWorkbenchSupport(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<FileStorageWorkbenchOptions>(configuration.GetSection(FileStorageWorkbenchOptions.SectionName));
+        services.Configure<FileStorageWebOptions>(configuration.GetSection("FileStorageWorkbench"));
         return services;
     }
 }

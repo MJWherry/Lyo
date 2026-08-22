@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T23:53:36.955720+00:00",
+  "generatedAt": "2026-08-22T01:02:03.063806+00:00",
   "packageCount": 221,
   "packages": [
     {
@@ -1079,7 +1079,7 @@
       "area": "Data",
       "topic": "Lyo.FileStorage",
       "name": "Lyo.FileStorage.Web.Components",
-      "tagline": "Blazor Server / Interactive UI for Lyo.FileStorage. Workbench tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.",
+      "tagline": "Blazor Server / Interactive UI for Lyo.FileStorage. Tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.",
       "targetFrameworks": [
         "net10.0"
       ]

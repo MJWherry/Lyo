@@ -5,12 +5,14 @@ using Lyo.FileStorage.Web.Components.Services;
 using Lyo.IO.Temp;
 using Lyo.Web.Components;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using MudBlazor;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
-public partial class FileStorageWorkbench : ComponentBase
+/// <summary>Top-level file-storage UI with Files, Tree, and Browser tabs. Talks to the file-storage HTTP API through <see cref="IApiClient" />.</summary>
+public partial class FileStorageManagement : ComponentBase
 {
     [Inject]
     public IApiClient ApiClient { get; set; } = null!;
@@ -30,13 +32,16 @@ public partial class FileStorageWorkbench : ComponentBase
     [Inject]
     public IDialogService DialogService { get; set; } = null!;
 
-    /// <summary>API route segment for file metadata QueryProject (e.g. <c>Workbench/FileStorage/FileMetadata</c>).</summary>
-    [Parameter]
-    public string FileMetadataQueryRoute { get; set; } = "Workbench/FileStorage/FileMetadata";
+    [Inject]
+    public IOptions<FileStorageWebOptions>? WebOptions { get; set; }
 
-    /// <summary>REST prefix for Workbench/FileStorage endpoints (matches <see cref="FileStorageWorkbenchOptions.ApiRoutePrefix" />).</summary>
+    /// <summary>API route segment for file metadata QueryProject (e.g. <c>FileStorage/FileMetadata</c>).</summary>
     [Parameter]
-    public string FileStorageApiRoutePrefix { get; set; } = "Workbench/FileStorage";
+    public string FileMetadataQueryRoute { get; set; } = "FileStorage/FileMetadata";
+
+    /// <summary>REST prefix for FileStorage endpoints (matches <see cref="FileStorageWebOptions.ApiRoutePrefix" />).</summary>
+    [Parameter]
+    public string FileStorageApiRoutePrefix { get; set; } = "FileStorage";
 
     /// <summary>
     /// Relative URI for multipart stream upload (no <see cref="FileStorageApiRoutePrefix" />). Default <c>upload/file</c> matches <c>POST /upload/file</c>. Set to empty to use
@@ -46,11 +51,18 @@ public partial class FileStorageWorkbench : ComponentBase
     public string? StreamUploadRelativePath { get; set; } = "upload/file";
 
     [Parameter]
-    public string Title { get; set; } = "File Storage Workbench";
+    public string Title { get; set; } = "File Storage";
 
     [Parameter]
     public string Description { get; set; } =
         "Upload files, migrate or rotate DEKs, and browse metadata through the file-storage HTTP API.";
+
+    /// <summary>
+    /// Public origin for browser-opened URLs (download, access links). No trailing slash.
+    /// When unset, uses <see cref="IApiClient" /> <c>BaseAddress</c>, which is the Docker DNS name in production.
+    /// </summary>
+    [Parameter]
+    public string? PublicBaseUrl { get; set; }
 
     /// <summary>Raised after mutating file operations so the Browser and Tree tabs can refresh.</summary>
     public event Func<Task>? FilesChanged;
@@ -80,19 +92,32 @@ public partial class FileStorageWorkbench : ComponentBase
         return string.IsNullOrEmpty(prefix) ? relative : $"{prefix}/{relative}";
     }
 
-    /// <summary>Resolves an API-relative path (e.g. <c>Workbench/FileStorage/files/...</c>) against the configured <see cref="IApiClient" /> base URL.</summary>
-    /// <returns>Absolute URL when the client has <see cref="HttpClient.BaseAddress" /> set; otherwise <see langword="null" />.</returns>
+    /// <summary>
+    /// Resolves an API-relative path (e.g. <c>FileStorage/files/...</c>) for the browser.
+    /// Prefers <see cref="PublicBaseUrl" />; otherwise <see cref="IApiClient" /> <c>BaseAddress</c>.
+    /// </summary>
     public string? GetApiAbsoluteUrl(string apiRelativePath)
     {
         if (string.IsNullOrWhiteSpace(apiRelativePath))
             return null;
 
-        var baseUri = ApiClient.GetClient().BaseAddress;
-        if (baseUri == null)
-            return null;
-
         var trimmed = apiRelativePath.TrimStart('/');
-        return new Uri(baseUri, trimmed).AbsoluteUri;
+        var publicBase = ResolvePublicBaseUrl();
+        if (!string.IsNullOrWhiteSpace(publicBase))
+            return $"{publicBase}/{trimmed}";
+
+        var baseUri = ApiClient.GetClient().BaseAddress;
+        return baseUri == null ? null : new Uri(baseUri, trimmed).AbsoluteUri;
+    }
+
+    /// <summary>Public origin for browser URLs: parameter, then <see cref="FileStorageWebOptions.PublicBaseUrl" />.</summary>
+    public string? ResolvePublicBaseUrl()
+    {
+        if (!string.IsNullOrWhiteSpace(PublicBaseUrl))
+            return PublicBaseUrl.Trim().TrimEnd('/');
+
+        var fromOptions = WebOptions?.Value.PublicBaseUrl;
+        return string.IsNullOrWhiteSpace(fromOptions) ? null : fromOptions.Trim().TrimEnd('/');
     }
 
     /// <summary>Builds the stream-upload URI used by the Files tab (<c>upload/file</c> or <c>{prefix}/files/save-stream</c> plus query string).</summary>
