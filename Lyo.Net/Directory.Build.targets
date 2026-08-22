@@ -13,6 +13,13 @@
         <None Include="README.md" Pack="true" PackagePath="README.md"/>
     </ItemGroup>
 
+    <!-- Razor/Web SDK glob-includes *.json as Content. Package docs.json is README SoT, not app content or nupkg contentFiles. -->
+    <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)/docs.json')">
+        <Content Remove="docs.json"/>
+        <None Remove="docs.json"/>
+        <None Include="docs.json" Pack="false"/>
+    </ItemGroup>
+
     <!-- One icon for every packable Lyo.* package. PackagePath is the nupkg root name matching PackageIcon. -->
     <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)assets/icon.png')">
         <None Include="$(MSBuildThisFileDirectory)assets/icon.png" Pack="true" PackagePath="icon.png" Visible="false"/>

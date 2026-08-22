@@ -9,7 +9,7 @@ This folder only keeps shared **JSON Schema** for editors/validators.
 | Path                                                                 | Role                                                                 |
 |----------------------------------------------------------------------|----------------------------------------------------------------------|
 | [`schema/package.schema.json`](schema/package.schema.json)           | Package `docs.json` shape                                            |
-| [`schema/section.schema.json`](schema/section.schema.json)           | Section union (`paragraph` / `list` / `code` / `table` / `markdown`) |
+| [`schema/section.schema.json`](schema/section.schema.json)           | Section union (`paragraph` / `list` / `code` / `table` / `details` / `markdown`) |
 | [`templates/package.template.json`](templates/package.template.json) | Starter `docs.json` for new packages                                 |
 
 ## Commands

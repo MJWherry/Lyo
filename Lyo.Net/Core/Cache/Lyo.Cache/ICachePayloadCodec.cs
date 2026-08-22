@@ -14,4 +14,7 @@ public interface ICachePayloadCodec
 
     /// <summary>Parses a framed blob from the cache and returns plaintext plus optional metadata.</summary>
     CacheEntryEnvelope Decode(byte[] framed);
+
+    /// <summary>True when <paramref name="data" /> is a LYO1 framed blob produced by <see cref="Encode" />.</summary>
+    bool IsFramed(ReadOnlySpan<byte> data);
 }

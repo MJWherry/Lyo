@@ -46,3 +46,11 @@ jobs:
             --source "https://nuget.pkg.github.com/${GITHUB_REPOSITORY_OWNER}/index.json" \
             --api-key "$NUGET_API_KEY" \
             artifacts/nuget
+
+      - name: Upload push report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-push-github
+          path: artifacts/nuget/push-report.json
+          if-no-files-found: ignore

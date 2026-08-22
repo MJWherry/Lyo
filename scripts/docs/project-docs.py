@@ -29,6 +29,11 @@ if str(_SCRIPTS) not in sys.path:
 
 from lyo_tooling.deps import load_dependency_map  # noqa: E402
 from lyo_tooling.dotnet import find_project_csproj, read_target_frameworks  # noqa: E402
+
+_DOCS_DIR = Path(__file__).resolve().parent
+if str(_DOCS_DIR) not in sys.path:
+    sys.path.insert(0, str(_DOCS_DIR))
+from markdown import section_to_md  # noqa: E402
 LYO_NET = ROOT / "Lyo.Net"
 PORTFOLIO = ROOT / "apps" / "gateway" / "content"
 PORTFOLIO_FULL = PORTFOLIO / "packages-full"
@@ -394,28 +399,6 @@ def feature_node_to_md(node, indent: int = 0) -> list[str]:
     return lines
 
 
-def list_item_to_md(item, indent: int = 0, ordered: bool = False, index: int = 1) -> list[str]:
-    """Emit a list section item (string or nested object) as markdown lines."""
-    pad = "  " * indent
-    prefix = f"{index}. " if ordered and indent == 0 else "- "
-    if isinstance(item, str):
-        return [f"{pad}{prefix}{item}"]
-
-    title = (item.get("title") or "").strip()
-    text = (item.get("text") or "").strip()
-    children = item.get("items") or []
-    if title and text:
-        label = f"**{title}.** {text}"
-    else:
-        label = text or title
-
-    lines = [f"{pad}{prefix}{label}"] if label else []
-    child_indent = indent + (1 if label else 0)
-    for child in children:
-        lines.extend(list_item_to_md(child, child_indent, ordered=False))
-    return lines
-
-
 def split_table_cells(line: str) -> list[str]:
     line = line.strip()
     if line.startswith("|"):
@@ -493,22 +476,6 @@ def parse_markdown_table(text: str) -> dict | None:
     if trail:
         out["trail"] = trail
     return out
-
-
-def table_to_markdown(headers: list[str], rows: list[list[str]]) -> str:
-    widths = [len(h) for h in headers]
-    for row in rows:
-        for i, cell in enumerate(row):
-            if i < len(widths):
-                widths[i] = max(widths[i], len(cell))
-    def fmt(cells: list[str]) -> str:
-        parts = []
-        for i, w in enumerate(widths):
-            cell = cells[i] if i < len(cells) else ""
-            parts.append(cell.ljust(w))
-        return "| " + " | ".join(parts) + " |"
-    sep = "| " + " | ".join("-" * max(3, w) for w in widths) + " |"
-    return "\n".join([fmt(headers), sep, *[fmt(r) for r in rows]])
 
 
 def text_to_section(title: str, text: str) -> dict | None:
@@ -735,42 +702,6 @@ def readme_to_docs(md: str, meta: dict) -> dict:
     if benches:
         pkg["benchmarks"] = benches
     return pkg
-
-
-def section_to_md(section: dict, level: int = 2) -> str:
-    h = "#" * level
-    parts = []
-    title = section.get("title")
-    if title:
-        parts.append(f"{h} {title}")
-        parts.append("")
-    t = section.get("type")
-    if t == "paragraph":
-        parts.append(section.get("text") or "")
-        parts.append("")
-    elif t == "list":
-        ordered = bool(section.get("ordered"))
-        for idx, item in enumerate(section.get("items") or []):
-            parts.extend(list_item_to_md(item, indent=0, ordered=ordered, index=idx + 1))
-        parts.append("")
-    elif t == "code":
-        parts.append(f"```{section.get('language') or 'text'}")
-        parts.append(section.get("code") or "")
-        parts.append("```")
-        parts.append("")
-    elif t == "table":
-        if section.get("lead"):
-            parts.append(section["lead"])
-            parts.append("")
-        parts.append(table_to_markdown(section.get("headers") or [], section.get("rows") or []))
-        parts.append("")
-        if section.get("trail"):
-            parts.append(section["trail"])
-            parts.append("")
-    elif t == "markdown":
-        parts.append(section.get("body") or "")
-        parts.append("")
-    return "\n".join(parts)
 
 
 def normalize_pkg_prose(pkg: dict) -> dict:

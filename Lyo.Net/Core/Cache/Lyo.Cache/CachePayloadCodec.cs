@@ -80,4 +80,7 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
         working = decompressed;
         return new(working, compressionResult, encryptionResult);
     }
+
+    /// <inheritdoc />
+    public bool IsFramed(ReadOnlySpan<byte> data) => CachePayloadFrame.TryInspect(data, out _, out _);
 }

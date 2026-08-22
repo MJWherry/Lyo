@@ -28,7 +28,7 @@ Auto-`main` also defaults to `scope=changed` since that last tag. Use Run workfl
 
 After a successful nuget.org push on `main` (`channel=release`), the pipeline tags `HEAD` as `v{version}` so the next auto-`main` run patch-bumps from what actually shipped. It does not tag previews, dry runs, or a failed push. If `v{version}` already points at `HEAD`, the tag job is a no-op. It will not move a tag that points at another commit.
 
-Each run writes a Markdown overview to the Actions **Summary** tab: resolved version, channel, destination, scope, stages, and the result of Resolve / Build / Pack / Publish / Tag. Resolve posts the plan as soon as config is known; a final Summary job posts outcomes even if an earlier job failed.
+Each run writes a Markdown report to the Actions **Summary** tab, rendered through the same JSON-to-Markdown path as package READMEs (`scripts/docs/markdown.py`). Resolve posts the plan as soon as config is known: which libraries are in the pack set, the version/channel/destination, and the commits since the change window. After every job finishes, the Summary job posts what actually happened: a one-line verdict, per-package nupkg sizes and nuget.org / GitHub Packages outcomes, and why skipped jobs did not run.
 
 `channel=release` is rejected on any branch other than `main`. Preview on nuget.org from `dev` is the pre-release path (`1.2.0-preview.<run_number>`).
 

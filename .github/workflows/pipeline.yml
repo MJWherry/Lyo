@@ -134,6 +134,7 @@ jobs:
           DRY_RUN: ${{ steps.cfg.outputs.dry_run }}
           PACKAGES: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
           SINCE: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
         run: |
           python3 scripts/nuget/ci_summary.py --phase plan \
             --branch "${{ github.ref_name }}" \
@@ -146,7 +147,8 @@ jobs:
             --packages "$PACKAGES" \
             --since "$SINCE" \
             --stages "$STAGES" \
-            --dry-run "$DRY_RUN"
+            --dry-run "$DRY_RUN" \
+            --force "$FORCE"
 
   build:
     needs: resolve
@@ -231,9 +233,39 @@ jobs:
     if: ${{ always() }}
     name: Summary CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Download pack artifacts
+        if: ${{ needs.pack.result == 'success' || needs.pack.result == 'failure' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts/nuget
+
+      - name: Download nuget.org push report
+        if: ${{ needs.publish-nuget.result == 'success' || needs.publish-nuget.result == 'failure' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-push-nuget
+          path: artifacts/push-nuget
+
+      - name: Download GitHub Packages push report
+        if: ${{ needs.publish-github.result == 'success' || needs.publish-github.result == 'failure' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-push-github
+          path: artifacts/push-github
 
       - name: Run summary
         env:
@@ -245,6 +277,7 @@ jobs:
           DRY_RUN: ${{ needs.resolve.outputs.dry_run }}
           PACKAGES: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
           SINCE: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
         run: |
           python3 scripts/nuget/ci_summary.py --phase result \
             --branch "${{ github.ref_name }}" \
@@ -258,6 +291,11 @@ jobs:
             --since "$SINCE" \
             --stages "$STAGES" \
             --dry-run "$DRY_RUN" \
+            --force "$FORCE" \
+            --pack-report artifacts/nuget/pack-report.json \
+            --nupkg-dir artifacts/nuget \
+            --push-report nuget=artifacts/push-nuget/push-report.json \
+            --push-report github=artifacts/push-github/push-report.json \
             --job "resolve=${{ needs.resolve.result }}" \
             --job "build=${{ needs.build.result }}" \
             --job "pack=${{ needs.pack.result }}" \

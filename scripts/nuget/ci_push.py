@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -31,6 +32,34 @@ def classify(text: str, returncode: int) -> str:
     if returncode == 0:
         return "pushed"
     return "failed"
+
+
+def feed_label(source: str) -> str:
+    src = (source or "").lower()
+    if "nuget.org" in src:
+        return "nuget.org"
+    if "nuget.pkg.github.com" in src:
+        return "github"
+    return source
+
+
+def write_push_report(
+    path: Path,
+    *,
+    source: str,
+    pushed: list[str],
+    skipped: list[str],
+    failed: list[str],
+) -> None:
+    payload = {
+        "feed": feed_label(source),
+        "source": source,
+        "pushed": pushed,
+        "skipped": skipped,
+        "failed": failed,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
 def push_one(nupkg: Path, *, source: str, api_key: str) -> tuple[str, str]:
@@ -58,6 +87,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", required=True, help="NuGet source URL")
     parser.add_argument("--api-key", default="", help="API key (or $NUGET_API_KEY)")
+    parser.add_argument("--report", default="", help="Path for push-report.json (default: <directory>/push-report.json)")
     parser.add_argument("directory", nargs="?", default="artifacts/nuget", help="Directory of nupkgs")
     args = parser.parse_args(argv)
 
@@ -67,14 +97,16 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     folder = Path(args.directory)
+    report_path = Path(args.report) if args.report else folder / "push-report.json"
     pkgs = sorted(p for p in folder.glob("*.nupkg") if p.is_file()) if folder.is_dir() else []
-    if not pkgs:
-        print("No nupkgs to push")
-        return 0
-
     pushed: list[str] = []
     skipped: list[str] = []
     failed: list[str] = []
+    if not pkgs:
+        print("No nupkgs to push")
+        write_push_report(report_path, source=args.source, pushed=pushed, skipped=skipped, failed=failed)
+        return 0
+
     for pkg in pkgs:
         outcome, _ = push_one(pkg, source=args.source, api_key=api_key)
         name = pkg.name
@@ -90,6 +122,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print()
     print(f"Pushed: {len(pushed)}  skipped (duplicate): {len(skipped)}  failed: {len(failed)}")
+    write_push_report(report_path, source=args.source, pushed=pushed, skipped=skipped, failed=failed)
     if failed:
         print("Failed packages:", file=sys.stderr)
         for name in failed:

@@ -600,6 +600,47 @@ def _refresh_tooling_docs() -> None:
         print_warning("tooling-docs render failed (continuing with pack)")
 
 
+def write_pack_report(
+    path: Path,
+    *,
+    version: str,
+    since: str,
+    force: bool,
+    compile_only: bool,
+    pack_only: bool,
+    selected: list[str],
+    built: list[str] | None = None,
+    repacked: list[str] | None = None,
+    skipped: list[str] | None = None,
+    failed: list[str] | None = None,
+    output_dir: Path | None = None,
+) -> None:
+    """Write a JSON report of this pack/compile run for the CI summary job."""
+    packed = [] if compile_only else list(built or []) + list(repacked or [])
+    nupkgs: list[dict[str, object]] = []
+    if output_dir and packed:
+        for name in packed:
+            pkg = output_dir / f"{name}.{version}.nupkg"
+            if pkg.is_file():
+                nupkgs.append({"id": name, "file": pkg.name, "size": pkg.stat().st_size})
+    payload = {
+        "version": version,
+        "since": since or "",
+        "force": force,
+        "compile_only": compile_only,
+        "pack_only": pack_only,
+        "selected": selected,
+        "built": list(built or []),
+        "repacked": list(repacked or []),
+        "skipped": list(skipped or []),
+        "failed": list(failed or []),
+        "packed": packed,
+        "nupkgs": nupkgs,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-v", "--version", default="1.0.0", help="Package version prefix (default: 1.0.0)")
@@ -645,6 +686,27 @@ def main(argv: list[str] | None = None) -> int:
     print()
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = output_dir / "pack-report.json"
+
+    def emit_report(
+        selected: list[Path] | None = None,
+        builder: Builder | None = None,
+        failed: list[str] | None = None,
+    ) -> None:
+        write_pack_report(
+            report_path,
+            version=version,
+            since=changed_since or "",
+            force=bool(args.force),
+            compile_only=bool(args.compile_only),
+            pack_only=bool(args.pack_only),
+            selected=[get_project_name(p) for p in (selected or [])],
+            built=list(builder.built) if builder else [],
+            repacked=list(builder.pack_only) if builder else [],
+            skipped=list(builder.skipped) if builder else [],
+            failed=list(failed or []),
+            output_dir=output_dir,
+        )
 
     projects_to_build: list[Path] = []
     if changed_since is not None:
@@ -659,6 +721,7 @@ def main(argv: list[str] | None = None) -> int:
             projects_to_build = changed
         if not projects_to_build:
             print_warning(f"No packable packages changed since {changed_since}")
+            emit_report()
             return 0
     elif not args.patterns:
         print_info("No pattern specified, building all packages...")
@@ -672,6 +735,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not projects_to_build:
         print_warning("No projects found matching the specified pattern(s)")
+        emit_report()
         return 1
 
     state_file = output_dir / ".build-state"
@@ -734,6 +798,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  - {name}")
     for name in builder.skipped:
         print(f"  - {name}")
+
+    emit_report(projects_to_build, builder, failed_projects)
 
     if failed_projects:
         print()
