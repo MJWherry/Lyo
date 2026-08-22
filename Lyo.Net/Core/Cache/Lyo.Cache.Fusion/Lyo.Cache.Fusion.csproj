@@ -22,7 +22,7 @@
         <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Cache.Tests"/>
     </ItemGroup>
-
 </Project>

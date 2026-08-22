@@ -160,6 +160,40 @@
       "type": "object",
       "required": [
         "type",
+        "title"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "details"
+        },
+        "title": {
+          "type": "string",
+          "description": "Summary label shown on the collapsed block."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/listItem"
+          }
+        },
+        "body": {
+          "type": "string",
+          "description": "Optional markdown inside the details block after the list."
+        },
+        "ordered": {
+          "type": "boolean"
+        },
+        "open": {
+          "type": "boolean",
+          "description": "When true, the details block is expanded by default."
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "type",
         "body"
       ],
       "additionalProperties": false,

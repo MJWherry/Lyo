@@ -94,10 +94,12 @@ jobs:
             "${extra[@]}"
 
       - name: Upload nupkgs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
           path: |
             artifacts/nuget/*.nupkg
             artifacts/nuget/*.snupkg
+            artifacts/nuget/pack-report.json
           if-no-files-found: warn

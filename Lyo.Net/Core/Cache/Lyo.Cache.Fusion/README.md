@@ -12,6 +12,10 @@
 
 Fusion registration reuses the same payload stack as local cache. `ICachePayloadSerializer` writes JSON bytes by default. `ICachePayloadCodec` can compress and, on .NET 10+, encrypt. See `CacheOptions.Payload` in the `Lyo.Cache` README. `GetOrSetPayloadAsync` / `GetOrSetPayloadAsync<T>` behave the same on local cache and Fusion.
 
+## Redis L2 wire format
+
+When Fusion has Redis L2 (`IDistributedCache`), values are written as a LYO2 metadata envelope around codec-framed bytes — not System.Text.Json. Payload `byte[]` that is already LYO1 is stored as-is. Object `GetOrSet` values are serialized once with `ICachePayloadSerializer` then framed by `ICachePayloadCodec` (`AutoCompress` / `AutoEncrypt`). JSON L2 keys written before this format still deserialize until they expire.
+
 ## L1 item snapshot
 
 `Items` is this process's Fusion L1 list (Set/Remove/Expire events), not a Redis SCAN. Framed payload writes set `CacheItem.Encrypted`, `Compressed`, and `SizeBytes`. Keys also carry `Expires` from the remembered TTL (sliding hits re-Set and refresh it). Other nodes can write L2 keys that never show up here until this process loads them.
@@ -32,6 +36,7 @@ source comments in `FusionCacheRegistration.cs`.
 ## Operational checklist
 
 - Register payload and cache options in the same order as documented in `Lyo.Cache`. Fusion assumes those services exist.
+- Redis L2 uses Lyo's `IFusionCacheSerializer` (codec-framed bytes). A host-registered System.Text.Json Fusion serializer is ignored.
 - For Redis, handle network partitions at the infrastructure layer. Fusion's backplane only helps when Redis is reachable.
 - For tag invalidation from `Lyo.Api`, pick `Broad` vs `Granular` as documented under `Lyo.Cache`. Granular adds per-PK tags and costs more CPU on writes.
 

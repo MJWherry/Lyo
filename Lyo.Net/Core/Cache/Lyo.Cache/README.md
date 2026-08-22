@@ -80,9 +80,9 @@ Set in configuration as `"QueryCacheTagGranularity": "Broad"` or `"Granular"`. S
 Used when callers use `ICacheService.GetOrSetPayloadAsync` / `GetOrSetPayloadAsync<T>`, for example `QueryOptions.CacheQueryResultsAsUtf8Payload` in Lyo.Api.
 
 | Area | Role |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ICachePayloadSerializer` | Object to UTF-8 bytes (default: `SystemTextJsonCachePayloadSerializer`). Hosts can replace the registration so serialization matches HTTP JSON options. |
-| `ICachePayloadCodec` | Frames plaintext bytes. Optional `AutoCompress` above `AutoCompressMinSizeBytes`. Optional `AutoEncrypt` (net10, requires `IEncryptionService`). See `CachePayloadCodec`. |
+| `ICachePayloadCodec` | Frames plaintext bytes. Optional `AutoCompress` above `AutoCompressMinSizeBytes`. Optional `AutoEncrypt` (net10, requires `IEncryptionService`). `IsFramed` detects a LYO1 blob. See `CachePayloadCodec`. |
 | `CachePayloadOptions` | `AutoCompress`, `AutoCompressMinSizeBytes`, net10 `AutoEncrypt` / `EncryptionKeyId`. |
 
 Binding examples: `CacheOptions:Payload:AutoCompress`, `CacheOptions:Payload:AutoCompressMinSizeBytes`.

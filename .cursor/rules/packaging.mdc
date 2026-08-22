@@ -23,7 +23,7 @@ alwaysApply: false
 </PropertyGroup>
 ```
 
-plus references and `<InternalsVisibleTo Include="Lyo.{X}.Tests"/>` when internals are tested. `Directory.Build.props` / `Directory.Build.targets` pack `README.md` automatically when that file exists — do not repeat `PackageReadmeFile` or a `None` pack item.
+plus references and `<InternalsVisibleTo Include="Lyo.{X}.Tests"/>` when internals are tested. `Directory.Build.props` / `Directory.Build.targets` pack `README.md` automatically when that file exists — do not repeat `PackageReadmeFile` or a `None` pack item. Razor/Web SDK would otherwise glob `docs.json` as Content (and leak it into consuming hosts via nupkg `contentFiles`); `Directory.Build.targets` already demotes it to `None` with `Pack=false` — do not re-include it as Content.
 
 ## Multi-targeting
 

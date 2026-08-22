@@ -72,6 +72,22 @@ public class CachePayloadTests
         env.Payload.ToArray().ShouldBe(data);
     }
 
+    [Fact]
+    public void CachePayloadCodec_IsFramed_DetectsEncodeOutput()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(new CacheOptions { Payload = new() { AutoCompress = false } });
+        services.AddCompressionService();
+        services.AddDefaultCompressionService<CompressionService>();
+        services.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(
+            sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>()));
+        var codec = services.BuildServiceProvider().GetRequiredService<ICachePayloadCodec>();
+        var framed = codec.Encode([1, 2, 3, 4]);
+        codec.IsFramed(framed).ShouldBeTrue();
+        codec.IsFramed([1, 2, 3, 4]).ShouldBeFalse();
+        codec.IsFramed([]).ShouldBeFalse();
+    }
+
     [Theory]
     [MemberData(nameof(CacheImplementations))]
     public async Task GetOrSetPayloadAsync_skips_compress_below_threshold(string mode)

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
+using ZiggyCreatures.Caching.Fusion.Serialization;
 
 // Do not add 'using Lyo.Cache.Fusion' - we need ZiggyCreatures.AddFusionCache(), not ours
 
@@ -37,11 +38,15 @@ internal static class FusionCacheRegistration
             sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>(), sp.GetService<IEncryptionService>()));
 
         svc.TryAddSingleton(CachePayloadSerializerRegistration.Create);
+        svc.TryAddSingleton<IFusionCacheSerializer>(sp => new CachePayloadFusionSerializer(
+            sp.GetRequiredService<ICachePayloadCodec>(), sp.GetRequiredService<ICachePayloadSerializer>()));
         var fusionCacheBuilder = FusionCacheServiceCollectionExtensions.AddFusionCache(svc);
         if (configureFusionCache != null)
             fusionCacheBuilder.WithOptions(configureFusionCache);
 
         fusionCacheBuilder.TryWithAutoSetup();
+        fusionCacheBuilder.WithSerializer(
+            sp => new CachePayloadFusionSerializer(sp.GetRequiredService<ICachePayloadCodec>(), sp.GetRequiredService<ICachePayloadSerializer>()));
         if (configureRedisBackplane != null) {
             var serviceLocator = new ServiceLocator();
             svc.AddSingleton(serviceLocator);

@@ -154,7 +154,7 @@
         ],
         [
           "`ICachePayloadCodec`",
-          "Frames plaintext bytes. Optional `AutoCompress` above `AutoCompressMinSizeBytes`. Optional `AutoEncrypt` (net10, requires `IEncryptionService`). See `CachePayloadCodec`."
+          "Frames plaintext bytes. Optional `AutoCompress` above `AutoCompressMinSizeBytes`. Optional `AutoEncrypt` (net10, requires `IEncryptionService`). `IsFramed` detects a LYO1 blob. See `CachePayloadCodec`."
         ],
         [
           "`CachePayloadOptions`",
