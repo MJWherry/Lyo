@@ -1,6 +1,6 @@
-using System.Net;
 using Lyo.Common.Extensions;
 using Lyo.Diagnostic.Correlation;
+using Lyo.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -37,14 +37,7 @@ public static class ServiceCollectionExtensions
                 if (!options.BaseUrl.IsNullOrWhitespace())
                     client.BaseAddress = new(options.BaseUrl!.TrimEnd('/') + "/");
             })
-            .ConfigurePrimaryHttpMessageHandler(provider => {
-                var options = provider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-                var handler = new HttpClientHandler();
-                if (options.EnableAutoResponseDecompression)
-                    handler.AutomaticDecompression = ToDecompressionMethods(options.AcceptEncodings);
-
-                return handler;
-            });
+            .UseLyoHttpClientHandler();
 
         if (propagateCorrelationId)
             builder.AddHttpMessageHandler<LyoCorrelationDelegatingHandler>();
@@ -68,52 +61,39 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    internal static void ApplyAcceptEncodingHeaders(HttpClient client, IEnumerable<string>? encodings)
+    /// <summary>
+    /// Sets the primary handler to a new <see cref="LyoHttpClientHandler" /> built from <see cref="ApiClientOptions" />.
+    /// A later <c>ConfigurePrimaryHttpMessageHandler</c> call replaces this handler and drops auto-decompress unless the replacement sets it.
+    /// </summary>
+    public static IHttpClientBuilder UseLyoHttpClientHandler(this IHttpClientBuilder builder) => builder.UseLyoHttpClientHandler<ApiClientOptions>();
+
+    /// <summary>
+    /// Sets the primary handler to a new <see cref="LyoHttpClientHandler" /> built from <typeparamref name="TOptions" /> in DI.
+    /// Register as factory-created (the default here), never a singleton. <typeparamref name="TOptions" /> must be available as <see cref="IOptions{TOptions}" />.
+    /// </summary>
+    public static IHttpClientBuilder UseLyoHttpClientHandler<TOptions>(this IHttpClientBuilder builder)
+        where TOptions : ApiClientOptions
     {
+        ArgumentHelpers.ThrowIfNull(builder);
+        return builder.ConfigurePrimaryHttpMessageHandler(provider => {
+            var options = provider.GetRequiredService<IOptions<TOptions>>().Value;
+            return new LyoHttpClientHandler(options);
+        });
+    }
+
+    /// <summary>Adds supported values from <paramref name="encodings" /> to <see cref="HttpClient.DefaultRequestHeaders" /> <c>Accept-Encoding</c>.</summary>
+    public static void ApplyAcceptEncodingHeaders(HttpClient client, IEnumerable<string>? encodings)
+    {
+        ArgumentHelpers.ThrowIfNull(client);
         if (encodings == null)
             return;
 
         foreach (var encoding in encodings.Where(i => !string.IsNullOrWhiteSpace(i)).Select(i => i.Trim().ToLowerInvariant()).Distinct()) {
-            if (!IsSupportedResponseEncoding(encoding))
+            if (!LyoHttpClientHandler.IsSupportedResponseEncoding(encoding))
                 continue;
 
             if (client.DefaultRequestHeaders.AcceptEncoding.All(i => !string.Equals(i.Value, encoding, StringComparison.OrdinalIgnoreCase)))
                 client.DefaultRequestHeaders.AcceptEncoding.Add(new(encoding));
         }
-    }
-
-    internal static DecompressionMethods ToDecompressionMethods(IEnumerable<string>? encodings)
-    {
-        var methods = DecompressionMethods.None;
-        if (encodings == null)
-            return methods;
-
-        foreach (var raw in encodings) {
-            if (string.IsNullOrWhiteSpace(raw))
-                continue;
-
-            var encoding = raw.Trim().ToLowerInvariant();
-            if (encoding == "gzip")
-                methods |= DecompressionMethods.GZip;
-            else if (encoding == "deflate")
-                methods |= DecompressionMethods.Deflate;
-#if !NETSTANDARD2_0
-            else if (encoding == "br")
-                methods |= DecompressionMethods.Brotli;
-#endif
-        }
-
-        return methods;
-    }
-
-    internal static bool IsSupportedResponseEncoding(string encoding)
-    {
-        if (encoding is "gzip" or "deflate")
-            return true;
-#if !NETSTANDARD2_0
-        if (encoding == "br")
-            return true;
-#endif
-        return false;
     }
 }

@@ -16,7 +16,7 @@
     {
       "type": "markdown",
       "title": "`IApiClient` methods",
-      "body": "**Serialization**\n\n- `GetSerializerOptions()` exposes effective `JsonSerializerOptions`. Use the same instance for ad-hoc serializers in your worker to avoid schema drift.\n\n**GET**\n\n- `GetAsAsync<TResult>(uri, beforeRequest, ct)` returns deserialized JSON.\n- `GetAsAsync<TRequest, TResult>(uri, query, enumerableDelimiter, …)` serializes `TRequest` properties as query parameters so GET DTOs match `Lyo.Api` flattened query endpoints.\n\n**Bodies and verbs**\n\n- **`PostAsAsync` / `PutAsAsync` / `PatchAsAsync` / `DeleteAsAsync`** map to JSON content (generic + non-generic overloads).\n- `PostAsBinaryAsync` for raw byte returns (exports, generated PDFs, etc.).\n\n**Files**\n\n- **`GetFileAsync` / `GetFileWithTypeAsync`** buffer entire payload.\n- `GetFileStreamAsync` returns **`Stream` + filename + length** without forcing memory spikes. The caller disposes underlying `HttpResponseMessage` per XML contract.\n- `PostFileAsAsync` overloads stream/byte[]/path + `FileTypeInfo` for MIME + extension hints.\n\n**Customization hook**\n\nEach method accepts optional `Action<HttpRequestMessage>` to append auth headers (`Authorization: Bearer …`), correlation ids, `Accept` overrides, or tracing headers.\n\nThrows `ApiException` wrapping non-success status codes with contextual payload extraction (see class for available properties). `ApiException` derives from\n`Lyo.Exceptions.Models.HttpException`, so callers can handle it through the shared HTTP hierarchy: `StatusCode` and `ErrorCode` (populated from the first parsed\n`LyoProblemDetails` error code) come from the base type, and `IsTransient` is `true` for 408/429/502/503/504, which lets `Lyo.Resilience` retry pipelines pick it up\nautomatically."
+      "body": "**Serialization**\n\n- `GetSerializerOptions()` exposes effective `JsonSerializerOptions`. Use the same instance for ad-hoc serializers in your worker to avoid schema drift.\n\n**GET**\n\n- `GetAsAsync<TResult>(uri, beforeRequest, ct)` returns deserialized JSON.\n- `GetAsAsync<TRequest, TResult>(uri, query, enumerableDelimiter, …)` serializes `TRequest` properties as query parameters so GET DTOs match `Lyo.Api` flattened query endpoints.\n\n**Bodies and verbs**\n\n- **`PostAsAsync` / `PutAsAsync` / `PatchAsAsync` / `DeleteAsAsync`** map to JSON content (generic + non-generic overloads).\n- `PostAsBinaryAsync` for raw byte returns (exports, generated PDFs, etc.).\n\n**Files**\n\n- **`GetFileAsync` / `GetFileWithTypeAsync`** buffer the payload as the `HttpClient` already decoded it. Use `AddLyoApiClient` / `LyoHttpClientHandler` so gzip/br/deflate transport encoding is stripped. A stored `.gz` without `Content-Encoding` is left as-is.\n- `GetFileStreamAsync` returns **`Stream` + filename + length** without forcing memory spikes. Dispose the stream to release the response.\n- `PostFileAsAsync` overloads stream/byte[]/path + `FileTypeInfo` for MIME + extension hints.\n\n**Customization hook**\n\nEach method accepts optional `Action<HttpRequestMessage>` to append auth headers (`Authorization: Bearer …`), correlation ids, `Accept` overrides, or tracing headers.\n\nThrows `ApiException` wrapping non-success status codes with contextual payload extraction (see class for available properties). `ApiException` derives from\n`Lyo.Exceptions.Models.HttpException`, so callers can handle it through the shared HTTP hierarchy: `StatusCode` and `ErrorCode` (populated from the first parsed\n`LyoProblemDetails` error code) come from the base type, and `IsTransient` is `true` for 408/429/502/503/504, which lets `Lyo.Resilience` retry pipelines pick it up\nautomatically."
     },
     {
       "type": "table",
@@ -45,7 +45,7 @@
         [
           "`EnableAutoResponseDecompression`",
           "`true`",
-          "Enables `HttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when `ApiClient` creates its own handler."
+          "Enables `LyoHttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when the client uses that primary handler (`AddLyoApiClient` / `CreateHttpClient`). Replacing the primary handler drops decompression unless the replacement sets it."
         ],
         [
           "`RequestCompression`",
@@ -66,7 +66,9 @@
       "title": "Compression and performance",
       "items": [
         "Adds `Accept-Encoding` headers from `AcceptEncodings` (duplicates removed, case normalized).",
-        "Sets `HttpClientHandler.AutomaticDecompression` when `EnableAutoResponseDecompression` is `true` (maps `gzip`/`deflate`/`br` where the target framework supports Brotli).",
+        "Uses `LyoHttpClientHandler` as the `IHttpClientFactory` primary handler (`UseLyoHttpClientHandler` / `UseLyoHttpClientHandler<TOptions>`). Other typed clients (Config, etc.) should call the same helper instead of copying `AutomaticDecompression` setup.",
+        "JSON methods still sniff gzip/deflate magic bytes and strip a BOM. File/binary methods do not: they return whatever the handler already decoded.",
+        "A later `ConfigurePrimaryHttpMessageHandler` replaces decompression. Subclass `LyoHttpClientHandler` or set `AutomaticDecompression` on the replacement. Do not add a second decompressing `DelegatingHandler`.",
         "Returns the underlying `IHttpClientBuilder` so callers can chain resilience, message handlers, or named-client overrides."
       ]
     },

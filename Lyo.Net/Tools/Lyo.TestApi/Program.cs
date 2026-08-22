@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -51,7 +50,6 @@ using Lyo.TestApi;
 using Lyo.TestApi.FileStorageWorkbench;
 using Lyo.Xlsx;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.ResponseCompression;
 using Scalar.AspNetCore;
 using Constants = Lyo.TestApi.Constants;
 
@@ -68,21 +66,7 @@ builder.Services.Configure<FormOptions>(options => {
 });
 
 builder.Services.AddOpenApi();
-builder.Services.AddResponseCompression(options => {
-    options.EnableForHttps = true;
-    options.Providers.Add<BrotliCompressionProvider>();
-    options.Providers.Add<GzipCompressionProvider>();
-});
-
-builder.Services.Configure<BrotliCompressionProviderOptions>(options => {
-    options.Level = CompressionLevel.Fastest;
-});
-
-builder.Services.Configure<GzipCompressionProviderOptions>(options => {
-    options.Level = CompressionLevel.Fastest;
-});
-
-builder.Services.AddRequestDecompression();
+builder.Services.AddLyoApiCompression();
 builder.Services.AddMetrics();
 builder.Services.AddFormatterService();
 builder.Services.AddCsvService();
@@ -213,8 +197,7 @@ if (app.Environment.IsDevelopment()) {
     app.MapScalarApiReference();
 }
 
-app.UseResponseCompression();
-app.UseRequestDecompression();
+app.UseLyoApiCompression();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Lyo.TestApi" })).AllowAnonymous().WithTags("Health");

@@ -1,7 +1,10 @@
 using System.IO.Compression;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
+using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
+using Lyo.Api.Models.Enums;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Common;
 using Lyo.Common.Records;
@@ -68,6 +71,42 @@ public class CompressionPostgresTests : IDisposable
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
         Assert.Equal("CompressionQueryTarget", result.Items[0].Name);
+    }
+
+    [Fact]
+    public async Task ExportCsv_WithBrotliAcceptEncoding_ReturnsCompressedCsv()
+    {
+        var name = $"CompressionCsv_{Guid.NewGuid():N}";
+        await _fixture.SeedJobDefinitionAsync(name);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/JobDefinition/Export") {
+            Content = JsonContent.Create(
+                new ExportRequest {
+                    Query = new() { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name) }, Format = ExportFormat.Csv
+                }, options: JsonOptions)
+        };
+        request.Headers.AcceptEncoding.Add(new("br"));
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
+        Assert.Contains("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
+        var csv = Encoding.UTF8.GetString(DecompressBrotli(await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken)));
+        Assert.Contains(name, csv, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ExportXlsx_WithBrotliAcceptEncoding_IsNotCompressed()
+    {
+        var name = $"CompressionXlsx_{Guid.NewGuid():N}";
+        await _fixture.SeedJobDefinitionAsync(name);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/JobDefinition/Export") {
+            Content = JsonContent.Create(
+                new ExportRequest {
+                    Query = new() { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name) }, Format = ExportFormat.Xlsx
+                }, options: JsonOptions)
+        };
+        request.Headers.AcceptEncoding.Add(new("br"));
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
+        Assert.DoesNotContain("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
     }
 
     private static byte[] CompressGzip(byte[] data)

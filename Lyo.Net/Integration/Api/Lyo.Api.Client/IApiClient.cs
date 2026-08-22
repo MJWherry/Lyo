@@ -1,4 +1,4 @@
-﻿﻿using System.Text.Json;
+﻿using System.Text.Json;
 using Lyo.Common.Records;
 
 namespace Lyo.Api.Client;
@@ -18,11 +18,13 @@ public interface IApiClient : IDisposable
 
     Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default);
 
+    /// <summary>Downloads a file and returns the payload as already decoded by the <see cref="HttpClient" /> handler (see <see cref="LyoHttpClientHandler" />).</summary>
     Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default);
 
-    /// <summary>Downloads a file as a stream without buffering the entire response in memory. The caller owns the returned <see cref="HttpResponseMessage" /> and must dispose it.</summary>
+    /// <summary>Downloads a file as a stream without buffering the entire response in memory. Dispose the returned stream to release the response.</summary>
     Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default);
 
+    /// <summary>Downloads a file and returns the payload with its <see cref="FileTypeInfo" /> from the response Content-Type header.</summary>
     Task<(byte[] Content, FileTypeInfo FileType)> GetFileWithTypeAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default);
 
     Task<TResult> PutAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default);

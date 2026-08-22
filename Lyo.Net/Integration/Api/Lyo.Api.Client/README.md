@@ -38,8 +38,8 @@ services.AddLyoApiClient(
 
 **Files**
 
-- **`GetFileAsync` / `GetFileWithTypeAsync`** buffer entire payload.
-- `GetFileStreamAsync` returns **`Stream` + filename + length** without forcing memory spikes. The caller disposes underlying `HttpResponseMessage` per XML contract.
+- **`GetFileAsync` / `GetFileWithTypeAsync`** buffer the payload as the `HttpClient` already decoded it. Use `AddLyoApiClient` / `LyoHttpClientHandler` so gzip/br/deflate transport encoding is stripped. A stored `.gz` without `Content-Encoding` is left as-is.
+- `GetFileStreamAsync` returns **`Stream` + filename + length** without forcing memory spikes. Dispose the stream to release the response.
 - `PostFileAsAsync` overloads stream/byte[]/path + `FileTypeInfo` for MIME + extension hints.
 
 **Customization hook**
@@ -57,11 +57,11 @@ Configuration section: `ApiClientOptions.SectionName = "ApiClient"`. Integration
 so all transport flags bind under their own section.
 
 | Property | Default | Description |
-| --------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `BaseUrl` | `null` | When set, becomes `HttpClient.BaseAddress` (trailing `/` enforced); relative URIs resolve against it. |
 | `EnsureStatusCode` | `true` | Calls `EnsureSuccessStatusCode` after each response. Set `false` when the server returns problem-details bodies on non-success codes that the caller wants to inspect. |
 | `AcceptEncodings` | `["gzip","deflate","br"]`* | Sent as `Accept-Encoding`. *On `netstandard2.0` the default drops `br` (Brotli is not built in there). Duplicates are removed and normalized to lowercase. |
-| `EnableAutoResponseDecompression` | `true` | Enables `HttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when `ApiClient` creates its own handler. |
+| `EnableAutoResponseDecompression` | `true` | Enables `LyoHttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when the client uses that primary handler (`AddLyoApiClient` / `CreateHttpClient`). Replacing the primary handler drops decompression unless the replacement sets it. |
 | `RequestCompression` | `None` | `ApiRequestCompressionType` for outgoing JSON bodies: `None`, `Gzip`, `Deflate`, `Brotli`. Sets `Content-Encoding` accordingly. |
 | `RequestCompressionMinBytes` | `1024` | Minimum serialized payload size before compression applies (skips CPU on tiny bodies). |
 
@@ -70,7 +70,9 @@ Pair request compression with a host that registers `AddRequestDecompression` (A
 ## Compression and performance
 
 - Adds `Accept-Encoding` headers from `AcceptEncodings` (duplicates removed, case normalized).
-- Sets `HttpClientHandler.AutomaticDecompression` when `EnableAutoResponseDecompression` is `true` (maps `gzip`/`deflate`/`br` where the target framework supports Brotli).
+- Uses `LyoHttpClientHandler` as the `IHttpClientFactory` primary handler (`UseLyoHttpClientHandler` / `UseLyoHttpClientHandler<TOptions>`). Other typed clients (Config, etc.) should call the same helper instead of copying `AutomaticDecompression` setup.
+- JSON methods still sniff gzip/deflate magic bytes and strip a BOM. File/binary methods do not: they return whatever the handler already decoded.
+- A later `ConfigurePrimaryHttpMessageHandler` replaces decompression. Subclass `LyoHttpClientHandler` or set `AutomaticDecompression` on the replacement. Do not add a second decompressing `DelegatingHandler`.
 - Returns the underlying `IHttpClientBuilder` so callers can chain resilience, message handlers, or named-client overrides.
 
 ## DI registration

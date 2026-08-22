@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Config;
@@ -15,27 +14,12 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Xlsx;
-using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCsvService();
 builder.Services.AddXlsxService();
 builder.Services.AddFormatterService();
-builder.Services.AddResponseCompression(options => {
-    options.EnableForHttps = true;
-    options.Providers.Add<BrotliCompressionProvider>();
-    options.Providers.Add<GzipCompressionProvider>();
-});
-
-builder.Services.Configure<BrotliCompressionProviderOptions>(options => {
-    options.Level = CompressionLevel.Fastest;
-});
-
-builder.Services.Configure<GzipCompressionProviderOptions>(options => {
-    options.Level = CompressionLevel.Fastest;
-});
-
-builder.Services.AddRequestDecompression();
+builder.Services.AddLyoApiCompression();
 builder.Services.ConfigureHttpJsonOptions(o => LyoJsonSerializerOptions.ApplyTo(o.SerializerOptions));
 builder.Services.AddLocalCache();
 builder.Services.AddLyoQueryServices();
@@ -52,8 +36,7 @@ builder.Services.AddCors(options => {
 var app = builder.Build();
 app.UseMiddleware<Lyo.Api.Middleware.LoggingMiddleware>();
 app.UseCors();
-app.UseResponseCompression();
-app.UseRequestDecompression();
+app.UseLyoApiCompression();
 app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")
     .AllowAnonymous()
     .WithMetadata(new MetadataConfiguration<JobContext, JobDefinition> { IncludeEntityMetadata = true })

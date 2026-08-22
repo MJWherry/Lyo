@@ -12,7 +12,7 @@
     "`BaseAddress = \"{BaseUrl}/\"` when `BaseUrl` is non-empty.",
     "Adds the `X-Api-Key: <ApiKey>` default request header when `ApiKey` is non-empty.",
     "Appends `gzip` / `deflate` / `br` to `Accept-Encoding` based on `AcceptEncodings`.",
-    "Enables `HttpClientHandler.AutomaticDecompression` from `AcceptEncodings` when `EnableAutoResponseDecompression == true`."
+    "Enables `LyoHttpClientHandler.AutomaticDecompression` from `AcceptEncodings` when `EnableAutoResponseDecompression == true` (`UseLyoHttpClientHandler<ConfigApiClientOptions>()`)."
   ],
   "examples": [
     {
@@ -38,7 +38,7 @@
         "`BaseAddress = \"{BaseUrl}/\"` when `BaseUrl` is non-empty.",
         "Adds the `X-Api-Key: <ApiKey>` default request header when `ApiKey` is non-empty.",
         "Appends `gzip` / `deflate` / `br` to `Accept-Encoding` based on `AcceptEncodings`.",
-        "Enables `HttpClientHandler.AutomaticDecompression` from `AcceptEncodings` when `EnableAutoResponseDecompression == true`."
+        "Enables `LyoHttpClientHandler.AutomaticDecompression` from `AcceptEncodings` when `EnableAutoResponseDecompression == true` (`UseLyoHttpClientHandler<ConfigApiClientOptions>()`)."
       ]
     },
     {
@@ -78,7 +78,7 @@
         [
           "`EnableAutoResponseDecompression`",
           "`true`",
-          "Toggles the matching `HttpClientHandler.AutomaticDecompression` flags."
+          "Toggles `LyoHttpClientHandler.AutomaticDecompression` via `UseLyoHttpClientHandler<ConfigApiClientOptions>()`."
         ],
         [
           "`RequestCompression`",

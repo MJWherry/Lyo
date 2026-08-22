@@ -129,8 +129,7 @@ public class ApiClient : IApiClient
             var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 #endif
             var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"');
-            var contentLength = response.Content.Headers.ContentLength;
-            return (new HttpResponseStream(stream, response, request), fileName, contentLength);
+            return (new HttpResponseStream(stream, response, request), fileName, response.Content.Headers.ContentLength);
         }
         catch {
             response.Dispose();
@@ -411,14 +410,7 @@ public class ApiClient : IApiClient
         throw new ApiException((int)response.StatusCode, message, problemDetails) { ErrorCode = problemDetails?.Errors.FirstOrDefault()?.Code };
     }
 
-    private static HttpClient CreateHttpClient(ApiClientOptions options)
-    {
-        if (!options.EnableAutoResponseDecompression)
-            return new();
-
-        var handler = new HttpClientHandler { AutomaticDecompression = ToDecompressionMethods(options.AcceptEncodings) };
-        return new(handler);
-    }
+    private static HttpClient CreateHttpClient(ApiClientOptions options) => new(new LyoHttpClientHandler(options));
 
     private void ConfigureAcceptEncodingHeaders()
     {
@@ -426,7 +418,7 @@ public class ApiClient : IApiClient
             return;
 
         foreach (var encoding in BaseOptions.AcceptEncodings.Where(i => !string.IsNullOrWhiteSpace(i)).Select(i => i.Trim().ToLowerInvariant()).Distinct()) {
-            if (!IsSupportedResponseEncoding(encoding))
+            if (!LyoHttpClientHandler.IsSupportedResponseEncoding(encoding))
                 continue;
 
             if (HttpClient.DefaultRequestHeaders.AcceptEncoding.All(i => !string.Equals(i.Value, encoding, StringComparison.OrdinalIgnoreCase)))
@@ -479,41 +471,6 @@ public class ApiClient : IApiClient
             ApiRequestCompressionType.Brotli => "br",
             var _ => throw new ArgumentOutOfRangeException(nameof(compressionType), compressionType, null)
         };
-
-    private static DecompressionMethods ToDecompressionMethods(IEnumerable<string>? encodings)
-    {
-        var methods = DecompressionMethods.None;
-        if (encodings == null)
-            return methods;
-
-        foreach (var raw in encodings) {
-            if (string.IsNullOrWhiteSpace(raw))
-                continue;
-
-            var encoding = raw.Trim().ToLowerInvariant();
-            if (encoding == "gzip")
-                methods |= DecompressionMethods.GZip;
-            else if (encoding == "deflate")
-                methods |= DecompressionMethods.Deflate;
-#if !NETSTANDARD2_0
-            else if (encoding == "br")
-                methods |= DecompressionMethods.Brotli;
-#endif
-        }
-
-        return methods;
-    }
-
-    private static bool IsSupportedResponseEncoding(string encoding)
-    {
-        if (encoding == "gzip" || encoding == "deflate")
-            return true;
-#if !NETSTANDARD2_0
-        if (encoding == "br")
-            return true;
-#endif
-        return false;
-    }
 
     private async Task<TResult> PostFileAsAsyncCore<TResult>(
         string uri,
