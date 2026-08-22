@@ -112,30 +112,8 @@ public static class ConfigApiHttpClientRegistration
                     client.BaseAddress = new(options.BaseUrl!.TrimEnd('/') + "/");
 
                 ConfigApiClient.ApplyApiKey(client.DefaultRequestHeaders, options.ApiKey);
-                foreach (var enc in options.AcceptEncodings.Select(e => e.Trim().ToLowerInvariant()).Where(e => e is "gzip" or "deflate" or "br").Distinct()) {
-                    if (client.DefaultRequestHeaders.AcceptEncoding.All(h => !string.Equals(h.Value, enc, StringComparison.OrdinalIgnoreCase)))
-                        client.DefaultRequestHeaders.AcceptEncoding.Add(new(enc));
-                }
+                ServiceCollectionExtensions.ApplyAcceptEncodingHeaders(client, options.AcceptEncodings);
             })
-            .ConfigurePrimaryHttpMessageHandler(() => {
-                var handler = new HttpClientHandler();
-                if (!options.EnableAutoResponseDecompression)
-                    return handler;
-
-                var methods = DecompressionMethods.None;
-                foreach (var enc in options.AcceptEncodings) {
-                    if (string.Equals(enc, "gzip", StringComparison.OrdinalIgnoreCase))
-                        methods |= DecompressionMethods.GZip;
-                    else if (string.Equals(enc, "deflate", StringComparison.OrdinalIgnoreCase))
-                        methods |= DecompressionMethods.Deflate;
-#if !NETSTANDARD2_0
-                    else if (string.Equals(enc, "br", StringComparison.OrdinalIgnoreCase))
-                        methods |= DecompressionMethods.Brotli;
-#endif
-                }
-
-                handler.AutomaticDecompression = methods;
-                return handler;
-            });
+            .UseLyoHttpClientHandler<ConfigApiClientOptions>();
     }
 }

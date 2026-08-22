@@ -51,6 +51,7 @@ builder.Services.AddLocalCache(); // or AddFusionCache()
 builder.Services.AddLyoQueryServices();
 builder.Services.AddLyoCrudServices<MyDbContext>();
 builder.Services.AddDbContextFactory<MyDbContext>(...);
+builder.Services.AddLyoApiCompression();
 // Register ILyoMapper — any implementation (Mapster/AutoMapper/custom). Many samples use a thin Mapster adapter.
 builder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();
 
@@ -61,6 +62,9 @@ builder.Services.AddXlsxExport(); // Lyo.Api.Export.Xlsx + AddXlsxService()
 // Optional: PostgreSQL set-returning functions (ISprocService), Lyo.Diff helpers
 // builder.Services.AddPostgresSprocService<MyDbContext>();
 // builder.Services.AddLyoDiffServices();
+
+var app = builder.Build();
+app.UseLyoApiCompression();
 ```
 
 ### Quick start
@@ -346,10 +350,15 @@ All registrations are extension methods on `IServiceCollection` (no `IServiceCol
 | `AddCsvExport()` / `AddXlsxExport()` | Optional format handlers (`Lyo.Api.Export.Csv` / `.Xlsx`). |
 | `AddPostgresSprocService<TContext>()` | Scoped `ISprocService` → `PostgresSprocService<TContext>` for PostgreSQL set-returning functions (`SELECT * FROM schema.func(…)`). |
 | `AddLyoDiffServices()` | Forwards to `Lyo.Diff.AddLyoDiff()` (text and object-graph diff, `IDiffService`). |
+| `AddLyoApiCompression()` | Brotli + gzip response compression (`MimeTypes` `*/*`) and request decompression. Skips already-compressed types from `FileTypeInfo` (images except SVG, audio, archives, Open XML, PDF). Pair with `app.UseLyoApiCompression()`. |
 
 ## Diagnostic recording ([`LyoApiDiagnosticExtensions`](LyoApiDiagnosticExtensions.cs))
 
 `services.AddLyoApiDiagnosticRecording(configure?)` is a thin alias over `Lyo.Diagnostic.AspNetCore.AddLyoDiagnosticsWeb`. It registers the breadcrumb pipeline, in-memory inbox, and structured logging for ASP.NET Core hosts. Pass an optional `Action<DiagnosticWebOptions>` to override capture behavior.
+
+## Response compression ([`LyoApiCompressionExtensions`](LyoApiCompressionExtensions.cs))
+
+`services.AddLyoApiCompression()` plus `app.UseLyoApiCompression()` (after logging, before endpoints) compress almost every response, including CSV exports and `application/octet-stream` file downloads. JPEG, ZIP, XLSX, PDF, and similar already-compressed types are excluded. Clients should decompress via [`LyoHttpClientHandler`](../Lyo.Api.Client/LyoHttpClientHandler.cs), not by sniffing file bytes.
 
 ## `LoggingMiddleware` ([`Middleware/LoggingMiddleware.cs`](Middleware/LoggingMiddleware.cs))
 

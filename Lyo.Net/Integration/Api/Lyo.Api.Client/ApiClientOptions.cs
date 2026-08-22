@@ -26,7 +26,7 @@ public class ApiClientOptions
     public string[] AcceptEncodings { get; set; } = ["gzip", "deflate", "br"];
 #endif
 
-    /// <summary>Gets or sets whether automatic response decompression should be enabled when ApiClient creates its own HttpClient.</summary>
+    /// <summary>Gets or sets whether <see cref="LyoHttpClientHandler" /> enables <see cref="System.Net.Http.HttpClientHandler.AutomaticDecompression" /> from <see cref="AcceptEncodings" />. Default true.</summary>
     public bool EnableAutoResponseDecompression { get; set; } = true;
 
     /// <summary>Gets or sets the compression type for JSON request bodies.</summary>

@@ -13,7 +13,7 @@ References [`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md) for `Co
 - `BaseAddress = "{BaseUrl}/"` when `BaseUrl` is non-empty.
 - Adds the `X-Api-Key: <ApiKey>` default request header when `ApiKey` is non-empty.
 - Appends `gzip` / `deflate` / `br` to `Accept-Encoding` based on `AcceptEncodings`.
-- Enables `HttpClientHandler.AutomaticDecompression` from `AcceptEncodings` when `EnableAutoResponseDecompression == true`.
+- Enables `LyoHttpClientHandler.AutomaticDecompression` from `AcceptEncodings` when `EnableAutoResponseDecompression == true` (`UseLyoHttpClientHandler<ConfigApiClientOptions>()`).
 
 ## Examples
 
@@ -51,7 +51,7 @@ services.AddConfigApiClientFromConfiguration(configuration);
 - `BaseAddress = "{BaseUrl}/"` when `BaseUrl` is non-empty.
 - Adds the `X-Api-Key: <ApiKey>` default request header when `ApiKey` is non-empty.
 - Appends `gzip` / `deflate` / `br` to `Accept-Encoding` based on `AcceptEncodings`.
-- Enables `HttpClientHandler.AutomaticDecompression` from `AcceptEncodings` when `EnableAutoResponseDecompression == true`.
+- Enables `LyoHttpClientHandler.AutomaticDecompression` from `AcceptEncodings` when `EnableAutoResponseDecompression == true` (`UseLyoHttpClientHandler<ConfigApiClientOptions>()`).
 
 ## `ConfigApiClientOptions`
 
@@ -64,7 +64,7 @@ Section: `ConfigApi` by default. Inherits from `Lyo.Api.Client.ApiClientOptions`
 | `PollInterval` (`TimeSpan?`) | `null` | **Advisory only.** Not consumed by `ConfigApiClient`; bring your own scheduler, or pass an explicit `TimeSpan` to `ConfigPolling.PollUntilChangedAsync`. |
 | `EnsureStatusCode` (`bool`) | `true` | When `true`, non-success responses (other than `304 Not Modified`) call `EnsureSuccessStatusCode()` and throw `HttpRequestException`. When `false`, `ResolveForAppAsync` returns a `ConfigResolveConditionalResult` with `Outcome = Failed` and a populated `Failure` so the caller can inspect the status code without an exception. |
 | `AcceptEncodings` | `["gzip", "deflate", "br"]` | Advertised encodings; only `gzip` / `deflate` / `br` are honored (and `br` requires a non-`netstandard2.0` target). |
-| `EnableAutoResponseDecompression` | `true` | Toggles the matching `HttpClientHandler.AutomaticDecompression` flags. |
+| `EnableAutoResponseDecompression` | `true` | Toggles `LyoHttpClientHandler.AutomaticDecompression` via `UseLyoHttpClientHandler<ConfigApiClientOptions>()`. |
 | `RequestCompression` | `ApiRequestCompressionType.None` | Inherited request-body compression, unused by the resolve route (GET / HEAD). |
 | `RequestCompressionMinBytes` | `1024` | Inherited threshold for request-body compression. |
 

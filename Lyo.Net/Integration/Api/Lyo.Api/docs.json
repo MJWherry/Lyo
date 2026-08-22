@@ -44,7 +44,7 @@
     {
       "title": "Setup",
       "language": "csharp",
-      "code": "// Required: query services, cache, ILyoMapper, DbContext factory\nbuilder.Services.AddLocalCache(); // or AddFusionCache()\nbuilder.Services.AddLyoQueryServices();\nbuilder.Services.AddLyoCrudServices<MyDbContext>();\nbuilder.Services.AddDbContextFactory<MyDbContext>(...);\n// Register ILyoMapper — any implementation (Mapster/AutoMapper/custom). Many samples use a thin Mapster adapter.\nbuilder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();\n\n// Optional: export endpoint + IExportService (Lyo.Api.Export); add format handlers separately\nbuilder.Services.AddLyoApiExport<MyDbContext>();\nbuilder.Services.AddCsvExport(); // Lyo.Api.Export.Csv + AddCsvService()\nbuilder.Services.AddXlsxExport(); // Lyo.Api.Export.Xlsx + AddXlsxService()\n// Optional: PostgreSQL set-returning functions (ISprocService), Lyo.Diff helpers\n// builder.Services.AddPostgresSprocService<MyDbContext>();\n// builder.Services.AddLyoDiffServices();"
+      "code": "// Required: query services, cache, ILyoMapper, DbContext factory\nbuilder.Services.AddLocalCache(); // or AddFusionCache()\nbuilder.Services.AddLyoQueryServices();\nbuilder.Services.AddLyoCrudServices<MyDbContext>();\nbuilder.Services.AddDbContextFactory<MyDbContext>(...);\nbuilder.Services.AddLyoApiCompression();\n// Register ILyoMapper — any implementation (Mapster/AutoMapper/custom). Many samples use a thin Mapster adapter.\nbuilder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();\n\n// Optional: export endpoint + IExportService (Lyo.Api.Export); add format handlers separately\nbuilder.Services.AddLyoApiExport<MyDbContext>();\nbuilder.Services.AddCsvExport(); // Lyo.Api.Export.Csv + AddCsvService()\nbuilder.Services.AddXlsxExport(); // Lyo.Api.Export.Xlsx + AddXlsxService()\n// Optional: PostgreSQL set-returning functions (ISprocService), Lyo.Diff helpers\n// builder.Services.AddPostgresSprocService<MyDbContext>();\n// builder.Services.AddLyoDiffServices();\n\nvar app = builder.Build();\napp.UseLyoApiCompression();"
     },
     {
       "title": "Quick start",
@@ -167,6 +167,10 @@
         [
           "`AddLyoDiffServices()`",
           "Forwards to `Lyo.Diff.AddLyoDiff()` (text and object-graph diff, `IDiffService`)."
+        ],
+        [
+          "`AddLyoApiCompression()`",
+          "Brotli + gzip response compression (`MimeTypes` `*/*`) and request decompression. Skips already-compressed types from `FileTypeInfo` (images except SVG, audio, archives, Open XML, PDF). Pair with `app.UseLyoApiCompression()`."
         ]
       ],
       "lead": "All registrations are extension methods on `IServiceCollection` (no `IServiceCollection` first parameter shown. They live inside `extension(IServiceCollection services)` blocks):"
@@ -175,6 +179,11 @@
       "type": "paragraph",
       "title": "Diagnostic recording ([`LyoApiDiagnosticExtensions`](LyoApiDiagnosticExtensions.cs))",
       "text": "`services.AddLyoApiDiagnosticRecording(configure?)` is a thin alias over `Lyo.Diagnostic.AspNetCore.AddLyoDiagnosticsWeb`. It registers the breadcrumb pipeline, in-memory inbox, and structured logging for ASP.NET Core hosts. Pass an optional `Action<DiagnosticWebOptions>` to override capture behavior."
+    },
+    {
+      "type": "paragraph",
+      "title": "Response compression ([`LyoApiCompressionExtensions`](LyoApiCompressionExtensions.cs))",
+      "text": "`services.AddLyoApiCompression()` plus `app.UseLyoApiCompression()` (after logging, before endpoints) compress almost every response, including CSV exports and `application/octet-stream` file downloads. JPEG, ZIP, XLSX, PDF, and similar already-compressed types are excluded. Clients should decompress via [`LyoHttpClientHandler`](../Lyo.Api.Client/LyoHttpClientHandler.cs), not by sniffing file bytes."
     },
     {
       "type": "list",
