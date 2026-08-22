@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -30,13 +31,23 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         CreateAnonymousProjectionType(6), CreateAnonymousProjectionType(7), CreateAnonymousProjectionType(8)
     ];
 
-    private static readonly PropertyInfo[][] AnonymousProjectionPropertyCache = Enumerable.Range(2, 7)
-        .Select(n => AnonymousProjectionTypes[n].GetProperties().OrderBy(p => p.Name).ToArray())
-        .ToArray();
+    /// <summary>Seven leaf slots plus a typed <c>Rest</c> (another anonymous type). Classes, not <see cref="ValueTuple"/> — Npgsql maps nested tuples to PG <c>record</c>.</summary>
+    private const int NestedAnonymousLeafCount = 7;
 
-    /// <summary>Compiled getters for anonymous projection shapes — avoids <see cref="PropertyInfo.GetValue(object?)" /> on hot paths.</summary>
-    private static readonly Func<object, object?>[][] AnonymousProjectionFieldGetters =
-        AnonymousProjectionPropertyCache.Select(propRow => propRow.Select(CompileAnonymousFieldGetter).ToArray()).ToArray();
+    private static readonly Type NestedAnonymousGenericDefinition = new {
+        V0 = (object?)null,
+        V1 = (object?)null,
+        V2 = (object?)null,
+        V3 = (object?)null,
+        V4 = (object?)null,
+        V5 = (object?)null,
+        V6 = (object?)null,
+        Rest = (object?)null
+    }.GetType().GetGenericTypeDefinition();
+
+    private static readonly ConcurrentDictionary<Type, Type> NestedAnonymousRowTypes = new();
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> CtorOrderedPropertiesByType = new();
+    private static readonly ConcurrentDictionary<PropertyInfo, Func<object, object?>> CompiledPropertyGetters = new();
 
     public (IReadOnlyList<ProjectedFieldSpec> Specs, IReadOnlyList<ApiError> PathErrors) ResolveProjectedFields<TDbModel>(
         IEnumerable<string> requestedFields,
@@ -494,7 +505,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 slots.Add(new SqlProjectionSingleSlot(i));
         }
 
-        if (slots.Count == 0 || slots.Count > 8)
+        if (slots.Count == 0)
             return null;
 
         return new(slots);
@@ -539,18 +550,16 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             leafExprs.Add(Expression.Convert(innerExpr, typeof(object)));
         }
 
-        var fieldCount = leafExprs.Count;
-        if (fieldCount is < 2 or > 8)
+        if (leafExprs.Count < 2)
             return null;
 
-        var anonType = AnonymousProjectionTypes[fieldCount];
-        var ctor = anonType.GetConstructors().First(c => c.GetParameters().Length == fieldCount);
-        var newExpr = Expression.New(ctor, leafExprs);
-        var delegateType = typeof(Func<,>).MakeGenericType(elementType, anonType);
+        var newExpr = BuildAnonymousRow(leafExprs);
+        var rowType = newExpr.Type;
+        var delegateType = typeof(Func<,>).MakeGenericType(elementType, rowType);
         var selector = Expression.Lambda(delegateType, newExpr, innerParam);
         var selectMethod = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static)
             .First(m => m.Name == nameof(Enumerable.Select) && m.GetParameters().Length == 2)
-            .MakeGenericMethod(elementType, anonType);
+            .MakeGenericMethod(elementType, rowType);
 
         return Expression.Call(selectMethod, collectionExpr, selector);
     }
@@ -624,10 +633,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                     dict[specs[i].RequestedPath] = tuple[i];
             }
             else {
-                var n = Math.Min(specs.Count, 8);
-                var getters = AnonymousProjectionFieldGetters[n - 2];
-                for (var i = 0; i < Math.Min(specs.Count, getters.Length); i++)
-                    dict[specs[i].RequestedPath] = getters[i](item);
+                for (var i = 0; i < specs.Count; i++)
+                    dict[specs[i].RequestedPath] = GetProjectionSlotValue(item, i);
             }
 
             multiResults.Add(dict);
@@ -642,17 +649,40 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         if (slotCount == 1 && slotIndex == 0)
             return item;
 
-        if (item is ITuple tuple && slotIndex < tuple.Length)
-            return tuple[slotIndex];
+        return GetProjectionSlotValue(item, slotIndex);
+    }
 
-        var getters = AnonymousProjectionFieldGetters[slotCount - 2];
-        return getters[slotIndex](item);
+    /// <summary>Reads slot <paramref name="slotIndex"/> from a flat or nested anonymous row. Walks <c>Rest</c> in constructor-parameter order (do not sort property names).</summary>
+    private static object? GetProjectionSlotValue(object item, int slotIndex)
+    {
+        var current = item;
+        var remaining = slotIndex;
+        while (true) {
+            if (current is ITuple tuple)
+                return remaining < tuple.Length ? tuple[remaining] : null;
+
+            var props = GetCtorOrderedProperties(current.GetType());
+            if (props.Length == 0)
+                return null;
+
+            var restIsLast = props[^1].Name == "Rest";
+            var leafCount = restIsLast ? props.Length - 1 : props.Length;
+            if (remaining < leafCount)
+                return GetCompiledPropertyGetter(props[remaining])(current);
+
+            if (!restIsLast)
+                return null;
+
+            remaining -= leafCount;
+            current = GetCompiledPropertyGetter(props[^1])(current);
+            if (current is null)
+                return null;
+        }
     }
 
     private static void ExpandMergedSqlCollectionSlot(Dictionary<string, object?> dict, IReadOnlyList<ProjectedFieldSpec> specs, object? slotValue, IReadOnlyList<int> indices)
     {
         var n = indices.Count;
-        var innerGetters = AnonymousProjectionFieldGetters[n - 2];
         var lists = new List<object?>[n];
         if (slotValue is IEnumerable enumerable && slotValue is not string and not byte[]) {
             var rowHint = enumerable is ICollection coll ? coll.Count : 0;
@@ -664,7 +694,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                     continue;
 
                 for (var j = 0; j < n; j++)
-                    lists[j].Add(innerGetters[j](row));
+                    lists[j].Add(GetProjectionSlotValue(row, j));
             }
         }
         else {
@@ -1322,6 +1352,21 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return Expression.Lambda<Func<object, object?>>(body, param).Compile();
     }
 
+    private static Func<object, object?> GetCompiledPropertyGetter(PropertyInfo property)
+        => CompiledPropertyGetters.GetOrAdd(property, CompileAnonymousFieldGetter);
+
+    private static PropertyInfo[] GetCtorOrderedProperties(Type type)
+        => CtorOrderedPropertiesByType.GetOrAdd(
+            type, static t => {
+                var ctor = t.GetConstructors(BindingFlags.Public | BindingFlags.Instance).OrderByDescending(c => c.GetParameters().Length).First();
+                return ctor.GetParameters().Select(p => t.GetProperty(p.Name!, BindingFlags.Public | BindingFlags.Instance)!).ToArray();
+            });
+
+    private static Type GetNestedAnonymousRowType(Type restType)
+        => NestedAnonymousRowTypes.GetOrAdd(
+            restType, static r => NestedAnonymousGenericDefinition.MakeGenericType(
+                typeof(object), typeof(object), typeof(object), typeof(object), typeof(object), typeof(object), typeof(object), r));
+
     private static Type CreateAnonymousProjectionType(int fieldCount)
         => fieldCount switch {
             2 => new { V0 = (object?)null, V1 = (object?)null }.GetType(),
@@ -1374,12 +1419,31 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         if (expressions.Count == 1)
             return expressions[0];
 
-        var n = Math.Min(expressions.Count, 8);
-        var anonType = AnonymousProjectionTypes[n];
-        var ctor = anonType.GetConstructors().First(c => c.GetParameters().Length == n);
-        var args = expressions.Take(n).ToArray();
-        var newExpr = Expression.New(ctor, args);
-        return Expression.Convert(newExpr, typeof(object));
+        return Expression.Convert(BuildAnonymousRow(expressions), typeof(object));
+    }
+
+    /// <summary>Flat anonymous type for 2–8 slots; 9+ nests seven leaves plus a typed Rest so EF still emits columns (not PG records).</summary>
+    private static NewExpression BuildAnonymousRow(IReadOnlyList<Expression> expressions)
+    {
+        var n = expressions.Count;
+        if (n <= 8)
+            return NewAnonymous(AnonymousProjectionTypes[n], expressions);
+
+        var rest = BuildAnonymousRow(expressions.Skip(NestedAnonymousLeafCount).ToArray());
+        var nestType = GetNestedAnonymousRowType(rest.Type);
+        var args = new Expression[NestedAnonymousLeafCount + 1];
+        for (var i = 0; i < NestedAnonymousLeafCount; i++)
+            args[i] = expressions[i];
+
+        args[NestedAnonymousLeafCount] = rest;
+        return NewAnonymous(nestType, args);
+    }
+
+    private static NewExpression NewAnonymous(Type anonType, IReadOnlyList<Expression> args)
+    {
+        var ctor = anonType.GetConstructors().First(c => c.GetParameters().Length == args.Count);
+        var members = GetCtorOrderedProperties(anonType);
+        return Expression.New(ctor, args, members);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

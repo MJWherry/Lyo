@@ -744,7 +744,7 @@ public class QueryService<TContext>(
             var sqlEntityTypes = projectionService.GetProjectionEntityTypeNames<TDbModel>(projectedFieldSpecs, queryRequest.ComputedFields);
             return ResultFactory.ProjectedQuerySuccess(queryRequest, converted, startIndex, converted.Count, total, hasMore, entityTypes: sqlEntityTypes);
         }
-        catch (Exception ex) when (ex is InvalidOperationException or NotSupportedException && ex.Message.Contains("could not be translated", StringComparison.OrdinalIgnoreCase)) {
+        catch (Exception ex) when (IsSqlProjectionFallbackException(ex)) {
             Logger.LogDebug(ex, "SQL projection failed for {EntityType}; using fallback path", typeof(TDbModel).Name);
             return null;
         }
@@ -870,6 +870,21 @@ public class QueryService<TContext>(
 
     private static LyoProblemDetails AggregatedValidationProblemDetails(IReadOnlyList<ApiError> errors, string rootSummary)
         => LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(ApiErrorCodes.InvalidQuery).WithMessage(rootSummary).AddErrors(errors).Build();
+
+    private static bool IsSqlProjectionFallbackException(Exception ex)
+    {
+        if (ex is InvalidOperationException or NotSupportedException && ex.Message.Contains("could not be translated", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        for (var current = ex; current is not null; current = current.InnerException) {
+            if (current.Message.Contains("Could not read a PostgreSQL record", StringComparison.OrdinalIgnoreCase) ||
+                current.Message.Contains("EnableRecordsAsTuples", StringComparison.OrdinalIgnoreCase) ||
+                current.Message.Contains("DataTypeName 'record'", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
 
     private readonly record struct QueryCoreCacheAugmentation(IReadOnlyList<string>? SelectForCacheKey, IReadOnlyList<ComputedField>? ComputedForCacheKey);
 

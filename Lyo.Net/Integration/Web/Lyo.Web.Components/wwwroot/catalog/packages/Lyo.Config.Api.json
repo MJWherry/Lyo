@@ -525,24 +525,6 @@
       ]
     },
     {
-      "name": "Microsoft.AspNetCore.Authorization",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.AspNetCore.Http.Abstractions",
-      "kind": "package",
-      "version": "2.*",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
       "name": "Microsoft.AspNetCore.OpenApi",
       "kind": "package",
       "version": "10.0.5",

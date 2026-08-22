@@ -165,7 +165,7 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.FileStorage.Ftp](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Ftp/README.md): FTP-backed IFileStorageService via Lyo.Ftp.Client.
 - [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): S3-compatible storage for Lyo.FileStorage (AWS S3, Backblaze B2, MinIO, and others) via AWSSDK.S3.
 - [Lyo.FileStorage.Sftp](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Sftp/README.md): SFTP-backed IFileStorageService via Lyo.Sftp.Client.
-- [Lyo.FileStorage.Web.Components](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Web.Components/README.md): Blazor Server / Interactive UI for Lyo.FileStorage. Workbench tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.
+- [Lyo.FileStorage.Web.Components](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Web.Components/README.md): Blazor Server / Interactive UI for Lyo.FileStorage. Tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.
 - [Lyo.FileSystemWatcher](Lyo.Net/Data/FileSystemWatcher/Lyo.FileSystemWatcher/README.md): Snapshot-based file watcher for .NET. Detects creates, deletes, changes, moves, and renames with debounce and SHA256 hashing.
 - [Lyo.Formatter](Lyo.Net/Data/Formatter/Lyo.Formatter/README.md): SmartFormat.NET templating for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting.
 - [Lyo.Formatter.Web.Components](Lyo.Net/Data/Formatter/Lyo.Formatter.Web.Components/README.md): Blazor pair for live SmartFormat editing: a debounced template box and an annotated preview that color-links `{keys}` to replacements. Works on WASM.

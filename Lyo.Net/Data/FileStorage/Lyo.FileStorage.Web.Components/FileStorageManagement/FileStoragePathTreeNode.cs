@@ -1,5 +1,8 @@
 using System.Diagnostics;
 using Lyo.Exceptions;
+using Lyo.Query.Models.Builders;
+using Lyo.Query.Models.Common;
+using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.DataGrid;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
@@ -163,26 +166,67 @@ public static class FileStoragePathTreeBuilder
     }
 
     /// <summary>
-    /// Replaces <paramref name="parent" /> immediate children from <paramref name="rows" />. Files whose prefix equals the parent are file leaves; longer prefixes contribute
-    /// the next path segment as a folder. Pending folders that are not yet represented in <paramref name="rows" /> are kept.
+    /// QueryProject filter for files that sit directly in <paramref name="parentPrefix" /> (empty / null prefix is root). Does not include files in nested folders.
     /// </summary>
-    public static void MergeImmediateChildren(FileStoragePathTreeNode parent, IReadOnlyList<FileStoragePathTreeRow> rows, bool truncated)
+    public static WhereClause CreateImmediateFilesWhere(string? parentPrefix)
+    {
+        var normalized = Normalize(parentPrefix);
+        if (normalized == null)
+            return WhereClauseBuilder.Or(static b => b.Equals("PathPrefix", null).Equals("PathPrefix", ""));
+
+        return WhereClauseBuilder.Condition("PathPrefix", ComparisonOperatorEnum.Equals, normalized);
+    }
+
+    /// <summary>
+    /// QueryProject filter for PathPrefix values nested under <paramref name="parentPrefix" />. Used to discover child folder names without treating those files as
+    /// children of the parent. Root uses any non-empty prefix.
+    /// </summary>
+    public static WhereClause CreateDescendantPrefixWhere(string? parentPrefix)
+    {
+        var normalized = Normalize(parentPrefix);
+        if (normalized == null)
+            return WhereClauseBuilder.And(static b => b.NotEquals("PathPrefix", null).NotEquals("PathPrefix", ""));
+
+        return WhereClauseBuilder.Condition("PathPrefix", ComparisonOperatorEnum.StartsWith, normalized + "/");
+    }
+
+    /// <summary>
+    /// QueryProject filter for every file under <paramref name="parentPrefix" /> including nested folders. Root (null prefix) matches all active files when combined with the
+    /// caller's deleted-row filter.
+    /// </summary>
+    public static WhereClause? CreateSubtreeWhere(string? parentPrefix)
+    {
+        var normalized = Normalize(parentPrefix);
+        if (normalized == null)
+            return null;
+
+        return WhereClauseBuilder.CombineAs(
+            GroupOperatorEnum.Or, CreateImmediateFilesWhere(normalized), CreateDescendantPrefixWhere(normalized));
+    }
+
+    /// <summary>
+    /// Replaces <paramref name="parent" /> immediate children. <paramref name="files" /> are file leaves whose prefix equals the parent.
+    /// <paramref name="descendantPrefixes" /> contribute the next path segment as an unloaded folder. Pending folders that are not yet represented are kept.
+    /// Child folders are left with <see cref="FileStoragePathTreeNode.ChildrenLoaded" /> false so the browser can query them on expand.
+    /// </summary>
+    public static void MergeImmediateChildren(
+        FileStoragePathTreeNode parent, IReadOnlyList<FileStoragePathTreeRow> files, IReadOnlyList<string?> descendantPrefixes, bool truncated)
     {
         ArgumentHelpers.ThrowIfNull(parent);
-        ArgumentHelpers.ThrowIfNull(rows);
+        ArgumentHelpers.ThrowIfNull(files);
+        ArgumentHelpers.ThrowIfNull(descendantPrefixes);
 
         var pending = parent.Children.Where(static c => c.IsPending && c.IsDirectory).ToList();
         var folders = new Dictionary<string, FileStoragePathTreeNode>(StringComparer.Ordinal);
-        var files = new List<FileStoragePathTreeNode>();
+        var fileNodes = new List<FileStoragePathTreeNode>();
 
-        foreach (var row in rows) {
-            var prefix = Normalize(row.PathPrefix);
-            if (IsImmediateFile(parent.PathPrefix, prefix)) {
-                files.Add(CreateFileNode(row));
-                continue;
-            }
+        foreach (var row in files) {
+            if (IsImmediateFile(parent.PathPrefix, row.PathPrefix))
+                fileNodes.Add(CreateFileNode(row));
+        }
 
-            var childPrefix = ImmediateChildFolderPrefix(parent.PathPrefix, prefix);
+        foreach (var rawPrefix in descendantPrefixes) {
+            var childPrefix = ImmediateChildFolderPrefix(parent.PathPrefix, rawPrefix);
             if (childPrefix == null || folders.ContainsKey(childPrefix))
                 continue;
 
@@ -199,7 +243,7 @@ public static class FileStoragePathTreeBuilder
         foreach (var folder in folders.Values.OrderBy(static n => n.Name, StringComparer.OrdinalIgnoreCase))
             parent.Children.Add(folder);
 
-        foreach (var file in files.OrderBy(static n => n.Name, StringComparer.OrdinalIgnoreCase))
+        foreach (var file in fileNodes.OrderBy(static n => n.Name, StringComparer.OrdinalIgnoreCase))
             parent.Children.Add(file);
 
         parent.ChildrenLoaded = true;

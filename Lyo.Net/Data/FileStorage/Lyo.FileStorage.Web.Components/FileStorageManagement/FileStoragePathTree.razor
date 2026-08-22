@@ -1,11 +1,12 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 
 <MudPaper Outlined="true" Class="pa-2 file-storage-tree-panel">
-    <MudStack Spacing="1">
-        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-            <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Paths</MudText>
-            <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Disabled="@Busy" OnClick="Refresh" aria-label="Refresh tree"/>
-        </MudStack>
+    <div class="file-storage-tree-toolbar">
+        <MudStack Spacing="1">
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Paths</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Disabled="@Busy" OnClick="Refresh" aria-label="Refresh tree"/>
+            </MudStack>
         <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
             <MudTextField T="string"
                           Class="flex-grow-1"
@@ -44,6 +45,9 @@
         @if (Truncated) {
             <MudAlert Severity="Severity.Info" Dense="true" Class="mb-1">Listing was truncated at the QueryProject page cap.</MudAlert>
         }
+        </MudStack>
+    </div>
+    <div class="file-storage-tree-scroll">
         @if (Busy && Items.Count == 0) {
             <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
         }
@@ -99,7 +103,7 @@
                 </ItemTemplate>
             </MudTreeView>
         }
-    </MudStack>
+    </div>
 </MudPaper>
 
 @code {
@@ -157,6 +161,14 @@
     [Parameter]
     public EventCallback<FileStoragePathTreeDrop> Dropped { get; set; }
 
+    /// <summary>Active file count for checked nodes (parent resolves folder descendants from QueryProject).</summary>
+    [Parameter]
+    public int BulkFileCount { get; set; }
+
+    /// <summary>Raised when multi-select checkboxes change so the parent can resolve descendant file ids.</summary>
+    [Parameter]
+    public EventCallback<IReadOnlyList<FileStoragePathTreeNode>> CheckedChanged { get; set; }
+
     private readonly HashSet<FileStoragePathTreeNode> _checked = new(FileStoragePathTreeNodeKeyComparer.Instance);
     private FileStoragePathTreeNode? _dragNode;
     private string? _dropKey;
@@ -164,8 +176,6 @@
     private string _filter = string.Empty;
 
     private IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> DisplayItems => FilterTree(Items, _filter);
-
-    private int BulkFileCount => FileStoragePathTreeBuilder.CollectActiveFileIds(_checked).Count;
 
     /// <inheritdoc />
     protected override void OnParametersSet()
@@ -189,7 +199,7 @@
     private Task OnExpandedAsync(FileStoragePathTreeNode node, bool expanded)
         => expanded ? FolderExpanded.InvokeAsync(node) : FolderCollapsed.InvokeAsync(node);
 
-    private void ToggleEdit()
+    private async Task ToggleEdit()
     {
         _editMode = !_editMode;
         if (_editMode)
@@ -198,6 +208,7 @@
         _checked.Clear();
         _dragNode = null;
         _dropKey = null;
+        await CheckedChanged.InvokeAsync([]);
     }
 
     private Task OnCheckedChanged(IReadOnlyCollection<FileStoragePathTreeNode?> values)
@@ -208,7 +219,7 @@
                 _checked.Add(node);
         }
 
-        return Task.CompletedTask;
+        return CheckedChanged.InvokeAsync(CheckedSnapshot());
     }
 
     private IReadOnlyList<FileStoragePathTreeNode> CheckedSnapshot() => _checked.ToList();

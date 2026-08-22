@@ -114,8 +114,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
 - `EasyCompressor` `2.1.0` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
-- `Microsoft.AspNetCore.Authorization` `10.0.5` (transitive, microsoft)
-- `Microsoft.AspNetCore.Http.Abstractions` `2.*` (transitive, microsoft)
 - `Microsoft.AspNetCore.OpenApi` `10.0.5` (transitive, microsoft)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` (transitive, microsoft)

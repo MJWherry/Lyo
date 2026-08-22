@@ -20,7 +20,7 @@ Registration methods live on `ServiceCollectionExtensions` (`AddLyoQueryServices
 - **Wildcards.** `Collection.*` (entire nested objects), `*` (root entity flattened).
 - **Collection scalar projection.** `JobRuns.CreatedBy` becomes an array of scalar arrays per row.
 - **MatchedOnly.** When filtering on nested fields, collections keep only matched items.
-- **SQL-level projection.** Projects in the database when it can, so it does not load the whole entity. Falls back to load-then-project for wildcards and subqueries. Both paths participate in caching.
+- **SQL-level projection.** Projects in the database when it can, so it does not load the whole entity. Independent Select fields are not capped at eight; width follows `QueryOptions.MaxSelectFieldCount`. Falls back to load-then-project for wildcards, keys, subqueries, and MatchedOnly. Both paths participate in caching.
 - **Derived includes.** Select paths add the navigation properties they need.
 - **Computed fields.** Optional `ComputedFields` on the request. SmartFormat templates add named columns from other projected values. Needs `IFormatterService` and `ApiFeature.ProjectionComputedFields`.
 - **`entityTypes` (success only).** On successful `QueryProject` responses, `entityTypes` is a sorted, distinct list of CLR class names for the root entity and every navigation or template path involved.
@@ -1146,12 +1146,9 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Query` (direct, lyo)
 - `Lyo.Validation` (direct, lyo)
-- `Microsoft.AspNetCore.Authorization` `10.0.5` (direct, microsoft)
-- `Microsoft.AspNetCore.Http.Abstractions` `2.*` (direct, microsoft)
 - `Microsoft.AspNetCore.OpenApi` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (direct, microsoft)
-- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)

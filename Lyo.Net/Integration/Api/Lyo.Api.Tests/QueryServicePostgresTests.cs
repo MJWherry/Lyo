@@ -1,4 +1,5 @@
 using Lyo.Api.Models.Error;
+using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Common.Enums;
@@ -7,6 +8,7 @@ using Lyo.Job.Postgres.Database;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Tests;
 
@@ -67,6 +69,99 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         Assert.True(row.ContainsKey("Name"));
         Assert.False(row.ContainsKey("Description"));
         Assert.Equal(name, row["Name"]?.ToString());
+    }
+
+    [Fact]
+    public async Task QueryProjected_TwelveRootScalars_MaterializesSqlProjectionWithoutRecordCast()
+    {
+        var defName = $"WideScalar_{Guid.NewGuid():N}";
+        var defId = await fixture.SeedJobDefinitionAsync(defName);
+        var createdBy = $"wide-user-{Guid.NewGuid():N}"[..20];
+        var runId = await fixture.SeedJobRunAsync(defId, createdBy);
+        List<string> select = [
+            "Id", "JobDefinitionId", "CreatedBy", "State", "AllowTriggers", "CreatedTimestamp", "RetryAttempt", "Priority", "DryRun", "SlaBreached", "ProgressPercent",
+            "IdempotencyKey"
+        ];
+
+        using var scope = fixture.ServiceProvider.CreateScope();
+        var projectionService = scope.ServiceProvider.GetRequiredService<IProjectionService>();
+        var (specs, pathErrors) = projectionService.ResolveProjectedFields<JobRun>(select);
+        Assert.Empty(pathErrors);
+        var build = projectionService.TryBuildSqlProjectionExpression<JobRun>(specs);
+        Assert.NotNull(build.Projection);
+        Assert.NotNull(build.ConversionPlan);
+        Assert.Equal(12, build.ConversionPlan!.Slots.Count);
+
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        var raw = await context.Set<JobRun>().AsNoTracking().Where(r => r.Id == runId).Select(build.Projection!).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Single(raw);
+        var converted = projectionService.ConvertSqlProjectedResults(raw, specs, build.ConversionPlan);
+        var sqlRow = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(converted[0]);
+        Assert.Equal(runId, sqlRow["Id"]);
+        Assert.Equal(defId, sqlRow["JobDefinitionId"]);
+        Assert.Equal(createdBy, sqlRow["CreatedBy"]?.ToString());
+
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 10,
+            Select = select,
+            WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, runId)
+        };
+        var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Items);
+        Assert.Single(result.Items!);
+        var apiRow = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(result.Items![0]);
+        Assert.Equal(runId, apiRow["Id"]);
+        Assert.Equal(createdBy, apiRow["CreatedBy"]?.ToString());
+    }
+
+    [Fact]
+    public async Task QueryProjected_JobRunGridSelect_MaterializesSqlProjection()
+    {
+        var defName = $"RunGrid_{Guid.NewGuid():N}";
+        var defId = await fixture.SeedJobDefinitionAsync(defName);
+        var createdBy = $"grid-user-{Guid.NewGuid():N}"[..20];
+        var runId = await fixture.SeedJobRunAsync(defId, createdBy);
+        List<string> select = [
+            "Id", "JobDefinition.Name", "WorkerMachineName", "State", "Result", "CreatedTimestamp", "StartedTimestamp", "FinishedTimestamp", "WorkerInstanceId", "WorkerProcessId",
+            "RetryAttempt", "JobRunResults.Count", "JobRunLogs.Count"
+        ];
+
+        using var scope = fixture.ServiceProvider.CreateScope();
+        var projectionService = scope.ServiceProvider.GetRequiredService<IProjectionService>();
+        var (specs, pathErrors) = projectionService.ResolveProjectedFields<JobRun>(select);
+        Assert.Empty(pathErrors);
+        var build = projectionService.TryBuildSqlProjectionExpression<JobRun>(specs);
+        Assert.NotNull(build.Projection);
+        Assert.NotNull(build.ConversionPlan);
+
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        var raw = await context.Set<JobRun>().AsNoTracking().Where(r => r.Id == runId).Select(build.Projection!).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Single(raw);
+        var converted = projectionService.ConvertSqlProjectedResults(raw, specs, build.ConversionPlan);
+        var sqlRow = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(converted[0]);
+        Assert.Equal(runId, sqlRow["Id"]);
+        Assert.Equal(defName, sqlRow["JobDefinition.Name"]?.ToString());
+        Assert.Equal(0, Convert.ToInt32(sqlRow["JobRunResults.Count"]));
+        Assert.Equal(0, Convert.ToInt32(sqlRow["JobRunLogs.Count"]));
+
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 10,
+            Select = select,
+            WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, runId)
+        };
+        var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Asc, TestContext.Current.CancellationToken);
+        Assert.True(result.IsSuccess);
+        var apiRow = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(result.Items![0]);
+        Assert.Equal(defName, apiRow["JobDefinition.Name"]?.ToString());
     }
 
     [Fact]

@@ -19,7 +19,7 @@
     "**Wildcards.** `Collection.*` (entire nested objects), `*` (root entity flattened).",
     "**Collection scalar projection.** `JobRuns.CreatedBy` becomes an array of scalar arrays per row.",
     "**MatchedOnly.** When filtering on nested fields, collections keep only matched items.",
-    "**SQL-level projection.** Projects in the database when it can, so it does not load the whole entity. Falls back to load-then-project for wildcards and subqueries. Both paths participate in caching.",
+    "**SQL-level projection.** Projects in the database when it can, so it does not load the whole entity. Independent Select fields are not capped at eight; width follows `QueryOptions.MaxSelectFieldCount`. Falls back to load-then-project for wildcards, keys, subqueries, and MatchedOnly. Both paths participate in caching.",
     "**Derived includes.** Select paths add the navigation properties they need.",
     "**Computed fields.** Optional `ComputedFields` on the request. SmartFormat templates add named columns from other projected values. Needs `IFormatterService` and `ApiFeature.ProjectionComputedFields`.",
     "**`entityTypes` (success only).** On successful `QueryProject` responses, `entityTypes` is a sorted, distinct list of CLR class names for the root entity and every navigation or template path involved.",
@@ -496,24 +496,6 @@
       ]
     },
     {
-      "name": "Microsoft.AspNetCore.Authorization",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "direct",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.AspNetCore.Http.Abstractions",
-      "kind": "package",
-      "version": "2.*",
-      "tags": [
-        "direct",
-        "microsoft"
-      ]
-    },
-    {
       "name": "Microsoft.AspNetCore.OpenApi",
       "kind": "package",
       "version": "10.0.5",
@@ -533,15 +515,6 @@
     },
     {
       "name": "Microsoft.EntityFrameworkCore.Relational",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "direct",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Hosting.Abstractions",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

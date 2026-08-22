@@ -32,8 +32,8 @@ services.AddKeycloakProviderFromConfiguration(builder.Configuration);
 `app.MapLyoAuthEndpoints()` wires:
 
 | Method | Path | Purpose |
-| ------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| GET | `/auth/login/{provider}?returnUrl=...&mode=browser|api` | Starts the OIDC login. `mode=browser` or `mode=api`. |
+| ------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| GET | `/auth/login/{provider}?returnUrl=...&mode=browser\|api` | Starts the OIDC login. `mode=browser` or `mode=api`. |
 | GET | `/auth/callback/{provider}` | IdP redirects back here. Browser mode mints a handoff code and 302s to `{returnUrl}?lyo_handoff=lyoh_...`. API mode returns 200 OK with `{access_token, refresh_token, expires_in, token_type}`. |
 | POST | `/auth/handoff/exchange` | Body `{ code }`. Consumes a handoff code once, returns tokens. Audited as `HandoffCodeConsumed` / `HandoffCodeRejected`. |
 | POST | `/auth/token` | Reserved for first-party API client grants. |

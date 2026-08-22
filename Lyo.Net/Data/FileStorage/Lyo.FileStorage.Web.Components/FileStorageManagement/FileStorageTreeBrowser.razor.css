@@ -1,9 +1,34 @@
-.file-storage-tree-layout {
-    min-height: 28rem;
+.file-storage-tree-browser {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    min-height: 22rem;
+    height: calc(100dvh - 16rem);
+    max-height: calc(100dvh - 16rem);
+    overflow: hidden;
 }
 
-.file-storage-tree-panel {
-    min-height: 28rem;
-    max-height: min(70vh, 48rem);
-    overflow: auto;
+.file-storage-tree-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+}
+
+::deep .file-storage-tree-layout.mud-grid,
+::deep .mud-grid.file-storage-tree-layout {
+    height: 100%;
+}
+
+::deep .file-storage-tree-col {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+}
+
+::deep .file-storage-tree-col > * {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
 }
