@@ -7,7 +7,7 @@ using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.DataGrid;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 /// <summary>Helpers for reading file ids from projected query rows (dynamic JSON / Guid).</summary>
 public static class FileStorageGridRowHelper

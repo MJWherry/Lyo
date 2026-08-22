@@ -2,8 +2,8 @@
   "id": "Lyo.FileStorage.Web.Components",
   "name": "Lyo.FileStorage.Web.Components",
   "area": "Data",
-  "tagline": "Blazor Server / Interactive UI for Lyo.FileStorage. Workbench tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.",
-  "description": "Blazor Server / Interactive UI for Lyo.FileStorage. Workbench tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.\n\nFiles, Tree, and Browser talk only to a backend host (typically Lyo.Gateway.Api, or Lyo.TestApi for kitchen-sink) over Lyo.Api.Client.IApiClient. The workbench never sees raw storage credentials and does not resolve IFileStorageService or IKeyStore. Encryption key ids come from GET {prefix}/key-ids. Keystore CRUD is not part of this package.",
+  "tagline": "Blazor Server / Interactive UI for Lyo.FileStorage. Tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.",
+  "description": "Blazor Server / Interactive UI for Lyo.FileStorage. Tree/grids and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.\n\nFiles, Tree, and Browser talk only to a backend host (typically Lyo.Gateway.Api, or Lyo.TestApi for kitchen-sink) over Lyo.Api.Client.IApiClient. The UI never sees raw storage credentials and does not resolve IFileStorageService or IKeyStore. Encryption key ids come from GET {prefix}/key-ids. Keystore CRUD is not part of this package.",
   "features": [],
   "examples": [],
   "sections": [
@@ -16,11 +16,11 @@
       ],
       "rows": [
         [
-          "FileStorageWorkbench (FileStorageWorkbench.razor / .razor.cs)",
-          "Top-level workbench with Files / Tree / Browser tabs and an API health check."
+          "FileStorageManagement (FileStorageManagement.razor / .razor.cs)",
+          "Top-level UI with Files / Tree / Browser tabs and an API health check."
         ],
         [
-          "FileStorageWorkbenchHeader",
+          "FileStorageManagementHeader",
           "Title bar."
         ],
         [
@@ -102,19 +102,19 @@
       ],
       "rows": [
         [
-          "FileStorageWorkbenchOptions",
-          "Binds the FileStorageWorkbench configuration section (host DI / stream-upload path). Files and Browser always use IApiClient."
+          "FileStorageWebOptions",
+          "Binds the FileStorage configuration section (API route prefix / stream-upload path). Files and Browser always use IApiClient."
         ]
       ]
     },
     {
       "type": "paragraph",
       "title": "Access link API models",
-      "text": "Access-link HTTP shapes live in Lyo.Api.FileStorage.Models (`CreateDownloadAccessLinkRequest` / `DownloadAccessLinkResponse`). The workbench Browser action and FileMetadataGrid open FileAccessLinkDialog against ApiRoutePrefix."
+      "text": "Access-link HTTP shapes live in Lyo.Api.FileStorage.Models (`CreateDownloadAccessLinkRequest` / `DownloadAccessLinkResponse`). The Browser action and FileMetadataGrid open FileAccessLinkDialog against ApiRoutePrefix."
     },
     {
       "type": "table",
-      "title": "FileStorageWorkbenchOptions",
+      "title": "FileStorageWebOptions",
       "headers": [
         "Property",
         "Default",
@@ -123,8 +123,8 @@
       "rows": [
         [
           "`ApiRoutePrefix`",
-          "`Workbench/FileStorage`",
-          "Route prefix on the API used for the workbench endpoints."
+          "`FileStorage`",
+          "Route prefix on the API used for the file-storage endpoints."
         ],
         [
           "`StreamUploadRelativePath`",
@@ -132,16 +132,16 @@
           "Endpoint for multipart streaming uploads; set empty to fall back to `{ApiRoutePrefix}/files/save-stream`."
         ]
       ],
-      "lead": "Default section: `FileStorageWorkbench`."
+      "lead": "Default section: `FileStorage`."
     },
     {
       "type": "list",
       "title": "Host integration",
       "items": [
-        "Binds FileStorageWorkbenchOptions from configuration.",
-        "The workbench requires an IApiClient. Keystore UI is a separate package (Lyo.KeyStore.Web.Components) that takes an in-process IKeyStore.",
+        "Binds FileStorageWebOptions from configuration.",
+        "The UI requires an IApiClient. Keystore UI is a separate package (Lyo.KeyStore.Web.Components) that takes an in-process IKeyStore.",
         "Adds MudBlazor (AddMudServices) and the Lyo.Web.Components dialog/snackbar plumbing.",
-        "Mounts <FileStorageWorkbench /> on a route."
+        "Mounts <FileStorageManagement /> on a route."
       ]
     }
   ],

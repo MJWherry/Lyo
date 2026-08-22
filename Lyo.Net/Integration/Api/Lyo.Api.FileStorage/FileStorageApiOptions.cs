@@ -5,19 +5,19 @@ namespace Lyo.Api.FileStorage;
 /// <summary>Route and keyed-DI names for <see cref="Extensions.BuildFileStorageApi" />.</summary>
 public sealed class FileStorageApiOptions
 {
-    /// <summary>Default MapGroup prefix (<c>Workbench/FileStorage</c>).</summary>
-    public const string DefaultRoute = "Workbench/FileStorage";
+    /// <summary>Default MapGroup prefix (<c>FileStorage</c>).</summary>
+    public const string DefaultRoute = "FileStorage";
 
     /// <summary>Default keyed name for <c>IFileStorageService</c> / multipart / staged / archive.</summary>
     public const string DefaultServiceKey = "gateway-filestorage";
 
     /// <summary>Default FileMetadata QueryProject route.</summary>
-    public const string DefaultFileMetadataRoute = "Workbench/FileStorage/FileMetadata";
+    public const string DefaultFileMetadataRoute = "FileStorage/FileMetadata";
 
     /// <summary>Default root-relative stream-upload path (<c>POST /upload/file</c>).</summary>
     public const string DefaultDirectUploadPath = "upload/file";
 
-    /// <summary>Workbench group prefix (no leading slash).</summary>
+    /// <summary>MapGroup prefix (no leading slash).</summary>
     public string Route { get; set; } = DefaultRoute;
 
     /// <summary>Keyed DI name for storage, multipart, staged upload, and archive.</summary>

@@ -1,7 +1,7 @@
 using Lyo.Web.Components.DataGrid;
 using Microsoft.AspNetCore.Components;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 /// <summary>Two QueryProject grids over file metadata: operator columns, and expected storage keys derived from those rows.</summary>
 public partial class FileStorageBrowser : ComponentBase, IDisposable
@@ -13,9 +13,9 @@ public partial class FileStorageBrowser : ComponentBase, IDisposable
     private LyoDataGridProjected? _metadataGrid;
     private LyoDataGridProjected? _storageGrid;
 
-    /// <summary>Cascaded workbench host (API client, dialogs).</summary>
+    /// <summary>Cascaded parent (API client, dialogs).</summary>
     [CascadingParameter]
-    public FileStorageWorkbench Workbench { get; set; } = default!;
+    public FileStorageManagement Host { get; set; } = default!;
 
     private bool DiagnosticsAvailable { get; set; }
 
@@ -23,12 +23,12 @@ public partial class FileStorageBrowser : ComponentBase, IDisposable
         => LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable | LyoDataGridFeatureFlags.AutoRefresh | LyoDataGridFeatureFlags.BulkMenu;
 
     /// <inheritdoc />
-    public void Dispose() => Workbench.FilesChanged -= RefreshAsync;
+    public void Dispose() => Host.FilesChanged -= RefreshAsync;
 
     protected override async Task OnInitializedAsync()
     {
-        _actions = new FileStorageBrowserActions(Workbench, RefreshAsync);
-        Workbench.FilesChanged += RefreshAsync;
+        _actions = new FileStorageBrowserActions(Host, RefreshAsync);
+        Host.FilesChanged += RefreshAsync;
         await LoadStorageKeysAsync();
     }
 
@@ -47,7 +47,7 @@ public partial class FileStorageBrowser : ComponentBase, IDisposable
     private async Task LoadStorageKeysAsync()
     {
         try {
-            var keys = await Workbench.ApiClient.GetAsAsync<List<string>>(Workbench.FilesApi("diagnostics/storage-keys?maxKeys=10000"));
+            var keys = await Host.ApiClient.GetAsAsync<List<string>>(Host.FilesApi("diagnostics/storage-keys?maxKeys=10000"));
             _existingKeys = (keys ?? []).ToHashSet(StringComparer.Ordinal);
             DiagnosticsAvailable = _existingKeys.Count > 0 || keys != null;
         }

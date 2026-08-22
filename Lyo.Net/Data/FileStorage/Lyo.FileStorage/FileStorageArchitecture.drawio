@@ -11,7 +11,7 @@
         </mxCell>
 
         <!-- Hosts (top-left) -->
-        <mxCell id="hosts" value="&lt;b&gt;Hosts / callers&lt;/b&gt;&#xa;· Lyo.TestApi (ASP.NET Minimal API)&#xa;· Lyo.Gateway (HTTP proxy → TestApiFileStorageService)&#xa;· Lyo.FileStorage.Web.Components — FileStorageWorkbench Blazor UI&#xa;· app services consuming IFileStorageService directly" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontStyle=0;align=left;spacingLeft=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+        <mxCell id="hosts" value="&lt;b&gt;Hosts / callers&lt;/b&gt;&#xa;· Lyo.TestApi (ASP.NET Minimal API)&#xa;· Lyo.Gateway (HTTP proxy → TestApiFileStorageService)&#xa;· Lyo.FileStorage.Web.Components — FileStorageManagement Blazor UI&#xa;· app services consuming IFileStorageService directly" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontStyle=0;align=left;spacingLeft=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
           <mxGeometry x="40" y="68" width="460" height="120" as="geometry" />
         </mxCell>
 

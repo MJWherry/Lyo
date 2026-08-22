@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 /// <summary>Result of the move or copy path-prefix dialog.</summary>
 [DebuggerDisplay("{ToString(),nq}")]

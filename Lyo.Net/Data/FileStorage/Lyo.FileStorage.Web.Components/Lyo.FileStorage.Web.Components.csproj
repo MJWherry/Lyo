@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <RootNamespace>Lyo.FileStorage.Web.Components</RootNamespace>
-        <Description>Reusable Blazor components for file storage workbenches: upload/save, path tree browser, DEK/KEK migration and rotation, metadata/expected-storage browser grids.</Description>
+        <Description>Reusable Blazor components for file storage: upload/save, path tree browser, DEK/KEK migration and rotation, metadata/expected-storage browser grids.</Description>
         <PackageTags>blazor components file-storage mudblazor keystore browser</PackageTags>
     </PropertyGroup>
 

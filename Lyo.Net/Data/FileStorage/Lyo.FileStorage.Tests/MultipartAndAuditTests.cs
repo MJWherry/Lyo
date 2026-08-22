@@ -89,7 +89,7 @@ public class MultipartAndAuditTests
         // The Local PUT receiver enforces FileStorageServiceBaseOptions.MaxUploadSizeBytes during the copy so an attacker cannot exhaust disk before finalize re-checks the size.
         using var scope = LocalFileStorageTestScope.Create(o => {
             o.DirectUploadReceiveBaseUri = "https://tests.invalid";
-            o.DirectUploadPutRouteRelativePath = "Workbench/FileStorage/direct-upload";
+            o.DirectUploadPutRouteRelativePath = "FileStorage/direct-upload";
             o.MaxUploadSizeBytes = 8;
             return o;
         });
@@ -100,7 +100,7 @@ public class MultipartAndAuditTests
         var oversized = new byte[32];
         await using var ms = new MemoryStream(oversized);
         await Assert.ThrowsAnyAsync<FilePolicyRejectedException>(async ()
-            => await scope.Storage.ReceiveWorkbenchDirectPutAsync(begin.FileId, ms, TestContext.Current.CancellationToken));
+            => await scope.Storage.ReceiveDirectPutAsync(begin.FileId, ms, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class MultipartAndAuditTests
         using var scope = LocalFileStorageTestScope.Create(
             o => {
                 o.DirectUploadReceiveBaseUri = "https://tests.invalid";
-                o.DirectUploadPutRouteRelativePath = "Workbench/FileStorage/direct-upload";
+                o.DirectUploadPutRouteRelativePath = "FileStorage/direct-upload";
                 return o;
             }, new[] { sink });
 

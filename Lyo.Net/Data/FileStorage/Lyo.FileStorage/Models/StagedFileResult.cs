@@ -5,7 +5,7 @@ using Lyo.FileStorage.Staged;
 
 namespace Lyo.FileStorage.Models;
 
-/// <summary>Public projection of a staged upload for APIs, events, and workbench responses.</summary>
+/// <summary>Public projection of a staged upload for APIs, events, and HTTP responses.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record StagedFileResult(
     Guid StageId,

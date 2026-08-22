@@ -1,4 +1,4 @@
-@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 @using Lyo.Common.Records
 @using Lyo.Web.Components
 @using Lyo.Web.Components.DataGrid
@@ -8,15 +8,15 @@
     <MudStack Spacing="2">
         <MudText Typo="Typo.h6">File browser</MudText>
         <MudText Typo="Typo.caption" Color="Color.Secondary">
-            Postgres-backed rows from the Test API (<code>@Workbench.FileMetadataQueryRoute</code>/QueryProject). Soft-deleted files are omitted.
+            Postgres-backed rows from the Test API (<code>@Host.FileMetadataQueryRoute</code>/QueryProject). Soft-deleted files are omitted.
             The expected-storage view builds object keys from metadata (<code>PathPrefix</code> + <code>SourceFileName</code>).
         </MudText>
         <MudTabs Rounded="true" KeepPanelsAlive="true" Elevation="0">
             <MudTabPanel Text="Metadata">
                 <LyoDataGridProjected @ref="_metadataGrid"
-                                      ApiClient="Workbench.ApiClient"
+                                      ApiClient="Host.ApiClient"
                                       GridKey="FileStorageBrowserMetadata"
-                                      Route="@Workbench.FileMetadataQueryRoute"
+                                      Route="@Host.FileMetadataQueryRoute"
                                       Features="@GridFeatures"
                                       GridClass="file-browser-grid-dense"
                                       KeySelector="@FileStorageGridRowHelper.GetFileRowKey"
@@ -53,9 +53,9 @@
             </MudTabPanel>
             <MudTabPanel Text="Expected storage">
                 <LyoDataGridProjected @ref="_storageGrid"
-                                      ApiClient="Workbench.ApiClient"
+                                      ApiClient="Host.ApiClient"
                                       GridKey="FileStorageBrowserExpectedStorage"
-                                      Route="@Workbench.FileMetadataQueryRoute"
+                                      Route="@Host.FileMetadataQueryRoute"
                                       Features="@GridFeatures"
                                       GridClass="file-browser-grid-dense"
                                       KeySelector="@FileStorageGridRowHelper.GetFileRowKey"

@@ -39,6 +39,15 @@ public class CacheItemTests
     }
 
     [Fact]
+    public void CacheItem_Equality_IgnoresTags()
+    {
+        var a = CacheItem.Key("k", tags: ["alpha"]);
+        var b = CacheItem.Key("K", tags: ["beta", "gamma"]);
+        Assert.True(a.Equals(b));
+        Assert.Equal(a.GetHashCode(), b.GetHashCode());
+    }
+
+    [Fact]
     public void FromStoredBytes_RawArray_ReportsSizeWithoutFlags()
     {
         var stored = new byte[] { 1, 2, 3, 4 };
@@ -83,5 +92,6 @@ public class CacheItemTests
         Assert.Null(item.Compressed);
         Assert.Null(item.SizeBytes);
         Assert.Null(item.Expires);
+        Assert.Null(item.Tags);
     }
 }

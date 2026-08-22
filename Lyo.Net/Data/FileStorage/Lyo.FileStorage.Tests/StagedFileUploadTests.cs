@@ -17,7 +17,7 @@ public sealed class StagedFileUploadTests
     private static LocalFileStorageTestScope CreateScope(Action<DiskFileStorageOptions>? configure = null)
         => LocalFileStorageTestScope.Create(o => {
             o.DirectUploadReceiveBaseUri = "https://tests.invalid";
-            o.StagePutRouteRelativePath = "Workbench/FileStorage/stage";
+            o.StagePutRouteRelativePath = "FileStorage/stage";
             configure?.Invoke(o);
             return o;
         });
@@ -32,7 +32,7 @@ public sealed class StagedFileUploadTests
         Assert.Equal(MultipartUploadProviderKind.Local, begin.ProviderKind);
         Assert.Contains(begin.StageId.ToString("D"), begin.PresignedPutUrl, StringComparison.Ordinal);
         await using (var body = new MemoryStream(payload))
-            await staged.ReceiveWorkbenchStagePutAsync(begin.StageId, body, TestContext.Current.CancellationToken);
+            await staged.ReceiveStagePutAsync(begin.StageId, body, TestContext.Current.CancellationToken);
 
         var completed = await staged.CompleteAsync(begin.StageId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(StagedUploadStatus.Uploaded, completed.Status);
@@ -62,7 +62,7 @@ public sealed class StagedFileUploadTests
         var payload = "abort-me"u8.ToArray();
         var begin = await staged.BeginAsync(new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "abort.bin" }, TestContext.Current.CancellationToken);
         await using (var body = new MemoryStream(payload))
-            await staged.ReceiveWorkbenchStagePutAsync(begin.StageId, body, TestContext.Current.CancellationToken);
+            await staged.ReceiveStagePutAsync(begin.StageId, body, TestContext.Current.CancellationToken);
 
         await staged.AbortAsync(begin.StageId, TestContext.Current.CancellationToken);
         var stage = await staged.GetAsync(begin.StageId, TestContext.Current.CancellationToken);
@@ -86,7 +86,7 @@ public sealed class StagedFileUploadTests
         var begin = await staged.BeginAsync(new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "evt.bin" }, TestContext.Current.CancellationToken);
         Assert.True(presignedFired);
         await using (var body = new MemoryStream(payload))
-            await staged.ReceiveWorkbenchStagePutAsync(begin.StageId, body, TestContext.Current.CancellationToken);
+            await staged.ReceiveStagePutAsync(begin.StageId, body, TestContext.Current.CancellationToken);
 
         await staged.CompleteAsync(begin.StageId, ct: TestContext.Current.CancellationToken);
         Assert.True(completedFired);

@@ -9,7 +9,7 @@
     {
       "title": "Client POST",
       "language": "csharp",
-      "code": "await api.PostAsAsync<CopyFileRequest, FileStoreResult>(\n    \"Workbench/FileStorage/files/copy\",\n    new(sourceId, pathPrefix: \"archive\"));"
+      "code": "await api.PostAsAsync<CopyFileRequest, FileStoreResult>(\n    \"FileStorage/files/copy\",\n    new(sourceId, pathPrefix: \"archive\"));"
     }
   ],
   "sections": [],

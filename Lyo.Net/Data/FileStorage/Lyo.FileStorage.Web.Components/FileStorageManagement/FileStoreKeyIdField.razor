@@ -1,4 +1,4 @@
-@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 
 @if (Ids.Count > 0) {
     <MudSelect T="string"
@@ -30,9 +30,9 @@ else {
 @code {
 
     [CascadingParameter]
-    public FileStorageWorkbench? Workbench { get; set; }
+    public FileStorageManagement? Host { get; set; }
 
-    /// <summary>Optional explicit list. When unset, uses <see cref="FileStorageWorkbench.EncryptionKeyIds" />.</summary>
+    /// <summary>Optional explicit list. When unset, uses <see cref="FileStorageManagement.EncryptionKeyIds" />.</summary>
     [Parameter]
     public IReadOnlyList<string>? KeyIds { get; set; }
 
@@ -60,7 +60,7 @@ else {
     [Parameter]
     public bool AutoSelectSingle { get; set; }
 
-    private IReadOnlyList<string> Ids => KeyIds ?? Workbench?.EncryptionKeyIds ?? [];
+    private IReadOnlyList<string> Ids => KeyIds ?? Host?.EncryptionKeyIds ?? [];
 
     private string ResolvedHelper
         => !string.IsNullOrWhiteSpace(HelperText)

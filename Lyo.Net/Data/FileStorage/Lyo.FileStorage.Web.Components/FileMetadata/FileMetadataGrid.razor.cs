@@ -4,7 +4,7 @@ using Lyo.Common.Records;
 using Lyo.Csv.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Web.Components.FileAccessLink;
-using Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+using Lyo.FileStorage.Web.Components.FileStorageManagement;
 using Lyo.Web.Components;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Dialog;
@@ -56,9 +56,9 @@ public partial class FileMetadataGrid
     [Parameter]
     public IApiClient? ApiClient { get; set; }
 
-    /// <summary>API group prefix, e.g. <c>Workbench/FileStorage</c>.</summary>
+    /// <summary>API group prefix, e.g. <c>FileStorage</c>.</summary>
     [Parameter]
-    public string ApiRoutePrefix { get; set; } = "Workbench/FileStorage";
+    public string ApiRoutePrefix { get; set; } = "FileStorage";
 
     /// <summary>QueryProject route. Defaults to <c>{ApiRoutePrefix}/FileMetadata</c>.</summary>
     [Parameter]
@@ -81,7 +81,7 @@ public partial class FileMetadataGrid
 
     private IApiClient Client => ApiClient ?? InjectedApiClient;
 
-    private string Prefix => string.IsNullOrWhiteSpace(ApiRoutePrefix) ? "Workbench/FileStorage" : ApiRoutePrefix.Trim().TrimEnd('/');
+    private string Prefix => string.IsNullOrWhiteSpace(ApiRoutePrefix) ? "FileStorage" : ApiRoutePrefix.Trim().TrimEnd('/');
 
     private string ResolvedQueryRoute => string.IsNullOrWhiteSpace(FileMetadataQueryRoute)
         ? $"{Prefix}/FileMetadata"

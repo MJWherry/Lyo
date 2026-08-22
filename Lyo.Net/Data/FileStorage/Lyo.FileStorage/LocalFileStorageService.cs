@@ -124,9 +124,9 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         };
     }
 
-    /// <summary>Accepts a raw HTTP PUT body for a pending plaintext direct upload. Use with a trusted host (e.g. <c>Lyo.TestApi</c> Workbench).</summary>
+    /// <summary>Accepts a raw HTTP PUT body for a pending plaintext direct upload. Use with a trusted cooperating HTTP host.</summary>
     /// <remarks>Enforces <see cref="FileStorageServiceBaseOptions.MaxUploadSizeBytes" /> during the copy so an attacker cannot exhaust disk before finalize re-checks the size.</remarks>
-    public async Task ReceiveWorkbenchDirectPutAsync(Guid fileId, Stream body, CancellationToken ct = default)
+    public async Task ReceiveDirectPutAsync(Guid fileId, Stream body, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(body);
         var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);

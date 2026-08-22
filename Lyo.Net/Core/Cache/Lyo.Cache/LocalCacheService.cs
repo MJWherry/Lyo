@@ -1224,10 +1224,11 @@ public sealed class LocalCacheService : ICacheService
         _memoryCache.Set(normalizedKey, value, entryOptions);
         _ttls[normalizedKey] = (duration, mode);
         var expires = DateTime.UtcNow.Add(duration);
+        IReadOnlyList<string>? trackedTags = tagList.Length == 0 ? null : tagList;
         UpsertItem(
             value is byte[] stored
-                ? CacheItem.FromStoredBytes(normalizedKey, stored, expires: expires)
-                : CacheItem.Key(normalizedKey, encrypted: false, compressed: false, expires: expires));
+                ? CacheItem.FromStoredBytes(normalizedKey, stored, expires: expires, tags: trackedTags)
+                : CacheItem.Key(normalizedKey, encrypted: false, compressed: false, expires: expires, tags: trackedTags));
         TagIndexAdd(normalizedKey, tagList);
     }
 

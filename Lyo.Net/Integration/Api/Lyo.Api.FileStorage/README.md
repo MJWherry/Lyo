@@ -7,17 +7,17 @@ HTTP endpoints for Lyo file storage. Hosts map `BuildFileStorageApi` after regis
 ### Host setup
 
 ```csharp
-app.BuildFileStorageApi(); // defaults: Workbench/FileStorage, keyed gateway-filestorage
+app.BuildFileStorageApi(); // defaults: FileStorage, keyed gateway-filestorage
 // or:
 app.BuildFileStorageApi(new FileStorageApiOptions {
-    Route = "Workbench/FileStorage",
+    Route = "FileStorage",
     ServiceKey = "gateway-filestorage"
 });
 ```
 
 ## What this maps
 
-Workbench group at `FileStorageApiOptions.Route`: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `diagnostics/storage-keys`, `stage/*`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). Read-only FileMetadata QueryProject at `FileMetadataRoute`. There are no `keys/*` CRUD routes. Wire DTOs live in `Lyo.Api.FileStorage.Models`.
+Route group at `FileStorageApiOptions.Route`: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `diagnostics/storage-keys`, `stage/*`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). Read-only FileMetadata QueryProject at `FileMetadataRoute`. There are no `keys/*` CRUD routes. Wire DTOs live in `Lyo.Api.FileStorage.Models`.
 
 ## Dependencies
 

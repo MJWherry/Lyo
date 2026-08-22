@@ -8,6 +8,6 @@ HTTP request and response DTOs for the file-storage API. `Lyo.Api.FileStorage` m
 
 ```csharp
 await api.PostAsAsync<CopyFileRequest, FileStoreResult>(
-    "Workbench/FileStorage/files/copy",
+    "FileStorage/files/copy",
     new(sourceId, pathPrefix: "archive"));
 ```

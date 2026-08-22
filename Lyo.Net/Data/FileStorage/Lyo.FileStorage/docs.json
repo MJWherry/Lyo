@@ -43,7 +43,7 @@
           "[`AzureBlobFileStorageService.cs`](../Lyo.FileStorage.AzureBlob/AzureBlobFileStorageService.cs), AzureBlobFileStorageOptions, SAS / SSE notes"
         ],
         [
-          "Lyo.FileStorage.Web.Components: Workbench UI",
+          "Lyo.FileStorage.Web.Components: Blazor UI",
           "Blazor grids and dialogs that call a configured Test API"
         ]
       ],
@@ -289,11 +289,11 @@
         ],
         [
           "DirectUploadReceiveBaseUri",
-          "Absolute origin of the host that exposes PUT …/Workbench/FileStorage/direct-upload/{fileId}/put (matches Lyo.TestApi conventions). When null, BeginDirectUploadAsync delegates to NotSupported."
+          "Absolute origin of the host that exposes PUT …/FileStorage/direct-upload/{fileId}/put. When null, BeginDirectUploadAsync delegates to NotSupported."
         ],
         [
           "DirectUploadPutRouteRelativePath",
-          "Path between base URI and {fileId}/put. Default Workbench/FileStorage/direct-upload with the bundled Test API."
+          "Path between base URI and {fileId}/put. Default FileStorage/direct-upload."
         ],
         [
           "Inherited (FileStorageServiceBaseOptions)",

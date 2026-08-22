@@ -40,7 +40,11 @@ public static class SetupEndpoints
                 .BuildDiscordGroup()
                 //.BuildRecipientGroup()
                 .BuildTwilioGroup()
-                .BuildFileStorageApi();
+                .BuildFileStorageApi(new FileStorageApiOptions {
+                    Route = Constants.FileStorageWorkbench.Route,
+                    FileMetadataRoute = Constants.FileStorageWorkbench.FileMetadata,
+                    ServiceKey = Constants.FileStorageWorkbench.ServiceKey
+                });
 
             app.MapCacheEndpoints("Cache", b => b.AllowAnonymous());
             return app;

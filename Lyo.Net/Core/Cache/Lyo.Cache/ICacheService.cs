@@ -7,7 +7,7 @@ public interface ICacheService : IHealth
 {
     /// <summary>
     /// This process's in-memory (L1) key and tag list. Thread-safe. Redis (L2) keys written by other processes are not listed until this process loads them.
-    /// Payload entries include <see cref="CacheItem.Encrypted" />, <see cref="CacheItem.Compressed" />, and <see cref="CacheItem.SizeBytes" />. Keys also carry <see cref="CacheItem.Expires" />.
+    /// Payload entries include <see cref="CacheItem.Encrypted" />, <see cref="CacheItem.Compressed" />, and <see cref="CacheItem.SizeBytes" />. Keys also carry <see cref="CacheItem.Expires" /> and <see cref="CacheItem.Tags" />.
     /// </summary>
     IReadOnlyCollection<CacheItem> Items { get; }
 

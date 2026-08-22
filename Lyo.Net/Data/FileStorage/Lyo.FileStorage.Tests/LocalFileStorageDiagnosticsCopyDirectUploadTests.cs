@@ -76,7 +76,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     {
         using var service = CreateService(o => {
             o.DirectUploadReceiveBaseUri = "https://tests.invalid";
-            o.DirectUploadPutRouteRelativePath = "Workbench/FileStorage/direct-upload";
+            o.DirectUploadPutRouteRelativePath = "FileStorage/direct-upload";
         });
 
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 100, OriginalFileName = "partial.bin" }, TestContext.Current.CancellationToken);
@@ -115,7 +115,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     {
         using var service = CreateService(o => {
             o.DirectUploadReceiveBaseUri = "https://tests.invalid";
-            o.DirectUploadPutRouteRelativePath = "Workbench/FileStorage/direct-upload";
+            o.DirectUploadPutRouteRelativePath = "FileStorage/direct-upload";
         });
 
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 100, OriginalFileName = "partial.bin" }, TestContext.Current.CancellationToken);
@@ -172,7 +172,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         const string apiBase = "https://tests.invalid";
         using var service = CreateService(o => {
             o.DirectUploadReceiveBaseUri = apiBase;
-            o.DirectUploadPutRouteRelativePath = "Workbench/FileStorage/direct-upload";
+            o.DirectUploadPutRouteRelativePath = "FileStorage/direct-upload";
         });
 
         var begin = await service.BeginDirectUploadAsync(
@@ -183,7 +183,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
                 ContentType = "application/octet-stream"
             }, TestContext.Current.CancellationToken);
 
-        Assert.StartsWith($"{apiBase}/Workbench/FileStorage/direct-upload/", begin.PresignedPutUrl, StringComparison.Ordinal);
+        Assert.StartsWith($"{apiBase}/FileStorage/direct-upload/", begin.PresignedPutUrl, StringComparison.Ordinal);
         Assert.Contains(begin.FileId.ToString("D"), begin.PresignedPutUrl, StringComparison.Ordinal);
         Assert.EndsWith("/put", begin.PresignedPutUrl, StringComparison.Ordinal);
         Assert.False(string.IsNullOrEmpty(begin.StorageLocation));
@@ -197,7 +197,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     {
         using var service = CreateService(o => {
             o.DirectUploadReceiveBaseUri = "https://tests.invalid/";
-            o.DirectUploadPutRouteRelativePath = "Workbench/FileStorage/direct-upload";
+            o.DirectUploadPutRouteRelativePath = "FileStorage/direct-upload";
         });
 
         var begin = await service.BeginDirectUploadAsync(
@@ -210,7 +210,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
 
         var payload = "hello-direct-upload-plain"u8.ToArray();
         await using (var ms = new MemoryStream(payload))
-            await service.ReceiveWorkbenchDirectPutAsync(begin.FileId, ms, TestContext.Current.CancellationToken);
+            await service.ReceiveDirectPutAsync(begin.FileId, ms, TestContext.Current.CancellationToken);
 
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(FileAvailability.Available, done.Availability);
@@ -219,7 +219,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     }
 
     [Fact]
-    public async Task ReceiveWorkbenchDirectPut_InvalidState_Throws()
+    public async Task ReceiveDirectPut_InvalidState_Throws()
     {
         using var service = CreateService(o => {
             o.DirectUploadReceiveBaseUri = "https://tests.invalid/";
@@ -228,12 +228,12 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         var saved = await service.SaveFileAsync("done"u8.ToArray(), "x.txt", ct: TestContext.Current.CancellationToken);
         await Assert.ThrowsAsync<ConflictException>(async () => {
             await using var ms = new MemoryStream([1]);
-            await service.ReceiveWorkbenchDirectPutAsync(saved.Id, ms, TestContext.Current.CancellationToken);
+            await service.ReceiveDirectPutAsync(saved.Id, ms, TestContext.Current.CancellationToken);
         });
     }
 
     [Fact]
-    public async Task ReceiveWorkbenchDirectPut_NullStream_ThrowsArgumentNull()
+    public async Task ReceiveDirectPut_NullStream_ThrowsArgumentNull()
     {
         using var service = CreateService(o => {
             o.DirectUploadReceiveBaseUri = "https://tests.invalid/";
@@ -241,7 +241,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
 
         Stream? missing = null;
         await Assert.ThrowsAsync<ArgumentNullException>(async () => {
-            await service.ReceiveWorkbenchDirectPutAsync(Guid.NewGuid(), missing!, TestContext.Current.CancellationToken);
+            await service.ReceiveDirectPutAsync(Guid.NewGuid(), missing!, TestContext.Current.CancellationToken);
         });
     }
 

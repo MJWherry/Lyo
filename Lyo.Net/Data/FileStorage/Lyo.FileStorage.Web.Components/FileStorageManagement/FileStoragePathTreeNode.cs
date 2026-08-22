@@ -2,10 +2,10 @@ using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.Web.Components.DataGrid;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 /// <summary>
-/// One node in the workbench path tree. Directories are virtual <c>PathPrefix</c> segments; files are metadata rows. Empty prefixes live under the root node
+/// One node in the path tree. Directories are virtual <c>PathPrefix</c> segments; files are metadata rows. Empty prefixes live under the root node
 /// (<see cref="FileStoragePathTreeBuilder.RootDisplayName" />).
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]

@@ -1,22 +1,22 @@
-@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
             <MudText Typo="Typo.caption" Color="Color.Secondary">
-                Relocates backing bytes under a new path prefix. The file id stays the same. Leave blank to use the default shard layout.
+                Copies backing bytes to a new file id. Leave the path prefix blank to inherit the source prefix.
             </MudText>
             <MudTextField T="string"
                           Label="Path prefix"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
-                          Placeholder="Optional"
+                          Placeholder="Optional (inherit source)"
                           @bind-Value="_pathPrefix"/>
         </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Confirm">Move</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Confirm">Copy</MudButton>
     </DialogActions>
 </MudDialog>
 

@@ -1,12 +1,12 @@
 @attribute [Route("/" + Constants.Page.FileStorageWorkbench)]
-@using Lyo.FileStorage.Web.Components.FileStorageWorkbench
+@using Lyo.FileStorage.Web.Components.FileStorageManagement
 @using Constants = Constants
 @inherits Lyo.TestGateway.Components.Pages.AuthorizedPage
 
 <PageTitle>File Storage Workbench</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
-    <FileStorageWorkbench FileMetadataQueryRoute="@Models.Constants.FileStorageWorkbench.FileMetadataRoute"
+    <FileStorageManagement FileMetadataQueryRoute="@Models.Constants.FileStorageWorkbench.FileMetadataRoute"
                           FileStorageApiRoutePrefix="@Models.Constants.FileStorageWorkbench.ApiRoutePrefix"/>
 </MudContainer>
 

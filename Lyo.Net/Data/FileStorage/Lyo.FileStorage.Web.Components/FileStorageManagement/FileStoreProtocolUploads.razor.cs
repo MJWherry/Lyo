@@ -5,7 +5,7 @@ using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 /// <summary>Kitchen-sink upload protocol on the Files tab (direct PUT, staged, or multipart).</summary>
 public enum FileStoreProtocolUploadMode
@@ -29,7 +29,7 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
     private string _status = "No file selected.";
 
     [CascadingParameter]
-    public FileStorageWorkbench Workbench { get; set; } = default!;
+    public FileStorageManagement Host { get; set; } = default!;
 
     [Parameter]
     public FileStoreProtocolUploadMode Mode { get; set; }
@@ -39,7 +39,7 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
         if (_stagingSession != null)
             return;
 
-        _stagingSession = Workbench.TempService.CreateSession();
+        _stagingSession = Host.TempService.CreateSession();
     }
 
     private string Title => Mode switch {
@@ -87,7 +87,7 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
 
         if ((Mode == FileStoreProtocolUploadMode.Staged || Mode == FileStoreProtocolUploadMode.Multipart) && _encrypt && string.IsNullOrWhiteSpace(_keyId)) {
             _status = "Key id is required when encryption is enabled.";
-            Workbench.Snackbar.Add(_status, Severity.Warning);
+            Host.Snackbar.Add(_status, Severity.Warning);
             return;
         }
 
@@ -104,12 +104,12 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
             };
 
             _status = result == null ? "Upload finished." : $"Saved {result.OriginalFileName ?? result.SourceFileName} ({result.Id}).";
-            Workbench.Snackbar.Add(_status, Severity.Success);
-            await Workbench.NotifyFilesChangedAsync();
+            Host.Snackbar.Add(_status, Severity.Success);
+            await Host.NotifyFilesChangedAsync();
         }
         catch (Exception ex) {
             _status = ex.Message;
-            Workbench.Snackbar.Add(ex.Message, Severity.Error);
+            Host.Snackbar.Add(ex.Message, Severity.Error);
         }
         finally {
             _busy = false;
@@ -118,32 +118,32 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
 
     private async Task<FileStoreResult?> RunDirectAsync(Stream stream, long length, string name, string? prefix)
     {
-        var begin = await Workbench.ApiClient.PostAsAsync<DirectUploadBeginRequest, DirectUploadBeginResult>(
-            Workbench.FilesApi("direct-upload/begin"),
+        var begin = await Host.ApiClient.PostAsAsync<DirectUploadBeginRequest, DirectUploadBeginResult>(
+            Host.FilesApi("direct-upload/begin"),
             new() { OriginalFileName = name, PathPrefix = prefix, DeclaredMaxSizeBytes = length });
         if (begin == null)
             throw new InvalidOperationException("Direct upload begin returned no result.");
 
         await PutAsync(begin.PresignedPutUrl, stream, begin.RequiredPutHeaders);
-        return await Workbench.ApiClient.PostAsAsync<DirectUploadCompleteRequest, FileStoreResult>(
-            Workbench.FilesApi($"direct-upload/{begin.FileId:D}/complete"),
+        return await Host.ApiClient.PostAsAsync<DirectUploadCompleteRequest, FileStoreResult>(
+            Host.FilesApi($"direct-upload/{begin.FileId:D}/complete"),
             new() { ExpectedByteLength = length, OriginalFileName = name });
     }
 
     private async Task<FileStoreResult?> RunStagedAsync(Stream stream, long length, string name, string? prefix)
     {
-        var begin = await Workbench.ApiClient.PostAsAsync<StagedUploadBeginRequest, StagedUploadBeginResult>(
-            Workbench.FilesApi("stage/begin"),
+        var begin = await Host.ApiClient.PostAsAsync<StagedUploadBeginRequest, StagedUploadBeginResult>(
+            Host.FilesApi("stage/begin"),
             new() { OriginalFileName = name, PathPrefix = prefix, DeclaredMaxSizeBytes = length });
         if (begin == null)
             throw new InvalidOperationException("Staged upload begin returned no result.");
 
         await PutAsync(begin.PresignedPutUrl, stream, begin.RequiredPutHeaders);
-        await Workbench.ApiClient.PostAsAsync<StagedUploadCompleteRequest, object>(
-            Workbench.FilesApi($"stage/{begin.StageId:D}/complete"),
+        await Host.ApiClient.PostAsAsync<StagedUploadCompleteRequest, object>(
+            Host.FilesApi($"stage/{begin.StageId:D}/complete"),
             new() { ExpectedByteLength = length, OriginalFileName = name });
-        return await Workbench.ApiClient.PostAsAsync<StagedUploadCommitRequest, FileStoreResult>(
-            Workbench.FilesApi($"stage/{begin.StageId:D}/commit"),
+        return await Host.ApiClient.PostAsAsync<StagedUploadCommitRequest, FileStoreResult>(
+            Host.FilesApi($"stage/{begin.StageId:D}/commit"),
             new() {
                 Compress = _compress,
                 Encrypt = _encrypt,
@@ -155,8 +155,8 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
     private async Task<FileStoreResult?> RunMultipartAsync(Stream stream, long length, string name, string? prefix)
     {
         const int partSize = 8 * 1024 * 1024;
-        var begin = await Workbench.ApiClient.PostAsAsync<BeginMultipartRequest, MultipartBeginResponse>(
-            Workbench.FilesApi("multipart/begin"),
+        var begin = await Host.ApiClient.PostAsAsync<BeginMultipartRequest, MultipartBeginResponse>(
+            Host.FilesApi("multipart/begin"),
             new(partSize, _compress, _encrypt, _encrypt ? _keyId : null, prefix, null, name, null, length));
         if (begin == null)
             throw new InvalidOperationException("Multipart begin returned no result.");
@@ -166,8 +166,8 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
         var remaining = length;
         while (remaining > 0) {
             var take = (int)Math.Min(partSize, remaining);
-            var descriptor = await Workbench.ApiClient.GetAsAsync<MultipartPartUrlResponse>(
-                Workbench.FilesApi($"multipart/{begin.SessionId:D}/part-url?partNumber={partNumber}"));
+            var descriptor = await Host.ApiClient.GetAsAsync<MultipartPartUrlResponse>(
+                Host.FilesApi($"multipart/{begin.SessionId:D}/part-url?partNumber={partNumber}"));
             if (descriptor?.PresignedPutUrl == null)
                 throw new InvalidOperationException($"No PUT URL for part {partNumber}.");
 
@@ -182,14 +182,14 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
             partNumber++;
         }
 
-        return await Workbench.ApiClient.PostAsAsync<CompleteMultipartRequest, FileStoreResult>(
-            Workbench.FilesApi("multipart/complete"),
+        return await Host.ApiClient.PostAsAsync<CompleteMultipartRequest, FileStoreResult>(
+            Host.FilesApi("multipart/complete"),
             new(begin.SessionId, parts));
     }
 
     private async Task<string?> PutAsync(string url, Stream body, IReadOnlyDictionary<string, string>? headers)
     {
-        var client = Workbench.ApiClient.GetClient();
+        var client = Host.ApiClient.GetClient();
         var target = ResolvePutUrl(url, client.BaseAddress);
         using var content = new StreamContent(body);
         using var request = new HttpRequestMessage(HttpMethod.Put, target) { Content = content };

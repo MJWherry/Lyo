@@ -7,18 +7,18 @@ using Lyo.Web.Components.Dialog;
 using Microsoft.JSInterop;
 using MudBlazor;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 /// <summary>Shared handlers and dialogs for Browser grids and the Tree inspector (view, download, archive zip, move, copy, rename, rotate DEK, delete).</summary>
 public sealed class FileStorageBrowserActions
 {
     private readonly Func<Task> _onMutated;
-    private readonly FileStorageWorkbench _workbench;
+    private readonly FileStorageManagement _host;
 
-    /// <summary>Creates actions bound to a workbench host. <paramref name="onMutated" /> runs after successful mutations so grids and the tree can refresh.</summary>
-    public FileStorageBrowserActions(FileStorageWorkbench workbench, Func<Task> onMutated)
+    /// <summary>Creates actions bound to the parent component. <paramref name="onMutated" /> runs after successful mutations so grids and the tree can refresh.</summary>
+    public FileStorageBrowserActions(FileStorageManagement host, Func<Task> onMutated)
     {
-        _workbench = ArgumentHelpers.ThrowIfNullReturn(workbench);
+        _host = ArgumentHelpers.ThrowIfNullReturn(host);
         _onMutated = ArgumentHelpers.ThrowIfNullReturn(onMutated);
     }
 
@@ -26,7 +26,7 @@ public sealed class FileStorageBrowserActions
     public async Task ViewFromRowAsync(object? row)
     {
         if (!FileStorageGridRowHelper.TryGetFileIdFromRow(row, out var fileId)) {
-            _workbench.SetStatus("Could not read file id from the grid row.", Severity.Warning);
+            _host.SetStatus("Could not read file id from the grid row.", Severity.Warning);
             return;
         }
 
@@ -41,11 +41,11 @@ public sealed class FileStorageBrowserActions
                 throw new InvalidOperationException($"Metadata for file {fileId} was not returned.");
 
             var parameters = new DialogParameters<FileStoreMetadataDialog> { { d => d.Metadata, result } };
-            await _workbench.DialogService.ShowAsync<FileStoreMetadataDialog>("File metadata", parameters, LyoDialogPresets.Medium);
-            _workbench.SetStatus($"Loaded metadata for {fileId}.", Severity.Success);
+            await _host.DialogService.ShowAsync<FileStoreMetadataDialog>("File metadata", parameters, LyoDialogPresets.Medium);
+            _host.SetStatus($"Loaded metadata for {fileId}.", Severity.Success);
         }
         catch (Exception ex) {
-            _workbench.SetStatus(ex.Message, Severity.Error);
+            _host.SetStatus(ex.Message, Severity.Error);
         }
     }
 
@@ -53,9 +53,9 @@ public sealed class FileStorageBrowserActions
     public async Task<FileStoreResult?> GetMetadataAsync(Guid fileId, bool includeDeleted = false)
     {
         var uri = includeDeleted
-            ? _workbench.FilesApi($"files/{fileId:D}/metadata?includeDeleted=true")
-            : _workbench.FilesApi($"files/{fileId:D}/metadata");
-        return await _workbench.ApiClient.GetAsAsync<FileStoreResult>(uri).ConfigureAwait(false);
+            ? _host.FilesApi($"files/{fileId:D}/metadata?includeDeleted=true")
+            : _host.FilesApi($"files/{fileId:D}/metadata");
+        return await _host.ApiClient.GetAsAsync<FileStoreResult>(uri).ConfigureAwait(false);
     }
 
     /// <summary>Opens the access-link dialog for an active file.</summary>
@@ -70,10 +70,10 @@ public sealed class FileStorageBrowserActions
         var parameters = new DialogParameters<FileAccessLinkDialog> {
             { d => d.FileId, fileId },
             { d => d.FileName, fileName },
-            { d => d.ApiRoutePrefix, _workbench.FileStorageApiRoutePrefix },
-            { d => d.PublicBaseUrl, _workbench.ApiClient.GetClient().BaseAddress?.ToString().TrimEnd('/') }
+            { d => d.ApiRoutePrefix, _host.FileStorageApiRoutePrefix },
+            { d => d.PublicBaseUrl, _host.ResolvePublicBaseUrl() }
         };
-        await _workbench.DialogService.ShowAsync<FileAccessLinkDialog>("Create access link", parameters, LyoDialogPresets.Medium);
+        await _host.DialogService.ShowAsync<FileAccessLinkDialog>("Create access link", parameters, LyoDialogPresets.Medium);
     }
 
     /// <summary>Opens the API download endpoint, which streams bytes through the host (decrypt/decompress). Direct-to-bucket URLs are access-link / presigned-read only.</summary>
@@ -85,18 +85,18 @@ public sealed class FileStorageBrowserActions
     /// <summary>Opens the API download endpoint for an active file.</summary>
     public async Task DownloadAsync(Guid fileId)
     {
-        var url = _workbench.GetApiAbsoluteUrl(_workbench.FilesApi($"files/{fileId:D}/download"));
+        var url = _host.GetApiAbsoluteUrl(_host.FilesApi($"files/{fileId:D}/download"));
         if (url == null) {
-            _workbench.SetStatus("ApiClient:BaseUrl is not configured; cannot download.", Severity.Warning);
+            _host.SetStatus("ApiClient:BaseUrl is not configured; cannot download.", Severity.Warning);
             return;
         }
 
         try {
-            await _workbench.JsRuntime.InvokeVoidAsync("open", url, "_blank");
-            _workbench.SetStatus($"Started download for {fileId}.", Severity.Success);
+            await _host.JsRuntime.InvokeVoidAsync("open", url, "_blank");
+            _host.SetStatus($"Started download for {fileId}.", Severity.Success);
         }
         catch (Exception ex) {
-            _workbench.SetStatus(ex.Message, Severity.Error);
+            _host.SetStatus(ex.Message, Severity.Error);
         }
     }
 
@@ -105,20 +105,20 @@ public sealed class FileStorageBrowserActions
     {
         ArgumentHelpers.ThrowIfNull(fileIds);
         if (fileIds.Count == 0) {
-            _workbench.SetStatus("Select at least one active file to download.", Severity.Warning);
+            _host.SetStatus("Select at least one active file to download.", Severity.Warning);
             return;
         }
 
         try {
             var qs = string.Join("&", fileIds.Select(id => $"id={id:D}"));
-            var (stream, fileName, _) = await _workbench.ApiClient.GetFileStreamAsync(_workbench.FilesApi($"files/archive?{qs}")).ConfigureAwait(false);
+            var (stream, fileName, _) = await _host.ApiClient.GetFileStreamAsync(_host.FilesApi($"files/archive?{qs}")).ConfigureAwait(false);
             await using (stream)
-                await _workbench.Js.DownloadFileFromStream(stream, fileName ?? "files.zip", FileTypeInfo.Zip.MimeType);
+                await _host.Js.DownloadFileFromStream(stream, fileName ?? "files.zip", FileTypeInfo.Zip.MimeType);
 
-            _workbench.SetStatus($"Downloaded {fileIds.Count} file(s).", Severity.Success);
+            _host.SetStatus($"Downloaded {fileIds.Count} file(s).", Severity.Success);
         }
         catch (Exception ex) {
-            _workbench.SetStatus(ex.Message, Severity.Error);
+            _host.SetStatus(ex.Message, Severity.Error);
         }
     }
 
@@ -134,7 +134,7 @@ public sealed class FileStorageBrowserActions
     {
         ArgumentHelpers.ThrowIfNull(fileIds);
         if (fileIds.Count == 0) {
-            _workbench.SetStatus("Select at least one active file to delete.", Severity.Warning);
+            _host.SetStatus("Select at least one active file to delete.", Severity.Warning);
             return Task.CompletedTask;
         }
 
@@ -151,7 +151,7 @@ public sealed class FileStorageBrowserActions
     public async Task MoveAsync(Guid fileId, string? currentPathPrefix = null)
     {
         var parameters = new DialogParameters<FileStoreMoveDialog> { { d => d.InitialPathPrefix, currentPathPrefix } };
-        var dialog = await _workbench.DialogService.ShowAsync<FileStoreMoveDialog>("Move file", parameters, LyoDialogPresets.Small);
+        var dialog = await _host.DialogService.ShowAsync<FileStoreMoveDialog>("Move file", parameters, LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is not { Canceled: false, Data: FileStorePathPrefixDialogResult prefix })
             return;
@@ -169,21 +169,21 @@ public sealed class FileStorageBrowserActions
     public async Task CopyAsync(Guid fileId, string? currentPathPrefix = null)
     {
         var parameters = new DialogParameters<FileStoreCopyDialog> { { d => d.InitialPathPrefix, currentPathPrefix } };
-        var dialog = await _workbench.DialogService.ShowAsync<FileStoreCopyDialog>("Copy file", parameters, LyoDialogPresets.Small);
+        var dialog = await _host.DialogService.ShowAsync<FileStoreCopyDialog>("Copy file", parameters, LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is not { Canceled: false, Data: FileStorePathPrefixDialogResult prefix })
             return;
 
         try {
-            var copied = await _workbench.ApiClient
+            var copied = await _host.ApiClient
                 .PostAsAsync<CopyFileRequest, FileStoreResult>(
-                    _workbench.FilesApi("files/copy"), new(fileId, prefix.PathPrefix))
+                    _host.FilesApi("files/copy"), new(fileId, prefix.PathPrefix))
                 .ConfigureAwait(false);
-            _workbench.SetStatus($"Copied to {copied.Id}.", Severity.Success);
+            _host.SetStatus($"Copied to {copied.Id}.", Severity.Success);
             await NotifyMutatedAsync();
         }
         catch (Exception ex) {
-            _workbench.SetStatus(ex.Message, Severity.Error);
+            _host.SetStatus(ex.Message, Severity.Error);
         }
     }
 
@@ -197,21 +197,21 @@ public sealed class FileStorageBrowserActions
     public async Task RenameAsync(Guid fileId, string? currentOriginalFileName = null)
     {
         var parameters = new DialogParameters<FileStoreRenameDialog> { { d => d.InitialOriginalFileName, currentOriginalFileName } };
-        var dialog = await _workbench.DialogService.ShowAsync<FileStoreRenameDialog>("Rename file", parameters, LyoDialogPresets.Small);
+        var dialog = await _host.DialogService.ShowAsync<FileStoreRenameDialog>("Rename file", parameters, LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is not { Canceled: false, Data: FileStoreRenameDialogResult rename })
             return;
 
         try {
-            await _workbench.ApiClient
+            await _host.ApiClient
                 .PostAsAsync<RenameFileRequest, FileStoreResult>(
-                    _workbench.FilesApi("files/rename"), new(fileId, rename.OriginalFileName))
+                    _host.FilesApi("files/rename"), new(fileId, rename.OriginalFileName))
                 .ConfigureAwait(false);
-            _workbench.SetStatus($"Renamed file {fileId}.", Severity.Success);
+            _host.SetStatus($"Renamed file {fileId}.", Severity.Success);
             await NotifyMutatedAsync();
         }
         catch (Exception ex) {
-            _workbench.SetStatus(ex.Message, Severity.Error);
+            _host.SetStatus(ex.Message, Severity.Error);
         }
     }
 
@@ -227,7 +227,7 @@ public sealed class FileStorageBrowserActions
     {
         ArgumentHelpers.ThrowIfNull(fileIds);
         if (fileIds.Count == 0) {
-            _workbench.SetStatus("Select at least one active file to rotate.", Severity.Warning);
+            _host.SetStatus("Select at least one active file to rotate.", Severity.Warning);
             return Task.CompletedTask;
         }
 
@@ -239,16 +239,16 @@ public sealed class FileStorageBrowserActions
     {
         var key = FileStorageGridRowHelper.GetExpectedStorageKey(row);
         if (string.IsNullOrWhiteSpace(key)) {
-            _workbench.SetStatus("Could not build an expected storage key from the grid row.", Severity.Warning);
+            _host.SetStatus("Could not build an expected storage key from the grid row.", Severity.Warning);
             return;
         }
 
         try {
-            await _workbench.Js.SendToClipboard(key);
-            _workbench.SetStatus("Copied expected storage key.", Severity.Success);
+            await _host.Js.SendToClipboard(key);
+            _host.SetStatus("Copied expected storage key.", Severity.Success);
         }
         catch (Exception ex) {
-            _workbench.SetStatus($"Copy failed: {ex.Message}", Severity.Warning);
+            _host.SetStatus($"Copy failed: {ex.Message}", Severity.Warning);
         }
     }
 
@@ -257,11 +257,11 @@ public sealed class FileStorageBrowserActions
     {
         var ids = GetActiveFileIds(rows);
         if (ids.Count == 0) {
-            _workbench.SetStatus("Select at least one active file to move.", Severity.Warning);
+            _host.SetStatus("Select at least one active file to move.", Severity.Warning);
             return;
         }
 
-        var dialog = await _workbench.DialogService.ShowAsync<FileStoreMoveDialog>("Move files", new DialogParameters(), LyoDialogPresets.Small);
+        var dialog = await _host.DialogService.ShowAsync<FileStoreMoveDialog>("Move files", new DialogParameters(), LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is not { Canceled: false, Data: FileStorePathPrefixDialogResult prefix })
             return;
@@ -274,11 +274,11 @@ public sealed class FileStorageBrowserActions
     {
         ArgumentHelpers.ThrowIfNull(fileIds);
         if (fileIds.Count == 0) {
-            _workbench.SetStatus("Select at least one active file to move.", Severity.Warning);
+            _host.SetStatus("Select at least one active file to move.", Severity.Warning);
             return;
         }
 
-        var dialog = await _workbench.DialogService.ShowAsync<FileStoreMoveDialog>("Move files", new DialogParameters(), LyoDialogPresets.Small);
+        var dialog = await _host.DialogService.ShowAsync<FileStoreMoveDialog>("Move files", new DialogParameters(), LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is not { Canceled: false, Data: FileStorePathPrefixDialogResult prefix })
             return;
@@ -291,26 +291,26 @@ public sealed class FileStorageBrowserActions
     {
         ArgumentHelpers.ThrowIfNull(moves);
         if (moves.Count == 0) {
-            _workbench.SetStatus("Nothing to move.", Severity.Warning);
+            _host.SetStatus("Nothing to move.", Severity.Warning);
             return;
         }
 
         var failed = 0;
         foreach (var (fileId, pathPrefix) in moves) {
             try {
-                await _workbench.ApiClient
-                    .PostAsAsync<MoveFileRequest, FileStoreResult>(_workbench.FilesApi("files/move"), new(fileId, pathPrefix))
+                await _host.ApiClient
+                    .PostAsAsync<MoveFileRequest, FileStoreResult>(_host.FilesApi("files/move"), new(fileId, pathPrefix))
                     .ConfigureAwait(false);
             }
             catch (Exception ex) {
                 failed++;
-                _workbench.SetStatus($"Move failed for {fileId}: {ex.Message}", Severity.Error);
+                _host.SetStatus($"Move failed for {fileId}: {ex.Message}", Severity.Error);
             }
         }
 
         var moved = moves.Count - failed;
         if (moved > 0)
-            _workbench.SetStatus(failed == 0 ? $"Moved {moved} file(s)." : $"Moved {moved} file(s); {failed} failed.", failed == 0 ? Severity.Success : Severity.Warning);
+            _host.SetStatus(failed == 0 ? $"Moved {moved} file(s)." : $"Moved {moved} file(s); {failed} failed.", failed == 0 ? Severity.Success : Severity.Warning);
 
         if (moved > 0)
             await NotifyMutatedAsync();
@@ -321,7 +321,7 @@ public sealed class FileStorageBrowserActions
     {
         var ids = GetActiveFileIds(rows);
         if (ids.Count == 0) {
-            _workbench.SetStatus("Select at least one active file to delete.", Severity.Warning);
+            _host.SetStatus("Select at least one active file to delete.", Severity.Warning);
             return;
         }
 
@@ -333,7 +333,7 @@ public sealed class FileStorageBrowserActions
     {
         var ids = GetActiveFileIds(rows);
         if (ids.Count == 0) {
-            _workbench.SetStatus("Select at least one active file to rotate.", Severity.Warning);
+            _host.SetStatus("Select at least one active file to rotate.", Severity.Warning);
             return;
         }
 
@@ -345,19 +345,19 @@ public sealed class FileStorageBrowserActions
         var failed = 0;
         foreach (var fileId in fileIds) {
             try {
-                await _workbench.ApiClient
-                    .PostAsAsync<MoveFileRequest, FileStoreResult>(_workbench.FilesApi("files/move"), new(fileId, pathPrefix))
+                await _host.ApiClient
+                    .PostAsAsync<MoveFileRequest, FileStoreResult>(_host.FilesApi("files/move"), new(fileId, pathPrefix))
                     .ConfigureAwait(false);
             }
             catch (Exception ex) {
                 failed++;
-                _workbench.SetStatus($"Move failed for {fileId}: {ex.Message}", Severity.Error);
+                _host.SetStatus($"Move failed for {fileId}: {ex.Message}", Severity.Error);
             }
         }
 
         var moved = fileIds.Count - failed;
         if (moved > 0)
-            _workbench.SetStatus(failed == 0 ? $"Moved {moved} file(s)." : $"Moved {moved} file(s); {failed} failed.", failed == 0 ? Severity.Success : Severity.Warning);
+            _host.SetStatus(failed == 0 ? $"Moved {moved} file(s)." : $"Moved {moved} file(s); {failed} failed.", failed == 0 ? Severity.Success : Severity.Warning);
 
         if (moved > 0)
             await NotifyMutatedAsync();
@@ -366,29 +366,29 @@ public sealed class FileStorageBrowserActions
     private async Task DeleteFilesCoreAsync(IReadOnlyList<Guid> fileIds)
     {
         var label = fileIds.Count == 1 ? $"Delete file {fileIds[0]}?" : $"Delete {fileIds.Count} files?";
-        var confirm = await _workbench.DialogService.ShowMessageBoxAsync("Delete file", label, "Delete", cancelText: "Cancel");
+        var confirm = await _host.DialogService.ShowMessageBoxAsync("Delete file", label, "Delete", cancelText: "Cancel");
         if (confirm != true)
             return;
 
         var failed = 0;
         foreach (var fileId in fileIds) {
             try {
-                var deleted = await _workbench.ApiClient.DeleteAsAsync<bool>(_workbench.FilesApi($"files/{fileId:D}")).ConfigureAwait(false);
+                var deleted = await _host.ApiClient.DeleteAsAsync<bool>(_host.FilesApi($"files/{fileId:D}")).ConfigureAwait(false);
                 if (!deleted)
                     failed++;
             }
             catch (Exception ex) {
                 failed++;
-                _workbench.SetStatus($"Delete failed for {fileId}: {ex.Message}", Severity.Error);
+                _host.SetStatus($"Delete failed for {fileId}: {ex.Message}", Severity.Error);
             }
         }
 
         var deletedCount = fileIds.Count - failed;
         if (deletedCount > 0)
-            _workbench.SetStatus(
+            _host.SetStatus(
                 failed == 0 ? $"Deleted {deletedCount} file(s)." : $"Deleted {deletedCount} file(s); {failed} failed.", failed == 0 ? Severity.Success : Severity.Warning);
         else
-            _workbench.SetStatus("No files were deleted.", Severity.Warning);
+            _host.SetStatus("No files were deleted.", Severity.Warning);
 
         if (deletedCount > 0)
             await NotifyMutatedAsync();
@@ -398,24 +398,24 @@ public sealed class FileStorageBrowserActions
     {
         var parameters = new DialogParameters<FileStoreRotateDekDialog> {
             { d => d.FileCount, fileIds.Count },
-            { d => d.KeyIds, _workbench.EncryptionKeyIds }
+            { d => d.KeyIds, _host.EncryptionKeyIds }
         };
-        var dialog = await _workbench.DialogService.ShowAsync<FileStoreRotateDekDialog>("Rotate DEKs", parameters, LyoDialogPresets.Medium);
+        var dialog = await _host.DialogService.ShowAsync<FileStoreRotateDekDialog>("Rotate DEKs", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is not { Canceled: false, Data: FileStoreRotateDekDialogResult rotate })
             return;
 
         try {
-            var rotation = await _workbench.ApiClient
+            var rotation = await _host.ApiClient
                 .PostAsAsync<RotateDeksRequest, DekMigrationResult>(
-                    _workbench.FilesApi("files/rotate-deks"), new(fileIds, rotate.TargetKeyId, rotate.TargetKeyVersion, rotate.BatchSize))
+                    _host.FilesApi("files/rotate-deks"), new(fileIds, rotate.TargetKeyId, rotate.TargetKeyVersion, rotate.BatchSize))
                 .ConfigureAwait(false);
-            _workbench.SetStatus(
+            _host.SetStatus(
                 rotation.AllSucceeded ? "DEK rotation completed." : "DEK rotation completed with failures.", rotation.AllSucceeded ? Severity.Success : Severity.Warning);
             await NotifyMutatedAsync();
         }
         catch (Exception ex) {
-            _workbench.SetStatus(ex.Message, Severity.Error);
+            _host.SetStatus(ex.Message, Severity.Error);
         }
     }
 
@@ -423,14 +423,14 @@ public sealed class FileStorageBrowserActions
     {
         fileId = default;
         if (FileStorageGridRowHelper.IsRowDeleted(row)) {
-            _workbench.SetStatus(deletedMessage, Severity.Info);
+            _host.SetStatus(deletedMessage, Severity.Info);
             return false;
         }
 
         if (FileStorageGridRowHelper.TryGetFileIdFromRow(row, out fileId))
             return true;
 
-        _workbench.SetStatus("Could not read file id from the grid row.", Severity.Warning);
+        _host.SetStatus("Could not read file id from the grid row.", Severity.Warning);
         return false;
     }
 

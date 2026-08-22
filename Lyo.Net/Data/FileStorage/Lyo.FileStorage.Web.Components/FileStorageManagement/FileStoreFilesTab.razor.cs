@@ -6,7 +6,7 @@ using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
-namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 public partial class FileStoreFilesTab : ComponentBase
 {
@@ -38,7 +38,7 @@ public partial class FileStoreFilesTab : ComponentBase
     private LocalBrowserFilePath? _uploadedFile;
 
     [CascadingParameter]
-    public FileStorageWorkbench Workbench { get; set; } = default!;
+    public FileStorageManagement Host { get; set; } = default!;
 
     private string CryptoOpsMigrationTitle => _cryptoOpsTab == 0 ? "DEK migration" : "KEK migration";
 
@@ -110,13 +110,13 @@ public partial class FileStoreFilesTab : ComponentBase
     private async Task SaveFileAsync()
     {
         if (_uploadedFile == null) {
-            Workbench.SetStatus("Choose a file first.", Severity.Warning);
+            Host.SetStatus("Choose a file first.", Severity.Warning);
             _uploadStatus = "No file selected.";
             return;
         }
 
         if (_saveEncrypt && string.IsNullOrWhiteSpace(_saveKeyId)) {
-            Workbench.SetStatus("Key id is required when encryption is enabled.", Severity.Warning);
+            Host.SetStatus("Key id is required when encryption is enabled.", Severity.Warning);
             _uploadStatus = "Enter a key id for encrypted uploads.";
             return;
         }
@@ -125,18 +125,18 @@ public partial class FileStoreFilesTab : ComponentBase
         _uploadStatus = "Uploading to storage…";
         try {
             await InvokeAsync(StateHasChanged);
-            var uri = Workbench.BuildSaveStreamUri(
+            var uri = Host.BuildSaveStreamUri(
                 string.IsNullOrWhiteSpace(_saveOriginalFileName) ? _uploadedFile.FileName : _saveOriginalFileName, _saveCompress, _saveEncrypt,
                 _saveEncrypt ? NullIfWhiteSpace(_saveKeyId) : null, string.IsNullOrWhiteSpace(_savePathPrefix) ? null : _savePathPrefix, _saveChunkSize);
-            var result = await Workbench.ApiClient.PostFileAsAsync<FileStoreResult>(uri, _uploadedFile.FilePath).ConfigureAwait(false);
+            var result = await Host.ApiClient.PostFileAsAsync<FileStoreResult>(uri, _uploadedFile.FilePath).ConfigureAwait(false);
 
-            await Workbench.NotifyFilesChangedAsync();
+            await Host.NotifyFilesChangedAsync();
 
-            Workbench.SetStatus($"Uploaded file {result.Id}.", Severity.Success);
+            Host.SetStatus($"Uploaded file {result.Id}.", Severity.Success);
             _uploadStatus = $"Uploaded file {result.Id}.";
         }
         catch (Exception ex) {
-            Workbench.SetStatus(ex.Message, Severity.Error);
+            Host.SetStatus(ex.Message, Severity.Error);
             _uploadStatus = $"Upload failed: {ex.Message}";
         }
         finally {
@@ -147,27 +147,27 @@ public partial class FileStoreFilesTab : ComponentBase
     private async Task MigrateDeksAsync()
     {
         if (string.IsNullOrWhiteSpace(_migrationSourceKeyId)) {
-            Workbench.SetStatus($"Source key id is required for {CryptoOpsKind} migration.", Severity.Warning);
+            Host.SetStatus($"Source key id is required for {CryptoOpsKind} migration.", Severity.Warning);
             return;
         }
 
         _fileBusy = true;
         try {
-            _migrationResult = await Workbench.ApiClient
+            _migrationResult = await Host.ApiClient
                 .PostAsAsync<MigrateDeksRequest, DekMigrationResult>(
-                    Workbench.FilesApi("files/migrate-deks"),
+                    Host.FilesApi("files/migrate-deks"),
                     new(
                         _migrationSourceKeyId, NullIfWhiteSpace(_migrationSourceKeyVersion), NullIfWhiteSpace(_migrationTargetKeyId),
                         NullIfWhiteSpace(_migrationTargetKeyVersion), _migrationBatchSize))
                 .ConfigureAwait(false);
 
-            Workbench.SetStatus(
+            Host.SetStatus(
                 _migrationResult.AllSucceeded ? $"{CryptoOpsKind} migration completed." : $"{CryptoOpsKind} migration completed with failures.",
                 _migrationResult.AllSucceeded ? Severity.Success : Severity.Warning);
-            await Workbench.NotifyFilesChangedAsync();
+            await Host.NotifyFilesChangedAsync();
         }
         catch (Exception ex) {
-            Workbench.SetStatus(ex.Message, Severity.Error);
+            Host.SetStatus(ex.Message, Severity.Error);
         }
         finally {
             _fileBusy = false;
@@ -181,18 +181,18 @@ public partial class FileStoreFilesTab : ComponentBase
 
         _fileBusy = true;
         try {
-            _rotationResult = await Workbench.ApiClient
+            _rotationResult = await Host.ApiClient
                 .PostAsAsync<RotateDeksRequest, DekMigrationResult>(
-                    Workbench.FilesApi("files/rotate-deks"),
+                    Host.FilesApi("files/rotate-deks"),
                     new(fileIds, NullIfWhiteSpace(_rotationTargetKeyId), NullIfWhiteSpace(_rotationTargetKeyVersion), _rotationBatchSize))
                 .ConfigureAwait(false);
-            Workbench.SetStatus(
+            Host.SetStatus(
                 _rotationResult.AllSucceeded ? $"{CryptoOpsKind} rotation completed." : $"{CryptoOpsKind} rotation completed with failures.",
                 _rotationResult.AllSucceeded ? Severity.Success : Severity.Warning);
-            await Workbench.NotifyFilesChangedAsync();
+            await Host.NotifyFilesChangedAsync();
         }
         catch (Exception ex) {
-            Workbench.SetStatus(ex.Message, Severity.Error);
+            Host.SetStatus(ex.Message, Severity.Error);
         }
         finally {
             _fileBusy = false;
@@ -212,14 +212,14 @@ public partial class FileStoreFilesTab : ComponentBase
         if (_stagingSession != null)
             return;
 
-        _stagingSession = Workbench.TempService.CreateSession();
+        _stagingSession = Host.TempService.CreateSession();
     }
 
     private bool TryParseRotationFileIds(out IReadOnlyCollection<Guid> fileIds)
     {
         if (_rotationFileIds.Count == 0) {
             fileIds = [];
-            Workbench.SetStatus("Enter at least one file id to rotate.", Severity.Warning);
+            Host.SetStatus("Enter at least one file id to rotate.", Severity.Warning);
             return false;
         }
 
@@ -234,7 +234,7 @@ public partial class FileStoreFilesTab : ComponentBase
 
         if (invalidTokens.Count > 0) {
             fileIds = [];
-            Workbench.SetStatus($"One or more file ids are invalid: {string.Join(", ", invalidTokens.Take(5))}", Severity.Warning);
+            Host.SetStatus($"One or more file ids are invalid: {string.Join(", ", invalidTokens.Take(5))}", Severity.Warning);
             return false;
         }
 

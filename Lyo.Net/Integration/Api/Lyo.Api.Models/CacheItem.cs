@@ -11,7 +11,8 @@ public sealed record CacheItem(
     bool? Encrypted = null,
     bool? Compressed = null,
     long? SizeBytes = null,
-    DateTime? Expires = null)
+    DateTime? Expires = null,
+    IReadOnlyList<string>? Tags = null)
 {
     public static CacheItem Key(
         string name,
@@ -19,8 +20,9 @@ public sealed record CacheItem(
         bool? encrypted = null,
         bool? compressed = null,
         long? sizeBytes = null,
-        DateTime? expires = null)
-        => new(CacheItemTypeEnum.Key, name, created ?? DateTime.UtcNow, encrypted, compressed, sizeBytes, expires);
+        DateTime? expires = null,
+        IReadOnlyList<string>? tags = null)
+        => new(CacheItemTypeEnum.Key, name, created ?? DateTime.UtcNow, encrypted, compressed, sizeBytes, expires, tags);
 
     public static CacheItem Tag(string name, DateTime? created = null) => new(CacheItemTypeEnum.Tag, name, created ?? DateTime.UtcNow);
 

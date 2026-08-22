@@ -117,7 +117,7 @@
         [
           "`PUT`",
           "`direct-upload/{fileId:guid}/put`",
-          "Only when keyed service is `LocalFileStorageService`. `ReceiveWorkbenchDirectPutAsync`; otherwise 501"
+          "Only when keyed service is `LocalFileStorageService`. `ReceiveDirectPutAsync`; otherwise 501"
         ],
         [
           "`POST`",
@@ -132,7 +132,7 @@
         [
           "`PUT`",
           "`stage/{stageId:guid}/put`",
-          "Local only. `ReceiveWorkbenchStagePutAsync`; otherwise 501"
+          "Local only. `ReceiveStagePutAsync`; otherwise 501"
         ],
         [
           "`POST`",
@@ -180,7 +180,7 @@
           "`IFileStorageDiagnosticsService.ListStorageKeysAsync` clamped to 1 to 10 000; 501 if backend doesn't implement diagnostics"
         ]
       ],
-      "lead": "`Lyo.Api.FileStorage.BuildFileStorageApi` maps the workbench group at `FileStorageApiOptions.Route` (`Workbench/FileStorage`) with the `FileStorageWorkbench` OpenAPI tag. All endpoints resolve services as **keyed** `IFileStorageService`, `IMultipartUploadService`, `IStagedFileUploadService`, and `IFileStorageArchiveService` under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-filestorage`). There are no `keys/*` routes.",
+      "lead": "`Lyo.Api.FileStorage.BuildFileStorageApi` maps the workbench group at `FileStorageApiOptions.Route` (`Workbench/FileStorage`) with the `FileStorage` OpenAPI tag. All endpoints resolve services as **keyed** `IFileStorageService`, `IMultipartUploadService`, `IStagedFileUploadService`, and `IFileStorageArchiveService` under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-filestorage`). There are no `keys/*` routes.",
       "trail": "`access-links` returns relative paths (`Workbench/FileStorage/files/access/{token}/download` and `…/presigned-read`); both routes call\n`IFileDownloadAccessService.ValidateAndConsumeDownloadAsync(token, user, remoteIp)` and translate `FileDownloadAccessConsumeFailureReason` to 400/403/404/410/429 via\n`MapFailureStatusCode`.\n\nAfter every mutating call (`save`, `save-stream`, `direct-upload/complete`, `stage/commit`, `multipart/complete`, `copy`, `move`, `rename`, `DELETE files/{id}`, `migrate-deks`, `rotate-deks`) the handler calls\n`cache.InvalidateQueryCacheAsync<FileMetadataEntity>()` so the read-only QueryProject endpoint stays consistent. `FileMetadataQueryCacheInvalidationHandler` performs the same\ninvalidation when audit events flow in from the file storage layer."
     },
     {

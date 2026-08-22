@@ -44,7 +44,7 @@ The Person group uses `Lyo.Api` `CreateBuilder<…>` with `WithFlags(All | Upser
 
 ## File storage workbench group (`Workbench/FileStorage`)
 
-`Lyo.Api.FileStorage.BuildFileStorageApi` maps the workbench group at `FileStorageApiOptions.Route` (`Workbench/FileStorage`) with the `FileStorageWorkbench` OpenAPI tag. All endpoints resolve services as **keyed** `IFileStorageService`, `IMultipartUploadService`, `IStagedFileUploadService`, and `IFileStorageArchiveService` under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-filestorage`). There are no `keys/*` routes.
+`Lyo.Api.FileStorage.BuildFileStorageApi` maps the workbench group at `FileStorageApiOptions.Route` (`Workbench/FileStorage`) with the `FileStorage` OpenAPI tag. All endpoints resolve services as **keyed** `IFileStorageService`, `IMultipartUploadService`, `IStagedFileUploadService`, and `IFileStorageArchiveService` under `Constants.FileStorageWorkbench.ServiceKey` (`gateway-filestorage`). There are no `keys/*` routes.
 
 | Method | Route | Purpose |
 | -------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -63,10 +63,10 @@ The Person group uses `Lyo.Api` `CreateBuilder<…>` with `WithFlags(All | Upser
 | `POST` | `files/migrate-deks` | `MigrateDeksAsync` (rotate every DEK that uses a source key) |
 | `POST` | `files/rotate-deks` | `RotateDeksAsync(fileIds, targetKey)` |
 | `POST` | `direct-upload/begin` | `BeginDirectUploadAsync` (presigned/PUT contract) |
-| `PUT` | `direct-upload/{fileId:guid}/put` | Only when keyed service is `LocalFileStorageService`. `ReceiveWorkbenchDirectPutAsync`; otherwise 501 |
+| `PUT` | `direct-upload/{fileId:guid}/put` | Only when keyed service is `LocalFileStorageService`. `ReceiveDirectPutAsync`; otherwise 501 |
 | `POST` | `direct-upload/{fileId:guid}/complete` | `CompleteDirectUploadAsync` |
 | `POST` | `stage/begin` | `IStagedFileUploadService.BeginAsync` (presigned PUT to staging key) |
-| `PUT` | `stage/{stageId:guid}/put` | Local only. `ReceiveWorkbenchStagePutAsync`; otherwise 501 |
+| `PUT` | `stage/{stageId:guid}/put` | Local only. `ReceiveStagePutAsync`; otherwise 501 |
 | `POST` | `stage/{stageId:guid}/complete` | `CompleteAsync` (verify/hash staged object) |
 | `POST` | `stage/{stageId:guid}/commit` | `CommitAsync` (compress/encrypt → `file_metadata`) |
 | `POST` | `stage/{stageId:guid}/abort` | `AbortAsync` |

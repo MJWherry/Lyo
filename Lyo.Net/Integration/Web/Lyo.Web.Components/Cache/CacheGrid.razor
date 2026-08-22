@@ -1,4 +1,5 @@
 @namespace Lyo.Web.Components.Cache
+@using System.Collections
 @using System.Text.Json
 @using Lyo.Api.Client
 @using Lyo.Api.Models.Common.Request
@@ -44,6 +45,23 @@
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name" MaxDisplayLength="150"/>
+        <LyoProjectedColumn Field="Tags" Title="Tags" Sortable="false">
+            <CellContent Context="item">
+                @{
+                    var tags = GetTags(item);
+                }
+                @if (tags.Count == 0) {
+                    <span>—</span>
+                }
+                else {
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var tag in tags) {
+                            <LyoChip Spec="@LyoChips.Of(tag, Color.Tertiary, Icons.Material.Filled.LocalOffer)"/>
+                        }
+                    </div>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
         <LyoProjectedColumn Field="Encrypted" Title="Encrypted">
             <CellContent Context="item">
                 @{
@@ -86,6 +104,7 @@
     private readonly List<FilterPropertyDefinition> _filters = [
         new("Type", "Type"),
         new("Name", "Name"),
+        new("Tags", "Tags"),
         new("Encrypted", "Encrypted"),
         new("Compressed", "Compressed"),
         new("SizeBytes", "Size"),
@@ -113,6 +132,54 @@
         var type = ProjectedValueHelper.GetValue(item, "Type");
         var name = ProjectedValueHelper.GetValue(item, "Name");
         return type == null || name == null ? [] : [type, name];
+    }
+
+    private static IReadOnlyList<string> GetTags(object? item)
+    {
+        var raw = ProjectedValueHelper.GetValue(item, "Tags");
+        if (raw is null)
+            return [];
+
+        var tags = new List<string>();
+        foreach (var value in EnumerateTagValues(raw)) {
+            if (!string.IsNullOrWhiteSpace(value))
+                tags.Add(value);
+        }
+
+        return tags;
+    }
+
+    private static IEnumerable<string> EnumerateTagValues(object raw)
+    {
+        if (raw is string s) {
+            yield return s;
+            yield break;
+        }
+
+        if (raw is JsonElement je) {
+            if (je.ValueKind == JsonValueKind.String) {
+                var text = je.GetString();
+                if (text != null)
+                    yield return text;
+            }
+            else if (je.ValueKind == JsonValueKind.Array) {
+                foreach (var el in je.EnumerateArray()) {
+                    var text = el.ValueKind == JsonValueKind.String ? el.GetString() : el.ToString();
+                    if (text != null)
+                        yield return text;
+                }
+            }
+
+            yield break;
+        }
+
+        if (raw is IEnumerable enumerable) {
+            foreach (var el in enumerable) {
+                var text = el?.ToString();
+                if (text != null)
+                    yield return text;
+            }
+        }
     }
 
     private static bool? GetNullableBool(object? item, string field)

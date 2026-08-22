@@ -65,7 +65,7 @@ var service = new S3FileStorageService(options, metadataStore);
 | [`FileStorageArchitecture.drawio`](FileStorageArchitecture.drawio) | Multi-page diagram: overview, upload (general), save (compress/encrypt), staged upload, read, copy, DEK migrate, DEK rotate, delete |
 | Lyo.FileStorage.S3/README.md: S3-compatible storage (AWS, B2, MinIO, …) | [`S3FileStorageService.cs`](../Lyo.FileStorage.S3/S3FileStorageService.cs), S3FileStorageOptions, DI builders |
 | Lyo.FileStorage.AzureBlob/README.md: Azure Blob | [`AzureBlobFileStorageService.cs`](../Lyo.FileStorage.AzureBlob/AzureBlobFileStorageService.cs), AzureBlobFileStorageOptions, SAS / SSE notes |
-| Lyo.FileStorage.Web.Components: Workbench UI | Blazor grids and dialogs that call a configured Test API |
+| Lyo.FileStorage.Web.Components: Blazor UI | Blazor grids and dialogs that call a configured Test API |
 
 For multipart session stores and Postgres metadata, follow references from your host registration (e.g. Lyo.FileMetadataStore.Postgres).
 
@@ -164,8 +164,8 @@ DiskFileStorageOptions adds:
 | RootDirectoryPath | Root folder for blobs and bundled JSON metadata (when IFileMetadataStore is not injected explicitly) |
 | EnableMetrics | Emit metrics via IMetrics when configured |
 | AllowFileUriPresignedUrls | Dev only. Allow file:// presigned-style URLs instead of rejecting presigned reads. |
-| DirectUploadReceiveBaseUri | Absolute origin of the host that exposes PUT …/Workbench/FileStorage/direct-upload/{fileId}/put (matches Lyo.TestApi conventions). When null, BeginDirectUploadAsync delegates to NotSupported. |
-| DirectUploadPutRouteRelativePath | Path between base URI and {fileId}/put. Default Workbench/FileStorage/direct-upload with the bundled Test API. |
+| DirectUploadReceiveBaseUri | Absolute origin of the host that exposes PUT …/FileStorage/direct-upload/{fileId}/put. When null, BeginDirectUploadAsync delegates to NotSupported. |
+| DirectUploadPutRouteRelativePath | Path between base URI and {fileId}/put. Default FileStorage/direct-upload. |
 | Inherited (FileStorageServiceBaseOptions) | |
 | HealthCheckMode | Lightweight vs deeper health probes |
 | HashAlgorithm, EnableDuplicateDetection, DuplicateStrategy | Dedup by plaintext originalFileHash. See Duplicate detection. |
