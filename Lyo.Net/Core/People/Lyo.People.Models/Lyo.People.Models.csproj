@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>People and person-related models for the Lyo library suite. Includes Person, PersonName, contact info, relationships, employment, identification, and preferences.</Description>
+        <PackageTags>people person models contact employment identification</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\DateAndTime\Lyo.DateAndTime\Lyo.DateAndTime.csproj"/>
+        <ProjectReference Include="..\..\Geolocation\Lyo.Geolocation.Models\Lyo.Geolocation.Models.csproj"/>
+        <ProjectReference Include="..\..\Common\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
+        <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
+    </ItemGroup>
+
+</Project>

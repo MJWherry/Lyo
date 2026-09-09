@@ -1,0 +1,104 @@
+{
+  "id": "Lyo.Audit",
+  "name": "Lyo.Audit",
+  "area": "Core",
+  "tagline": "Audit trail with two records: `AuditChange` (entity change tracking) and `AuditEvent` (events to log).",
+  "description": "Audit trail with two records: `AuditChange` (entity change tracking) and `AuditEvent` (events to log). Both are immutable and stay unchanged after creation. Each carries an `EntityRef` for the subject plus an optional `EntityRef` for the actor. Storage is contracted through `IAuditRecorder`.",
+  "features": [
+    "**AuditChange.** A change to an entity or property: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property to old value), `ChangedProperties` (property to new value), optional `Actor` (`EntityRef?`).",
+    "**AuditEvent.** Something to log: `Id` (Guid), `Subject` (`EntityRef`), `EventType`, `Timestamp`, optional `Message`, `Actor` (`EntityRef?`), and `Metadata`.",
+    "**IAuditRecorder.** Sync and async: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`, `RecordEvents`/`RecordEventsAsync`. Persist to a database or log sink in your implementation.",
+    "**NullAuditRecorder.** A no-op when you do not need auditing."
+  ],
+  "examples": [
+    {
+      "title": "AuditChange (tracking entity edits)",
+      "language": "csharp",
+      "code": "using Lyo.Audit;\nusing Lyo.EntityReference.Models;\n\nvar change = new AuditChange(\n    EntityRef.For<Order>(order.Id),\n    new Dictionary<string, object?> {\n        [\"Name\"] = \"Old Name\",\n        [\"Status\"] = \"Draft\"\n    },\n    new Dictionary<string, object?> {\n        [\"Name\"] = \"New Name\",\n        [\"Status\"] = \"Submitted\"\n    }) {\n    Actor = EntityRef.ForKey(\"User\", currentUserId.ToString())\n};\n\nauditRecorder.RecordChange(change);"
+    },
+    {
+      "title": "AuditEvent (events worth logging)",
+      "language": "csharp",
+      "code": "using Lyo.Audit;\nusing Lyo.EntityReference.Models;\n\nvar evt = new AuditEvent(\n    Subject: EntityRef.ForKey(\"User\", \"user-123\"),\n    EventType: \"UserLogin\",\n    Message: \"User signed in successfully\",\n    Actor: EntityRef.ForKey(\"User\", \"user-123\"),\n    Metadata: new Dictionary<string, object?> {\n        [\"IpAddress\"] = \"192.168.1.1\",\n        [\"UserAgent\"] = \"Mozilla/5.0...\"\n    });\n\nauditRecorder.RecordEvent(evt);"
+    },
+    {
+      "title": "Recording in bulk and asynchronously",
+      "language": "csharp",
+      "code": "auditRecorder.RecordChanges(new[] { change1, change2, change3 });\nauditRecorder.RecordEvents(new[] { evt1, evt2 });\n\nawait auditRecorder.RecordChangeAsync(change);\nawait auditRecorder.RecordChangesAsync(changes, cancellationToken);\nawait auditRecorder.RecordEventAsync(evt);\nawait auditRecorder.RecordEventsAsync(events, cancellationToken);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "AuditChange (tracking entity edits)",
+      "text": "Decorate domain types with `[EntityRefLogicalType(\"MyApp.Order\")]` so the persisted `EntityType` stays stable if the CLR type is renamed."
+    },
+    {
+      "type": "markdown",
+      "title": "Storing in PostgreSQL",
+      "body": "PostgreSQL storage with EF Core migrations is in `Lyo.Audit.Postgres`:\n\n```xml\n<PackageReference Include=\"Lyo.Audit.Postgres\" Version=\"1.0.22\" />\n```\n\n```csharp\nservices.AddPostgresAuditRecorder(new PostgresAuditOptions {\n    ConnectionString = configuration.GetConnectionString(\"Audit\"),\n    EnableAutoMigrations = true\n});\n```\n\nMigrations run at host startup through `IHostedService` when `EnableAutoMigrations` is true, not during service registration. The app needs a host such as\n`Host.CreateDefaultBuilder()` or `WebApplication.CreateBuilder()`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Audit/Lyo.Audit/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

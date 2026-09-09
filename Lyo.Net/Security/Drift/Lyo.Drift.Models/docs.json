@@ -1,0 +1,100 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Drift.Models",
+  "name": "Lyo.Drift.Models",
+  "area": "Security",
+  "tagline": "DTOs, enums, and route constants for the Lyo Drift collector: instances, structure snapshots, and diffs.",
+  "description": "Contract library for Drift. Agents and the API share instance upsert payloads, file-tree and system-info snapshots, persistable object-graph difference DTOs, and a configurable SystemInfoDriftProjection. The default is identity-only (OS, CPU, RAM total, host, drives, NIC names); volatile fields are never mapped.",
+  "features": [
+    "**Identity default.** SystemInfoDriftProjection.From omits env vars, NIC addresses, monitors, locale, uptime, free disk, and process lifetime unless named groups are passed.",
+    "**DTO diffs.** ObjectGraphDifferenceDto stores JSON leaves, not object?.",
+    "**Routes.** Constants.Rest.Drift names Instance, Snapshot, Diff, and Change ingest paths."
+  ],
+  "examples": [
+    {
+      "title": "Project system info",
+      "language": "csharp",
+      "code": "var projection = SystemInfoDriftProjection.From(SystemInfoCollector.Collect());"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Security/Drift/Lyo.Drift.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileSystemWatcher.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.SystemInformation",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

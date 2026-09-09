@@ -1,0 +1,89 @@
+{
+  "id": "Lyo.Common.Metadata",
+  "name": "Lyo.Common.Metadata",
+  "area": "Core",
+  "tagline": "Lyo registry records — file type, MIME, language, port, HTTP status, HTTP header, geography, and CLR type catalogs — plus the extensions that bridge enums to those records.",
+  "description": "The record catalogs that turn the bare enums in [`Lyo.Common.Core`](../Lyo.Common.Core/README.md) into something descriptive live in `Lyo.Common.Metadata`: `MimeTypeInfo` is the IANA media-type catalog, `FileTypeInfo` maps extensions onto those rows, `LanguageCodeInfo` knows BCP-47 and ISO 639 codes, `LyoTypeInfo` is the type picker behind config, job, and filter editors.\n\nRecords and the extensions that read them ship together because they depend on each other — `LyoTypeInfo` uses `StringExtensions`, and `FileTypeInfo.FromMimeType` reads `MimeTypeInfo`. Splitting them would have produced a cycle rather than two packages.\n\nThis package references `Lyo.Common.Core`, so a reference here also gives you the primitives. Namespaces sit under the package name: `Lyo.Common.Metadata.Records`, `.Extensions`, and `.JsonConverters`.",
+  "features": [
+    "**File and media metadata.** `MimeTypeInfo` is the IANA catalog (`Value`, aliases, `FromValue` which strips `Content-Type` parameters, `HttpContentType`). `FileTypeInfo` is the file-type registry: name, extensions, category, and a `Mime` row. Several file types may share one MIME (`Unknown` / `Bin` / `Enc` all use `application/octet-stream`). Video rows cover MP4, MOV, MKV, AVI, MPEG, MPEG-TS, 3GP, and HLS. The two-key envelope suffix is `TwoKeyEnvelopeSuffix = \"2k\"`; `CommonStorageResolutionSuffixes` is what `Lyo.FileStorage` uses when persisted blobs have no explicit metadata. Byte-scale units live on `FileSizeUnitInfo`.",
+    "**`LyoTypeInfo`.** Type-picker catalog: CLR types (`IsClr`) plus entries other packages register at startup, with `FromType` / `FromName` / `ByCategory`, widget hints via `LyoTypeEditorKind` (including Xml, Regex, and a Formatter hint), synthesized `T[]` and `List<T>` entries for registered elements, legacy aliases, `ToJson` / `TryValidateJson`, and an implicit conversion to `Type`.",
+    "**Language and platform records.** `ProgrammingLanguageInfo`, `LanguageCodeInfo` (`FromISO639_1`, `FromBCP_47`, `FromISO639_3`), and `SocialPlatformInfo`.",
+    "**Network and protocol records.** `HttpStatusCodeInfo`, `PortInfo` (well-known ports with `PortCategory`, `FromName` / `FromPort` / `ByCategory`, implicit `int`), and `HttpHeaderInfo` (RFC + Lyo contract + common `X-` names with `HttpHeaderCategory` / `HttpHeaderPresence`, `FromName` / `ByCategory`, implicit `string`). Vendor wire names stay in that vendor’s `.Models` package.",
+    "**Geography and geometry.** `BoundingBox2D` and `GeographicInfo` (`ByCountry`, `ByState`, `FromAbbreviation`, `FromTimeZone`). In the split, `GeographicInfo` moved here from `Enums/`: it is a registry record that happened to live beside the enums it keys off.",
+    "**Enum-to-record bridges** (`Extensions/`). `TypeInfoExtensions` (the `GetMimeTypeFromExtension` / `GetFileTypeFromExtension` / `FromMimeValue` family), `EnumMetadataExtensions` (`GetStringValue`, `GetDescription`, `IsSingleFlag<T>`), and `LanguageExtensions`.",
+    "**Record converters** (`JsonConverters/`). `SocialPlatformInfoJsonConverter` and `LanguageCodeInfoJsonConverter`, including their `Nullable*` wrappers. They reference `System.Text.Json` directly rather than depending on [`Lyo.Common.Json`](../Lyo.Common.Json/README.md) — that indirection is what keeps the two packages from forming a cycle."
+  ],
+  "examples": [
+    {
+      "title": "Look up file and MIME data",
+      "language": "csharp",
+      "code": "using Lyo.Common.Core.Enums;\nusing Lyo.Common.Metadata.Extensions;\nusing Lyo.Common.Metadata.Records;\n\nFileTypeInfo type = \"report.pdf\".GetFileTypeFromExtension();\nMimeTypeInfo mime = \"clip.mkv\".GetMimeTypeFromExtension();\nstring contentType = mime.HttpContentType;\n\nstring label = CountryCode.NZ.GetDescription();"
+    },
+    {
+      "title": "Pick a type",
+      "language": "csharp",
+      "code": "using Lyo.Common.Metadata.Records;\n\n// Drives config, job-parameter and query-filter editors.\nLyoTypeInfo info = LyoTypeInfo.FromName(\"int\");\nType runtime = LyoTypeInfo.DateTime;                  // implicit Type\nvar scalars = LyoTypeInfo.ByCategory(LyoTypeCategory.Scalar);\n\n// Packages register their own non-CLR entries at startup.\nLyoTypeInfo.Register(new(\"cron\", LyoTypeCategory.Text, LyoTypeEditorKind.Text));"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Records versus enums",
+      "text": "Enums live in `Lyo.Common.Core`; the records that describe them live here. MIME is a catalog (`MimeTypeInfo`), not an enum: a package that only needs `video/mp4` as a string still goes through Metadata. File types point at MIME rows (`FileTypeInfo.Mime`) so jpg/jpeg share `image/jpeg` and unknown/bin/enc share `application/octet-stream`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Common/Lyo.Common.Metadata/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -1,0 +1,31 @@
+@using System.Text.Json.Nodes
+@using Lyo.Config
+@inject IConfigStore Store
+@inject IApiClient ApiClient
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h5">Config workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Writes go through TestApi (<code>IConfigStore</code> over HTTP). The API encrypts at rest when Encrypted is on; this host does not register encryption. Apply entity type <code>App</code> and id <code>gateway:local</code>, then seed a sample JSON definition if the store is empty.
+            </MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Science"
+                           Disabled="@_seeding"
+                           OnClick="SeedSampleAsync">
+                    Seed sample
+                </MudButton>
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+
+    <ConfigManagement @key="_managementKey"
+                      Store="Store"
+                      ApiClient="ApiClient"
+                      InitialSubjectEntityType="@AppConfigEntity.AppEntityType"
+                      InitialSubjectEntityId="gateway:local"/>
+</MudStack>

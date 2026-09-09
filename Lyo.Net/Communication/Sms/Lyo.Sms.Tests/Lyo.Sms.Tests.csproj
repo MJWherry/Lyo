@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\Lyo.Sms.Twilio\Lyo.Sms.Twilio.csproj"/>
+        <ProjectReference Include="..\Lyo.Sms\Lyo.Sms.csproj"/>
+    </ItemGroup>
+
+</Project>
+

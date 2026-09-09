@@ -1,0 +1,130 @@
+{
+  "id": "Lyo.ContactUs",
+  "name": "Lyo.ContactUs",
+  "area": "Plugins",
+  "tagline": "Contact-form submission contracts. `IContactUsService` and `ContactUsServiceBase` cover validation, error-code mapping, and logging. Storage sits in sibling packages.",
+  "description": "Contact-form submission contracts. `IContactUsService` and `ContactUsServiceBase` cover validation, error-code mapping, and logging. Storage implementations sit in sibling packages such as [`Lyo.ContactUs.Postgres`](../Lyo.ContactUs.Postgres/README.md).",
+  "features": [],
+  "examples": [
+    {
+      "title": "Quick start with Postgres storage",
+      "language": "csharp",
+      "code": "using Lyo.ContactUs;\nusing Lyo.ContactUs.Models;\nusing Lyo.ContactUs.Postgres;\n\nservices.AddContactUsPostgres(new PostgresContactUsOptions {\n    ConnectionString = \"Host=localhost;Database=myapp;Username=user;Password=pass\",\n    EnableAutoMigrations = true,\n});\n\nvar result = await contactUsService.SubmitAsync(new ContactUsRequest {\n    Name = \"John Doe\",\n    Email = \"john@example.com\",\n    Subject = \"Question\",\n    Message = \"I have a question about your product.\",\n}, ct);\n\nif (result.IsSuccess)\n    Console.WriteLine($\"Submitted! ID: {result.SubmissionId}\");\nelse\n    Console.WriteLine($\"Failed: {result.Errors?[0].Message}\");"
+    },
+    {
+      "title": "Configuration",
+      "language": "json",
+      "code": "{\n  \"PostgresContactUs\": {\n    \"ConnectionString\": \"Host=localhost;Database=myapp;Username=user;Password=pass\",\n    \"EnableAutoMigrations\": true\n  },\n  \"ContactUsOptions\": {\n    \"MaxMessageLength\": 10000,\n    \"MinMessageLength\": 10,\n    \"EnableMetrics\": false\n  }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "`IContactUsService`",
+      "items": [
+        "`Task<ContactUsSubmitResult> SubmitAsync(ContactUsRequest request, CancellationToken ct = default)`",
+        "`Task<bool> TestConnectionAsync(CancellationToken ct = default)`"
+      ]
+    },
+    {
+      "type": "list",
+      "title": "`ContactUsServiceBase`",
+      "items": [
+        "`ValidateRequest(ContactUsRequest)` (virtual; the default checks `Name` / `Email` (≤ 320 chars) / `Subject` / `Message` and clamps message length to `Options.MinMessageLength` … `Options.MaxMessageLength`).",
+        "`SubmitCoreAsync(ContactUsRequest, CancellationToken)` (abstract; this is where the row is actually persisted).",
+        "`TestConnectionAsync(CancellationToken)` (abstract; probe the backend)."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Request and result models (`Lyo.ContactUs.Models`)",
+      "items": [
+        "`ContactUsRequest` *(record)*: `Name` (req, ≤ 200), `Email` (req, ≤ 320, `[EmailAddress]`), `Subject` (req, ≤ 500), `Message` (req, ≤ 10 000), optional `Phone` (≤ 50), optional `Company` (≤ 200).",
+        "`ContactUsServiceOptions`: `SectionName = \"ContactUsOptions\"`, `MaxMessageLength` (default `10000`), `MinMessageLength` (default `10`), `EnableMetrics` (default `false`).",
+        "`ContactUsSubmitResult` *(derives from `Lyo.Result.Result<Guid?>`)*: `SubmissionId`, `Message`, plus `FromSuccess` / `FromException` / `FromError` factories."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "DI helpers (`Extensions`)",
+      "items": [
+        "`services.AddContactUsService<TService, TOptions>(Action<TOptions>? configure = null)` generic registration of a custom `IContactUsService` plus options type.",
+        "`services.AddContactUsService<TService>(ContactUsServiceOptions options)` the same with a pre-built options instance.",
+        "`services.AddContactUsFromConfiguration(IConfiguration configuration, string sectionName = ContactUsServiceOptions.SectionName)` binds only the shared `ContactUsServiceOptions` (idempotent, skips if already registered). Pair this with a storage registration such as `AddContactUsPostgres(...)` from `Lyo.ContactUs.Postgres` to get a working service."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Configuration",
+      "text": "Sample `appsettings.json`:"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/ContactUs/Lyo.ContactUs/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

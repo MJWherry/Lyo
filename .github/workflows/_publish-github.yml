@@ -1,0 +1,56 @@
+# Reusable: push packed nupkgs to GitHub Packages.
+name: Publish - GitHub Packages
+
+on:
+  workflow_call:
+    inputs:
+      artifact_name:
+        required: false
+        type: string
+        default: nuget-packages
+      version:
+        description: Display version for the job title only
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publish GH CI - ${{ github.ref_name }} - v${{ inputs.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download nupkgs
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: artifacts/nuget
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: Push to GitHub Packages
+        env:
+          NUGET_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/nuget/ci_push.py \
+            --source "https://nuget.pkg.github.com/${GITHUB_REPOSITORY_OWNER}/index.json" \
+            --api-key "$NUGET_API_KEY" \
+            artifacts/nuget
+
+      - name: Upload push report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-push-github
+          path: artifacts/nuget/push-report.json
+          if-no-files-found: ignore

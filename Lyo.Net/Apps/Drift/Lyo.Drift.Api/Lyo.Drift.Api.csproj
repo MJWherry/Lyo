@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>HTTP API surface for the Lyo Drift collector: instance upsert, snapshot/diff/change ingest, and DiffAgainst.</Description>
+        <PackageTags>api drift aspnetcore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Drift\Lyo.Drift.Models\Lyo.Drift.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Drift\Lyo.Drift.Postgres\Lyo.Drift.Postgres.csproj"/>
+    </ItemGroup>
+
+</Project>

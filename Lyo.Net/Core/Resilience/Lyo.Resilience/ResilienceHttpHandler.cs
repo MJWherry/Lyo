@@ -1,0 +1,43 @@
+using Lyo.Exceptions;
+using Lyo.Metrics;
+using Polly.Registry;
+
+namespace Lyo.Resilience;
+
+/// <summary><see cref="DelegatingHandler" /> that wraps each HTTP request in a named resilience pipeline.</summary>
+public sealed class ResilienceHttpHandler : DelegatingHandler
+{
+    private readonly IMetrics _metrics;
+    private readonly string _pipelineName;
+    private readonly ResiliencePipelineProvider<string> _pipelineProvider;
+
+    /// <summary>Mints a resilience HTTP handler.</summary>
+    /// <param name="pipelineProvider">Registry used to resolve the pipeline by name.</param>
+    /// <param name="pipelineName">Pipeline name to apply.</param>
+    /// <param name="metrics">Optional metrics for duration and success/failure (NullMetrics when omitted).</param>
+    public ResilienceHttpHandler(ResiliencePipelineProvider<string> pipelineProvider, string pipelineName, IMetrics? metrics = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pipelineName);
+        _pipelineProvider = ArgumentHelpers.ThrowIfNullReturn(pipelineProvider);
+        _pipelineName = pipelineName;
+        _metrics = metrics ?? NullMetrics.Instance;
+    }
+
+    /// <inheritdoc />
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        var tags = new[] { (Constants.Metrics.PipelineTag, _pipelineName) };
+        using var timer = _metrics.StartTimer(Constants.Metrics.ExecutionDuration, tags);
+        try {
+            var pipeline = _pipelineProvider.GetPipeline(_pipelineName);
+            var response = await pipeline.ExecuteAsync(async ct2 => await base.SendAsync(request, ct2).ConfigureAwait(false), ct).ConfigureAwait(false);
+            _metrics.IncrementCounter(Constants.Metrics.ExecutionSuccess, tags: tags);
+            return response;
+        }
+        catch (Exception ex) {
+            _metrics.IncrementCounter(Constants.Metrics.ExecutionFailure, tags: tags);
+            _metrics.RecordError(Constants.Metrics.ExecutionError, ex, tags);
+            throw;
+        }
+    }
+}

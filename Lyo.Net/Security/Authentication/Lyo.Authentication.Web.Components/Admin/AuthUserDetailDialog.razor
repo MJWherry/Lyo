@@ -1,0 +1,62 @@
+@namespace Lyo.Authentication.Web.Components
+@using Lyo.Authentication.Models.Response
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.h6">@_user.DisplayName</MudText>
+            @if (_user.DisabledTimestamp is not null) {
+                <LyoChip Color="Color.Error" Label="Disabled"/>
+            }
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle1">Profile</MudText>
+                        <MudSpacer/>
+                        <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="EditProfile">Edit</MudButton>
+                    </MudStack>
+                    <MudText Typo="Typo.body2">@_user.Email</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Language: @(_user.PreferredLanguageBcp47 ?? "(unset)")</MudText>
+                    <MudStack Row="true" Spacing="2">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Created</MudText>
+                        <LyoTimestamp Value="@_user.CreatedTimestamp" Kind="LyoTimestampKind.Relative"/>
+                    </MudStack>
+                    <MudStack Row="true" Spacing="2">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Last login</MudText>
+                        <LyoTimestamp Value="@_user.LastLoginTimestamp" Kind="LyoTimestampKind.Relative"/>
+                    </MudStack>
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined" OnClick="RevokeAll">Revoke all tokens</MudButton>
+                        <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined" OnClick="ToggleDisabled">
+                            @(_user.DisabledTimestamp is null ? "Disable account" : "Enable account")
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+            <MudTabs KeepPanelsAlive="true" Rounded="true">
+                <MudTabPanel Text="Tokens">
+                    <AuthTokenGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" UserId="@_user.Id" AllowHardDelete="true" AllowRevoke="true"/>
+                </MudTabPanel>
+                <MudTabPanel Text="Claims">
+                    <AuthClaimGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" UserId="@_user.Id"/>
+                </MudTabPanel>
+                <MudTabPanel Text="Scopes">
+                    <AuthScopeGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" UserId="@_user.Id"/>
+                </MudTabPanel>
+                <MudTabPanel Text="Identities">
+                    <AuthLinkedIdentityGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" UserId="@_user.Id"/>
+                </MudTabPanel>
+                <MudTabPanel Text="Audit">
+                    <AuthEventGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" UserId="@_user.Id"/>
+                </MudTabPanel>
+            </MudTabs>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>

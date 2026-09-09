@@ -1,0 +1,27 @@
+@inject IApiClient ApiClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudTabs @bind-ActivePanelIndex="_tabIndex" Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2">
+    <MudTabPanel Text="Statistics">
+        <JobStats ApiClient="ApiClient" StatisticsRoute="@StatisticsRoute"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Definitions">
+        <JobDefinitionGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" OnViewRuns="@HandleViewRuns"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Schedules">
+        <JobScheduleGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Runs">
+        <JobRunGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"
+                    DefinitionId="@_runsDefinitionId"
+                    DefinitionIdChanged="@(id => _runsDefinitionId = id)"
+                    DefinitionName="@_runsDefinitionName"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Workers">
+        <JobWorkerInstanceGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Workflows">
+        <JobWorkflowView ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+    </MudTabPanel>
+</MudTabs>

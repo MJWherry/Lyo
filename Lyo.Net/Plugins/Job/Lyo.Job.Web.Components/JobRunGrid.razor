@@ -1,0 +1,159 @@
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="JobRunGrid"
+                      Route="@_runRoute"
+                      KeySelector="@(i => ProjectedGridKeys.RawId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@ApplyQuery"
+                      KeySelectFields="@_keySelectFields"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <LeftControls>
+        <MudButton OnClick="@OpenCreateRunDialog"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Size="Size.Small"
+                   Variant="Variant.Outlined"
+                   Color="Color.Default">
+            Create Job Run
+        </MudButton>
+        <MudButton OnClick="@ResyncQueued"
+                   StartIcon="@Icons.Material.Filled.Sync"
+                   Size="Size.Small"
+                   Variant="Variant.Outlined"
+                   Color="Color.Default">
+            Resync RabbitMQ
+        </MudButton>
+        @if (DefinitionId is { } defId) {
+            <LyoChip Color="Color.Primary"
+                     OnClose="@ClearDefinitionFilter" CloseIcon="@Icons.Material.Filled.Close">
+                Definition: @(DefinitionName ?? defId.ToString()[..8])
+            </LyoChip>
+        }
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details" aria-label="View job run details"
+                                   OnClick="@(() => ViewRun(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Color="Color.Primary" title="Re-run" aria-label="Re-run job run"
+                                   OnClick="@(() => RerunJob(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error" title="Cancel run" aria-label="Cancel job run"
+                                   Disabled="@(!CanCancel(cell.Item))"
+                                   OnClick="@(() => CancelRun(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, "Id")"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="WorkerMachineName" Title="Worker" HeaderStyle="width: 180px;" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                @{
+                    var machine = DisplayOrEmpty(item, "WorkerMachineName");
+                    var pid = DisplayOrEmpty(item, "WorkerProcessId");
+                    var workerId = DisplayOrEmpty(item, "WorkerInstanceId");
+                }
+                @if (string.IsNullOrWhiteSpace(machine) && string.IsNullOrWhiteSpace(workerId)) {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>
+                }
+                else {
+                    <MudStack Spacing="0">
+                        @if (!string.IsNullOrWhiteSpace(machine)) {
+                            <LyoChip Variant="Variant.Outlined" Label="@(string.IsNullOrWhiteSpace(pid) ? machine : $"{machine}:{pid}")"/>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(workerId)) {
+                            <LyoIdField Compact="true" Text="@workerId"/>
+                        }
+                    </MudStack>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="State" Title="State" Align="Align.Center" HeaderStyle="width: 110px;">
+            <CellContent Context="item">
+                @{
+                    var stateText = ProjectedValueHelper.GetDisplayValue(item, "State");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<JobState>(stateText, JobColorHelper.ForState, JobColorHelper.StateIcon))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <TemplateColumn T="object?" Title="Duration" Sortable="false" HeaderClass="lyo-dg-align-center" CellClass="lyo-dg-align-center" HeaderStyle="width: 110px; text-align: center;" CellStyle="white-space: nowrap; text-align: center;">
+            <CellTemplate Context="cell">
+                @{
+                    var (started, finished) = GetTimestamps(cell.Item);
+                }
+                <LyoChip Color="@JobColorHelper.ForDuration(started, finished)"
+                         Icon="@(started is not null && finished is null ? Icons.Material.Filled.Timer : null)"
+                         Label="@JobColorHelper.FormatDurationFromDates(started, finished)"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Result" Title="Result" Align="Align.Center" HeaderStyle="width: 110px;">
+            <CellContent Context="item">
+                @{
+                    var resultText = ProjectedValueHelper.GetDisplayValue(item, "Result");
+                }
+                @if (Enum.TryParse<JobRunResult>(resultText, out var result)) {
+                    <LyoChip Spec="@(LyoChips.FromEnum<JobRunResult>(resultText, JobColorHelper.ForResult, JobColorHelper.ResultIcon))"/>
+                }
+                else {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="WorkerInstanceId" Title="Worker ID" Identifier="true" HiddenByDefault="true">
+            <CellContent Context="item">
+                @{
+                    var workerId = DisplayOrEmpty(item, "WorkerInstanceId");
+                }
+                @if (string.IsNullOrWhiteSpace(workerId)) {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>
+                }
+                else {
+                    <LyoIdField Compact="true" Text="@workerId"/>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="WorkerProcessId" Title="Worker PID" HiddenByDefault="true">
+            <CellContent Context="item">
+                @{
+                    var pid = DisplayOrEmpty(item, "WorkerProcessId");
+                }
+                @if (string.IsNullOrWhiteSpace(pid)) {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">—</MudText>
+                }
+                else {
+                    @pid
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="RetryAttempt" Title="Retry #" Align="Align.Center" HeaderStyle="width: 80px;" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="JobRunResults.Count" Title="Results" Align="Align.Center" HeaderStyle="width: 80px;"/>
+        <LyoProjectedColumn Field="JobRunLogs.Count" Title="Logs" Align="Align.Center" HeaderStyle="width: 80px;"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewRun(item))">View Details</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Refresh" OnClick="@(() => RerunJob(item))">Re-Run</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Cancel" Disabled="@(!CanCancel(item))" OnClick="@(() => CancelRun(item))">Cancel</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteRun(item))">Delete</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

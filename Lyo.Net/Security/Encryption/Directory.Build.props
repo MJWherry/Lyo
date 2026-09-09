@@ -1,0 +1,8 @@
+<Project>
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))"/>
+    <!-- Every project in the Encryption family works with key material and digests; declared once here instead of a per-project GlobalUsings.cs. -->
+    <ItemGroup>
+        <Using Include="Lyo.Common.Core.Security"/>
+        <Using Include="Lyo.Hashing"/>
+    </ItemGroup>
+</Project>

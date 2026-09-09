@@ -1,0 +1,96 @@
+{
+  "id": "Lyo.Health",
+  "name": "Lyo.Health",
+  "area": "Core",
+  "tagline": "Contract for services that report their own health. Implement `IHealth`. There is no central health service.",
+  "description": "Contract for services that report their own health. Implement `IHealth`. There is no central health service. A check returns `HealthResult` with status, timings, and optional metadata.",
+  "features": [],
+  "examples": [
+    {
+      "title": "How to use it",
+      "language": "csharp",
+      "code": "// File storage\nvar fileStorage = app.Services.GetRequiredService<IFileStorageService>();\nvar result = await fileStorage.CheckHealthAsync();\n// result.IsHealthy, result.Duration, result.Metadata, result.Message\n\n// Cache\nvar cache = app.Services.GetRequiredService<ICacheService>();\nvar result = await cache.CheckHealthAsync();\n\n// RabbitMQ\nvar mq = app.Services.GetRequiredService<IMqService>();\nvar result = await mq.CheckHealthAsync();"
+    },
+    {
+      "title": "The contract",
+      "language": "csharp",
+      "code": "public interface IHealth\n{\n    string HealthCheckName { get; }\n    Task<HealthResult> CheckHealthAsync(CancellationToken ct = default);\n}"
+    },
+    {
+      "title": "`HealthResult`",
+      "language": "csharp",
+      "code": "HealthResult.Healthy(sw.Elapsed, message: null, metadata: new Dictionary<string, object?> { [\"database\"] = \"audit\" });\nHealthResult.Unhealthy(sw.Elapsed, \"Database connection failed\", metadata: null, exception: ex);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "The contract",
+      "body": "- Hosts label probe output with `HealthCheckName`, a short identifier, for example `\"filestorage\"`, `\"cache\"`, `\"rabbitmq\"`, `\"audit-postgres\"`, `\"change-tracker-postgres\"`.\n- The live probe is `CheckHealthAsync`. Keep it cheap and short-circuiting, and honor the supplied `CancellationToken`."
+    },
+    {
+      "type": "table",
+      "title": "`HealthResult`",
+      "headers": [
+        "Member",
+        "Type",
+        "Notes"
+      ],
+      "rows": [
+        [
+          "`IsHealthy`",
+          "`bool`",
+          "`true` when healthy, `false` when not."
+        ],
+        [
+          "`Duration`",
+          "`TimeSpan`",
+          "Elapsed probe time (usually from `Stopwatch`)."
+        ],
+        [
+          "`CheckedAt`",
+          "`DateTime`",
+          "UTC instant the probe finished (set by the factory helpers)."
+        ],
+        [
+          "`Message`",
+          "`string?`",
+          "Optional human-readable summary; filled with the exception message on failure."
+        ],
+        [
+          "`Metadata`",
+          "`IReadOnlyDictionary<string, object?>?`",
+          "Schema, version, connection info, key-id, and similar."
+        ],
+        [
+          "`Exception`",
+          "`Exception?`",
+          "Exception captured when the probe threw."
+        ]
+      ],
+      "lead": "A probe outcome is an immutable, sealed `HealthResult`:",
+      "trail": "Prefer the static factories over constructing the type yourself:"
+    },
+    {
+      "type": "paragraph",
+      "title": "How to use it",
+      "text": "Ask the service for health directly. Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend `IHealth`. Health comes from the service. No separate registration. Hosts that want an aggregate view typically resolve `IEnumerable<IHealth>` and fan out `CheckHealthAsync` in parallel, then publish the resulting `HealthResult` collection."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Health/Lyo.Health/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

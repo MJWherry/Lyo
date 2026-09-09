@@ -1,0 +1,46 @@
+@using Lyo.Web.Components.ParamTable
+@inject ISnackbar Snackbar
+
+<LyoDialog Busy="@_busy" OnSave="Submit" SaveDisabled="@(_selected is null || !IsValid())" SaveText="Generate" CloseText="Cancel" DebugData="@_selected">
+    <MudStack Spacing="2">
+        <MudGrid Spacing="2">
+            <MudItem xs="12">
+                <MudSelect T="ReportDefinitionRes"
+                           Value="_selected"
+                           ValueChanged="OnDefinitionChanged"
+                           Label="Report Definition"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           ToStringFunc="@(d => d?.Name ?? "")"
+                           Required>
+                    @foreach (var def in (Definitions ?? []).Where(d => d.IsActive)) {
+                        <MudSelectItem T="ReportDefinitionRes" Value="def">
+                            <MudText Typo="Typo.body1">@def.Name</MudText>
+                            @if (!string.IsNullOrEmpty(def.Description)) {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@def.Description</MudText>
+                            }
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect T="ReportFormat?"
+                           @bind-Value="_formatOverride"
+                           Label="Format override"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Clearable="true">
+                    @foreach (var f in Enum.GetValues<ReportFormat>()) {
+                        <MudSelectItem T="ReportFormat?" Value="@f">@f</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_fileName" Label="File name (optional)" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+        </MudGrid>
+
+        <LyoParameterValueGrid Entries="@_parameters" ApiClient="ApiClient" FormatterContext="@_formatterContext" ValueChanged="OnValueChanged"/>
+
+    </MudStack>
+</LyoDialog>

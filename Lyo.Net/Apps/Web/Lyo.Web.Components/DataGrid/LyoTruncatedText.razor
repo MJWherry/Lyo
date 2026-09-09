@@ -1,0 +1,11 @@
+@using LyoHoverPopover = Lyo.Web.Components.Popover.LyoHoverPopover
+@namespace Lyo.Web.Components.DataGrid
+
+@if (ChipLabelHelper.ShouldTruncate(Text, MaxLength)) {
+    <LyoHoverPopover Text="@Text" Title="@Title" MaxWidth="@PopoverMaxWidth">
+        <span style="display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; vertical-align: bottom;">@ChipLabelHelper.TruncateLabel(Text, MaxLength)</span>
+    </LyoHoverPopover>
+}
+else {
+    <span>@(string.IsNullOrEmpty(Text) ? "—" : Text)</span>
+}

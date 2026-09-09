@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Blazor components library for the Lyo web UI framework with MudBlazor integration.</Description>
+        <PackageTags>blazor components web ui mudblazor</PackageTags>
+        <!-- Razor compiler emits #nullable disable in .g.cs while project has Nullable=enable (dotnet/razor#8720). -->
+        <NoWarn>$(NoWarn);CS8669</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Web\Lyo.Web.Primitives\Lyo.Web.Primitives.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Validation\Lyo.Validation\Lyo.Validation.csproj"/>
+        <ProjectReference Include="..\..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\..\Data\DataTable\Lyo.DataTable.Models\Lyo.DataTable.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Parameters\Lyo.Parameters\Lyo.Parameters.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Blazored.LocalStorage"/>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="PdfAnnotator\**\*.cs"/>
+        <RazorComponent Remove="PdfAnnotator\**\*.razor"/>
+    </ItemGroup>
+
+</Project>

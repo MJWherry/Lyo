@@ -1,0 +1,17 @@
+using System.Diagnostics;
+
+namespace Lyo.Authentication.Models.Records;
+
+/// <summary>Successfully validated Format-B token. The ASP.NET Core handler projects this into a <see cref="System.Security.Claims.ClaimsPrincipal" />.</summary>
+/// <param name="TokenId">11-char token id (becomes the <c>lyo:token_id</c> claim).</param>
+/// <param name="Subject">Synthesized JWT subject (<c>lyo_token:&lt;id&gt;</c>).</param>
+/// <param name="OwnerUserId">Owning Lyo user, or <c>null</c> for unowned tokens.</param>
+/// <param name="Kind">Token kind (e.g. <c>pat</c>).</param>
+/// <param name="Ring">Token ring (e.g. <c>live</c>).</param>
+/// <param name="Scopes">Snapshotted scopes from the token.</param>
+/// <param name="ValidatedAt">When the validator produced this result.</param>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record ApiTokenPrincipal(string TokenId, string Subject, Guid? OwnerUserId, string Kind, string Ring, IReadOnlyList<string> Scopes, DateTime ValidatedAt)
+{
+    public override string ToString() => $"ApiTokenPrincipal: id={TokenId}, kind={Kind}, ring={Ring}, scopes={Scopes.Count}";
+}

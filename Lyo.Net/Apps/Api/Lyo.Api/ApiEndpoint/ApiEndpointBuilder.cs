@@ -1,0 +1,1377 @@
+using System.Globalization;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using Lyo.Api.ApiEndpoint.Config;
+using Lyo.Api.ApiEndpoint.Dynamic;
+using Lyo.Api.Models;
+using Lyo.Api.Models.Builders;
+using Lyo.Api.Models.Common.Request;
+using Lyo.Api.Models.Common.Response;
+using Lyo.Api.Models.Enums;
+using Lyo.Api.Models.Error;
+using Lyo.Api.Services.Crud.Create;
+using Lyo.Api.Services.Crud.Delete;
+using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Api.Services.Crud.Update;
+using Lyo.Api.Services.Export;
+using Lyo.Common.Core;
+using Lyo.Common.Core.Conversion;
+using Lyo.Common.Core.Enums;
+using Lyo.Exceptions;
+using Lyo.Query.Models.Common.Request;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Lyo.Api.ApiEndpoint;
+
+/// <summary>
+/// Fluent registration of typed CRUD minimal endpoints for one entity: query, projection, get, create/update/patch/delete/upsert (single and bulk), export, metadata, and
+/// optional query history. Call <see cref="Build" /> after configuring operations. Authorization defaults and per-operation overrides are applied here.
+/// </summary>
+public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey>(WebApplication app, string baseRoute, string groupName)
+    where TDbContext : DbContext where TDbEntity : class
+{
+    private string[]? _authorizationPolicies;
+
+    private CreateConfig<TRequest, TDbEntity, TDbContext>? _createBulkConfig;
+
+    private CreateConfig<TRequest, TDbEntity, TDbContext>? _createConfig;
+
+    private DeleteConfig<TDbEntity, TDbContext>? _deleteBulkConfig;
+
+    private DeleteConfig<TDbEntity, TDbContext>? _deleteConfig;
+
+    private ExportConfig<TDbEntity>? _exportConfig;
+
+    private GetConfig<TDbEntity, TDbContext>? _getConfig;
+
+    private EndpointAuth? _metadataAuth;
+
+    private MetadataConfiguration<TDbContext, TDbEntity> _metadataConfig = new();
+
+    private bool _metadataEnabled;
+
+    private PatchConfig<TDbEntity, TDbContext>? _patchBulkConfig;
+
+    private PatchConfig<TDbEntity, TDbContext>? _patchConfig;
+
+    private QueryConfig<TDbEntity>? _queryConfig;
+
+    private bool _requireAuthorization;
+
+    private UpdateConfig<TRequest, TDbEntity, TDbContext>? _updateBulkConfig;
+
+    private UpdateConfig<TRequest, TDbEntity, TDbContext>? _updateConfig;
+
+    private UpsertConfig<TRequest, TDbEntity, TDbContext>? _upsertBulkConfig;
+
+    private UpsertConfig<TRequest, TDbEntity, TDbContext>? _upsertConfig;
+
+    /// <summary>Requires that every endpoint built by this builder use the default authorization policy (authenticated user).</summary>
+    /// <example>
+    /// <code>app.CreateBuilder&lt;...&gt;("/api/items", "Items").RequireAuthorization().WithCrud(...).Build();</code>
+    /// </example>
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> RequireAuthorization()
+    {
+        _requireAuthorization = true;
+        _authorizationPolicies = null;
+        return this;
+    }
+
+    /// <summary>Requires that every endpoint built by this builder use the specified authorization policy or policies.</summary>
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> RequireAuthorization(params string[] policyNames)
+    {
+        _requireAuthorization = false;
+        _authorizationPolicies = policyNames;
+        return this;
+    }
+
+    /// <summary>Marks every endpoint built by this builder as allowing anonymous access (no authentication required).</summary>
+    /// <example>
+    /// <code>app.CreateBuilder&lt;...&gt;("/api/public/items", "Public").AllowAnonymous().WithReadOnlyEndpoints(...).Build();</code>
+    /// </example>
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> AllowAnonymous()
+    {
+        _requireAuthorization = false;
+        _authorizationPolicies = null;
+        return this;
+    }
+
+    /// <summary>
+    /// Runs per-property write rules for a full-replacement write. Loads the persisted row so the check covers only what the request actually changes. PATCH already names its
+    /// own property set. Does nothing, and issues no query, when the endpoint configured no rules.
+    /// </summary>
+    private static async Task<LyoProblemDetails?> AuthorizeWriteAsync(
+        PatchPropertyAuthorization? propertyAuthorization,
+        HttpContext httpContext,
+        IQueryService<TDbContext> queryService,
+        object[]? keys,
+        object? incoming,
+        CancellationToken ct)
+    {
+        if (propertyAuthorization is null || incoming is null)
+            return null;
+
+        var current = keys is { Length: > 0 } ? await queryService.Get<TDbEntity>(keys, ct: ct).ConfigureAwait(false) : null;
+        return await PatchPropertyAuthorizationApplier.AuthorizeReplacementAsync(propertyAuthorization, httpContext, typeof(TDbEntity), incoming, current, ct)
+            .ConfigureAwait(false);
+    }
+
+    private IEndpointConventionBuilder ApplyAuthorization(IEndpointConventionBuilder builder, EndpointAuth? endpointAuth)
+        => EndpointAuthorizationApplier.Apply(builder, endpointAuth ?? BuilderLevelAuth());
+
+    /// <summary>
+    /// The builder-wide default expressed as an <see cref="EndpointAuth" />. Null means no convention, which is not the same as anonymous. The host's global policy still applies.
+    /// </summary>
+    private EndpointAuth? BuilderLevelAuth()
+        => _authorizationPolicies is { Length: > 0 } policies ? EndpointAuth.RequireAuthorization(policies) :
+            _requireAuthorization ? EndpointAuth.RequireAuthorization() : null;
+
+    private Expression<Func<TDbEntity, object?>> ResolveDefaultOrderFromPrimaryKey()
+    {
+        using var scope = app.Services.CreateScope();
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TDbContext>>();
+        using var context = factory.CreateDbContext();
+        var entityType = context.Model.FindEntityType(typeof(TDbEntity));
+        OperationHelpers.ThrowIfNull(entityType, $"Entity type {typeof(TDbEntity).Name} not found in model.");
+        var pk = entityType.FindPrimaryKey();
+        OperationHelpers.ThrowIfNull(pk, $"Entity {typeof(TDbEntity).Name} has no primary key.");
+        if (pk.Properties.Count == 0)
+            throw new InvalidOperationException($"Entity {typeof(TDbEntity).Name} has an empty primary key.");
+
+        // Single- or composite-key: default query/export sort uses the first key property (EF key order).
+        return DynamicEndpointMapper.BuildDefaultOrderExpression<TDbEntity>(pk.Properties[0].Name);
+    }
+
+    private (string Name, Type ClrType) ResolvePrimaryKeyMetadata()
+    {
+        using var scope = app.Services.CreateScope();
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TDbContext>>();
+        using var context = factory.CreateDbContext();
+        var entityType = context.Model.FindEntityType(typeof(TDbEntity));
+        OperationHelpers.ThrowIfNull(entityType, $"Entity type {typeof(TDbEntity).Name} not found in model.");
+        var pk = entityType.FindPrimaryKey();
+        OperationHelpers.ThrowIfNull(pk, $"Entity {typeof(TDbEntity).Name} has no primary key.");
+        if (pk.Properties.Count == 0)
+            throw new InvalidOperationException($"Entity {typeof(TDbEntity).Name} has an empty primary key.");
+
+        return (pk.Properties[0].Name, pk.Properties[0].ClrType);
+    }
+
+    private EndpointMetadataResponse BuildMetadataResponse()
+    {
+        var nullability = new NullabilityInfoContext();
+
+        PropertyMetadata ToPropertyMetadata(PropertyInfo property)
+        {
+            var propertyType = property.PropertyType;
+            var underlying = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+            var propertyNullability = nullability.Create(property);
+            var isNullable = propertyNullability.ReadState == NullabilityState.Nullable || Nullable.GetUnderlyingType(propertyType) != null ||
+                (!propertyType.IsValueType && propertyNullability.ReadState == NullabilityState.Unknown);
+
+            return new(property.Name, underlying.GetFriendlyTypeName(), isNullable);
+        }
+
+        TypeMetadata ToTypeMetadata(Type type)
+        {
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead)
+                .Select(ToPropertyMetadata)
+                .OrderBy(p => p.Name, StringComparer.Ordinal)
+                .ToList();
+
+            return new(type.Name, properties);
+        }
+
+        var (keyPropertyName, keyType) = ResolvePrimaryKeyMetadata();
+        return new(
+            _metadataConfig.IncludeEntityMetadata ? ToTypeMetadata(typeof(TDbEntity)) : null, typeof(TRequest) == typeof(object) ? null : ToTypeMetadata(typeof(TRequest)),
+            typeof(TResponse) == typeof(object) ? null : ToTypeMetadata(typeof(TResponse)), keyPropertyName, keyType.Name);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCrud(ApiFeatureSet features, CrudConfiguration<TDbContext, TDbEntity, TRequest> config)
+    {
+        if (features.Contains(ApiFeature.Query)) {
+            WithQuery(config.QueryAuth);
+            if (config.DeniedSelectFields is { Count: > 0 })
+                _queryConfig = _queryConfig! with { DeniedSelectFields = config.DeniedSelectFields };
+
+            if (features.Contains(ApiFeature.ProjectionComputedFields))
+                WithProjectionComputedFields();
+        }
+
+        if (features.Contains(ApiFeature.Get))
+            WithGet(config.BeforeGet, config.AfterGet, config.GetAuth);
+
+        if (features.Contains(ApiFeature.Create))
+            WithCreate(config.BeforeCreate, config.AfterCreate, config.CreateAuth, config.AfterCreateAsync);
+
+        if (features.Contains(ApiFeature.CreateBulk))
+            WithCreateBulk(config.BeforeCreate, config.AfterCreate, config.CreateBulkAuth, config.AfterCreateAsync);
+
+        if (features.Contains(ApiFeature.Update))
+            WithUpdate(config.BeforeUpdate, config.AfterUpdate, config.UpdateAuth, config.PatchPropertyAuthorization);
+
+        if (features.Contains(ApiFeature.UpdateBulk))
+            WithUpdateBulk(config.BeforeUpdate, config.AfterUpdate, config.UpdateBulkAuth, config.PatchPropertyAuthorization);
+
+        if (features.Contains(ApiFeature.Patch)) {
+            var beforePatch = config.BeforePatch;
+            var afterPatch = config.AfterPatch;
+            if (features.Contains(ApiFeature.PatchInheritsUpdate) && (config.BeforeUpdate != null || config.AfterUpdate != null)) {
+                beforePatch ??= config.BeforeUpdate != null
+                    ? ctx => config.BeforeUpdate!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services))
+                    : null;
+
+                afterPatch ??= config.AfterUpdate != null
+                    ? ctx => config.AfterUpdate!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services))
+                    : null;
+            }
+
+            WithPatch(beforePatch, afterPatch, true, config.PatchAuth, config.PatchPropertyAuthorization);
+        }
+
+        if (features.Contains(ApiFeature.PatchBulk)) {
+            var beforePatch = config.BeforePatch;
+            var afterPatch = config.AfterPatch;
+            if (features.Contains(ApiFeature.PatchInheritsUpdate) && (config.BeforeUpdate != null || config.AfterUpdate != null)) {
+                beforePatch ??= config.BeforeUpdate != null
+                    ? ctx => config.BeforeUpdate!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services))
+                    : null;
+
+                afterPatch ??= config.AfterUpdate != null
+                    ? ctx => config.AfterUpdate!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services))
+                    : null;
+            }
+
+            WithPatchBulk(beforePatch, afterPatch, true, config.PatchBulkAuth, config.PatchPropertyAuthorization);
+        }
+
+        if (features.Contains(ApiFeature.Delete))
+            WithDelete(config.BeforeDelete, config.AfterDelete, config.DeleteIncludes, config.DeleteAuth, config.BeforeDeleteAsync);
+
+        if (features.Contains(ApiFeature.DeleteBulk))
+            WithDeleteBulk(config.BeforeDelete, config.AfterDelete, config.DeleteIncludes, null, config.DeleteBulkAuth, config.BeforeDeleteAsync);
+
+        foreach (var contributor in app.Services.GetServices<IApiEndpointContributor>()) {
+            if (features.Contains(contributor.Feature)) {
+                contributor.ConfigureTypedCrud(
+                    new ApiEndpointCrudContributorContext(
+                        config.ExportAuth, auth => {
+                            _ = WithExport(auth);
+                            if (config.DeniedSelectFields is { Count: > 0 })
+                                _exportConfig = _exportConfig! with { DeniedSelectFields = config.DeniedSelectFields };
+                        }));
+            }
+        }
+
+        if (features.Contains(ApiFeature.Metadata))
+            WithMetadata(config.Metadata, config.MetadataAuth);
+
+        if (features.Contains(ApiFeature.Upsert)) {
+            var beforeCreate = config.BeforeCreate;
+            var afterCreate = config.AfterCreate;
+            var beforeUpdate = config.BeforeUpdate;
+            var afterUpdate = config.AfterUpdate;
+            if (features.Contains(ApiFeature.UpsertInheritCreate)) {
+                beforeCreate = config.BeforeCreate;
+                afterCreate = config.AfterCreate;
+            }
+
+            if (features.Contains(ApiFeature.UpsertInheritUpdate)) {
+                beforeUpdate = config.BeforeUpdate;
+                afterUpdate = config.AfterUpdate;
+            }
+
+            WithUpsert(
+                config.BeforeUpsert, config.AfterUpsert, beforeCreate, afterCreate, beforeUpdate, afterUpdate, features.Contains(ApiFeature.UpsertInheritCreate),
+                features.Contains(ApiFeature.UpsertInheritUpdate), config.UpsertAuth, config.PatchPropertyAuthorization);
+        }
+
+        if (features.Contains(ApiFeature.UpsertBulk)) {
+            var beforeCreate = config.BeforeCreate;
+            var afterCreate = config.AfterCreate;
+            var beforeUpdate = config.BeforeUpdate;
+            var afterUpdate = config.AfterUpdate;
+            if (features.Contains(ApiFeature.UpsertInheritCreate)) {
+                beforeCreate = config.BeforeCreate;
+                afterCreate = config.AfterCreate;
+            }
+
+            if (features.Contains(ApiFeature.UpsertInheritUpdate)) {
+                beforeUpdate = config.BeforeUpdate;
+                afterUpdate = config.AfterUpdate;
+            }
+
+            WithUpsertBulk(
+                config.BeforeUpsert, config.AfterUpsert, beforeCreate, afterCreate, beforeUpdate, afterUpdate, features.Contains(ApiFeature.UpsertInheritCreate),
+                features.Contains(ApiFeature.UpsertInheritUpdate), config.UpsertBulkAuth, config.PatchPropertyAuthorization);
+        }
+
+        return this;
+    }
+
+    /// <summary>Fluent CRUD setup via <c>WithCrud(crud =&gt; crud.WithFlags(flags).BeforeCreate(...))</c>.</summary>
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCrud(Action<CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var builder = new CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>();
+        configure(builder);
+        var (features, config) = builder.Build();
+        return WithCrud(features, config);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithQuery(EndpointAuth? auth = null)
+    {
+        _queryConfig = new() { GroupName = groupName, DefaultOrder = ResolveDefaultOrderFromPrimaryKey(), Auth = auth };
+        return this;
+    }
+
+    /// <summary>Turns on computed fields (SmartFormat templates) on the QueryProject endpoint. Requires WithQuery and IFormatterService.</summary>
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithProjectionComputedFields()
+    {
+        if (_queryConfig == null)
+            throw new InvalidOperationException("WithProjectionComputedFields requires WithQuery to be called first.");
+
+        _queryConfig = _queryConfig with { EnableComputedFields = true };
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithExport(EndpointAuth? auth = null)
+    {
+        _exportConfig = new() { GroupName = groupName, DefaultOrder = ResolveDefaultOrderFromPrimaryKey(), Auth = auth };
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithMetadata(EndpointAuth? auth = null) => WithMetadata(new(), auth);
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithMetadata(MetadataConfiguration<TDbContext, TDbEntity> config, EndpointAuth? auth = null)
+    {
+        _metadataEnabled = true;
+        _metadataConfig = config;
+        _metadataAuth = auth;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithGet(
+        Action<GetContext<TDbEntity, TDbContext>>? before = null,
+        Action<GetContext<TDbEntity, TDbContext>>? after = null,
+        EndpointAuth? auth = null)
+    {
+        _getConfig = new() { Before = before, After = after, Auth = auth };
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCreate(
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? before = null,
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? after = null,
+        EndpointAuth? auth = null,
+        Func<CreateContext<TRequest, TDbEntity, TDbContext>, Task>? afterAsync = null)
+    {
+        _createConfig = new() {
+            Before = before,
+            After = after,
+            Auth = auth,
+            AfterAsync = afterAsync
+        };
+
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCreateBulk(
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? before = null,
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? after = null,
+        EndpointAuth? auth = null,
+        Func<CreateContext<TRequest, TDbEntity, TDbContext>, Task>? afterAsync = null)
+    {
+        _createBulkConfig = new() {
+            Before = before,
+            After = after,
+            Auth = auth,
+            AfterAsync = afterAsync
+        };
+
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpdate(
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? before = null,
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? after = null,
+        EndpointAuth? auth = null,
+        PatchPropertyAuthorization? propertyAuthorization = null)
+    {
+        _updateConfig = new() { Before = before, After = after, Auth = auth, PropertyAuthorization = propertyAuthorization };
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpdateBulk(
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? before = null,
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? after = null,
+        EndpointAuth? auth = null,
+        PatchPropertyAuthorization? propertyAuthorization = null)
+    {
+        _updateBulkConfig = new() { Before = before, After = after, Auth = auth, PropertyAuthorization = propertyAuthorization };
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatch(
+        Action<PatchContext<TDbEntity, TDbContext>>? before = null,
+        Action<PatchContext<TDbEntity, TDbContext>>? after = null,
+        bool inheritUpdate = true,
+        EndpointAuth? auth = null,
+        PatchPropertyAuthorization? propertyAuthorization = null)
+    {
+        Action<PatchContext<TDbEntity, TDbContext>>? inheritedBefore = null;
+        Action<PatchContext<TDbEntity, TDbContext>>? inheritedAfter = null;
+        if (_updateConfig?.Before != null && inheritUpdate) {
+            inheritedBefore = ctx
+                => _updateConfig.Before!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services));
+        }
+
+        if (_updateConfig?.After != null && inheritUpdate)
+            inheritedAfter = ctx => _updateConfig.After!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services));
+
+        _patchConfig = new() {
+            Before = before ?? inheritedBefore,
+            After = after ?? inheritedAfter,
+            Auth = auth,
+            PropertyAuthorization = propertyAuthorization
+        };
+
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatchBulk(
+        Action<PatchContext<TDbEntity, TDbContext>>? before = null,
+        Action<PatchContext<TDbEntity, TDbContext>>? after = null,
+        bool inheritUpdate = true,
+        EndpointAuth? auth = null,
+        PatchPropertyAuthorization? propertyAuthorization = null)
+    {
+        Action<PatchContext<TDbEntity, TDbContext>>? inheritedBefore = null;
+        Action<PatchContext<TDbEntity, TDbContext>>? inheritedAfter = null;
+        if (_updateBulkConfig?.Before != null && inheritUpdate) {
+            inheritedBefore = ctx
+                => _updateBulkConfig.Before!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services));
+        }
+
+        if (_updateBulkConfig?.After != null && inheritUpdate) {
+            inheritedAfter = ctx
+                => _updateBulkConfig.After!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services));
+        }
+
+        _patchBulkConfig = new() {
+            Before = before ?? inheritedBefore,
+            After = after ?? inheritedAfter,
+            Auth = auth,
+            PropertyAuthorization = propertyAuthorization
+        };
+
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpsert(
+        Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? before = null,
+        Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? after = null,
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? beforeCreate = null,
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? afterCreate = null,
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? beforeUpdate = null,
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? afterUpdate = null,
+        bool inheritCreate = true,
+        bool inheritUpdate = true,
+        EndpointAuth? auth = null,
+        PatchPropertyAuthorization? propertyAuthorization = null)
+    {
+        _upsertConfig = new() {
+            Before = before,
+            After = after,
+            BeforeCreate =
+                beforeCreate != null ? ctx => beforeCreate(new(ctx.Request.NewData!, ctx.Entity, ctx.DbContext, ctx.Services)) :
+                _createConfig?.Before != null && inheritCreate ? ctx => _createConfig.Before!(new(ctx.Request.NewData!, ctx.Entity, ctx.DbContext, ctx.Services)) : null,
+            AfterCreate =
+                afterCreate != null ? ctx => afterCreate(new(ctx.Request.NewData!, ctx.Entity, ctx.DbContext, ctx.Services)) :
+                _createConfig?.After != null && inheritCreate ? ctx => _createConfig.After!(new(ctx.Request.NewData!, ctx.Entity, ctx.DbContext, ctx.Services)) : null,
+            BeforeUpdate =
+                beforeUpdate != null ? ctx => beforeUpdate(new(new() { Keys = ctx.Request.Keys ?? [], Data = ctx.Request.NewData! }, ctx.Entity, ctx.DbContext, ctx.Services)) :
+                _updateConfig?.Before != null && inheritUpdate ? ctx
+                    => _updateConfig.Before!(new(new() { Keys = ctx.Request.Keys ?? [], Data = ctx.Request.NewData! }, ctx.Entity, ctx.DbContext, ctx.Services)) : null,
+            AfterUpdate = afterUpdate != null ? ctx
+                    => afterUpdate(new(new() { Keys = ctx.Request.Keys ?? [], Data = ctx.Request.NewData! }, ctx.Entity, ctx.DbContext, ctx.Services)) :
+                _updateConfig?.After != null && inheritUpdate ? ctx
+                    => _updateConfig.After!(new(new() { Keys = ctx.Request.Keys ?? [], Data = ctx.Request.NewData! }, ctx.Entity, ctx.DbContext, ctx.Services)) : null,
+            Auth = auth,
+            PropertyAuthorization = propertyAuthorization
+        };
+
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpsertBulk(
+        Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? before = null,
+        Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? after = null,
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? beforeCreate = null,
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? afterCreate = null,
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? beforeUpdate = null,
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? afterUpdate = null,
+        bool inheritCreate = true,
+        bool inheritUpdate = true,
+        EndpointAuth? auth = null,
+        PatchPropertyAuthorization? propertyAuthorization = null)
+    {
+        _upsertBulkConfig = new() {
+            Before = before,
+            After = after,
+            BeforeCreate =
+                beforeCreate != null ? ctx => beforeCreate(new(ctx.Request.NewData!, ctx.Entity, ctx.DbContext, ctx.Services)) :
+                _createBulkConfig?.Before != null && inheritCreate ? ctx => _createBulkConfig.Before!(new(ctx.Request.NewData!, ctx.Entity, ctx.DbContext, ctx.Services)) : null,
+            AfterCreate =
+                afterCreate != null ? ctx => afterCreate(new(ctx.Request.NewData!, ctx.Entity, ctx.DbContext, ctx.Services)) :
+                _createBulkConfig?.After != null && inheritCreate ? ctx => _createBulkConfig.After!(new(ctx.Request.NewData!, ctx.Entity, ctx.DbContext, ctx.Services)) : null,
+            BeforeUpdate =
+                beforeUpdate != null ? ctx => beforeUpdate(new(new() { Keys = ctx.Request.Keys ?? [], Data = ctx.Request.NewData! }, ctx.Entity, ctx.DbContext, ctx.Services)) :
+                _updateBulkConfig?.Before != null && inheritUpdate ? ctx
+                    => _updateBulkConfig.Before!(new(new() { Keys = ctx.Request.Keys ?? [], Data = ctx.Request.NewData! }, ctx.Entity, ctx.DbContext, ctx.Services)) : null,
+            AfterUpdate = afterUpdate != null ? ctx
+                    => afterUpdate(new(new() { Keys = ctx.Request.Keys ?? [], Data = ctx.Request.NewData! }, ctx.Entity, ctx.DbContext, ctx.Services)) :
+                _updateBulkConfig?.After != null && inheritUpdate ? ctx
+                    => _updateBulkConfig.After!(new(new() { Keys = ctx.Request.Keys ?? [], Data = ctx.Request.NewData! }, ctx.Entity, ctx.DbContext, ctx.Services)) : null,
+            Auth = auth,
+            PropertyAuthorization = propertyAuthorization
+        };
+
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithDelete(
+        Action<DeleteContext<TDbEntity, TDbContext>>? before = null,
+        Action<DeleteContext<TDbEntity, TDbContext>>? after = null,
+        string[]? includes = null,
+        EndpointAuth? auth = null,
+        Func<DeleteContext<TDbEntity, TDbContext>, CancellationToken, Task>? beforeAsync = null)
+    {
+        _deleteConfig = new() {
+            Before = before,
+            BeforeAsync = beforeAsync,
+            After = after,
+            Includes = includes,
+            Auth = auth
+        };
+
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithDeleteBulk(
+        Action<DeleteContext<TDbEntity, TDbContext>>? before = null,
+        Action<DeleteContext<TDbEntity, TDbContext>>? after = null,
+        string[]? includes = null,
+        string? endpoint = null,
+        EndpointAuth? auth = null,
+        Func<DeleteContext<TDbEntity, TDbContext>, CancellationToken, Task>? beforeAsync = null)
+    {
+        _deleteBulkConfig = new() {
+            Before = before,
+            BeforeAsync = beforeAsync,
+            After = after,
+            Includes = includes,
+            Auth = auth
+        };
+
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithQuery(QueryConfig<TDbEntity> config)
+    {
+        _queryConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithQuery(Action<QueryEndpointConfigBuilder<TDbEntity>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new QueryEndpointConfigBuilder<TDbEntity>();
+        configure(b);
+        _queryConfig = new() {
+            GroupName = groupName,
+            DefaultOrder = ResolveDefaultOrderFromPrimaryKey(),
+            Auth = b.AuthPolicy,
+            EnableComputedFields = b.EnableComputedFields,
+            MaxIncludePathCount = b.MaxIncludePathCount,
+            MaxIncludePageSize = b.MaxIncludePageSize,
+            MaxKeySetCount = b.MaxKeySetCount,
+            MaxSelectFieldCount = b.MaxSelectFieldCount,
+            MaxComputedFieldCount = b.MaxComputedFieldCount,
+            MaxComputedTemplateLength = b.MaxComputedTemplateLength
+        };
+
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithExport(ExportConfig<TDbEntity> config)
+    {
+        _exportConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithExport(Action<ExportEndpointConfigBuilder<TDbEntity>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new ExportEndpointConfigBuilder<TDbEntity>();
+        configure(b);
+        _exportConfig = new() { GroupName = groupName, DefaultOrder = ResolveDefaultOrderFromPrimaryKey(), Auth = b.AuthPolicy };
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithMetadata(Action<MetadataEndpointConfigBuilder<TDbContext, TDbEntity>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var metaBuilder = new MetadataEndpointConfigBuilder<TDbContext, TDbEntity>();
+        configure(metaBuilder);
+        return WithMetadata(metaBuilder.Options, metaBuilder.AuthPolicy);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithGet(GetConfig<TDbEntity, TDbContext> config)
+    {
+        _getConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithGet(Action<GetEndpointConfigBuilder<TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new GetEndpointConfigBuilder<TDbEntity, TDbContext>();
+        configure(b);
+        return WithGet(b.Build());
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCreate(CreateConfig<TRequest, TDbEntity, TDbContext> config)
+    {
+        _createConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCreate(Action<CreateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new CreateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>();
+        configure(b);
+        return WithCreate(b.Build());
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCreateBulk(CreateConfig<TRequest, TDbEntity, TDbContext> config)
+    {
+        _createBulkConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCreateBulk(Action<CreateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new CreateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>();
+        configure(b);
+        return WithCreateBulk(b.Build());
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpdate(UpdateConfig<TRequest, TDbEntity, TDbContext> config)
+    {
+        _updateConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpdate(Action<UpdateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new UpdateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>();
+        configure(b);
+        return WithUpdate(b.Build());
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpdateBulk(UpdateConfig<TRequest, TDbEntity, TDbContext> config)
+    {
+        _updateBulkConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpdateBulk(Action<UpdateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new UpdateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>();
+        configure(b);
+        return WithUpdateBulk(b.Build());
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatch(PatchConfig<TDbEntity, TDbContext> config, bool inheritUpdate = true)
+        => WithPatch(config.Before, config.After, inheritUpdate, config.Auth, config.PropertyAuthorization);
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatch(Action<PatchEndpointConfigBuilder<TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new PatchEndpointConfigBuilder<TDbEntity, TDbContext>();
+        configure(b);
+        var c = b.Build();
+        return WithPatch(c.Before, c.After, b.InheritUpdate, c.Auth, c.PropertyAuthorization);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatchBulk(PatchConfig<TDbEntity, TDbContext> config, bool inheritUpdate = true)
+        => WithPatchBulk(config.Before, config.After, inheritUpdate, config.Auth, config.PropertyAuthorization);
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatchBulk(Action<PatchEndpointConfigBuilder<TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new PatchEndpointConfigBuilder<TDbEntity, TDbContext>();
+        configure(b);
+        var c = b.Build();
+        return WithPatchBulk(c.Before, c.After, b.InheritUpdate, c.Auth, c.PropertyAuthorization);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpsert(UpsertConfig<TRequest, TDbEntity, TDbContext> config)
+    {
+        _upsertConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpsert(Action<UpsertEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new UpsertEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>();
+        configure(b);
+        return WithUpsert(
+            b.BeforeUpsertAction, b.AfterUpsertAction, b.BeforeCreateAction, b.AfterCreateAction, b.BeforeUpdateAction, b.AfterUpdateAction, b.InheritCreate, b.InheritUpdate,
+            b.AuthPolicy, b.PropertyRules);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpsertBulk(UpsertConfig<TRequest, TDbEntity, TDbContext> config)
+    {
+        _upsertBulkConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpsertBulk(Action<UpsertEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new UpsertEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>();
+        configure(b);
+        return WithUpsertBulk(
+            b.BeforeUpsertAction, b.AfterUpsertAction, b.BeforeCreateAction, b.AfterCreateAction, b.BeforeUpdateAction, b.AfterUpdateAction, b.InheritCreate, b.InheritUpdate,
+            b.BulkAuthPolicy ?? b.AuthPolicy);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithDelete(DeleteConfig<TDbEntity, TDbContext> config)
+    {
+        _deleteConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithDelete(Action<DeleteEndpointConfigBuilder<TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new DeleteEndpointConfigBuilder<TDbEntity, TDbContext>();
+        configure(b);
+        return WithDelete(b.Build());
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithDeleteBulk(DeleteConfig<TDbEntity, TDbContext> config)
+    {
+        _deleteBulkConfig = config;
+        return this;
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithDeleteBulk(Action<DeleteEndpointConfigBuilder<TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new DeleteEndpointConfigBuilder<TDbEntity, TDbContext>();
+        configure(b);
+        return WithDeleteBulk(b.Build());
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCreateAndBulk(Action<CreateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new CreateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>();
+        configure(b);
+        var c = b.Build();
+        return WithCreate(c).WithCreateBulk(c);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpdateAndBulk(Action<UpdateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new UpdateEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>();
+        configure(b);
+        var c = b.Build();
+        return WithUpdate(c).WithUpdateBulk(c);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatchAndBulk(Action<PatchEndpointConfigBuilder<TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new PatchEndpointConfigBuilder<TDbEntity, TDbContext>();
+        configure(b);
+        var c = b.Build();
+        return WithPatch(c.Before, c.After, b.InheritUpdate, c.Auth, c.PropertyAuthorization).WithPatchBulk(c.Before, c.After, b.InheritUpdate, c.Auth, c.PropertyAuthorization);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpsertAndBulk(Action<UpsertEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var b = new UpsertEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>();
+        configure(b);
+        return WithUpsert(
+                b.BeforeUpsertAction, b.AfterUpsertAction, b.BeforeCreateAction, b.AfterCreateAction, b.BeforeUpdateAction, b.AfterUpdateAction, b.InheritCreate, b.InheritUpdate,
+                b.AuthPolicy, b.PropertyRules)
+            .WithUpsertBulk(
+                b.BeforeUpsertAction, b.AfterUpsertAction, b.BeforeCreateAction, b.AfterCreateAction, b.BeforeUpdateAction, b.AfterUpdateAction, b.InheritCreate, b.InheritUpdate,
+                b.BulkAuthPolicy ?? b.AuthPolicy, b.PropertyRules);
+    }
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCreateAndBulk(
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? before = null,
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? after = null,
+        Func<CreateContext<TRequest, TDbEntity, TDbContext>, Task>? afterAsync = null)
+        => WithCreate(before, after, afterAsync: afterAsync).WithCreateBulk(before, after, afterAsync: afterAsync);
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpdateAndBulk(
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? before = null,
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? after = null)
+        => WithUpdate(before, after).WithUpdateBulk(before, after);
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatchAndBulk(
+        Action<PatchContext<TDbEntity, TDbContext>>? before = null,
+        Action<PatchContext<TDbEntity, TDbContext>>? after = null,
+        PatchPropertyAuthorization? propertyAuthorization = null)
+        => WithPatch(before, after, true, null, propertyAuthorization).WithPatchBulk(before, after, true, null, propertyAuthorization);
+
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpsertAndBulk(
+        Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? before = null,
+        Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? after = null,
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? beforeCreate = null,
+        Action<CreateContext<TRequest, TDbEntity, TDbContext>>? afterCreate = null,
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? beforeUpdate = null,
+        Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? afterUpdate = null,
+        bool inheritCreate = true,
+        bool inheritUpdate = true)
+        => WithUpsert(before, after, beforeCreate, afterCreate, beforeUpdate, afterUpdate, inheritCreate, inheritUpdate)
+            .WithUpsertBulk(before, after, beforeCreate, afterCreate, beforeUpdate, afterUpdate, inheritCreate, inheritUpdate);
+
+    public void Build()
+    {
+        BuildMetadata();
+        BuildQuery();
+        BuildExport();
+        BuildGet();
+        BuildCreate();
+        BuildCreateBulk();
+        BuildUpdate();
+        BuildUpdateBulk();
+        BuildPatch();
+        BuildPatchBulk();
+        BuildUpsert();
+        BuildUpsertBulk();
+        BuildDelete();
+        BuildDeleteBulk();
+    }
+
+    private void BuildMetadata()
+    {
+        if (!_metadataEnabled)
+            return;
+
+        var metadata = BuildMetadataResponse();
+        var routeBuilder = app.MapGet($"{baseRoute}/Metadata", () => Results.Json(metadata))
+            .WithName($"Metadata{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<EndpointMetadataResponse>();
+
+        ApplyAuthorization(routeBuilder, _metadataAuth);
+    }
+
+    private void BuildQuery()
+    {
+        if (_queryConfig == null)
+            return;
+
+        var routeBuilder = app.MapPost(
+                $"{baseRoute}/QueryConcrete", async (
+                    [FromBody] QueryConcreteReq queryRequest, [FromServices] IQueryService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
+                    var queryPolicyErrors = ValidateQueryPolicy(queryRequest, _queryConfig);
+                    if (queryPolicyErrors.Count > 0) {
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity()
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                            .WithMessage("Invalid query.")
+                            .AddErrors(queryPolicyErrors)
+                            .Build();
+
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, problem);
+                    }
+
+                    var result = await basicService.Query<TDbEntity, TResponse>(queryRequest, _queryConfig.DefaultOrder, SortDirection.Desc, ct).ConfigureAwait(false);
+                    if (result.IsSuccess)
+                        return Results.Ok(result);
+
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error);
+                })
+            .WithName($"QueryConcrete{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<QueryRes<TResponse>>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
+
+        ApplyAuthorization(routeBuilder, _queryConfig.Auth);
+        var projectedRouteBuilder = app.MapPost(
+                $"{baseRoute}/QueryProject", async (
+                    [FromBody] ProjectionQueryReq queryRequest, [FromServices] IQueryService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
+                    var queryPolicyErrors = ValidateProjectedQueryPolicy(queryRequest, _queryConfig);
+                    if (queryPolicyErrors.Count > 0) {
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity()
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                            .WithMessage("Invalid query.")
+                            .AddErrors(queryPolicyErrors)
+                            .Build();
+
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, problem);
+                    }
+
+                    if (!_queryConfig.EnableComputedFields && queryRequest.ComputedFields.Count > 0) {
+                        return ApiErrorResponseFactory.ThrowForError(
+                            httpContext,
+                            LyoProblemDetails.FromCode(
+                                Constants.ApiErrorCodes.InvalidComputedField,
+                                "Computed fields are not enabled. Enable via ApiFeature.ProjectionComputedFields or WithProjectionComputedFields.", DateTime.UtcNow));
+                    }
+
+                    var result = await basicService.QueryProjected(queryRequest, _queryConfig.DefaultOrder, SortDirection.Desc, ct).ConfigureAwait(false);
+                    if (result.IsSuccess)
+                        return Results.Ok(result);
+
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error);
+                })
+            .WithName($"QueryProject{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<ProjectedQueryRes<object?>>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
+
+        ApplyAuthorization(projectedRouteBuilder, _queryConfig.Auth);
+    }
+
+    private static QueryPolicy ToPolicy(QueryConfig<TDbEntity> queryConfig)
+        => new() {
+            MaxIncludePathCount = queryConfig.MaxIncludePathCount,
+            MaxIncludePageSize = queryConfig.MaxIncludePageSize,
+            MaxKeySetCount = queryConfig.MaxKeySetCount,
+            MaxSelectFieldCount = queryConfig.MaxSelectFieldCount,
+            MaxComputedFieldCount = queryConfig.MaxComputedFieldCount,
+            MaxComputedTemplateLength = queryConfig.MaxComputedTemplateLength,
+            DeniedSelectFields = queryConfig.DeniedSelectFields ?? [],
+        };
+
+    private static List<ApiError> ValidateQueryPolicy(QueryConcreteReq queryRequest, QueryConfig<TDbEntity> queryConfig)
+        => QueryPolicyValidator.Validate(queryRequest, ToPolicy(queryConfig));
+
+    private static List<ApiError> ValidateProjectedQueryPolicy(ProjectionQueryReq queryRequest, QueryConfig<TDbEntity> queryConfig)
+        => QueryPolicyValidator.Validate(queryRequest, ToPolicy(queryConfig));
+
+    private void BuildExport()
+    {
+        if (_exportConfig == null)
+            return;
+
+        var serviceProviderIsService = app.Services.GetService<IServiceProviderIsService>();
+        var exportServiceRegistered = serviceProviderIsService?.IsService(typeof(IExportService<TDbContext>)) == true;
+        OperationHelpers.ThrowIf(
+            !exportServiceRegistered,
+            $"Export endpoint for '{typeof(TDbContext).Name}' requires '{nameof(IExportService<TDbContext>)}'. " +
+            $"Register it with services.AddLyoApiExport<{typeof(TDbContext).Name}>().");
+
+        var routeBuilder = app.MapPost(
+                $"{baseRoute}/Export", async (
+                    [FromBody] ExportRequest request, [FromServices] IExportService<TDbContext> exportService, HttpContext httpContext, CancellationToken ct = default) => {
+                    var deniedErrors = DeniedSelectFieldPolicy.ValidateExport(request, _exportConfig.DeniedSelectFields);
+                    if (deniedErrors.Count > 0) {
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity()
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                            .WithMessage("Invalid export request.")
+                            .AddErrors(deniedErrors)
+                            .Build();
+
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, problem);
+                    }
+
+                    var (stream, contentType, fileName) = await exportService.ExportAsync<TDbEntity, TResponse>(request, _exportConfig.DefaultOrder, SortDirection.Desc, ct)
+                        .ConfigureAwait(false);
+
+                    return Results.File(stream, contentType, fileName);
+                })
+            .WithName($"Export{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest);
+
+        ApplyAuthorization(routeBuilder, _exportConfig.Auth);
+    }
+
+    private void BuildGet()
+    {
+        if (_getConfig == null)
+            return;
+
+        var routeBuilder = app.MapGet(
+                $"{baseRoute}{ApiEndpointBuilderExtensions.GetDefaultEndpoint<TKey>()}", async (
+                    TKey id, [FromQuery] string[] include, [FromServices] IQueryService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
+                    var result = await basicService.Get<TDbEntity, TResponse>([id!], include, _getConfig.Before, _getConfig.After, ct).ConfigureAwait(false);
+                    if (result is not null)
+                        return Results.Ok(result);
+
+                    return ApiErrorResponseFactory.ThrowNotFound(httpContext, [id]);
+                })
+            .WithName($"Get{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<TResponse>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
+
+        ApplyAuthorization(routeBuilder, _getConfig.Auth);
+    }
+
+    private void BuildCreate()
+    {
+        if (_createConfig == null)
+            return;
+
+        var keyPropertyNames = ResolveKeyPropertyNames();
+        var routeBuilder = app.MapPost(
+                $"{baseRoute}", async ([FromBody] TRequest request, [FromServices] ICreateService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default)
+                    => {
+                    var result = await basicService.CreateAsync<TRequest, TDbEntity, TResponse>(request, _createConfig.Before, _createConfig.After, _createConfig.AfterAsync, ct)
+                        .ConfigureAwait(false);
+
+                    if (result.IsSuccess)
+                        return Results.Created(BuildCreatedLocation(baseRoute, keyPropertyNames, result.Data), result);
+
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error);
+                })
+            .WithName($"Create{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<CreateResult<TResponse>>(StatusCodes.Status201Created)
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
+
+        ApplyAuthorization(routeBuilder, _createConfig.Auth);
+    }
+
+    /// <summary>
+    /// Primary key property names for <typeparamref name="TDbEntity" />, taken from the EF model at registration time. Empty when the model is unavailable, which leaves the
+    /// <c>Location</c> header on the old <c>Id</c> guess instead of failing registration.
+    /// </summary>
+    private IReadOnlyList<string> ResolveKeyPropertyNames()
+    {
+        try {
+            using var scope = app.Services.CreateScope();
+            using var context = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TDbContext>>().CreateDbContext();
+            return context.Model.FindEntityType(typeof(TDbEntity))?.FindPrimaryKey()?.Properties.Select(p => p.Name).ToArray() ?? [];
+        }
+        catch (Exception) {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Builds the <c>Location</c> header for a created resource from the entity's real primary key rather than assuming a property called <c>Id</c>, which produced
+    /// <c>{baseRoute}/</c> for every entity keyed on anything else.
+    /// </summary>
+    /// <returns>The resource URL, or <c>null</c> when the key cannot be read off the response, since a wrong location is worse than none.</returns>
+    private static string? BuildCreatedLocation(string baseRoute, IReadOnlyList<string> keyPropertyNames, TResponse? data)
+    {
+        if (data is null)
+            return null;
+
+        var names = keyPropertyNames.Count > 0 ? keyPropertyNames : ["Id"];
+        var segments = new List<string>(names.Count);
+        foreach (var name in names) {
+            var value = data.GetPropertyValue(name);
+            if (value is null)
+                return null;
+
+            segments.Add(Uri.EscapeDataString(Convert.ToString(value, CultureInfo.InvariantCulture) ?? ""));
+        }
+
+        return $"{baseRoute}/{string.Join("/", segments)}";
+    }
+
+    private void BuildCreateBulk()
+    {
+        if (_createBulkConfig == null)
+            return;
+
+        var routeBuilder = app.MapPost(
+                $"{baseRoute}/Bulk", async ([FromBody] List<TRequest> requests, [FromServices] ICreateService<TDbContext> basicService, CancellationToken ct = default) => {
+                    var result = await basicService.CreateBulkAsync<TRequest, TDbEntity, TResponse>(
+                            requests, _createBulkConfig.Before, _createBulkConfig.After, _createBulkConfig.AfterAsync, ct)
+                        .ConfigureAwait(false);
+
+                    return Results.Ok(result);
+                })
+            .WithName($"Create{Regex.Replace(typeof(TResponse).Name, "Res$", "")}Bulk")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<CreateBulkResult<TResponse>>();
+
+        ApplyAuthorization(routeBuilder, _createBulkConfig.Auth);
+    }
+
+    private void BuildUpdate()
+    {
+        if (_updateConfig == null)
+            return;
+
+        var routeBuilder = app.MapPost(
+                $"{baseRoute}/Update", async (
+                    [FromBody] UpdateRequest<TRequest> request, [FromServices] IUpdateService<TDbContext> basicService, [FromServices] IQueryService<TDbContext> queryService,
+                    HttpContext httpContext, CancellationToken ct = default) => {
+                    var propertyDenial = await AuthorizeWriteAsync(_updateConfig.PropertyAuthorization, httpContext, queryService, request.Keys, request.Data, ct)
+                        .ConfigureAwait(false);
+
+                    if (propertyDenial != null)
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, propertyDenial);
+
+                    var result = await basicService.UpdateAsync<TRequest, TDbEntity, TResponse>(request, _updateConfig.Before, _updateConfig.After, ct).ConfigureAwait(false);
+                    if (result.Result != UpdateResultEnum.Failed)
+                        return Results.Ok(result);
+
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error, request.Keys);
+                })
+            .WithName($"Update{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<UpdateResult<TResponse>>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
+
+        ApplyAuthorization(routeBuilder, _updateConfig.Auth);
+    }
+
+    private void BuildUpdateBulk()
+    {
+        if (_updateBulkConfig == null)
+            return;
+
+        var routeBuilder = app.MapPost(
+                $"{baseRoute}/Bulk/Update", async (
+                    [FromBody] List<UpdateRequest<TRequest>> requests, [FromServices] IUpdateService<TDbContext> basicService,
+                    [FromServices] IQueryService<TDbContext> queryService, HttpContext httpContext, CancellationToken ct = default) => {
+                    foreach (var request in requests) {
+                        var propertyDenial = await AuthorizeWriteAsync(_updateBulkConfig.PropertyAuthorization, httpContext, queryService, request.Keys, request.Data, ct)
+                            .ConfigureAwait(false);
+
+                        if (propertyDenial != null)
+                            return ApiErrorResponseFactory.ThrowForError(httpContext, propertyDenial);
+                    }
+
+                    var result = await basicService.UpdateBulkAsync<TRequest, TDbEntity, TResponse>(requests, _updateBulkConfig.Before, _updateBulkConfig.After, ct)
+                        .ConfigureAwait(false);
+
+                    return Results.Ok(result);
+                })
+            .WithName($"Update{Regex.Replace(typeof(TResponse).Name, "Res$", "")}Bulk")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<UpdateBulkResult<TResponse>>();
+
+        ApplyAuthorization(routeBuilder, _updateBulkConfig.Auth);
+    }
+
+    private void BuildPatch()
+    {
+        if (_patchConfig == null)
+            return;
+
+        var routeBuilder = app.MapPatch(
+                $"{baseRoute}", async (
+                        [FromBody] PatchRequest request, [FromServices] IPatchService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default)
+                    => {
+                    var fieldAuth = await PatchPropertyAuthorizationApplier.ApplyAsync(_patchConfig.PropertyAuthorization, httpContext, typeof(TDbEntity), request, ct)
+                        .ConfigureAwait(false);
+
+                    if (!fieldAuth.Success) {
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, fieldAuth.Error);
+                    }
+
+                    request = fieldAuth.Request!;
+                    var result = await basicService.PatchAsync<TDbEntity, TResponse>(request, _patchConfig.Before, _patchConfig.After, ct).ConfigureAwait(false);
+                    var keys = request.Keys?.Cast<object?>().ToArray();
+                    if (result.Result is PatchResultEnum.Updated or PatchResultEnum.NoChange)
+                        return Results.Ok(result);
+
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error, keys);
+                })
+            .WithName($"Patch{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<PatchResult<TResponse>>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
+
+        ApplyAuthorization(routeBuilder, _patchConfig.Auth);
+    }
+
+    private void BuildPatchBulk()
+    {
+        if (_patchBulkConfig == null)
+            return;
+
+        var routeBuilder = app.MapPatch(
+                $"{baseRoute}/Bulk", async (
+                    [FromBody] List<PatchRequest> request, [FromServices] IPatchService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
+                    if (_patchBulkConfig.PropertyAuthorization != null) {
+                        var sanitized = new List<PatchRequest>(request.Count);
+                        foreach (var patchRequest in request) {
+                            var fieldAuth = await PatchPropertyAuthorizationApplier
+                                .ApplyAsync(_patchBulkConfig.PropertyAuthorization, httpContext, typeof(TDbEntity), patchRequest, ct)
+                                .ConfigureAwait(false);
+
+                            if (!fieldAuth.Success) {
+                                return ApiErrorResponseFactory.ThrowForError(httpContext, fieldAuth.Error);
+                            }
+
+                            sanitized.Add(fieldAuth.Request!);
+                        }
+
+                        request = sanitized;
+                    }
+
+                    var result = await basicService.PatchBulkAsync<TDbEntity, TResponse>(request, _patchBulkConfig.Before, _patchBulkConfig.After, ct).ConfigureAwait(false);
+                    return Results.Ok(result);
+                })
+            .WithName($"Patch{Regex.Replace(typeof(TResponse).Name, "Res$", "")}Bulk")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<PatchBulkResult<TResponse>>();
+
+        ApplyAuthorization(routeBuilder, _patchBulkConfig.Auth);
+    }
+
+    private void BuildUpsert()
+    {
+        if (_upsertConfig == null)
+            return;
+
+        var routeBuilder = app.MapPost(
+                $"{baseRoute}/Upsert", async (
+                    [FromBody] UpsertRequest<TRequest> request, [FromServices] IUpsertService<TDbContext> basicService, [FromServices] IQueryService<TDbContext> queryService,
+                    HttpContext httpContext, CancellationToken ct = default) => {
+                    var propertyDenial = await AuthorizeWriteAsync(_upsertConfig.PropertyAuthorization, httpContext, queryService, request.Keys, request.NewData, ct)
+                        .ConfigureAwait(false);
+
+                    if (propertyDenial != null)
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, propertyDenial);
+
+                    var result = await basicService.UpsertAsync<TRequest, TDbEntity, TResponse>(
+                            request, _upsertConfig.Before, _upsertConfig.After, _upsertConfig.BeforeCreate, _upsertConfig.AfterCreate, _upsertConfig.BeforeUpdate,
+                            _upsertConfig.AfterUpdate, ct)
+                        .ConfigureAwait(false);
+
+                    if (result.Result != UpsertResultEnum.Failed)
+                        return Results.Ok(result);
+
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error);
+                })
+            .WithName($"Upsert{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<UpsertResult<TResponse>>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<LyoProblemDetails>(StatusCodes.Status500InternalServerError);
+
+        ApplyAuthorization(routeBuilder, _upsertConfig.Auth);
+    }
+
+    private void BuildUpsertBulk()
+    {
+        if (_upsertBulkConfig == null)
+            return;
+
+        var routeBuilder = app.MapPost(
+                $"{baseRoute}/Bulk/Upsert", async (
+                    [FromBody] List<UpsertRequest<TRequest>> requests, [FromServices] IUpsertService<TDbContext> basicService,
+                    [FromServices] IQueryService<TDbContext> queryService, HttpContext httpContext, CancellationToken ct = default) => {
+                    foreach (var request in requests) {
+                        var propertyDenial = await AuthorizeWriteAsync(_upsertBulkConfig.PropertyAuthorization, httpContext, queryService, request.Keys, request.NewData, ct)
+                            .ConfigureAwait(false);
+
+                        if (propertyDenial != null)
+                            return ApiErrorResponseFactory.ThrowForError(httpContext, propertyDenial);
+                    }
+
+                    var result = await basicService.UpsertBulkAsync<TRequest, TDbEntity, TResponse>(
+                        requests, _upsertBulkConfig.Before, _upsertBulkConfig.After, _upsertBulkConfig.BeforeCreate, _upsertBulkConfig.AfterCreate, _upsertBulkConfig.BeforeUpdate,
+                        _upsertBulkConfig.AfterUpdate, ct);
+
+                    return Results.Ok(result);
+                })
+            .WithName($"Upsert{Regex.Replace(typeof(TResponse).Name, "Res$", "")}Bulk")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<UpsertBulkResult<TResponse>>();
+
+        ApplyAuthorization(routeBuilder, _upsertBulkConfig.Auth);
+    }
+
+    private void BuildDelete()
+    {
+        if (_deleteConfig == null)
+            return;
+
+        var routeBuilder1 = app.MapDelete(
+                $"{baseRoute}{ApiEndpointBuilderExtensions.GetDefaultEndpoint<TKey>()}", async (
+                    [FromRoute] TKey id, [FromServices] IDeleteService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
+                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>(
+                            [id!], _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
+                        .ConfigureAwait(false);
+
+                    if (result.Error is null)
+                        return Results.Ok(result);
+
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error, [id]);
+                })
+            .WithName($"Delete{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<DeleteResult<TResponse>>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces<LyoProblemDetails>(StatusCodes.Status500InternalServerError);
+
+        ApplyAuthorization(routeBuilder1, _deleteConfig.Auth);
+        var routeBuilder2 = app.MapDelete(
+                $"{baseRoute}", async (
+                    [FromBody] DeleteRequest request, [FromServices] IDeleteService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default) => {
+                    var result = await basicService.DeleteAsync<TDbEntity, TResponse>(
+                            request, _deleteConfig.Before, _deleteConfig.BeforeAsync, _deleteConfig.After, _deleteConfig.Includes, ct)
+                        .ConfigureAwait(false);
+
+                    var keys = request.Keys?.Cast<object?>().ToArray();
+                    if (result.Error is null)
+                        return Results.Ok(result);
+
+                    return ApiErrorResponseFactory.ThrowForError(httpContext, result.Error, keys);
+                })
+            .WithName($"Delete{Regex.Replace(typeof(TResponse).Name, "Res$", "")}Request")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<DeleteResult<TResponse>>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces<LyoProblemDetails>(StatusCodes.Status500InternalServerError);
+
+        ApplyAuthorization(routeBuilder2, _deleteConfig.Auth);
+    }
+
+    private void BuildDeleteBulk()
+    {
+        if (_deleteBulkConfig == null)
+            return;
+
+        var routeBuilder = app.MapDelete(
+                $"{baseRoute}/Bulk", async ([FromBody] List<DeleteRequest> requests, [FromServices] IDeleteService<TDbContext> basicService, CancellationToken ct = default) => {
+                    var result = await basicService.DeleteBulkAsync<TDbEntity, TResponse>(
+                            requests, _deleteBulkConfig.Before, _deleteBulkConfig.BeforeAsync, _deleteBulkConfig.After, _deleteBulkConfig.Includes, ct)
+                        .ConfigureAwait(false);
+
+                    return Results.Ok(result);
+                })
+            .WithName($"Delete{Regex.Replace(typeof(TResponse).Name, "Res$", "")}Bulk")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<DeleteBulkResult<TResponse>>();
+
+        ApplyAuthorization(routeBuilder, _deleteBulkConfig.Auth);
+    }
+}

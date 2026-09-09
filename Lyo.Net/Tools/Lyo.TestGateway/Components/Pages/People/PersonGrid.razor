@@ -1,0 +1,56 @@
+@using Lyo.Api.Models.Common.Response
+@using Lyo.Query.Models.Common.Request
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.Models
+@using Constants = Lyo.TestGateway.Models.Constants
+@inject IApiClient ApiClient
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="PersonGrid"
+                      Route="@Constants.Person.Route"
+                      KeySelector="@(i => ProjectedGridKeys.RawId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@AddMostRecentAddressSelects"
+                      RowMenuControls="@GetRowMenuControls()">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="Open person"
+                               OnClick="@(() => OpenPerson(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;" Identifier="true"/>
+        <LyoProjectedColumn Field="FirstName" Title="Firstname" QuickSearchPropertyName="Firstname"/>
+        <LyoProjectedColumn Field="MiddleName" Title="Middlename"/>
+        <LyoProjectedColumn Field="LastName" Title="Lastname" QuickSearchPropertyName="Lastname"/>
+        <LyoProjectedColumn Field="DateOfBirth" Title="DoB"/>
+        <LyoProjectedColumn Field="ContactAddresses.Address.FullAddress"
+                            Title="Most recent address"
+                            Sortable="false"
+                            HeaderStyle="width: 220px;"
+                            FormattedValue="@((item, _) => MostRecentAddressFullAddress(item) ?? "—")"/>
+        <LyoProjectedColumn Field="ContactAddresses.Count" Title="Addresses"/>
+        <LyoProjectedColumn Field="ContactEmailAddresses.Count" Title="Email Addresses"/>
+        <LyoProjectedColumn Field="ContactPhoneNumbers.Count" Title="Phone Numbers"/>
+        <LyoProjectedColumn Field="SourceEntityType" Title="Source"/>
+    </Columns>
+</LyoDataGridProjected>
+
+@code {
+    private RenderFragment<object?> GetRowMenuControls()
+        => person => @<MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => OpenPerson(person))">Open</MudMenuItem>;
+}

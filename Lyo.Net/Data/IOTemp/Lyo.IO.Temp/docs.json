@@ -1,0 +1,351 @@
+{
+  "id": "Lyo.IO.Temp",
+  "name": "Lyo.IO.Temp",
+  "area": "Data",
+  "tagline": "Session-scoped temp files and directories, with naming strategies and overflow policies.",
+  "description": "Session-scoped temp files and directories, with naming strategies and overflow policies.\n\nCallers use `IIOTempService` and `IIOTempSession`. `IOTempService` and `IOTempSession` are the stock implementations. When the repo generates XML docs, IntelliSense repeats the same summaries as this README. Types that only implement those interfaces use `<inheritdoc />`.",
+  "features": [
+    "**Sessions.** `IIOTempSession` owns a set of temp files and dirs and deletes them when disposed.",
+    "**One-offs.** `CreateFile` / `CreateDirectory` without opening a session.",
+    "**Pluggable storage.** All I/O goes through `IIOTempStorageProvider`. Included: `FileSystemIOTempStorageProvider` (default, `PathStyle.Host`) and `InMemoryIOTempStorageProvider` (WASM / tests, `PathStyle.Posix`). Path combine/normalize/jail uses `Lyo.Common.Core.Pathing.PathHelpers`.",
+    "**Naming.** `Guid`, `Sequential`, `Timestamp`, `RandomChars`.",
+    "**Overflow.** When a per-file or total-size cap is crossed: `ThrowException`, `DeleteOldest`, or `DeleteLargest`.",
+    "**Generator.** `session.Generator` writes random-byte files, text/CSV/JSON, zips, and fake directory trees.",
+    "**Events.** Session: `FileCreated` / `DirectoryCreated` / `FileWritten` / `FileAppended` / `FileDeleted` / `DirectoryDeleted` / `Overflow` / `Cleared` / `Disposed`. Service: `SessionCreated` / `SessionDisposed` / one-off create and cleanup deletes.",
+    "**Nested sessions.** Child sessions whose root sits inside a parent session.",
+    "**Inspection.** Snapshots, byte totals, on-disk enumerations.",
+    "**Keyed pools.** `GetOrCreateSession(key)` for per-request or per-pipeline reuse.",
+    "**Fluent option helpers.** `WithMaxFileSize` / `WithMaxTotalSize` on options objects.",
+    "**Test asserts.** `AssertFilesExist` / `AssertTotalSize` on `IIOTempSession`.",
+    "**Auto-cleanup.** An `IHostedService` that calls `Cleanup()` on a timer.",
+    "**Metrics.** Session/file/cleanup counters when `IMetrics` is registered."
+  ],
+  "examples": [
+    {
+      "title": "DI registration",
+      "language": "csharp",
+      "code": "// Add to DI\nservices.AddIOTempService(); // uses default options\n\n// Or configure options\nservices.AddIOTempService(options =>\n{\n    options.DirectoryName = \"my-app-temp\";\n    options.MaxTotalSizeBytes = 500 * 1024 * 1024; // 500 MB\n});\n\n// Add with automatic background cleanup\nservices.AddIOTempServiceWithAutoCleanup(\n    cleanupInterval: TimeSpan.FromHours(1),\n    initialDelay: TimeSpan.FromMinutes(5));"
+    },
+    {
+      "title": "Sessions (preferred)",
+      "language": "csharp",
+      "code": "using var session = _ioTempService.CreateSession();\n\n// Write your own data\nvar path = session.GetFilePath(\"report.pdf\");\nawait File.WriteAllBytesAsync(path, reportBytes);\n\n// Or create directly from data\nvar path2 = await session.CreateFileAsync(byteData);\nvar path3 = await session.CreateFileAsync(stream);\n\n// Session dispose → all files/dirs cleaned up automatically"
+    },
+    {
+      "title": "Generator",
+      "language": "csharp",
+      "code": "// Random-bytes files\nvar file = session.Generator.CreateRandomFile(FileSizeUnitInfo.Megabyte, 1);\nvar files = session.Generator.CreateRandomFiles(5, FileSizeUnitInfo.Kilobyte, 64);\n\n// Named random files (name selector per index)\nvar named = session.Generator.CreateRandomFiles(3, 1024, i => $\"chunk_{i}.bin\");\n\n// Structured content\nvar txt = session.Generator.CreateTextFile(lines: 100, charsPerLine: 80);\nvar csv = session.Generator.CreateCsvFile(rows: 500, columns: 10);\nvar json = session.Generator.CreateJsonFile(depth: 3, keysPerObject: 5);\n\n// Zip archive\nvar zip = session.Generator.CreateZipFile(TempDirectorySpec.Flat(10, 1024));\n\n// Simulated directory tree\nvar dir = session.Generator.SimulateDirectory(TempDirectorySpec.Flat(20, 512));"
+    },
+    {
+      "title": "TempDirectorySpec",
+      "language": "csharp",
+      "code": "// Fluent builder\nvar spec = TempDirectorySpec.Builder()\n    .WithFiles(5, FileSizeUnitInfo.Kilobyte, 4)\n    .WithFileSizeSelector(i => (i + 1) * 512) // per-file size varies\n    .WithSubdirectory(sub => sub.WithFiles(3, 256))\n    .WithSubdirectory(TempDirectorySpec.Flat(2, 128))\n    .Build();\n\n// Randomised spec\nvar randomSpec = TempDirectorySpec.Random(\n    minFiles: 3, maxFiles: 10,\n    minSize: 512, maxSize: 4096);"
+    },
+    {
+      "title": "Mutating a session",
+      "language": "csharp",
+      "code": "// Delete all tracked files/dirs, reset byte count\nsession.Clear();\n\n// Copy an external file or directory into the session\nvar dest = session.CopyFrom(\"/path/to/external/file.csv\");\nvar destDir = session.CopyFrom(\"/path/to/external/dir\");\n\n// Append data to an existing tracked file\nsession.AppendToFile(path, ReadOnlyMemory<byte>.Empty);\nsession.AppendToFile(path, \"extra line\\n\");"
+    },
+    {
+      "title": "Events",
+      "language": "csharp",
+      "code": "session.FileCreated += path => Console.WriteLine($\"Created: {path}\");\nsession.DirectoryCreated += path => Console.WriteLine($\"Dir created: {path}\");\nsession.FileWritten += path => Console.WriteLine($\"Written: {path}\");\nsession.FileAppended += path => Console.WriteLine($\"Appended: {path}\");\nsession.FileDeleted += path => Console.WriteLine($\"Deleted: {path}\");\nsession.DirectoryDeleted += path => Console.WriteLine($\"Dir deleted: {path}\");\nsession.Overflow += path => Console.WriteLine($\"Evicted: {path}\");\nsession.Cleared += path => Console.WriteLine($\"Cleared: {path}\");\nsession.Disposed += path => Console.WriteLine($\"Disposed: {path}\");\n\nservice.SessionCreated += path => Console.WriteLine($\"Session: {path}\");\nservice.SessionDisposed += path => Console.WriteLine($\"Session gone: {path}\");"
+    },
+    {
+      "title": "Nested sessions",
+      "language": "csharp",
+      "code": "using var sub = session.CreateSubSession();\n// sub is rooted inside session.SessionDirectory\n// disposing session also removes all sub-session content"
+    },
+    {
+      "title": "Inspection",
+      "language": "csharp",
+      "code": "long bytes = session.GetTotalBytesUsed();\nvar snapshot = session.GetSnapshot(); // TempSessionSnapshot: frozen view\n\nvar files = session.EnumerateFiles(\"*.csv\"); // all .csv on disk (including untracked)\nvar dirs = session.EnumerateDirectories();"
+    },
+    {
+      "title": "Keyed session pool",
+      "language": "csharp",
+      "code": "// Get or create a named session (same instance returned for same key)\nvar session = service.GetOrCreateSession(\"pipeline-A\");\n\n// With custom options for initial creation\nvar session = service.GetOrCreateSession(\"pipeline-A\", new IOTempSessionOptions { MaxTotalSizeBytes = 100_000 });\n\n// Release when done\nservice.ReleaseSession(\"pipeline-A\");\n\n// Service-level stats\nIOTempServiceStats stats = service.GetStats();"
+    },
+    {
+      "title": "Fluent option helpers",
+      "language": "csharp",
+      "code": "var sessionOptions = new IOTempSessionOptions()\n    .WithMaxFileSize(FileSizeUnitInfo.Megabyte, 5)\n    .WithMaxTotalSize(FileSizeUnitInfo.Gigabyte, 1);"
+    },
+    {
+      "title": "Test assertions",
+      "language": "csharp",
+      "code": "session.AssertFilesExist(); // all tracked files exist on disk\nsession.AssertTotalSize(expectedBytes: 2048, toleranceBytes: 64);"
+    },
+    {
+      "title": "One-offs (no session)",
+      "language": "csharp",
+      "code": "var path = _ioTempService.CreateFile();\nvar pathWithData = _ioTempService.CreateFile(byteData, \"myfile.bin\");\nvar dir = _ioTempService.CreateDirectory();"
+    },
+    {
+      "title": "Cleanup",
+      "language": "csharp",
+      "code": "_ioTempService.Cleanup();\nawait _ioTempService.CleanupAsync(ct);\nawait _ioTempService.CleanupAsync(TimeSpan.FromHours(1), ct);"
+    },
+    {
+      "title": "Sessions in unit tests",
+      "language": "csharp",
+      "code": "public sealed class MyServiceTests : IDisposable\n{\n    private readonly IIOTempSession _tempSession =\n        IOTempSession.CreateForTests(nameof(MyServiceTests));\n\n    public void Dispose() => _tempSession.Dispose();\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Generator",
+      "text": "Use `session.Generator`:"
+    },
+    {
+      "type": "paragraph",
+      "title": "TempDirectorySpec",
+      "text": "Describe a folder layout for simulation or zip building:"
+    },
+    {
+      "type": "paragraph",
+      "title": "Storage backends",
+      "text": "All I/O goes through `IIOTempStorageProvider`. Two implementations ship in the package. Register another via DI for a different backend. Each provider reports `PathStyle` (`Host` on real disk, `Posix` for in-memory or remote). Service, session, and generator path combine/normalize/jail checks all go through `PathHelpers` with that style."
+    },
+    {
+      "type": "markdown",
+      "title": "FileSystemIOTempStorageProvider, the default",
+      "body": "Calls `System.IO` with `PathStyle.Host`. Picked automatically when no `IIOTempStorageProvider` is registered.\n\n```csharp\n// Implicit — no registration needed\nservices.AddIOTempService();\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "InMemoryIOTempStorageProvider",
+      "body": "`ConcurrentDictionary` store with `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; fits Blazor WASM and unit tests.\nData lasts for the lifetime of the provider instance.\n\n```csharp\n// Blazor WASM (Program.cs)\nbuilder.Services.AddSingleton<IIOTempStorageProvider>(new InMemoryIOTempStorageProvider());\nbuilder.Services.AddIOTempService();\n\n// xUnit / NUnit — direct construction\nvar storage = new InMemoryIOTempStorageProvider();\nvar options = new IOTempSessionOptions { RootDirectory = storage.RootPath };\nusing var session = new IOTempSession(options, storageProvider: storage);\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "SFTP (`Lyo.IO.Temp.Sftp`)",
+      "body": "Remote temp storage uses the shipped SFTP provider:\n\n```csharp\nservices.AddIOTempSftpStorageProvider(o =>\n{\n    o.Host = \"sftp.example.com\";\n    o.Username = \"lyo\";\n    o.Password = secret;\n    o.RootRemoteDirectory = \"/tmp/lyo\";\n    o.HostKeyPolicy = SftpHostKeyPolicy.FingerprintAllowList;\n    o.AllowedHostKeyFingerprints.Add(\"SHA256:...\");\n});\nservices.AddIOTempService();\n```\n\nSee package `Lyo.IO.Temp.Sftp` (backed by `Lyo.Sftp.Client`)."
+    },
+    {
+      "type": "markdown",
+      "title": "Write a custom provider",
+      "body": "One `IIOTempStorageProvider` implementation covers any backend (FTP, Azure Blob, etc.):\n\n```csharp\npublic sealed class FtpIOTempStorageProvider : IIOTempStorageProvider\n{\n    // implement RootPath, PathStyle, DirectoryExists, CreateDirectory, WriteAllBytes, OpenRead, ...\n}\n\n// Register it before AddIOTempService\nservices.AddSingleton<IIOTempStorageProvider>(new FtpIOTempStorageProvider(...));\nservices.AddIOTempService();\n```\n\nThe interface includes `PathStyle`, directory create/delete/enumerate, file touch/read/write/append/copy/move/delete, streaming open (read, create, append), file metadata (length,\ncreation time), async variants of all write operations, and an `EnsureDirectoryAccessible` hook (used for R/W probing; may be a no-op for in-memory providers)."
+    },
+    {
+      "type": "table",
+      "title": "IOTempServiceOptions",
+      "headers": [
+        "Option",
+        "Default",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`TempRoot`",
+          "`Path.GetTempPath()`",
+          "OS temp root. Parent folder of `DirectoryName`."
+        ],
+        [
+          "`DirectoryName`",
+          "`\"lyo-io-temp\"`",
+          "Folder under `TempRoot`."
+        ],
+        [
+          "`FileLifetime`",
+          "`null`",
+          "Expiry `Cleanup()` uses when no argument is passed."
+        ],
+        [
+          "`MaxFileSizeBytes`",
+          "1 GB",
+          "Hard cap per file."
+        ],
+        [
+          "`MaxTotalSizeBytes`",
+          "10 GB",
+          "Cap on total size under the service directory."
+        ],
+        [
+          "`OverflowStrategy`",
+          "`ThrowException`",
+          "`ThrowException`, `DeleteOldest`, or `DeleteLargest`."
+        ],
+        [
+          "`EnableMetrics`",
+          "`true`",
+          "Write metrics through `IMetrics`."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "IOTempSessionOptions",
+      "headers": [
+        "Option",
+        "Default",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`RootDirectory`",
+          "`{TempPath}/lyo-io-temp/{ProcessId}`",
+          "Folder that contains the session directory. A per-process suffix isolates parallel runners by default."
+        ],
+        [
+          "`CreateRootDirectoryIfNotExists`",
+          "`true`",
+          "If true, a missing `RootDirectory` is created at construction; if false, a missing root throws."
+        ],
+        [
+          "`FileNamingStrategy`",
+          "`Guid`",
+          "`Guid`, `Sequential`, `Timestamp`, or `RandomChars`."
+        ],
+        [
+          "`FileExtension`",
+          "`.tmp`",
+          "Suffix added to auto-named files."
+        ],
+        [
+          "`FilePrefix`/`Suffix`",
+          "`null`",
+          "Optional prefix or suffix on generated file names."
+        ],
+        [
+          "`MaxFileSizeBytes`",
+          "1 GB",
+          "Hard cap per file."
+        ],
+        [
+          "`MaxTotalSizeBytes`",
+          "`null`",
+          "Total cap for one session."
+        ],
+        [
+          "`OverflowStrategy`",
+          "`ThrowException`",
+          "What happens when the total cap is crossed."
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Sessions in unit tests",
+      "text": "`IOTempSession.CreateForTests` is a one-liner for unit tests. The root is created for you and named after the test so leftover folders from a failed CI run are easy to find. Sessions sit under `{TempPath}/lyo-io-temp-tests/{subdirectoryName}/{Guid}/`, away from production temp dirs."
+    },
+    {
+      "type": "table",
+      "title": "IOTempCleanupOptions",
+      "headers": [
+        "Option",
+        "Default",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`InitialDelay`",
+          "5 minutes",
+          "Wait after app startup before the first cleanup run."
+        ],
+        [
+          "`Interval`",
+          "1 hour",
+          "How often cleanup runs after that first pass."
+        ]
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/IOTemp/Lyo.IO.Temp/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

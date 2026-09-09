@@ -1,0 +1,174 @@
+{
+  "id": "Lyo.Email.Postgres",
+  "name": "Lyo.Email.Postgres",
+  "area": "Communication",
+  "tagline": "PostgreSQL EF Core store for email mailbox logs (`EmailLogEntity`). The package never sends or fetches mail. Hosts insert outbound rows after SMTP send and inbound rows after their own IMAP/POP client.",
+  "description": "PostgreSQL EF Core store for email mailbox logs (`EmailLogEntity` / `EmailAttachmentLogEntity`). The package never sends or fetches mail. It wires `EmailDbContext` so workers or gateways can persist send and receive outcomes after [`Lyo.Email`](../Lyo.Email/README.md) (outbound) or a host IMAP/POP client (inbound). There is no FileStorage id on the schema; hosts that save HTML write their own file and record the path.",
+  "features": [
+    "**Schema only.** `email.email_logs` and `email.email_attachment_logs`. This package does not send SMTP, fetch IMAP/POP, or subscribe to `EmailService` events.",
+    "**Direction.** `EmailDirection.Outbound` (default) or `Inbound`, matching SMS mailbox logs.",
+    "**Bodies.** Plain text on the row (`TextBody`). HTML is a host-owned file whose name and path are stored (`HtmlFileName` / `HtmlFilePath`), not a FileStorage id.",
+    "**Attachments.** Metadata only: file name, content type, byte length, optional JSON bag, sort order. Bytes are not stored.",
+    "**DI.** `AddEmailDbContext` / `AddEmailDbContextFactory` / `AddEmailDbContextFactoryFromConfiguration`."
+  ],
+  "examples": [
+    {
+      "title": "Injection helpers",
+      "language": "csharp",
+      "code": "services.AddEmailDbContextFactoryFromConfiguration(builder.Configuration);\n// or\nservices.AddEmailDbContextFactory(opts =>\n{\n    opts.ConnectionString = \"Host=...;Database=...;Username=...;Password=...\";\n    opts.EnableAutoMigrations = true;\n});"
+    },
+    {
+      "title": "Insert after send",
+      "language": "csharp",
+      "code": "emailService.EmailSent += async (_, args) =>\n{\n    var result = args.EmailResult;\n    var request = result.Data;\n    string? htmlFileName = null;\n    string? htmlFilePath = null;\n    if (!string.IsNullOrWhiteSpace(request?.HtmlBody))\n    {\n        htmlFileName = $\"{Guid.NewGuid():N}.html\";\n        htmlFilePath = Path.Combine(htmlArchiveRoot, htmlFileName);\n        await File.WriteAllTextAsync(htmlFilePath, request.HtmlBody);\n    }\n\n    await using var context = await factory.CreateDbContextAsync();\n    context.EmailLogs.Add(new EmailLogEntity\n    {\n        Direction = EmailDirection.Outbound,\n        FromAddress = request?.FromAddress,\n        Subject = request?.Subject,\n        TextBody = request?.TextBody,\n        HtmlFileName = htmlFileName,\n        HtmlFilePath = htmlFilePath,\n        IsSuccess = result.IsSuccess,\n        Message = result.SmtpResponse,\n        MessageId = result.MessageId,\n        SentTimestamp = result.SentDate,\n        ErrorMessage = result.Errors?.FirstOrDefault()?.Message\n    });\n    await context.SaveChangesAsync();\n};"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Types",
+      "items": [
+        "`EmailDbContext`. EF Core context exposing `DbSet<EmailLogEntity>` (`email_logs`) and `DbSet<EmailAttachmentLogEntity>` (`email_attachment_logs`). Default schema is `email`. `SaveChanges` and `SaveChangesAsync` stamp `CreatedTimestamp` on insert and `UpdatedTimestamp` on update for both entities.",
+        "`EmailDbContextFactory`. Design-time factory for EF Core tools.",
+        "`EmailDirection`. `Outbound` (default) or `Inbound`.",
+        "`EmailLogEntity`. Direction, sender, recipients (jsonb), subject, `TextBody`, host-owned `HtmlFileName` / `HtmlFilePath`, success flag, SMTP or fetch note, error message, MIME `MessageId`, `SentTimestamp` / `ReceivedTimestamp`, and audit timestamps. Attachment bytes and HTML content are not stored on this row.",
+        "`EmailAttachmentLogEntity`. Attachment metadata only (file name, `ContentType`, `SizeBytes`, `MetadataJson`, `SortOrder`) linked back to an `EmailLogEntity`. No FileStorage id.",
+        "`PostgresEmailOptions`. An `IPostgresMigrationConfig` implementation. Section name is `PostgresEmail`. Default schema is `email`. `EnableAutoMigrations` defaults to `false`."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Injection helpers",
+      "headers": [
+        "Extension",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`AddEmailDbContext(string connectionString)`",
+          "Wires an `IDbContextFactory<EmailDbContext>` plus a scoped `EmailDbContext` taken from the factory."
+        ],
+        [
+          "`AddEmailDbContextFactory(PostgresEmailOptions options)`",
+          "Registers `IDbContextFactory<EmailDbContext>` against `options.ConnectionString` with the `email` migrations history schema, plus support for the `Lyo.Postgres` migration runner."
+        ],
+        [
+          "`AddEmailDbContextFactory(Action<PostgresEmailOptions> configure)`",
+          "Same as above, using an inline configuration callback."
+        ],
+        [
+          "`AddEmailDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresEmailOptions.SectionName)`",
+          "Reads `PostgresEmailOptions` from configuration (section defaults to `PostgresEmail`) and wires the factory."
+        ]
+      ],
+      "lead": "Every extension hangs off `IServiceCollection`. Hosts map and insert; this package does not subscribe to send events."
+    },
+    {
+      "type": "paragraph",
+      "title": "Supported frameworks",
+      "text": "`net10.0`"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Email/Lyo.Email.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

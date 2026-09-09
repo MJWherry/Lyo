@@ -1,0 +1,13 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
+    <MudSelect T="string"
+               Label="Preset"
+               Value="_preset"
+               ValueChanged="OnPresetChangedAsync"
+               Variant="Variant.Outlined"
+               Margin="Margin.Dense"
+               Style="min-width: 200px;">
+        @foreach (var p in Presets) {
+            <MudSelectItem Value="@p">@p</MudSelectItem>
+        }
+    </MudSelect>
+</MudStack>

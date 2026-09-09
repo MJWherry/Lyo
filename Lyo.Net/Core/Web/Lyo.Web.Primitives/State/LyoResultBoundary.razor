@@ -1,0 +1,35 @@
+@namespace Lyo.Web.Primitives
+@typeparam T
+
+@if (Phase is LyoResultPhase.Loading) {
+    @(LoadingContent ?? DefaultLoading)
+}
+else if (Phase is LyoResultPhase.Error) {
+    @(ErrorContent is not null ? ErrorContent(Errors) : DefaultError)
+}
+else if (Phase is LyoResultPhase.Empty) {
+    @(EmptyContent ?? DefaultEmpty)
+}
+else if (ChildContent is not null) {
+    @ChildContent(Result!.Data!)
+}
+
+@code {
+
+    private RenderFragment DefaultLoading =>
+        @<LyoSkeletonPanel Rows="@SkeletonRows"/>;
+
+    private RenderFragment DefaultEmpty =>
+        @<LyoEmptyState Title="@EmptyTitle" Description="@EmptyDescription" Icon="@EmptyIcon" Actions="@EmptyActions"/>;
+
+    private RenderFragment DefaultError =>
+        @<MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="my-2">
+             <div class="d-flex align-center justify-space-between gap-4">
+                 <div style="white-space: pre-line;">@ErrorText</div>
+                 @if (OnRetry.HasDelegate) {
+                     <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@OnRetry">Retry</MudButton>
+                 }
+             </div>
+         </MudAlert>;
+
+}

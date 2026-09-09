@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Drift agent: watches configured directories and posts file-tree and system-info snapshots to the collector API.</Description>
+        <PackageTags>drift agent filesystem watcher</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Drift.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Diff\Lyo.Diff\Lyo.Diff.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\SystemInformation\Lyo.SystemInformation\Lyo.SystemInformation.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileSystemWatcher\Lyo.FileSystemWatcher\Lyo.FileSystemWatcher.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\Lyo.Drift.Client\Lyo.Drift.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Drift\Lyo.Drift.Models\Lyo.Drift.Models.csproj"/>
+    </ItemGroup>
+
+</Project>

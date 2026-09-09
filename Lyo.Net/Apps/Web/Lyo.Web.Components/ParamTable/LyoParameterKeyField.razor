@@ -1,0 +1,17 @@
+@namespace Lyo.Web.Components.ParamTable
+
+@if (InheritFrom is { Count: > 0 }) {
+    <MudSelect T="string" Value="@Key" ValueChanged="OnKeyChanged" Label="@Label"
+               Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+        @foreach (var p in InheritFrom) {
+            <MudSelectItem Value="@p.Key">@p.Key</MudSelectItem>
+        }
+        @if (HasUnlistedKey) {
+            <MudSelectItem Value="@Key">@Key</MudSelectItem>
+        }
+    </MudSelect>
+}
+else {
+    <MudTextField T="string" Value="@Key" ValueChanged="OnKeyChanged" Label="@Label"
+                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
+}

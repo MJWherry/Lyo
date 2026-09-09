@@ -1,0 +1,17 @@
+@using Lyo.Web.Components.ParamTable
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2">
+    <LyoParameterEditor Title="Job Parameters" Items="@_rows" ShowRequired ShowEncrypt ShowOptionsEditor ShowDefaultKind AllowReorder ApiClient="ApiClient"
+                        DefaultValueHint="Optional definition default. Leave empty so schedules and runs supply the value."
+                        FormatterContext="@_formatterContext"
+                        OnChanged="@(() => _dirty = true)"/>
+
+    @if (_dirty) {
+        <div>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="SaveChanges" StartIcon="@Icons.Material.Filled.Save">
+                Save Parameters
+            </MudButton>
+        </div>
+    }
+</MudStack>

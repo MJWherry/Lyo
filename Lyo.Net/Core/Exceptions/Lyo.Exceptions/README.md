@@ -1,0 +1,63 @@
+# Lyo.Exceptions
+
+Exception types and argument-validation helpers shared by Lyo packages.
+
+## Features
+
+- **ArgumentHelpers.** Argument checks: `ThrowIfNull`, `ThrowIfNullOrWhiteSpace`, `ThrowIfNullOrEmpty`, `ThrowIf`, `ThrowIfNotInRange`, `ThrowIfFileNotFound`, `ThrowIfNullReturn` (for constructor chaining), plus `ThrowIfEmpty` (GUIDs), `ThrowIfDefault` (structs such as `DateTime`), `ThrowIfNotDefined` (enum casts), and `ThrowIfIndexOutOfRange`.
+- **UriHelpers.** URI checks: `GetValidWebUri`, `ThrowIfInvalidUri`, `ThrowIfInvalidAbsoluteUri`.
+- **OperationHelpers.** Operation/state checks (`ThrowIf`, `ThrowIfNull`, `ThrowIfNullOrWhiteSpace`, stream checks, disposition/cancellation/not-supported) plus numeric parity with `ArgumentHelpers`: `ThrowIfNotInRange` (scalar, `DateTime`, `TimeSpan`, array lengths), `ThrowIfGreaterThan`, `ThrowIfGreaterThanOrEqual`, `ThrowIfLessThan`, `ThrowIfLessThanOrEqual`, `ThrowIfZero`, sign helpers, `ThrowIfEqual`, `ThrowIfNotEqual`.
+- **OrThrow / StringOr.** Fluent `string?.Or` / `.OrIfWhiteSpace` chains and terminals (`OrThrow(Func<…>)`, `OrThrowInvalidOperation`, etc.) plus generic `OrThrow`/`OrThrowInvalidOperation` unwraps. Lives here so callers do not pull in `Lyo.Common.Core` for throw-only ergonomics.
+- **FileHelpers.** File-name checks: `ThrowIfFileNameInvalid`, `GetValidFileName`, and path-prefix safety helpers `NormalizePathPrefix`, `ThrowIfPathPrefixTraversal`, `NormalizeAndValidatePathPrefix`. Shared by every Lyo.FileStorage backend's save/direct-upload/diagnostics paths.
+- **FormatHelpers.** Format checks that throw `InvalidFormatException` (`ThrowIfInvalidGuid`, `GetValidGuid`, hex color, `ThrowIfInvalidFormat` with custom regex, `ThrowIfInvalidPort` / `IsValidPort` for ports 1 to 65535, `ThrowIfNotInRange` for numeric options checks).
+- **ConfigurationHelpers.** Configuration checks that throw `ConfigurationException` (`ThrowIf`, `ThrowIfNull`, `ThrowIfNullOrWhiteSpace`) with caller-expression setting names.
+- **ExceptionThrower.** Accessibility and existence for files/directories (`ThrowIfFileNotAccessible`, `ThrowIfDirectoryNotFound`, `ThrowIfDirectoryNotAccessible`).
+- **Custom exceptions.** `InvalidFormatException`, `ArgumentOutsideRangeException`, `ConfigurationException`, `HttpException` (base for `UnauthorizedException`, `BadRequestException`, `ForbiddenException`, `NotFoundException`, `ConflictException`, `GoneException`, `UnprocessableEntityException`, `RateLimitExceededException`, `ServiceUnavailableException`, `GatewayTimeoutException`).
+- **HttpException extras.** Each `HttpException` has an optional machine-readable `ErrorCode` (init-only) and an `IsTransient` flag (true for 429/503/504) that retry policies can use as a single predicate. `HttpExceptions.FromStatusCode(statusCode, message)` maps raw status codes onto the dedicated types (or `GenericHttpException` for unknown codes). `ConflictException`/`NotFoundException`/`ForbiddenException`/`GoneException` expose `ForResource(name, id)` factories that always set the resource properties, avoiding the `new NotFoundException("User", null)` constructor-overload trap.
+- **ValidationErrorsBuilder.** Collects field-level errors (`AddIf`, `Add`, `AddRange`) and throws one `ValidationException` through `ThrowIfAny()` only when errors exist.
+
+## Examples
+
+### First steps
+
+```csharp
+using Lyo.Exceptions;
+
+// Argument validation
+public void Process(string name, byte[] data)
+{
+    ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+    ArgumentHelpers.ThrowIfNullOrEmpty(data);
+    // ...
+}
+
+// Constructor chaining
+public MyService(IOptions options, ILogger logger)
+    : base(ArgumentHelpers.ThrowIfNullReturn(options), logger)
+{
+}
+
+// URI validation
+var uri = UriHelpers.GetValidWebUri(url);
+
+// Operation state (builder/build validation)
+OperationHelpers.ThrowIfNull(_data, "Data must be specified using WithData()");
+OperationHelpers.ThrowIf(_count == 0, "At least one item is required");
+
+// New guards
+ArgumentHelpers.ThrowIfEmpty(tenantId); // Guid.Empty
+ArgumentHelpers.ThrowIfDefault(createdAt); // default(DateTime)
+ArgumentHelpers.ThrowIfNotDefined((DayOfWeek)value); // undefined enum cast
+ArgumentHelpers.ThrowIfIndexOutOfRange(index, items.Count);
+
+// HTTP exceptions with error codes and resource factories
+throw NotFoundException.ForResource("User", userId);
+throw new ConflictException("Order already submitted.") { ErrorCode = "order.already_submitted" };
+var ex = HttpExceptions.FromStatusCode(503, "Upstream unavailable."); // ex.IsTransient == true
+
+// Accumulate validation errors, throw once
+var errors = new ValidationErrorsBuilder()
+    .AddIf(string.IsNullOrWhiteSpace(req.Email), nameof(req.Email), "Email is required.")
+    .AddIf(req.Age < 0, nameof(req.Age), "Age must be positive.");
+errors.ThrowIfAny();
+```

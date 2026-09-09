@@ -1,0 +1,197 @@
+{
+  "id": "Lyo.Metrics",
+  "name": "Lyo.Metrics",
+  "area": "Core",
+  "tagline": "Thread-safe counters, gauges, histograms, timings, errors, and events — in-memory, OpenTelemetry, and null implementations.",
+  "description": "Thread-safe counters, gauges, histograms, timings, errors, and events — in-memory, OpenTelemetry, and null implementations.",
+  "features": [
+    "**Concurrency.** Per-key locks plus `ConcurrentDictionary`.",
+    "**Metric types.** Gauges, counters, timings, histograms, events, errors.",
+    "**Implementations.** `OpenTelemetryMetrics`, `MetricsService` (in-memory), and `NullMetrics` for tests.",
+    "**Bounds.** `MaxHistogramValues`, `MaxEventQueueSize`, and key-lock cleanup on `KeyLockCleanupIntervalMinutes`.",
+    "**Safety.** Bounded collections and overflow protection on counters.",
+    "**Options.** `ValidateTags`, `SamplingRate`, `ThrowOnConversionErrors`, `InvalidTagCharacters`.",
+    "**No dependencies.** Only `Lyo.Exceptions`, no NuGet packages. Service registration lives in [Lyo.Metrics.DependencyInjection](../Lyo.Metrics.DependencyInjection/README.md) so instrumenting a low-dependency package stays cheap.",
+    "**Values.** Accepts `IConvertible` numbers (long, int, decimal, float, and similar)."
+  ],
+  "examples": [
+    {
+      "title": "Subscribe to events",
+      "language": "csharp",
+      "code": "using Lyo.Metrics;\n\n// Create a metrics service\nvar metrics = new MetricsService();\n\n// Record a counter\nmetrics.IncrementCounter(\"requests.total\");\n\n// Record a counter with value\nmetrics.IncrementCounter(\"bytes.processed\", 1024);\n\n// Record a counter with tags\nmetrics.IncrementCounter(\"requests.total\", tags: [(\"method\", \"GET\"), (\"status\", \"200\")]);\n\n// Record a gauge (current value)\nmetrics.RecordGauge(\"cache.size\", 1500);\n\n// Record timing using a timer\nusing (metrics.StartTimer(\"operation.duration\"))\n{\n    // Your operation here\n    await DoSomethingAsync();\n}\n\n// Record an error\ntry\n{\n    await ProcessDataAsync();\n}\ncatch (Exception ex)\n{\n    metrics.RecordError(\"data.processing\", ex);\n}"
+    },
+    {
+      "title": "Construct directly, no container",
+      "language": "csharp",
+      "code": "using Lyo.Metrics;\n\n// A package that only records metrics needs nothing but this reference.\n// Take IMetrics as an optional constructor parameter and fall back to the no-op\n// singleton so callers who do not care about metrics pay nothing.\npublic sealed class MyService(IMetrics? metrics = null)\n{\n    private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;\n\n    public async Task ProcessAsync()\n    {\n        using (_metrics.StartTimer(\"my_service.process\"))\n        {\n            _metrics.IncrementCounter(\"my_service.calls\");\n            await DoWorkAsync();\n        }\n    }\n}\n\n// For container registration, reference Lyo.Metrics.DependencyInjection\n// and call services.AddLyoMetrics()."
+    },
+    {
+      "title": "MetricsOptions",
+      "language": "csharp",
+      "code": "var options = new MetricsOptions\n{\n    // Maximum number of events to keep in the event queue\n    MaxEventQueueSize = 10000,\n    \n    // Maximum number of values per histogram\n    MaxHistogramValues = 1000,\n    \n    // Whether to throw exceptions on conversion errors\n    ThrowOnConversionErrors = false,\n    \n    // Interval for cleaning up unused key locks (in minutes)\n    KeyLockCleanupIntervalMinutes = 60,\n    \n    // Sampling rate (0.0 to 1.0)\n    // 1.0 = record all metrics, 0.5 = record 50% of metrics\n    SamplingRate = 1.0,\n    \n    // Whether to validate and sanitize tag keys/values\n    ValidateTags = true,\n    \n    // Characters not allowed in tag keys/values\n    InvalidTagCharacters = new HashSet<char> { '|', '=', '\\n', '\\r' }\n};\n\nvar metrics = new MetricsService(options);"
+    },
+    {
+      "title": "ASP.NET Core",
+      "language": "csharp",
+      "code": "// Registration requires the Lyo.Metrics.DependencyInjection package.\npublic class Startup\n{\n    public void ConfigureServices(IServiceCollection services)\n    {\n        services.AddLyoMetrics(options =>\n        {\n            options.MaxEventQueueSize = 50000;\n            options.SamplingRate = 1.0;\n        });\n        \n        services.AddControllers();\n    }\n}\n\npublic class MyController : ControllerBase\n{\n    private readonly IMetrics _metrics;\n    \n    public MyController(IMetrics metrics)\n    {\n        _metrics = metrics;\n    }\n    \n    [HttpGet]\n    public async Task<IActionResult> Get()\n    {\n        using (_metrics.StartTimer(\"api.get.duration\"))\n        {\n            _metrics.IncrementCounter(\"api.requests\", tags: [(\"endpoint\", \"get\"), (\"method\", \"GET\")]);\n            \n            var result = await ProcessRequestAsync();\n            \n            _metrics.IncrementCounter(\"api.requests.success\");\n            return Ok(result);\n        }\n    }\n}"
+    },
+    {
+      "title": "Background service",
+      "language": "csharp",
+      "code": "public class MyBackgroundService : BackgroundService\n{\n    private readonly IMetrics _metrics;\n    \n    public MyBackgroundService(IMetrics metrics)\n    {\n        _metrics = metrics;\n    }\n    \n    protected override async Task ExecuteAsync(CancellationToken stoppingToken)\n    {\n        while (!stoppingToken.IsCancellationRequested)\n        {\n            using (_metrics.StartTimer(\"background.job.duration\"))\n            {\n                try\n                {\n                    await ProcessJobAsync();\n                    _metrics.IncrementCounter(\"background.job.success\");\n                }\n                catch (Exception ex)\n                {\n                    _metrics.RecordError(\"background.job\", ex);\n                    _metrics.IncrementCounter(\"background.job.failure\");\n                }\n            }\n            \n            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);\n        }\n    }\n}"
+    },
+    {
+      "title": "Errors",
+      "language": "csharp",
+      "code": "try\n{\n    await ProcessDataAsync();\n}\ncatch (Exception ex)\n{\n    metrics.RecordError(\"data.processing\", ex);\n    \n    // With additional tags\n    metrics.RecordError(\"data.processing\", ex, tags: [(\"source\", \"api\"), (\"user_id\", userId)]);\n}"
+    },
+    {
+      "title": "Events",
+      "language": "csharp",
+      "code": "// Simple event\nmetrics.RecordEvent(\"user.login\");\n\n// Event with value\nmetrics.RecordEvent(\"file.uploaded\", fileSizeBytes);\n\n// Event with tags\nmetrics.RecordEvent(\"user.login\", tags: [(\"provider\", \"google\")]);"
+    },
+    {
+      "title": "Read a counter",
+      "language": "csharp",
+      "code": "var metrics = new MetricsService();\n\nmetrics.IncrementCounter(\"requests.total\", tags: [(\"method\", \"GET\")]);\n\nvar count = metrics.GetCounterValue(\"requests.total\", tags: [(\"method\", \"GET\")]);"
+    },
+    {
+      "title": "Read a gauge",
+      "language": "csharp",
+      "code": "metrics.RecordGauge(\"cache.size\", 1500);\n\nvar size = metrics.GetGaugeValue(\"cache.size\");\nif (size.HasValue)\n{\n    Console.WriteLine($\"Cache size: {size.Value}\");\n}"
+    },
+    {
+      "title": "Read a histogram",
+      "language": "csharp",
+      "code": "metrics.RecordHistogram(\"response.size\", 1024);\nmetrics.RecordHistogram(\"response.size\", 2048);\nmetrics.RecordHistogram(\"response.size\", 4096);\n\nvar histogram = metrics.GetHistogram(\"response.size\");\nif (histogram != null)\n{\n    var min = histogram.Values.Min();\n    var max = histogram.Values.Max();\n    var avg = histogram.Values.Average();\n    Console.WriteLine($\"Min: {min}, Max: {max}, Avg: {avg}\");\n}"
+    },
+    {
+      "title": "Read events",
+      "language": "csharp",
+      "code": "// Get events (default: last 1000)\nvar events = metrics.GetEvents(); // last 1000\nvar events100 = metrics.GetEvents(100);\n\nforeach (var evt in events)\n{\n    Console.WriteLine($\"{evt.Name}: {evt.Value} at {evt.Timestamp}\");\n}"
+    },
+    {
+      "title": "Clear metrics",
+      "language": "csharp",
+      "code": "metrics.Clear(); // Clears all counters, gauges, histograms, and events"
+    },
+    {
+      "title": "Export a snapshot",
+      "language": "csharp",
+      "code": "var snapshot = metrics.Export();\n\nConsole.WriteLine($\"Total metrics recorded: {snapshot.TotalMetricsRecorded}\");\nConsole.WriteLine($\"Counters: {snapshot.Counters.Count}\");\nConsole.WriteLine($\"Gauges: {snapshot.Gauges.Count}\");\nConsole.WriteLine($\"Histograms: {snapshot.Histograms.Count}\");\n\n// Serialize to JSON\nvar json = JsonSerializer.Serialize(snapshot);"
+    },
+    {
+      "title": "Names that mean something",
+      "language": "csharp",
+      "code": "// Good\nmetrics.IncrementCounter(\"http.requests.total\");\nmetrics.RecordGauge(\"cache.size_bytes\");\n\n// Bad\nmetrics.IncrementCounter(\"c1\");\nmetrics.RecordGauge(\"x\");"
+    },
+    {
+      "title": "Tags as dimensions",
+      "language": "csharp",
+      "code": "// Good - use tags for filtering/grouping\nmetrics.IncrementCounter(\"requests.total\", tags: [(\"method\", \"GET\"), (\"status\", \"200\"), (\"endpoint\", \"/api/users\")]);\n\n// Bad - create separate metrics for each dimension\nmetrics.IncrementCounter(\"requests.get.200.users\");\nmetrics.IncrementCounter(\"requests.get.200.products\");"
+    },
+    {
+      "title": "Sampling high-volume metrics",
+      "language": "csharp",
+      "code": "var options = new MetricsOptions\n{\n    SamplingRate = 0.1 // Sample 10% of metrics\n};"
+    },
+    {
+      "title": "Timers around work",
+      "language": "csharp",
+      "code": "// Good - automatic timing\nusing (metrics.StartTimer(\"operation.duration\"))\n{\n    await DoWorkAsync();\n}\n\n// Bad - manual timing (error-prone)\nvar sw = Stopwatch.StartNew();\ntry\n{\n    await DoWorkAsync();\n}\nfinally\n{\n    sw.Stop();\n    metrics.RecordTiming(\"operation.duration\", sw.Elapsed);\n}"
+    },
+    {
+      "title": "Record errors",
+      "language": "csharp",
+      "code": "try\n{\n    await ProcessDataAsync();\n}\ncatch (Exception ex)\n{\n    metrics.RecordError(\"data.processing\", ex, tags: [(\"source\", \"api\")]);\n    throw; // Re-throw if needed\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "Counters",
+      "body": "Monotonic totals are recorded by `IncrementCounter` and `DecrementCounter`. Use them for request counts, bytes processed, or\noccurrences.\n\n```csharp\n// Increment by 1 (default)\nmetrics.IncrementCounter(\"requests.total\");\n\n// Increment by specific value\nmetrics.IncrementCounter(\"bytes.processed\", 1024);\n\n// Decrement counter\nmetrics.DecrementCounter(\"items.in_queue\", 5);\n\n// With tags\nmetrics.IncrementCounter(\"requests.total\", tags: [(\"method\", \"POST\"), (\"endpoint\", \"/api/users\")]);\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "Gauges",
+      "body": "The last value for a name and tag set is stored by `RecordGauge`. Use it for cache size, queue\nlength, or memory usage.\n\n```csharp\n// Record current value\nmetrics.RecordGauge(\"cache.size\", 1500);\n\n// Update gauge value\nmetrics.RecordGauge(\"memory.usage_mb\", 512.5);\n\n// With tags\nmetrics.RecordGauge(\"queue.length\", 42, tags: [(\"queue_name\", \"email_queue\")]);\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "Histograms",
+      "body": "A numeric sample is appended to a bounded value list by `RecordHistogram`. Use it for response sizes or other numeric\ndistributions.\n\n```csharp\n// Record a value\nmetrics.RecordHistogram(\"response.size_bytes\", 2048);\n\n// Record multiple values (they'll be aggregated)\nmetrics.RecordHistogram(\"response.size_bytes\", 1024);\nmetrics.RecordHistogram(\"response.size_bytes\", 4096);\n\n// With tags\nmetrics.RecordHistogram(\"response.size_bytes\", 2048, tags: [(\"endpoint\", \"/api/data\")]);\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "Timings",
+      "body": "Duration measurements are a special case of histograms. Use the `Timer` class for automatic timing.\n\n```csharp\n// Using StartTimer (recommended)\nusing (metrics.StartTimer(\"operation.duration\"))\n{\n    await DoWorkAsync();\n}\n\n// Manual timing\nvar stopwatch = Stopwatch.StartNew();\nawait DoWorkAsync();\nstopwatch.Stop();\nmetrics.RecordTiming(\"operation.duration\", stopwatch.Elapsed);\n\n// With tags\nusing (metrics.StartTimer(\"database.query\", tags: [(\"table\", \"users\")]))\n{\n    await QueryDatabaseAsync();\n}\n```"
+    },
+    {
+      "type": "paragraph",
+      "title": "MetricsOptions",
+      "text": "Tune `MetricsService` here:"
+    },
+    {
+      "type": "paragraph",
+      "title": "DI configuration",
+      "text": "Registrations on `IServiceCollection` moved to [Lyo.Metrics.DependencyInjection](../Lyo.Metrics.DependencyInjection/README.md). They still sit in `namespace Lyo.Metrics`, so an existing `using Lyo.Metrics;` keeps working — only the `ProjectReference` changes. This package itself has no NuGet dependencies, which is what lets `Lyo.Query.Evaluation` and other low-dependency packages instrument themselves without inheriting `Microsoft.Extensions.Configuration.Binder`."
+    },
+    {
+      "type": "markdown",
+      "title": "MetricsService (in-memory)",
+      "body": "The default `IMetrics` implementation. Counters, gauges, histograms, and events live in process memory.\n\n```csharp\nvar metrics = new MetricsService();\n// or\nvar metrics = new MetricsService(new MetricsOptions { ... });\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "OpenTelemetryMetrics",
+      "body": "OpenTelemetry is the export path for this `IMetrics` implementation. Reach for it when Prometheus scrapes the process, OTLP ships elsewhere, or several processes need a shared collector.\n\n```csharp\nusing Lyo.Metrics.OpenTelemetry;\n\nservices.AddLyoMetricsWithOpenTelemetryFromConfiguration(builder.Configuration);\n// OpenTelemetry:ServiceName / Protocol / MetricExportIntervalMs in appsettings.\n// Endpoint stays empty so OTEL_EXPORTER_OTLP_ENDPOINT (JetBrains plugin) can supply it.\n```\n\n**Behavior.**\n\n- OpenTelemetry instruments\n- OTLP when options `Endpoint` or the OTEL endpoint env var is set; Console / Prometheus via `configureMeterProvider`\n\n**When to use.**\n\n- Multiple instances\n- Prometheus, Grafana, a JetBrains OpenTelemetry plugin, or an OTLP collector\n\nThe [Lyo.Metrics.OpenTelemetry README](../Lyo.Metrics.OpenTelemetry/README.md) has the package details.\n"
+    },
+    {
+      "type": "markdown",
+      "title": "NullMetrics",
+      "body": "Tests and optional recording use this no-op `IMetrics`. Construction is private; the singleton is `NullMetrics.Instance`. Register it through DI or take the static instance.\n\n```csharp\nservices.AddNullMetrics();\n// or\nIMetrics metrics = NullMetrics.Instance;\n```\n\n**Behavior.**\n\n- No recording\n- No exceptions\n- `StartTimer` returns `default(MetricsTimer)`. Disposal is a no-op, so `using (metrics.StartTimer(...))` allocates nothing.\n\n**When to use.**\n\n- Unit tests\n- Optional metrics\n- Turn recording off without changing call sites\n"
+    },
+    {
+      "type": "markdown",
+      "title": "Statistics on histograms (`MathExtensions`)",
+      "body": "Histogram samples become [`Lyo.Mathematics.Functions`](../../Mathematics/Lyo.Mathematics.Functions/README.md)\n(`StatisticsFunctions`) through `Lyo.Metrics.MathExtensions`. The same helpers attach to `HistogramData?` (cached snapshots) and to `MetricsService` (lookup by name + tags). Missing or empty histograms yield `null` / empty arrays rather than exceptions.\n\n```csharp\n// On a HistogramData? (e.g. from snapshot.Histograms.Values or MetricsService.GetHistogram(...))\nHistogramData? h = metrics.GetHistogram(\"latency.ms\");\nvar stats = h.Describe(sample: true); // DescriptiveStatisticsResult?\nvar quartiles = h.Quartiles(); // QuartilesResult?\nvar iqr = h.InterquartileRange();\nvar p95 = h.Percentile(0.95);\nvar sma = h.MovingAverage(windowSize: 30);\nvar ema = h.ExponentialMovingAverage(smoothingFactor: 0.2);\nvar rollingStd = h.RollingStandardDeviation(windowSize: 30);\nvar rollingMed = h.RollingMedian(windowSize: 30);\nvar mad = h.MedianAbsoluteDeviation();\nvar z = h.LatestZScore();\nvar anomalousZ = h.IsLatestValueAnomalous(threshold: 3d);\nvar anomalousMad = h.IsLatestValueAnomalousByMad(threshold: 3.5d);\nvar ci95 = h.MeanConfidenceInterval(confidenceLevel: 0.95);\nvar pearson = h.PearsonCorrelation(other); // null if either is empty\n\n// Tag-aware lookups directly on MetricsService\nvar p99 = metrics.GetHistogramPercentile(\"latency.ms\", percentile: 0.99,\n                                           tags: new[] { (\"endpoint\", \"/api/users\") });\nvar pcts = snapshot.GetHistogramPercentiles(\"latency.ms\", 0.5, 0.9, 0.99);\nvar pearr = metrics.GetHistogramPearsonCorrelation(\n                \"service_a.latency\", \"service_b.latency\");\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "Keep tag cardinality down",
+      "body": "Tags with huge cardinality (user IDs are the usual example) explode unique series. Keep tag values small and bounded.\n\n```csharp\n// Good - low cardinality\nmetrics.IncrementCounter(\"requests.total\", tags: [(\"method\", \"GET\"), (\"status\", \"200\")]); // Only a few values\n\n// Bad - high cardinality\nmetrics.IncrementCounter(\"requests.total\", tags: [(\"user_id\", userId)]); // Thousands of unique values!\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "Thread safety",
+      "body": "Concurrent calls from many threads are supported; every implementation is thread-safe:\n\n```csharp\n// Safe to use from multiple threads\nParallel.ForEach(items, item =>\n{\n    metrics.IncrementCounter(\"items.processed\");\n});\n```"
+    },
+    {
+      "type": "list",
+      "title": "Performance",
+      "items": [
+        "**Sampling.** Use `SamplingRate < 1.0` for high-volume metrics.",
+        "**Tag cardinality.** Limit unique tag combinations.",
+        "**Histogram size.** Set `MaxHistogramValues`.",
+        "**Event queue.** Set `MaxEventQueueSize` from available memory."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Metrics/Lyo.Metrics/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -1,0 +1,83 @@
+@namespace Lyo.Web.Components.ParamTable
+@using Lyo.Parameters
+@using Lyo.Web.Components.ParamOptions
+
+<MudGrid Spacing="2">
+    @if (ShowType) {
+        <MudItem xs="12" sm="6">
+            <LyoTypeSelect Value="@Item.Type" ValueChanged="OnTypeChanged" Label="Type" ShowFullNameField="false"/>
+        </MudItem>
+    }
+    @if (LyoTypeUi.NeedsConcreteFullName(Item.Type)) {
+        <MudItem xs="12" sm="6">
+            <MudTextField T="string" Value="@LyoTypeUi.ConcreteFullNameDisplay(Item.Type)"
+                          ValueChanged="OnConcreteFullNameChanged"
+                          Label="CLR FullName" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                          HelperText="Concrete enum or unlisted CLR type"/>
+        </MudItem>
+    }
+    @if (ShowOptionsEditor) {
+        <MudItem xs="12" sm="6">
+            <MudSelect T="ParameterOptionsKind?"
+                       Value="@Item.EffectiveKind"
+                       ValueChanged="OnOptionsKindChanged"
+                       Label="Options kind"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Dense="true"
+                       Clearable="true"
+                       HelperText="Static list, root query, or stored procedure for the value picker. Empty = typed default only.">
+                <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Static">Static</MudSelectItem>
+                <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Query">Root query</MudSelectItem>
+                <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Sproc">Stored procedure</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+    }
+    <MudItem xs="12">
+        <MudTextField T="string" Value="@Item.Description" ValueChanged="OnDescriptionChanged"
+                      Label="Description" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+    </MudItem>
+    @if (ShowDefaultKind) {
+        <MudItem xs="12">
+            <MudToggleGroup T="LyoParameterDefaultKind" Value="@Item.DefaultKind" ValueChanged="OnDefaultKindChanged"
+                            Size="Size.Small" CheckMark="false" Color="Color.Primary">
+                <MudToggleItem Value="LyoParameterDefaultKind.Literal" Text="Literal default"/>
+                <MudToggleItem Value="LyoParameterDefaultKind.Expression" Text="Expression default"/>
+            </MudToggleGroup>
+        </MudItem>
+    }
+    <MudItem xs="12">
+        @if (UsesExpressionDefault) {
+            <LyoTypeValueInput TypeName="@TemplateTypeName"
+                               Json="@DefaultTemplateJson"
+                               JsonChanged="OnDefaultTemplateChanged"
+                               Label="Default expression"
+                               AllowUnset="true"
+                               EditorSurfaceHeight="@EditorSurfaceHeight"
+                               FormatterContext="@FormatterContext"/>
+            <MudText Typo="Typo.caption" Class="@(ExpressionError is null ? "mud-text-secondary" : "mud-error-text")">@ExpressionHint</MudText>
+        }
+        else {
+            <LyoParameterValueField TypeName="@Item.Type"
+                                    Json="@Item.Value"
+                                    JsonChanged="OnValueChanged"
+                                    OptionsJson="@Item.EffectiveOptions"
+                                    AllowedValues="@Item.AllowedValues"
+                                    SiblingValues="SiblingValues"
+                                    ApiClient="ApiClient"
+                                    Label="Default"
+                                    AllowUnset="true"
+                                    IsEncrypted="@Item.IsEncrypted"
+                                    EditorSurfaceHeight="@EditorSurfaceHeight"
+                                    FormatterContext="@FormatterContext"/>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@ResolvedDefaultHint</MudText>
+        }
+    </MudItem>
+    @if (ShowOptionsEditor && Item.EffectiveKind is not null) {
+        <MudItem xs="12">
+            <LyoParameterOptionsEditor ShowKindSelect="false"
+                                       OptionsJson="@Item.EffectiveOptions"
+                                       OptionsJsonChanged="OnOptionsChanged"/>
+        </MudItem>
+    }
+</MudGrid>

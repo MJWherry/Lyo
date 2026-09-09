@@ -1,0 +1,28 @@
+@using System.Globalization
+@using Lyo.Common.Metadata.Records
+@using Lyo.FileMetadataStore.Models
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
+
+@if (Metadata != null) {
+    <LyoResponsiveTable>
+        <TableContent>
+            <MudSimpleTable Dense="true" Bordered="true" Hover="false" Style="min-width: min(100%, 640px);">
+                <tbody>
+                @foreach (var row in Rows) {
+                    <tr>
+                        <td><strong>@row.Label</strong></td>
+                        <td>@row.Value</td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        </TableContent>
+        <CardContent>
+            <LyoRecordCard Title="@(Metadata.OriginalFileName ?? Metadata.SourceFileName)" Subtitle="@Metadata.Id.ToString()">
+                @foreach (var row in Rows) {
+                    <LyoRecordField Label="@row.Label" Value="@row.Value"/>
+                }
+            </LyoRecordCard>
+        </CardContent>
+    </LyoResponsiveTable>
+}

@@ -1,0 +1,52 @@
+<Project>
+    <!-- Evaluated after the csproj, so LyoRequireXmlDocs from the project file is visible. -->
+    <PropertyGroup Condition="'$(LyoRequireXmlDocs)' == 'true'">
+        <NoWarn>$([System.String]::Copy('$(NoWarn)').Replace('CS1591;', '').Replace(';CS1591', '').Replace('CS1591', ''))</NoWarn>
+    </PropertyGroup>
+
+    <!-- Init-only setters and records need IsExternalInit on netstandard2.0; PolySharp generates it at compile time. -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="PolySharp">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <!-- SDK glob-includes README.md as None with Pack=false. Re-add it as packable at the nupkg root. -->
+    <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)/README.md')">
+        <None Remove="README.md"/>
+        <None Include="README.md" Pack="true" PackagePath="README.md"/>
+    </ItemGroup>
+
+    <!-- Razor/Web SDK glob-includes *.json as Content. Package docs.json is README SoT, not app content or nupkg contentFiles. -->
+    <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)/docs.json')">
+        <Content Remove="docs.json"/>
+        <None Remove="docs.json"/>
+        <None Include="docs.json" Pack="false"/>
+    </ItemGroup>
+
+    <!-- One icon for every packable Lyo.* package. PackagePath is the nupkg root name matching PackageIcon. -->
+    <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)assets/icon.png')">
+        <None Include="$(MSBuildThisFileDirectory)assets/icon.png" Pack="true" PackagePath="icon.png" Visible="false"/>
+    </ItemGroup>
+
+    <!-- Ad-hoc `dotnet pack` refreshes tooling READMEs. build_nuget.py does that once, then sets SkipToolingDocsOnPack. -->
+    <Target Name="RenderToolingDocsOnPack" BeforeTargets="Pack" Condition="'$(SkipToolingDocsOnPack)' != 'true'">
+        <PropertyGroup>
+            <_RepoRoot>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', '..'))))</_RepoRoot>
+            <_ToolingDocs>$([System.IO.Path]::Combine('$(_RepoRoot)', 'scripts', 'docs', 'tooling-docs.py'))</_ToolingDocs>
+        </PropertyGroup>
+        <Exec Command="python3 &quot;$(_ToolingDocs)&quot; render"
+              WorkingDirectory="$(_RepoRoot)"
+              IgnoreExitCode="true"
+              Condition="Exists('$(_ToolingDocs)')"
+              ConsoleToMsBuild="true">
+            <Output TaskParameter="ExitCode" PropertyName="_ToolingDocsExitCode"/>
+        </Exec>
+        <Warning Text="tooling-docs render skipped or failed (exit $(_ToolingDocsExitCode)). Pack continues."
+                 Condition="Exists('$(_ToolingDocs)') AND '$(_ToolingDocsExitCode)' != '' AND '$(_ToolingDocsExitCode)' != '0'"/>
+    </Target>
+
+    <!-- build_nuget.py writes this when packing a subset; pins Lyo ProjectReference nupkg versions. -->
+    <Import Project="$(LyoDependencyVersionTargets)" Condition="'$(LyoDependencyVersionTargets)' != '' AND Exists('$(LyoDependencyVersionTargets)')"/>
+</Project>

@@ -1,0 +1,262 @@
+{
+  "id": "Lyo.Diagnostic.Web.Components",
+  "name": "Lyo.Diagnostic.Web.Components",
+  "area": "Core",
+  "tagline": "Blazor (Server / Interactive) workbench that uses `Lyo.Diagnostic` to analyze and triage .NET stack traces and exception payloads.",
+  "description": "Blazor (Server / Interactive) workbench that uses [`Lyo.Diagnostic`](../Lyo.Diagnostic/README.md) to analyze and triage .NET stack traces and exception payloads. The workbench is UI only — paste, view, and classify. Nothing is persisted by the components.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Components",
+      "headers": [
+        "Component",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "`DiagnosticWorkbench`",
+          "Top-level shell. Arranges the panels below into a side-by-side input/output review layout."
+        ],
+        [
+          "`StackTraceDecodePanel`",
+          "Drop in raw stack-trace text. `IStackTraceDecoder` decodes it and the panel shows structured frames."
+        ],
+        [
+          "`DecodedStackTraceSummary`",
+          "Compact summary chip with top frame, exception type, and framework signature."
+        ],
+        [
+          "`StackFrameTable`",
+          "Decoded frames in a table (`method`, `file`, `line`, `assembly`). Frames from user code get extra styling."
+        ],
+        [
+          "`SanitisedStackTracePanel`",
+          "The sanitised stack trace (paths/PII trimmed) for error pages customers see."
+        ],
+        [
+          "`ExceptionTypeClassifierPanel`",
+          "Runs the pasted exception type through `IExceptionTypeClassifier` and shows the category (`Transient`, `Programming`, `Validation`, `Security`, …)."
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Wiring into a host",
+      "text": "DI supplies `IStackTraceDecoder` and `IExceptionTypeClassifier` to the workbench. Register them with `Lyo.Diagnostic` extensions before you mount `<DiagnosticWorkbench />`. MudBlazor layout comes from `Lyo.Web.Components`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Diagnostic/Lyo.Diagnostic.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Primitives",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Evaluation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

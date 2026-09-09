@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Central HTTP API exposing Lyo.Config PostgreSQL-backed IConfigStore for microservices (polling-friendly ETags). Embed via AddConfigApi / MapConfigApiEndpoints.</Description>
+        <PackageTags>config api aspnetcore etag</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Config\Lyo.Config.Postgres\Lyo.Config.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\..\Security\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.AspNetCore\Lyo.Authentication.AspNetCore.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Postgres\Lyo.Authentication.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Google\Lyo.Authentication.Google.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Keycloak\Lyo.Authentication.Keycloak.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication\Lyo.Authentication.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.OpenIdConnect\Lyo.Authentication.OpenIdConnect.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Config\Lyo.Config\Lyo.Config.csproj"/>
+        <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
+    </ItemGroup>
+
+</Project>

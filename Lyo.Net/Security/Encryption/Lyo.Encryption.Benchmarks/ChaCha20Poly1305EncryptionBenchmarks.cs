@@ -1,0 +1,41 @@
+using BenchmarkDotNet.Attributes;
+using Lyo.Benchmark;
+using Lyo.Benchmark.Data;
+using Lyo.Encryption.ChaCha20Poly1305;
+using Lyo.KeyStore;
+
+namespace Lyo.Encryption.Benchmarks;
+
+[BenchmarkDescription("ChaCha20-Poly1305 encrypt and decrypt of seeded deterministic buffers (100 / 250 / 500 MiB); decrypt cases reuse ciphertext from setup.")]
+[BenchmarkParameter("DataSize", Unit = "bytes", Description = "Plaintext size: 100, 250, or 500 MiB.")]
+public class ChaCha20Poly1305EncryptionBenchmarks : LyoBenchmarkBase
+{
+    private byte[] _encrypted = null!;
+    private ChaCha20Poly1305EncryptionService _encryptionService = null!;
+    private LocalKeyStore _keyStore = null!;
+    private byte[] _testData = null!;
+
+    [Params(BenchmarkData.BufferedSize100MiB, BenchmarkData.BufferedSize250MiB, BenchmarkData.BufferedSize500MiB)]
+    public int DataSize { get; set; }
+
+    /// <inheritdoc />
+    protected override void OnGlobalSetup()
+    {
+        _keyStore = EncryptionBenchmarkSupport.CreateKeyStore();
+        _encryptionService = new(_keyStore);
+        _testData = BenchmarkData.DeterministicBytes(DataSize);
+    }
+
+    [GlobalSetup(Target = nameof(Decrypt))]
+    public void SetupDecrypt()
+    {
+        EnsureGlobalSetup();
+        _encrypted = _encryptionService.Encrypt(_testData, EncryptionBenchmarkSupport.KeyId);
+    }
+
+    [Benchmark]
+    public byte[] Encrypt() => _encryptionService.Encrypt(_testData, EncryptionBenchmarkSupport.KeyId);
+
+    [Benchmark]
+    public byte[] Decrypt() => _encryptionService.Decrypt(_encrypted, EncryptionBenchmarkSupport.KeyId);
+}

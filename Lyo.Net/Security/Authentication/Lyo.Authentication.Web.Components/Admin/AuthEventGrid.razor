@@ -1,0 +1,50 @@
+@namespace Lyo.Authentication.Web.Components
+@using Lyo.Authentication.Models
+@using Lyo.Query.Models.Common
+@using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="AuthEventGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@ApplyQuery"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <LyoProjectedColumn Field="Timestamp" Title="When" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+        <LyoProjectedColumn Field="Kind" Title="Kind" QuickSearchPropertyName="Kind">
+            <CellContent Context="item">
+                <LyoChip Spec="@AuthChipHelper.Kind(item)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Outcome" Title="Outcome">
+            <CellContent Context="item">
+                <LyoChip Spec="@AuthChipHelper.Outcome(item)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Provider" Title="Provider">
+            <CellContent Context="item">
+                <LyoChip Spec="@AuthChipHelper.Provider(item)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Subject" Title="Subject" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="Reason" Title="Reason" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="UserId" Title="User" HiddenByDefault="@(UserId is not null)" HeaderStyle="width: 140px; min-width: 140px;" CellStyle="min-width: 140px;">
+            <CellContent Context="item">
+                <AuthProjectedGuid Item="item" Field="UserId"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="IpAddress" Title="IP" HiddenByDefault="true"/>
+    </Columns>
+</LyoDataGridProjected>

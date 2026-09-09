@@ -1,0 +1,248 @@
+{
+  "id": "Lyo.Tts",
+  "name": "Lyo.Tts",
+  "area": "Communication",
+  "tagline": "TTS contracts and shared behavior: provider-agnostic interfaces, a non-generic facade, and a base service with bulk synthesis, metrics, and lifecycle events.",
+  "description": "TTS contracts and shared behavior: provider-agnostic interfaces, a non-generic\nfacade, and a base service with bulk synthesis, metrics, and lifecycle events.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Contracts",
+      "headers": [
+        "Interface",
+        "Methods"
+      ],
+      "rows": [
+        [
+          "`ITtsService`",
+          "Non-generic facade. `Task<TtsSynthesisResult> SynthesizeAsync(string text, string? voiceId = null, CancellationToken ct = default)`."
+        ],
+        [
+          "`ITtsService<TRequest>` where `TRequest : TtsRequest`",
+          "Typed methods: string overload, fully typed request, write-to-file, write-to-stream, bulk, and `TestConnectionAsync`."
+        ]
+      ],
+      "trail": "`ITtsService` is kept small on purpose. Host code that only needs string-in, audio-bytes-out depends on\nit without caring which provider is wired. Provider packages ship a small `*TtsAppService` adapter\n(holding the typed service) and wire `ITtsService` via that adapter alongside `ITtsService<TRequest>`."
+    },
+    {
+      "type": "table",
+      "title": "Provider registration matrix",
+      "headers": [
+        "Provider package",
+        "`ITtsService<TRequest>`",
+        "`ITtsService` (non-generic)",
+        "App-service adapter",
+        "DI entry points"
+      ],
+      "rows": [
+        [
+          "[`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md)",
+          "`ITtsService<AwsPollyTtsRequest>`",
+          "(through `AwsPollyTtsAppService`)",
+          "`AwsPollyTtsAppService`",
+          "`AddAwsPollyTtsService(Action<AwsPollyOptions>)`, `AddAwsPollyTtsServiceFromConfiguration(IConfiguration, string?)`, `AddAmazonPollyFromConfiguration(IConfiguration, string?)`"
+        ],
+        [
+          "[`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md)",
+          "`ITtsService<TypecastTtsRequest>`",
+          "(through `TypecastTtsAppService`)",
+          "`TypecastTtsAppService`",
+          "`AddTypecastTtsService(Action<TypecastOptions>?)`, `AddTypecastTtsServiceFromConfiguration(IConfiguration, string?)` (requires `TypecastClient` to be wired first)"
+        ],
+        [
+          "[`Lyo.Tts.WindowsSpeech`](../Lyo.Tts.WindowsSpeech/README.md)",
+          "`ITtsService<WindowsTtsRequest>`",
+          "No `WindowsSpeechTtsAppService` ships in this package",
+          "(none)",
+          "`AddWindowsSpeechTtsService(Action<TtsServiceOptions>?)`, `AddWindowsSpeechTtsService(TtsServiceOptions)`"
+        ]
+      ],
+      "trail": "`AwsPolly` and `Typecast` wire both `ITtsService<TRequest>` and the non-generic `ITtsService`. The\nnon-generic interface is backed by the `*TtsAppService` adapter so the same singleton handles both calls.\n`WindowsSpeech` currently wires only the typed interface. Code that depends on the non-generic\n`ITtsService` will not resolve when WindowsSpeech is the only TTS provider wired."
+    },
+    {
+      "type": "list",
+      "title": "Request shapes",
+      "items": [
+        "`AwsPollyTtsRequest`. Polly voice, engine, sample rate, output format, and related fields.",
+        "`TypecastTtsRequest`. Model id, voice id, language, format, and prosody.",
+        "`WindowsTtsRequest`. Voice id, `Volume`, `SpeechRate`, optional `OutputFormat` (SAPI still forces WAV output)."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Base class (`TtsServiceBase<TRequest>`)",
+      "items": [
+        "`Task<TtsResult<TRequest>> SynthesizeAsync(string text, string? voiceId = null, CancellationToken ct = default)`",
+        "`Task<TtsResult<TRequest>> SynthesizeCoreAsync(TRequest request, CancellationToken ct = default)`",
+        "`Task<bool> TestConnectionAsync(CancellationToken ct = default)`"
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Failure codes (`TtsErrorCodes`)",
+      "headers": [
+        "Constant",
+        "Value"
+      ],
+      "rows": [
+        [
+          "`SynthesizeFailed`",
+          "`TTS_SYNTHESIZE_FAILED`"
+        ],
+        [
+          "`OperationCancelled`",
+          "`TTS_OPERATION_CANCELLED`"
+        ],
+        [
+          "`FileWriteFailed`",
+          "`TTS_FILE_WRITE_FAILED`"
+        ],
+        [
+          "`StreamWriteFailed`",
+          "`TTS_STREAM_WRITE_FAILED`"
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Default metric keys (`Lyo.Tts.Constants.Metrics`)",
+      "headers": [
+        "Constant key",
+        "Metric",
+        "Kind"
+      ],
+      "rows": [
+        [
+          "`SynthesizeDuration`",
+          "`tts.synthesize.duration`",
+          "Timer"
+        ],
+        [
+          "`SynthesizeSuccess`",
+          "`tts.synthesize.success`",
+          "Counter"
+        ],
+        [
+          "`SynthesizeFailure`",
+          "`tts.synthesize.failure`",
+          "Counter"
+        ],
+        [
+          "`BulkSynthesizeDuration`",
+          "`tts.bulk.synthesize.duration`",
+          "Timer"
+        ],
+        [
+          "`BulkSynthesizeTotal`",
+          "`tts.bulk.synthesize.total`",
+          "Counter"
+        ],
+        [
+          "`BulkSynthesizeSuccess`",
+          "`tts.bulk.synthesize.success`",
+          "Counter"
+        ],
+        [
+          "`BulkSynthesizeFailure`",
+          "`tts.bulk.synthesize.failure`",
+          "Counter"
+        ],
+        [
+          "`BulkSynthesizeLastDurationMs`",
+          "`tts.bulk.synthesize.last_duration_ms`",
+          "Gauge"
+        ]
+      ],
+      "trail": "Providers usually remap these to a namespaced prefix (`tts.awspolly.*`, `tts.typecast.*`,\n`tts.windowsspeech.*`)."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Speech/Lyo.Tts/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tts.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

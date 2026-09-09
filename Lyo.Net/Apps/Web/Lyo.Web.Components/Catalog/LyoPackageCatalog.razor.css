@@ -1,0 +1,17 @@
+.lyo-package-catalog {
+    display: grid;
+    grid-template-columns: minmax(14rem, 22rem) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.lyo-package-catalog-list {
+    max-height: 70vh;
+    overflow: auto;
+}
+
+@media (max-width: 800px) {
+    .lyo-package-catalog {
+        grid-template-columns: 1fr;
+    }
+}

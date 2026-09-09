@@ -1,0 +1,97 @@
+{
+  "id": "Lyo.SystemInformation",
+  "name": "Lyo.SystemInformation",
+  "area": "Core",
+  "tagline": "Inventory of the host machine — hardware, software, drives, network interfaces, and monitors (including EDID parsing) — plus structured logging of that snapshot.",
+  "description": "`Lyo.SystemInformation` takes a point-in-time picture of the machine a process is running on. `SystemInfoCollector.Collect()` returns a `SystemInfo` record covering hardware, software, network, and environment, stamped with `CollectedAtUtc`; the `ILogger` extensions emit it as structured log entries at a level you choose.\n\nIt was carved out of `Lyo.Common` because it is the one part of that package that legitimately needs `Microsoft.Extensions.Logging.Abstractions`. Keeping it separate is what let the rest of the Common family shed that dependency. Its only production consumer is `Lyo.Job.Worker`, which logs the host inventory when a worker starts.\n\nEverything lives in the `Lyo.SystemInformation` namespace, matching the package.",
+  "features": [
+    "**`SystemInfoCollector`.** Take the full snapshot with `Collect()`, or pay only for one facet via `GetHardwareInfo()` / `GetSoftwareInfo()` / `GetNetworkInfo()` / `GetEnvironmentInfo()`.",
+    "**Hardware inventory.** `HardwareInfo` covers CPU, memory, `DriveSpaceInfo` per volume, and `MonitorInfo` for attached displays.",
+    "**EDID parsing** (`EdidParser`). Pulls manufacturer, model, and physical dimensions from the display's Extended Display Identification Data — details OS APIs often collapse to a device string.",
+    "**Network inventory.** Interfaces, addresses, and link state on `NetworkInfo` and `NetworkInterfaceInfo`.",
+    "**Software and environment.** `EnvironmentInfo` (machine and user context, working set) and `SoftwareInfo` (OS, runtime, architecture).",
+    "**Structured logging** (`SystemInfoLoggerExtensions`). `LogSystemInfo(info, level)` plus per-facet `LogHardwareInfo` / `LogSoftwareInfo` / `LogNetworkInfo` / `LogEnvironmentInfo`, so a startup banner is one call and the fields stay queryable in the log sink."
+  ],
+  "examples": [
+    {
+      "title": "Log the host inventory at startup",
+      "language": "csharp",
+      "code": "using Lyo.SystemInformation;\n\nvar info = SystemInfoCollector.Collect();\nlogger.LogSystemInfo(info, LogLevel.Information);"
+    },
+    {
+      "title": "A single facet",
+      "language": "csharp",
+      "code": "using Lyo.SystemInformation;\n\n// Drive space for a pre-flight check, without collecting software or environment facets.\nforeach (var drive in SystemInfoCollector.GetHardwareInfo().Drives)\n    logger.LogInformation(\"{Name}: {Free} free of {Total}\", drive.Name, drive.AvailableFreeSpaceBytes, drive.TotalSizeBytes);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "What platforms cover",
+      "text": "Collection is best-effort and degrades instead of throwing: facets the current OS does not expose come back empty or with defaults. Monitor enumeration and EDID reads depend most on the platform, because they go through native display APIs on Windows and sysfs on Linux."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/SystemInformation/Lyo.SystemInformation/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -1,0 +1,144 @@
+namespace Lyo.Job.Web.Components;
+
+public partial class JobManagement
+{
+    /// <summary>Base route for job endpoints (for example "Job"). Definitions use BaseRoute/Definition, runs use BaseRoute/Run, and so on.</summary>
+    [Parameter]
+    [EditorRequired]
+    public string BaseRoute { get; set; } = "Job";
+
+    /// <summary>Optional URL to fetch SpJobStatistic data. When null, the stats tab shows nothing.</summary>
+    [Parameter]
+    public string? StatisticsRoute { get; set; }
+
+    /// <summary>Starting tab: statistics, definitions, schedules, runs, workers, workflows.</summary>
+    [Parameter]
+    public string? InitialTab { get; set; }
+
+    [Parameter]
+    public Guid? DefinitionId { get; set; }
+
+    [Parameter]
+    public Guid? RunId { get; set; }
+
+    [Parameter]
+    public Guid? ScheduleId { get; set; }
+
+    [Parameter]
+    public Guid? WorkflowId { get; set; }
+
+    private int _tabIndex;
+    private bool _tabInitialized;
+    private bool _deepLinkHandled;
+    private Guid? _runsDefinitionId;
+    private string? _runsDefinitionName;
+
+    private string DefinitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
+
+    private string RunRoute => $"{BaseRoute.TrimEnd('/')}/Run";
+
+    private string ScheduleRoute => $"{BaseRoute.TrimEnd('/')}/Schedule";
+
+    private string TriggerRoute => $"{BaseRoute.TrimEnd('/')}/Trigger";
+
+    protected override void OnParametersSet()
+    {
+        // Apply the deep-link tab once so later parameter churn does not reset the user's tab.
+        if (_tabInitialized)
+            return;
+
+        if (DefinitionId is null && RunId is null && ScheduleId is null && WorkflowId is null && string.IsNullOrWhiteSpace(InitialTab))
+            return;
+
+        _tabIndex = ResolveTabIndex();
+        _tabInitialized = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_deepLinkHandled)
+            return;
+
+        if (DefinitionId is null && RunId is null && ScheduleId is null && WorkflowId is null && string.IsNullOrWhiteSpace(InitialTab))
+            return;
+
+        _deepLinkHandled = true;
+        if (RunId is { } runId)
+            await OpenRunAsync(runId);
+        else if (DefinitionId is { } definitionId)
+            await OpenDefinitionAsync(definitionId);
+        else if (ScheduleId is { } scheduleId)
+            Snackbar.Add($"Opened schedules (schedule {scheduleId:D}).", Severity.Info);
+        else if (WorkflowId is { } workflowId)
+            Snackbar.Add($"Opened workflows (workflow {workflowId:D}).", Severity.Info);
+    }
+
+    private int ResolveTabIndex()
+    {
+        if (RunId.HasValue)
+            return 3;
+
+        if (DefinitionId.HasValue)
+            return 1;
+
+        if (ScheduleId.HasValue)
+            return 2;
+
+        if (WorkflowId.HasValue)
+            return 5;
+
+        return InitialTab?.Trim().ToLowerInvariant() switch {
+            "statistics" or "stats" => 0,
+            "definitions" or "definition" => 1,
+            "schedules" or "schedule" => 2,
+            "runs" or "run" => 3,
+            "workers" or "worker" => 4,
+            "workflows" or "workflow" => 5,
+            var _ => 0
+        };
+    }
+
+    private void HandleViewRuns((Guid Id, string? Name) definition)
+    {
+        _runsDefinitionId = definition.Id;
+        _runsDefinitionName = definition.Name;
+        _tabIndex = 3;
+        StateHasChanged();
+    }
+
+    private async Task OpenDefinitionAsync(Guid id)
+    {
+        var req = new QueryConcreteReq { Keys = [[id]], Amount = 1, Include = [..JobDefinitionEditorQuery.Includes] };
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{DefinitionRoute}/QueryConcrete", req);
+        var def = res?.Items?.FirstOrDefault();
+        if (def is null) {
+            Snackbar.Add($"Job definition {id:D} not found.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<JobDefinitionView> {
+            { d => d.JobDefinition, def },
+            { d => d.DefinitionRoute, DefinitionRoute },
+            { d => d.ScheduleRoute, ScheduleRoute },
+            { d => d.TriggerRoute, TriggerRoute }
+        };
+
+        var dialog = await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, LyoDialogPresets.Large);
+        await dialog.Result;
+    }
+
+    private async Task OpenRunAsync(Guid id)
+    {
+        var req = new QueryConcreteReq { Keys = [[id]], Amount = 1, Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"] };
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>($"{RunRoute}/QueryConcrete", req);
+        var run = res?.Items?.FirstOrDefault();
+        if (run is null) {
+            Snackbar.Add($"Job run {id:D} not found.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<JobRunDetailView> { { d => d.JobRun, run }, { d => d.RunRoute, RunRoute } };
+        var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, LyoDialogPresets.Medium);
+        await dialog.Result;
+    }
+}

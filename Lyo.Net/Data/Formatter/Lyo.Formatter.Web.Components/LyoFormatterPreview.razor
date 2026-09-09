@@ -1,0 +1,16 @@
+@namespace Lyo.Formatter.Web.Components
+@implements IDisposable
+
+<div class="lyo-fmt-preview">
+    @if (!string.IsNullOrWhiteSpace(Label)) {
+        <MudText Typo="Typo.caption" Class="mb-1">@Label</MudText>
+    }
+    <div class="lyo-fmt-preview-body">
+        @if (Resolved.PreviewSegments.Count == 0) {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">@EmptyText</MudText>
+        }
+        else {
+            <p class="lyo-fmt-preview-text">@foreach (var segment in Resolved.PreviewSegments) {<LyoFormatterToken Segment="segment" Session="Resolved"/>}</p>
+        }
+    </div>
+</div>

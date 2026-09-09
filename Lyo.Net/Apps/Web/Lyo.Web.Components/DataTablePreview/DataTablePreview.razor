@@ -1,0 +1,10 @@
+@if (Table == null) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">No table loaded.</MudText>
+}
+else if (Table.MaxColumn < 0 && Table.Rows.Count == 0) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Empty table.</MudText>
+}
+else {
+    <div @ref="_hostRef" class="lyo-datatable-preview-host" data-instance="@_instanceId"></div>
+    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">@Table.Rows.Count.ToString("N0") row(s)</MudText>
+}

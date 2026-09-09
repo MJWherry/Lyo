@@ -1,0 +1,105 @@
+{
+  "id": "Lyo.TextEncoding",
+  "name": "Lyo.TextEncoding",
+  "area": "Core",
+  "tagline": "Binary codecs (Base64 / Base64Url / Hex) plus charset encode/decode/convert with CodePages, detection, PEM/MIME, and injectable services.",
+  "description": "Span-first binary-to-text codecs and character-set helpers for buffers, streams, and files. Two injectable services — `IBinaryEncodingService` and `ICharsetEncodingService` — sit beside static `BinaryEncoding` / `CharsetEncoding`. The namespace is `Lyo.TextEncoding`, so `System.Text.Encoding` needs no alias. Code pages come from `System.Text.Encoding.CodePages`. Hex casing uses `TextLetterCase` from `Lyo.Common.Core`.",
+  "features": [
+    "**`IBinaryEncodingService` / `BinaryEncoding`.** Hex, Base64, Base64Url. Streaming decode, MIME line wrap, PEM helpers, `TryEncode` / `TryDecode`.",
+    "**`ICharsetEncodingService` / `CharsetEncoding`.** Resolve CodePages, convert streams sync or async, `EmitBom`, `CharsetConvertingStream`.",
+    "**`CharsetInfo`.** Catalog of well-known encodings plus `Custom(...)`. Pickers use `WellKnown`.",
+    "**Detection.** BOM, a UTF-8 heuristic, and text declarations. For non-seekable streams: `ConsumedPrefix` + `CreateReplayStream`.",
+    "**Fallbacks.** Optional `EncoderFallback` / `DecoderFallback`. BCL encodings are cloned. Singletons are never mutated.",
+    "**DI.** `AddLyoBinaryEncoding`, `AddLyoCharsetEncoding`, `AddLyoTextEncoding`."
+  ],
+  "examples": [
+    {
+      "title": "Wire into DI",
+      "language": "csharp",
+      "code": "using System.Text;\nusing Lyo.TextEncoding.Registration;\nusing Microsoft.Extensions.DependencyInjection;\n\nvar services = new ServiceCollection();\nservices.AddLyoTextEncoding();\n\nusing var sp = services.BuildServiceProvider();\nvar binary = sp.GetRequiredService<IBinaryEncodingService>();\nvar charset = sp.GetRequiredService<ICharsetEncodingService>();\nEncoding utf8 = Encoding.UTF8; // no alias needed"
+    },
+    {
+      "title": "Binary encode, decode, and PEM",
+      "language": "csharp",
+      "code": "var encoded = BinaryEncoding.Encode(BinaryEncodingKind.Base64, payload, lineLength: 76);\nvar pem = BinaryEncoding.EncodePem(\"CERTIFICATE\", payload);\nvar bytes = BinaryEncoding.DecodePem(pem, out var label);\n\nawait BinaryEncoding.DecodeAsync(BinaryEncodingKind.Base64, textReader, binaryOut, ct);"
+    },
+    {
+      "title": "Charset convert, detect, and a converting stream",
+      "language": "csharp",
+      "code": "CharsetEncoding.EnsureCodePagesRegistered();\nvar utf8Bytes = CharsetEncoding.Convert(winBytes, CharsetInfo.Windows1252, CharsetInfo.Utf8);\n\nvar detected = CharsetEncoding.DetectEncoding(nonSeekableStream);\nusing var replay = CharsetEncoding.CreateReplayStream(nonSeekableStream, detected);\n\nusing var converting = CharsetEncoding.CreateConvertingStream(sink, CharsetInfo.Windows1252, CharsetInfo.Utf8);\nconverting.Write(src);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Common/Lyo.TextEncoding/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

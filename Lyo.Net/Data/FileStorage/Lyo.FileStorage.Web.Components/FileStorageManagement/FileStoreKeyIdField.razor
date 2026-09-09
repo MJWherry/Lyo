@@ -1,0 +1,28 @@
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
+
+@if (Ids.Count > 0) {
+    <MudSelect T="string"
+               Label="@Label"
+               HelperText="@ResolvedHelper"
+               Variant="Variant.Outlined"
+               Margin="Margin.Dense"
+               Dense="true"
+               Clearable="true"
+               Style="@Style"
+               Value="@Value"
+               ValueChanged="OnValueChanged">
+        @foreach (var id in Ids) {
+            <MudSelectItem T="string" Value="@id">@id</MudSelectItem>
+        }
+    </MudSelect>
+}
+else {
+    <MudTextField T="string"
+                  Label="@Label"
+                  HelperText="@ResolvedHelper"
+                  Variant="Variant.Outlined"
+                  Margin="Margin.Dense"
+                  Style="@Style"
+                  Value="@Value"
+                  ValueChanged="OnValueChanged"/>
+}

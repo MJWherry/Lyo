@@ -1,0 +1,51 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.FileSystemWatcher.Models",
+  "name": "Lyo.FileSystemWatcher.Models",
+  "area": "Data",
+  "tagline": "Persistable file-system snapshot, change, and watch-options DTOs, plus DTO-native change detection.",
+  "description": "Serializable contracts for Lyo.FileSystemWatcher snapshots and change events. Use these types to store or send trees without live FileSystemInfo. FileSystemSnapshotDiffer.DetectChanges diffs two DTO trees using path, size, fingerprint, and hash.",
+  "features": [
+    "**No live file handles.** Snapshot entries copy size, timestamps, attributes, hash, and fingerprint.",
+    "**Relative paths.** Entry paths are relative to the watch root and use '/' separators.",
+    "**DTO diffs.** FileSystemSnapshotDiffer detects create, delete, change, rename, and move without the files on disk.",
+    "**Regex include/exclude.** FileSystemPathGlob matches .NET regular expressions against relative paths."
+  ],
+  "examples": [
+    {
+      "title": "Diff two stored trees",
+      "language": "csharp",
+      "code": "var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree);\nforeach (var change in changes)\n    Console.WriteLine($\"{change.ChangeType} {change.OldPath} -> {change.NewPath}\");"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Types",
+      "items": [
+        "FileSystemSnapshotTreeDto. Hierarchical snapshot (root, counts, nested directories and files).",
+        "FileSystemSnapshotEntryDto. One file or directory (relative path, size, timestamps, hash, fingerprint).",
+        "FileSystemChangeDto. One create/delete/change/rename/move, with OccurredAtUtc.",
+        "FileSystemWatchOptionsDto. Serializable include/exclude regexes, recursion, hashing, debounce.",
+        "FileSystemSnapshotDiffer.DetectChanges. DTO-native change detection.",
+        "FileSystemPathGlob. Include/exclude .NET regex matching for relative paths."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/FileSystemWatcher/Lyo.FileSystemWatcher.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

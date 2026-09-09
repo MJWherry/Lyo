@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>PostgreSQL implementation of Lyo.ChangeTracker using Entity Framework Core. Persists generic EntityRef-based change history with migrations support.</Description>
+        <PackageTags>change-tracker postgres postgresql entityframework ef entityref</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Postgres\Lyo.EntityReference.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Health\Lyo.Health\Lyo.Health.csproj"/>
+        <ProjectReference Include="..\Lyo.ChangeTracker\Lyo.ChangeTracker.csproj"/>
+        <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
+    </ItemGroup>
+
+</Project>

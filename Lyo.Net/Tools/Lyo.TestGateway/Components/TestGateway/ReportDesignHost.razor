@@ -1,0 +1,9 @@
+@using Lyo.Reporting.Web.Components
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+
+<ReportDesignWorkbench ApiClient="ApiClient"
+                       BaseRoute="@_baseRoute"
+                       DefinitionId="DefinitionId"
+                       DownloadFileAsync="DownloadFileAsync"
+                       ViewFileUrlAsync="ViewFileUrlAsync"/>

@@ -1,0 +1,113 @@
+{
+  "id": "Lyo.Schedule.Models",
+  "name": "Lyo.Schedule.Models",
+  "area": "Core",
+  "tagline": "Schedule-only DTOs. `Lyo.Scheduler`, `Lyo.Job.Postgres`, and other callers use this when they need a transport-friendly answer to \"when does this run\".",
+  "description": "Schedule-only DTOs. [`Lyo.Scheduler`](../../Scheduler/Lyo.Scheduler/README.md), `Lyo.Job.Postgres`, and any other consumer that wants a\ntransport-friendly answer to \"when does this run\" take a dependency here.",
+  "features": [],
+  "examples": [
+    {
+      "title": "First steps",
+      "language": "csharp",
+      "code": "using Lyo.Schedule.Models;\n\nvar weekday = new ScheduleDefinitionBuilder()\n    .SetTimes(new TimeOnly(8, 0), new TimeOnly(17, 0))\n    .OnDays(DayOfWeek.Monday | DayOfWeek.Tuesday | DayOfWeek.Wednesday | DayOfWeek.Thursday | DayOfWeek.Friday)\n    .Build();\n\nvar cron = new ScheduleDefinitionBuilder()\n    .SetCron(\"0 */15 * * * *\") // every 15 minutes (6-field, second precision)\n    .Build();\n\ncron.Validate(); // throws ArgumentException for invalid cron expressions\n\nvar next = CronExpression\n    .Parse(cron.CronExpression!, CronFormat.IncludeSeconds)\n    .GetNextOccurrence(DateTimeOffset.UtcNow, TimeZoneInfo.Utc);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Types",
+      "headers": [
+        "Type",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "`ScheduleType`",
+          "Enum whose values are `SetTimes`, `Interval`, `OneShot`, and `Cron`."
+        ],
+        [
+          "`ScheduleDefinition`",
+          "Immutable record that holds `Type`, `DayFlags`, `MonthFlags`, set-times, interval bounds, a one-shot timestamp, and `CronExpression`. `Validate()` throws if the fields do not match the chosen `ScheduleType`."
+        ],
+        [
+          "`ScheduleDefinitionBuilder`",
+          "Fluent builder exposing `SetTimes(...)`, `Interval(...)`, `OneShot(...)`, `SetCron(string)`, `OnDays(DayOfWeek)`, and `InMonths(...)`. A `Set*` mutator also switches `Type`, so inconsistent fields cannot be combined."
+        ],
+        [
+          "`CronExpression` / `CronFormat`",
+          "Cron parser and evaluator that stand alone. Pass the expression plus a `CronFormat` into `CronExpression.Parse`."
+        ]
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Schedule/Lyo.Schedule.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

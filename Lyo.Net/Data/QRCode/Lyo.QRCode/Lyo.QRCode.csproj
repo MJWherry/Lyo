@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>QR code generation for Lyo: includes an in-library ISO/IEC 18004 encoder (PNG/SVG via BuiltInQRCodeService) plus abstractions. Optional Lyo.QRCode.QRCoder adds JPEG/Bitmap (Windows) and QRCoder-based rendering.</Description>
+        <PackageTags>qrcode qr code generator barcode abstraction</PackageTags>
+        <DefineConstants>$(DefineConstants);HAS_SPAN</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="System.Collections"/>
+        <Using Include="System.Text"/>
+        <Using Include="System.Globalization"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.QRCode.QRCoder"/>
+        <InternalsVisibleTo Include="Lyo.QRCode.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+        <PackageReference Include="SixLabors.ImageSharp"/>
+        <PackageReference Include="ZXing.Net"/>
+        <PackageReference Include="ZXing.Net.Bindings.ImageSharp.V3"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
+    </ItemGroup>
+
+</Project>
+

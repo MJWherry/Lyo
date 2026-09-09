@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Server-side authentication services for Lyo: Ed25519-signed JWT issuance/validation (`ILyoJwtIssuer`, `Ed25519LyoJwtIssuer`, `JwkSetBuilder`), opaque Format-B token issuance/validation/store (`IApiTokenIssuer`, `IApiTokenStore`, `ApiTokenCodec` minting/hashing), refresh-token exchange, user/external-identity stores, scope registry runtime, and audit recorder plumbing. Pure data shapes (records, claim names, format helpers, audit-event taxonomy, `Scope`) live in `Lyo.Authentication.Models` and are consumer-safe. This package brings in `Lyo.KeyStore`, `Lyo.Hashing`, and BouncyCastle — do not reference it from a Blazor WebAssembly client.</Description>
+        <PackageTags>authentication tokens jwt ed25519 scope-based-auth</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BouncyCastle.Cryptography"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Options"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Text.Json"/>
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Authentication.Models\Lyo.Authentication.Models.csproj"/>
+        <ProjectReference Include="..\..\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
+        <ProjectReference Include="..\..\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

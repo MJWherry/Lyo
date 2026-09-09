@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Reporting.Business.Example</RootNamespace>
+        <Description>Sample business-document Blazor templates (invoice, receipt, purchase order, estimate, statement of work) for Lyo Reporting. Not packed.</Description>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Plugins\Reporting\Lyo.Reporting.Web\Lyo.Reporting.Web.csproj"/>
+    </ItemGroup>
+
+</Project>

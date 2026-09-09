@@ -1,0 +1,46 @@
+.lyo-hover-popover-anchor {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: bottom;
+    cursor: help;
+    outline: none;
+}
+
+.lyo-hover-popover-anchor:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.lyo-hover-popover-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 12px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    /* The whole point of this component: the pointer can rest here and select the text. */
+    user-select: text;
+    cursor: auto;
+}
+
+.lyo-hover-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.lyo-hover-popover-title {
+    font-weight: 600;
+}
+
+.lyo-hover-popover-content {
+    min-width: 0;
+}
+
+.lyo-hover-popover-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

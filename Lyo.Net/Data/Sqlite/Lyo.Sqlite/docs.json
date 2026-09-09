@@ -1,0 +1,100 @@
+{
+  "id": "Lyo.Sqlite",
+  "name": "Lyo.Sqlite",
+  "area": "Data",
+  "tagline": "Common SQLite migration host bits for Lyo libraries that own an EF Core schema.",
+  "description": "Common SQLite migration host bits for Lyo libraries that own an EF Core schema. When the consumer options opt in, a thin `IHostedService` calls `DbContext.Database.MigrateAsync`\nas the host starts.\n\n> Out of scope: health checks, design-time `IDesignTimeDbContextFactory` helpers, and connection-string builders stay in consumer libraries when those need them.",
+  "features": [],
+  "examples": [
+    {
+      "title": "How to wire it",
+      "language": "csharp",
+      "code": "using Lyo.Sqlite;\nusing Microsoft.Extensions.DependencyInjection;\n\npublic sealed class FileStoreSqliteOptions : ISqliteMigrationConfig\n{\n    public string ConnectionString { get; init; } = \"Data Source=./filestore.db\";\n    public bool EnableAutoMigrations { get; init; }\n}\n\nservices.Configure<FileStoreSqliteOptions>(configuration.GetSection(\"SqliteFileMetadataStore\"));\nservices.AddSqliteMigrations<SqliteFileMetadataStoreDbContext, FileStoreSqliteOptions>();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Types",
+      "headers": [
+        "Type",
+        "Role"
+      ],
+      "rows": [
+        [
+          "`ISqliteMigrationConfig`",
+          "`ConnectionString`, `EnableAutoMigrations`"
+        ],
+        [
+          "`SqliteMigrationHostedService<TContext, TOptions>`",
+          "Calls `MigrateAsync` from `StartAsync` when enabled"
+        ],
+        [
+          "`Extensions.AddSqliteMigrations<TContext, TOptions>()`",
+          "Adds the hosted service"
+        ]
+      ],
+      "trail": "`TContext` is built with `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so every consumer DbContext **must expose a public constructor that\ntakes a single `DbContextOptions<TContext>`**."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Sqlite/Lyo.Sqlite/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Sqlite",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

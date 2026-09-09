@@ -1,0 +1,295 @@
+{
+  "id": "Lyo.Translation",
+  "name": "Lyo.Translation",
+  "area": "Communication",
+  "tagline": "**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) remain under `Communication/Translation/`, not under `Integration/`. See package layout.",
+  "description": "**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) remain under `Communication/Translation/`, not `Integration/`.\nSee [package layout](../../../docs/package-layout.md).\n\nContracts and shared translation behavior: `ITranslationService`,\n`TranslationServiceBase` (bulk pipeline, metrics, lifecycle events), error codes, metric key names,\nand a small DI helper.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
+  "features": [],
+  "examples": [
+    {
+      "title": "Injection helpers",
+      "language": "csharp",
+      "code": "services.AddTranslationService<MyTranslationService, MyTranslationOptions>(opts =>\n{\n    opts.DefaultSourceLanguage = LanguageCodeInfo.EnUs;\n});\n\n// or with a pre-built options instance:\nservices.AddTranslationService<MyTranslationService, MyTranslationOptions>(myOptions);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "`ITranslationService`",
+      "headers": [
+        "Member",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`TranslateAsync(string text, LanguageCodeInfo targetLanguageCode, LanguageCodeInfo? sourceLanguage = null, CancellationToken ct = default)`",
+          "Convenience overload. Builds a `TranslationRequest` and applies `Options.DefaultSourceLanguage` when the caller leaves source unset."
+        ],
+        [
+          "`TranslateAsync(TranslationRequest request, CancellationToken ct = default)`",
+          "Translates one `TranslationRequest`."
+        ],
+        [
+          "`TranslateBulkAsync(IEnumerable<TranslationRequest> requests, CancellationToken ct = default)`",
+          "Bulk send capped by concurrency. Returns `IReadOnlyList<TranslationResult>`."
+        ],
+        [
+          "`DetectLanguageAsync(string text, CancellationToken ct = default)`",
+          "Detects the language of `text` and returns `LanguageCodeInfo`. Providers may return unknown info on failure."
+        ],
+        [
+          "`TestConnectionAsync(CancellationToken ct = default)`",
+          "Provider-defined connectivity check."
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "title": "`TranslationServiceBase`",
+      "items": [
+        "Shared bulk pipeline using a `SemaphoreSlim` sized by `TranslationServiceOptions.BulkTranslationConcurrencyLimit` and a hard per-call cap of `TranslationServiceOptions.MaxBulkTranslationLimit`.",
+        "Bulk results land in a `ConcurrentBag`, so output order is not guaranteed to match input order.",
+        "Lifecycle events: `Translating`, `Translated`, `BulkTranslating`, `BulkTranslated`.",
+        "A `MetricNames` dictionary that providers may override in the constructor."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "`TranslationServiceOptions`",
+      "headers": [
+        "Property",
+        "Type",
+        "Default",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`DefaultTargetLanguage`",
+          "`LanguageCodeInfo?`",
+          "`null`",
+          "Provider fallback used when the caller omits a target."
+        ],
+        [
+          "`DefaultSourceLanguage`",
+          "`LanguageCodeInfo?`",
+          "`null`",
+          "Source language used when callers leave it unset."
+        ],
+        [
+          "`MaxTextLength`",
+          "`int`",
+          "`50000`",
+          "Upper bound on text length providers should accept."
+        ],
+        [
+          "`EnableMetrics`",
+          "`bool`",
+          "`true`",
+          "When `false`, the base substitutes `NullMetrics.Instance`."
+        ],
+        [
+          "`BulkTranslationConcurrencyLimit`",
+          "`int`",
+          "`10`",
+          "Cap on bulk dispatch concurrency."
+        ],
+        [
+          "`MaxBulkTranslationLimit`",
+          "`int`",
+          "`100`",
+          "Upper bound on requests in one `TranslateBulkAsync` call."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Failure codes (`TranslationErrorCodes`)",
+      "headers": [
+        "Constant",
+        "Value"
+      ],
+      "rows": [
+        [
+          "`TranslateFailed`",
+          "`TRANSLATION_FAILED`"
+        ],
+        [
+          "`OperationCancelled`",
+          "`TRANSLATION_OPERATION_CANCELLED`"
+        ],
+        [
+          "`DetectLanguageFailed`",
+          "`TRANSLATION_DETECT_LANGUAGE_FAILED`"
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Default metric keys (`Lyo.Translation.Constants.Metrics`)",
+      "headers": [
+        "Constant key",
+        "Metric",
+        "Kind"
+      ],
+      "rows": [
+        [
+          "`TranslateDuration`",
+          "`translation.Service.translate.duration`",
+          "Timer"
+        ],
+        [
+          "`TranslateSuccess`",
+          "`translation.Service.translate.success`",
+          "Counter"
+        ],
+        [
+          "`TranslateFailure`",
+          "`translation.Service.translate.failure`",
+          "Counter"
+        ],
+        [
+          "`BulkTranslateDuration`",
+          "`translation.Service.bulk.translate.duration`",
+          "Timer"
+        ],
+        [
+          "`BulkTranslateTotal`",
+          "`translation.Service.bulk.translate.total`",
+          "Counter"
+        ],
+        [
+          "`BulkTranslateSuccess`",
+          "`translation.Service.bulk.translate.success`",
+          "Counter"
+        ],
+        [
+          "`BulkTranslateFailure`",
+          "`translation.Service.bulk.translate.failure`",
+          "Counter"
+        ],
+        [
+          "`BulkTranslateLastDurationMs`",
+          "`translation.Service.bulk.translate.last_duration_ms`",
+          "Gauge"
+        ],
+        [
+          "`DetectLanguageDuration`",
+          "`translation.Service.detectLanguage.duration`",
+          "Timer"
+        ],
+        [
+          "`DetectLanguageSuccess`",
+          "`translation.Service.detectLanguage.success`",
+          "Counter"
+        ],
+        [
+          "`DetectLanguageFailure`",
+          "`translation.Service.detectLanguage.failure`",
+          "Counter"
+        ]
+      ],
+      "trail": "Provider packages (Google, AWS) override `CreateMetricNamesDictionary` to put a namespace on these."
+    },
+    {
+      "type": "paragraph",
+      "title": "Injection helpers",
+      "text": "`Lyo.Translation.Extensions` exposes a generic helper used by provider packages. It wires `TOptions`, `TService`, and `ITranslationService` (resolved from `TService`) as singletons. Concrete provider packages (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) wrap this in their own `Add*FromConfiguration` extensions that also wire native SDK clients."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Translation/Lyo.Translation/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -1,0 +1,10 @@
+@using Lyo.Web.Components.Identifiers
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.IdGenerator)]
+@inherits AuthorizedPage
+
+<PageTitle>ID Generator</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <IdWorkbench/>
+</MudContainer>

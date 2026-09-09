@@ -1,0 +1,99 @@
+@using System.Text.Json.Nodes
+@using Lyo.Common.Metadata.Records;
+@using LyoTypeSelect = Lyo.Web.Components.LyoType.LyoTypeSelect
+@inject ISnackbar Snackbar
+
+<LyoDialog Busy="@_saving" OnSave="SaveAsync" SaveDisabled="@(!_canSave)" DebugData="@DebugModel()">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(IsNew ? "New definition" : _edit.Key)</MudText>
+    </TitleContent>
+    <TitleChips>
+        <LyoChip Spec="@LyoChips.FromBool(_edit.IsRequired, "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+        <LyoChip Spec="@LyoChips.FromBool(_edit.IsEncrypted, "Encrypted", "Plain", Color.Warning, Color.Default)"/>
+        @if (!IsNew) {
+            <LyoChip Spec="@LyoChips.FromBool(_edit.DefaultValue != null, "Has default", "No default", Color.Info, Color.Default)"/>
+        }
+    </TitleChips>
+    <ChildContent>
+        <LyoForm TModel="ConfigDefinitionRecord" Model="_edit" ShowActions="false" HasChangesChanged="@(v => _formHasChanges = v)" @ref="_form">
+            <MudGrid Spacing="2" Class="pa-1">
+                @if (!IsNew) {
+                    <MudItem xs="12" sm="4">
+                        <LyoIdField Label="ID" Value="@_edit.Id"/>
+                    </MudItem>
+                }
+                <MudItem xs="12" sm="@(IsNew ? 6 : 4)">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="string"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.SubjectEntityType)"
+                                  Label="Subject entity type"
+                                  AllowEditing="@IsNew"/>
+                </MudItem>
+                <MudItem xs="12" sm="@(IsNew ? 6 : 4)">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="string"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.Key)"
+                                  Label="Key"
+                                  AllowEditing="@IsNew"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <LyoTypeSelect Label="Value type"
+                                      Value="@_edit.ForValueType"
+                                      ValueChanged="OnTypeChanged"/>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="bool"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.IsRequired)"
+                                  Label="Required"
+                                  AllowEditing="true"
+                                  OnValueChanged="@(_ => StateHasChanged())"/>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="bool"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.IsEncrypted)"
+                                  Label="Encrypted"
+                                  AllowEditing="true"
+                                  OnValueChanged="@(_ => StateHasChanged())"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <LyoFormInput TModel="ConfigDefinitionRecord"
+                                  TValue="string?"
+                                  Model="_edit"
+                                  PropertyExpression="@(m => m.Description)"
+                                  Label="Description"
+                                  AllowEditing="true"
+                                  AllowMultiline="true"
+                                  Lines="2"/>
+                </MudItem>
+            </MudGrid>
+        </LyoForm>
+        <MudSwitch T="bool"
+                   Color="Color.Primary"
+                   Label="Include default value"
+                   Value="@_includeDefault"
+                   ValueChanged="OnIncludeDefaultChanged"
+                   Class="mt-2"/>
+        @if (_includeDefault && _edit.DefaultValue != null) {
+            <ConfigValueEditor Value="_edit.DefaultValue"
+                               ValueChanged="OnDefaultValueChanged"
+                               ParseErrorChanged="OnParseErrorChanged"
+                               IsEncrypted="_edit.IsEncrypted"
+                               EditorSurfaceHeight="180px"/>
+        }
+        @if (!IsNew) {
+            <MudDivider Class="my-3"/>
+            <MudText Typo="Typo.subtitle2">Definition history</MudText>
+            <ConfigDefinitionRevisionList Store="Store"
+                                          DefinitionId="_edit.Id"
+                                          DataVersion="_historyVersion"
+                                          Compact="true"
+                                          OnChanged="OnDefinitionRevertedAsync"/>
+        }
+    </ChildContent>
+</LyoDialog>

@@ -1,0 +1,328 @@
+@page "/auth/tokens"
+@using Lyo.Authentication.Models
+@using Lyo.Authentication.Models.Format
+@using Lyo.Authentication.Models.Records
+
+@inject IAuthTokenManagementClient TokenClient
+@inject IAuthSessionAccessor SessionAccessor
+@inject IJsInterop JsInterop
+@inject ISnackbar Snackbar
+
+<PageTitle>API tokens</PageTitle>
+
+<LyoElementRoot DefaultId="LyoAuthTokensPage" ElementId="@ElementId">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-6">
+        <MudStack Spacing="4">
+            <MudPaper Class="pa-4">
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.h5">API tokens</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Mint, list, and revoke long-lived tokens. The plaintext is shown <strong>exactly once</strong> after creation — copy it before navigating away.
+                        </MudText>
+                    </div>
+
+                    @if (_kindsLoading) {
+                        <MudStack AlignItems="AlignItems.Center">
+                            <MudProgressCircular Indeterminate="true"/>
+                        </MudStack>
+                    }
+                    else if (_kinds is null) {
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
+                            Could not load token kinds. You may not be signed in, or the API may not be reachable.
+                        </MudAlert>
+                    }
+                    else {
+                        <EditForm Model="_form" OnValidSubmit="CreateAsync">
+                            <MudStack Spacing="3">
+                                <MudGrid>
+                                    <MudItem xs="12" md="4">
+                                        <MudSelect T="string"
+                                                   Label="Kind"
+                                                   Value="_form.Kind"
+                                                   ValueChanged="OnKindChanged"
+                                                   Variant="Variant.Outlined"
+                                                   Margin="Margin.Dense"
+                                                   Disabled="_creating">
+                                            @foreach (var kind in _kinds) {
+                                                <MudSelectItem T="string" Value="@kind.Kind" Disabled="@(!kind.Allowed)">
+                                                    @PrettyKind(kind.Kind)
+                                                    @if (!kind.Allowed) {
+                                                        <MudText HtmlTag="span" Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">
+                                                            (requires <code>@kind.RequiredScope</code>)
+                                                        </MudText>
+                                                    }
+                                                </MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="12" md="5">
+                                        <MudTextField T="string"
+                                                      @bind-Value="_form.DisplayName"
+                                                      Label="Display name"
+                                                      Required="true"
+                                                      Variant="Variant.Outlined"
+                                                      Margin="Margin.Dense"
+                                                      Placeholder="GitHub Actions deploy"
+                                                      Disabled="_creating"/>
+                                    </MudItem>
+                                    <MudItem xs="12" md="3">
+                                        <MudNumericField T="int?"
+                                                         @bind-Value="_form.LifetimeDays"
+                                                         Label="Lifetime (days)"
+                                                         Variant="Variant.Outlined"
+                                                         Margin="Margin.Dense"
+                                                         Min="0"
+                                                         HelperText="0 or empty = no expiry"
+                                                         Disabled="_creating"/>
+                                    </MudItem>
+                                </MudGrid>
+
+                                @{
+                                    var kindDescriptor = SelectedKindDescriptor();
+                                }
+                                @if (kindDescriptor is not null) {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@kindDescriptor.Description</MudText>
+                                }
+
+                                <div>
+                                    <MudText Typo="Typo.subtitle2">Scopes</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @if (string.Equals(_form.Kind, ApiTokenKind.Webhook, StringComparison.Ordinal)) {
+                                            <text>
+                                                Webhook tokens may be issued without scopes — the signature itself is the proof. Pick scopes only if the receiving system also makes
+                                                scoped calls back into Lyo.</text>
+                                        }
+                                        else {
+                                            <text>Only scopes you currently hold can be granted. The API silently drops scopes you don't possess.</text>
+                                        }
+                                    </MudText>
+                                    @if (_availableScopes.Count == 0) {
+                                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mt-1">
+                                            You don't hold any scopes, so the only kind you can mint is <code>webhook</code>.
+                                        </MudAlert>
+                                    }
+                                    else {
+                                        <MudChipSet T="string"
+                                                    SelectedValues="_form.SelectedScopes"
+                                                    SelectedValuesChanged="OnScopesChanged"
+                                                    SelectionMode="SelectionMode.MultiSelection"
+                                                    CheckMark="true">
+                                            @foreach (var scope in _availableScopes) {
+                                                <MudChip T="string" Value="@scope" Color="Color.Primary" Size="Size.Small" Text="@scope"/>
+                                            }
+                                        </MudChipSet>
+                                    }
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(_createError)) {
+                                    <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">@_createError</MudAlert>
+                                }
+
+                                <MudStack Row="true" Spacing="2">
+                                    <MudButton ButtonType="ButtonType.Submit"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.AddCircle"
+                                               Disabled="@(_creating || !CanSubmit())">
+                                        @(_creating ? "Generating..." : "Generate token")
+                                    </MudButton>
+                                </MudStack>
+                            </MudStack>
+                        </EditForm>
+                    }
+                </MudStack>
+            </MudPaper>
+
+            @if (_lastIssued is not null) {
+                <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" NoIcon="true" Class="pa-4">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.VpnKey" Color="Color.Success"/>
+                            <MudText Typo="Typo.h6">@_lastIssued.Record.DisplayName</MudText>
+                            <LyoChip Color="Color.Primary" Variant="Variant.Outlined" Label="@_lastIssued.Record.Kind"/>
+                        </MudStack>
+                        <MudText Typo="Typo.body2">
+                            Copy this token now — it will <strong>never be shown again</strong>. Lyo only stores its SHA-256 hash.
+                        </MudText>
+                        <MudPaper Outlined="true" Class="pa-3" Style="font-family: monospace; word-break: break-all; background: var(--mud-palette-background);">
+                            @_lastIssued.Plaintext
+                        </MudPaper>
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton StartIcon="@Icons.Material.Filled.ContentCopy"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       OnClick="@(() => CopyAsync(_lastIssued!.Plaintext))">
+                                Copy token
+                            </MudButton>
+                            <MudButton StartIcon="@Icons.Material.Filled.Close"
+                                       Variant="Variant.Text"
+                                       Color="Color.Default"
+                                       OnClick="DismissReveal">
+                                I've copied it
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+                </MudAlert>
+            }
+
+            <MudPaper Class="pa-4">
+                <MudStack Spacing="3">
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6">Existing tokens</MudText>
+                        <MudSpacer/>
+                        <MudSwitch T="bool"
+                                   Value="_includeRevoked"
+                                   ValueChanged="OnIncludeRevokedChanged"
+                                   Color="Color.Primary"
+                                   Label="Show revoked"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="ReloadTokensAsync" Disabled="_listLoading"/>
+                    </MudStack>
+
+                    @if (ApiClient is not null && _currentUserId is { } userId) {
+                        <AuthTokenGrid @ref="_tokenGrid"
+                                       ApiClient="ApiClient"
+                                       UserId="@userId"
+                                       ExcludeInternal="true"
+                                       IncludeRevoked="_includeRevoked"
+                                       AllowRevoke="true"
+                                       AllowHardDelete="false"
+                                       UseSelfServiceRevoke="true"
+                                       GridKey="AuthSelfServiceTokenGrid"/>
+                    }
+                    else if (_listLoading) {
+                        <MudStack AlignItems="AlignItems.Center">
+                            <MudProgressCircular Indeterminate="true"/>
+                        </MudStack>
+                    }
+                    else if (_tokens is null) {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                            Could not load tokens — you may be missing the <code>auth.tokens.read</code> scope.
+                        </MudAlert>
+                    }
+                    else if (_tokens.Count == 0) {
+                        <MudText Color="Color.Secondary">No tokens yet. Use the form above to mint one.</MudText>
+                    }
+                    else {
+                        <LyoResponsiveTable>
+                            <TableContent>
+                                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Kind</th>
+                                        <th>Ring</th>
+                                        <th>Scopes</th>
+                                        <th>Created</th>
+                                        <th>Expires</th>
+                                        <th>Status</th>
+                                        <th style="width:1%;"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var token in _tokens) {
+                                        <tr>
+                                            <td>
+                                                <strong>@token.DisplayName</strong>
+                                                <MudText HtmlTag="div" Typo="Typo.caption" Color="Color.Secondary"><code>@token.Id</code></MudText>
+                                            </td>
+                                            <td>
+                                                <LyoChip Variant="Variant.Outlined" Label="@token.Kind"/>
+                                            </td>
+                                            <td>@token.Ring</td>
+                                            <td>@TokenScopes(token)</td>
+                                            <td><LyoTimestamp Value="@token.CreatedAt" Kind="LyoTimestampKind.Relative"/></td>
+                                            <td>
+                                                @if (token.ExpiresAt is { } exp) {
+                                                    <LyoTimestamp Value="@exp" Kind="LyoTimestampKind.Relative"/>
+                                                }
+                                                else {
+                                                    <text>—</text>
+                                                }
+                                            </td>
+                                            <td>@TokenStatus(token)</td>
+                                            <td>@RevokeButton(token)</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            </TableContent>
+                            <CardContent>
+                                @foreach (var token in _tokens) {
+                                    <LyoRecordCard Title="@token.DisplayName" Subtitle="@token.Id.ToString()">
+                                        <TitleContent>
+                                            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                                <LyoChip Variant="Variant.Outlined" Label="@token.Kind"/>
+                                                @TokenStatus(token)
+                                            </MudStack>
+                                        </TitleContent>
+                                        <Actions>
+                                            @RevokeButton(token)
+                                        </Actions>
+                                        <ChildContent>
+                                            <LyoRecordField Label="Ring" Value="@token.Ring.ToString()"/>
+                                            <LyoRecordField Label="Scopes">
+                                                @TokenScopes(token)
+                                            </LyoRecordField>
+                                            <LyoRecordField Label="Created">
+                                                <LyoTimestamp Value="@token.CreatedAt" Kind="LyoTimestampKind.Relative"/>
+                                            </LyoRecordField>
+                                            <LyoRecordField Label="Expires">
+                                                @if (token.ExpiresAt is { } exp) {
+                                                    <LyoTimestamp Value="@exp" Kind="LyoTimestampKind.Relative"/>
+                                                }
+                                                else {
+                                                    <text>—</text>
+                                                }
+                                            </LyoRecordField>
+                                        </ChildContent>
+                                    </LyoRecordCard>
+                                }
+                            </CardContent>
+                        </LyoResponsiveTable>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudStack>
+    </MudContainer>
+</LyoElementRoot>
+
+@code {
+
+    private RenderFragment<AuthTokenSummary> TokenScopes => token => @<text>
+        @if (token.Scopes.Length == 0) {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">(none)</MudText>
+        }
+        else {
+            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                @foreach (var scope in token.Scopes) {
+                    <LyoChip Label="@scope"/>
+                }
+            </MudStack>
+        }
+    </text>;
+
+    private RenderFragment<AuthTokenSummary> TokenStatus => token => @<text>
+        @if (token.RevokedAt is not null) {
+            <LyoChip Color="Color.Error" Label="Revoked"/>
+        }
+        else if (!token.IsActive(DateTime.UtcNow)) {
+            <LyoChip Color="Color.Warning" Label="Expired"/>
+        }
+        else {
+            <LyoChip Color="Color.Success" Label="Active"/>
+        }
+    </text>;
+
+    private RenderFragment<AuthTokenSummary> RevokeButton => token => @<text>
+        @if (token.RevokedAt is null) {
+            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                           Color="Color.Error"
+                           Size="Size.Small"
+                           title="Revoke"
+                           OnClick="@(() => RevokeAsync(token))"
+                           Disabled="_revoking"/>
+        }
+    </text>;
+
+}

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <RootNamespace>Lyo.DataTable.Models</RootNamespace>
+        <AssemblyName>Lyo.DataTable.Models</AssemblyName>
+        <PackageId>Lyo.DataTable.Models</PackageId>
+        <Description>Mutable data table with headers, rows, footer, thin cells, and a sparse optional format map. Used for CSV, XLSX, PDF data and programmatic table construction.</Description>
+        <PackageTags>datatable csv xlsx</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

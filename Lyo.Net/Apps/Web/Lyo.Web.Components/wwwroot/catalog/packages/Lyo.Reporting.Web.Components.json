@@ -1,0 +1,581 @@
+{
+  "id": "Lyo.Reporting.Web.Components",
+  "name": "Lyo.Reporting.Web.Components",
+  "area": "Plugins",
+  "tagline": "MudBlazor ops UI for Lyo Reporting: browse definitions, run reports, design compositions, and view or download generations.",
+  "description": "MudBlazor ops UI for Lyo Reporting: browse definitions, run reports, design compositions with a live preview, and view or download generations.\n\nThis package is a Razor component library. No `AddXxx` DI. The host supplies an authenticated `IApiClient` (and optional FileStorage download/view callbacks).\n\nPair with [`Lyo.Reporting.Api`](../../../Apps/Reporting/Lyo.Reporting.Api/README.md) on the API host and [`Lyo.Reporting.Client`](../../../Apps/Reporting/Lyo.Reporting.Client/README.md) for typed HTTP access.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Page in the host",
+      "headers": [
+        "Parameter",
+        "Notes"
+      ],
+      "rows": [
+        [
+          "`BaseRoute`",
+          "Prefix for reporting routes (default `\"Reporting\"`)."
+        ],
+        [
+          "`DownloadFileAsync`",
+          "Host callback that downloads a blob by `OutputFileId` and preferred file name (`OriginalFileName`)."
+        ],
+        [
+          "`ViewFileUrlAsync`",
+          "Host callback that returns a browser URL for PDF/HTML preview."
+        ]
+      ],
+      "lead": "```razor\n@using Lyo.Reporting.Web.Components\n\n<ReportManagement BaseRoute=\"Reporting\"\n                  DownloadFileAsync=\"DownloadReportFileAsync\"\n                  ViewFileUrlAsync=\"GetReportViewUrlAsync\" />\n\n@code {\n    // Wire to your FileStorage (or Gateway) download/view endpoints.\n    private Task DownloadReportFileAsync(Guid fileId, string? fileName, CancellationToken ct)\n        => /* stream via IJsInterop.DownloadFileFromStream(stream, fileName ?? $\"{fileId}\", mime) */ Task.CompletedTask;\n\n    private Task<string?> GetReportViewUrlAsync(Guid fileId, CancellationToken ct)\n        => Task.FromResult<string?>($\"/files/{fileId}\");\n}\n```",
+      "trail": "Omit download/view callbacks and those menu actions snackbar that the host has not configured them. CSV/XLSX generations can still preview tables from `ReportDataJson` without `OutputFileId`. A generation with no `OutputFileId` (persist hook skipped) cannot download."
+    },
+    {
+      "type": "table",
+      "title": "Components",
+      "headers": [
+        "Component",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "`ReportManagement`",
+          "Tabs: Generations / Definitions. After generate, switches to Generations and opens the generation view (and the report output when viewable)."
+        ],
+        [
+          "`ReportDefinitionGrid`",
+          "List of definitions plus Run / Delete (cascade + storage cleanup)"
+        ],
+        [
+          "`ReportDefinitionView`",
+          "JSON preview / definition detail, with a Design action that opens `/report-design/{id}` when the host wires `Design`"
+        ],
+        [
+          "`RunReportDialog`",
+          "Format override + parameters → `POST …/Generation/Generate`; values via `LyoParameterValueField` (Options / AllowedValues select or typed JSON)"
+        ],
+        [
+          "`ReportGenerationGrid`",
+          "List of generations plus View/Download/Delete (storage cleanup)"
+        ],
+        [
+          "`ReportGenerationView`",
+          "Detail for a generation plus View/Download actions"
+        ],
+        [
+          "`ReportParameterView`",
+          "`LyoParameterEditor` for definition parameters (card or table layout, per `AddLyoParameterEditor`)"
+        ],
+        [
+          "`ReportDesignWorkbench`",
+          "Composition designer: expandable nested tree (canvas hit reopens collapsed parents; selected row has a left accent), accordion inspector, live `ReportDesignCanvas` on the stored composition (example `{Key}` interpolated at paint; TOC/FromParameter fill from examples without cloning; `VisibleWhen` and `Collapsed` items stay and dim). Toolbar: Card, Table, Grid, Block. Table size is numeric Columns/Rows; Query/Sproc tables use `LyoParameterOptionsEditor`. Templates menu: Blank, Controls gallery, Sales summary, Invoice, Operations dashboard. Hover chrome, handle-only drag, grid-child and table-column reorder on the canvas, Chart.js redraw, Badge/Signature/TOC/Timeline/Address/Totals/Checkbox/Notes, dirty confirm, undo/redo, duplicate, Save / Save as definition, generate from stored JSON only"
+        ],
+        [
+          "`ReportDesignCanvas`",
+          "Live editor that paints the same body as `ReportViewer` against the live `_report` graph (not a Bind clone), including `@page` CSS. Hover bounding boxes, a move handle (the only draggable node), delete, and + on containers. Drop slots sit between body items, grid children, and table columns. Generate HTML/PDF still uses `ReportViewer`."
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "`ReportFormatterContext`",
+      "text": "`ReportFormatterContext.Build(definition, parameters)` supplies the token list for formatter-typed report parameters, exposing the definition as `Definition` and sibling parameters as a `Parameters` map plus flat `Parameter_{key}` entries. Unlike the job scheduler, reporting has no format pass of its own — nothing here runs a value through `IFormatterService` — so that is deliberately all it offers: whatever consumes the generated value resolves the rest. Host-wide keys come from `AddLyoFormatterValueEditor` instead, with no plumbing needed here."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Reporting/Lyo.Reporting.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Formatter",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Reporting.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Reporting.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Reporting.Web",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Csv",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Evaluation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Primitives",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.WebRenderer",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "AngleSharp",
+      "kind": "package",
+      "version": "1.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Blazored.LocalStorage",
+      "kind": "package",
+      "version": "4.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "DynamicExpresso.Core",
+      "kind": "package",
+      "version": "2.19.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.Components.Web",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "PuppeteerSharp",
+      "kind": "package",
+      "version": "24.0.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SmartFormat.NET",
+      "kind": "package",
+      "version": "3.6.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.RateLimiting",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

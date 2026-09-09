@@ -1,0 +1,171 @@
+@namespace Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.QueryNodeEditor
+
+<div class="lyo-dg-toolbar">
+    <LyoToolbar Disabled="@Host.Loading">
+        <Rows>
+            <LyoToolbarRow>
+                <LyoToolbarGroup>
+                    @if (Host.HasFeature(LyoDataGridFeatureFlags.BulkMenu)) {
+                        <LyoToolbarMenu Label="@($"Bulk {Host.GetBulkLabel()}")">
+                            @if (Host.IsSelectable && Host.EffectiveSelectedCount > 0) {
+                                <MudMenuItem Icon="@Icons.Material.Filled.Deselect"
+                                             OnClick="@Host.ClearSelectionAsync">
+                                    Deselect (@(Host.EffectiveSelectedCount.ToString("N0")))
+                                </MudMenuItem>
+                            }
+
+                            @if (Host.BulkExportControls is not null) {
+                                <MudMenuItem>
+                                    <div @key="Host.CanExport()">
+                                        @Host.BulkExportControls(Host.ExportHost)
+                                    </div>
+                                </MudMenuItem>
+                            }
+
+                            @if (Host.HasKeySelector) {
+                                @if (Host.BulkMenuItems is not null) {
+                                    @Host.BulkMenuItems
+                                }
+
+                                @if (Host.HasFeature(LyoDataGridFeatureFlags.BulkPatch) && !string.IsNullOrEmpty(Host.PatchRoute)) {
+                                    <MudMenuItem OnClick="@(_ => Host.BulkPatchAsync())" Label="Patch"/>
+                                }
+
+                                @if (Host.HasFeature(LyoDataGridFeatureFlags.BulkDelete) && !string.IsNullOrEmpty(Host.Route)) {
+                                    <MudMenuItem OnClick="@(_ => Host.BulkDeleteAsync())" Label="Delete"/>
+                                }
+                            }
+                        </LyoToolbarMenu>
+                    }
+
+                    @if (Host.LeftControls is not null) {
+                        @Host.LeftControls
+                    }
+                </LyoToolbarGroup>
+
+                <LyoToolbarGroup AlignEnd="true">
+                    <LyoToolbarMenu Label="Dev" Icon="@Icons.Material.Filled.DeveloperMode">
+                        <MudMenuItem OnClick="@Host.ShowRequestDialogAsync">View Request</MudMenuItem>
+                        <MudMenuItem OnClick="@Host.ShowResponseDialogAsync">View Response</MudMenuItem>
+                    </LyoToolbarMenu>
+
+                    <LyoToolbarButton Icon="@Icons.Material.Filled.Refresh" Text="Refresh" OnClick="@(() => Host.RefreshDataAsync())"/>
+
+                    @if (Host.HasFeature(LyoDataGridFeatureFlags.AutoRefresh)) {
+                        <LyoToolbarMenu Label="@(Host.AutoRefreshEnabled ? $"Auto ({Host.RefreshInterval.TotalSeconds}s)" : "Auto Refresh")"
+                                        Icon="@Icons.Material.Filled.Refresh"
+                                        Color="@(Host.AutoRefreshEnabled ? Color.Success : Color.Error)">
+                            <MudMenuItem OnClick="@Host.ToggleAutoRefresh"
+                                         Icon="@(Host.AutoRefreshEnabled ? Icons.Material.Filled.Stop : Icons.Material.Filled.PlayArrow)">
+                                @(Host.AutoRefreshEnabled ? "Stop Auto Refresh" : "Start Auto Refresh")
+                            </MudMenuItem>
+                            <MudDivider/>
+                            @foreach (var seconds in Host.AutoRefreshIntervalsSeconds) {
+                                <MudMenuItem OnClick="@(() => Host.SetRefreshInterval(seconds))">
+                                    @if (Host.RefreshInterval.TotalSeconds == seconds) {
+                                        <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small"/>
+                                    }
+                                    <span>@seconds second@(seconds > 1 ? "s" : "")</span>
+                                </MudMenuItem>
+                            }
+                        </LyoToolbarMenu>
+                    }
+
+                    @if (Host.CardMode && Host.SortableCardColumns.Count > 0) {
+                        <LyoToolbarMenu Icon="@Icons.Material.Filled.SwapVert"
+                                        Tooltip="Sort"
+                                        AnchorOrigin="Origin.BottomRight"
+                                        TransformOrigin="Origin.TopRight">
+                            @foreach (var column in Host.SortableCardColumns) {
+                                var direction = Host.CardSortDirection(column);
+                                <MudMenuItem OnClick="@(() => Host.SortByCardColumnAsync(column))" Icon="@Host.SortIcon(direction)">@column.Label</MudMenuItem>
+                            }
+                        </LyoToolbarMenu>
+                    }
+
+                    <LyoToolbarMenu Icon="@Icons.Material.Outlined.Settings" AnchorOrigin="Origin.BottomCenter">
+                        <MudMenuItem OnClick="@Host.ShowColumnsPanel">Columns</MudMenuItem>
+                    </LyoToolbarMenu>
+
+                    @if (Host.ShowLayoutToggle) {
+                        <MudToggleGroup T="LyoDataGridLayout" Value="@Host.EffectiveLayout" ValueChanged="Host.SetLayoutAsync"
+                                        Size="Size.Small" CheckMark="false" Color="Color.Primary">
+                            <MudToggleItem Value="LyoDataGridLayout.Auto">
+                                <MudIcon Icon="@Icons.Material.Filled.Devices" Size="Size.Small" title="Automatic: cards on small screens"/>
+                            </MudToggleItem>
+                            <MudToggleItem Value="LyoDataGridLayout.Table">
+                                <MudIcon Icon="@Icons.Material.Filled.TableRows" Size="Size.Small" title="Table layout"/>
+                            </MudToggleItem>
+                            <MudToggleItem Value="LyoDataGridLayout.Cards">
+                                <MudIcon Icon="@Icons.Material.Filled.ViewAgenda" Size="Size.Small" title="Card layout"/>
+                            </MudToggleItem>
+                        </MudToggleGroup>
+                    }
+                </LyoToolbarGroup>
+            </LyoToolbarRow>
+
+            @if (ShowSearchOrFilters) {
+                <LyoToolbarRow>
+                    @if (Host.HasFeature(LyoDataGridFeatureFlags.Searchable)) {
+                        <LyoToolbarGroup Grow="true">
+                            <LyoToolbarField Grow="true">
+                                <MudTextField @ref="_searchField"
+                                              @bind-Value="SearchText"
+                                              Placeholder="@Host.QuickSearchPlaceholder"
+                                              Adornment="Adornment.Start"
+                                              Style="min-width: 300px;"
+                                              AdornmentIcon="@Icons.Material.Filled.Search"
+                                              IconSize="Size.Medium"
+                                              Clearable="true"
+                                              Immediate="true"
+                                              DebounceInterval="300"
+                                              OnDebounceIntervalElapsed="OnSearchDebouncedAsync"
+                                              OnKeyDown="OnSearchKeyDownAsync"
+                                              @onfocus="@(() => SearchHadFocus = true)"
+                                              @onblur="@(() => SearchHadFocus = false)"/>
+                            </LyoToolbarField>
+                        </LyoToolbarGroup>
+                    }
+
+                    @if (Host.HasFeature(LyoDataGridFeatureFlags.Filterable) && Host.FilterPropertyDefinitions.Count > 0) {
+                        <LyoToolbarGroup>
+                            <LyoToolbarMenu Label="Filters"
+                                            Icon="@Icons.Material.Filled.FilterList"
+                                            AnchorOrigin="Origin.BottomLeft"
+                                            TransformOrigin="Origin.TopLeft"
+                                            PopoverFixed="true"
+                                            PopoverClass="lyo-filter-menu-popover">
+                                <div class="px-3 py-2 lyo-filter-panel-popover"
+                                     style="@("width: min(44rem, calc(100vw - 2rem)); min-width: min(44rem, calc(100vw - 2rem)); max-width: calc(100vw - 2rem); height: 6.75rem; min-height: 6.75rem; max-height: 6.75rem; overflow: hidden; box-sizing: border-box;")">
+                                    <QueryFilterComponent ApiClient="Host.ApiClient"
+                                                          PropertyDefinitions="@Host.FilterPropertyDefinitions"
+                                                          CurrentFilters="@Host.GetActiveFilters()"
+                                                          FiltersChanged="@Host.OnFiltersChangedAsync"/>
+                                </div>
+                            </LyoToolbarMenu>
+
+                            @if (Host.FilterStates.Count > 0) {
+                                @foreach (var (filterState, index) in Host.FilterStates.Select((f, i) => (f, i))) {
+                                    <LyoChip Color="@(filterState.IsEnabled ? Color.Primary : Color.Default)"
+                                             Variant="@(filterState.IsEnabled ? Variant.Filled : Variant.Outlined)"
+                                             OnClick="@(() => Host.ToggleFilterAsync(index))"
+                                             OnClose="@(() => Host.RemoveFilterAsync(index))"
+                                             CloseIcon="@Icons.Material.Filled.Close"
+                                             Style="@(filterState.IsEnabled ? "" : "opacity: 0.6; text-decoration: line-through;")">
+                                        <FilterChipLabel Text="@Host.GetFilterDisplayText(filterState.Condition)"
+                                                         DialogText="@Host.GetFilterDisplayDetailText(filterState.Condition)"
+                                                         MaxLength="@Host.FilterChipLabelMaxLength"/>
+                                    </LyoChip>
+                                }
+                            }
+                            else {
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary">None</MudText>
+                            }
+                        </LyoToolbarGroup>
+                    }
+                </LyoToolbarRow>
+            }
+        </Rows>
+    </LyoToolbar>
+</div>

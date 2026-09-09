@@ -1,0 +1,270 @@
+using System.Diagnostics;
+using Lyo.Common.Core.Pathing;
+using Lyo.Common.Metadata.Records;
+using Lyo.Compression;
+using Lyo.Encryption;
+using Lyo.Encryption.TwoKey;
+using Lyo.Exceptions;
+using Lyo.FileMetadataStore;
+using Lyo.FileMetadataStore.Models;
+using Lyo.FileStorage.Audit;
+using Lyo.FileStorage.Models;
+using Lyo.FileStorage.OperationContext;
+using Lyo.FileStorage.Policy;
+using Lyo.Health;
+using Lyo.Metrics;
+using Microsoft.Extensions.Logging;
+
+namespace Lyo.FileStorage.Remote;
+
+/// <summary>
+/// Physical IO for backends reached over a remote file protocol. Path layout, jailing, extension probing, and header rotation live here. A concrete provider supplies only an
+/// <see cref="IRemoteFileTransport" />.
+/// </summary>
+/// <remarks>
+/// <para>Presigned URLs and multipart uploads are unsupported on purpose: neither FTP nor SFTP offers a delegated-credential upload the caller could use directly.</para>
+/// </remarks>
+public abstract class RemoteFileStorageServiceBase : FileStorageServiceBase
+{
+    /// <summary>Smallest byte count that can hold a Lyo encryption header. Anything shorter is corrupt, not merely old.</summary>
+    private const int MinEncryptionHeaderBytes = 13;
+
+    private readonly string _root;
+    private readonly IRemoteFileTransport _transport;
+
+    /// <summary>Builds the shared remote-storage pipeline over <paramref name="transport" />.</summary>
+    /// <param name="options">Storage options for the concrete provider.</param>
+    /// <param name="metadataService">Metadata store behind this file storage.</param>
+    /// <param name="transport">Protocol adapter that performs the remote calls.</param>
+    /// <param name="logger">Logger for the concrete provider's category.</param>
+    /// <param name="compressionService">Optional compression stage.</param>
+    /// <param name="twoKeyEncryptionService">Optional envelope-encryption stage.</param>
+    /// <param name="metrics">Optional metrics sink.</param>
+    /// <param name="operationContextAccessor">Optional ambient actor/tenant context.</param>
+    /// <param name="auditHandlers">Optional audit event handlers.</param>
+    /// <param name="contentPolicy">Optional content policy gate.</param>
+    protected RemoteFileStorageServiceBase(
+        FileStorageServiceBaseOptions options,
+        IFileMetadataStore metadataService,
+        IRemoteFileTransport transport,
+        ILogger logger,
+        ICompressionService? compressionService = null,
+        ITwoKeyEncryptionService? twoKeyEncryptionService = null,
+        IMetrics? metrics = null,
+        IFileOperationContextAccessor? operationContextAccessor = null,
+        IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
+        IFileContentPolicy? contentPolicy = null)
+        : base(
+            ArgumentHelpers.ThrowIfNullReturn(options), ArgumentHelpers.ThrowIfNullReturn(metadataService), logger, compressionService, twoKeyEncryptionService, metrics,
+            operationContextAccessor, auditHandlers, contentPolicy)
+    {
+        ArgumentHelpers.ThrowIfNull(transport);
+        _transport = transport;
+        _root = transport.RootRemoteDirectory;
+        Logger.LogInformation("Initialized {Protocol} file storage under {Root}", _transport.ProtocolName, _root);
+    }
+
+    /// <inheritdoc />
+    protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
+    {
+        var sw = Stopwatch.StartNew();
+        try {
+            await _transport.HealthPingAsync(ct).ConfigureAwait(false);
+            sw.Stop();
+            return HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { ["root"] = _root });
+        }
+        catch (Exception ex) {
+            sw.Stop();
+            return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
+        }
+    }
+
+    /// <inheritdoc />
+    protected override async Task<Stream> CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
+    {
+        var path = GetFilePath(fileId, extension, pathPrefix);
+        var parent = PathHelpers.GetDirectoryName(PathStyle.Posix, path);
+        if (parent is { Length: > 0 })
+            await _transport.CreateDirectoryAsync(parent, ct).ConfigureAwait(false);
+
+        return await _transport.OpenCreateAsync(path, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    protected override async Task<long> GetStorageSizeAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
+    {
+        var path = GetFilePath(fileId, extension, pathPrefix);
+        return await _transport.FileExistsAsync(path, ct).ConfigureAwait(false) ? await _transport.GetLengthAsync(path, ct).ConfigureAwait(false) : 0L;
+    }
+
+    /// <inheritdoc />
+    protected override async Task<Stream?> ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
+    {
+        var path = await FindFilePathAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
+        return path is null ? null : await _transport.OpenReadAsync(path, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    protected override async Task<bool> DeleteFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
+    {
+        var path = await FindFilePathAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
+        if (path is null)
+            return false;
+
+        await _transport.DeleteFileAsync(path, ct).ConfigureAwait(false);
+        Logger.LogDebug("Deleted {Protocol} file {FileId} at {Path}", _transport.ProtocolName, fileId, path);
+        return true;
+    }
+
+    /// <inheritdoc />
+    protected override async Task<EncryptionHeaderInfo> ExtractEncryptionHeaderAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
+    {
+        var path = GetFilePath(fileId, extension, pathPrefix);
+        if (!await _transport.FileExistsAsync(path, ct).ConfigureAwait(false))
+            throw new FileNotFoundException($"{_transport.ProtocolName} file not found for {fileId}", path);
+
+#if NETSTANDARD2_0
+        using var stream = await _transport.OpenReadAsync(path, ct).ConfigureAwait(false);
+#else
+        await using var stream = await _transport.OpenReadAsync(path, ct).ConfigureAwait(false);
+#endif
+        var header = EncryptionHeader.Read(stream);
+        return new(header.EncryptedDataEncryptionKey, header.KeyId, header.KeyVersion, header.DekKeyMaterialBytes);
+    }
+
+    /// <inheritdoc />
+    protected override async Task UpdateFileHeaderAsync(Guid fileId, string? pathPrefix, string targetKeyId, string targetKeyVersion, byte[] newEncryptedDek, CancellationToken ct)
+    {
+        var path = await FindFilePathAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
+        if (path is null || !await _transport.FileExistsAsync(path, ct).ConfigureAwait(false))
+            throw new FileNotFoundException($"File {fileId} not found on {_transport.ProtocolName}; cannot rotate header.", fileId.ToString());
+
+        var bytes = await _transport.DownloadBytesAsync(path, ct).ConfigureAwait(false);
+        if (bytes.Length < MinEncryptionHeaderBytes)
+            throw new InvalidDataException($"File {fileId} has a truncated or invalid encryption header ({bytes.Length} bytes); cannot rotate DEK.");
+
+        using var read = new MemoryStream(bytes, false);
+        var oldHeader = EncryptionHeader.Read(read);
+        var oldHeaderSize = (int)read.Position;
+        var updated = oldHeader.With(targetKeyId, targetKeyVersion, newEncryptedDek);
+        using var headerMs = new MemoryStream(updated.GetHeaderSize());
+        updated.Write(headerMs);
+        var newHeaderBytes = headerMs.ToArray();
+        using var dest = new MemoryStream();
+        await dest.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
+        await dest.WriteAsync(bytes, oldHeaderSize, bytes.Length - oldHeaderSize, ct).ConfigureAwait(false);
+        dest.Position = 0;
+        await _transport.UploadAsync(path, dest, ct).ConfigureAwait(false);
+        Logger.LogDebug("Updated {Protocol} file header for {FileId}", _transport.ProtocolName, fileId);
+    }
+
+    /// <inheritdoc />
+    protected override async Task CleanupPartialFileAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
+    {
+        try {
+            var path = await FindFilePathAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
+            if (path is not null && await _transport.FileExistsAsync(path, ct).ConfigureAwait(false))
+                await _transport.DeleteFileAsync(path, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            Logger.LogWarning(ex, "Failed to cleanup partial {Protocol} file {FileId}", _transport.ProtocolName, fileId);
+        }
+    }
+
+    /// <inheritdoc />
+    public override async Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default)
+    {
+        var meta = await GetMetadataAsync(sourceFileId, ct).ConfigureAwait(false);
+        EnsureReadableAvailability(meta);
+        var src = await FindFilePathAsync(sourceFileId, meta.PathPrefix, ct).ConfigureAwait(false);
+        if (src is null)
+            throw new FileNotFoundException($"Source {_transport.ProtocolName} file missing for id {sourceFileId}");
+
+        var destId = Guid.NewGuid();
+        var destPrefix = NormalizePathPrefix(request?.PathPrefix ?? meta.PathPrefix);
+        var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
+        var dest = GetFilePath(destId, suffix, destPrefix);
+        await _transport.CopyFileAsync(src, dest, ct).ConfigureAwait(false);
+        return await RecordCopyMetadataAsync(sourceFileId, meta, destId, request, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public override async Task<FileStoreResult> MoveFileAsync(Guid fileId, MoveFileRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        ValidatePathPrefix(request.PathPrefix);
+        var destPrefix = NormalizePathPrefix(request.PathPrefix);
+        var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+        EnsureReadableAvailability(meta);
+        var previous = meta.PathPrefix;
+        if (string.Equals(previous, destPrefix, StringComparison.Ordinal))
+            return meta;
+
+        var src = await FindFilePathAsync(fileId, previous, ct).ConfigureAwait(false);
+        if (src is null)
+            throw new FileNotFoundException($"Source file path not found for id {fileId}");
+
+        var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
+        var dest = GetFilePath(fileId, suffix, destPrefix);
+        await _transport.RenameAsync(src, dest, ct).ConfigureAwait(false);
+        var movedMeta = await RecordMoveMetadataAsync(meta, destPrefix, ct).ConfigureAwait(false);
+        RaiseFileMoved(fileId, FileStoreSnapshot.From(movedMeta), previous);
+        return movedMeta;
+    }
+
+    /// <summary>
+    /// Builds the absolute remote path for a file. Without a prefix, ids are sharded two levels deep by their leading hex digits so one directory does not collect every file.
+    /// </summary>
+    /// <param name="fileId">File identifier, rendered without dashes.</param>
+    /// <param name="extension">Suffix appended after the id, including any pipeline extensions.</param>
+    /// <param name="pathPrefix">Caller-chosen prefix. Sharding is skipped when this is supplied.</param>
+    private string GetFilePath(Guid fileId, string extension = "", string? pathPrefix = null)
+    {
+        var fileName = fileId.ToString("N") + extension;
+        string combined;
+        if (!string.IsNullOrWhiteSpace(pathPrefix))
+            combined = PathHelpers.Combine(PathStyle.Posix, _root, pathPrefix!.Replace('\\', '/').Trim('/'), fileName);
+        else {
+            var id = fileId.ToString("N");
+            combined = PathHelpers.Combine(PathStyle.Posix, _root, id.Substring(0, 2), id.Substring(2, 2), fileName);
+        }
+
+        var full = PathHelpers.GetFullPath(PathStyle.Posix, combined);
+        PathHelpers.ThrowIfEscapesRoot(PathStyle.Posix, _root, full);
+        return full;
+    }
+
+    /// <summary>
+    /// Finds the stored object for <paramref name="fileId" />. The pipeline appends an extension per stage, and which stages ran is not recorded per file, so the bare path is
+    /// probed first and then each plausible suffix combination.
+    /// </summary>
+    /// <param name="fileId">File identifier.</param>
+    /// <param name="pathPrefix">Prefix the file was stored under.</param>
+    /// <param name="ct">Cancellation token.</param>
+    private async Task<string?> FindFilePathAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
+    {
+        var basePath = GetFilePath(fileId, "", pathPrefix);
+        if (await _transport.FileExistsAsync(basePath, ct).ConfigureAwait(false))
+            return basePath;
+
+        var candidates = new List<string>();
+        if (CompressionService != null)
+            candidates.Add(basePath + CompressionService.FileExtension);
+
+        if (TwoKeyEncryptionService != null) {
+            candidates.Add(basePath + TwoKeyEncryptionService.FileExtension);
+            if (CompressionService != null)
+                candidates.Add(basePath + CompressionService.FileExtension + TwoKeyEncryptionService.FileExtension);
+        }
+
+        foreach (var ext in FileTypeInfo.CommonStorageResolutionSuffixes)
+            candidates.Add(basePath + ext);
+
+        foreach (var c in candidates) {
+            if (await _transport.FileExistsAsync(c, ct).ConfigureAwait(false))
+                return c;
+        }
+
+        return null;
+    }
+}

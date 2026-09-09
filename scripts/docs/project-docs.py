@@ -1,0 +1,1196 @@
+#!/usr/bin/env python3
+"""
+Per-project docs — docs.json is the ONLY source of truth.
+
+  docs.json  (edit this)
+      ↓ render
+  README.md  (generated — never hand-edit as SoT)
+  Lyo.Web.Components/wwwroot/catalog/
+  apps/gateway/content/  (only if that tree still exists; marketing site lives in Lyo-Public)
+
+Commands:
+  render      docs.json → README + portfolio + Blazor  (normal path)
+  sync-deps   refresh dependencies[] on each docs.json from csproj/graph
+  audit       print coverage stats
+  extract     DANGEROUS legacy import: README → docs.json (lossy; overwrites SoT)
+
+Pass project names or globs after the command to limit work:
+  python3 scripts/docs/project-docs.py render Lyo.Email
+  python3 scripts/docs/project-docs.py render 'Lyo.Email.*' Lyo.Sms
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+import unicodedata
+from fnmatch import fnmatchcase
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+_SCRIPTS = ROOT / "scripts"
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+
+from lyo_tooling.deps import load_dependency_map  # noqa: E402
+from lyo_tooling.dotnet import find_project_csproj, read_target_frameworks  # noqa: E402
+
+_DOCS_DIR = Path(__file__).resolve().parent
+if str(_DOCS_DIR) not in sys.path:
+    sys.path.insert(0, str(_DOCS_DIR))
+from markdown import section_to_md  # noqa: E402
+LYO_NET = ROOT / "Lyo.Net"
+PORTFOLIO = ROOT / "apps" / "gateway" / "content"
+PORTFOLIO_FULL = PORTFOLIO / "packages-full"
+BLAZOR = ROOT / "Lyo.Net/Apps/Web/Lyo.Web.Components/wwwroot/catalog"
+ROOT_README = ROOT / "README.md"
+DOCS_FILENAME = "docs.json"
+
+AREA_ORDER = [
+    "Communication",
+    "Core",
+    "Data",
+    "Plugins",
+    "Integration",
+    "Apps",
+    "Security",
+    "Examples",
+    "Tools",
+    "Other",
+]
+
+SKIP_DIRS = {"bin", "obj", "node_modules", ".git", "TestResults"}
+
+EXAMPLE_H2 = re.compile(
+    r"^(quick\s*start|usage(\s+examples?)?|examples?|getting\s*started|"
+    r"registration|setup|basic\s*usage|how\s*to|cookbook|samples?|"
+    r"loading|extraction.*|editing.*|dependency\s*injection|"
+    r"drop-and-play\s*registration|di(\s+extension.*)?"
+    r"|configuration(\s*options)?|events|"
+    r"rendering|rerun|retention.*|subscribe.*|watching.*)$",
+    re.I,
+)
+# Also treat H2 as examples when the title is clearly a how-to / API demo.
+EXAMPLE_H2_LOOSE = re.compile(
+    r"\b(register|registration|setup|load|open|merge|apply|watch|subscribe|"
+    r"configure|configuration|dependency\s*injection|\bdi\b|quick\s*start|"
+    r"example|usage|getting\s*started)\b",
+    re.I,
+)
+FEATURES_H2 = re.compile(r"^features$", re.I)
+SKIP_H2 = re.compile(r"^(table\s*of\s*contents|toc|contents)$", re.I)
+
+EXAMPLE_TITLE_ALIASES = {
+    "Basic Usage": "Subscribe to events",
+    "Advanced Configuration": "Configure options",
+    "Dependency Injection Example": "Register with DI",
+    "High-Performance Configuration": "High-performance options",
+    "Watch for File Changes": "Handle file change events",
+    "Monitor Directory Content Changes": "Handle directory change events",
+    "Watch Subdirectories": "Watch subdirectories",
+    "Drop-and-play registration": "Register jobs (Postgres)",
+    "DI": "Register with DI",
+    "Dependency injection": "Register with DI",
+    "Loading": "Open a PDF",
+    "Editing and merging (`IPdfWriter`)": "Edit and merge PDFs",
+    "Editing and merging (IPdfWriter)": "Edit and merge PDFs",
+    "Retention cleanup": "Run retention cleanup",
+    "Registration": "Register services",
+}
+
+SUITE_BY_PACKAGE = {
+    "Lyo.Compression": "compression",
+    "Lyo.Encryption": "encryption",
+    "Lyo.Cache": "cache",
+    "Lyo.Hashing": "hashing",
+    "Lyo.Lock": "lock",
+    "Lyo.Csv": "csv",
+    "Lyo.Xlsx": "xlsx",
+    "Lyo.Api": "query",
+    "Lyo.Query.Models": "query",
+}
+
+
+def strip_emoji(text: str) -> str:
+    out = []
+    for ch in text:
+        o = ord(ch)
+        if ch in "\uFE0E\uFE0F\u200D\u20E3":
+            continue
+        if 0x1F000 <= o <= 0x1FFFF or 0x2600 <= o <= 0x27BF:
+            continue
+        name = unicodedata.name(ch, "")
+        if "EMOJI" in name or name.startswith("REGIONAL INDICATOR"):
+            continue
+        out.append(ch)
+    s = "".join(out)
+    # Keep list indentation; only collapse internal runs of spaces per line.
+    s = re.sub(r"(?m)^(#{1,6})[ \t]+", r"\1 ", s)
+    lines = []
+    for line in s.split("\n"):
+        m = re.match(r"^([ \t]*)(.*)$", line)
+        lead, rest = m.group(1), m.group(2)
+        rest = re.sub(r"[ \t]{2,}", " ", rest)
+        lines.append(lead + rest)
+    s = "\n".join(lines)
+    s = re.sub(r"\n{3,}", "\n\n", s)
+    return s.strip()
+
+
+def collapse_ws(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def normalize_prose(text: str) -> str:
+    """Join soft line wraps; keep blank-line paragraphs; heal broken ``**`` markers."""
+    if not text:
+        return ""
+    s = text.replace("\r\n", "\n")
+    # Mid-wrap often splits bold: "*\n*AES" or "* *AES"
+    s = re.sub(r"\*\s*\n\s*\*", "**", s)
+    s = re.sub(r"\*\s+\*", "**", s)
+    paragraphs = re.split(r"\n\s*\n", s)
+    out: list[str] = []
+    for para in paragraphs:
+        joined = re.sub(r"[ \t]*\n[ \t]*", " ", para).strip()
+        joined = re.sub(r"[ \t]{2,}", " ", joined)
+        if joined:
+            out.append(joined)
+    return "\n\n".join(out)
+
+
+def strip_md_links(text: str) -> str:
+    return re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text).strip()
+
+
+def extract_lead_title(text: str) -> str | None:
+    """Pull a short title from a bold label immediately above a code fence."""
+    lines = [l.strip() for l in text.strip().splitlines() if l.strip()]
+    if not lines:
+        return None
+    last = lines[-1]
+    m = re.fullmatch(r"\*\*([^*]+)\*\*:?", last)
+    if not m:
+        return None
+    title = m.group(1).strip().rstrip(":")
+    # Reject captions that are clearly not titles (too long / look like prose).
+    if len(title) > 72 or title.count(" ") > 10:
+        return None
+    return title
+
+
+def uniquify_title(title: str, existing: list[dict]) -> str:
+    titles = {e.get("title") for e in existing}
+    if title not in titles:
+        return title
+    n = 2
+    while f"{title} ({n})" in titles:
+        n += 1
+    return f"{title} ({n})"
+
+
+def make_tagline(description: str, limit: int = 200) -> str:
+    """First paragraph, trimmed to a clean sentence (no mid-word cutoffs)."""
+    if not description:
+        return ""
+    first = collapse_ws(strip_md_links(description.split("\n\n")[0]))
+    if len(first) <= limit:
+        return first
+    window = first[: limit + 1]
+    # Prefer ending on sentence punctuation.
+    for sep in (". ", "! ", "? "):
+        idx = window.rfind(sep)
+        if idx >= 80:
+            return window[: idx + 1].strip()
+    # Else break on last space before limit.
+    idx = window.rfind(" ")
+    if idx >= 80:
+        return window[:idx].rstrip(",;:") + "…"
+    return first[:limit].rstrip() + "…"
+
+
+def area_from_path(rel: str) -> str:
+    parts = rel.replace("\\", "/").split("/")
+    if parts and parts[0] == "Lyo.Net" and len(parts) > 1 and parts[1] in AREA_ORDER:
+        return parts[1]
+    return "Other"
+
+
+def package_topic(package_id: str) -> str:
+    """Family key for catalog grouping: ``Lyo.Email`` from ``Lyo.Email.Postgres``."""
+    parts = package_id.split(".")
+    if len(parts) < 2:
+        return package_id
+    return f"{parts[0]}.{parts[1]}"
+
+
+def discover_projects() -> list[dict]:
+    found = []
+    for csproj in sorted(LYO_NET.rglob("*.csproj")):
+        if any(p in SKIP_DIRS for p in csproj.parts):
+            continue
+        name = csproj.stem
+        if not name.startswith("Lyo."):
+            continue
+        if name.endswith(".Tests") or name.endswith(".Benchmarks"):
+            continue
+        readme = csproj.parent / "README.md"
+        if not readme.is_file():
+            continue
+        rel = readme.relative_to(ROOT).as_posix()
+        found.append(
+            {
+                "id": name,
+                "name": name,
+                "dir": csproj.parent,
+                "readme": readme,
+                "readmePath": rel,
+                "docsPath": csproj.parent / DOCS_FILENAME,
+                "area": area_from_path(rel),
+            }
+        )
+    return found
+
+
+def select_projects(projects: list[dict], patterns: list[str]) -> list[dict]:
+    """Filter discovered projects by name globs. Empty patterns = all. Errors if a pattern matches nothing."""
+    if not patterns:
+        return projects
+    selected: list[dict] = []
+    seen: set[str] = set()
+    missing: list[str] = []
+    for pattern in patterns:
+        hits = [p for p in projects if fnmatchcase(p["id"], pattern)]
+        if not hits:
+            missing.append(pattern)
+            continue
+        for proj in hits:
+            if proj["id"] in seen:
+                continue
+            seen.add(proj["id"])
+            selected.append(proj)
+    if missing:
+        raise SystemExit("no project matched: " + ", ".join(missing))
+    return selected
+
+
+def split_h2(md: str) -> tuple[str, str, list[tuple[str, str]]]:
+    """Return (title, intro, [(h2, body), ...])."""
+    lines = md.replace("\r\n", "\n").split("\n")
+    i = 0
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    title = ""
+    if i < len(lines) and lines[i].startswith("# "):
+        title = lines[i][2:].strip()
+        i += 1
+    intro_lines = []
+    while i < len(lines) and not lines[i].startswith("## "):
+        intro_lines.append(lines[i])
+        i += 1
+    sections = []
+    while i < len(lines):
+        if not lines[i].startswith("## "):
+            i += 1
+            continue
+        h2 = lines[i][3:].strip()
+        i += 1
+        body = []
+        while i < len(lines) and not lines[i].startswith("## "):
+            body.append(lines[i])
+            i += 1
+        sections.append((h2, "\n".join(body).strip()))
+    return title, "\n".join(intro_lines).strip(), sections
+
+
+def split_h3(body: str) -> list[tuple[str | None, str]]:
+    lines = body.split("\n")
+    parts: list[tuple[str | None, str]] = []
+    title: str | None = None
+    buf: list[str] = []
+
+    def flush():
+        nonlocal buf, title
+        text = "\n".join(buf).strip()
+        if text or title:
+            parts.append((title, text))
+        buf = []
+
+    for line in lines:
+        if line.startswith("### "):
+            flush()
+            title = line[4:].strip()
+            continue
+        buf.append(line)
+    flush()
+    return parts or [(None, body.strip())]
+
+
+def iter_code_and_text(body: str):
+    re_code = re.compile(r"```([^\n`]*)\n([\s\S]*?)```")
+    last = 0
+    for m in re_code.finditer(body):
+        if m.start() > last:
+            t = body[last : m.start()].strip()
+            if t:
+                yield ("text", None, t)
+        lang = (m.group(1) or "csharp").strip() or "csharp"
+        yield ("code", lang, m.group(2).rstrip("\n"))
+        last = m.end()
+    tail = body[last:].strip()
+    if tail:
+        yield ("text", None, tail)
+
+
+def _build_nested_nodes(entries: list[tuple[int, str]], start: int, parent_indent: int) -> tuple[list, int]:
+    """Build FeatureNode / list-item trees from (indent, body) pairs."""
+    nodes: list = []
+    i = start
+    while i < len(entries):
+        indent, body = entries[i]
+        if indent <= parent_indent:
+            break
+        j = i + 1
+        if j < len(entries) and entries[j][0] > indent:
+            children, j = _build_nested_nodes(entries, j, indent)
+            nodes.append({"title": body, "items": children})
+            i = j
+        else:
+            nodes.append(body)
+            i = j
+    return nodes, i
+
+
+def _parse_indented_bullets(text: str) -> list:
+    """Parse markdown bullets into nested string / {title, items} nodes."""
+    entries: list[tuple[int, str]] = []
+    for line in text.split("\n"):
+        m = re.match(r"^([ \t]*)([-*+]|\d+\.)\s+(.*)$", line)
+        if m:
+            indent = len(m.group(1).expandtabs(2))
+            entries.append((indent, strip_emoji(m.group(3).rstrip())))
+            continue
+        if entries and re.match(r"^\s+\S", line):
+            indent, body = entries[-1]
+            entries[-1] = (indent, f"{body} {line.strip()}")
+            continue
+        if not line.strip():
+            continue
+        if entries:
+            break
+    if not entries:
+        return []
+    nodes, _ = _build_nested_nodes(entries, 0, -1)
+    return nodes
+
+
+def parse_feature_list(text: str) -> list:
+    """Top-level bullets; nested children become `{title, items}` objects."""
+    return _parse_indented_bullets(text)
+
+
+def parse_bullet_list(text: str) -> list | None:
+    items = _parse_indented_bullets(text)
+    return items or None
+
+
+def feature_node_to_md(node, indent: int = 0) -> list[str]:
+    """Emit a FeatureNode as markdown lines."""
+    pad = "  " * indent
+    if isinstance(node, str):
+        return [f"{pad}- {node}"]
+
+    title = (node.get("title") or "").strip()
+    text = (node.get("text") or "").strip()
+    items = node.get("items") or []
+
+    # Top-level groups with children → ### subsection under Features.
+    if indent == 0 and items:
+        lines: list[str] = [f"### {title}", ""]
+        if text:
+            lines.extend([text, ""])
+        for child in items:
+            lines.extend(feature_node_to_md(child, 0))
+        lines.append("")
+        return lines
+
+    if title and text:
+        label = f"**{title}.** {text}"
+    elif title:
+        label = f"**{title}**" if items else title
+    else:
+        label = text
+
+    lines = [f"{pad}- {label}"] if label else []
+    for child in items:
+        lines.extend(feature_node_to_md(child, indent + (1 if label else indent)))
+    return lines
+
+
+def split_table_cells(line: str) -> list[str]:
+    line = line.strip()
+    if line.startswith("|"):
+        line = line[1:]
+    if line.endswith("|"):
+        line = line[:-1]
+    return [c.strip() for c in line.split("|")]
+
+
+def is_table_separator(line: str) -> bool:
+    cells = split_table_cells(line)
+    if not cells:
+        return False
+    return all(re.fullmatch(r":?-{3,}:?", c.replace(" ", "")) for c in cells if c)
+
+
+def parse_markdown_table(text: str) -> dict | None:
+    """
+    Parse a markdown pipe-table into {headers, rows, lead?, trail?}.
+    Returns None when the body is not primarily a table.
+    """
+    text = text.strip()
+    if not text or "|" not in text:
+        return None
+
+    lines = text.replace("\r\n", "\n").split("\n")
+    # Find first table header + separator.
+    start = None
+    for i in range(len(lines) - 1):
+        if (
+            lines[i].strip().startswith("|")
+            and is_table_separator(lines[i + 1])
+        ):
+            start = i
+            break
+    if start is None:
+        return None
+
+    headers = split_table_cells(lines[start])
+    if not headers:
+        return None
+
+    rows: list[list[str]] = []
+    end = start + 2
+    while end < len(lines):
+        line = lines[end].strip()
+        if not line.startswith("|"):
+            break
+        if is_table_separator(line):
+            end += 1
+            continue
+        cells = split_table_cells(lines[end])
+        # Pad / trim to header width
+        if len(cells) < len(headers):
+            cells = cells + [""] * (len(headers) - len(cells))
+        elif len(cells) > len(headers):
+            cells = cells[: len(headers)]
+        rows.append(cells)
+        end += 1
+
+    if not rows:
+        return None
+
+    lead = "\n".join(lines[:start]).strip()
+    trail = "\n".join(lines[end:]).strip()
+    # Reject if surrounding prose dominates (mixed narrative docs stay markdown).
+    non_table = (lead + "\n" + trail).strip()
+    table_lines = end - start
+    if non_table and len(non_table) > 400 and table_lines < 4:
+        return None
+
+    out: dict = {"headers": headers, "rows": rows}
+    if lead:
+        out["lead"] = lead
+    if trail:
+        out["trail"] = trail
+    return out
+
+
+def text_to_section(title: str, text: str) -> dict | None:
+    text = strip_emoji(text)
+    if not text:
+        return None
+    bullets = parse_bullet_list(text)
+    if bullets:
+        non_empty = [l for l in text.split("\n") if l.strip()]
+        bulletish = sum(
+            1
+            for l in non_empty
+            if re.match(r"^\s*([-*+]|\d+\.)\s+", l) or re.match(r"^\s{2,}\S", l)
+        )
+        if non_empty and bulletish / len(non_empty) >= 0.55:
+            return {"type": "list", "title": title, "items": bullets}
+
+    table = parse_markdown_table(text)
+    if table:
+        section = {"type": "table", "title": title, "headers": table["headers"], "rows": table["rows"]}
+        if table.get("lead"):
+            section["lead"] = table["lead"]
+        if table.get("trail"):
+            section["trail"] = table["trail"]
+        return section
+
+    if len(text) < 700 and "\n\n\n" not in text and not re.search(r"^#{1,6}\s", text, re.M):
+        return {"type": "paragraph", "title": title, "text": collapse_ws(text)}
+    return {"type": "markdown", "title": title, "body": text}
+
+
+def detect_benchmarks(pkg: dict) -> dict | None:
+    items = []
+    readme_dir = (ROOT / pkg["readmePath"]).parent
+    candidates = [
+        readme_dir / "BENCHMARK_SUMMARY.md",
+        readme_dir.parent / f"{pkg['id']}.Benchmarks" / "BENCHMARK_SUMMARY.md",
+        readme_dir / f"{pkg['id']}.Benchmarks" / "BENCHMARK_SUMMARY.md",
+    ]
+    if pkg["id"].startswith("Lyo.Encryption"):
+        candidates.append(readme_dir.parent / "Lyo.Encryption.Benchmarks" / "BENCHMARK_SUMMARY.md")
+    if pkg["id"].startswith("Lyo.Compression"):
+        candidates.append(readme_dir.parent / "Lyo.Compression.Benchmarks" / "BENCHMARK_SUMMARY.md")
+    seen = set()
+    for abs_path in candidates:
+        if not abs_path.is_file():
+            continue
+        rel = abs_path.relative_to(ROOT).as_posix()
+        if rel in seen:
+            continue
+        seen.add(rel)
+        items.append({"label": "Benchmark summary", "href": rel})
+    suite = SUITE_BY_PACKAGE.get(pkg["id"])
+    if not items and not suite:
+        return None
+    out: dict = {}
+    if suite:
+        out["suite"] = suite
+    if items:
+        out["items"] = items
+    return out or None
+
+
+def readme_to_docs(md: str, meta: dict) -> dict:
+    md = strip_emoji(md)
+    title, intro, h2s = split_h2(md)
+    description = strip_emoji(intro)
+    tagline = make_tagline(description) or meta["id"]
+
+    features: list[str] = []
+    examples: list[dict] = []
+    sections: list[dict] = []
+
+    for h2_raw, body in h2s:
+        h2 = strip_emoji(h2_raw)
+        if not body or SKIP_H2.match(h2):
+            continue
+
+        if FEATURES_H2.match(h2):
+            features.extend(parse_feature_list(body) or parse_bullet_list(body) or [])
+            continue
+
+        as_examples = bool(EXAMPLE_H2.match(h2) or EXAMPLE_H2_LOOSE.search(h2))
+        h3parts = split_h3(body)
+
+        if as_examples:
+            # Named examples: one per code block; prefer ### title, then bold lead-in, then H2.
+            for h3, part_body in h3parts:
+                part_title = strip_emoji(h3) if h3 else None
+                code_idx = 0
+                pending_lead = None
+                prose_bits = []
+                for kind, lang, value in iter_code_and_text(part_body):
+                    if kind != "code":
+                        lead = extract_lead_title(value)
+                        if lead:
+                            pending_lead = lead
+                        if value.strip():
+                            prose_bits.append(value.strip())
+                        continue
+                    code_idx += 1
+                    title_ex = (
+                        pending_lead
+                        or part_title
+                        or (h2 if code_idx == 1 else f"{h2} ({code_idx})")
+                    )
+                    title_ex = EXAMPLE_TITLE_ALIASES.get(title_ex, title_ex)
+                    if not pending_lead and not part_title:
+                        title_ex = EXAMPLE_TITLE_ALIASES.get(h2, title_ex)
+                    examples.append(
+                        {
+                            "title": uniquify_title(title_ex, examples),
+                            "language": lang or "csharp",
+                            "code": value,
+                        }
+                    )
+                    pending_lead = None
+                # Keep non-code prose (tables, etc.) as a section under the H2/H3.
+                if prose_bits:
+                    st = part_title or h2
+                    # Drop pure bold labels that were only example captions.
+                    joined = "\n\n".join(
+                        p
+                        for p in prose_bits
+                        if not re.fullmatch(r"\*\*[^*]+\*\*:?", p.strip())
+                    )
+                    if joined.strip():
+                        section = text_to_section(st, joined)
+                        if section:
+                            sections.append(section)
+            continue
+
+        # Non-example sections: keep each ## / ### as ONE block so interleaved
+        # prose + code does not repeat the same heading for every chunk.
+        for h3, part_body in h3parts:
+            part_title = strip_emoji(h3) if h3 else None
+            section_title = f"{h2} — {part_title}" if part_title else h2
+            part_body = part_body.strip()
+            if not part_body:
+                continue
+
+            chunks = list(iter_code_and_text(part_body))
+            code_chunks = [c for c in chunks if c[0] == "code"]
+            text_chunks = [c for c in chunks if c[0] == "text"]
+
+            # Pure list (Events, etc.)
+            if len(code_chunks) == 0 and text_chunks:
+                section = text_to_section(section_title, part_body)
+                if section:
+                    sections.append(section)
+                continue
+
+            # Single code fence with little/no prose → code section
+            if len(code_chunks) == 1 and sum(len(t[2]) for t in text_chunks) < 80:
+                sections.append(
+                    {
+                        "type": "code",
+                        "title": section_title,
+                        "language": code_chunks[0][1] or "csharp",
+                        "code": code_chunks[0][2],
+                    }
+                )
+                continue
+
+            # Mixed prose + one or more code blocks → one markdown section (keeps fences).
+            sections.append(
+                {
+                    "type": "markdown",
+                    "title": section_title,
+                    "body": part_body,
+                }
+            )
+
+    # Packages without a ## Features heading: promote the first overview-style list.
+    if not features:
+        promote = re.compile(
+            r"^(registration|overview|highlights|capabilities|what it (is|does)|summary)$",
+            re.I,
+        )
+        for section in sections:
+            if section.get("type") != "list":
+                continue
+            st = section.get("title") or ""
+            if promote.match(st) or promote.match(st.split(" — ")[0]):
+                features = list(section.get("items") or [])
+                break
+
+    pkg = {
+        "id": meta["id"],
+        "name": title or meta["id"],
+        "area": meta["area"],
+        "tagline": tagline,
+        "description": description or tagline,
+        "features": features,
+        "examples": examples,
+        "sections": sections,
+        "links": [],
+        "readmePath": meta["readmePath"],
+    }
+    # Promote leftover standalone code sections into examples (keeps docs scannable).
+    remaining_sections = []
+    for section in sections:
+        if section.get("type") == "code" and (section.get("code") or "").strip():
+            title = section.get("title") or "Example"
+            # Prefer the leaf after " — " for display.
+            if " — " in title:
+                leaf = title.split(" — ")[-1].strip()
+                title = EXAMPLE_TITLE_ALIASES.get(leaf, leaf)
+            title = EXAMPLE_TITLE_ALIASES.get(title, title)
+            if not any(e.get("code") == section["code"] for e in examples):
+                examples.append(
+                    {
+                        "title": title,
+                        "language": section.get("language") or "csharp",
+                        "code": section["code"],
+                    }
+                )
+            continue
+        remaining_sections.append(section)
+    pkg["sections"] = remaining_sections
+    pkg["examples"] = examples
+
+    benches = detect_benchmarks(pkg)
+    if benches:
+        pkg["benchmarks"] = benches
+    return pkg
+
+
+def normalize_pkg_prose(pkg: dict) -> dict:
+    """Return a shallow copy with tagline/description soft-wraps normalized."""
+    out = dict(pkg)
+    if "tagline" in out:
+        out["tagline"] = normalize_prose(out.get("tagline") or "")
+    if "description" in out:
+        out["description"] = normalize_prose(out.get("description") or "")
+    return out
+
+
+def docs_to_readme(pkg: dict) -> str:
+    pkg = normalize_pkg_prose(pkg)
+    tagline = (pkg.get("tagline") or "").strip()
+    desc = (pkg.get("description") or "").strip()
+    lines = [
+        f"# {pkg.get('name') or pkg['id']}",
+        "",
+    ]
+    # Prefer full description; fall back to tagline. Avoid printing both when one is a prefix of the other.
+    if desc:
+        lines.extend([desc, ""])
+    elif tagline:
+        lines.extend([tagline, ""])
+
+    if pkg.get("features"):
+        lines.append("## Features")
+        lines.append("")
+        for f in pkg["features"]:
+            lines.extend(feature_node_to_md(f, 0))
+        # feature_node_to_md may already end groups with a blank line; collapse trailing blanks.
+        while lines and lines[-1] == "":
+            lines.pop()
+        lines.append("")
+
+    if pkg.get("examples"):
+        lines.append("## Examples")
+        lines.append("")
+        for ex in pkg["examples"]:
+            if ex.get("title"):
+                lines.append(f"### {ex['title']}")
+                lines.append("")
+            lines.append(f"```{ex.get('language') or 'csharp'}")
+            lines.append(ex.get("code") or "")
+            lines.append("```")
+            lines.append("")
+
+    benches = pkg.get("benchmarks")
+    if benches and (benches.get("headline") or benches.get("suite") or benches.get("items")):
+        lines.append("## Benchmarks")
+        lines.append("")
+        if benches.get("headline"):
+            lines.append(benches["headline"])
+            lines.append("")
+        if benches.get("suite"):
+            lines.append(f"- Portfolio suite: `{benches['suite']}`")
+        for item in benches.get("items") or []:
+            note = f". {item['note']}" if item.get("note") else ""
+            lines.append(f"- [{item['label']}]({item['href']}){note}")
+        lines.append("")
+
+    for section in pkg.get("sections") or []:
+        if is_legacy_deps_section(section):
+            continue
+        lines.append(section_to_md(section, 2).rstrip())
+        lines.append("")
+
+    if pkg.get("links"):
+        lines.append("## Links")
+        lines.append("")
+        for link in pkg["links"]:
+            lines.append(f"- [{link['label']}]({link['href']})")
+        lines.append("")
+
+    deps = pkg.get("dependencies") or []
+    if deps:
+        lines.append("## Dependencies")
+        lines.append("")
+        lines.append(
+            "Generated from `ProjectReference` / `PackageReference` "
+            "(same model as `docs/Lyo.ProjectGraph.html`)."
+        )
+        lines.append("")
+        for dep in deps:
+            name = dep.get("name") or ""
+            tags = dep.get("tags") or []
+            tag_str = ", ".join(tags)
+            version = dep.get("version")
+            label = f"`{name}`"
+            ver = f" `{version}`" if version else ""
+            lines.append(f"- {label}{ver} ({tag_str})" if tag_str else f"- {label}{ver}")
+        lines.append("")
+
+    text = "\n".join(lines)
+    text = re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
+    return strip_emoji(text)
+
+
+LEGACY_DEPS_TITLE = re.compile(
+    r"^(related\s+packages|related\s+projects|dependencies)(\b| — |-|:)",
+    re.I,
+)
+
+
+def is_legacy_deps_section(section: dict) -> bool:
+    title = (section.get("title") or "").strip()
+    return bool(LEGACY_DEPS_TITLE.match(title))
+
+
+def is_package_reference_example(example: dict) -> bool:
+    code = (example.get("code") or "").strip()
+    if "PackageReference" not in code:
+        return False
+    # Pure PackageReference snippet (no real API usage)
+    lines = [l for l in code.splitlines() if l.strip()]
+    return all("PackageReference" in l or l.strip().startswith("<") or l.strip().startswith("//") for l in lines)
+
+
+def sync_dependencies_into_docs(projects: list[dict] | None = None) -> int:
+    """Write `dependencies` + `targetFrameworks` onto each docs.json; strip legacy deps sections."""
+    dep_map = load_dependency_map(include_tests=False)
+    updated = 0
+    for proj in projects if projects is not None else discover_projects():
+        if not proj["docsPath"].is_file():
+            continue
+        pkg = json.loads(proj["docsPath"].read_text(encoding="utf-8"))
+        deps = dep_map.get(proj["id"], [])
+        pkg["dependencies"] = deps
+        csproj = find_project_csproj(proj["dir"]) or (proj["dir"] / f"{proj['id']}.csproj")
+        pkg["targetFrameworks"] = read_target_frameworks(csproj)
+        pkg["sections"] = [s for s in (pkg.get("sections") or []) if not is_legacy_deps_section(s)]
+        pkg["examples"] = [e for e in (pkg.get("examples") or []) if not is_package_reference_example(e)]
+        write_json(proj["docsPath"], pkg)
+        updated += 1
+    return updated
+
+
+def write_json(path: Path, data) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def cmd_extract(*, force: bool = False, projects: list[dict] | None = None) -> None:
+    """Legacy README → docs.json import. Overwrites the source of truth — refuse without --force."""
+    if not force:
+        raise SystemExit(
+            "extract overwrites docs.json (the source of truth) from generated READMEs and is lossy.\n"
+            "Refuse to run. If you truly need a one-time import: "
+            "python3 scripts/docs/project-docs.py extract --force\n"
+            "Normal workflow: edit docs.json, then: python3 scripts/docs/project-docs.py render"
+        )
+    selected = projects if projects is not None else discover_projects()
+    ok = 0
+    for proj in selected:
+        md = proj["readme"].read_text(encoding="utf-8")
+        pkg = readme_to_docs(md, proj)
+        write_json(proj["docsPath"], pkg)
+        ok += 1
+    print(f"extract --force: overwrote {ok} {DOCS_FILENAME} files from READMEs (SoT replaced)")
+
+
+def load_all_docs(projects: list[dict] | None = None) -> list[dict]:
+    packages = []
+    for proj in projects if projects is not None else discover_projects():
+        if not proj["docsPath"].is_file():
+            print(f"warn: missing {proj['docsPath']}", file=sys.stderr)
+            continue
+        pkg = json.loads(proj["docsPath"].read_text(encoding="utf-8"))
+        # keep path fields honest
+        pkg["id"] = pkg.get("id") or proj["id"]
+        pkg["readmePath"] = proj["readmePath"]
+        pkg["area"] = pkg.get("area") or proj["area"]
+        packages.append(pkg)
+    packages.sort(
+        key=lambda p: (
+            AREA_ORDER.index(p["area"]) if p.get("area") in AREA_ORDER else 99,
+            p["id"],
+        )
+    )
+    return packages
+
+
+def cmd_sync_deps(projects: list[dict] | None = None) -> None:
+    n = sync_dependencies_into_docs(projects)
+    print(f"sync-deps: wrote dependencies onto {n} docs.json files")
+
+
+def replace_marked_region(source: str, start_marker: str, end_marker: str, replacement: str) -> str:
+    start = source.find(start_marker)
+    end = source.find(end_marker)
+    if start == -1 or end == -1 or end < start:
+        raise ValueError(f"Missing markers {start_marker!r} / {end_marker!r}")
+    return (
+        source[: start + len(start_marker)]
+        + "\n\n"
+        + replacement.strip()
+        + "\n\n"
+        + source[end:]
+    )
+
+
+def render_root_packages_list(packages: list[dict]) -> str:
+    by_area: dict[str, list[dict]] = {a: [] for a in AREA_ORDER}
+    for pkg in packages:
+        area = pkg.get("area") if pkg.get("area") in by_area else "Other"
+        by_area.setdefault(area, []).append(pkg)
+    parts: list[str] = []
+    for area in AREA_ORDER:
+        items = by_area.get(area) or []
+        if not items or area == "Other":
+            continue
+        parts.append(f"### {area}")
+        parts.append("")
+        for pkg in items:
+            tagline = (pkg.get("tagline") or "").replace("\n", " ").strip()
+            parts.append(f"- [{pkg.get('name') or pkg['id']}]({pkg['readmePath']}): {tagline}")
+        parts.append("")
+    return "\n".join(parts).strip()
+
+
+def _portfolio_index_entry(pkg: dict) -> dict:
+    return {
+        "id": pkg["id"],
+        "name": pkg.get("name") or pkg["id"],
+        "area": pkg.get("area") or "Other",
+        "topic": package_topic(pkg["id"]),
+        "tagline": pkg.get("tagline") or "",
+        "readme": pkg["readmePath"],
+        "targetFrameworks": pkg.get("targetFrameworks") or [],
+    }
+
+
+def _blazor_index_entry(pkg: dict) -> dict:
+    return {
+        "id": pkg["id"],
+        "area": pkg.get("area"),
+        "topic": package_topic(pkg["id"]),
+        "name": pkg.get("name"),
+        "tagline": pkg.get("tagline"),
+        "targetFrameworks": pkg.get("targetFrameworks") or [],
+    }
+
+
+def _merge_index_entries(existing: list[dict], updates: list[dict]) -> list[dict]:
+    by_id = {e["id"]: e for e in existing if e.get("id")}
+    order = [e["id"] for e in existing if e.get("id")]
+    for entry in updates:
+        eid = entry["id"]
+        by_id[eid] = entry
+        if eid not in order:
+            order.append(eid)
+    return [by_id[i] for i in order]
+
+
+def cmd_render(projects: list[dict] | None = None, *, subset: bool = False) -> None:
+    # Always refresh dependencies from csproj / graph before emitting consumers.
+    cmd_sync_deps(projects)
+    packages = load_all_docs(projects)
+    if not packages:
+        raise SystemExit(
+            "No docs.json found — create one from docs/catalog/templates/package.template.json "
+            "(docs.json is the source of truth; do not extract from README)"
+        )
+
+    emit_packages = [normalize_pkg_prose(p) for p in packages]
+
+    for pkg in emit_packages:
+        readme_path = ROOT / pkg["readmePath"]
+        readme_path.write_text(docs_to_readme(pkg), encoding="utf-8")
+
+    # Root README package index needs every package. Skip on a subset render.
+    if not subset and ROOT_README.is_file():
+        root_md = ROOT_README.read_text(encoding="utf-8")
+        try:
+            root_md = replace_marked_region(
+                root_md,
+                "<!-- catalog:packages:start -->",
+                "<!-- catalog:packages:end -->",
+                render_root_packages_list(emit_packages),
+            )
+            ROOT_README.write_text(root_md, encoding="utf-8")
+        except ValueError as err:
+            print(f"warn: root README package list not updated: {err}", file=sys.stderr)
+
+    # Marketing-site package snapshot lives in Lyo-Public. Skip if that tree is gone.
+    if PORTFOLIO.parent.is_dir():
+        PORTFOLIO.mkdir(parents=True, exist_ok=True)
+        if subset:
+            PORTFOLIO_FULL.mkdir(parents=True, exist_ok=True)
+        elif PORTFOLIO_FULL.exists():
+            for old in PORTFOLIO_FULL.glob("*.json"):
+                old.unlink()
+        else:
+            PORTFOLIO_FULL.mkdir(parents=True)
+
+        entries = [_portfolio_index_entry(p) for p in emit_packages]
+        index_path = PORTFOLIO / "packages.json"
+        if subset:
+            if index_path.is_file():
+                try:
+                    existing = json.loads(index_path.read_text(encoding="utf-8"))
+                except json.JSONDecodeError:
+                    existing = []
+                if not isinstance(existing, list):
+                    existing = []
+                write_json(index_path, _merge_index_entries(existing, entries))
+        else:
+            write_json(index_path, entries)
+        for p in emit_packages:
+            write_json(PORTFOLIO_FULL / f"{p['id']}.json", p)
+    else:
+        print("render: skip apps/gateway/content (not in this repo)")
+
+    # Blazor catalog mirror
+    blazor_packages = BLAZOR / "packages"
+    blazor_packages.mkdir(parents=True, exist_ok=True)
+    if not subset:
+        for old in blazor_packages.glob("*.json"):
+            old.unlink()
+    for p in emit_packages:
+        write_json(blazor_packages / f"{p['id']}.json", p)
+    blazor_entries = [_blazor_index_entry(p) for p in emit_packages]
+    index_path = BLAZOR / "index.json"
+    generated_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()
+    if subset and index_path.is_file():
+        try:
+            index = json.loads(index_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            index = {}
+        existing = index.get("packages") if isinstance(index, dict) else None
+        if not isinstance(existing, list):
+            existing = []
+        blazor_entries = _merge_index_entries(existing, blazor_entries)
+        write_json(
+            index_path,
+            {
+                "generatedAt": index.get("generatedAt") if isinstance(index, dict) else generated_at,
+                "packageCount": len(blazor_entries),
+                "packages": blazor_entries,
+            },
+        )
+    elif not subset:
+        write_json(
+            index_path,
+            {
+                "generatedAt": generated_at,
+                "packageCount": len(emit_packages),
+                "packages": blazor_entries,
+            },
+        )
+
+    if subset:
+        print(f"render: {len(emit_packages)} README(s) from project {DOCS_FILENAME} (subset; catalog patched, root index skipped)")
+    else:
+        print(f"render: {len(emit_packages)} READMEs + root README + Blazor catalog from project {DOCS_FILENAME}")
+
+        # Adhoc tooling READMEs (scripts/*, k6 matrix, etc.) — same SoT rule via tooling-docs.
+        tooling = Path(__file__).with_name("tooling-docs.py")
+        if tooling.is_file():
+            import importlib.util
+
+            spec = importlib.util.spec_from_file_location("lyo_tooling_docs", tooling)
+            if spec and spec.loader:
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                mod.render()
+        else:
+            print("warn: tooling-docs.py not found; skipped adhoc tooling READMEs", file=sys.stderr)
+
+
+def cmd_audit(projects: list[dict] | None = None) -> None:
+    packages = load_all_docs(projects)
+    empty_f = empty_e = good = 0
+    samples = [
+        "Lyo.FileSystemWatcher",
+        "Lyo.Compression",
+        "Lyo.Cache",
+        "Lyo.Encryption",
+    ]
+    for p in packages:
+        fc = len(p.get("features") or [])
+        ec = len(p.get("examples") or [])
+        if not fc:
+            empty_f += 1
+        if not ec:
+            empty_e += 1
+        if fc and ec:
+            good += 1
+    print(
+        json.dumps(
+            {
+                "total": len(packages),
+                "emptyFeatures": empty_f,
+                "emptyExamples": empty_e,
+                "withBoth": good,
+            },
+            indent=2,
+        )
+    )
+    for sid in samples:
+        p = next((x for x in packages if x["id"] == sid), None)
+        if not p:
+            if projects is not None:
+                continue
+            print(sid, "MISSING")
+            continue
+        print(
+            sid,
+            {
+                "features": len(p.get("features") or []),
+                "examples": len(p.get("examples") or []),
+                "sections": len(p.get("sections") or []),
+                "exTitles": [e.get("title") for e in (p.get("examples") or [])[:8]],
+                "feat0": (
+                    (lambda f: f if isinstance(f, str) else (f.get("title") or f.get("text") or ""))(
+                        (p.get("features") or [""])[0]
+                    )
+                )[:90],
+            },
+        )
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "command",
+        nargs="?",
+        default="render",
+        choices=("render", "sync-deps", "deps", "audit", "all", "extract"),
+        help="render is the default",
+    )
+    parser.add_argument(
+        "patterns",
+        nargs="*",
+        help="Project names or globs (Lyo.Email, 'Lyo.Email.*'). Empty = every package. Quote globs so the shell does not expand them.",
+    )
+    parser.add_argument("--force", action="store_true", help="Required for extract (overwrites docs.json from README)")
+    args = parser.parse_args(argv)
+
+    selected = select_projects(discover_projects(), args.patterns)
+    subset = bool(args.patterns)
+    cmd = args.command
+    if cmd == "extract":
+        cmd_extract(force=args.force, projects=selected)
+    elif cmd in ("sync-deps", "deps"):
+        cmd_sync_deps(selected)
+    elif cmd == "render":
+        cmd_render(selected, subset=subset)
+    elif cmd == "audit":
+        cmd_audit(selected if subset else None)
+    elif cmd == "all":
+        # Never extract here — docs.json is SoT; "all" means render + audit only.
+        cmd_render(selected, subset=subset)
+        cmd_audit(selected if subset else None)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

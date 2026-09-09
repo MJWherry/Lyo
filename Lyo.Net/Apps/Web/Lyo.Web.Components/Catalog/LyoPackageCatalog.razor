@@ -1,0 +1,81 @@
+@namespace Lyo.Web.Components.Catalog
+
+<LyoPageHeader Title="Package catalog" Description="@HeaderDescription" Icon="@Icons.Material.Filled.Inventory2">
+    <Actions>
+        <MudTextField @bind-Value="_search"
+                      @bind-Value:after="ApplyFilter"
+                      Immediate="true"
+                      Clearable="true"
+                      Placeholder="Search packages"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Margin="Margin.Dense"
+                      Variant="Variant.Outlined"
+                      Style="min-width: 16rem;"/>
+    </Actions>
+</LyoPageHeader>
+
+@if (_loading) {
+    <LyoSkeletonPanel Rows="8" ShowHeader="true"/>
+}
+else if (!string.IsNullOrEmpty(_error)) {
+    <MudAlert Severity="Severity.Warning">@_error</MudAlert>
+}
+else {
+    <LyoToolbar>
+        <Start>
+            <MudChip T="string"
+                     Size="Size.Small"
+                     Variant="@(_area is null ? Variant.Filled : Variant.Outlined)"
+                     Color="Color.Primary"
+                     OnClick="@(() => SetArea(null))"
+                     Text="All"/>
+            @foreach (var area in Areas) {
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Variant="@(string.Equals(_area, area, StringComparison.OrdinalIgnoreCase) ? Variant.Filled : Variant.Outlined)"
+                         OnClick="@(() => SetArea(area))"
+                         Text="@area"/>
+            }
+        </Start>
+        <End>
+            <MudText Typo="Typo.caption">@_filtered.Count packages</MudText>
+        </End>
+    </LyoToolbar>
+
+    <div class="lyo-package-catalog">
+        <MudPaper Outlined="true" Class="lyo-package-catalog-list">
+            @if (_filtered.Count == 0) {
+                <LyoEmptyState Title="No packages" Description="Try a different search or area." Icon="@Icons.Material.Filled.SearchOff" IconSize="Size.Medium"/>
+            }
+            else {
+                <MudNavMenu Dense="true">
+                    @foreach (var package in _filtered) {
+                        <MudNavLink OnClick="@(() => Select(package))"
+                                    Icon="@Icons.Material.Filled.Extension">
+                            <div>
+                                <div>@package.Name</div>
+                                <div class="mud-text-secondary" style="font-size: 0.75rem;">@package.Area</div>
+                            </div>
+                        </MudNavLink>
+                    }
+                </MudNavMenu>
+            }
+        </MudPaper>
+        <div class="lyo-package-catalog-detail">
+            @if (_selected is null) {
+                <LyoEmptyState Title="Select a package" Description="Search or filter the list, then pick a package to read its docs." Icon="@Icons.Material.Filled.MenuBook"/>
+            }
+            else {
+                <LyoTabSet PersistKey="@($"catalog-{_selected.Id}")" DefaultTab="docs">
+                    <LyoTab Id="docs" Text="Docs" Icon="@Icons.Material.Filled.Description">
+                        <PackageDoc PackageId="@_selected.Id" CatalogBasePath="@CatalogBasePath"/>
+                    </LyoTab>
+                    <LyoTab Id="graph" Text="Dependencies" Icon="@Icons.Material.Filled.AccountTree">
+                        <LyoDependencyGraph PackageId="@_selected.Id" CatalogBasePath="@CatalogBasePath" Index="@_index"/>
+                    </LyoTab>
+                </LyoTabSet>
+            }
+        </div>
+    </div>
+}

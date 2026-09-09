@@ -1,0 +1,139 @@
+{
+  "id": "Lyo.Query.Evaluation",
+  "name": "Lyo.Query.Evaluation",
+  "area": "Data",
+  "tagline": "Evaluate where clauses without a cache: build expressions, match in memory, explain matches, and resolve property paths.",
+  "description": "This slice of the query engine turns a `WhereClause` into an expression tree and evaluates it. Every `IWhereClauseService` member is implemented here except caching, which `Lyo.Query` adds by overriding this package's virtual members.\n\nThe split exists because `Lyo.Validation` needs exactly this and nothing else. Evaluating a `ValidationSchema` used to mean referencing `Lyo.Query`, which pulled in cache, encryption, hashing, key store, compression, and health. `WhereClauseEvaluator` uses a `ConcurrentDictionary` instead of the shared cache, so a consumer that only wants to know whether an object matches a clause pays for expression building and nothing else.\n\nMetrics are recorded here rather than in `Lyo.Query`, because `Lyo.Metrics` has no NuGet dependencies of its own. `IMetrics` is an optional constructor parameter that defaults to `NullMetrics.Instance`, so the uninstrumented path costs nothing.",
+  "features": [
+    "**In-memory matching.** `MatchesWhereClause` against a compiled predicate.",
+    "**Match explanation.** `ExplainMatch` produces the `WhereClauseExplainNode` tree that validation turns into errors.",
+    "**Queryable translation.** `ApplyWhereClause`, `SortByProperty`, and `ApplyOrdering` against `IQueryable<T>`.",
+    "**Path resolution.** Dotted paths, including collection segments, go through `TryValidatePropertyPath` and `SharedEntityMetadataCache`.",
+    "**Value conversion.** Filter literals go through `IValueConversionService` / `ValueConversionService`, which delegates to `TypeConversion`.",
+    "**Metrics.** Durations, success counters, and errors under `Lyo.Query.Constants.Metrics`, tagged `entity_type`. Pass an `IMetrics` to opt in; omit it and nothing is recorded or allocated.",
+    "**Extension points.** `GetMatcher`, `GetEfPredicate`, and `GetIncludePaths` are virtual so a host can plug in its own caching."
+  ],
+  "examples": [
+    {
+      "title": "Evaluate a clause without Lyo.Query",
+      "language": "csharp",
+      "code": "using Lyo.Query.Services.ValueConversion;\nusing Lyo.Query.Services.WhereClause;\n\nIWhereClauseService where = new WhereClauseEvaluator(new ValueConversionService());\n\nvar clause = new ConditionClause(\"Status\", ComparisonOperatorEnum.In, new[] { \"Open\", \"Pending\" });\nif (!where.MatchesWhereClause(order, clause))\n    Console.WriteLine(where.ExplainMatch(order, clause).FailureSummary);"
+    },
+    {
+      "title": "Smallest DI wiring",
+      "language": "csharp",
+      "code": "services.TryAddSingleton<IValueConversionService, ValueConversionService>();\nservices.TryAddSingleton<IWhereClauseService, WhereClauseEvaluator>();"
+    },
+    {
+      "title": "Record metrics without Lyo.Query",
+      "language": "csharp",
+      "code": "using Lyo.Metrics;\n\n// Pass an IMetrics to instrument evaluation. Omitting it uses NullMetrics.Instance.\nvar metrics = new MetricsService();\nIWhereClauseService where = new WhereClauseEvaluator(new ValueConversionService(), metrics);\n\nwhere.MatchesWhereClause(order, clause);\n\nvar successes = metrics.GetCounterValue(\n    Lyo.Query.Constants.Metrics.MatchesWhereClauseSuccess,\n    tags: [(Lyo.Query.Constants.Metrics.Tags.EntityType, nameof(Order))]);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "How this relates to `Lyo.Query`",
+      "body": "`Lyo.Query.BaseWhereClauseService` subclasses `WhereClauseEvaluator` and overrides the protected `GetMatcher` / `GetEfPredicate` / `GetIncludePaths` members to go through `ICacheService`. It also forwards the injected `IMetrics` only when `CacheOptions.EnableMetrics` is set, since that flag lives in `Lyo.Cache` and cannot be read from here. `IWhereClauseService` signatures are the same either way, so nothing downstream can tell which one it got.\n\nTake this package when the consumer only evaluates clauses. Take `Lyo.Query` when the consumer wants the shared cache and the rest of the request/paging surface."
+    },
+    {
+      "type": "markdown",
+      "title": "`netstandard2.0` caveat",
+      "body": "On `net` targets, `IWhereClauseService.ExplainMatch` ships a default implementation so database-only services need not implement it. `netstandard2.0` has no default interface implementations, so the member is abstract there and implementers must supply it."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Query/Lyo.Query.Evaluation/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -1,0 +1,99 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Lyo.EntityReference.Postgres.Database;
+
+namespace Lyo.People.Postgres.Database;
+
+/// <summary>PostgreSQL row for a person.</summary>
+public class PersonEntity : EntitySourceDerivedEntityBase
+{
+    // Name (flattened from PersonName)
+    [MaxLength(12)]
+    public string? NamePrefix { get; set; }
+
+    [Required]
+    [MaxLength(25)]
+    public string FirstName { get; set; } = string.Empty;
+
+    [MaxLength(25)]
+    public string? MiddleName { get; set; }
+
+    [Required]
+    [MaxLength(25)]
+    public string LastName { get; set; } = string.Empty;
+
+    [MaxLength(12)]
+    public string? NameSuffix { get; set; }
+
+    [MaxLength(100)]
+    public string? PreferredName { get; set; }
+
+    [MaxLength(100)]
+    public string? MaidenName { get; set; }
+
+    // Demographics columns
+    public DateOnly? DateOfBirth { get; set; }
+
+    [MaxLength(1)]
+    public string? Sex { get; set; }
+
+    [MaxLength(3)]
+    public string? Nationality { get; set; }
+
+    [MaxLength(20)]
+    public string? PreferredLanguageBcp47 { get; set; }
+
+    [MaxLength(1)]
+    public string? Race { get; set; }
+
+    [MaxLength(1)]
+    public string? MaritalStatus { get; set; }
+
+    [MaxLength(2)]
+    public string? DisabilityStatus { get; set; }
+
+    [MaxLength(2)]
+    public string? VeteranStatus { get; set; }
+
+    public Guid? PlaceOfBirthAddressId { get; set; }
+
+    public Guid? EmergencyContactPersonId { get; set; }
+
+    // Denormalized employment summary for queries
+    [MaxLength(200)]
+    public string? CurrentJobTitle { get; set; }
+
+    [MaxLength(200)]
+    public string? CurrentCompany { get; set; }
+
+    // Row metadata
+    [MaxLength(500)]
+    public string? CreatedBy { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    [MaxLength(4000)]
+    public string? Notes { get; set; }
+
+    /// <summary>Citizenship countries stored as a JSON array of country codes.</summary>
+    [Column(TypeName = "jsonb")]
+    [MaxLength(2048)]
+    public string? CitizenshipJson { get; set; }
+
+    /// <summary>Preferences payload stored as JSON.</summary>
+    [Column(TypeName = "jsonb")]
+    [MaxLength(8192)]
+    public string? PreferencesJson { get; set; }
+
+    /// <summary>Caller-defined extras stored as a JSON object.</summary>
+    [Column(TypeName = "jsonb")]
+    [MaxLength(8192)]
+    public string? CustomFieldsJson { get; set; }
+
+    // Navigations
+    public virtual ICollection<ContactEmailAddressEntity> ContactEmailAddresses { get; set; } = new List<ContactEmailAddressEntity>();
+
+    public virtual ICollection<ContactPhoneNumberEntity> ContactPhoneNumbers { get; set; } = new List<ContactPhoneNumberEntity>();
+
+    public virtual ICollection<ContactAddressEntity> ContactAddresses { get; set; } = new List<ContactAddressEntity>();
+}

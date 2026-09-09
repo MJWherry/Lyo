@@ -1,0 +1,12 @@
+@namespace Lyo.Web.Components
+
+@if (string.Equals(RootTag, "span", StringComparison.OrdinalIgnoreCase)) {
+    <span id="@ResolvedId" @attributes="AdditionalAttributes">
+        @ChildContent
+    </span>
+}
+else {
+    <div id="@ResolvedId" @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+}

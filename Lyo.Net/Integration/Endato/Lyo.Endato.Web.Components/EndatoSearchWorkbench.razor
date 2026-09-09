@@ -1,0 +1,86 @@
+@using System.Diagnostics
+@using System.Text.Json
+@inject EndatoClient EndatoClient
+@inject JsonSerializerOptions JsonOptions
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Endato Search</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Person search and contact enrichment via <code>Lyo.Endato.Client</code>.
+            </MudText>
+        </div>
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" @bind-ActivePanelIndex="_activeTab">
+            <MudTabPanel Text="Search" Icon="@Icons.Material.Filled.Search">
+                <MudStack Spacing="3" Class="pa-2">
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                        <MudButtonGroup OverrideStyles="false" Variant="Variant.Outlined" Size="Size.Small">
+                            <MudButton OnClick="@(() => SetSearchMode(EndatoSearchMode.Person))"
+                                       Variant="@(_searchMode == EndatoSearchMode.Person ? Variant.Filled : Variant.Outlined)"
+                                       Color="@(_searchMode == EndatoSearchMode.Person ? Color.Primary : Color.Default)">
+                                Person Search
+                            </MudButton>
+                            <MudButton OnClick="@(() => SetSearchMode(EndatoSearchMode.Enrichment))"
+                                       Variant="@(_searchMode == EndatoSearchMode.Enrichment ? Variant.Filled : Variant.Outlined)"
+                                       Color="@(_searchMode == EndatoSearchMode.Enrichment ? Color.Primary : Color.Default)">
+                                Contact Enrich
+                            </MudButton>
+                        </MudButtonGroup>
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   StartIcon="@(_busy ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Search)"
+                                   OnClick="RunSearchAsync"
+                                   Disabled="@_busy">
+                            @(_busy ? "Searching…" : "Search")
+                        </MudButton>
+
+                        @if (_lastElapsedMs.HasValue) {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@_lastElapsedMs.Value ms</MudText>
+                        }
+                    </MudStack>
+
+                    @if (!string.IsNullOrWhiteSpace(_error)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+                    }
+
+                    @if (_searchMode == EndatoSearchMode.Person) {
+                        <EndatoPersonSearchForm @ref="_personForm" Query="@_personQuery"/>
+                    }
+                    else {
+                        <EndatoEnrichmentSearchForm @ref="_enrichmentForm" Query="@_enrichmentQuery"/>
+                    }
+
+                    <MudDivider Class="my-2"/>
+
+                    @if (_searchMode == EndatoSearchMode.Person) {
+                        <EndatoPersonSearchResults Response="@_personResponse"/>
+                    }
+                    else {
+                        <EndatoEnrichmentResult Response="@_enrichmentResponse"/>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Debug" Icon="@Icons.Material.Filled.Code">
+                <MudPaper Elevation="0" Class="pa-2">
+                    <EndatoSearchDebugPanel SearchMode="@_searchMode"
+                                            PersonQuery="@_personQuery"
+                                            PersonQueryChanged="@OnPersonQueryChanged"
+                                            EnrichmentQuery="@_enrichmentQuery"
+                                            EnrichmentQueryChanged="@OnEnrichmentQueryChanged"
+                                            PersonResponse="@_personResponse"
+                                            EnrichmentResponse="@_enrichmentResponse"
+                                            OnRunRequested="RunSearchAsync"
+                                            Busy="@_busy"
+                                            Error="@_error"
+                                            LastElapsedMs="@_lastElapsedMs"/>
+                </MudPaper>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudPaper>

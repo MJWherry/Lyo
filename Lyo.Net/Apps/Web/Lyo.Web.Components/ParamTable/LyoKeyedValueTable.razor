@@ -1,0 +1,67 @@
+@namespace Lyo.Web.Components.ParamTable
+@using Lyo.Web.Components.DataGrid
+
+@if (Items is { Count: > 0 }) {
+    <LyoResponsiveTable>
+        <TableContent>
+            <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="@Class">
+                <thead>
+                <tr>
+                    <th>Key</th>
+                    @if (ShowType) {
+                        <th>Type</th>
+                    }
+                    <th>Value</th>
+                    @if (ShowDescription) {
+                        <th>Description</th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Sorted) {
+                    <tr>
+                        <td class="@KeyClass">@item.Key</td>
+                        @if (ShowType) {
+                            <td>
+                                <LyoTypeChip TypeName="@item.Type" Variant="Variant.Outlined"/>
+                            </td>
+                        }
+                        <td>
+                            <LyoTruncatedText Text="@item.Value"/>
+                        </td>
+                        @if (ShowDescription) {
+                            <td>
+                                <LyoTruncatedText Text="@item.Description"/>
+                            </td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        </TableContent>
+        <CardContent>
+            @foreach (var item in Sorted) {
+                <LyoRecordCard Title="@item.Key">
+                    <TitleContent>
+                        @if (ShowType) {
+                            <LyoTypeChip TypeName="@item.Type" Variant="Variant.Outlined"/>
+                        }
+                    </TitleContent>
+                    <ChildContent>
+                        <LyoRecordField Label="Value">
+                            <LyoTruncatedText Text="@item.Value"/>
+                        </LyoRecordField>
+                        @if (ShowDescription) {
+                            <LyoRecordField Label="Description">
+                                <LyoTruncatedText Text="@item.Description"/>
+                            </LyoRecordField>
+                        }
+                    </ChildContent>
+                </LyoRecordCard>
+            }
+        </CardContent>
+    </LyoResponsiveTable>
+}
+else {
+    <MudText Typo="Typo.body2" Class="mud-text-secondary">@EmptyText</MudText>
+}

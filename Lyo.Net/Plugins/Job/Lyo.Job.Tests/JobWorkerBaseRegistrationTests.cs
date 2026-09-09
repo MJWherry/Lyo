@@ -1,0 +1,206 @@
+using Lyo.Api.Client;
+using Lyo.Api.Models.Common.Request;
+using Lyo.Api.Models.Common.Response;
+using Lyo.Job.Client;
+using Lyo.Job.Models;
+using Lyo.Job.Models.Enums;
+using Lyo.Job.Models.Events;
+using Lyo.Job.Models.Request;
+using Lyo.Job.Models.Response;
+using Lyo.Job.Tests.Postgres;
+using Lyo.Job.Worker;
+using Lyo.MessageQueue;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace Lyo.Job.Tests;
+
+public class JobWorkerBaseRegistrationTests
+{
+    [Fact]
+    public async Task StartAsync_WhenApiUnavailable_RetriesRegistrationOnHeartbeatInterval()
+    {
+        var api = new ControllableWorkerInstanceApiClient { FailRegisterCount = 1 };
+        var worker = CreateWorker(api);
+        try {
+            await worker.StartAsync(TestContext.Current.CancellationToken);
+            Assert.True(worker.IsRunning);
+            Assert.Equal(1, api.RegisterAttempts);
+            Assert.Equal(0, api.SuccessfulRegisters);
+            await WaitUntilAsync(() => api.SuccessfulRegisters >= 1 && api.HeartbeatCount >= 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            Assert.True(api.RegisterAttempts >= 2);
+            Assert.Equal(1, api.SuccessfulRegisters);
+            Assert.True(api.HeartbeatCount >= 1);
+            AssertRegisteredMetadata(api.LastRegisterRequest?.Metadata);
+        }
+        finally {
+            await worker.StopAsync(TestContext.Current.CancellationToken);
+        }
+    }
+
+    [Fact]
+    public async Task Heartbeat_WhenInstanceNotFound_ReRegisters()
+    {
+        var api = new ControllableWorkerInstanceApiClient { FailHeartbeat404Count = 1 };
+        var worker = CreateWorker(api);
+        try {
+            await worker.StartAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(1, api.SuccessfulRegisters);
+            await WaitUntilAsync(() => api.SuccessfulRegisters >= 2 && api.HeartbeatCount >= 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            Assert.True(api.RegisterAttempts >= 2);
+            Assert.Equal(2, api.SuccessfulRegisters);
+            Assert.True(api.Heartbeat404Count >= 1);
+            Assert.True(api.HeartbeatCount >= 1);
+        }
+        finally {
+            await worker.StopAsync(TestContext.Current.CancellationToken);
+        }
+    }
+
+    [Fact]
+    public async Task StartAsync_RegistersSystemInfoAndQueueSubscriptions()
+    {
+        var api = new ControllableWorkerInstanceApiClient();
+        var worker = CreateWorker(api);
+        try {
+            await worker.StartAsync(TestContext.Current.CancellationToken);
+            AssertRegisteredMetadata(api.LastRegisterRequest?.Metadata);
+        }
+        finally {
+            await worker.StopAsync(TestContext.Current.CancellationToken);
+        }
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenBrokerTopologyMissing_DeclaresJobEventExchangeAndRunQueue()
+    {
+        var mq = new FakeMqService();
+        var api = new ControllableWorkerInstanceApiClient();
+        var worker = new TestJobWorker(mq, new JobClient(api), new FakeJobEventPublisher(), "cs");
+        try {
+            await worker.StartAsync(TestContext.Current.CancellationToken);
+            var exchange = Assert.Single(mq.CreatedExchanges);
+            Assert.Equal(Constants.Mq.JobEventExchange, exchange.Name);
+            Assert.Equal(Constants.Mq.JobEventExchangeType, exchange.Type);
+            Assert.True(exchange.Durable);
+            Assert.Contains(mq.CreatedQueues, q => q.Name == Constants.Mq.QueueGetJobRunCreated("cs") && q.Durable && !q.Exclusive && !q.AutoDelete);
+        }
+        finally {
+            await worker.StopAsync(TestContext.Current.CancellationToken);
+        }
+    }
+
+    private static TestJobWorker CreateWorker(ControllableWorkerInstanceApiClient api) => new(new FakeMqService(), new JobClient(api), new FakeJobEventPublisher(), "cs");
+
+    private static void AssertRegisteredMetadata(IReadOnlyDictionary<string, string?>? metadata)
+    {
+        Assert.NotNull(metadata);
+        Assert.False(string.IsNullOrWhiteSpace(metadata[Constants.WorkerMetadata.Os]));
+        Assert.False(string.IsNullOrWhiteSpace(metadata[Constants.WorkerMetadata.Framework]));
+        Assert.True(int.Parse(metadata[Constants.WorkerMetadata.ProcessorCount]!) > 0);
+        Assert.Equal(Constants.Mq.QueueGetJobRunCreated("cs"), metadata[Constants.WorkerMetadata.Queue]);
+        Assert.Equal(Constants.Mq.QueueGetJobRunCreatedWait("cs"), metadata[Constants.WorkerMetadata.WaitQueue]);
+        Assert.StartsWith(Constants.Mq.QueueGetJobRunCancel("cs") + ".", metadata[Constants.WorkerMetadata.CancelQueue], StringComparison.Ordinal);
+        Assert.Contains(metadata[Constants.WorkerMetadata.Queue]!, metadata[Constants.WorkerMetadata.Subscriptions], StringComparison.Ordinal);
+        Assert.Contains(Constants.WorkerMetadata.WorkingSetBytes, metadata.Keys);
+        Assert.Contains(Constants.WorkerMetadata.GcHeapBytes, metadata.Keys);
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout, CancellationToken ct)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (!condition()) {
+            if (DateTime.UtcNow >= deadline)
+                throw new TimeoutException("Condition was not met within the timeout.");
+
+            await Task.Delay(20, ct);
+        }
+    }
+
+    private sealed class TestJobWorker(IMqService mq, IJobClient jobClient, IJobEventPublisher events, string workerType)
+        : JobWorkerBase(mq, jobClient, events, workerType, NullLogger.Instance)
+    {
+        protected override TimeSpan HeartbeatInterval => TimeSpan.FromMilliseconds(50);
+
+        protected override Task ExecuteAsync(IJobWorkerContext ctx) => Task.CompletedTask;
+    }
+
+    /// <summary>API client that simulates Job WorkerInstance register/heartbeat failures for recovery checks.</summary>
+    private sealed class ControllableWorkerInstanceApiClient : StubApiClient
+    {
+        private int _remainingHeartbeat404s;
+        private int _remainingRegisterFailures;
+
+        public int FailRegisterCount {
+            set => _remainingRegisterFailures = value;
+        }
+
+        public int FailHeartbeat404Count {
+            set => _remainingHeartbeat404s = value;
+        }
+
+        public int RegisterAttempts { get; private set; }
+
+        public int SuccessfulRegisters { get; private set; }
+
+        public int HeartbeatCount { get; private set; }
+
+        public int Heartbeat404Count { get; private set; }
+
+        public JobWorkerInstanceReq? LastRegisterRequest { get; private set; }
+
+        public override Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+            where TRequest : default
+        {
+            if (!IsWorkerInstanceRoute(uri))
+                return Task.FromResult(default(TResult)!);
+
+            // StopAsync patches State=Stopped; do not count as heartbeat and do not inject 404s.
+            if (request is PatchRequest patch && patch.Properties.TryGetValue("State", out var state) && Equals(state, JobWorkerInstanceState.Stopped))
+                return Task.FromResult(default(TResult)!);
+
+            if (_remainingHeartbeat404s > 0) {
+                _remainingHeartbeat404s--;
+                Heartbeat404Count++;
+                throw new ApiException(404, "Worker instance not found");
+            }
+
+            HeartbeatCount++;
+            return Task.FromResult(default(TResult)!);
+        }
+
+        public override Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+            where TRequest : default
+        {
+            if (!IsWorkerInstanceRoute(uri))
+                return Task.FromResult(default(TResult)!);
+
+            RegisterAttempts++;
+            if (_remainingRegisterFailures > 0) {
+                _remainingRegisterFailures--;
+                throw new HttpRequestException("Connection refused (localhost:5074)");
+            }
+
+            var id = Guid.NewGuid();
+            SuccessfulRegisters++;
+            var now = DateTime.UtcNow;
+            LastRegisterRequest = request as JobWorkerInstanceReq;
+            var created = new CreateResult<JobWorkerInstanceRes>(
+                true,
+                new() {
+                    Id = id,
+                    WorkerType = "cs",
+                    MachineName = "host",
+                    ProcessId = 1,
+                    State = JobWorkerInstanceState.Running,
+                    InFlightCount = 0,
+                    StartedTimestamp = now,
+                    LastHeartbeatUtc = now,
+                    CreatedTimestamp = now
+                },
+                null);
+            return Task.FromResult((TResult)(object)created);
+        }
+
+        private static bool IsWorkerInstanceRoute(string uri) => uri.Contains("WorkerInstance", StringComparison.OrdinalIgnoreCase);
+    }
+}

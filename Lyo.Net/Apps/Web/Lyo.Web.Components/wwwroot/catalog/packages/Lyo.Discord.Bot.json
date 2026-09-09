@@ -1,0 +1,521 @@
+{
+  "id": "Lyo.Discord.Bot",
+  "name": "Lyo.Discord.Bot",
+  "area": "Integration",
+  "tagline": "Library (not an executable) that runs a DSharpPlus Discord bot and upserts guild data into your Lyo API (`Lyo.Discord.Client` against PostgreSQL-backed `Discord/*` endpoints).",
+  "description": "Library (not an executable) that runs a DSharpPlus Discord bot and upserts guild data into your Lyo API (`Lyo.Discord.Client` against PostgreSQL-backed `Discord/*` endpoints). Host apps (for example `Lyo.TestConsole`) treat it as a base: configure the Discord token under `DiscordBot`, the Lyo API HTTP client under `LyoDiscordClient`, resolve services from DI, and call `RunAsync`.",
+  "features": [
+    "`LyoDiscordBotOptions` (bound from `DiscordBot`)",
+    "`LyoDiscordClientOptions` (bound from `LyoDiscordClient`) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client used for upserts)",
+    "`IGuildDatabaseSyncService` / `GuildDatabaseSyncService`",
+    "`LyoDiscordBot` (singleton) and `LyoDiscordBotBase` (the same instance)"
+  ],
+  "examples": [
+    {
+      "title": "Add the bot",
+      "language": "csharp",
+      "code": "using Lyo.Discord.Bot;\n\nservices.AddLyoDiscordBot<LyoDiscordBot>(configuration);"
+    },
+    {
+      "title": "Run the bot from a host",
+      "language": "csharp",
+      "code": "var bot = host.Services.GetRequiredService<LyoDiscordBot>();\nawait bot.RunAsync(cancellationToken);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Settings",
+      "headers": [
+        "Property",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`Token`",
+          "Token for the Discord bot."
+        ],
+        [
+          "`Intents`",
+          "Optional. Gateway intent flags; default is `Guilds \\"
+        ]
+      ],
+      "lead": "`DiscordBot` (→ `LyoDiscordBotOptions`): settings that apply only to Discord.",
+      "trail": "`LyoDiscordClient` (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits `ApiClientOptions`. Set `BaseUrl` (defaults to `http://localhost:5092/` when omitted), plus compression, `AcceptEncodings`, `EnsureStatusCode`, etc."
+    },
+    {
+      "type": "list",
+      "title": "Service registration",
+      "items": [
+        "`LyoDiscordBotOptions` (bound from `DiscordBot`)",
+        "`LyoDiscordClientOptions` (bound from `LyoDiscordClient`) and `Lyo.Discord.Client.LyoDiscordClient` (HTTP client used for upserts)",
+        "`IGuildDatabaseSyncService` / `GuildDatabaseSyncService`",
+        "`LyoDiscordBot` (singleton) and `LyoDiscordBotBase` (the same instance)"
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Sync coverage",
+      "items": [
+        "**Full guild sync** (owner user if needed, guild row, channels bulk, emojis via REST + bulk, users + members bulk): `GuildAvailable`, `GuildCreated`, `GuildDownloadCompleted` (each guild in the download batch).",
+        "**Guild metadata only**: `GuildUpdated`.",
+        "**Single channel**: `ChannelCreated`, `ChannelUpdated`.",
+        "**User + member row**: `GuildMemberAdded`, `GuildMemberUpdated`.",
+        "**Emojis**: `GuildEmojisUpdated` (re-fetch via REST where applicable)."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Slash-command tree",
+      "headers": [
+        "Command",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`/settings channels setcommandchannel`",
+          "Pick the channel where the bot accepts commands (defaults to the current channel)."
+        ],
+        [
+          "`/settings channels setlogchannel`",
+          "Pick the channel where the bot posts errors and operational notices."
+        ],
+        [
+          "`/settings roles setmodrole`",
+          "Pick the moderator role used by bot permission checks."
+        ],
+        [
+          "`/settings roles setadminrole`",
+          "Pick the admin role used by bot permission checks."
+        ],
+        [
+          "`/settings info …`",
+          "Show effective guild settings (subgroup defined in `GuildSlashSettings`)."
+        ]
+      ],
+      "lead": "A built-in slash-command tree under [`Commands/Settings/`](Commands/Settings) drives per-guild bot configuration through the Lyo API and the\n`DiscordGuildSettings` config-store document. Discord/DSharpPlus will not let a slash group mix direct subcommands and nested subgroups, so everything hangs off subgroups:",
+      "trail": "Shared name/description constants live in [`GuildSlashSettings.cs`](Commands/Settings/GuildSlashSettings.cs); error responses are normalized via\n[`SlashCommandErrorResponder`](Commands/SlashCommandErrorResponder.cs) and `DiscordCommandException`. Register the command module on your DSharpPlus client in\n`ConfigureDiscordClient` (for example via `client.UseSlashCommands().RegisterCommands<GuildSettingsSlashCommands>(guildId)`).\n\nSlash command handlers update settings through `LyoApi.Guilds.GetSettingsAsync` / `PutSettingsAsync` and then push the new document into the local cache (`Cache.SetGuildSettings`)\nso the in-process bot reads the latest values without another API round-trip."
+    },
+    {
+      "type": "markdown",
+      "title": "Subclassing the bot",
+      "body": "Subclass `LyoDiscordBotBase` and register your type with `AddLyoDiscordBot<MyBot>(configuration)`.\n\n- **`ConfigureDiscordConfiguration`.** tweak `DiscordConfiguration` (for example intents).\n- **`ConfigureDiscordClient`.** register DSharpPlus extensions (for example [CommandsNext](https://github.com/DSharpPlus/DSharpPlus), slash commands, interactivity). Call **before**\n handlers are wired.\n- **`RegisterDefaultSyncHandlers`.** override if you need to change sync behavior; call `base.RegisterDefaultSyncHandlers(client)` to keep database sync.\n- **`RegisterAdditionalHandlers`.** subscribe to other gateway events.\n\nExample sketch:\n\n```csharp\npublic sealed class MyBot : LyoDiscordBotBase\n{\n    public MyBot(LyoDiscordBotOptions o, Lyo.Discord.Client.LyoDiscordClient api, IGuildDatabaseSyncService s, ILoggerFactory lf)\n        : base(o, api, s, lf) { }\n\n    protected override void ConfigureDiscordClient(DSharpPlus.DiscordClient client)\n    {\n        // client.UseCommandsNext(...);\n    }\n\n    protected override void RegisterAdditionalHandlers(DSharpPlus.DiscordClient client)\n    {\n        client.MessageCreated += async (_, e) => { /* ... */ };\n    }\n}\n```"
+    },
+    {
+      "type": "list",
+      "title": "Package references",
+      "items": [
+        "**DSharpPlus**. gateway and REST helpers the bot host uses.",
+        "**Lyo.Discord.Client**. HTTP upserts to your Lyo API."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Discord/Lyo.Discord.Bot/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diff",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Discord.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Notification",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "DSharpPlus",
+      "kind": "package",
+      "version": "4.5.2",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "DSharpPlus.CommandsNext",
+      "kind": "package",
+      "version": "4.5.2",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "DSharpPlus.Interactivity",
+      "kind": "package",
+      "version": "4.5.2",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "DSharpPlus.SlashCommands",
+      "kind": "package",
+      "version": "4.5.2",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Discord.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "AngleSharp",
+      "kind": "package",
+      "version": "1.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.RateLimiting",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

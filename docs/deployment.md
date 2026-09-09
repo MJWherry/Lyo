@@ -1,0 +1,58 @@
+# Deployment and operations
+
+Lyo is a set of libraries consumed by your own apps, plus a few sample hosts under [`Lyo.Net/Apps/`](../Lyo.Net/Apps/), [`Lyo.Net/Examples/`](../Lyo.Net/Examples/), and [`Lyo.Net/Tools/`](../Lyo.Net/Tools/). There is no single "deploy Lyo" target. You deploy the app that consumes the packages. This repo publishes **NuGet packages** ([CI](ci.md)). Application hosts live in other repositories. This page covers the operational pieces that *do* ship here and what to keep in mind when running Lyo-based services.
+
+## What the bundled container stacks are (and aren't)
+
+This repo ships **two** compose stacks. Neither is a production deploy of Lyo.
+
+### Benchmark/test runner
+
+The root [`docker-compose.yml`](../docker-compose.yml) and [`docker/Dockerfile`](../docker/Dockerfile) define a **benchmark/test runner**, not an application stack. A single `run` service:
+
+- compiles and runs only the projects named by `TARGET` (a group, exact name, glob, or list);
+- bakes the source into the image (the host tree is never mounted for building);
+- mounts the host Docker socket so Testcontainers can spin up sibling Redis/Postgres containers;
+- mounts `docs/benchmarks/data` and `docs/benchmarks/history` back to the host for dashboard manifests.
+
+Run it via the wrapper (see [Testing](testing.md)):
+
+```bash
+python3 scripts/docker/run.py benchmarks      # or: tests / all / <project> / '<glob>'
+docker compose logs -f                        # follow progress
+```
+
+Resource limits and other knobs come from `.env`. See [Configuration](configuration.md) and the full runner reference in [`docker/README.md`](../docker/README.md).
+
+### Workbench (TestApi / TestGateway / examples)
+
+[`docker/workbench/compose.yml`](../docker/workbench/compose.yml) runs the kitchen-sink hosts and their backing services on one network (`lyo-workbench`):
+
+- `Lyo.TestApi` at http://localhost:5251
+- `Lyo.TestGateway` at http://localhost:5138
+- `Lyo.Job.Worker.Example` and `Lyo.Job.Scheduler.Example`
+- Postgres, RabbitMQ (management UI at http://localhost:15673), Redis
+
+```bash
+python3 scripts/docker/run_workbench.py up
+```
+
+Details, ports, and AWS caveats: [`docker/README.md`](../docker/README.md#workbench-stack).
+
+## Deploying an app that uses Lyo
+
+Treat a Lyo-consuming service like any other .NET app:
+
+1. **Target framework.** Build against .NET 10 (`net10.0`). Some packages also support `netstandard2.0`. Shared build settings: [`Lyo.Net/Directory.Build.props`](../Lyo.Net/Directory.Build.props).
+2. **Packages.** Resolve the Lyo packages from your feed (see [Publishing](publishing.md)) and pin versions explicitly.
+3. **Backing services.** Provision the infrastructure the packages you use require. PostgreSQL for `*.Postgres` packages, Redis for distributed locks and Fusion caching, plus any vendor credentials for Integration/Communication providers.
+4. **Database migrations.** Packages that ship EF Core migrations expose hosted migration helpers (see [`Lyo.Postgres`](../Lyo.Net/Data/Postgres/Lyo.Postgres/README.md)). Decide whether migrations run on startup or as a separate deploy step.
+5. **Secrets.** Never bake secrets into images. Supply key-store/KEK secrets and vendor API keys via your platform's secret manager and bind them through configuration (see [Security](security/README.md)).
+
+## Operational notes
+
+- **Observability.** Wire up `Lyo.Metrics` (OpenTelemetry backend available) and `Lyo.Diagnostic` for metrics, breadcrumbs, and exception capture.
+- **Resilience.** `Lyo.Resilience` builds Polly pipelines from configuration for outbound calls to vendors and databases.
+- **Health checks.** `Lyo.Health` provides `IHealth`/`HealthResult` for readiness and liveness endpoints.
+- **Encryption keys in production.** Do not use `LocalKeyStore`. Use a managed KeyStore (AWS KMS via `Lyo.KeyStore.Aws`, or your own `IKeyStore`), and plan key rotation. See [Security](security/README.md) and [security/encryption.md](security/encryption.md).
+- **Benchmark comparability.** If you run the container suites in CI, keep `CPU_LIMIT`/`MEM_LIMIT` fixed so numbers stay comparable across runs.

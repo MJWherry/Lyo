@@ -1,0 +1,31 @@
+---
+description: Never leave processes the agent started running after the turn (API, Gateway, docker, watchers)
+alwaysApply: true
+---
+
+# No orphaned processes
+
+Do not start a long-running process and leave it on. If you started it, you stop it before the turn ends — including when the task fails, you switch approach, or you are only “checking that it boots.”
+
+## What counts
+
+Hosts and daemons: `Lyo.TestApi`, `Lyo.TestGateway`, `dotnet run` / `dotnet watch`, `python3 scripts/docker/run.py` / `run_workbench.py up`, `docker compose up`, Redis/Postgres you started ad hoc, file watchers, k6 servers, anything backgrounded with `block_until_ms: 0` that does not exit on its own.
+
+Finite commands are fine (`dotnet build`, `dotnet test`, one-shot scripts). Await them; do not background them unless you will reap them in the same turn.
+
+## Required cleanup
+
+- Stop the process (Ctrl+C equivalent / kill the pid from the terminal header / `run_workbench.py down`).
+- Confirm it is gone (`pgrep`, closed terminal footer with `exit_code`) before finishing.
+- Do not hand the user a running stack you launched unless they **explicitly** asked to leave it up.
+
+```text
+# ❌ BAD — start the API and end the turn
+dotnet run --project Lyo.Net/Tools/Lyo.TestApi
+# (leave it listening)
+
+# ✅ GOOD — boot only as long as you need, then stop
+dotnet run --project Lyo.Net/Tools/Lyo.TestApi
+# …curl / exercise …
+# kill the process; verify nothing is still bound to the port
+```

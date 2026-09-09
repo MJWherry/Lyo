@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Scientific contracts, datasets, engineering models, chemistry and astronomy records, and unit infrastructure built on top of the Lyo mathematics stack.</Description>
+        <PackageTags>scientific chemistry astronomy engineering units thermodynamics fluids mechanics</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Mathematics\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

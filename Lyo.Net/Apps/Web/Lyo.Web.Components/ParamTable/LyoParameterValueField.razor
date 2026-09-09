@@ -1,0 +1,49 @@
+@namespace Lyo.Web.Components.ParamTable
+@using Lyo.Web.Components.ParamOptions
+
+<MudStack Spacing="0">
+    @if (IsEncrypted && string.IsNullOrWhiteSpace(Json) && !Encrypted) {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">Stored encrypted. Enter a new default to replace it, or leave empty.</MudText>
+    }
+    @if (Encrypted) {
+        <MudTextField T="string" Value="@Json" ValueChanged="OnJsonChanged" Label="@Label" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" InputType="InputType.Password" Required="@Required"/>
+    }
+    else if (HasPicker && ApiClient is not null) {
+        <LyoParameterOptionsSelect ApiClient="ApiClient"
+                                   OptionsJson="@OptionsJson"
+                                   AllowedValues="@AllowedValues"
+                                   SiblingValues="SiblingValues"
+                                   TypeName="@TypeName"
+                                   AllowMultiple="@LyoTypeUi.IsCollection(TypeName)"
+                                   ListKind="@LyoTypeUi.ToListKind(TypeName)"
+                                   Required="@Required"
+                                   Label="@Label"
+                                   Value="@Json"
+                                   ValueChanged="OnJsonChanged"/>
+    }
+    else {
+        <LyoTypeValueInput TypeName="@TypeName"
+                          Json="@Json"
+                          JsonChanged="OnJsonChanged"
+                          Label="@Label"
+                          Required="@Required"
+                          AllowUnset="@AllowUnset"
+                          IsEncrypted="@IsEncrypted"
+                          EditorSurfaceHeight="@EditorSurfaceHeight"
+                          FormatterContext="@FormatterContext"/>
+    }
+    @if (ShowFooter) {
+        <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            @if (!string.IsNullOrEmpty(Description)) {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@Description</MudText>
+            }
+            else {
+                <span/>
+            }
+            @if (ShowEncrypt) {
+                <MudSwitch T="bool" Value="@Encrypted" ValueChanged="OnEncryptedChanged" Label="Encrypt" Color="Color.Warning" Size="Size.Small"/>
+            }
+        </MudStack>
+    }
+</MudStack>

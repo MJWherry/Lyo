@@ -1,0 +1,42 @@
+using Lyo.Discord.Bot.Services;
+using Lyo.Discord.Client;
+using Lyo.Exceptions;
+using Lyo.Notification;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Lyo.Discord.Bot;
+
+/// <summary>Adds <see cref="LyoDiscordBotOptions" />, <see cref="IGuildDatabaseSyncService" />, and <see cref="LyoDiscordClient" />.</summary>
+public static class ServiceCollectionExtensions
+{
+    /// <summary>
+    /// Reads <see cref="LyoDiscordBotOptions" /> from configuration, registers <see cref="LyoDiscordClient" />, sync service, and <typeparamref name="TBot" /> (singleton).
+    /// </summary>
+    public static IServiceCollection AddLyoDiscordBot<TBot>(this IServiceCollection services, IConfiguration configuration, string sectionName = LyoDiscordBotOptions.SectionName)
+        where TBot : LyoDiscordBotBase
+    {
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        services.Configure<LyoDiscordBotOptions>(configuration.GetSection(sectionName));
+        services.Configure<LyoDiscordClientOptions>(configuration.GetSection(LyoDiscordClientOptions.SectionName));
+        services.AddSingleton(p => p.GetRequiredService<IOptions<LyoDiscordBotOptions>>().Value);
+        services.AddSingleton(p => p.GetRequiredService<IOptions<LyoDiscordClientOptions>>().Value);
+        services.AddSingleton<IGuildDiscordNotificationService, GuildDiscordNotificationService>();
+        services.AddLyoNotification();
+        services.AddSingleton<INotificationHandler<GuildSettingsChangedNotification>, GuildSettingsChangedNotificationHandler>();
+        services.AddSingleton<IGuildDatabaseSyncService, GuildDatabaseSyncService>();
+        services.AddSingleton<TBot>();
+        services.AddSingleton<LyoDiscordBotBase>(sp => sp.GetRequiredService<TBot>());
+        services.AddSingleton<ILyoDiscordBotGateway>(sp => sp.GetRequiredService<LyoDiscordBotBase>());
+        services.AddSingleton<LyoDiscordClient>(sp => {
+            var clientOpts = sp.GetRequiredService<IOptions<LyoDiscordClientOptions>>().Value;
+            var lf = sp.GetService<ILoggerFactory>();
+            return new(clientOpts, lf?.CreateLogger<LyoDiscordClient>());
+        });
+
+        return services;
+    }
+}

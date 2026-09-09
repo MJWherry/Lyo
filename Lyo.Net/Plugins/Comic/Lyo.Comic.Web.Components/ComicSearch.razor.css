@@ -1,0 +1,6 @@
+/* Outer shell for the search page only; browse grid/list layout lives in ComicBrowseResults.razor.css */
+
+.comic-search {
+    width: 100%;
+    overflow-x: hidden;
+}

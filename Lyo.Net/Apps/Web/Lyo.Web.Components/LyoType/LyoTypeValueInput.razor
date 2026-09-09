@@ -1,0 +1,149 @@
+@namespace Lyo.Web.Components.LyoType
+@using System.Text.Json.Nodes
+@using Lyo.Common.Core.Enums;
+@using Lyo.Web.Primitives.ChipInput
+@using Lyo.Web.Components.JsonEditor
+
+<MudStack Spacing="2">
+    @if (_mode == EditorMode.JsonTree) {
+        <JsonEditor T="JsonNode"
+                    @key="@_editorKey"
+                    Value="@_node"
+                    ValueChanged="OnNodeChanged"
+                    JsonOptions="@EditorJsonOptions"
+                    Editable="@(!ReadOnly)"
+                    AllowTreeEditing="@(!ReadOnly)"
+                    DefaultViewMode="JsonEditorViewMode.Tree"
+                    ParseErrorChanged="OnParseErrorChanged"
+                    EditorSurfaceHeight="@EditorSurfaceHeight"/>
+    }
+    else if (_mode == EditorMode.Collection) {
+        <LyoChipInput Values="@_chips"
+                      ValuesChanged="OnChipsChanged"
+                      Placeholder="Type and press Enter"
+                      ShowClearButton="true"
+                      ValidationPattern="@_chipPattern"
+                      ValidationErrorMessage="@_chipMessage"/>
+    }
+    else {
+        @switch (_editorKind) {
+            case LyoTypeEditorKind.Boolean:
+                <MudSwitch T="bool" Value="@_boolValue" ValueChanged="OnBoolChanged" Color="Color.Primary" Label="@ResolvedLabel" Disabled="@ReadOnly"/>
+                break;
+            case LyoTypeEditorKind.Integer:
+                <MudNumericField T="long?" Value="@_longValue" ValueChanged="OnLongChanged" Label="@ResolvedLabel" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 Disabled="@ReadOnly" Required="@Required" Clearable="@AllowUnset"/>
+                break;
+            case LyoTypeEditorKind.Decimal:
+                <MudNumericField T="decimal?" Value="@_decimalValue" ValueChanged="OnDecimalChanged" Label="@ResolvedLabel" Variant="Variant.Outlined"
+                                 Margin="Margin.Dense" Disabled="@ReadOnly" Required="@Required" Clearable="@AllowUnset"/>
+                break;
+            case LyoTypeEditorKind.DateTime:
+                <MudStack Row="true" Spacing="1">
+                    <MudDatePicker Date="@_dateValue" DateChanged="OnDateChanged" Label="Date" Editable Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@ReadOnly"/>
+                    <MudTimePicker Time="@_timeValue" TimeChanged="OnTimeChanged" Label="Time" Editable Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@ReadOnly"/>
+                </MudStack>
+                break;
+            case LyoTypeEditorKind.DateOnly:
+                <MudDatePicker Date="@_dateValue" DateChanged="OnDateOnlyChanged" Label="@ResolvedLabel" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense"
+                               Disabled="@ReadOnly"/>
+                break;
+            case LyoTypeEditorKind.TimeOnly:
+                <MudTimePicker Time="@_timeValue" TimeChanged="OnTimeOnlyChanged" Label="@ResolvedLabel" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense"
+                               Disabled="@ReadOnly"/>
+                break;
+            case LyoTypeEditorKind.Enum:
+                @if (_enumNames.Length > 0) {
+                    <MudSelect T="string"
+                               Label="@ResolvedLabel"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Dense="true"
+                               Clearable="@AllowUnset"
+                               Disabled="@ReadOnly"
+                               Required="@Required"
+                               Placeholder="@(AllowUnset ? "None" : null)"
+                               Value="@_textValue"
+                               ValueChanged="OnEnumNameChanged">
+                        @foreach (var name in _enumNames) {
+                            <MudSelectItem T="string" Value="@name">@name</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                else {
+                    <MudTextField T="string"
+                                  Label="@ResolvedLabel"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Immediate="true"
+                                  Disabled="@ReadOnly"
+                                  Required="@Required"
+                                  HelperText="@_enumHelper"
+                                  Value="@_textValue"
+                                  ValueChanged="OnTextChanged"/>
+                }
+                break;
+            case LyoTypeEditorKind.Guid:
+                <MudTextField T="string"
+                              Label="@ResolvedLabel"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              Disabled="@ReadOnly"
+                              Required="@Required"
+                              Clearable="@AllowUnset"
+                              HelperText="8-4-4-4-12 hex GUID"
+                              Error="@(!string.IsNullOrEmpty(_scalarError))"
+                              ErrorText="@_scalarError"
+                              InputType="@(IsEncrypted ? InputType.Password : InputType.Text)"
+                              Value="@_textValue"
+                              ValueChanged="OnTextChanged"/>
+                break;
+            case LyoTypeEditorKind.Uri:
+                <MudTextField T="string"
+                              Label="@ResolvedLabel"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              Disabled="@ReadOnly"
+                              Required="@Required"
+                              Clearable="@AllowUnset"
+                              HelperText="Absolute URI (https://…) or a path with /"
+                              Error="@(!string.IsNullOrEmpty(_scalarError))"
+                              ErrorText="@_scalarError"
+                              Value="@_textValue"
+                              ValueChanged="OnTextChanged"/>
+                break;
+            case LyoTypeEditorKind.Formatter when FormatterEditorType is not null:
+                <DynamicComponent Type="@FormatterEditorType" Parameters="@FormatterEditorParameters"/>
+                break;
+            case LyoTypeEditorKind.Regex:
+            case LyoTypeEditorKind.Xml:
+            case LyoTypeEditorKind.Formatter:
+                <MudTextField T="string"
+                              Label="@ResolvedLabel"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              Lines="@(_editorKind == LyoTypeEditorKind.Formatter ? 3 : 4)"
+                              Disabled="@ReadOnly"
+                              Required="@Required"
+                              HelperText="@(_editorKind == LyoTypeEditorKind.Formatter ? "SmartFormat template. Unresolved {tokens} stay until run." : null)"
+                              Value="@_textValue"
+                              ValueChanged="OnTextChanged"/>
+                break;
+            default:
+                <MudTextField T="string"
+                              Label="@ResolvedLabel"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              Disabled="@ReadOnly"
+                              Required="@Required"
+                              InputType="@(IsEncrypted ? InputType.Password : InputType.Text)"
+                              Value="@_textValue"
+                              ValueChanged="OnTextChanged"/>
+                break;
+        }
+    }
+</MudStack>

@@ -1,0 +1,29 @@
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="DriftChangeGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.RawId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@ApplyQuery"
+                      Features="@LyoDataGridFeatureFlags.All"
+                      AutoRefreshEnabled="true">
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View change" aria-label="View change payload"
+                               OnClick="@(() => ViewChange(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" Identifier="true" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;"/>
+        <LyoProjectedColumn Field="InstanceId" Title="Instance" Identifier="true" HeaderStyle="width: 140px;"/>
+        <LyoProjectedColumn Field="WatchRoot" Title="Watch Root" QuickSearchPropertyName="WatchRoot" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="OccurredAtUtc" Title="Occurred" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewChange(item))">View</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

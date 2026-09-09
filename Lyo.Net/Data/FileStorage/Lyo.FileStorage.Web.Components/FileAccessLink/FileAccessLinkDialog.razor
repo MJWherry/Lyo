@@ -1,0 +1,142 @@
+@namespace Lyo.FileStorage.Web.Components.FileAccessLink
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            @if (!string.IsNullOrWhiteSpace(FileName)) {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@FileName</MudText>
+            }
+            else {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@FileId.ToString("D")</MudText>
+            }
+
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Dates and times are combined as UTC. Each download or presigned-read request consumes the link per policy (max downloads, validity, window).
+            </MudText>
+
+            @if (_error != null) {
+                <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+            }
+
+            @if (_response == null) {
+                @if (ShowAdvanced) {
+                    <MudExpansionPanels Elevation="0">
+                        <MudExpansionPanel Text="Validity (UTC)">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" md="6">
+                                    <MudDatePicker Label="Not before date" @bind-Date="_notBeforeDate" Clearable="true" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"/>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTimePicker Label="Not before time" @bind-Time="_notBeforeTime" Clearable="true" Variant="Variant.Outlined" AmPm="false"/>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudDatePicker Label="Expires date" @bind-Date="_expiresDate" Clearable="true" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"/>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTimePicker Label="Expires time" @bind-Time="_expiresTime" Clearable="true" Variant="Variant.Outlined" AmPm="false"/>
+                                </MudItem>
+                            </MudGrid>
+                        </MudExpansionPanel>
+                        <MudExpansionPanel Text="Access window (UTC)">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" md="6">
+                                    <MudDatePicker Label="Window start date" @bind-Date="_windowStartDate" Clearable="true" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"/>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTimePicker Label="Window start time" @bind-Time="_windowStartTime" Clearable="true" Variant="Variant.Outlined" AmPm="false"/>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudDatePicker Label="Window end date" @bind-Date="_windowEndDate" Clearable="true" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"/>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTimePicker Label="Window end time" @bind-Time="_windowEndTime" Clearable="true" Variant="Variant.Outlined" AmPm="false"/>
+                                </MudItem>
+                            </MudGrid>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                }
+                else {
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="6">
+                            <MudDatePicker Label="Expires date (UTC)" @bind-Date="_expiresDate" Clearable="true" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"/>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTimePicker Label="Expires time (UTC)" @bind-Time="_expiresTime" Clearable="true" Variant="Variant.Outlined" AmPm="false"/>
+                        </MudItem>
+                    </MudGrid>
+                }
+
+                <MudNumericField T="int?"
+                                 @bind-Value="_maxDownloads"
+                                 Label="Max downloads"
+                                 Clearable="true"
+                                 Variant="Variant.Outlined"
+                                 Margin="Margin.Dense"
+                                 HelperText="Leave empty for unlimited"/>
+
+                @if (ShowAdvanced) {
+                    <MudTextField T="string"
+                                  @bind-Value="_tenantId"
+                                  Label="Tenant id"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  HelperText="Optional"/>
+                }
+            }
+            else {
+                <MudAlert Severity="Severity.Success" Dense="true">Link created.</MudAlert>
+                <MudText Typo="Typo.body2">Link id @_response.LinkId.ToString("D")</MudText>
+
+                <MudText Typo="Typo.subtitle2" Class="mt-2">Download (full URL)</MudText>
+                @if (!string.IsNullOrEmpty(_downloadAbsoluteUrl)) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Wrap="Wrap.Wrap">
+                        <MudTextField Value="@_downloadAbsoluteUrl" ReadOnly="true" Variant="Variant.Outlined" Lines="2" Class="flex-grow-1"
+                                      Style="min-width:min(100%,560px);"/>
+                        <MudTooltip Text="Copy">
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" OnClick="@(() => CopyToClipboardAsync(_downloadAbsoluteUrl))" aria-label="Copy download URL"/>
+                        </MudTooltip>
+                        <MudTooltip Text="Open">
+                            <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" OnClick="@(() => OpenTabAsync(_downloadAbsoluteUrl))" aria-label="Open download URL"/>
+                        </MudTooltip>
+                    </MudStack>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_response.DownloadUrl)) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">API path</MudText>
+                        <LyoChip Variant="Variant.Outlined" Label="@_response.DownloadUrl"/>
+                    </MudStack>
+                }
+
+                <MudText Typo="Typo.subtitle2" Class="mt-3">Presigned read (full URL)</MudText>
+                @if (!string.IsNullOrEmpty(_presignedReadAbsoluteUrl)) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Wrap="Wrap.Wrap">
+                        <MudTextField Value="@_presignedReadAbsoluteUrl" ReadOnly="true" Variant="Variant.Outlined" Lines="2" Class="flex-grow-1"
+                                      Style="min-width:min(100%,560px);"/>
+                        <MudTooltip Text="Copy">
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" OnClick="@(() => CopyToClipboardAsync(_presignedReadAbsoluteUrl))"
+                                           aria-label="Copy presign URL"/>
+                        </MudTooltip>
+                    </MudStack>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_response.PresignedReadUrl)) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">API path</MudText>
+                        <LyoChip Variant="Variant.Outlined" Label="@_response.PresignedReadUrl"/>
+                    </MudStack>
+                }
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        @if (_response == null) {
+            <MudButton OnClick="Close" Variant="Variant.Text">Cancel</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateAsync" Disabled="@_busy">Create</MudButton>
+        }
+        else {
+            <MudButton OnClick="@(() => CopyToClipboardAsync(_downloadAbsoluteUrl))" Variant="Variant.Text" Disabled="@(string.IsNullOrEmpty(_downloadAbsoluteUrl))">Copy download</MudButton>
+            <MudButton OnClick="Close" Variant="Variant.Filled" Color="Color.Primary">Close</MudButton>
+        }
+    </DialogActions>
+</MudDialog>

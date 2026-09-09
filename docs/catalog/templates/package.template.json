@@ -1,0 +1,35 @@
+{
+  "$schema": "../schema/package.schema.json",
+  "id": "Lyo.Example",
+  "name": "Lyo.Example",
+  "area": "Core",
+  "tagline": "One-line pitch for the package.",
+  "description": "Longer intro: what it is, when to use it, and the primary contracts (interfaces / Add* extensions).",
+  "features": [
+    "**Feature one.** Short explanation",
+    {
+      "title": "Feature group",
+      "text": "Optional blurb for the group.",
+      "items": [
+        "Subfeature A",
+        {
+          "title": "Subfeature B",
+          "items": [
+            "Detail one",
+            "Detail two"
+          ]
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "title": "Registration",
+      "language": "csharp",
+      "code": "services.AddExampleFromConfiguration(configuration);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Example/Lyo.Example/README.md"
+}

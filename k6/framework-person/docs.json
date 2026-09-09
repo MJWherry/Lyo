@@ -1,0 +1,36 @@
+{
+  "id": "k6.framework-person",
+  "name": "k6 framework-person matrix",
+  "tagline": "Intensity × cache matrix for person Query APIs (load/stress/spike/soak/ceiling).",
+  "description": "Python MatrixPlanner expands endpoint × profile × intensity (low/med/high) × cache (uncached/cached) cells, pins RANDOM_SEED, invokes k6 via K6ProcessRunner, then refreshes the dashboard with build_manifests.py --k6-only. Scenario details live in k6/framework-person/README.md.",
+  "commands": [
+    {
+      "cmd": "python3 k6/framework-person/run_all.py",
+      "blurb": "All 90 cells (3×5×3×2)"
+    },
+    {
+      "cmd": "python3 k6/framework-person/run_all.py nonsoak med uncached",
+      "blurb": "Day-run slice without soak"
+    },
+    {
+      "cmd": "python3 k6/framework-person/run_all.py query load med",
+      "blurb": "One endpoint/profile/intensity × both cache modes"
+    },
+    {
+      "cmd": "python3 k6/framework-person/run_all.py spike high uncached",
+      "blurb": "Spike high intensity, cache-miss only"
+    },
+    {
+      "cmd": "MODE=smoke python3 k6/framework-person/run_all.py query load med",
+      "blurb": "One VU / one iteration per planned cell"
+    }
+  ],
+  "notes": [
+    "Keywords AND across axes (endpoint/profile/intensity/cache); OR within an axis",
+    "Results: {endpoint}_{profile}_{intensity}_{cached|uncached}.summary.json under results/<optional-label-><timestamp>/",
+    "RANDOM_SEED=20260623 is always pinned by run_all.py",
+    "CONTINUE_ON_FAILURE=true keeps going after a failed cell",
+    "TEST_FILTER accepts comma-separated keywords (same as CLI args)"
+  ],
+  "readmePath": "k6/framework-person/TOOLING.md"
+}

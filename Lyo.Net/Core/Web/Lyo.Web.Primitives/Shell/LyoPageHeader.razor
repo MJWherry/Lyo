@@ -1,0 +1,32 @@
+@namespace Lyo.Web.Primitives
+
+<header class="lyo-page-header @Class" style="@Style">
+    <LyoBreadcrumbs Items="@Breadcrumbs" Class="lyo-page-header-crumbs"/>
+    <div class="lyo-page-header-bar">
+        <div class="lyo-page-header-heading">
+            <div class="lyo-page-header-title">
+                @if (!string.IsNullOrWhiteSpace(Icon)) {
+                    <MudIcon Icon="@Icon" Size="Size.Medium" Color="@IconColor"/>
+                }
+                <MudText Typo="@TitleTypo">@Title</MudText>
+                @TitleContent
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Description)) {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@Description</MudText>
+            }
+        </div>
+        @if (Actions is not null) {
+            <div class="lyo-page-header-actions">
+                @Actions
+            </div>
+        }
+    </div>
+    @if (Chips is not null) {
+        <div class="lyo-page-header-chips">
+            @Chips
+        </div>
+    }
+    @if (Divider) {
+        <MudDivider Class="lyo-page-header-divider"/>
+    }
+</header>

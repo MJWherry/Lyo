@@ -1,0 +1,62 @@
+@using Lyo.Reporting.Models
+@typeparam T
+
+@* ReportViewer.razor - Generic component for rendering Report<T> *@
+
+@if (!string.IsNullOrEmpty(PageRuleCss)) {
+    <style>@PageRuleCss</style>
+}
+
+<div style="@GetRootStyles()">
+    @if (!string.IsNullOrEmpty(Layout.Watermark)) {
+        <div style="@GetWatermarkStyles()">@Layout.Watermark</div>
+    }
+
+    @if (!string.IsNullOrEmpty(Layout.HeaderText) || !string.IsNullOrEmpty(Layout.LogoUrl)) {
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+            @if (!string.IsNullOrEmpty(SafeLogoUrl)) {
+                <img src="@SafeLogoUrl" alt="" style="max-height: 48px; max-width: 160px;" />
+            }
+            @if (!string.IsNullOrEmpty(Layout.HeaderText)) {
+                <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: @AccentColor;">@Layout.HeaderText</div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Report.Title)) {
+        <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid @AccentColor;">
+            <h1 style="margin: 0; font-size: @(IsCompact ? "28px" : "36px"); font-weight: 700; color: @InkColor;">@Report.Title</h1>
+            @if (!string.IsNullOrEmpty(Report.Subtitle)) {
+                <p style="margin: 8px 0 0 0; color: @MutedColor; font-size: 18px;">@Report.Subtitle</p>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Report.Description)) {
+        <div style="margin-bottom: 30px; padding: 15px; background: #f1f5f9; border-left: 4px solid @AccentColor; border-radius: 4px;">
+            <p style="margin: 0; color: @BodyColor; line-height: 1.6;">@Report.Description</p>
+        </div>
+    }
+
+    @{
+        var orderedSections = Report.Sections.OrderBy(s => s.Order).ToList();
+    }
+    @foreach (var sectionItem in orderedSections) {
+        @RenderSection(sectionItem, 0)
+    }
+
+    @if (!string.IsNullOrEmpty(Report.Footer) || Layout.ShowPageNumbers) {
+        <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 13px;">
+            @if (!string.IsNullOrEmpty(Report.Footer)) {
+                <div>@Report.Footer</div>
+            }
+            @if (Layout.ShowPageNumbers) {
+                <div style="margin-top: 6px;">Page 1</div>
+            }
+        </div>
+    }
+
+    @if (HasChartBlocks) {
+        @RenderChartBootstrap()
+    }
+</div>

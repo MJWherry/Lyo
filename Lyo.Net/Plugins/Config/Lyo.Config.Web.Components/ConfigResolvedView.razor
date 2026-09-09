@@ -1,0 +1,119 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudStack Spacing="2" Class="mt-3">
+    @if (string.IsNullOrWhiteSpace(SubjectEntityType) || string.IsNullOrWhiteSpace(SubjectEntityId)) {
+        <MudAlert Severity="Severity.Info" Dense="true">Apply a subject entity type and id to resolve config.</MudAlert>
+    }
+    else if (_loading) {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
+    }
+    else {
+        @if (_resolveError != null) {
+            <MudAlert Severity="Severity.Warning" Dense="true">@_resolveError</MudAlert>
+        }
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary">@_items.Count key(s) for @SubjectEntityType / @SubjectEntityId</MudText>
+        <LyoResponsiveTable>
+            <TableContent>
+                <MudTable Items="_items" Dense="true" Hover="true" Breakpoint="Breakpoint.None" Elevation="0">
+                    <HeaderContent>
+                        <MudTh></MudTh>
+                        <MudTh>Key</MudTh>
+                        <MudTh>Source</MudTh>
+                        <MudTh>Required</MudTh>
+                        <MudTh>Encrypted</MudTh>
+                        <MudTh>Value</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        @{
+                            var source = ConfigColorHelper.ResolveSource(context);
+                            var encrypted = context.Definition.IsEncrypted;
+                        }
+                        <MudTd DataLabel="Actions">
+                            <MudStack Row="true" Spacing="0">
+                                @RowActions(context)
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="Key">
+                            <MudText Typo="Typo.body2">@context.Definition.Key</MudText>
+                            @if (!string.IsNullOrWhiteSpace(context.Definition.Description)) {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Definition.Description</MudText>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Source">
+                            <LyoChip Spec="@LyoChips.Of(ConfigColorHelper.SourceLabel(source), ConfigColorHelper.ForSource(source))"/>
+                        </MudTd>
+                        <MudTd DataLabel="Required">
+                            <LyoChip Spec="@LyoChips.FromBool(context.Definition.IsRequired, "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+                        </MudTd>
+                        <MudTd DataLabel="Encrypted">
+                            <LyoChip Spec="@LyoChips.FromBool(encrypted, "Encrypted", "Plain", Color.Warning, Color.Default)"/>
+                        </MudTd>
+                        <MudTd DataLabel="Value">
+                            <LyoTruncatedText Text="@ConfigDisplay.Json(context.Value?.Json, encrypted)"/>
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">No definitions for this entity type.</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </TableContent>
+            <CardContent>
+                @if (_items.Count == 0) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">No definitions for this entity type.</MudText>
+                }
+                else {
+                    @foreach (var item in _items) {
+                        var source = ConfigColorHelper.ResolveSource(item);
+                        var encrypted = item.Definition.IsEncrypted;
+                        <LyoRecordCard Title="@item.Definition.Key" Subtitle="@item.Definition.Description">
+                            <TitleContent>
+                                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                    <LyoChip Spec="@LyoChips.Of(ConfigColorHelper.SourceLabel(source), ConfigColorHelper.ForSource(source))"/>
+                                    <LyoChip Spec="@LyoChips.FromBool(item.Definition.IsRequired, "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+                                    <LyoChip Spec="@LyoChips.FromBool(encrypted, "Encrypted", "Plain", Color.Warning, Color.Default)"/>
+                                </MudStack>
+                            </TitleContent>
+                            <Actions>
+                                @RowActions(item)
+                            </Actions>
+                            <ChildContent>
+                                <LyoRecordField Label="Value">
+                                    <LyoTruncatedText Text="@ConfigDisplay.Json(item.Value?.Json, encrypted)"/>
+                                </LyoRecordField>
+                            </ChildContent>
+                        </LyoRecordCard>
+                    }
+                }
+            </CardContent>
+        </LyoResponsiveTable>
+    }
+</MudStack>
+
+@code {
+
+    private RenderFragment<ResolvedConfigItemRecord> RowActions => item => @<text>
+        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                       Size="Size.Small"
+                       title="Edit binding"
+                       OnClick="@(() => OpenBindingAsync(item))"/>
+        <MudIconButton Icon="@Icons.Material.Filled.RestartAlt"
+                       Size="Size.Small"
+                       Disabled="@(item.Binding == null || item.Definition.DefaultValue == null)"
+                       title="Reset to default"
+                       OnClick="@(() => ResetToDefaultAsync(item))"/>
+        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                       Size="Size.Small"
+                       Color="Color.Error"
+                       Disabled="@(item.Binding == null)"
+                       title="Clear binding"
+                       OnClick="@(() => ClearBindingAsync(item))"/>
+        <MudIconButton Icon="@Icons.Material.Filled.History"
+                       Size="Size.Small"
+                       Disabled="@(item.Binding == null)"
+                       title="Value history"
+                       OnClick="@(() => ViewRevisionsAsync(item))"/>
+    </text>;
+
+}

@@ -1,0 +1,116 @@
+@using Lyo.Web.Components
+@using PersonResult = Lyo.Endato.Client.Models.Person.Response.Person
+@inject IDialogService DialogService
+
+@if (Response == null) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Run a person search to see results.</MudText>
+}
+else {
+    <MudStack Spacing="2">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <LyoChip Label="@($"{Response.Persons.Count} person(s)")"/>
+            @if (Response.Pagination != null) {
+                <LyoChip Color="Color.Info" Label="@($"Page {Response.Pagination.CurrentPageNumber} / {Response.Pagination.TotalPages}")"/>
+            }
+            @if (Response.Counts != null) {
+                <LyoChip Label="@($"Expected {Response.Counts.ExpectedCount}")"/>
+            }
+            <LyoChip Label="@($"{Response.TotalRequestExecutionTimeMs} ms")"/>
+            @if (Response.IsError) {
+                <LyoChip Color="Color.Error" Label="Error"/>
+            }
+            <MudText Typo="Typo.caption" Color="Color.Secondary">@Response.RequestId</MudText>
+        </MudStack>
+
+        @if (Response.Error?.InputErrors is { Count: > 0 }) {
+            <MudAlert Severity="Severity.Error" Dense="true">
+                @string.Join("; ", Response.Error.InputErrors)
+            </MudAlert>
+        }
+
+        @if (Response.Persons.Count == 0) {
+            <MudAlert Severity="Severity.Info" Dense="true">No persons returned.</MudAlert>
+        }
+        else {
+            <LyoResponsiveTable>
+                <TableContent>
+                    <MudTable Items="@Response.Persons" Dense="true" Hover="true" Breakpoint="Breakpoint.None" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Name</MudTh>
+                            <MudTh>Age</MudTh>
+                            <MudTh>DoB</MudTh>
+                            <MudTh>Tahoe ID</MudTh>
+                            <MudTh>Contacts</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Name">@context.FullName</MudTd>
+                            <MudTd DataLabel="Age">@context.Age</MudTd>
+                            <MudTd DataLabel="DoB">@context.Dob</MudTd>
+                            <MudTd DataLabel="Tahoe ID">@context.TahoeId</MudTd>
+                            <MudTd DataLabel="Contacts">
+                                @context.PhoneNumbers.Count phones, @context.EmailAddresses.Count emails, @context.Addresses.Count addresses
+                            </MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                                               OnClick="@(() => ShowPerson(context))"/>
+                            </MudTd>
+                        </RowTemplate>
+                        <ChildRowContent>
+                            <MudTr>
+                                <td colspan="6">
+                                    <MudStack Spacing="2" Class="pa-2">
+                                        @PersonDetails(context)
+                                    </MudStack>
+                                </td>
+                            </MudTr>
+                        </ChildRowContent>
+                    </MudTable>
+                </TableContent>
+                <CardContent>
+                    @foreach (var person in Response.Persons) {
+                        <LyoRecordCard Title="@person.FullName" Subtitle="@person.TahoeId">
+                            <Actions>
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                                               OnClick="@(() => ShowPerson(person))"/>
+                            </Actions>
+                            <ChildContent>
+                                <LyoRecordField Label="Age" Value="@person.Age.ToString()"/>
+                                <LyoRecordField Label="DoB" Value="@person.Dob"/>
+                                <LyoRecordField Label="Contacts"
+                                                Value="@($"{person.PhoneNumbers.Count} phones, {person.EmailAddresses.Count} emails, {person.Addresses.Count} addresses")"/>
+                                <LyoRecordField Label="Details">
+                                    <MudStack Spacing="1">
+                                        @PersonDetails(person)
+                                    </MudStack>
+                                </LyoRecordField>
+                            </ChildContent>
+                        </LyoRecordCard>
+                    }
+                </CardContent>
+            </LyoResponsiveTable>
+        }
+    </MudStack>
+}
+
+@code {
+
+    private RenderFragment<PersonResult> PersonDetails => person => @<text>
+        @if (person.Locations is { Count: > 0 }) {
+            <MudText Typo="Typo.caption"><strong>Locations:</strong> @string.Join("; ", person.Locations.Select(l => $"{l.City}, {l.State}"))</MudText>
+        }
+        @if (person.PhoneNumbers.Count > 0) {
+            <MudText Typo="Typo.caption"><strong>Mobile phones:</strong> @EndatoContactFormatter.FormatPossibleNumbers(person.PhoneNumbers)</MudText>
+        }
+        @if (person.EmailAddresses.Count > 0) {
+            <MudText Typo="Typo.caption"><strong>Emails:</strong> @EndatoContactFormatter.FormatPossibleEmails(person.EmailAddresses)</MudText>
+        }
+        @if (person.Addresses.Count > 0) {
+            <MudText Typo="Typo.caption"><strong>Top address:</strong> @person.Addresses[0].FullAddress</MudText>
+        }
+        @if (person.Associates?.Count > 0) {
+            <MudText Typo="Typo.caption"><strong>Associates:</strong> @person.Associates.Count</MudText>
+        }
+    </text>;
+
+}

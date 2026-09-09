@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bogus"/>
+        <PackageReference Include="Spectre.Console"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Core\Common\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
+        <ProjectReference Include="..\..\Data\Seed\Lyo.Seed\Lyo.Seed.csproj"/>
+        <ProjectReference Include="..\..\Apps\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
+        <ProjectReference Include="..\..\Core\People\Lyo.People.Models\Lyo.People.Models.csproj"/>
+        <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\ChangeTracker\Lyo.ChangeTracker.Postgres\Lyo.ChangeTracker.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\Geolocation\Lyo.Geolocation.Postgres\Lyo.Geolocation.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
+
+        <!-- Communication -->
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Postgres\Lyo.Email.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Postgres\Lyo.Sms.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Postgres\Lyo.Sms.Twilio.Postgres.csproj"/>
+
+        <!-- Plugins -->
+        <ProjectReference Include="..\..\Plugins\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Comment\Lyo.Comment.Postgres\Lyo.Comment.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Config\Lyo.Config.Postgres\Lyo.Config.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\ContactUs\Lyo.ContactUs.Postgres\Lyo.ContactUs.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Favorite\Lyo.Favorite.Postgres\Lyo.Favorite.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\HomeInventory\Lyo.HomeInventory.Postgres\Lyo.HomeInventory.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Note\Lyo.Note.Postgres\Lyo.Note.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Rating\Lyo.Rating.Postgres\Lyo.Rating.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>
+
+        <!-- Data -->
+        <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>
+
+        <!-- Integration -->
+        <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Postgres\Lyo.Discord.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Postgres\Lyo.Endato.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Reporting\Lyo.Reporting.Postgres\Lyo.Reporting.Postgres.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="appsettings.Development.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <DependentUpon>appsettings.json</DependentUpon>
+        </None>
+    </ItemGroup>
+
+</Project>

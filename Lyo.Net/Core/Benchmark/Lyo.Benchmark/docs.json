@@ -1,0 +1,249 @@
+{
+  "id": "Lyo.Benchmark",
+  "name": "Lyo.Benchmark",
+  "area": "Core",
+  "tagline": "Helpers used only by `*.Benchmarks` executables. The BenchmarkDotNet counterpart to `Lyo.Testing`.",
+  "description": "Helpers used only by `*.Benchmarks` executables. The BenchmarkDotNet counterpart\nto [`Lyo.Testing`](../../Lyo.Testing/Lyo.Testing.csproj). References\n[`Lyo.Benchmark.Models`](../Lyo.Benchmark.Models/README.md) plus BenchmarkDotNet and Testcontainers.\nConsumer-facing models stay dependency-light. Suites share one config, entry\npoint, exporter, and data/container helpers.\n\n`net10.0`, not packable.",
+  "features": [
+    "**`SampleRecord`** (`Data/`). Shared benchmark row type (`Id`, `Name`, `Email`, `Age`, `Balance`, `IsActive`, `CreatedAt`) with `Generate(count, startId)`. CSV, XLSX, and Query benchmark projects use this instead of each defining an identical record and generator."
+  ],
+  "examples": [
+    {
+      "title": "What a benchmark project must have",
+      "language": "csharp",
+      "code": "// Program.cs\nusing Lyo.Benchmark;\n\n[assembly: BenchmarkReport(\"hashing\", \"Hashing\",\n    Description = \"SHA-2/MD5 digests ... payloads are random bytes of DataSize.\")] // name + title + methodology\n\nBenchmarkEntry.Run(args);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "What a benchmark project must have",
+      "body": "That's it. No per-class `[MemoryDiagnoser]` / `[SimpleJob]`. `BenchmarkEntry.Run` discovers the\nbenchmarks in the entry assembly and runs them under `LyoBenchmarkConfig.Default`, which adds a\ndefault job, the memory diagnoser, and the `LyoBenchmarkExporter`."
+    },
+    {
+      "type": "table",
+      "title": "Building blocks",
+      "headers": [
+        "Type",
+        "Role"
+      ],
+      "rows": [
+        [
+          "`BenchmarkEntry`",
+          "`Run(args)` starts a `BenchmarkSwitcher` over the entry assembly with the shared config."
+        ],
+        [
+          "`LyoBenchmarkConfig`",
+          "`ManualConfig` adding the default job, `MemoryDiagnoser`, and the exporter."
+        ],
+        [
+          "`Export.LyoBenchmarkExporter`",
+          "`IExporter` that builds a `MicroBenchmarkReport` from the `Summary` (GC bytes, ns means, structured params, comparison axis, baseline ratios) and writes `<name>.lyobench.json` into `BenchmarkDotNet.Artifacts`."
+        ],
+        [
+          "`[BenchmarkReport(name, title)]`",
+          "Assembly attribute naming the report; optional `Description` becomes the report's suite-level methodology. Defaults to the assembly name (`Lyo.Hashing.Benchmarks` → `hashing`) when omitted."
+        ],
+        [
+          "`[BenchmarkDescription(\"…\")]`",
+          "Method or class narrative. Copied into the measurement / group `description` so reports explain what each benchmark exercises."
+        ],
+        [
+          "`[BenchmarkParameter(\"DataSize\", Unit = \"bytes\", Description = \"…\")]`",
+          "Class attribute (repeatable) explaining a `[Params]` value; becomes a `ParameterDescriptor` on the comparison/group so values like `DataSize = 1048576` read as \"1 MB of bytes\"."
+        ],
+        [
+          "`[BenchmarkDataShape(typeof(SampleRecord))]`",
+          "Names the model/row type. The exporter reflects over it to emit a `DatasetDescriptor` (CLR types, columns, object/scalar/collection kind, nesting depth), capturing data structure, including nested complexity, instead of just a row count."
+        ],
+        [
+          "`[BenchmarkSla(MaxMeanMs = …, MinThroughputMbps = …, MaxAllocatedKb = …, Standard = \"…\")]`",
+          "Method or class budget (method wins; class is the default). The exporter compares the measured mean / derived throughput / allocation against the budget and emits a `Exceeds` / `Meets` / `Miss` verdict + target string on each measurement and comparison row, and rolls one worst-case row per benchmark into the report's `slo` list. Throughput is derived from `SizeParam` (default `DataSize`). See [SLAs](#slas--business-standards)."
+        ],
+        [
+          "`[ComparisonSuite(Baseline = \"…\")]`",
+          "Marks the class that drives the comparison table (replaces the magic `AlgorithmComparisonBenchmarks` class name)."
+        ],
+        [
+          "`[ComparisonAxis(\"Encrypt\")]`",
+          "Marks a method as part of the comparison table under an axis. Algorithm name is the method name minus the axis suffix (or set `Algorithm` explicitly)."
+        ],
+        [
+          "`Data.BenchmarkData`",
+          "`RandomBytes(n)`, `CompressibleString(n)` payload generators."
+        ],
+        [
+          "`Containers.RedisBenchmarkContainer`",
+          "Throwaway Redis Testcontainers wrapper for Docker-dependent suites (`Start()` in `[GlobalSetup]`, `Dispose()` in `[GlobalCleanup]`)."
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Output",
+      "text": "Output is the shared `lyo.bench/v1` schema (see [`Lyo.Benchmark.Models`](../Lyo.Benchmark.Models/README.md)). `scripts/benchmarks/build_manifests.py` copies the `*.lyobench.json` files into `docs/benchmarks/data/` and rewrites k6 output onto that same schema so the dashboard can render both through one viewer."
+    },
+    {
+      "type": "paragraph",
+      "title": "Why data shape is reflected instead of collected at runtime",
+      "text": "Each BenchmarkDotNet case runs in a **separate child process**. Static fields filled in `[GlobalSetup]` therefore never reach the exporter, which lives in the host process. `[BenchmarkDataShape(typeof(T))]` is how auto-derivation works instead: the host already has the benchmark `Type`, reflects over that `T` there, and builds a `DatasetDescriptor` without crossing the process boundary."
+    },
+    {
+      "type": "markdown",
+      "title": "Business standards / SLAs",
+      "body": "`[BenchmarkSla]` attaches an authored budget and the business-standard reasoning behind it so a number\ncan be judged against an expectation rather than read in isolation:\n\n* **Latency.** `MaxMeanUs` / `MaxMeanMs` / `MaxMeanNs` (use whichever unit reads best).\n* **Throughput.** `MinThroughputMbps` for size-based suites. The exporter derives MB/s from the\n  benchmark mean and the byte size in `SizeParam` (default `DataSize`).\n* **Allocation.** `MaxAllocatedKb`.\n* **`Standard`.** Free text citing the norm, for example \"SHA-256 on AES-NI hardware should sustain >= 200 MB/s\".\n\nEach declared budget is graded `Exceeds` (comfortably under, mean ≤ 50% of the\nlatency/alloc budget or throughput ≥ 1.5× the target), `Miss` (over budget), or `Meets`. Verdicts land on every\n`ComparisonRow` and `BenchmarkMeasurement`. One worst-case row per benchmark is aggregated into the\nreport's `slo` list so micro reports get the same SLA summary section the k6 load reports already have."
+    },
+    {
+      "type": "paragraph",
+      "title": "Always run with `--join`",
+      "text": "`--join` is passed by `python3 scripts/benchmarks/run_dotnet.py` so a suite's benchmark classes collapse into **one** joined `Summary`. The exporter then writes a single `<name>.lyobench.json` that covers every group plus the comparison table. Drop `--join` and `BenchmarkSwitcher` emits one `Summary` per class; the exporter still writes a fixed `<name>.lyobench.json` and only the last class survives."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Benchmark/Lyo.Benchmark/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Benchmark.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "BenchmarkDotNet",
+      "kind": "package",
+      "version": "0.15.8",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Testcontainers.Redis",
+      "kind": "package",
+      "version": "4.13.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

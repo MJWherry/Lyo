@@ -1,0 +1,106 @@
+{
+  "id": "Lyo.Geolocation.Models",
+  "name": "Lyo.Geolocation.Models",
+  "area": "Core",
+  "tagline": "Vendor-neutral data contracts used by `Lyo.Geolocation` and `Lyo.Geolocation.Postgres`.",
+  "description": "Vendor-neutral data contracts used by [`Lyo.Geolocation`](../Lyo.Geolocation/README.md) and [`Lyo.Geolocation.Postgres`](../Lyo.Geolocation.Postgres/README.md).\n\nNo HTTP stacks and no vendor client packages. Hosts that only need DTOs can reference this project alone.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Where data came from",
+      "text": "`IEntitySourceDerived` is implemented by [`Addresses.Address`](Addresses/Address.cs) (`ICollection<EntitySourceRecord> Sources`, optional `LocallyModifiedAt`). Persistence is [`address_source`](../Lyo.Geolocation.Postgres/README.md). The parent `address` carries owner identity (`address_id` FK). External source lives in `source_entity_*` + `imported_at`, for example `GoogleMapsPlace` plus a place id. The importing application chooses `source_entity_type` (for example `Lyo.Google.Geolocation.Client`), not this package. Map vendor DTOs with `EntitySourceRecord.From(source, importedAt)` before persist."
+    },
+    {
+      "type": "table",
+      "title": "Catalog of DTOs",
+      "headers": [
+        "Type",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "`Coordinates.GeoCoordinate`",
+          "Longitude / latitude plus optional accuracy, altitude, timestamp."
+        ],
+        [
+          "`BoundingBox`",
+          "Northeast/Southwest pair with `Contains`, `Center`, `Intersects`, `Expand`, factories."
+        ]
+      ],
+      "lead": "**Geometry and coordinates**",
+      "trail": "**Addresses**\n\n| Type | Role |\n|--------------------------------|------------------------------------------------------------------------------------------|\n| `Addresses.Address` | Unified US + international address. Endato-shaped optional enrichment fields. `Sources`. |\n| `Addresses.ContactAddress` | Person to address junction, used by People flows. |\n\n**Places, routing, geocoding, distance.** See `Place`, `Route`, `GeocodeResult`, and the other types in this package."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Geolocation/Lyo.Geolocation.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

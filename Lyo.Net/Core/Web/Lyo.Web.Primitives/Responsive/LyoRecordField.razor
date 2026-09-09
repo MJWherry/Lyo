@@ -1,0 +1,15 @@
+@namespace Lyo.Web.Primitives
+
+@if (!Hidden) {
+    <div class="lyo-record-card-field">
+        <dt class="lyo-record-card-label">@Label</dt>
+        <dd class="lyo-record-card-value">
+            @if (ChildContent is not null) {
+                @ChildContent
+            }
+            else {
+                @DisplayValue
+            }
+        </dd>
+    </div>
+}

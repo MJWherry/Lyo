@@ -1,0 +1,265 @@
+{
+  "id": "Lyo.PackageMetadata.Postgres",
+  "name": "Lyo.PackageMetadata.Postgres",
+  "area": "Core",
+  "tagline": "EF Core store behind `Lyo.PackageMetadata.IPackageMetadataStore`.",
+  "description": "EF Core store behind `Lyo.PackageMetadata.IPackageMetadataStore`.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "What problem this solves",
+      "text": "Stripped namespaces and assembly-qualified tokens show up in stack traces. [`Lyo.PackageMetadata`](../Lyo.PackageMetadata/README.md) resolves which NuGet or Git package owns a prefix for diagnostics overlays. `PostgresPackageMetadataStore` implements the store against normalized tables (`PackageStackPrefix` rows ordered by `NormalizedPrefix` length) so resolution is `O(sorted prefixes)` in-process after each DB read. The bulk API loads all prefixes once per call when caching allows."
+    },
+    {
+      "type": "list",
+      "title": "How storage is modeled (conceptual)",
+      "items": [
+        "`PackageMetadataEntity` holds catalog metadata (id, package name, version range, SPDX/license expression blobs). See EF configurations for the rest.",
+        "`PackageStackPrefixEntity` maps `NormalizedPrefix` to the owning package. Longest prefix wins."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Bulk resolution (`TryGetManyForStrippedMethodPrefixesAsync`)",
+      "items": [
+        "Input: distinct stripped prefixes (typically one per decoded stack frame subtree).",
+        "Output: a dictionary with one entry per input key; the value is `null` when nothing matches contract rules.",
+        "Requested keys are never dropped silently. That invariant keeps `Lyo.Diagnostic` bulk decode paths deterministic."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Caching the prefix catalog (`PostgresPrefixCatalogCachingMode`)",
+      "headers": [
+        "Mode",
+        "What it means"
+      ],
+      "rows": [
+        [
+          "`InvalidateOnRegisterManyOrClear`",
+          "Keep an immutable in-process snapshot. Reload when mutations bump the generation counter (`RegisterManyAsync` or `ClearPrefixCatalogCache` on the same instance)."
+        ],
+        [
+          "`Disabled`",
+          "Always hit Postgres. Wrap with an outer cache yourself if importing huge catalogs asynchronously."
+        ]
+      ],
+      "lead": "Repeated DB chatter is gated by `PostgresPackageMetadataOptions.PrefixCatalogCaching`:",
+      "trail": "When caching is disabled, `ClearPrefixCatalogCache()` is a no-op on the cache. It only bumps the generation.\n\nCross-process writes do not invalidate. Disable the snapshot or bust the cache after CLI imports."
+    },
+    {
+      "type": "list",
+      "title": "DI registration (`Extensions`)",
+      "items": [
+        "**AddPackageMetadataDbContextFactory** (and `FromConfiguration`). Binds `PostgresPackageMetadataOptions`, registers the `PackageMetadataDbContext` factory, attaches `AddPostgresMigrations` bootstrap.",
+        "**AddPostgresPackageMetadataStore.** Factory plus `IPackageMetadataStore` as `PostgresPackageMetadataStore` singleton resolving options and `IDbContextFactory`."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Schema and migrations",
+      "text": "Migrations live under `Migrations/`. Table names and schema follow `PostgresPackageMetadataOptions.Schema`. Inspect the snapshot for authoritative DDL."
+    },
+    {
+      "type": "list",
+      "title": "Related reading",
+      "items": [
+        "Stack decode and breadcrumb tooling that optionally consumes `IPackageMetadataStore`: [`Lyo.Diagnostic`](../../Diagnostic/Lyo.Diagnostic/README.md)."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/PackageMetadata/Lyo.PackageMetadata.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

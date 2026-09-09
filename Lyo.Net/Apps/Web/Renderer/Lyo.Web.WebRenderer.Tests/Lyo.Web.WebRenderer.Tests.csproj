@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Web.WebRenderer.Tests</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+        <ProjectReference Include="..\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
+        <ProjectReference Include="..\..\..\..\Plugins\Reporting\Lyo.Reporting.Web\Lyo.Reporting.Web.csproj"/>
+        <ProjectReference Include="..\..\..\..\Plugins\Reporting\Lyo.Reporting.Models\Lyo.Reporting.Models.csproj"/>
+        <ProjectReference Include="..\..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+    </ItemGroup>
+
+
+</Project>

@@ -1,0 +1,170 @@
+{
+  "id": "Lyo.Tts.WindowsSpeech",
+  "name": "Lyo.Tts.WindowsSpeech",
+  "area": "Communication",
+  "tagline": "Text-to-speech through Windows SAPI. `WindowsSpeechTtsService` uses the built-in Speech API.",
+  "description": "Text-to-speech through Windows SAPI. `WindowsSpeechTtsService` uses the built-in Speech API.",
+  "features": [
+    "**SAPI.** Calls the Windows Speech Synthesis API.",
+    "**Voices.** Pick any installed Windows voice.",
+    "**Rate.** Speech rate in the range -10 to 10.",
+    "**Volume.** Volume in the range 0 to 100.",
+    "**Bulk.** Batch synthesis through the shared `Lyo.Tts` pipeline.",
+    "**Logging.** Writes through Microsoft.Extensions.Logging.",
+    "**Metrics.** Optional instrumentation for TTS calls.",
+    "**Concurrency.** Safe to use from multiple threads.",
+    "**Async.** Every method accepts a `CancellationToken`."
+  ],
+  "examples": [
+    {
+      "title": "Listen for events",
+      "language": "csharp",
+      "code": "using Lyo.Tts;\nusing Lyo.Tts.Models;\nusing Lyo.Tts.WindowsSpeech;\nusing Microsoft.Extensions.DependencyInjection;\n\nvar services = new ServiceCollection();\nservices.AddWindowsSpeechTtsService(options =>\n{\n    options.DefaultVoiceId = \"Microsoft Zira Desktop\";\n    options.DefaultOutputFormat = AudioFormat.Wav;\n    options.MaxTextLength = 5000;\n    options.EnableMetrics = true;\n});\n\nawait using var serviceProvider = services.BuildServiceProvider();\nvar ttsService = serviceProvider.GetRequiredService<ITtsService<WindowsTtsRequest>>();\n\nvar result = await ttsService.SynthesizeAsync(\"Hello, world!\");\nif (result.IsSuccess && result.AudioData is { Length: > 0 })\n    await File.WriteAllBytesAsync(\"output.wav\", result.AudioData);"
+    },
+    {
+      "title": "Ready-made options instance",
+      "language": "csharp",
+      "code": "services.AddWindowsSpeechTtsService(new TtsServiceOptions\n{\n    DefaultVoiceId = \"Microsoft Zira Desktop\",\n    DefaultOutputFormat = AudioFormat.Wav,\n    MaxTextLength = 5000,\n    EnableMetrics = true,\n});"
+    },
+    {
+      "title": "Enumerate voices",
+      "language": "csharp",
+      "code": "var ttsService = serviceProvider.GetRequiredService<ITtsService<WindowsTtsRequest>>();\nvar ok = await ttsService.TestConnectionAsync();\n// TestConnectionAsync logs every installed SAPI voice via the registered ILogger."
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Supported platforms",
+      "text": "Windows only. This package builds and runs on Windows. It needs the Windows-specific `System.Speech` package."
+    },
+    {
+      "type": "markdown",
+      "title": "What gets registered",
+      "body": "`AddWindowsSpeechTtsService` (`Action<TtsServiceOptions>?` or `TtsServiceOptions`) wires:\n\n- `TtsServiceOptions` (singleton).\n- `WindowsSpeechTtsService` (singleton; subclass of `TtsServiceBase<WindowsTtsRequest>`).\n- `ITtsService<WindowsTtsRequest>` resolved from the singleton above.\n\nIt does not wire the non-generic `ITtsService`. No `WindowsSpeechTtsAppService`\nadapter in this package today, so callers that depend on `ITtsService` should depend on\n`ITtsService<WindowsTtsRequest>` instead, or wire their own adapter. The other Lyo TTS providers\n([`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md), [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md))\nregister both interfaces because they ship an `*TtsAppService` adapter."
+    },
+    {
+      "type": "list",
+      "title": "Requirements",
+      "items": [
+        "Windows OS",
+        ".NET Standard 2.0 or .NET 10.0",
+        "System.Speech package (pulled in automatically)"
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Notes",
+      "items": [
+        "This library will not compile off Windows",
+        "The library calls Windows SAPI, which exists only on Windows",
+        "Windows Speech Synthesis always emits WAV"
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Speech/Lyo.Tts.WindowsSpeech/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tts",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tts.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.Speech",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "$([MSBuild]::IsOSPlatform('Windows'))"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

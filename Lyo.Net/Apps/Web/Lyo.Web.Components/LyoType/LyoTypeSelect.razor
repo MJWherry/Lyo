@@ -1,0 +1,56 @@
+@namespace Lyo.Web.Components.LyoType
+@using Lyo.Common.Core.Enums;
+@using Lyo.Common.Metadata.Records;
+<MudStack Spacing="1">
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Start">
+        <div class="lyo-type-element">
+            <MudSelect T="string"
+                       Label="@Label"
+                       Variant="@Variant"
+                       Margin="@Margin"
+                       Dense="@Dense"
+                       FullWidth="@FullWidth"
+                       Value="@_element"
+                       ValueChanged="OnElementChanged">
+                @foreach (var (_, types) in LyoTypeUi.PickerGroups()) {
+                    @foreach (var known in types) {
+                        <MudSelectItem Value="@known.FullName">
+                            <span title="@known.Description">@LyoTypeUi.DisplayName(known)</span>
+                        </MudSelectItem>
+                    }
+                }
+                @if (ShowCustom) {
+                    <MudSelectItem Value="@LyoTypeUi.CustomTypeToken">Custom…</MudSelectItem>
+                }
+                else if (_element == LyoTypeUi.CustomTypeToken && !string.IsNullOrWhiteSpace(Value)) {
+                    <MudSelectItem Value="@LyoTypeUi.CustomTypeToken">@Value</MudSelectItem>
+                }
+            </MudSelect>
+        </div>
+        @if (CanWrap) {
+            <div class="lyo-type-shape">
+                <MudSelect T="LyoTypeCollectionShape"
+                           Label="@(string.IsNullOrWhiteSpace(Label) ? null : "Shape")"
+                           Variant="@Variant"
+                           Margin="@Margin"
+                           Dense="@Dense"
+                           Value="@_shape"
+                           ValueChanged="OnShapeChanged">
+                    <MudSelectItem Value="LyoTypeCollectionShape.Value">Value</MudSelectItem>
+                    <MudSelectItem Value="LyoTypeCollectionShape.List">List</MudSelectItem>
+                    <MudSelectItem Value="LyoTypeCollectionShape.Array">Array</MudSelectItem>
+                </MudSelect>
+            </div>
+        }
+    </MudStack>
+    @if (ShowFullNameField && NeedsFullNameField) {
+        <MudTextField T="string"
+                      Label="CLR FullName"
+                      Variant="@Variant"
+                      Margin="@Margin"
+                      Immediate="true"
+                      HelperText="Concrete enum or unlisted CLR type"
+                      Value="@FullNameFieldValue"
+                      ValueChanged="OnFullNameChanged"/>
+    }
+</MudStack>

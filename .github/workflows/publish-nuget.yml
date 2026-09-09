@@ -1,0 +1,158 @@
+# Push Lyo.* nupkgs to nuget.org.
+# Auth is NuGet Trusted Publishing (OIDC) — no long-lived API key in the repo.
+# Filename is locked to the nuget.org Trusted Publishing policy.
+# Prefer Actions → CI - Pipeline. This workflow is the OIDC push job
+# (workflow_call) plus an emergency pack+push dispatch.
+# Setup: docs/publishing.md and docs/ci.md
+#
+# Do not attach a GitHub Environment to the OIDC login job. Leave the
+# nuget.org policy Environment empty. No required-reviewer gate — solo
+# pushes to main publish without waiting.
+
+name: Publish - NuGet
+run-name: Publish - ${{ github.ref_name }} - v${{ inputs.version }}
+
+on:
+  workflow_call:
+    inputs:
+      artifact_name:
+        description: Artifact name uploaded by the pack job
+        required: false
+        type: string
+        default: nuget-packages
+      dry_run:
+        description: Skip nuget.org push
+        required: false
+        type: boolean
+        default: false
+      version:
+        description: Display version for the push job title only. Not used to pack.
+        required: false
+        type: string
+        default: ""
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Emergency pack: what to pack (prefer CI - Pipeline)"
+        required: true
+        type: choice
+        options:
+          - changed
+          - named
+          - all
+        default: changed
+      packages:
+        description: "Package names or globs when scope=named"
+        required: false
+        type: string
+        default: ""
+      version:
+        description: "Release version (no preview suffix)"
+        required: true
+        type: string
+        default: "1.0.0"
+      since:
+        description: "Git ref for scope=changed"
+        required: false
+        type: string
+        default: ""
+      dry_run:
+        description: "Pack only; do not push to nuget.org"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  pack-emergency:
+    # github.event_name is the caller's event, so workflow_dispatch is true
+    # when CI - Pipeline is run manually. github.workflow is the caller name.
+    if: ${{ github.workflow == 'Publish - NuGet' }}
+    name: Pack CI - ${{ github.ref_name }} - v${{ inputs.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      NUGET_OUTPUT_DIR: ${{ github.workspace }}/artifacts/nuget
+      BUILD_CONFIG: Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Lyo
+        uses: ./.github/actions/setup-lyo
+
+      - name: Pack
+        env:
+          SCOPE: ${{ inputs.scope }}
+          PACKAGES: ${{ inputs.packages }}
+          VERSION: ${{ inputs.version }}
+          SINCE: ${{ inputs.since }}
+        run: |
+          python3 scripts/nuget/ci_pack.py \
+            --scope "$SCOPE" \
+            --packages "$PACKAGES" \
+            --since "$SINCE" \
+            --version "$VERSION" \
+            --channel release
+
+      - name: Upload nupkgs
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            artifacts/nuget/*.nupkg
+            artifacts/nuget/*.snupkg
+          if-no-files-found: warn
+
+  push:
+    needs: [pack-emergency]
+    if: ${{ always() && !inputs.dry_run && (needs.pack-emergency.result == 'success' || needs.pack-emergency.result == 'skipped') }}
+    name: Publish CI - ${{ github.ref_name }} - v${{ inputs.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download nupkgs
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name || 'nuget-packages' }}
+          path: artifacts/nuget
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: NuGet login (OIDC)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to nuget.org
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          python3 scripts/nuget/ci_push.py \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "$NUGET_API_KEY" \
+            artifacts/nuget
+
+      - name: Upload push report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-push-nuget
+          path: artifacts/nuget/push-report.json
+          if-no-files-found: ignore

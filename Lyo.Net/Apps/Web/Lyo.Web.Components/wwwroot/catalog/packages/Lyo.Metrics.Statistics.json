@@ -1,0 +1,83 @@
+{
+  "id": "Lyo.Metrics.Statistics",
+  "name": "Lyo.Metrics.Statistics",
+  "area": "Core",
+  "tagline": "Histogram statistics on top of `Lyo.Metrics`: percentile, quartile, moving-average, and anomaly-detection helpers.",
+  "description": "Histogram statistics on top of `Lyo.Metrics`: percentile, quartile, moving-average, and anomaly-detection helpers sitting on the metrics primitives in `Lyo.Metrics`.\n\nThe base `Lyo.Metrics` package stays dependency-light because this package exists: the heavy `Lyo.Mathematics` + `Lyo.Mathematics.Functions` (F#) chain is pulled in only when callers opt in by referencing `Lyo.Metrics.Statistics`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "How to use it",
+      "language": "csharp",
+      "code": "using Lyo.Metrics;\n\nvar snapshot = metrics.GetSnapshot();\nvar p95 = snapshot.Histograms.Values\n    .First(h => h.Name == \"request.latency\")\n    .Percentile(95d);\n\n// Or via MetricsService directly\nvar p95 = metrics.GetHistogramPercentile(\"request.latency\", 95d);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "What ships",
+      "items": [
+        "On `HistogramData`: `Describe`, `Quartiles`, `InterquartileRange`, `Percentile`, `MovingAverage`, `ExponentialMovingAverage`, `RollingStandardDeviation`, `RollingMedian`, `RollingMinimum`, `RollingMaximum`, `MedianAbsoluteDeviation`, `LatestZScore`, `IsLatestValueAnomalous`, `IsLatestValueAnomalousByMad`, `MeanConfidenceInterval`, `PearsonCorrelation`.",
+        "On `MetricsService`: `DescribeHistogram`, `GetHistogramQuartiles`, `GetHistogramInterquartileRange`, `GetHistogramPercentile`, `GetHistogramMovingAverage`, `GetHistogramExponentialMovingAverage`, `GetHistogramRollingStandardDeviation`, `GetHistogramRollingMedian`, `GetHistogramRollingMinimum`, `GetHistogramRollingMaximum`, `GetHistogramMedianAbsoluteDeviation`, `GetLatestHistogramZScore`, `IsLatestHistogramValueAnomalous`, `IsLatestHistogramValueAnomalousByMad`, `GetHistogramMeanConfidenceInterval`, `GetHistogramPearsonCorrelation`.",
+        "On `MetricsSnapshot`: `GetHistogramPercentiles` (batch percentile lookup)."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Metrics/Lyo.Metrics.Statistics/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Mathematics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Mathematics.Functions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Scientific",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "FSharp.Core",
+      "kind": "package",
+      "version": "10.0.100",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

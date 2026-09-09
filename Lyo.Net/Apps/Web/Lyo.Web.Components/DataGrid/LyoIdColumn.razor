@@ -1,0 +1,43 @@
+@namespace Lyo.Web.Components.DataGrid
+@typeparam T
+@typeparam TRes where TRes : class
+@using Lyo.Web.Components.Form
+
+<TemplateColumn T="T"
+                Title="@Title"
+                Sortable="@Sortable"
+                SortBy="@GetSortValue"
+                InitialDirection="@InitialDirection"
+                Hideable="@Hideable"
+                Resizable="@Resizable"
+                Tag="@GetApiSortKey()"
+                HeaderStyle="@EffectiveHeaderStyle"
+                HeaderClass="@EffectiveHeaderClass"
+                CellStyle="@EffectiveCellStyle"
+                CellClass="@EffectiveCellClass"
+                Hidden="@IsHidden"
+                HiddenChanged="@OnHiddenChanged">
+    <CellTemplate Context="cell">
+        @Cell(cell.Item)
+    </CellTemplate>
+</TemplateColumn>
+
+@code {
+
+    /// <summary>Cell markup for one row, rendered by the table cell and by the mobile card layout so a value looks the same in both.</summary>
+    internal RenderFragment<object?> Cell => item =>
+        @<text>
+            @{
+                var fkPath = EffectiveField;
+                var fk = RelatedProjection.GetFieldValue(item, fkPath);
+                var related = Lookup?.Get<TRes>(Route, fk);
+            }
+            @if (ChildContent != null) {
+                @ChildContent(related)
+            }
+            else {
+                <LyoIdField Compact="true" Text="@(fk?.ToString() ?? string.Empty)"/>
+            }
+        </text>;
+
+}

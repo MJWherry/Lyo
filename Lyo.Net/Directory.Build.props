@@ -1,0 +1,51 @@
+<Project>
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <NuGetAuditMode>direct</NuGetAuditMode>
+        <Deterministic>true</Deterministic>
+        <Authors>Matthew Wherry</Authors>
+        <Owners>Matthew Wherry</Owners>
+        <Copyright>Copyright © Lyo</Copyright>
+        <NoWarn Condition="'$(MSBuildProjectName)' != '' and $(MSBuildProjectName.EndsWith('.Tests'))">$(NoWarn);CS8618;CS8619;CA1806;CS8610</NoWarn>
+        <NoWarn>$(NoWarn);CS1591;CS1574</NoWarn>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/mjwherry/Lyo</RepositoryUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+        <!-- Packed automatically from the project README when present; do not repeat in csproj. -->
+        <PackageReadmeFile Condition="Exists('$(MSBuildProjectDirectory)\README.md')">README.md</PackageReadmeFile>
+        <!-- Shared NuGet gallery icon. Source SVG is assets/icon.svg; nuget.org requires PNG/JPEG. -->
+        <PackageIcon Condition="Exists('$(MSBuildThisFileDirectory)assets/icon.png')">icon.png</PackageIcon>
+    </PropertyGroup>
+    <!-- Defaults for every *.Tests project: xUnit v3 self-hosts, so Exe; never published to NuGet. Set explicitly in a csproj to opt out.
+         Microsoft.NET.Test.Sdk must be a *direct* PackageReference: its VSTest targets do not flow through Lyo.Testing, so
+         `dotnet test Lyo.slnx` would otherwise skip most suites. -->
+    <PropertyGroup Condition="'$(MSBuildProjectName)' != '' and $(MSBuildProjectName.EndsWith('.Tests'))">
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(MSBuildProjectName)' != '' and $(MSBuildProjectName.EndsWith('.Tests'))">
+        <Using Include="Xunit"/>
+        <PackageReference Include="coverlet.collector">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+        <PackageReference Include="xunit.v3"/>
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+    <Import Project="$(LyoPackVersionProps)" Condition="'$(LyoPackVersionProps)' != '' AND Exists('$(LyoPackVersionProps)')"/>
+</Project>

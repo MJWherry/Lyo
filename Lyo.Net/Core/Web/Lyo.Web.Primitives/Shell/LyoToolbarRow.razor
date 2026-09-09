@@ -1,0 +1,10 @@
+@namespace Lyo.Web.Primitives
+
+<div class="@RowCssClass @Class" style="@Style">
+    @ChildContent
+    @if (!IsCollapsed && Owner?.TryClaimRowToggle() == true) {
+        <LyoToolbarIconButton Icon="@(Owner.RowsExpanded ? Icons.Material.Filled.UnfoldLess : Icons.Material.Filled.UnfoldMore)"
+                              Tooltip="@(Owner.RowsExpanded ? "Hide extra rows" : "Show extra rows")"
+                              OnClick="@Owner.ToggleRowsExpandedAsync"/>
+    }
+</div>

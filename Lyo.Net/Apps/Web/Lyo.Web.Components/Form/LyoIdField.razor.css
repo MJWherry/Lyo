@@ -1,0 +1,33 @@
+.lyo-id-field-row {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+::deep .lyo-id-field.mud-input-control .mud-input-outlined {
+    min-height: 40px;
+}
+
+::deep .lyo-id-field .lyo-id-field-row {
+    min-height: 40px;
+    padding-inline: 12px;
+    box-sizing: border-box;
+}
+
+.lyo-id-field-row ::deep .lyo-id-field-icon {
+    flex: 0 0 auto;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+}
+
+.lyo-id-field-row ::deep .lyo-id-field-value {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

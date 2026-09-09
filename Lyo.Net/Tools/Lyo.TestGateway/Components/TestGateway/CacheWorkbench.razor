@@ -1,0 +1,292 @@
+@using Lyo.Cache
+@using Lyo.Common.Metadata.Records
+@using Lyo.Health
+@using Lyo.Metrics
+@using Lyo.Web.Components.Cache
+@using CacheConstants = Lyo.Cache.Constants
+@inject IApiClient ApiClient
+@inject ICacheService CacheService
+@inject IMetrics Metrics
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Local Cache Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Exercise `Lyo.Cache` locally with explicit sets, `GetOrSet` hits and misses, TTL expiration, tag invalidation, and live cache metrics.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Configuration</MudText>
+                            <MudTextField T="string" Label="Cache key" @bind-Value="_cacheKey"/>
+                            <MudTextField T="string" Label="Tag" @bind-Value="_cacheTag"/>
+                            <MudTextField T="string" Label="Input value" Lines="4" @bind-Value="_inputValue"/>
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudNumericField T="int" Label="TTL ms" Min="50" Max="600000" @bind-Value="_durationMilliseconds"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudNumericField T="int" Label="Factory delay ms" Min="0" Max="5000" @bind-Value="_factoryDelayMilliseconds"/>
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                `GetOrSet` uses the current input when it misses. Re-running it with the same key should return the cached value until expiration or invalidation.
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Operations</MudText>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Filled" OnClick="SetValueAsync" Disabled="@_busy">Set</MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReadWithGetOrSetAsync" Disabled="@_busy">GetOrSet</MudButton>
+                                <MudButton Variant="Variant.Outlined" OnClick="RunExpirationDemoAsync" Disabled="@_busy">Expiration Demo</MudButton>
+                            </MudStack>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Text" OnClick="InvalidateKeyAsync" Disabled="@_busy">Invalidate Key</MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Warning" OnClick="InvalidateTagAsync" Disabled="@_busy">Invalidate Tag</MudButton>
+                                <MudButton Variant="Variant.Text" OnClick="CheckHealthAsync" Disabled="@_busy">Health</MudButton>
+                            </MudStack>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Text" OnClick="RefreshSnapshot">Refresh Snapshot</MudButton>
+                                <MudButton Variant="Variant.Text" OnClick="RefreshMetrics">Refresh Metrics</MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ClearEvents">Clear Events</MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="7">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <LyoChip Spec="@LyoChips.FromBool(_busy, "Busy", "Idle", Color.Warning, Color.Success)"/>
+                                <LyoChip Spec="@LyoChips.FromBool(MetricsStore != null, "Metrics Enabled", "Metrics Unavailable", Color.Success, Color.Warning)"/>
+                                <LyoChip Color="@(_items.Count == 0 ? Color.Default : Color.Primary)" Label="@($"{_items.Count} Cached Items")"/>
+                            </MudStack>
+
+                            <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Latest Result</MudText>
+
+                        @if (_lastValue == null) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Run `Set` or `GetOrSet` to inspect the latest payload returned from the cache service.
+                            </MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Key</strong></td>
+                                    <td>@_cacheKey</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Value</strong></td>
+                                    <td>@_lastValue.Text</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Origin</strong></td>
+                                    <td>@_lastValue.Source</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Factory Call</strong></td>
+                                    <td>@_lastValue.FactoryCallNumber</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created</strong></td>
+                                    <td>@_lastValue.CreatedAt.ToString("u")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Health</strong></td>
+                                    <td>@(_lastHealth == null ? "(not checked)" : _lastHealth.IsHealthy ? "Healthy" : $"Unhealthy: {_lastHealth.Message}")</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Metrics For Current Key</MudText>
+
+                        @if (MetricsStore == null) {
+                            <MudAlert Severity="Severity.Warning" Dense="true">
+                                The current `IMetrics` implementation is not `MetricsService`, so live cache metrics are not available here.
+                            </MudAlert>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Hit Success</strong></td>
+                                    <td>@_hitSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Miss Success</strong></td>
+                                    <td>@_missSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Set Success</strong></td>
+                                    <td>@_setSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Remove Success</strong></td>
+                                    <td>@_removeSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Remove By Tag Success</strong></td>
+                                    <td>@_removeByTagSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hit Duration Samples</strong></td>
+                                    <td>@_hitDurationCount (@_hitDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Miss Duration Samples</strong></td>
+                                    <td>@_missDurationCount (@_missDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Set Duration Samples</strong></td>
+                                    <td>@_setDurationCount (@_setDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Remove Duration Samples</strong></td>
+                                    <td>@_removeDurationCount (@_removeDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Items Removed By Tag</strong></td>
+                                    <td>@_removeByTagItemsRemoved</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Cache Size Gauge</strong></td>
+                                    <td>@(_cacheSizeGauge?.ToString("0.##") ?? "(n/a)")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Refresh</strong></td>
+                                    <td>@(_lastMetricsRefresh == default ? "(not loaded)" : _lastMetricsRefresh.ToString("u"))</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-1">Tracked Cache Items</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3">
+                            L1 items this process has tracked. Not Redis.
+                        </MudText>
+
+                        @if (_items.Count == 0) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                No items are currently tracked by the cache service.
+                            </MudText>
+                        }
+                        else {
+                            <LyoResponsiveTable>
+                                <TableContent>
+                                    <MudSimpleTable Dense="true" Hover="true">
+                                        <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Encrypted</th>
+                                            <th>Compressed</th>
+                                            <th>Size</th>
+                                            <th>Created</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach (var item in _items) {
+                                            <tr>
+                                                <td style="white-space: pre-wrap; word-break: break-word;">@item.Name</td>
+                                                <td>@item.Type</td>
+                                                <td>@(item.Encrypted is null ? "—" : item.Encrypted == true ? "Yes" : "No")</td>
+                                                <td>@(item.Compressed is null ? "—" : item.Compressed == true ? "Yes" : "No")</td>
+                                                <td>@(item.SizeBytes is { } size ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false) : "—")</td>
+                                                <td>@item.Created.ToString("u")</td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </TableContent>
+                                <CardContent>
+                                    @foreach (var item in _items) {
+                                        <LyoRecordCard Title="@item.Name" Subtitle="@item.Type.ToString()">
+                                            <LyoRecordField Label="Encrypted" Value="@(item.Encrypted is null ? "—" : item.Encrypted == true ? "Yes" : "No")"/>
+                                            <LyoRecordField Label="Compressed" Value="@(item.Compressed is null ? "—" : item.Compressed == true ? "Yes" : "No")"/>
+                                            <LyoRecordField Label="Size" Value="@(item.SizeBytes is { } size ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false) : "—")"/>
+                                            <LyoRecordField Label="Created" Value="@item.Created.ToString("u")"/>
+                                        </LyoRecordCard>
+                                    }
+                                </CardContent>
+                            </LyoResponsiveTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Recent Events</MudText>
+
+                        @if (_events.Count == 0) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Cache operations will append a short event log here.
+                            </MudText>
+                        }
+                        else {
+                            <LyoResponsiveTable>
+                                <TableContent>
+                                    <MudSimpleTable Dense="true" Hover="true">
+                                        <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Stage</th>
+                                            <th>Details</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach (var entry in _events) {
+                                            <tr>
+                                                <td>@entry.Timestamp.ToString("HH:mm:ss.fff")</td>
+                                                <td>@entry.Stage</td>
+                                                <td style="white-space: pre-wrap; word-break: break-word;">@entry.Message</td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </TableContent>
+                                <CardContent>
+                                    @foreach (var entry in _events) {
+                                        <LyoRecordCard Title="@entry.Stage" Subtitle="@entry.Timestamp.ToString("HH:mm:ss.fff")">
+                                            <LyoRecordField Label="Details">
+                                                <div style="white-space: pre-wrap; word-break: break-word;">@entry.Message</div>
+                                            </LyoRecordField>
+                                        </LyoRecordCard>
+                                    }
+                                </CardContent>
+                            </LyoResponsiveTable>
+                        }
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudText Typo="Typo.h6" Class="mb-2">API cache</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                L1 snapshot from the remote API process (`POST Cache/QueryProject`). This is not the local workbench cache above.
+            </MudText>
+            <CacheGrid ApiClient="ApiClient"/>
+        </MudPaper>
+    </MudStack>
+</MudPaper>

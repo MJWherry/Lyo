@@ -1,0 +1,49 @@
+{
+  "id": "scripts.analysis",
+  "name": "Solution analysis tooling",
+  "tagline": "Measure duplication, audit per-TFM dependency closures, and keep Lyo.Common references narrowed to what each project uses.",
+  "description": "Read-only reporting over the project graph, plus one rewriter. Run every command from the repo root. `clone_report.py` and `dep_closure.py` answer questions; `narrow_common.py` edits csproj files and is idempotent, so it is safe to re-run after any change that moves types between the Lyo.Common family packages (`Lyo.Common.Core`, `.Json`, `.Metadata`, and `Lyo.SystemInformation`).\n\n`dep_closure.py` is the gate used when splitting a package: snapshot with `--save`, do the work, then `--baseline` the snapshot to prove no consumer picked up a new NuGet package. A checked-in snapshot lives at `Lyo.Net/scripts/analysis/baselines/dep_closure_pre.json`.",
+  "commands": [
+    {
+      "cmd": "python3 Lyo.Net/scripts/analysis/clone_report.py",
+      "blurb": "Duplication summary: type-1 (literal copy-paste) and type-2 (same code, renamed identifiers)"
+    },
+    {
+      "cmd": "python3 Lyo.Net/scripts/analysis/clone_report.py --top 40 --json Lyo.Net/scripts/analysis/baselines/clone_report.json",
+      "blurb": "List the biggest clone clusters and save machine-readable results"
+    },
+    {
+      "cmd": "python3 Lyo.Net/scripts/analysis/clone_report.py --baseline Lyo.Net/scripts/analysis/baselines/clone_report.json",
+      "blurb": "Compare duplication against a prior run"
+    },
+    {
+      "cmd": "python3 Lyo.Net/scripts/analysis/dep_closure.py 'Lyo.Validation' 'Lyo.Query.*'",
+      "blurb": "Transitive project + package closure per target framework"
+    },
+    {
+      "cmd": "python3 Lyo.Net/scripts/analysis/dep_closure.py '*' --save Lyo.Net/scripts/analysis/baselines/dep_closure_pre.json",
+      "blurb": "Snapshot the whole solution before a refactor"
+    },
+    {
+      "cmd": "python3 Lyo.Net/scripts/analysis/dep_closure.py 'Lyo.Validation' --baseline Lyo.Net/scripts/analysis/baselines/dep_closure_pre.json",
+      "blurb": "Fail if a package closure grew; the gate to run after moving types between packages"
+    },
+    {
+      "cmd": "python3 Lyo.Net/scripts/analysis/narrow_common.py --dry-run --verbose",
+      "blurb": "Show which Lyo.Common family packages each project actually needs, without writing"
+    },
+    {
+      "cmd": "python3 Lyo.Net/scripts/analysis/narrow_common.py",
+      "blurb": "Rewrite references to that set; prints nothing when already converged"
+    }
+  ],
+  "notes": [
+    "clone_report.py, dep_closure.py, and narrow_common.py live under Lyo.Net/scripts/analysis/; run them from the repo root so they can import scripts/lyo_tooling",
+    "dep_closure.py reads csproj references only, so a package that used to arrive transitively can look like growth once it is declared explicitly -- check obj/project.assets.json before believing a regression",
+    "dep_closure.py --self-test verifies the graph walk itself",
+    "narrow_common.py keys off `using` / `@using` directives and fully-qualified names; every namespace now sits under the package that owns it, so a using names its package outright and no symbol-level guessing is needed",
+    "narrow_common.py drops a reference that no source names, so a project whose only use of a package was an unused using loses it -- add the using before re-running if the reference is deliberate",
+    "narrow_common.py covers every project, not just direct Common consumers: narrowing one project stops Lyo.Common.Core flowing transitively to its consumers"
+  ],
+  "readmePath": "Lyo.Net/scripts/analysis/README.md"
+}

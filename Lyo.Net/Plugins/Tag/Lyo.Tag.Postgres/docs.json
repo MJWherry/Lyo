@@ -1,0 +1,254 @@
+{
+  "id": "Lyo.Tag.Postgres",
+  "name": "Lyo.Tag.Postgres",
+  "area": "Plugins",
+  "tagline": "Entity Framework Core store for `Lyo.Tag` on PostgreSQL. Rows live in `tag.tag` (`PostgresTagOptions.Schema = \"tag\"`), and the package includes migrations.",
+  "description": "Entity Framework Core store for `Lyo.Tag` on PostgreSQL. Rows live in `tag.tag` (`PostgresTagOptions.Schema = \"tag\"`), and the package includes migrations. Each row carries a **subject** and an optional **actor** (`for_entity_*` / `from_entity_*`). Per tenant, uniqueness is `(for_entity_type, for_entity_id, name, tag_type, slug)`.\n\n`PostgresTagStore` implements `ITagStore` and `Lyo.Health.IHealth` (`HealthCheckName = \"tag-postgres\"`). Registering the store also registers a liveness probe.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register the store",
+      "language": "csharp",
+      "code": "services.AddPostgresTagStore(new PostgresTagOptions {\n    ConnectionString = \"...\",\n    EnableAutoMigrations = true\n});"
+    },
+    {
+      "title": "appsettings.json",
+      "language": "json",
+      "code": "{\n  \"PostgresTag\": {\n    \"ConnectionString\": \"Host=localhost;Database=lyo;...\",\n    \"EnableAutoMigrations\": true\n  }\n}"
+    },
+    {
+      "title": "Bind from configuration",
+      "language": "csharp",
+      "code": "services.AddPostgresTagStoreFromConfiguration(configuration);"
+    },
+    {
+      "title": "Mark a docket urgent",
+      "language": "csharp",
+      "code": "// Add tag (idempotent – no-op if already exists)\nawait tagStore.AddTagAsync(\n    EntityRef.ForGuid(\"Docket\", docketId),\n    \"urgent\",\n    EntityRef.ForKey(\"User\", userId.ToString()));\n\n// Get all tags for an entity\nvar tags = await tagStore.GetTagsForEntityAsync(EntityRef.ForGuid(\"Docket\", docketId));\n\n// Find all dockets with \"urgent\" tag\nvar urgentDockets = await tagStore.GetEntitiesWithTagAsync(\"urgent\", \"Docket\");\n\n// Remove a tag\nawait tagStore.RemoveTagAsync(EntityRef.ForGuid(\"Docket\", docketId), \"urgent\");\n\n// Remove all tags from an entity\nawait tagStore.RemoveAllTagsForEntityAsync(EntityRef.ForGuid(\"Docket\", docketId));"
+    },
+    {
+      "title": "Add a migration",
+      "language": "bash",
+      "code": "export TAG_CONNECTION_STRING=\"Host=localhost;Database=lyo;Username=postgres;Password=postgres\"\ndotnet ef migrations add MigrationName --project Plugins/Tag/Lyo.Tag.Postgres"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Service registration",
+      "items": [
+        "`AddTagDbContextFactory(Action<PostgresTagOptions>)` / `AddTagDbContextFactory(PostgresTagOptions)` register the `IDbContextFactory<TagDbContext>` only. Handy when you consume the schema from migrations or another store.",
+        "`AddTagDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` does the same, bound from configuration.",
+        "`AddPostgresTagStore(Action<PostgresTagOptions>)` / `AddPostgresTagStore(PostgresTagOptions)` register the DbContext factory **and** the `ITagStore` singleton.",
+        "`AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` registers the store by binding configuration. The default section name is `PostgresTag`."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "From configuration",
+      "text": "The same registration from configuration:"
+    },
+    {
+      "type": "markdown",
+      "title": "Building an EntityRef",
+      "body": "Create refs with `Lyo.EntityReference.Models.EntityRef`, either generic or from strings:\n\n```csharp\n// Generic: uses typeof(T).FullName, keys joined with \":\"\nvar forDocket = EntityRef.For<Docket>(docketId);\nvar fromUser = EntityRef.For<User>(123);\n\n// String-based\nvar forEntity = EntityRef.ForGuid(\"Docket\", docketGuid);\nvar fromEntity = EntityRef.ForKey(\"User\", \"123\");\n```"
+    },
+    {
+      "type": "list",
+      "title": "Database schema",
+      "items": [
+        "**tag.tag.** `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar 128/256), `name`, `slug`, `tag_type`, `tenant_id` (uuid), lifecycle from `EntityRelationEntityBase`, plus tag-specific indexes",
+        "Unique index on (for_entity_type, for_entity_id, tag)",
+        "Index on (for_entity_type, for_entity_id)",
+        "Index on tag"
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Tenant isolation",
+      "body": "Every read and write on `PostgresTagStore` takes an optional `Guid? tenantId` (same shape as `IFavoriteStore`). `TenancyResolver` applies the policy in `PostgresTagOptions.Tenancy`. When that is unset, it inherits `EntityRefOptions.Mode`. Because `tenant_id` is non-null, only `SingleTenantDefault` and `MultiTenantStrict` are valid. Construction rejects `SystemOnly`. Every query gets a `WhereTenant` filter. The policy matrix and an `appsettings.json` snippet live in [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy).\n\n```json\n{\n  \"PostgresTag\": {\n    \"ConnectionString\": \"Host=localhost;Database=lyo;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Tag/Lyo.Tag.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tag",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

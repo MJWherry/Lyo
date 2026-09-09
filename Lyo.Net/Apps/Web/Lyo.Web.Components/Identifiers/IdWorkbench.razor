@@ -1,0 +1,222 @@
+@using Lyo.Common.Core.Enums;
+@using Lyo.Common.Core.Identifiers;
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">ID Generator</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Generate and inspect GUID, KSUID, ULID, NanoID, and Snowflake identifiers from Lyo.Common.Core.
+            </MudText>
+        </div>
+
+        <MudTabs Elevation="0" Rounded="true" TabPanelsClass="pt-4">
+
+            <!-- ── UUID / GUID ─────────────────────────────────────────── -->
+            <MudTabPanel Text="UUID / GUID">
+                <MudStack Spacing="3">
+                    <MudPaper Elevation="1" Class="pa-4">
+                        <MudStack Spacing="3">
+                            <MudGrid>
+                                <MudItem xs="12" md="4">
+                                    <MudSelect T="GuidVersion" Label="Version" @bind-Value="_guidVersion" Margin="Margin.Dense">
+                                        <MudSelectItem Value="GuidVersion.V4">V4 — Random</MudSelectItem>
+                                        <MudSelectItem Value="GuidVersion.V7">V7 — Unix-ms ordered (recommended for DBs)</MudSelectItem>
+                                        <MudSelectItem Value="GuidVersion.V6">V6 — Gregorian ordered</MudSelectItem>
+                                        <MudSelectItem Value="GuidVersion.CombPostgres">COMB (PostgreSQL)</MudSelectItem>
+                                        <MudSelectItem Value="GuidVersion.CombSqlServer">COMB (SQL Server)</MudSelectItem>
+                                        <MudSelectItem Value="GuidVersion.V3">V3 — MD5 name-based</MudSelectItem>
+                                        <MudSelectItem Value="GuidVersion.V5">V5 — SHA-1 name-based</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                                @if (_guidVersion is not GuidVersion.V3 and not GuidVersion.V5) {
+                                    <MudItem xs="6" md="2">
+                                        <MudNumericField T="int" Label="Count" @bind-Value="_guidCount" Min="1" Max="100"/>
+                                    </MudItem>
+                                }
+                                <MudItem xs="6" md="2" Class="d-flex align-end">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                               OnClick="GenerateGuids" FullWidth="true">Generate
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+
+                            @if (_guidVersion is GuidVersion.V3 or GuidVersion.V5) {
+                                <MudGrid>
+                                    <MudItem xs="12" md="3">
+                                        <MudSelect T="string" Label="Namespace" @bind-Value="_guidNamespace" Margin="Margin.Dense">
+                                            <MudSelectItem Value="@("DNS")">DNS</MudSelectItem>
+                                            <MudSelectItem Value="@("URL")">URL</MudSelectItem>
+                                            <MudSelectItem Value="@("OID")">OID</MudSelectItem>
+                                            <MudSelectItem Value="@("X500")">X.500</MudSelectItem>
+                                            <MudSelectItem Value="@("Custom")">Custom GUID</MudSelectItem>
+                                        </MudSelect>
+                                    </MudItem>
+                                    @if (_guidNamespace == "Custom") {
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField Label="Custom namespace GUID"
+                                                          @bind-Value="_guidCustomNamespace"
+                                                          Placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+                                        </MudItem>
+                                    }
+                                    <MudItem xs="12" md="4">
+                                        <MudTextField Label="Name" @bind-Value="_guidName" Placeholder="e.g. example.com"/>
+                                    </MudItem>
+                                </MudGrid>
+
+                                <MudAlert Severity="Severity.Info" Dense="true">
+                                    V3 / V5 are deterministic — the same namespace + name always produce the same GUID.
+                                </MudAlert>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <IdResultPanel Entries="_guidEntries"/>
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- ── KSUID ────────────────────────────────────────────────── -->
+            <MudTabPanel Text="KSUID">
+                <MudStack Spacing="3">
+                    <MudPaper Elevation="1" Class="pa-4">
+                        <MudStack Spacing="2">
+                            <MudGrid>
+                                <MudItem xs="6" md="2">
+                                    <MudNumericField T="int" Label="Count" @bind-Value="_ksuidCount" Min="1" Max="100"/>
+                                </MudItem>
+                                <MudItem xs="6" md="2" Class="d-flex align-end">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                               OnClick="GenerateKsuids" FullWidth="true">Generate
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                27-char base62 · second-precision timestamp · K-sortable
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                    <IdResultPanel Entries="_ksuidEntries"/>
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- ── ULID ─────────────────────────────────────────────────── -->
+            <MudTabPanel Text="ULID">
+                <MudStack Spacing="3">
+                    <MudPaper Elevation="1" Class="pa-4">
+                        <MudStack Spacing="2">
+                            <MudGrid>
+                                <MudItem xs="6" md="2">
+                                    <MudNumericField T="int" Label="Count" @bind-Value="_ulidCount" Min="1" Max="100"/>
+                                </MudItem>
+                                <MudItem xs="6" md="2" Class="d-flex align-end">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                               OnClick="GenerateUlids" FullWidth="true">Generate
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                26-char Crockford base32 · ms-precision timestamp · lexicographically sortable
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                    <IdResultPanel Entries="_ulidEntries"/>
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- ── NanoID ───────────────────────────────────────────────── -->
+            <MudTabPanel Text="NanoID">
+                <MudStack Spacing="3">
+                    <MudPaper Elevation="1" Class="pa-4">
+                        <MudStack Spacing="2">
+                            <MudGrid>
+                                <MudItem xs="12" md="5">
+                                    <MudTextField Label="Alphabet" @bind-Value="_nanoAlphabet" Margin="Margin.Dense"/>
+                                </MudItem>
+                                <MudItem xs="6" md="2">
+                                    <MudNumericField T="int" Label="Size (chars)" @bind-Value="_nanoSize" Min="1" Max="256"/>
+                                </MudItem>
+                                <MudItem xs="6" md="2">
+                                    <MudNumericField T="int" Label="Count" @bind-Value="_nanoCount" Min="1" Max="100"/>
+                                </MudItem>
+                                <MudItem xs="12" md="2" Class="d-flex align-end">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                               OnClick="GenerateNanoIds" FullWidth="true">Generate
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Cryptographically random · configurable alphabet &amp; length · URL-safe by default
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                    <IdResultPanel Entries="_nanoEntries"/>
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- ── Snowflake ─────────────────────────────────────────────── -->
+            <MudTabPanel Text="Snowflake">
+                <MudStack Spacing="3">
+                    <MudPaper Elevation="1" Class="pa-4">
+                        <MudStack Spacing="2">
+                            <MudGrid>
+                                <MudItem xs="6" md="3">
+                                    <MudNumericField T="int" Label="Machine ID (0–1023)"
+                                                     @bind-Value="_snowMachineId" Min="0" Max="1023"/>
+                                </MudItem>
+                                <MudItem xs="6" md="2">
+                                    <MudNumericField T="int" Label="Count" @bind-Value="_snowCount" Min="1" Max="100"/>
+                                </MudItem>
+                                <MudItem xs="12" md="2" Class="d-flex align-end">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                               OnClick="GenerateSnowflakes" FullWidth="true">Generate
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                64-bit time-ordered · 41-bit ms timestamp · 10-bit machine ID · 12-bit sequence counter
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                    <IdResultPanel Entries="_snowEntries"/>
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- ── Auto Increment ────────────────────────────────────────── -->
+            <MudTabPanel Text="Auto Increment">
+                <MudStack Spacing="3">
+                    <MudPaper Elevation="1" Class="pa-4">
+                        <MudStack Spacing="2">
+                            <MudGrid>
+                                <MudItem xs="12" md="3">
+                                    <MudSelect T="string" Label="Type" @bind-Value="_autoType" Margin="Margin.Dense">
+                                        <MudSelectItem Value="@("int")">int</MudSelectItem>
+                                        <MudSelectItem Value="@("long")">long</MudSelectItem>
+                                        <MudSelectItem Value="@("uint")">uint</MudSelectItem>
+                                        <MudSelectItem Value="@("ulong")">ulong</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="6" md="3">
+                                    <MudNumericField T="long" Label="Start value" @bind-Value="_autoStart"/>
+                                </MudItem>
+                                <MudItem xs="6" md="2">
+                                    <MudNumericField T="int" Label="Count" @bind-Value="_autoCount" Min="1" Max="100"/>
+                                </MudItem>
+                                <MudItem xs="12" md="2" Class="d-flex align-end">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                               OnClick="GenerateAutoIncrementIds" FullWidth="true">Generate
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Monotonic numeric IDs using AutoIncrementIdGenerator&lt;T&gt; with overflow-safe increments.
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                    <IdResultPanel Entries="_autoEntries"/>
+                </MudStack>
+            </MudTabPanel>
+
+        </MudTabs>
+    </MudStack>
+</MudPaper>

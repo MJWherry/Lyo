@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Lyo Benchmark Report</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Syne:wght@600;700&display=swap"
+          rel="stylesheet">
+    <script>document.documentElement.setAttribute("data-theme", (function () {
+        try {
+            var t = localStorage.getItem("lyo-bench-theme");
+            if (t === "light" || t === "dark") return t;
+        } catch (e) {
+        }
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    })());</script>
+    <link href="shared/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+    <nav class="top-nav">
+        <a href="index.html">&larr; All suites</a>
+        <button aria-label="Toggle color theme" class="theme-toggle" id="theme-toggle" type="button">Dark</button>
+    </nav>
+    <header class="hero">
+        <h1 id="report-title">Benchmark Report</h1>
+        <p class="subtitle" id="report-subtitle"></p>
+        <div id="history-bar"></div>
+    </header>
+
+    <main id="report"></main>
+
+    <footer>Unified <code>lyo.bench/v1</code> schema. Data lives in <code>docs/benchmarks/data/</code>.</footer>
+</div>
+
+<script src="shared/theme.js"></script>
+<script src="data/registry.js"></script>
+<script src="shared/render.js"></script>
+<script src="shared/viewer.js"></script>
+<script>
+    (function () {
+        var root = document.getElementById("report");
+        var historyBar = document.getElementById("history-bar");
+        var hashBody = (location.hash || "").replace(/^#/, "");
+        var name = decodeURIComponent(hashBody.split("@")[0] || "").trim();
+        var snapshotFile = decodeURIComponent((hashBody.split("@")[1] || "").trim());
+        var registry = (window.LyoBench && window.LyoBench.registry) || [];
+        var entry = registry.filter(function (r) {
+            return r.name === name;
+        })[0];
+        var latestReport = null;
+
+        if (!name) {
+            window.BenchmarkDashboard.renderError(root, "No report selected. Open this page from the index.");
+            return;
+        }
+
+        document.getElementById("report-title").textContent = entry ? entry.title : name;
+        document.getElementById("report-subtitle").textContent = entry ? (entry.type === "load" ? "Load test (k6)" : "Micro-benchmark (BenchmarkDotNet)") : "";
+
+        function setSnapshotHash(file) {
+            var next = name + (file ? "@" + encodeURIComponent(file) : "");
+            if (location.hash.replace(/^#/, "") !== next) {
+                history.replaceState(null, "", "#" + next);
+            }
+        }
+
+        function renderBody(report) {
+            if (!report) {
+                window.BenchmarkDashboard.renderError(root, "Snapshot not found.");
+                return;
+            }
+            window.LyoBenchViewer.renderReport(report, root);
+        }
+
+        function showReport(report, file) {
+            renderBody(report);
+            setSnapshotHash(file || null);
+        }
+
+        function selectSnapshot(file) {
+            if (!file) {
+                showReport(latestReport, null);
+                return;
+            }
+            var latestEntry = (latestReport.history || []).filter(function (h) {
+                return h.isCurrent;
+            })[0];
+            if (latestEntry && latestEntry.file === file) {
+                showReport(latestReport, file);
+                return;
+            }
+            window.LyoBenchViewer.loadHistorySnapshot(
+                name,
+                file,
+                function (report) {
+                    if (!report) {
+                        window.BenchmarkDashboard.renderError(root, "Could not read snapshot '" + file + "'.");
+                        return;
+                    }
+                    showReport(report, file);
+                },
+                function (err) {
+                    window.BenchmarkDashboard.renderError(root, err);
+                }
+            );
+        }
+
+        function mountHistory(report) {
+            var entries = report.history || [];
+            if (!entries.length) return;
+            window.LyoBenchViewer.mountHistoryBar(historyBar, name, entries, selectSnapshot);
+        }
+
+        function afterLatestLoaded() {
+            latestReport = window.LyoBench.reports[name];
+            if (!latestReport) {
+                window.BenchmarkDashboard.renderError(root, "No data for report '" + name + "'. Run scripts/benchmarks/build_manifests.py, then reload.");
+                return;
+            }
+            mountHistory(latestReport);
+            if (snapshotFile) {
+                selectSnapshot(snapshotFile);
+            } else {
+                showReport(latestReport, null);
+            }
+        }
+
+        var mainScript = document.createElement("script");
+        mainScript.src = "data/" + name + ".js";
+        mainScript.onload = afterLatestLoaded;
+        mainScript.onerror = function () {
+            window.BenchmarkDashboard.renderError(root, "Could not load data/" + name + ".js. Run scripts/benchmarks/build_manifests.py, then reload.");
+        };
+        document.body.appendChild(mainScript);
+
+        window.addEventListener("hashchange", function () {
+            location.reload();
+        });
+    })();
+</script>
+</body>
+</html>

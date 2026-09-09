@@ -1,0 +1,95 @@
+{
+  "id": "Lyo.Note",
+  "name": "Lyo.Note",
+  "area": "Plugins",
+  "tagline": "Contracts for notes hung on entities. A note has a **subject** (what it is about) and an **actor** (who wrote it), both as `EntityRef`.",
+  "description": "Contracts for notes hung on entities. A note has a **subject** (what it is about) and an **actor** (who wrote it), both as `EntityRef`. The default Postgres store maps `for_entity_*` / `from_entity_*` (nullable varchar) and uses soft-delete.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "`INoteStore`",
+      "items": [
+        "`SaveAsync(NoteRecord note, CancellationToken ct = default)` insert or update. If `note.Id` matches an active row, that row's subject/actor endpoints and `Content` are updated in place. Otherwise a new row is inserted. A new `Id` is generated when `Id == default`.",
+        "`GetByIdAsync(Guid id, CancellationToken ct = default)` one note by id. Active rows only.",
+        "`GetForEntityAsync(EntityRef forEntity, CancellationToken ct = default)` every note on that target, ordered by `CreatedAt`.",
+        "`GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default)` every note written by that actor, ordered by `CreatedAt`.",
+        "`GetForEntityTypeAsync(string forEntityType, Guid? forEntityId = null, CancellationToken ct = default)` every note for a target *type*. Optionally restrict to one target id.",
+        "`DeleteAsync(Guid id, CancellationToken ct = default)` soft-delete one note.",
+        "`DeleteForEntityAsync(EntityRef forEntity, CancellationToken ct = default)` soft-delete every note on that target."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "`NoteRecord`",
+      "items": [
+        "`Content`. Note body. A string, and it may be empty.",
+        "`UpdatedTimestamp`. Last update time (UTC). Nullable.",
+        "`SubjectRef` / `ActorRef`. Projected as `EntityRef`."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Note/Lyo.Note/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

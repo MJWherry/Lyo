@@ -1,0 +1,265 @@
+using Lyo.Api;
+using Lyo.Api.ApiEndpoint;
+using Lyo.Api.ApiEndpoint.Config;
+using Lyo.Configuration;
+using Lyo.Config;
+using Lyo.Discord.Models;
+using Lyo.Discord.Models.Request;
+using Lyo.Discord.Models.Response;
+using Lyo.Discord.Postgres.Database;
+using Lyo.Exceptions;
+using Lyo.Postgres;
+using Mapster;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+namespace Lyo.Discord.Postgres;
+
+/// <summary>DI helpers for PostgreSQL Discord database context registration and API mapping.</summary>
+public static class Extensions
+{
+    /// <summary>Audit columns on <see cref="Database.DiscordUser" />; set via API CRUD hooks, not request DTOs.</summary>
+    private static readonly CrudConfiguration<DiscordDbContext, DiscordUser, DiscordUserReq> DiscordUserCrud = new() {
+        BeforeCreate = ctx => {
+            var utc = DateTime.UtcNow;
+            ctx.Entity.CreatedTimestamp = utc;
+            ctx.Entity.UpdatedTimestamp = utc;
+        },
+        BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
+    };
+
+    /// <summary>Audit columns on <see cref="Database.DiscordGuild" />; set via API CRUD hooks, not request DTOs.</summary>
+    private static readonly CrudConfiguration<DiscordDbContext, DiscordGuild, DiscordGuildReq> DiscordGuildCrud = new() {
+        BeforeCreate = ctx => {
+            var utc = DateTime.UtcNow;
+            ctx.Entity.CreatedTimestamp = utc;
+            ctx.Entity.UpdatedTimestamp = utc;
+        },
+        BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
+        AfterUpsert = ctx => {
+            var store = ctx.Services.GetService(typeof(IConfigStore)) as IConfigStore;
+            if (store == null)
+                return;
+
+            DiscordGuildSettingsHelper.EnsureDefaultBindingAsync(store, ctx.Entity.Id).GetAwaiter().GetResult();
+        }
+    };
+
+    private static readonly CrudConfiguration<DiscordDbContext, DiscordChannel, DiscordChannelReq> DiscordChannelCrud = new() {
+        BeforeCreate = ctx => {
+            var utc = DateTime.UtcNow;
+            ctx.Entity.CreatedTimestamp = utc;
+            ctx.Entity.UpdatedTimestamp = utc;
+        },
+        BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
+    };
+
+    private static readonly CrudConfiguration<DiscordDbContext, DiscordEmoji, DiscordEmojiReq> DiscordEmojiCrud = new() {
+        BeforeCreate = ctx => {
+            var utc = DateTime.UtcNow;
+            ctx.Entity.CreatedTimestamp = utc;
+            ctx.Entity.UpdatedTimestamp = utc;
+        },
+        BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
+    };
+
+    private static readonly CrudConfiguration<DiscordDbContext, DiscordRole, DiscordRoleReq> DiscordRoleCrud = new() {
+        BeforeCreate = ctx => {
+            var utc = DateTime.UtcNow;
+            ctx.Entity.CreatedTimestamp = utc;
+            ctx.Entity.UpdatedTimestamp = utc;
+        },
+        BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
+    };
+
+    private static readonly CrudConfiguration<DiscordDbContext, DiscordMessage, DiscordMessageReq> DiscordMessageCrud = new() {
+        BeforeCreate = ctx => {
+            var utc = DateTime.UtcNow;
+            ctx.Entity.CreatedTimestamp = utc;
+            ctx.Entity.UpdatedTimestamp = utc;
+        },
+        BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
+    };
+
+    /// <summary>Wires Discord REST endpoints (query, CRUD, export). Call after <see cref="AddPostgresDiscord(Action{PostgresDiscordOptions})" />.</summary>
+    public static WebApplication BuildDiscordGroup(this WebApplication app)
+    {
+        app.CreateBuilder<DiscordDbContext, DiscordUser, DiscordUserReq, DiscordUserRes, long>(Constants.Rest.Discord.Users, "Discord")
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordUserCrud)
+            .Build();
+
+        app.CreateBuilder<DiscordDbContext, DiscordGuild, DiscordGuildReq, DiscordGuildRes, long>(Constants.Rest.Discord.Guilds, "Discord")
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordGuildCrud)
+            .Build();
+
+        app.CreateBuilder<DiscordDbContext, DiscordChannel, DiscordChannelReq, DiscordChannelRes, long>(Constants.Rest.Discord.Channels, "Discord")
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordChannelCrud)
+            .Build();
+
+        app.CreateBuilder<DiscordDbContext, DiscordEmoji, DiscordEmojiReq, DiscordEmojiRes, long>(Constants.Rest.Discord.Emojis, "Discord")
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordEmojiCrud)
+            .Build();
+
+        app.CreateBuilder<DiscordDbContext, DiscordRole, DiscordRoleReq, DiscordRoleRes, long>(Constants.Rest.Discord.Roles, "Discord")
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordRoleCrud)
+            .Build();
+
+        app.CreateBuilder<DiscordDbContext, DiscordInteraction, DiscordInteractionReq, DiscordInteractionRes, long>(Constants.Rest.Discord.Interactions, "Discord")
+            .WithCrud(ApiFeatureSet.DefaultCrud, new())
+            .Build();
+
+        app.CreateBuilder<DiscordDbContext, DiscordMessage, DiscordMessageReq, DiscordMessageRes, long>(Constants.Rest.Discord.Messages, "Discord")
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordMessageCrud)
+            .Build();
+
+        app.CreateBuilder<DiscordDbContext, DiscordAttachment, DiscordAttachmentReq, DiscordAttachmentRes, long>(Constants.Rest.Discord.Attachments, "Discord")
+            .WithCrud(ApiFeatureSet.DefaultCrud, new())
+            .Build();
+
+        // Composite PK (UserId, GuildId): there is no single-`{id}` GET/DELETE — Query, Upsert, or PATCH with Keys in PK order.
+        app.CreateBuilder<DiscordDbContext, DiscordMember, DiscordMemberReq, DiscordMemberRes, long>(Constants.Rest.Discord.Members, "Discord")
+            .WithCrud(
+                new(
+                    ApiFeature.Query, ApiFeature.Upsert, ApiFeature.UpsertBulk, ApiFeature.UpsertInheritCreate, ApiFeature.UpsertInheritUpdate, ApiFeature.Patch,
+                    ApiFeature.PatchBulk, ApiFeature.PatchInheritsUpdate), new())
+            .Build();
+
+        app.MapDiscordGuildSettingsEndpoints();
+        return app;
+    }
+
+    /// <summary>Discord entities and API DTOs configures Mapster mappings.</summary>
+    public static TypeAdapterConfig ConfigureDiscordMappings(this TypeAdapterConfig config)
+    {
+        config.NewConfig<DiscordUserReq, DiscordUser>()
+            .Map(dest => dest.Username, src => DiscordUsernameOrPlaceholder(src.Username))
+            .Ignore(dest => dest.CreatedTimestamp)
+            .Ignore(dest => dest.UpdatedTimestamp);
+
+        config.NewConfig<DiscordUser, DiscordUserRes>();
+        config.NewConfig<DiscordGuildReq, DiscordGuild>()
+            .Map(dest => dest.Name, src => DiscordGuildNameOrPlaceholder(src.Name))
+            .Ignore(dest => dest.CreatedTimestamp)
+            .Ignore(dest => dest.UpdatedTimestamp);
+
+        config.NewConfig<DiscordGuild, DiscordGuildRes>();
+        config.NewConfig<DiscordChannelReq, DiscordChannel>().Ignore(dest => dest.CreatedTimestamp).Ignore(dest => dest.UpdatedTimestamp);
+        config.NewConfig<DiscordChannel, DiscordChannelRes>();
+        config.NewConfig<DiscordEmojiReq, DiscordEmoji>().Ignore(dest => dest.CreatedTimestamp).Ignore(dest => dest.UpdatedTimestamp);
+        config.NewConfig<DiscordEmoji, DiscordEmojiRes>();
+        config.NewConfig<DiscordRoleReq, DiscordRole>().Ignore(dest => dest.CreatedTimestamp).Ignore(dest => dest.UpdatedTimestamp);
+        config.NewConfig<DiscordRole, DiscordRoleRes>();
+        config.NewConfig<DiscordInteractionReq, DiscordInteraction>();
+        config.NewConfig<DiscordInteraction, DiscordInteractionRes>();
+        config.NewConfig<DiscordMessageReq, DiscordMessage>().Ignore(dest => dest.CreatedTimestamp).Ignore(dest => dest.UpdatedTimestamp);
+        config.NewConfig<DiscordMessage, DiscordMessageRes>();
+        config.NewConfig<DiscordAttachmentReq, DiscordAttachment>();
+        config.NewConfig<DiscordAttachment, DiscordAttachmentRes>();
+        config.NewConfig<DiscordMemberReq, DiscordMember>();
+        config.NewConfig<DiscordMember, DiscordMemberRes>();
+        return config;
+    }
+
+    /// <summary>Discord payloads may omit names; DB columns are NOT NULL (varchar limits from migrations).</summary>
+    private static string DiscordUsernameOrPlaceholder(string? username)
+    {
+        const int maxLen = 35;
+        var n = username?.Trim();
+        if (string.IsNullOrEmpty(n))
+            return "(unknown)";
+
+        return n.Length > maxLen ? n[..maxLen] : n;
+    }
+
+    private static string DiscordGuildNameOrPlaceholder(string? name)
+    {
+        const int maxLen = 50;
+        var n = name?.Trim();
+        if (string.IsNullOrEmpty(n))
+            return "(unknown)";
+
+        return n.Length > maxLen ? n[..maxLen] : n;
+    }
+
+    extension(IServiceCollection services)
+    {
+        /// <summary>Registers <see cref="DiscordDbContext" /> to the service collection.</summary>
+        public IServiceCollection AddDiscordDbContext(string connectionString)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
+            return services.AddDiscordDbContextFactory(new PostgresDiscordOptions { ConnectionString = connectionString })
+                .AddScoped<DiscordDbContext>(sp => sp.GetRequiredService<IDbContextFactory<DiscordDbContext>>().CreateDbContext());
+        }
+
+        /// <summary>Registers PostgreSQL Discord <see cref="IDbContextFactory{TContext}" /> to the service collection.</summary>
+        public IServiceCollection AddDiscordDbContextFactory(Action<PostgresDiscordOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresDiscordOptions();
+            configure(options);
+            return services.AddDiscordDbContextFactory(options);
+        }
+
+        /// <summary>Registers PostgreSQL Discord <see cref="IDbContextFactory{TContext}" /> using configuration binding.</summary>
+        public IServiceCollection AddDiscordDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresDiscordOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = LyoOptions.Bind<PostgresDiscordOptions>(configuration, configSectionName);
+
+            return services.AddDiscordDbContextFactory(options);
+        }
+
+        /// <summary>Registers PostgreSQL Discord <see cref="IDbContextFactory{TContext}" /> with optional auto-migrations.</summary>
+        public IServiceCollection AddDiscordDbContextFactory(PostgresDiscordOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            services.AddPostgresDbContextFactory<DiscordDbContext, PostgresDiscordOptions>(options);
+
+            return services;
+        }
+
+        /// <summary>
+        /// Adds Discord PostgreSQL persistence: <see cref="IDbContextFactory{TContext}" />, optional migrations, and CRUD/query services. Requires <c>AddLyoQueryServices</c>,
+        /// cache, plus <see cref="MapsterMapper.IMapper" /> (wire mappings with <see cref="ConfigureDiscordMappings" />).
+        /// </summary>
+        public IServiceCollection AddPostgresDiscord(Action<PostgresDiscordOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresDiscordOptions();
+            configure(options);
+            return services.AddPostgresDiscord(options);
+        }
+
+        /// <summary>Adds Discord PostgreSQL persistence using configuration binding.</summary>
+        public IServiceCollection AddPostgresDiscordFromConfiguration(IConfiguration configuration, string configSectionName = PostgresDiscordOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(configuration);
+            var options = LyoOptions.Bind<PostgresDiscordOptions>(configuration, configSectionName);
+
+            return services.AddPostgresDiscord(options);
+        }
+
+        /// <summary>Adds Discord PostgreSQL persistence: <see cref="IDbContextFactory{TContext}" />, optional migrations, and CRUD/query services.</summary>
+        public IServiceCollection AddPostgresDiscord(PostgresDiscordOptions options)
+        {
+            services.AddDiscordDbContextFactory(options);
+            services.AddLyoCrudServices<DiscordDbContext>();
+            return services;
+        }
+
+        /// <summary>Adds config definition seeding for <see cref="DiscordGuildSettings" /> (requires <c>AddPostgresConfigStore</c>).</summary>
+        public IServiceCollection AddDiscordGuildSettingsInfrastructure()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddHostedService<DiscordGuildSettingsDefinitionSeeder>();
+            return services;
+        }
+    }
+}

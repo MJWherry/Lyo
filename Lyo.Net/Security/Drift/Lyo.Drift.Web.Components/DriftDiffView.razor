@@ -1,0 +1,57 @@
+<LyoDialog DebugData="@Diff">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Diff</MudText>
+    </TitleContent>
+    <TitleChips>
+        <LyoChip Spec="@(LyoChips.FromEnum<DriftDiffSource>(Diff.Source.ToString(), DriftColorHelper.ForDiffSource))"/>
+    </TitleChips>
+    <ChildContent>
+        @if (_fileChanges.Count > 0) {
+            <MudText Typo="Typo.subtitle2" Class="mb-2">File changes</MudText>
+            <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="mb-4">
+                <thead>
+                <tr>
+                    <th>Kind</th>
+                    <th>Old path</th>
+                    <th>New path</th>
+                    <th>Dir</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var change in _fileChanges) {
+                    <tr>
+                        <td><LyoChip Spec="@(LyoChips.FromEnum<FileSystemChangeKind>(change.ChangeType.ToString(), DriftColorHelper.ForChangeKind))"/></td>
+                        <td>@(change.OldPath ?? "—")</td>
+                        <td>@(change.NewPath ?? "—")</td>
+                        <td>@(change.IsDirectory ? "yes" : "no")</td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+        @if (_systemDiffs.Count > 0) {
+            <MudText Typo="Typo.subtitle2" Class="mb-2">System differences</MudText>
+            <MudSimpleTable Dense="true" Hover="true" Elevation="0">
+                <thead>
+                <tr>
+                    <th>Path</th>
+                    <th>Old</th>
+                    <th>New</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in _systemDiffs) {
+                    <tr>
+                        <td>@row.Path</td>
+                        <td><LyoTruncatedText Text="@(row.OldValueJson ?? "—")"/></td>
+                        <td><LyoTruncatedText Text="@(row.NewValueJson ?? "—")"/></td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+        @if (_fileChanges.Count == 0 && _systemDiffs.Count == 0) {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No differences stored on this diff.</MudText>
+        }
+    </ChildContent>
+</LyoDialog>

@@ -1,0 +1,218 @@
+{
+  "id": "Lyo.Stt",
+  "name": "Lyo.Stt",
+  "area": "Communication",
+  "tagline": "Lyo speech-to-text contract. Ships `ISttService`, `SttServiceBase`, request/result/options/event records, and metric name constants. This repo ships no provider packages.",
+  "description": "Lyo speech-to-text contract. The package ships `ISttService`, an abstract `SttServiceBase`, the request/result/options/event records, and metric name constants. No provider implementations ship in this repository. Applications that need transcription implement `SttServiceBase` (or any `ISttService`) and register it themselves.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "`ISttService`",
+      "items": [
+        "`RecognizeAsync(byte[] audioData, LanguageCodeInfo?, AudioFormat?, CancellationToken)`",
+        "`RecognizeFromFileAsync(string audioFilePath, LanguageCodeInfo?, CancellationToken)`. Audio format is inferred from the file extension.",
+        "`RecognizeFromStreamAsync(Stream audioStream, LanguageCodeInfo?, AudioFormat?, CancellationToken)`",
+        "`RecognizeAsync(SttRequest request, CancellationToken)`",
+        "`RecognizeBulkAsync(IEnumerable<SttRequest>, CancellationToken)`",
+        "`TestConnectionAsync(CancellationToken)`"
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "`SttServiceBase`",
+      "text": "Abstract `ISttService` implementation (also `IDisposable`) that provides the bulk pipeline, concurrency throttling, and metric/event plumbing. Subclasses implement `Task<SttResult> RecognizeCoreAsync(SttRequest request, CancellationToken ct)` (the provider call) and `Task<bool> TestConnectionAsync(CancellationToken ct)`. The base class raises events `Recognizing`, `Recognized`, `BulkRecognizing`, and `BulkRecognized`, and applies a `SemaphoreSlim` sized by `SttServiceOptions.BulkSttConcurrencyLimit` to throttle bulk work."
+    },
+    {
+      "type": "table",
+      "title": "`SttServiceOptions`",
+      "headers": [
+        "Property",
+        "Type",
+        "Default",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`DefaultLanguageCode`",
+          "`LanguageCodeInfo?`",
+          "`null`",
+          "Default language for the `RecognizeAsync` convenience overloads."
+        ],
+        [
+          "`DefaultAudioFormat`",
+          "`AudioFormat?`",
+          "`null`",
+          "Audio format used when callers leave it unset."
+        ],
+        [
+          "`MaxAudioFileSize`",
+          "`long`",
+          "`10 * 1024 * 1024` (10 MiB)",
+          "Advisory upper bound on `RecognizeFromFileAsync` payloads (enforced by providers)."
+        ],
+        [
+          "`EnableMetrics`",
+          "`bool`",
+          "`true`",
+          "When `false`, the base substitutes `NullMetrics.Instance`."
+        ],
+        [
+          "`BulkSttConcurrencyLimit`",
+          "`int`",
+          "`10`",
+          "Concurrency cap applied to `RecognizeBulkAsync`."
+        ],
+        [
+          "`MaxBulkSttLimit`",
+          "`int`",
+          "`100`",
+          "Max requests per `RecognizeBulkAsync` call (throws `ArgumentOutsideRangeException` when exceeded)."
+        ]
+      ],
+      "lead": "Base options (from `Lyo.Stt.Models`):"
+    },
+    {
+      "type": "table",
+      "title": "Metric names (`Lyo.Stt.Constants.Metrics`)",
+      "headers": [
+        "Key",
+        "Metric",
+        "Kind"
+      ],
+      "rows": [
+        [
+          "`RecognizeDuration`",
+          "`stt.recognize.duration`",
+          "Timer"
+        ],
+        [
+          "`RecognizeSuccess`",
+          "`stt.recognize.success`",
+          "Counter"
+        ],
+        [
+          "`RecognizeFailure`",
+          "`stt.recognize.failure`",
+          "Counter"
+        ],
+        [
+          "`BulkRecognizeDuration`",
+          "`stt.bulk.recognize.duration`",
+          "Timer"
+        ],
+        [
+          "`BulkRecognizeTotal`",
+          "`stt.bulk.recognize.total`",
+          "Counter"
+        ],
+        [
+          "`BulkRecognizeSuccess`",
+          "`stt.bulk.recognize.success`",
+          "Counter"
+        ],
+        [
+          "`BulkRecognizeFailure`",
+          "`stt.bulk.recognize.failure`",
+          "Counter"
+        ],
+        [
+          "`BulkRecognizeLastDurationMs`",
+          "`stt.bulk.recognize.last_duration_ms`",
+          "Gauge"
+        ]
+      ],
+      "lead": "`SttServiceBase` records counters/timers under these keys (providers may replace the dictionary):"
+    },
+    {
+      "type": "paragraph",
+      "title": "No in-repo providers",
+      "text": "No `Lyo.Stt.*` provider packages in this solution. Using the contract means writing your own implementation, usually by subclassing `SttServiceBase` and registering it in DI. A later provider will be listed here."
+    },
+    {
+      "type": "paragraph",
+      "title": "Supported frameworks",
+      "text": "`netstandard2.0;net10.0`"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Speech/Lyo.Stt/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

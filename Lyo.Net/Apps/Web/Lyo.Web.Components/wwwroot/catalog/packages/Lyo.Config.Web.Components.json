@@ -1,0 +1,548 @@
+{
+  "id": "Lyo.Config.Web.Components",
+  "name": "Lyo.Config.Web.Components",
+  "area": "Plugins",
+  "tagline": "Blazor / MudBlazor dashboard for Lyo.Config. Add ConfigManagement to a host page for definitions, resolved bindings, and two first-class histories against IConfigStore.",
+  "description": "Blazor / MudBlazor dashboard for [`Lyo.Config`](../Lyo.Config/README.md). Add `ConfigManagement` to a host page for definitions, resolved per-entity values, **definition history**, and **value history**.\n\nComponents take `IConfigStore` as a parameter for writes and an `IApiClient` for reads: the grids are `LyoDataGridProjected` over Config.Api / TestApi query routes. There is no `AddXxx` DI registration and **no `IEncryptionService`** in this package. The client sends plaintext plus `IsEncrypted`. The API encrypts at rest.\n\nTargets interactive Blazor on `net10.0`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "How a host wires this up",
+      "language": "razor",
+      "code": "@inject IConfigStore Store\n@inject IApiClient ApiClient\n\n<ConfigManagement Store=\"Store\" ApiClient=\"ApiClient\" InitialSubjectEntityType=\"App\" InitialSubjectEntityId=\"gateway:local\" />"
+    },
+    {
+      "title": "Architecture",
+      "language": "mermaid",
+      "code": "flowchart LR\n    UI[ConfigManagement tabs] --> Store[IConfigStore]\n    UI --> Query[IApiClient query grids]\n    Store -->|ConfigApiStore HTTP| API[Config.Api / TestApi]\n    API --> Encrypt[IEncryptionService]\n    API --> PG[config schema]"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Top-level entry point",
+      "headers": [
+        "Parameter",
+        "Notes"
+      ],
+      "rows": [
+        [
+          "`Store`",
+          "Required `IConfigStore`. Hosts inject the store and pass it in."
+        ],
+        [
+          "`ApiClient`",
+          "Required `IApiClient`. The definitions tab uses `LyoDataGridProjected` on `Config/Definition` (search/filter/sort/export). Bulk delete still calls `IConfigStore.DeleteDefinitionAsync`."
+        ],
+        [
+          "`InitialSubjectEntityType`",
+          "Toolbar prefill. Defaults to `App` (`AppConfigEntity.AppEntityType`)."
+        ],
+        [
+          "`InitialSubjectEntityId`",
+          "Toolbar prefill for the entity instance (string; app routes use `kind:id`)."
+        ]
+      ],
+      "lead": "```razor\n@using Lyo.Config.Web.Components\n\n<ConfigManagement Store=\"Store\" />\n```",
+      "trail": "`ConfigManagement` owns subject entity type/id (Apply to load) and renders tabbed `MudTabs`: Definitions, Resolved, Definition history, Value history. `GetDefinitionsAsync` requires an entity type. Bindings and `LoadConfigAsync` also need an id. There is no list-all-definitions API."
+    },
+    {
+      "type": "table",
+      "title": "Component catalog",
+      "headers": [
+        "Component",
+        "Role"
+      ],
+      "rows": [
+        [
+          "`ConfigManagement`",
+          "Toolbar + tabbed dashboard shell."
+        ],
+        [
+          "`ConfigDefinitionGrid`",
+          "`LyoDataGridProjected` over the definition query route (filter Key / ForValueType / IsRequired / IsEncrypted, export, store-backed bulk delete). History opens definition history. Required / Encrypted / Has default chips."
+        ],
+        [
+          "`ConfigDefinitionView`",
+          "`LyoDialogPresets.Medium` + `LyoForm`. Type dropdown from `LyoTypeInfo.All` plus Custom FullName (Enum also asks for the concrete FullName). Encrypted switch (flag only). Optional default via `ConfigValueEditor`. Compact definition history with revert."
+        ],
+        [
+          "`ConfigResolvedView`",
+          "`LoadConfigAsync` merge for type+id. Source chips: Overridden / Using default / Missing. Edit binding, reset to default, clear binding. History jumps to Value history when a binding exists."
+        ],
+        [
+          "`ConfigBindingView`",
+          "Medium binding editor. Encrypted inherits from the definition (client still only sends plaintext). Compact value history with revert."
+        ],
+        [
+          "`ConfigValueEditor`",
+          "Typed Mud inputs from `LyoTypeValueInput` (`LyoTypeInfo.EditorKind`). `JsonEditor<JsonNode>` for JSON documents, binary, and custom types. Chip input for collections. Password-style input when Encrypted. No type-name field (the definition owns `ForValueType`)."
+        ],
+        [
+          "`ConfigDefinitionRevisionList`",
+          "Newest-first metadata revisions for a selected definition. Revert copies that snapshot and appends a new revision."
+        ],
+        [
+          "`ConfigRevisionList`",
+          "Newest-first value revisions for a selected binding. Revert copies that snapshot and appends a new revision. Empty until the first binding save."
+        ],
+        [
+          "`ConfigColorHelper`",
+          "Chip colors for required/optional and Binding/Default/Missing. Rendering goes through `LyoChip`."
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Store calls",
+      "items": [
+        "`SaveDefinitionAsync` / `SaveBindingAsync(..., tenantId: null)`.",
+        "`DeleteDefinitionAsync` — confirm in UI. PostgreSQL cascades bindings and revisions.",
+        "`DeleteBindingAsync` — `InvalidOperationException` when `IsRequired` and there is no default is shown as a snackbar.",
+        "`LoadConfigAsync` — required-missing is shown as a warning. Fallback rows still let you edit bindings.",
+        "`GetDefinitionRevisionsAsync` / `RevertDefinitionToRevisionAsync` — definition history.",
+        "`GetBindingRevisionsAsync` / `RevertBindingToRevisionAsync` — value history. Revert is auditable (new revision appended)."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Shared UI",
+      "text": "Reuse `LyoDialog` / `LyoDialogPresets.Medium`, `LyoForm` / `LyoFormInput`, `LyoIdField`, `LyoChip` / `LyoChips`, `LyoTimestamp`, `LyoTruncatedText`, and `JsonEditor`. Status chips go in `TitleChips`, not `TitleContent`. Pass `IApiClient` for `LyoDataGridProjected` on definition query routes. Do not register `IEncryptionService` in this package."
+    },
+    {
+      "type": "list",
+      "title": "See also",
+      "items": [
+        "[`Lyo.Config`](../Lyo.Config/README.md). `IConfigStore`, records, `AppConfigEntity`.",
+        "[`Lyo.Config.Postgres`](../Lyo.Config.Postgres/README.md). `AddPostgresConfigStoreFromConfiguration`.",
+        "[`Lyo.TestGateway`](../../../Tools/Lyo.TestGateway/README.md). `/config` workbench via `ConfigApiStore` over TestApi (API encrypts)."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Config/Lyo.Config.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Config",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Csv",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Evaluation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Primitives",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "AngleSharp",
+      "kind": "package",
+      "version": "1.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Blazored.LocalStorage",
+      "kind": "package",
+      "version": "4.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.RateLimiting",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -1,0 +1,10 @@
+@using Lyo.Api.Models.Enums
+@using Lyo.Web.Components.DataGrid
+@namespace Lyo.Web.Components.Export
+
+@* Host must be a Parameter — MudMenu popovers do not reliably receive cascading values *@
+<MudMenuItem Icon="@Icons.Material.Filled.DataObject"
+             Disabled="@(ExportHost is null || !ExportHost.CanExport)"
+             OnClick="@ExportJsonAsync">
+    Export as JSON
+</MudMenuItem>

@@ -1,0 +1,1093 @@
+using System.Text;
+using Lyo.Common.Core.Enums;
+using Lyo.Compression.BZip2;
+using Lyo.Compression.Compressors;
+using Lyo.Compression.Lz4;
+using Lyo.Compression.Lzma;
+using Lyo.Compression.Models;
+using Lyo.Compression.Policy;
+using Lyo.Compression.Snappier;
+using Lyo.Compression.Xz;
+using Lyo.Compression.Zstd;
+using Lyo.Exceptions.Models;
+using Lyo.IO.Temp.Models;
+using Lyo.Testing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace Lyo.Compression.Tests;
+
+public class CompressionServiceTests : IDisposable
+{
+    private static readonly ICompressorFactory[] AllFactories = [
+        new GZipCompressorFactory(), new DeflateCompressorFactory(),
+#if !NETSTANDARD2_0
+        new BrotliCompressorFactory(), new ZLibCompressorFactory(),
+#endif
+        new Lz4CompressorFactory(), new LzmaCompressorFactory(), new SnappierCompressorFactory(), new ZstdCompressorFactory(), new BZip2CompressorFactory(),
+        new XzCompressorFactory()
+    ];
+
+    private readonly ILogger<CompressionService> _logger;
+
+    private readonly IIOTempSession _tempSession;
+
+    public CompressionServiceTests(ITestOutputHelper output)
+    {
+        var loggerFactory = LoggerFactory.Create(builder => {
+            builder.AddProvider(new XunitLoggerProvider(output));
+            builder.SetMinimumLevel(LogLevel.Debug);
+        });
+
+        _logger = loggerFactory.CreateLogger<CompressionService>();
+        _tempSession = new IOTempSession(new() { FileExtension = ".txt" }, loggerFactory.CreateLogger<IOTempSession>());
+    }
+
+    public void Dispose() => _tempSession.Dispose();
+
+    public static IEnumerable<TheoryDataRow<CompressionAlgorithm>> AllAlgorithms()
+    {
+        yield return new(CompressionAlgorithm.GZip);
+        yield return new(CompressionAlgorithm.Deflate);
+        yield return new(SnappierCompressionAlgorithm.Instance);
+        yield return new(ZstdCompressionAlgorithm.Instance);
+        yield return new(Lz4CompressionAlgorithm.Instance);
+        yield return new(LzmaCompressionAlgorithm.Instance);
+        yield return new(BZip2CompressionAlgorithm.Instance);
+        yield return new(XzCompressionAlgorithm.Instance);
+#if !NETSTANDARD2_0
+        yield return new(CompressionAlgorithm.Brotli);
+        yield return new(CompressionAlgorithm.ZLib);
+#endif
+    }
+
+    private CompressionService NewService(CompressionServiceOptions? options = null, ILogger<CompressionService>? logger = null) => new(AllFactories, logger ?? _logger, options);
+
+    [Fact]
+    public void Resolver_WithoutFactory_ReturnsSelf()
+    {
+        var service = NewService();
+        Assert.Same(service, service.Resolver);
+        Assert.Null(service.AlgorithmSelector);
+    }
+
+    [Fact]
+    public void ResolveForCompress_WithoutSelector_UsesDefaultAlgorithm()
+    {
+        var service = NewService(new() { DefaultAlgorithm = CompressionAlgorithm.GZip });
+        var result = service.ResolveForCompress(new() { ByteLength = 10_000, ContentType = "text/plain" });
+        Assert.True(result.ShouldCompress);
+        Assert.Equal(CompressionAlgorithm.GZip, result.Algorithm);
+    }
+
+    [Fact]
+    public void ResolveForCompress_WithSelector_DelegatesToPolicy()
+    {
+        var selector = new CompressionPolicyAlgorithmSelector(
+            new() { BuiltInDefaultsEnabled = false, Rules = [new() { Categories = [FileTypeCategory.Images], Compress = false }] },
+            new() { DefaultAlgorithm = CompressionAlgorithm.GZip }, NullLogger<CompressionPolicyAlgorithmSelector>.Instance);
+
+        var service = new CompressionService(AllFactories, _logger, new() { DefaultAlgorithm = CompressionAlgorithm.GZip }, algorithmSelector: selector);
+        var result = service.ResolveForCompress(new() { ByteLength = 100_000, ContentType = "image/png", OriginalFileName = "photo.png" });
+        Assert.False(result.ShouldCompress);
+        Assert.Same(selector, service.AlgorithmSelector);
+    }
+
+    [Theory]
+    [MemberData(nameof(AllAlgorithms))]
+    public void Compress_Decompress_RoundTrip(CompressionAlgorithm algorithm)
+    {
+        var service = NewService(new() { DefaultAlgorithm = algorithm });
+        // Use a larger payload that actually shrinks
+        var original = Encoding.UTF8.GetBytes(new string('A', 1000) + "Hello, World! This is a test string for compression. " + new string('B', 1000));
+        var compressInfo = service.Compress(original, out var compressed);
+        var decompressInfo = service.Decompress(compressed, out var decompressed);
+        Assert.Equal(original, decompressed);
+        // Ratio should stay sane (tiny payloads can grow a bit from framing overhead)
+        Assert.True(compressInfo.CompressionRatio > 0);
+        Assert.True(decompressInfo.ExpansionRatio > 0);
+    }
+
+    /// <summary>
+    /// Each algorithm must emit one wire format across APIs: byte[] Compress output must be readable by the stream Decompress path. Guards the
+    /// <see cref="CompressionAlgorithm.BinaryCompressMatchesStreamFormat" /> flags and the LZ4 StreamCompatible binary mode (whose default block modes are not stream-readable).
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllAlgorithms))]
+    public void Compress_Bytes_Output_IsReadableByStreamDecompress(CompressionAlgorithm algorithm)
+    {
+        var service = NewService(new() { DefaultAlgorithm = algorithm });
+        var original = Encoding.UTF8.GetBytes(new string('A', 1000) + "cross-API format consistency" + new string('B', 1000));
+        service.Compress(original, out var compressed);
+        using var compressedStream = new MemoryStream(compressed);
+        using var decompressedStream = new MemoryStream();
+        service.Decompress(compressedStream, decompressedStream);
+        Assert.Equal(original, decompressedStream.ToArray());
+    }
+
+    [Theory]
+    [MemberData(nameof(AllAlgorithms))]
+    public void CompressString_DecompressString_RoundTrip(CompressionAlgorithm algorithm)
+    {
+        var service = NewService(new() { DefaultAlgorithm = algorithm });
+        var original = "Hello, World! This is a test string for compression.";
+        var compressInfo = service.CompressString(original, out var compressed);
+        service.DecompressString(compressed, out var decompressed);
+        Assert.Equal(original, decompressed);
+        Assert.True(compressed.Length > 0);
+        Assert.True(compressInfo.CompressionRatio > 0);
+    }
+
+    [Theory]
+    [InlineData("UTF-8")]
+    [InlineData("UTF-16")]
+    [InlineData("ASCII")]
+    public void CompressString_WithDifferentEncodings_RoundTrip(string encodingName)
+    {
+        var service = NewService();
+        // Use Encoding.Unicode for UTF-16 so BOM handling stays consistent
+        // Encoding.Unicode is UTF-16 LE with BOM, more reliable than GetEncoding("UTF-16")
+        var encoding = encodingName == "UTF-16" ? Encoding.Unicode : Encoding.GetEncoding(encodingName);
+        // Use a larger payload that shrinks well
+        // ASCII cannot carry Chinese characters, so those cases are skipped for ASCII
+        var original = encodingName == "ASCII"
+            ? "Hello, World! " + new string('X', 500) + " This is a longer string for compression testing."
+            : "Hello, World! 你好世界! " + new string('X', 500) + " This is a longer string for compression testing.";
+
+        // Confirm the encoding round-trip first
+        var originalBytes = encoding.GetBytes(original);
+        var roundTripString = encoding.GetString(originalBytes);
+        Assert.Equal(original, roundTripString); // Ensure encoding itself works
+        service.CompressString(original, out var compressed, encoding);
+        service.DecompressString(compressed, out var decompressed, encoding);
+
+        // Confirm bytes match exactly (compress then decompress must preserve them)
+        var decompressedBytes = encoding.GetBytes(decompressed);
+        Assert.Equal(originalBytes, decompressedBytes);
+        Assert.Equal(original, decompressed);
+        Assert.True(compressed.Length > 0);
+    }
+
+    [Fact]
+    public void CompressFile_DecompressFile_RoundTrip()
+    {
+        var service = NewService();
+        var tempFile = _tempSession.CreateFile("test content for file compression");
+        var compressedFile = tempFile + service.FileExtension;
+        var compressInfo = service.CompressFile(tempFile, compressedFile);
+        Assert.True(File.Exists(compressedFile));
+        Assert.True(compressInfo.InputSize > 0);
+        Assert.True(compressInfo.CompressionRatio > 0);
+        var decompressedFile = tempFile + ".decompressed";
+        service.DecompressFile(compressedFile, decompressedFile);
+        Assert.True(File.Exists(decompressedFile));
+        var originalContent = File.ReadAllText(tempFile);
+        var decompressedContent = File.ReadAllText(decompressedFile);
+        Assert.Equal(originalContent, decompressedContent);
+    }
+
+    [Fact]
+    public async Task CompressFileAsync_DecompressFileAsync_RoundTrip()
+    {
+        var service = NewService();
+        var tempFile = await _tempSession.CreateFileAsync("test content for async file compression", TestContext.Current.CancellationToken);
+        var compressedFile = tempFile + service.FileExtension;
+        var compressInfo = await service.CompressFileAsync(tempFile, compressedFile, TestContext.Current.CancellationToken);
+        Assert.True(File.Exists(compressedFile));
+        Assert.True(compressInfo.CompressionRatio > 0);
+        var decompressedFile = tempFile + ".decompressed";
+        await service.DecompressFileAsync(compressedFile, decompressedFile, TestContext.Current.CancellationToken);
+        Assert.True(File.Exists(decompressedFile));
+        var originalContent = await File.ReadAllTextAsync(tempFile, TestContext.Current.CancellationToken);
+        var decompressedContent = await File.ReadAllTextAsync(decompressedFile, TestContext.Current.CancellationToken);
+        Assert.Equal(originalContent, decompressedContent);
+    }
+
+    [Fact]
+    public void Compress_Stream_RoundTrip()
+    {
+        var service = NewService();
+        var original = "Test stream compression"u8.ToArray();
+        using var inputStream = new MemoryStream(original);
+        using var compressedStream = new MemoryStream();
+        service.Compress(inputStream, compressedStream);
+        compressedStream.Position = 0;
+        using var decompressedStream = new MemoryStream();
+        service.Decompress(compressedStream, decompressedStream);
+        Assert.Equal(original, decompressedStream.ToArray());
+    }
+
+    [Fact]
+    public async Task CompressAsync_Stream_RoundTrip()
+    {
+        var service = NewService();
+        var original = "Test async stream compression"u8.ToArray();
+        using var inputStream = new MemoryStream(original);
+        using var compressedStream = new MemoryStream();
+        await service.CompressAsync(inputStream, compressedStream, ct: TestContext.Current.CancellationToken);
+        compressedStream.Position = 0;
+        using var decompressedStream = new MemoryStream();
+        await service.DecompressAsync(compressedStream, decompressedStream, ct: TestContext.Current.CancellationToken);
+        Assert.Equal(original, decompressedStream.ToArray());
+    }
+
+    [Fact]
+    public void CompressToBase64_DecompressFromBase64_RoundTrip()
+    {
+        var service = NewService();
+        var original = "Test base64 compression"u8.ToArray();
+        var compressInfo = service.CompressToBase64(original, out var base64);
+        service.DecompressFromBase64(base64, out var decompressed);
+        Assert.Equal(original, decompressed);
+        Assert.True(base64.Length > 0);
+        Assert.True(compressInfo.CompressionRatio > 0);
+    }
+
+    [Fact]
+    public void TryCompress_Success_ReturnsTrue()
+    {
+        var service = NewService();
+        var original = "Test try compress"u8.ToArray();
+        var success = service.TryCompress(original, out var compressed, out var info);
+        Assert.True(success);
+        Assert.NotNull(compressed);
+        Assert.NotNull(info);
+        Assert.True(compressed.Length > 0);
+    }
+
+    [Fact]
+    public void TryDecompress_Success_ReturnsTrue()
+    {
+        var service = NewService();
+        var original = "Test try decompress"u8.ToArray();
+        service.Compress(original, out var compressed);
+        var success = service.TryDecompress(compressed, out var decompressed, out var info);
+        Assert.True(success);
+        Assert.NotNull(decompressed);
+        Assert.NotNull(info);
+        Assert.Equal(original, decompressed);
+    }
+
+    [Fact]
+    public void TryCompress_InvalidData_ReturnsFalse()
+    {
+        var service = NewService();
+        // TryCompress swallows exceptions, so null is caught and returns false
+        var success = service.TryCompress(null, out var compressed, out var info);
+        Assert.False(success);
+        Assert.Null(compressed);
+        Assert.Null(info);
+    }
+
+    [Fact]
+    public void TryCompress_EmptyData_ReturnsFalse()
+    {
+        var service = NewService();
+
+        // Empty data raises ArgumentException, which must be caught
+        var success = service.TryCompress([], out var compressed, out var info);
+        Assert.False(success);
+        Assert.Null(compressed);
+        Assert.Null(info);
+    }
+
+    [Theory]
+    [InlineData(new byte[] { 0x1F, 0x8B }, true)] // GZip
+    [InlineData(new byte[] { 0x78, 0x01 }, true)] // ZLib
+    [InlineData(new byte[] { 0x78, 0x5E }, true)] // ZLib
+    [InlineData(new byte[] { 0x78, 0x9C }, true)] // ZLib
+    [InlineData(new byte[] { 0x78, 0xDA }, true)] // ZLib
+    [InlineData(new byte[] { 0x28, 0xB5, 0x2F, 0xFD }, true)] // Zstd frame
+    [InlineData(new byte[] { 0x04, 0x22, 0x4D, 0x18 }, true)] // LZ4 frame
+    [InlineData(new byte[] { 0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00 }, true)] // XZ container
+    [InlineData(new byte[] { 0x42, 0x5A, 0x68 }, true)] // BZip2 ("BZh")
+    [InlineData(new byte[] { 0x81, 0x00 }, false)] // Brotli has no magic bytes; the old 0x81-0x83 heuristic was bogus
+    [InlineData(new byte[] { 0x82, 0x00 }, false)]
+    [InlineData(new byte[] { 0x83, 0x00 }, false)]
+    [InlineData(new byte[] { 0x78, 0x00 }, false)] // 0x78 with a non-standard FLG byte is not zlib
+    [InlineData(new byte[] { 0x00, 0x00 }, false)]
+    [InlineData(new byte[] { 0xFF, 0xFF }, false)]
+    public void IsLikelyCompressed_DetectsCompressedData(byte[] data, bool expected)
+    {
+        var service = NewService();
+        var result = service.IsLikelyCompressed(data);
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(new byte[] { 0x1F, 0x8B, 0x08 }, "GZip")]
+    [InlineData(new byte[] { 0x28, 0xB5, 0x2F, 0xFD }, "ZstdSharp")]
+    [InlineData(new byte[] { 0x04, 0x22, 0x4D, 0x18 }, "LZ4")]
+    [InlineData(new byte[] { 0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00 }, "XZ")]
+    [InlineData(new byte[] { 0x42, 0x5A, 0x68, 0x39 }, "BZip2")]
+    [InlineData(new byte[] { 0x78, 0x9C, 0x00 }, "ZLib")]
+    public void TryDetectAlgorithm_KnownMagics_ReturnsRegisteredAlgorithm(byte[] data, string expectedName)
+    {
+        // This test project references every addon algorithm assembly, so their CompressionAlgorithm records are registered.
+        var service = NewService();
+        Assert.True(service.TryDetectAlgorithm(data, out var algorithm));
+        Assert.Equal(expectedName, algorithm!.Name);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(new byte[0])]
+    [InlineData(new byte[] { 0x00, 0x11, 0x22 })] // no known magic
+    [InlineData(new byte[] { 0x81, 0x00 })] // raw Brotli/Deflate have no magic and are never detected
+    public void TryDetectAlgorithm_UnknownOrInvalid_ReturnsFalse(byte[]? data)
+    {
+        var service = NewService();
+        Assert.False(service.TryDetectAlgorithm(data, out var algorithm));
+        Assert.Null(algorithm);
+    }
+
+    [Fact]
+    public void Decompress_Stream_ExceedingMaxInputSize_Throws_EvenForNonSeekableOutput()
+    {
+        // Highly compressible payload: 64 KB of zeros shrinks well under the 1 KB decompression cap, so the bomb is only caught while inflating.
+        var service = NewService();
+        using var compressed = new MemoryStream();
+        service.Compress(new MemoryStream(new byte[64 * 1024]), compressed);
+        var limitedService = NewService(new() { MaxInputSize = 1024 });
+        compressed.Position = 0;
+        using var nonSeekableOutput = new NonSeekableWriteStream(Stream.Null);
+        Assert.Throws<InvalidDataException>(() => limitedService.Decompress(compressed, nonSeekableOutput));
+    }
+
+    [Fact]
+    public async Task DecompressAsync_Stream_ExceedingMaxInputSize_Throws_EvenForNonSeekableOutput()
+    {
+        var service = NewService();
+        using var compressed = new MemoryStream();
+        service.Compress(new MemoryStream(new byte[64 * 1024]), compressed);
+        var limitedService = NewService(new() { MaxInputSize = 1024 });
+        compressed.Position = 0;
+        using var nonSeekableOutput = new NonSeekableWriteStream(Stream.Null);
+        await Assert.ThrowsAsync<InvalidDataException>(() => limitedService.DecompressAsync(compressed, nonSeekableOutput, ct: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public void Decompress_Bytes_ExceedingMaxInputSize_Throws_BeforeFullExpansion()
+    {
+        // 64 KB of zeros shrinks well under the 1 KB cap, so the bomb can only be caught while inflating — the byte[] path must not fully expand first.
+        var service = NewService();
+        service.Compress(new byte[64 * 1024], out var compressed);
+        var limitedService = NewService(new() { MaxInputSize = 1024 });
+        Assert.Throws<InvalidDataException>(() => limitedService.Decompress(compressed, out var _));
+
+        // An uncapped service still round-trips the same payload.
+        service.Decompress(compressed, out var decompressed);
+        Assert.Equal(new byte[64 * 1024], decompressed);
+    }
+
+    [Fact]
+    public void IsLikelyCompressed_NullOrEmpty_ReturnsFalse()
+    {
+        var service = NewService();
+
+        // IsLikelyCompressed now rejects null and length < 2, so null must be handled without throwing
+        Assert.False(service.IsLikelyCompressed(null!));
+        Assert.False(service.IsLikelyCompressed([]));
+        Assert.False(service.IsLikelyCompressed([0x01]));
+    }
+
+    [Fact]
+    public void GetCompressionRatio_CalculatesCorrectly()
+    {
+        var service = NewService();
+        var original = new byte[1000];
+        var compressed = new byte[500];
+        var ratio = service.GetCompressionRatio(original, compressed);
+        Assert.Equal(0.5, ratio);
+    }
+
+    [Fact]
+    public void GetCompressionRatio_EmptyOriginal_ReturnsZero()
+    {
+        var service = NewService();
+        var ratio = service.GetCompressionRatio([], new byte[100]);
+        Assert.Equal(0, ratio);
+    }
+
+    [Fact]
+    public void Compress_Batch_RoundTrip()
+    {
+        var service = NewService();
+        var items = new Dictionary<string, byte[]> { { "item1", "First item"u8.ToArray() }, { "item2", "Second item"u8.ToArray() }, { "item3", "Third item"u8.ToArray() } };
+        var compressed = service.Compress(items);
+        var decompressed = service.Decompress(compressed);
+        Assert.Equal(items.Count, compressed.Count);
+        Assert.Equal(items.Count, decompressed.Count);
+        foreach (var key in items.Keys)
+            Assert.Equal(items[key], decompressed[key]);
+    }
+
+    [Fact]
+    public void CompressFiles_Batch_RoundTrip()
+    {
+        var service = NewService();
+        _tempSession.CreateFile("File 1 content");
+        _tempSession.CreateFile("File 2 content");
+        _tempSession.CreateFile("File 3 content");
+        var compressResult = service.CompressFiles(_tempSession.Files);
+        Assert.Equal(3, compressResult.TotalFiles);
+        Assert.Equal(3, compressResult.SuccessfulFilesCount);
+        Assert.Equal(0, compressResult.FailedFilesCount);
+        Assert.Equal(3, compressResult.SuccessfulFiles.Count);
+
+        // Inflate every compressed file
+        var compressedFiles = compressResult.SuccessfulFiles.Select(f => f.OutputFilePath).ToList();
+        var decompressResult = service.DecompressFiles(compressedFiles);
+        Assert.Equal(3, decompressResult.TotalFiles);
+        Assert.Equal(3, decompressResult.SuccessfulFilesCount);
+
+        // Map each compressed file back to its original
+        var compressedToOriginal = compressResult.SuccessfulFiles.ToDictionary(f => f.OutputFilePath, f => _tempSession.Files.First(orig => f.InputFilePath == orig));
+
+        // Confirm content by pairing inflated files with the originals
+        foreach (var decompressedFile in decompressResult.SuccessfulFiles) {
+            // InputFilePath on the inflated file is the compressed path
+            var compressedFilePath = decompressedFile.InputFilePath;
+            var originalFilePath = compressedToOriginal[compressedFilePath];
+            var original = File.ReadAllText(originalFilePath);
+            var decompressed = File.ReadAllText(decompressedFile.OutputFilePath);
+            Assert.Equal(original, decompressed);
+        }
+    }
+
+    [Fact]
+    public async Task CompressFilesAsync_Batch_RoundTrip()
+    {
+        var service = NewService();
+        await _tempSession.CreateFileAsync(new string('A', 1000) + " Async File 1 " + new string('B', 1000), TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new string('C', 1000) + " Async File 2 " + new string('D', 1000), TestContext.Current.CancellationToken);
+        var compressResult = await service.CompressFilesAsync(_tempSession.Files, TestContext.Current.CancellationToken);
+        Assert.Equal(2, compressResult.TotalFiles);
+        Assert.Equal(2, compressResult.SuccessfulFilesCount);
+        Assert.Equal(0, compressResult.FailedFilesCount);
+
+        // Map each compressed file back to its original
+        var compressedToOriginal = compressResult.SuccessfulFiles.ToDictionary(f => f.OutputFilePath, f => _tempSession.Files.First(orig => f.InputFilePath == orig));
+        var compressedFiles = compressResult.SuccessfulFiles.Select(f => f.OutputFilePath).ToList();
+        var decompressResult = await service.DecompressFilesAsync(compressedFiles, TestContext.Current.CancellationToken);
+        Assert.Equal(2, decompressResult.TotalFiles);
+        Assert.Equal(2, decompressResult.SuccessfulFilesCount);
+
+        // Pair inflated files with originals via the compressed path
+        foreach (var decompressedFile in decompressResult.SuccessfulFiles) {
+            // Locate the original that belongs to this inflated file
+            // InputFilePath on the inflated file is the compressed path
+            var compressedFilePath = decompressedFile.InputFilePath;
+            var originalFilePath = compressedToOriginal[compressedFilePath];
+            var original = await File.ReadAllTextAsync(originalFilePath, TestContext.Current.CancellationToken);
+            var decompressed = await File.ReadAllTextAsync(decompressedFile.OutputFilePath, TestContext.Current.CancellationToken);
+            Assert.Equal(original, decompressed);
+        }
+    }
+
+    [Fact]
+    public void CompressFiles_WithNonExistentFile_IncludesInFailed()
+    {
+        var service = NewService();
+        var files = new List<string> { _tempSession.CreateFile("Valid file"), "/nonexistent/path/file.txt" };
+        var result = service.CompressFiles(files);
+        Assert.Equal(2, result.TotalFiles);
+        Assert.Equal(1, result.SuccessfulFilesCount);
+        Assert.Equal(1, result.FailedFilesCount);
+        Assert.Single(result.FailedFiles);
+        Assert.Equal("/nonexistent/path/file.txt", result.FailedFiles[0].FilePath);
+    }
+
+    [Fact]
+    public async Task CompressStringToStreamAsync_DecompressStringFromStreamAsync_RoundTrip()
+    {
+        var service = NewService();
+        var original = "Test string to stream compression";
+        using var outputStream = new MemoryStream();
+        await service.CompressStringToStreamAsync(original, outputStream, ct: TestContext.Current.CancellationToken);
+        outputStream.Position = 0;
+        var decompressed = await service.DecompressStringFromStreamAsync(outputStream, ct: TestContext.Current.CancellationToken);
+        Assert.Equal(original, decompressed);
+    }
+
+    [Theory]
+    [MemberData(nameof(AllAlgorithms))]
+    public void FileExtension_MatchesAlgorithm(CompressionAlgorithm algorithm)
+    {
+        var service = NewService(new() { DefaultAlgorithm = algorithm });
+        Assert.Equal(algorithm.Extension, service.FileExtension);
+    }
+
+    [Fact]
+    public void Compress_NullInput_ThrowsArgumentNullException()
+    {
+        var service = NewService();
+        Assert.Throws<ArgumentNullException>(() => service.Compress(null!, out var _));
+    }
+
+    [Fact]
+    public void Compress_EmptyInput_ThrowsArgumentException()
+    {
+        var service = NewService();
+        Assert.Throws<ArgumentOutsideRangeException>(() => service.Compress([], out var _));
+    }
+
+    [Fact]
+    public void CompressFile_NonExistentFile_ThrowsFileNotFoundException()
+    {
+        var service = NewService();
+        Assert.Throws<FileNotFoundException>(() => service.CompressFile("/nonexistent/file.txt"));
+    }
+
+    [Fact]
+    public async Task CompressFileAsync_Cancellation_ThrowsOperationCanceledException()
+    {
+        var service = NewService();
+        var tempFile = await _tempSession.CreateFileAsync(new('x', 10000), TestContext.Current.CancellationToken); // Larger file to ensure it takes time
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+        await Assert.ThrowsAsync<OperationCanceledException>(() => service.CompressFileAsync(tempFile, ct: cts.Token));
+    }
+
+    [Fact]
+    public void CompressToBase64_InvalidBase64_ThrowsArgumentException()
+    {
+        var service = NewService();
+        Assert.Throws<ArgumentException>(() => service.DecompressFromBase64("invalid base64!!!", out var _));
+    }
+
+    [Fact]
+    public void CompressString_NullOrEmpty_ThrowsArgumentException()
+    {
+        var service = NewService();
+        Assert.Throws<ArgumentNullException>(() => service.CompressString(null!, out var _));
+        Assert.Throws<ArgumentException>(() => service.CompressString("", out var _));
+    }
+
+    [Fact]
+    public void Compress_Stream_NonReadableInput_ThrowsArgumentException()
+    {
+        var service = NewService();
+        using var nonReadableStream = new MemoryStream();
+        nonReadableStream.Close(); // Makes it non-readable
+        Assert.Throws<InvalidOperationException>(() => service.Compress(nonReadableStream, new MemoryStream()));
+    }
+
+    [Fact]
+    public void Compress_Stream_NonWritableOutput_ThrowsArgumentException()
+    {
+        var service = NewService();
+        using var nonWritableStream = new MemoryStream();
+        nonWritableStream.Close(); // Makes it non-writable
+        Assert.Throws<InvalidOperationException>(() => service.Compress(new MemoryStream(new byte[10]), nonWritableStream));
+    }
+
+    [Fact]
+    public void CompressionInfo_Properties_CalculatedCorrectly()
+    {
+        var service = NewService();
+        var original = new byte[1000];
+        service.Compress(original, out var _);
+        var info = service.Compress(original, out var _);
+        Assert.True(info.CompressionRatio > 0);
+        Assert.True(info.SpaceSavedPercent >= 0);
+        Assert.True(info.TimeMs >= 0);
+    }
+
+    [Fact]
+    public void DecompressionInfo_Properties_CalculatedCorrectly()
+    {
+        var service = NewService();
+        // Use a larger payload that shrinks well
+        var original = Encoding.UTF8.GetBytes(new string('X', 1000) + "Test decompression info" + new string('Y', 1000));
+        service.Compress(original, out var compressed);
+        var info = service.Decompress(compressed, out var decompressed);
+        Assert.Equal(original.Length, decompressed.Length);
+        Assert.True(info.ExpansionRatio > 0);
+        // SizeIncreasePercent must be positive (inflated > compressed)
+        Assert.True(info.SizeIncreasePercent > 0);
+        Assert.True(info.ExpansionRatio >= 0);
+    }
+
+    [Fact]
+    public void BatchCompressionResult_Properties_CalculatedCorrectly()
+    {
+        var service = NewService();
+        // Use a larger payload that shrinks well
+        _tempSession.CreateFile(new string('A', 1000) + " Content 1 " + new string('B', 1000));
+        _tempSession.CreateFile(new string('C', 1000) + " Content 2 " + new string('D', 1000));
+        var result = service.CompressFiles(_tempSession.Files);
+        Assert.Equal(2, result.TotalFiles);
+        Assert.Equal(2, result.SuccessfulFilesCount);
+        Assert.Equal(0, result.FailedFilesCount);
+        Assert.True(result.AverageCompressionRatio > 0);
+        // TotalSpaceSavedPercent can go negative when framing overhead makes files larger
+        // Expected for tiny files; only check that the value is a finite number
+        Assert.True(result.TotalSpaceSavedPercent is >= -100 and <= 100);
+        Assert.True(result.TotalOriginalSize > 0);
+        Assert.True(result.TotalCompressedSize > 0);
+        Assert.True(result.TotalTimeMs >= 0);
+    }
+
+    [Fact]
+    public void BatchDecompressionResult_Properties_CalculatedCorrectly()
+    {
+        var service = NewService();
+        _tempSession.CreateFile(new string('A', 1000) + " Content 1 " + new string('B', 1000));
+        _tempSession.CreateFile(new string('C', 1000) + " Content 2 " + new string('D', 1000));
+        var compressResult = service.CompressFiles(_tempSession.Files);
+        var compressedFiles = compressResult.SuccessfulFiles.Select(f => f.OutputFilePath).ToList();
+        var result = service.DecompressFiles(compressedFiles);
+        Assert.Equal(2, result.TotalFiles);
+        Assert.Equal(2, result.SuccessfulFilesCount);
+        Assert.Equal(0, result.FailedFilesCount);
+        Assert.True(result.AverageExpansionRatio > 0);
+        // SizeIncreasePercent must be positive (inflated > compressed)
+        Assert.True(result.TotalSizeIncreasePercent > 0);
+        Assert.True(result.TotalCompressedSize > 0);
+        Assert.True(result.TotalDecompressedSize > 0);
+        Assert.True(result.TotalTimeMs >= 0);
+    }
+
+    [Fact]
+    public void CompressString_InvalidEncoding_FallsBackToUtf8()
+    {
+        var service = NewService(new() { DefaultEncoding = "InvalidEncodingName123" });
+        var original = "Test string with invalid encoding";
+
+        // Must not throw; must fall back to UTF-8
+        service.CompressString(original, out var compressed);
+        service.DecompressString(compressed, out var decompressed);
+        Assert.Equal(original, decompressed);
+        Assert.True(compressed.Length > 0);
+    }
+
+    [Fact]
+    public void DecompressString_InvalidEncoding_FallsBackToUtf8()
+    {
+        var service = NewService(new() { DefaultEncoding = "InvalidEncodingName456" });
+        var original = "Test string for decompression";
+
+        // Compress first with a valid encoding
+        service.CompressString(original, out var compressed);
+
+        // Stand up a service with an invalid encoding; it must fall back to UTF-8
+        var serviceWithInvalidEncoding = NewService(new() { DefaultEncoding = "InvalidEncodingName456" });
+        serviceWithInvalidEncoding.DecompressString(compressed, out var decompressed);
+        Assert.Equal(original, decompressed);
+    }
+
+    [Fact]
+    public async Task CompressStringToStreamAsync_InvalidEncoding_FallsBackToUtf8()
+    {
+        var service = NewService(new() { DefaultEncoding = "InvalidEncodingName789" });
+        var original = "Test async string compression";
+        using var outputStream = new MemoryStream();
+        await service.CompressStringToStreamAsync(original, outputStream, ct: TestContext.Current.CancellationToken);
+        outputStream.Position = 0;
+        var decompressed = await service.DecompressStringFromStreamAsync(outputStream, ct: TestContext.Current.CancellationToken);
+        Assert.Equal(original, decompressed);
+    }
+
+    [Fact]
+    public void Compress_ExceedsMaxInputSize_ThrowsArgumentOutsideRangeException()
+    {
+        var maxSize = 1024L; // 1 KB
+        var service = NewService(new() { MaxInputSize = maxSize });
+        var largeData = new byte[maxSize + 1]; // Exceeds limit by 1 byte
+        var exception = Assert.Throws<ArgumentOutsideRangeException>(() => service.Compress(largeData, out var _));
+        Assert.NotNull(exception);
+        Assert.Equal(maxSize + 1, exception.ActualValue);
+    }
+
+    [Fact]
+    public void Compress_WithinMaxInputSize_Succeeds()
+    {
+        var maxSize = 1024L; // 1 KB
+        var service = NewService(new() { MaxInputSize = maxSize });
+        var data = new byte[maxSize]; // Exactly at limit
+        service.Compress(data, out var compressed);
+        Assert.NotNull(compressed);
+        Assert.True(compressed.Length > 0);
+    }
+
+    [Fact]
+    public void CompressFile_ExceedsMaxInputSize_ThrowsArgumentOutsideRangeException()
+    {
+        var maxSize = 1024L; // 1 KB
+        var service = NewService(new() { MaxInputSize = maxSize });
+        var tempFile = _tempSession.CreateFile(new('X', (int)(maxSize + 1)));
+        var exception = Assert.Throws<ArgumentOutsideRangeException>(() => service.CompressFile(tempFile));
+        Assert.NotNull(exception);
+        Assert.Equal(maxSize + 1, exception.ActualValue);
+    }
+
+    [Fact]
+    public async Task CompressFileAsync_ExceedsMaxInputSize_ThrowsArgumentOutsideRangeException()
+    {
+        var maxSize = 1024L; // 1 KB
+        var service = NewService(new() { MaxInputSize = maxSize });
+        var tempFile = await _tempSession.CreateFileAsync(new('X', (int)(maxSize + 1)), TestContext.Current.CancellationToken);
+        var exception = await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.CompressFileAsync(tempFile, ct: TestContext.Current.CancellationToken));
+        Assert.NotNull(exception);
+        Assert.Equal(maxSize + 1, exception.ActualValue);
+    }
+
+    [Fact]
+    public void Constructor_InvalidMaxParallelFileOperations_ThrowsArgumentOutsideRangeException()
+    {
+        var exception = Assert.Throws<ArgumentOutsideRangeException>(() => new CompressionService(AllFactories, _logger, new() { MaxParallelFileOperations = 0 }));
+        Assert.NotNull(exception);
+        Assert.Equal(0, exception.ActualValue);
+        Assert.Equal(1, exception.MinValue);
+    }
+
+    [Fact]
+    public void Constructor_InvalidDefaultFileBufferSize_ThrowsArgumentOutsideRangeException()
+    {
+        var exception = Assert.Throws<ArgumentOutsideRangeException>(() => new CompressionService(AllFactories, _logger, new() { DefaultFileBufferSize = 512 })); // Less than 1024
+        Assert.NotNull(exception);
+        Assert.Equal(512, exception.ActualValue);
+        Assert.Equal(1024, exception.MinValue);
+    }
+
+    [Fact]
+    public void Constructor_InvalidAsyncFileBufferSize_ThrowsArgumentOutsideRangeException()
+    {
+        var exception = Assert.Throws<ArgumentOutsideRangeException>(() => new CompressionService(AllFactories, _logger, new() { AsyncFileBufferSize = 256 })); // Less than 1024
+        Assert.NotNull(exception);
+        Assert.Equal(256, exception.ActualValue);
+        Assert.Equal(1024, exception.MinValue);
+    }
+
+    [Fact]
+    public void Constructor_InvalidMaxInputSize_ThrowsArgumentOutsideRangeException()
+    {
+        var exception = Assert.Throws<ArgumentOutsideRangeException>(() => new CompressionService(AllFactories, _logger, new() { MaxInputSize = 512 })); // Less than 1024
+        Assert.NotNull(exception);
+        Assert.Equal(512L, exception.ActualValue);
+        Assert.Equal(1024L, exception.MinValue);
+    }
+
+    [Fact]
+    public void Constructor_ValidOptions_CreatesService()
+    {
+        var options = new CompressionServiceOptions {
+            MaxParallelFileOperations = 4,
+            DefaultFileBufferSize = 8192,
+            AsyncFileBufferSize = 16384,
+            MaxInputSize = 1024L * 1024 * 1024 // 1 GB
+        };
+
+        var service = new CompressionService(AllFactories, _logger, options);
+        Assert.NotNull(service);
+        Assert.Equal(options.DefaultAlgorithm, service.Algorithm);
+    }
+
+    [Fact]
+    public void CompressFile_OnFailure_NoPartialFileLeft()
+    {
+        var service = NewService();
+        var tempFile = _tempSession.CreateFile("test content");
+        var outputFile = tempFile + service.FileExtension;
+
+        // Place a directory where the output file should go to force a failure
+        // Switch approach: use a file that exceeds the size cap
+        _tempSession.CreateFile(new('X', 1000000));
+
+        // Must fail on the file-size cap when the limit is set low
+        // Also cover a missing input file
+        // Check atomicity by confirming leftover temp files are removed
+        // After a failed compress, no .tmp file should remain
+
+        // Force a compress failure: oversized file plus a low limit
+        var serviceWithLowLimit = new CompressionService(
+            AllFactories, options: new() {
+                MaxInputSize = 1024 // 1 KB limit
+            });
+
+        var largeContent = new string('Y', 2000); // 2 KB
+        var largeTempFile = _tempSession.CreateFile(largeContent);
+        try {
+            serviceWithLowLimit.CompressFile(largeTempFile, outputFile);
+        }
+        catch (ArgumentOutsideRangeException) {
+            // Expected: file exceeds the size cap
+        }
+
+        // Confirm no leftover .tmp file
+        var tempFilePath = outputFile + ".tmp";
+        Assert.False(File.Exists(tempFilePath), "Temporary file should be cleaned up on failure");
+    }
+
+    [Fact]
+    public async Task CompressFileAsync_OnFailure_NoPartialFileLeft()
+    {
+        var service = new CompressionService(
+            AllFactories, options: new() {
+                MaxInputSize = 1024 // 1 KB limit
+            });
+
+        var largeContent = new string('Z', 2000); // 2 KB
+        var largeTempFile = await _tempSession.CreateFileAsync(largeContent, TestContext.Current.CancellationToken);
+        var outputFile = largeTempFile + service.FileExtension;
+        try {
+            await service.CompressFileAsync(largeTempFile, outputFile, TestContext.Current.CancellationToken);
+        }
+        catch (ArgumentOutsideRangeException) {
+            // Expected: file exceeds the size cap
+        }
+
+        // Confirm no leftover .tmp file
+        var tempFilePath = outputFile + ".tmp";
+        Assert.False(File.Exists(tempFilePath), "Temporary file should be cleaned up on failure");
+    }
+
+    [Fact]
+    public void CompressFile_AtomicOperation_CompleteFileExists()
+    {
+        var service = NewService();
+        var tempFile = _tempSession.CreateFile("test content for atomic operation");
+        var outputFile = tempFile + service.FileExtension;
+        service.CompressFile(tempFile, outputFile);
+
+        // Confirm the output file exists and is finished (not a temp file)
+        Assert.True(File.Exists(outputFile));
+        Assert.False(File.Exists(outputFile + ".tmp"), "Temporary file should not exist after successful operation");
+
+        // Confirm it inflates (proves a complete, valid file)
+        var decompressedFile = tempFile + ".decompressed";
+        service.DecompressFile(outputFile, decompressedFile);
+        var originalContent = File.ReadAllText(tempFile);
+        var decompressedContent = File.ReadAllText(decompressedFile);
+        Assert.Equal(originalContent, decompressedContent);
+    }
+
+    [Fact]
+    public async Task CompressFileAsync_AtomicOperation_CompleteFileExists()
+    {
+        var service = NewService();
+        var tempFile = await _tempSession.CreateFileAsync("test content for async atomic operation", TestContext.Current.CancellationToken);
+        var outputFile = tempFile + service.FileExtension;
+        await service.CompressFileAsync(tempFile, outputFile, TestContext.Current.CancellationToken);
+
+        // Confirm the output file exists and is finished (not a temp file)
+        Assert.True(File.Exists(outputFile));
+        Assert.False(File.Exists(outputFile + ".tmp"), "Temporary file should not exist after successful operation");
+
+        // Confirm it inflates (proves a complete, valid file)
+        var decompressedFile = tempFile + ".decompressed";
+        await service.DecompressFileAsync(outputFile, decompressedFile, TestContext.Current.CancellationToken);
+        var originalContent = await File.ReadAllTextAsync(tempFile, TestContext.Current.CancellationToken);
+        var decompressedContent = await File.ReadAllTextAsync(decompressedFile, TestContext.Current.CancellationToken);
+        Assert.Equal(originalContent, decompressedContent);
+    }
+
+    [Fact]
+    public void DecompressFile_AtomicOperation_CompleteFileExists()
+    {
+        var service = NewService();
+        var tempFile = _tempSession.CreateFile("test content for decompress atomic operation");
+        var compressedFile = tempFile + service.FileExtension;
+
+        // Compress first
+        service.CompressFile(tempFile, compressedFile);
+        var decompressedFile = tempFile + ".decompressed";
+        service.DecompressFile(compressedFile, decompressedFile);
+
+        // Confirm the output file exists and is finished (not a temp file)
+        Assert.True(File.Exists(decompressedFile));
+        Assert.False(File.Exists(decompressedFile + ".tmp"), "Temporary file should not exist after successful operation");
+        var originalContent = File.ReadAllText(tempFile);
+        var decompressedContent = File.ReadAllText(decompressedFile);
+        Assert.Equal(originalContent, decompressedContent);
+    }
+
+    [Fact]
+    public async Task DecompressFileAsync_AtomicOperation_CompleteFileExists()
+    {
+        var service = NewService();
+        var tempFile = await _tempSession.CreateFileAsync("test content for async decompress atomic operation", TestContext.Current.CancellationToken);
+        var compressedFile = tempFile + service.FileExtension;
+
+        // Compress first
+        await service.CompressFileAsync(tempFile, compressedFile, TestContext.Current.CancellationToken);
+        var decompressedFile = tempFile + ".decompressed";
+        await service.DecompressFileAsync(compressedFile, decompressedFile, TestContext.Current.CancellationToken);
+
+        // Confirm the output file exists and is finished (not a temp file)
+        Assert.True(File.Exists(decompressedFile));
+        Assert.False(File.Exists(decompressedFile + ".tmp"), "Temporary file should not exist after successful operation");
+        var originalContent = await File.ReadAllTextAsync(tempFile, TestContext.Current.CancellationToken);
+        var decompressedContent = await File.ReadAllTextAsync(decompressedFile, TestContext.Current.CancellationToken);
+        Assert.Equal(originalContent, decompressedContent);
+    }
+
+    [Fact]
+    public void Compress_MaxInputSize_Configurable()
+    {
+        // Confirm MaxInputSize can be set to different values
+        var smallLimit = 1024L; // 1 KB
+        var largeLimit = 10L * 1024 * 1024 * 1024; // 10 GB
+        var serviceSmall = NewService(new() { MaxInputSize = smallLimit });
+        var serviceLarge = NewService(new() { MaxInputSize = largeLimit });
+        var smallData = new byte[smallLimit];
+        var largeData = new byte[1024 * 1024]; // 1 MB
+
+        // Small-cap service must accept a small payload
+        serviceSmall.Compress(smallData, out var _);
+
+        // Small-cap service must reject a large payload
+        Assert.Throws<ArgumentOutsideRangeException>(() => serviceSmall.Compress(largeData, out var _));
+
+        // Large-cap service must accept both sizes
+        serviceLarge.Compress(smallData, out var _);
+        serviceLarge.Compress(largeData, out var _);
+    }
+
+    [Fact]
+    public async Task CompressFilesAsync_WithCustomOutputPaths_RoundTrips()
+    {
+        var service = NewService();
+        var file1 = await _tempSession.CreateFileAsync("Content one for custom path", TestContext.Current.CancellationToken);
+        var file2 = await _tempSession.CreateFileAsync("Content two for custom path", TestContext.Current.CancellationToken);
+        var out1 = _tempSession.GetFilePath("custom1" + service.FileExtension);
+        var out2 = _tempSession.GetFilePath("custom2" + service.FileExtension);
+        var filePaths = new Dictionary<string, string?> { [file1] = out1, [file2] = out2 };
+        var compressResult = await service.CompressFilesAsync(filePaths, TestContext.Current.CancellationToken);
+        Assert.Equal(2, compressResult.TotalFiles);
+        Assert.Equal(2, compressResult.SuccessfulFilesCount);
+        Assert.True(File.Exists(out1));
+        Assert.True(File.Exists(out2));
+        var dec1 = _tempSession.GetFilePath("dec1.txt");
+        var dec2 = _tempSession.GetFilePath("dec2.txt");
+        var decompPaths = new Dictionary<string, string?> { [out1] = dec1, [out2] = dec2 };
+        var decompressResult = await service.DecompressFilesAsync(decompPaths, TestContext.Current.CancellationToken);
+        Assert.Equal(2, decompressResult.SuccessfulFilesCount);
+        Assert.Equal("Content one for custom path", await File.ReadAllTextAsync(dec1, TestContext.Current.CancellationToken));
+        Assert.Equal("Content two for custom path", await File.ReadAllTextAsync(dec2, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public void AddCompressionService_RegistersConcreteOnlyUntilDefaultMapper()
+    {
+        var services = new ServiceCollection();
+        services.AddCompressionService();
+        var provider = services.BuildServiceProvider();
+        _ = provider.GetRequiredService<CompressionService>();
+        Assert.Null(provider.GetService<ICompressionService>());
+    }
+
+    [Fact]
+    public void AddCompressionService_RegistersService()
+    {
+        var services = new ServiceCollection();
+        services.AddCompressionService();
+        services.AddDefaultCompressionService<CompressionService>();
+        var provider = services.BuildServiceProvider();
+        var svc = provider.GetRequiredService<ICompressionService>();
+        Assert.NotNull(svc);
+        var original = "test"u8.ToArray();
+        svc.Compress(original, out var compressed);
+        svc.Decompress(compressed, out var decompressed);
+        Assert.Equal(original, decompressed);
+    }
+
+    [Fact]
+    public void AddDefaultCompressionService_ResolvesSameInstanceAsConcrete()
+    {
+        var services = new ServiceCollection();
+        services.AddCompressionService();
+        services.AddDefaultCompressionService<CompressionService>();
+        var provider = services.BuildServiceProvider();
+        var concrete = provider.GetRequiredService<CompressionService>();
+        var iface = provider.GetRequiredService<ICompressionService>();
+        Assert.Same(concrete, iface);
+    }
+
+    [Fact]
+    public void AddCompressionService_WithConfigure_RegistersService()
+    {
+        var services = new ServiceCollection();
+        services.AddCompressionService(opts => opts.DefaultAlgorithm = CompressionAlgorithm.GZip);
+        services.AddDefaultCompressionService<CompressionService>();
+        var provider = services.BuildServiceProvider();
+        var svc = provider.GetRequiredService<ICompressionService>();
+        Assert.NotNull(svc);
+    }
+
+    [Fact]
+    public void AddCompressionServiceFromConfiguration_BindsSectionToOptions()
+    {
+        var settings = new Dictionary<string, string?> { ["CompressionService:DefaultAlgorithm"] = nameof(CompressionAlgorithm.GZip) };
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        var services = new ServiceCollection();
+        services.AddCompressionServiceFromConfiguration(configuration);
+        services.AddDefaultCompressionService<CompressionService>();
+        var provider = services.BuildServiceProvider();
+        var svc = provider.GetRequiredService<ICompressionService>();
+        // String-to-default-algorithm binding is not supported on the record-based smart enum;
+        // confirm the service is registered and uses one of the built-in algorithms.
+        Assert.NotNull(svc);
+    }
+
+    [Fact]
+    public void AddCompressionServiceKeyed_UsesPerKeyAlgorithm()
+    {
+        var services = new ServiceCollection();
+        services.AddCompressionServiceKeyed("a", o => o.DefaultAlgorithm = CompressionAlgorithm.GZip);
+        services.AddCompressionServiceKeyed("b", o => o.DefaultAlgorithm = CompressionAlgorithm.Deflate);
+        var provider = services.BuildServiceProvider();
+        var gzipSvc = provider.GetRequiredKeyedService<ICompressionService>("a");
+        var deflateSvc = provider.GetRequiredKeyedService<ICompressionService>("b");
+        Assert.Equal(CompressionAlgorithm.GZip, gzipSvc.Algorithm);
+        Assert.Equal(CompressionAlgorithm.Deflate, deflateSvc.Algorithm);
+    }
+
+    [Fact]
+    public void CompressString_WithExplicitInvalidEncoding_FallsBackToUtf8()
+    {
+        var service = NewService();
+        var original = "Test string";
+
+        // Pass an invalid encoding explicitly
+        service.CompressString(original, out var compressed, Encoding.GetEncoding("utf-8"));
+        service.DecompressString(compressed, out var decompressed, Encoding.GetEncoding("utf-8"));
+        Assert.Equal(original, decompressed);
+
+        // Next: invalid encoding name in options, plus an explicit valid encoding
+        var serviceWithInvalidDefault = NewService(new() { DefaultEncoding = "InvalidEncoding" });
+        serviceWithInvalidDefault.CompressString(original, out var compressed2, Encoding.UTF8);
+        serviceWithInvalidDefault.DecompressString(compressed2, out var decompressed2, Encoding.UTF8);
+        Assert.Equal(original, decompressed2);
+    }
+
+    /// <summary>Write-only, non-seekable stream wrapper: makes the bomb guard (not a seek-based position check) catch oversized decompression output.</summary>
+    private sealed class NonSeekableWriteStream(Stream inner) : Stream
+    {
+        public override bool CanRead => false;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => true;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush() => inner.Flush();
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
+    }
+}

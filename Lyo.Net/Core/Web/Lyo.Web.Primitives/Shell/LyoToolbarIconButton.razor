@@ -1,0 +1,23 @@
+@namespace Lyo.Web.Primitives
+
+@if (string.IsNullOrWhiteSpace(Tooltip)) {
+    <MudIconButton Icon="@Icon"
+                   Size="Size.Small"
+                   Color="@Color"
+                   Disabled="@IsDisabled"
+                   OnClick="@OnClick"
+                   Class="@Class"
+                   title="@Tooltip"
+                   @attributes="AdditionalAttributes"/>
+}
+else {
+    <MudTooltip Text="@Tooltip">
+        <MudIconButton Icon="@Icon"
+                       Size="Size.Small"
+                       Color="@Color"
+                       Disabled="@IsDisabled"
+                       OnClick="@OnClick"
+                       Class="@Class"
+                       @attributes="AdditionalAttributes"/>
+    </MudTooltip>
+}

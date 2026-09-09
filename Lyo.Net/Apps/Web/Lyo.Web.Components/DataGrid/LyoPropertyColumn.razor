@@ -1,0 +1,41 @@
+@typeparam T
+@using System.Linq.Expressions
+@using Lyo.Web.Components.Form
+@typeparam TProperty
+
+<PropertyColumn T="T" TProperty="TProperty"
+                Property="@Property"
+                Title="@Title"
+                Sortable="@Sortable"
+                InitialDirection="@InitialDirection"
+                Hideable="@Hideable"
+                Resizable="@Resizable"
+                HeaderStyle="@EffectiveHeaderStyle"
+                CellStyle="@EffectiveCellStyle"
+                Hidden="@_hidden"
+                HiddenChanged="@(h => _hidden = h)">
+    <CellTemplate Context="cell">
+        @Cell(cell.Item)
+    </CellTemplate>
+</PropertyColumn>
+
+@code {
+
+    /// <summary>Cell markup for one row, rendered by the table cell and by the mobile card layout so a value looks the same in both.</summary>
+    internal RenderFragment<object?> Cell => item =>
+        @<text>
+            @{
+                var displayText = DisplayText(item);
+            }
+            @if (Identifier) {
+                <LyoIdField Compact="true" Text="@displayText"/>
+            }
+            else if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
+                <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
+            }
+            else {
+                <text>@displayText</text>
+            }
+        </text>;
+
+}

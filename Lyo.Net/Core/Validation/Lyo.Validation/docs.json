@@ -1,0 +1,190 @@
+{
+  "id": "Lyo.Validation",
+  "name": "Lyo.Validation",
+  "area": "Core",
+  "tagline": "C# validators, fluent rule builders, validation attributes, and `WhereClause` schemas that surface failures as `Lyo.Result.Result<T>`.",
+  "description": "Fluent rule builders, C# validators, validation attributes, and adapters that return structured `Lyo.Result.Result<T>` failures. Errors are\npopulated through `Lyo.Result.Error` so callers can render Problem Details, log structurally, or aggregate into `BulkResult`.\n\nSchemas are named `WhereClause` documents (`ValidationSchema`) that hosts load from an API or [`Lyo.Validation.Postgres`](../Lyo.Validation.Postgres/README.md). Evaluation reuses `IWhereClauseService.ExplainMatch`. Failed nodes become errors via `WhereClauseExplainResult.ToErrors`.",
+  "features": [
+    "**Fluent + attributes.** `PropertyValidatorBuilder<T, TProperty>` / `ValidatorBuilder<T>` and `AttributeValidator<T>`.",
+    "**Schema documents.** `ValidationSchema` keyed by name, optional target type, `WhereClause` constraints (`NotIn`, `In`, `Regex`, and similar).",
+    "**Store.** `IValidationSchemaStore` (in-memory default. Postgres in a sibling package).",
+    "**Error mapping.** `WhereClauseExplainResult.ToErrors` in Query.Models (not a Validation-local builder)."
+  ],
+  "examples": [
+    {
+      "title": "Usual usage",
+      "language": "csharp",
+      "code": "using Lyo.Validation;\n\nvar validator = ValidatorBuilder<CreateUserRequest>.Create()\n    .RuleFor(x => x.Name)\n    .NotWhiteSpace()\n    .Length(2, 50)\n    .RuleFor(x => x.Email)\n    .Email()\n    .RuleFor(x => x.Age)\n    .InclusiveBetween(18, 120)\n    .Build();\n\nvar result = validator.Validate(new CreateUserRequest { Name = \"Matt\", Email = \"matt@example.com\", Age = 33 });"
+    },
+    {
+      "title": "Validate via attributes",
+      "language": "csharp",
+      "code": "public sealed class CreateUserRequest {\n    [NotWhiteSpace]\n    [Length(2, 50)]\n    public string Name { get; init; } = string.Empty;\n\n    [Email]\n    public string Email { get; init; } = string.Empty;\n\n    [Range(18, 120)]\n    public int Age { get; init; }\n}\n\nResult<CreateUserRequest> result = new CreateUserRequest { /* ... */ }.ValidateWithAttributes();"
+    },
+    {
+      "title": "Load a schema built from WhereClause",
+      "language": "csharp",
+      "code": "services.AddLyoQueryServices();\nservices.AddValidation();\nservices.AddQueryValidationEvaluator();\n// or services.AddPostgresValidationStoreFromConfiguration(configuration);\n\nvar validator = await compiler.GetAsync<CreateUserRequest>(\"signup.v2\", ct);\nvar result = validator.Validate(request);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Package contents",
+      "items": [
+        "Fluent validator composition via `PropertyValidatorBuilder<T, TProperty>` and `ValidatorBuilder<T>` (including `NotIn` / `In` for scalar allow-lists).",
+        "Attribute-based validation through built-in attributes such as `NotEmpty`, `Required`, `NotWhiteSpace`, `Length`, `Regex`, `Phone`, `Email`, `Uri`, and `Range` (in `Lyo.Validation.Attributes`).",
+        "Data-driven `ValidationSchema` documents: a named `WhereClause` tree (same operators as query filters) compiled to `IValidator<T>` via `IValidationSchemaCompiler`.",
+        "`AttributeValidator<T>` for reflection-driven validation across both Lyo's `ValidationAttributeBase` and `System.ComponentModel.DataAnnotations` (including `IValidatableObject`).",
+        "Structured property metadata via `ValidationMetadataKeys` (`AttemptedValue`, `PropertyName`) attached to each failing `Error.Metadata`.",
+        "Stable error codes via `Lyo.Result.ValidationErrorCodes` (e.g. `EmptyValue`, `NullValue`, `InvalidLength`, `InvalidEmail`, `OutOfRange`, `ValidationFailed`)."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Validate via attributes",
+      "body": "Public instance-readable properties on `T` are what `AttributeValidator<T>` validates (compiled getters are cached statically per `T`). Lyo `ValidationAttributeBase` attributes run together with\n`System.ComponentModel.DataAnnotations.ValidationAttribute`. When `T` is an `IValidatableObject`,\n`Validate(ValidationContext)` runs as well. The cached singleton is `AttributeValidator<T>.Shared`; `value.ValidateWithAttributes()` is the call that uses it.\n\n\n\n`Lyo.Result.ValidationErrorCodes` is where DataAnnotations codes land (`RequiredAttribute` → `RequiredValue`, `EmailAddressAttribute` → `InvalidEmail`,\n`RangeAttribute` → `OutOfRange`). Unmapped attributes become `ValidationFailed`.\n"
+    },
+    {
+      "type": "markdown",
+      "title": "Schemas backed by a database",
+      "body": "`ValidationSchema` is the wire DTO hosts PUT/GET on their own API. Constraints are a polymorphic `WhereClause` (`$type`: `group` / `condition`) using `ComparisonOperatorEnum` (`In`, `Equals`, `NotIn`, `Regex`, …). An instance is valid iff the query engine reports a match.\n\nRegister `AddValidation()` plus `AddQueryValidationEvaluator()` (after `AddLyoQueryServices()`). Persist with [`Lyo.Validation.Postgres`](../Lyo.Validation.Postgres/README.md) (`AddPostgresValidationStoreFromConfiguration`). `WhereClauseValidator<T>` calls `ExplainMatch` then `ToErrors`. Do not add a second error mapper in API code."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Validation/Lyo.Validation/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Evaluation",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

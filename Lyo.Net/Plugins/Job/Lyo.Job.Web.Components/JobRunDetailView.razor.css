@@ -1,0 +1,62 @@
+.job-run-kv {
+    display: grid;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: 0.5rem 1rem;
+    align-items: start;
+    margin-top: 0.5rem;
+}
+
+.job-run-kv-label {
+    color: var(--mud-palette-text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.75rem;
+}
+
+.job-run-kv-value {
+    min-width: 0;
+    font-size: 0.875rem;
+    line-height: 1.75rem;
+}
+
+.job-run-table {
+    width: 100%;
+}
+
+.job-run-logs {
+    max-height: 28rem;
+    overflow: auto;
+}
+
+.job-run-logs ::deep thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--mud-palette-surface);
+}
+
+.job-run-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+}
+
+.job-run-log-time {
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.job-run-log-stack {
+    margin: 0.35rem 0 0;
+    padding: 0.5rem 0.65rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background: var(--mud-palette-background-gray);
+    border-radius: 4px;
+}
+
+.job-run-parent-id {
+    display: inline-flex;
+    align-items: center;
+}

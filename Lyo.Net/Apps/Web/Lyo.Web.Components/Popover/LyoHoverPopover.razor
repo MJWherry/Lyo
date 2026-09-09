@@ -1,0 +1,48 @@
+@namespace Lyo.Web.Components.Popover
+
+<span class="@AnchorCssClass"
+      tabindex="0"
+      @onpointerenter="OnAnchorEnter"
+      @onpointerleave="OnAnchorLeave"
+      @onfocusin="OnAnchorEnter"
+      @onfocusout="OnAnchorLeave"
+      @onclick="OnAnchorClick"
+      @onkeydown="OnKeyDown">
+    @ChildContent
+    <MudPopover Open="@IsOpen"
+                AnchorOrigin="@AnchorOrigin"
+                TransformOrigin="@TransformOrigin"
+                OverflowBehavior="@OverflowBehavior"
+                Fixed="@Fixed"
+                Paper="true"
+                Elevation="8"
+                Class="@PopoverCssClass">
+        <div class="lyo-hover-popover-body"
+             style="@BodyStyle"
+             @onpointerenter="OnPopoverEnter"
+             @onpointerleave="OnPopoverLeave"
+             @onkeydown="OnKeyDown"
+             @onclick:stopPropagation="true">
+            @if (!string.IsNullOrWhiteSpace(Title) || _pinned) {
+                <div class="lyo-hover-popover-header">
+                    <MudText Typo="Typo.subtitle2" Class="lyo-hover-popover-title">@Title</MudText>
+                    @if (_pinned) {
+                        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                       Size="Size.Small"
+                                       title="Close"
+                                       aria-label="Close"
+                                       OnClick="Close"/>
+                    }
+                </div>
+            }
+            <div class="lyo-hover-popover-content">
+                @if (PopoverContent is not null) {
+                    @PopoverContent
+                }
+                else {
+                    <MudText Typo="Typo.body2" Class="lyo-hover-popover-text">@Text</MudText>
+                }
+            </div>
+        </div>
+    </MudPopover>
+</span>

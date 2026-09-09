@@ -1,0 +1,51 @@
+.lyo-dialog-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+}
+
+.lyo-dialog-title-text {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.lyo-dialog-title-text ::deep .mud-typography {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lyo-dialog-title-chips {
+    width: 100%;
+    min-width: 0;
+    padding-bottom: 8px;
+}
+
+.lyo-dialog-title-chips:not(:has(.mud-chip)) {
+    display: none;
+    padding: 0;
+}
+
+/*
+ * The reserve here only has to cover the dialog's own chrome — title, actions, and the MudBlazor dialog margin. The old 16rem reserved room for nothing in
+ * particular and left tall content (a tabbed editor around a template editor) with a sliver to scroll in, so it stays as small as the chrome allows.
+ */
+.lyo-dialog-content {
+    max-height: calc(100vh - 10rem);
+    overflow-y: auto;
+    padding: 4px 2px;
+}
+
+/* Compact density for forms and tables hosted inside dialogs. */
+.lyo-dialog-content ::deep .mud-table-cell {
+    padding: 4px 8px;
+}
+
+.lyo-dialog-content ::deep .mud-tabs-panels > .mud-tabs-panel {
+    padding: 0;
+}
+
+.lyo-dialog-content ::deep .mud-input-control > .mud-input-control-input-container > .mud-input-helper-text {
+    margin-top: 0;
+}

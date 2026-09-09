@@ -1,0 +1,246 @@
+{
+  "id": "Lyo.Privacy.Web.Components",
+  "name": "Lyo.Privacy.Web.Components",
+  "area": "Core",
+  "tagline": "Blazor (Server / Interactive) workbench components for `Lyo.Privacy`. Operators can preview, compare, and tune redaction policies without a host config round-trip.",
+  "description": "Blazor (Server / Interactive) workbench components for [`Lyo.Privacy`](../Lyo.Privacy/README.md). Operators can preview, compare, and tune redaction policies without a host config round-trip.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Components",
+      "headers": [
+        "Component",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "`PrivacyWorkbench`",
+          "Top-level workbench shell. Arranges the panels below into a side-by-side review layout."
+        ],
+        [
+          "`RedactionPolicyBuilderPanel`",
+          "Interactive `RedactionPolicyBuilder` editor: turn categories on or off, configure custom regex rules, tweak placeholders."
+        ],
+        [
+          "`RedactionPresetToolbar`",
+          "Preset buttons such as \"PII only\", \"Strict\", and \"Permissive\". Fires a completed policy."
+        ],
+        [
+          "`TextRedactionPanel`",
+          "Free-text input plus a preview of `ITextRedactor.Redact(...)` output and a `RedactionOutcome` summary (categories matched, counts)."
+        ],
+        [
+          "`JsonRedactionPanel`",
+          "JSON input plus a preview of `IStructuredRedactor.Redact(...)` output with per-path redaction highlights."
+        ],
+        [
+          "`PolicyFingerprintChip`",
+          "Shows the active policy's name and fingerprint hash so reviewers can compare what production applied against the workbench."
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Wiring into a host",
+      "text": "These components take `ITextRedactor` and `IStructuredRedactor` from DI; register them via [`Lyo.Privacy.AspNetCore`](../Lyo.Privacy.AspNetCore/README.md) before mounting `<PrivacyWorkbench />` on a route. Layout and dialog plumbing use MudBlazor (via `Lyo.Web.Components`)."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Privacy/Lyo.Privacy.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Privacy",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Primitives",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Evaluation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Collections.Immutable",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

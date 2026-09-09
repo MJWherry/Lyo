@@ -1,0 +1,225 @@
+@using System.Diagnostics
+@using Lyo.Lock.Abstractions
+@using Lyo.Metrics
+@using SemaphoreConstants = Lyo.Lock.Constants
+@implements IAsyncDisposable
+@inject IKeyedSemaphoreService SemaphoreService
+@inject IMetrics Metrics
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Local Semaphore Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Exercise bounded concurrency by key, saturate permits manually, and compare semaphore-limited runs against unlocked bursts.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Configuration</MudText>
+                            <MudTextField T="string" Label="Semaphore key" @bind-Value="_key"/>
+                            <MudGrid>
+                                <MudItem xs="12" sm="3">
+                                    <MudNumericField T="int" Label="Workers" Min="1" Max="20" @bind-Value="_workerCount"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="3">
+                                    <MudNumericField T="int" Label="Max permits" Min="1" Max="10" @bind-Value="_maxConcurrency"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="3">
+                                    <MudNumericField T="int" Label="Hold ms" Min="10" Max="10000" @bind-Value="_holdMilliseconds"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="3">
+                                    <MudNumericField T="int" Label="Timeout ms" Min="10" Max="20000" @bind-Value="_timeoutMilliseconds"/>
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Semaphore runs should keep max concurrent work at or below the permit count.
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Manual Permit Saturation</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Acquire permits until full, then verify an additional acquire times out for the same key.
+                            </MudText>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Filled" OnClick="AcquirePermitAsync" Disabled="@(_busy || HeldPermitCount >= _maxConcurrency)">Acquire Permit
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" OnClick="AcquireUntilFullAsync" Disabled="@(_busy || HeldPermitCount >= _maxConcurrency)">Acquire Until Full
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" OnClick="TryCompetingAcquireAsync" Disabled="@(_busy || HeldPermitCount < _maxConcurrency)">Competing
+                                    Acquire
+                                </MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ReleasePermitsAsync" Disabled="@(_busy || HeldPermitCount == 0)">Release All
+                                </MudButton>
+                            </MudStack>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Held permits: @HeldPermitCount / @_maxConcurrency</MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Burst Demo</MudText>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RunSemaphoreDemoAsync" Disabled="@(_busy || HeldPermitCount != 0)">Run With
+                                    Semaphore
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="RunUnlockedDemoAsync" Disabled="@_busy">Run Without Semaphore</MudButton>
+                                <MudButton Variant="Variant.Text" OnClick="RefreshMetricsAsync" Disabled="@_busy">Refresh Metrics</MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ClearEvents">Clear Events</MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="7">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <LyoChip Color="@(HeldPermitCount == 0 ? Color.Default : Color.Success)"
+                                         Label="@(HeldPermitCount == 0 ? "No Permits Held" : $"{HeldPermitCount} Permits Held")"/>
+                                <LyoChip Spec="@LyoChips.FromBool(_busy, "Busy", "Idle", Color.Warning, Color.Success)"/>
+                                <LyoChip Spec="@LyoChips.FromBool(MetricsStore != null, "Metrics Enabled", "Metrics Unavailable", Color.Success, Color.Warning)"/>
+                            </MudStack>
+
+                            <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Latest Run</MudText>
+                        @if (_lastRun == null) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Run one of the burst demos to inspect concurrency.</MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Mode</strong></td>
+                                    <td>@(_lastRun.UsedSemaphore ? "Semaphore" : "Unlocked")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Completed</strong></td>
+                                    <td>@_lastRun.Completed / @_lastRun.WorkerCount</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Timeouts</strong></td>
+                                    <td>@_lastRun.TimedOut</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Max Concurrent</strong></td>
+                                    <td>@_lastRun.MaxConcurrent</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Permit Limit</strong></td>
+                                    <td>@_lastRun.MaxAllowed</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Elapsed</strong></td>
+                                    <td>@_lastRun.Elapsed.TotalMilliseconds.ToString("0") ms</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Summary</strong></td>
+                                    <td>@_lastRun.Summary</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Semaphore Metrics For Current Key</MudText>
+                        @if (MetricsStore == null) {
+                            <MudAlert Severity="Severity.Warning" Dense="true">
+                                The current `IMetrics` implementation is not `MetricsService`, so live semaphore metrics are not available here.
+                            </MudAlert>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Key</strong></td>
+                                    <td>@_key</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Acquire Success</strong></td>
+                                    <td>@_acquireSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Acquire Failure</strong></td>
+                                    <td>@_acquireFailure</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Acquire Duration Samples</strong></td>
+                                    <td>@_acquireDurationCount (@_acquireDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Release Duration Samples</strong></td>
+                                    <td>@_releaseDurationCount (@_releaseDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Execute Duration Samples</strong></td>
+                                    <td>@_executeDurationCount (@_executeDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Refresh</strong></td>
+                                    <td>@(_lastMetricsRefresh == default ? "(not loaded)" : _lastMetricsRefresh.ToString("u"))</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Recent Events</MudText>
+                        @if (VisibleEvents.Count == 0) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Acquire permits or run a demo to populate the event log.</MudText>
+                        }
+                        else {
+                            <LyoResponsiveTable>
+                                <TableContent>
+                                    <MudSimpleTable Dense="true" Hover="true">
+                                        <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Stage</th>
+                                            <th>Details</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach (var entry in VisibleEvents) {
+                                            <tr>
+                                                <td>@entry.Timestamp.ToString("HH:mm:ss.fff")</td>
+                                                <td>@entry.Stage</td>
+                                                <td style="white-space: pre-wrap; word-break: break-word;">@entry.Message</td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </TableContent>
+                                <CardContent>
+                                    @foreach (var entry in VisibleEvents) {
+                                        <LyoRecordCard Title="@entry.Stage" Subtitle="@entry.Timestamp.ToString("HH:mm:ss.fff")">
+                                            <LyoRecordField Label="Details">
+                                                <div style="white-space: pre-wrap; word-break: break-word;">@entry.Message</div>
+                                            </LyoRecordField>
+                                        </LyoRecordCard>
+                                    }
+                                </CardContent>
+                            </LyoResponsiveTable>
+                        }
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>

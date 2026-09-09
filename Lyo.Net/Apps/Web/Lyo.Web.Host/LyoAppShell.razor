@@ -1,0 +1,55 @@
+@namespace Lyo.Web.Host
+@using Lyo.Web.Components
+@using Lyo.Web.Primitives
+
+@if (_initialized) {
+    <MudThemeProvider Theme="@(Theme ?? LyoThemes.Default)" IsDarkMode="@_isDarkMode"/>
+    <MudPopoverProvider/>
+    <MudDialogProvider/>
+    <MudSnackbarProvider/>
+    <MudLayout>
+        <MudDrawer @bind-Open="_drawerOpen"
+                   Elevation="1"
+                   Variant="DrawerVariant.Temporary"
+                   Anchor="Anchor.Start"
+                   Class="mud-width-260">
+            <div>
+                @DrawerHeader
+                <MudDivider/>
+                @if (DrawerNav is not null) {
+                    @DrawerNav
+                }
+                else {
+                    <MudNavMenu Dense="true">
+                        <LyoNavMenu/>
+                    </MudNavMenu>
+                }
+            </div>
+        </MudDrawer>
+        <MudMainContent>
+            <MudAppBar Elevation="4" Color="Color.Primary" Dense="true">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer"/>
+                <MudButton Href="/" Variant="Variant.Text" Class="ml-2" Style="text-transform: none; padding: 0; min-width: auto;">
+                    <MudText Typo="Typo.h6" Style="color: white;">@Title</MudText>
+                </MudButton>
+                <MudSpacer/>
+                @if (ShowThemeToggle) {
+                    <MudSwitch T="bool" Value="_isDarkMode" ValueChanged="OnDarkModeChanged" Color="Color.Default" Label="Dark Mode"/>
+                }
+                @AppBarEnd
+            </MudAppBar>
+            @ChildContent
+        </MudMainContent>
+    </MudLayout>
+}
+else {
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <MudProgressCircular Indeterminate="true"/>
+    </div>
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

@@ -1,0 +1,70 @@
+using Lyo.DataTable.Models;
+
+namespace Lyo.DataTable.Models.Tests;
+
+public sealed class DataTableBuilderTests
+{
+    [Fact]
+    public void Build_Creates_Table_With_Headers_And_Rows()
+    {
+        var table = new DataTableBuilder().AddHeaders("Name", "Amount").AddRow(r => r.AddCells("Alice", "10")).AddRow(r => r.AddCells("Bob", "20")).Build();
+        Assert.Equal(2, table.Headers.Count);
+        Assert.Equal(2, table.Rows.Count);
+        Assert.Equal("Alice", table.Rows[0].Cells[0].DisplayValue);
+        Assert.Equal("10", table.Rows[0].Cells[1].DisplayValue);
+    }
+
+    [Fact]
+    public void AddSumFooter_Computes_Sum_At_Build()
+    {
+        var table = new DataTableBuilder().AddColumn(1, c => c.WithSumFooter())
+            .AddHeaders("Name", "Amount")
+            .AddRow(r => r.AddCells("A", "10"))
+            .AddRow(r => r.AddCells("B", "20"))
+            .Build();
+
+        Assert.Equal("30", table.Footer[1].DisplayValue);
+    }
+
+    [Fact]
+    public void AddRow_With_Builder_Chains_Cells()
+    {
+        var table = new DataTableBuilder().AddHeaders("Col0", "Col1").AddRow().SetCell(0, "x").SetCell(1, 42).BuildAndAdd().Build();
+        Assert.Single(table.Rows);
+        Assert.Equal("x", table.Rows[0].Cells[0].DisplayValue);
+        Assert.Equal("42", table.Rows[0].Cells[1].DisplayValue);
+    }
+
+    [Fact]
+    public void AddFooter_Sets_Footer_Cells()
+    {
+        var table = new DataTableBuilder().AddHeaders("H1").AddFooters("Total").Build();
+        Assert.Single(table.Footer);
+        Assert.Equal("Total", table.Footer[0].DisplayValue);
+    }
+
+    [Fact]
+    public void FormatWhen_Applies_Conditional_Formatting()
+    {
+        var table = new DataTableBuilder().AddColumn(1, c => c.FormatWhen<int>(v => v < 0, b => b.WithFontColor("#FF0000")))
+            .AddHeaders("Label", "Value")
+            .AddRow(r => r.SetCell(0, "Negative").SetCell(1, -5))
+            .AddRow(r => r.SetCell(0, "Positive").SetCell(1, 10))
+            .Build();
+
+        Assert.Equal(2, table.Rows.Count);
+        Assert.Equal("#FF0000", table.GetFormat(0, 1)?.FontColor);
+        Assert.Null(table.GetFormat(1, 1)?.FontColor);
+    }
+
+    [Fact]
+    public async Task EnumerateRowsAsync_YieldsBodyRows()
+    {
+        var table = new DataTableBuilder().AddHeaders("Name").AddRow(r => r.AddCells("Alice")).AddRow(r => r.AddCells("Bob")).Build();
+        var names = new List<string>();
+        await foreach (var row in table.EnumerateRowsAsync(TestContext.Current.CancellationToken))
+            names.Add(row.Cells[0].DisplayValue);
+
+        Assert.Equal(["Alice", "Bob"], names);
+    }
+}

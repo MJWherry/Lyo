@@ -1,0 +1,174 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudText Typo="Typo.h5">Job Schedules</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                All schedules across job definitions, ordered by next run.
+            </MudText>
+            <MudSpacer/>
+            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="RefreshAsync"
+                       StartIcon="@Icons.Material.Filled.Refresh" Disabled="@_loading">
+                Refresh
+            </MudButton>
+        </MudStack>
+
+        @if (_loading) {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
+        }
+        else if (_rows.Count == 0) {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No job schedules found.</MudText>
+        }
+        else {
+            <LyoResponsiveTable>
+                <TableContent>
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                        <tr>
+                            <th>Job Definition</th>
+                            <th>Schedule</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Next Run</th>
+                            <th>Enabled</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var row in _rows) {
+                            <tr>
+                                <td>
+                                    <MudText Typo="Typo.body2">@row.DefinitionName</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@row.DefinitionId.ToString()[..8]…</MudText>
+                                </td>
+                                <td>
+                                    <MudText Typo="Typo.body2">@row.Schedule.Id.ToString()[..8]…</MudText>
+                                </td>
+                                <td>
+                                    <LyoChip Label="@row.Schedule.Type.ToString()" Color="Color.Primary"/>
+                                </td>
+                                <td>@(row.Schedule.Description ?? "—")</td>
+                                <td>
+                                    @if (row.NextRunUtc.HasValue) {
+                                        <LyoTimestamp Value="@row.NextRunUtc.Value" Kind="LyoTimestampKind.Relative"/>
+                                    }
+                                    else {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">none</MudText>
+                                    }
+                                </td>
+                                <td>
+                                    <MudTooltip Text="@(row.Schedule.Enabled ? "Disable schedule" : "Enable schedule")">
+                                        <MudSwitch T="bool"
+                                                   Value="@row.Schedule.Enabled"
+                                                   ValueChanged="@(_ => ToggleScheduleAsync(row))"
+                                                   Color="Color.Success"
+                                                   Size="Size.Small"
+                                                   Class="ma-0"
+                                                   aria-label="@($"{(row.Schedule.Enabled ? "Disable" : "Enable")} schedule for {row.DefinitionName}")"/>
+                                    </MudTooltip>
+                                </td>
+                                <td>
+                                    <MudTooltip Text="Run now">
+                                        <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small" Color="Color.Primary" aria-label="Run scheduled job now"
+                                                       OnClick="@(() => RunScheduleAsync(row))"/>
+                                    </MudTooltip>
+                                    <MudTooltip Text="Edit job definition">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" aria-label="Edit job definition"
+                                                       OnClick="@(() => ViewDefinitionAsync(row.DefinitionId))"/>
+                                    </MudTooltip>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </MudSimpleTable>
+                </TableContent>
+                <CardContent>
+                    @foreach (var row in _rows) {
+                        <LyoRecordCard Title="@row.DefinitionName" Subtitle="@($"Schedule {row.Schedule.Id.ToString()[..8]}…")">
+                            <TitleContent>
+                                <LyoChip Label="@row.Schedule.Type.ToString()" Color="Color.Primary"/>
+                            </TitleContent>
+                            <Actions>
+                                <MudSwitch T="bool"
+                                           Value="@row.Schedule.Enabled"
+                                           ValueChanged="@(_ => ToggleScheduleAsync(row))"
+                                           Color="Color.Success"
+                                           Size="Size.Small"
+                                           Class="ma-0"
+                                           title="@(row.Schedule.Enabled ? "Disable schedule" : "Enable schedule")"
+                                           aria-label="@($"{(row.Schedule.Enabled ? "Disable" : "Enable")} schedule for {row.DefinitionName}")"/>
+                                <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small" Color="Color.Primary" title="Run now" aria-label="Run scheduled job now"
+                                               OnClick="@(() => RunScheduleAsync(row))"/>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit job definition" aria-label="Edit job definition"
+                                               OnClick="@(() => ViewDefinitionAsync(row.DefinitionId))"/>
+                            </Actions>
+                            <ChildContent>
+                                <LyoRecordField Label="Description" Value="@row.Schedule.Description"/>
+                                <LyoRecordField Label="Next Run">
+                                    @if (row.NextRunUtc.HasValue) {
+                                        <LyoTimestamp Value="@row.NextRunUtc.Value" Kind="LyoTimestampKind.Relative"/>
+                                    }
+                                    else {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">none</MudText>
+                                    }
+                                </LyoRecordField>
+                            </ChildContent>
+                        </LyoRecordCard>
+                    }
+                </CardContent>
+            </LyoResponsiveTable>
+
+            <MudDivider/>
+
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Upcoming Runs (next @_upcomingRuns.Count across all schedules)</MudText>
+                @if (_upcomingRuns.Count == 0) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">No upcoming runs found.</MudText>
+                }
+                else {
+                    <LyoResponsiveTable>
+                        <TableContent>
+                            <MudSimpleTable Dense="true" Hover="true">
+                                <thead>
+                                <tr>
+                                    <th>Run At</th>
+                                    <th>Job Definition</th>
+                                    <th>Schedule</th>
+                                    <th>Type</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var run in _upcomingRuns) {
+                                    <tr>
+                                        <td><LyoTimestamp Value="@run.RunAtUtc" Kind="LyoTimestampKind.Relative"/></td>
+                                        <td>@run.DefinitionName</td>
+                                        <td>@(run.ScheduleDescription ?? run.ScheduleId.ToString()[..8] + "…")</td>
+                                        <td>@run.ScheduleType</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        </TableContent>
+                        <CardContent>
+                            @foreach (var run in _upcomingRuns) {
+                                <LyoRecordCard Title="@run.DefinitionName">
+                                    <TitleContent>
+                                        <LyoChip Label="@run.ScheduleType.ToString()" Color="Color.Primary"/>
+                                    </TitleContent>
+                                    <ChildContent>
+                                        <LyoRecordField Label="Run At">
+                                            <LyoTimestamp Value="@run.RunAtUtc" Kind="LyoTimestampKind.Relative"/>
+                                        </LyoRecordField>
+                                        <LyoRecordField Label="Schedule" Value="@(run.ScheduleDescription ?? run.ScheduleId.ToString()[..8] + "…")"/>
+                                    </ChildContent>
+                                </LyoRecordCard>
+                            }
+                        </CardContent>
+                    </LyoResponsiveTable>
+                }
+            </div>
+        }
+    </MudStack>
+</MudPaper>

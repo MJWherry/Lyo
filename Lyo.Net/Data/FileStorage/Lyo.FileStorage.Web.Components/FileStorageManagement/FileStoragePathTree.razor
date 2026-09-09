@@ -1,0 +1,107 @@
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
+
+<MudPaper Outlined="true" Class="pa-2 file-storage-tree-panel">
+    <div class="file-storage-tree-toolbar">
+        <MudStack Spacing="1">
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Paths</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Disabled="@Busy" OnClick="Refresh" aria-label="Refresh tree"/>
+            </MudStack>
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+            <MudTextField T="string"
+                          Class="flex-grow-1"
+                          @bind-Value="_filter"
+                          Immediate="true"
+                          DebounceInterval="200"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Placeholder="Search"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Clearable="true"
+                          Disabled="@Busy"
+                          aria-label="Search paths"/>
+            <MudTooltip Text="@(_editMode ? "Done selecting" : "Select multiple for bulk actions")">
+                <MudIconButton Icon="@(_editMode ? Icons.Material.Filled.Close : Icons.Material.Filled.Edit)"
+                               Color="@(_editMode ? Color.Primary : Color.Default)"
+                               Size="Size.Small"
+                               Disabled="@Busy"
+                               OnClick="ToggleEdit"
+                               aria-label="Toggle bulk selection"/>
+            </MudTooltip>
+        </MudStack>
+        @if (_editMode) {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Check files or folders, then Move / Rotate DEKs / Delete / Download zip. A folder includes every file under it. Drag onto a folder to move.
+            </MudText>
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@BulkFileCount file(s)</MudText>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkMoveAsync">Move…</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkRotateAsync">Rotate DEKs…</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkDownloadAsync">Download zip</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkDeleteAsync">Delete</MudButton>
+            </MudStack>
+        }
+        @if (Truncated) {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-1">Listing was truncated at the QueryProject page cap.</MudAlert>
+        }
+        </MudStack>
+    </div>
+    <div class="file-storage-tree-scroll">
+        @if (Busy && Items.Count == 0) {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+        }
+        else if (DisplayItems.Count == 0) {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">No matching paths.</MudText>
+        }
+        else {
+            <MudTreeView T="FileStoragePathTreeNode"
+                         Items="@DisplayItems"
+                         Hover="true"
+                         Dense="true"
+                         Comparer="FileStoragePathTreeNodeKeyComparer.Instance"
+                         SelectionMode="@(_editMode ? SelectionMode.MultiSelection : SelectionMode.SingleSelection)"
+                         AutoSelectParent="false"
+                         SelectedValues="_checked"
+                         SelectedValuesChanged="OnCheckedChanged">
+                <ItemTemplate Context="treeItem">
+                    @if (treeItem.Value != null) {
+                        var node = treeItem.Value;
+                        <MudTreeViewItem @key="@node.Key"
+                                         Value="@node"
+                                         Text="@node.Name"
+                                         Items="@treeItem.Children"
+                                         Icon="@IconFor(node)"
+                                         IconColor="@IconColorFor(node)"
+                                         CanExpand="@treeItem.Expandable"
+                                         Expanded="@treeItem.Expanded"
+                                         ReadOnly="@(_editMode && node.IsDeleted)"
+                                         Selected="@(_editMode ? _checked.Contains(node) : Selected?.Key == node.Key)"
+                                         ExpandedChanged="@(expanded => OnExpandedAsync(node, expanded))"
+                                         OnClick="@(() => OnSelectAsync(node))">
+                            <BodyContent>
+                                <div class="@ItemClass(node)"
+                                     draggable="@(_editMode && !node.IsDeleted ? "true" : "false")"
+                                     @ondragstart="@(() => OnDragStart(node))"
+                                     @ondragover:preventDefault="@(_editMode && node.IsDirectory)"
+                                     @ondragenter="@(() => OnDragEnter(node))"
+                                     @ondragleave="@(() => OnDragLeave(node))"
+                                     @ondrop:preventDefault="@(_editMode && node.IsDirectory)"
+                                     @ondrop="@(() => OnDropAsync(node))">
+                                    <MudText Typo="Typo.body2"
+                                             Color="@(node.IsDeleted ? Color.Secondary : Color.Default)"
+                                             Style="@(node.IsDeleted ? "text-decoration: line-through;" : null)">
+                                        @node.Name
+                                        @if (node.IsPending) {
+                                            <span class="mud-text-secondary"> (new)</span>
+                                        }
+                                    </MudText>
+                                </div>
+                            </BodyContent>
+                        </MudTreeViewItem>
+                    }
+                </ItemTemplate>
+            </MudTreeView>
+        }
+    </div>
+</MudPaper>

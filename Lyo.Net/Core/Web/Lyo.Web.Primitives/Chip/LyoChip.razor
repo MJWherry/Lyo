@@ -1,0 +1,20 @@
+@namespace Lyo.Web.Primitives
+
+<MudChip T="string"
+         Size="@Size"
+         Color="@ResolvedColor"
+         Icon="@ResolvedIcon"
+         Variant="@ResolvedVariant"
+         OnClick="@OnClick"
+         OnClose="@OnClose"
+         CloseIcon="@CloseIcon"
+         Style="@ResolvedStyle"
+         Class="@ResolvedClass"
+         title="@Title">
+    @if (ChildContent != null) {
+        @ChildContent
+    }
+    else {
+        @ResolvedLabel
+    }
+</MudChip>

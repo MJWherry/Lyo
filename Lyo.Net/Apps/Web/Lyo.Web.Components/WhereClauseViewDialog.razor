@@ -1,0 +1,29 @@
+@using System.Text.Json
+@using Lyo.Query.Models.Common
+@inject IJsInterop Js
+
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-where-clause-view-dialog">
+    <MudDialog>
+        <DialogContent>
+            @if (WhereClause == null) {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No where clause to display</MudText>
+            }
+            else {
+                <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" ApplyEffectsToContainer="true" TabPanelsClass="pt-3">
+                    <MudTabPanel Text="Readable">
+                        <LyoCodeBlock Code="@_readableText" Language="sql"/>
+                    </MudTabPanel>
+                    <MudTabPanel Text="JSON">
+                        <LyoCodeBlock Code="@_jsonText" Language="json"/>
+                    </MudTabPanel>
+                </MudTabs>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CopyToClipboard" StartIcon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary" Disabled="@(WhereClause == null)">
+                @(_activeTab == 1 ? "Copy JSON" : "Copy")
+            </MudButton>
+            <MudButton OnClick="Close" Color="Color.Default">Close</MudButton>
+        </DialogActions>
+    </MudDialog>
+</LyoElementRoot>

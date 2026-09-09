@@ -1,0 +1,188 @@
+{
+  "id": "Lyo.Compression.Lz4",
+  "name": "Lyo.Compression.Lz4",
+  "area": "Data",
+  "tagline": "`Lyo.Compression` addon that registers an `LZ4` `ICompressorFactory` using `EasyCompressor.LZ4`.",
+  "description": "`Lyo.Compression` addon that registers an `LZ4` `ICompressorFactory` using `EasyCompressor.LZ4`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Add the factory in DI",
+      "language": "csharp",
+      "code": "using Lyo.Compression;\nusing Lyo.Compression.Lz4;\nusing Lyo.Compression.Models;\nusing Microsoft.Extensions.Configuration;\nusing Microsoft.Extensions.DependencyInjection;\n\nservices.AddLz4Compressor();\n\n// Configure via lambda\nservices.AddCompressionService(options =>\n{\n    options.DefaultAlgorithm = Lz4CompressionAlgorithm.Instance;\n    options.DefaultCompressionLevel = CompressionLevel.Fastest;\n});\nservices.AddDefaultCompressionService<CompressionService>();\n\n// Or bind from appsettings (CompressionOptions section)\nservices.AddLz4Compressor();\nservices.AddCompressionServiceFromConfiguration(configuration, CompressionServiceOptions.SectionName);\nservices.AddDefaultCompressionService<CompressionService>();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "DI registration",
+      "text": "AddLz4Compressor() registers the factory and nothing else. AddCompressionService, AddDefaultCompressionService<CompressionService>(), and keyed registration live in [`Lyo.Compression`](../Lyo.Compression/README.md). If stored files might carry CompressionAlgorithm = LZ4, register this factory so file-storage reads can open them. [ICompressionResolver](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) picks the codec from metadata in GetFileAsync / GetFileStreamAsync."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Compression/Lyo.Compression.Lz4/README.md",
+  "benchmarks": {
+    "items": [
+      {
+        "label": "Benchmarks at a glance",
+        "href": "Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md"
+      }
+    ]
+  },
+  "dependencies": [
+    {
+      "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "EasyCompressor.LZ4",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

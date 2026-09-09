@@ -1,0 +1,13 @@
+@namespace Lyo.Web.Primitives
+@page "/workbench/{Slug}"
+
+<LyoPageHeader Title="@(Descriptor?.Title ?? Slug)" Icon="@Descriptor?.Icon" Description="@Descriptor?.Category"/>
+
+@if (Descriptor is null) {
+    <LyoEmptyState Title="Unknown workbench"
+                   Description="@($"No workbench is registered for '{Slug}'.")"
+                   Icon="@Icons.Material.Filled.ExtensionOff"/>
+}
+else {
+    <DynamicComponent Type="Descriptor.ComponentType"/>
+}

@@ -1,0 +1,60 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="JobWorkerInstanceGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.RawId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All"
+                      AutoRefreshEnabled="true"
+                      QuickSearchProperties="@_quickSearchProperties">
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details" aria-label="View worker instance details"
+                               OnClick="@(() => ViewInstance(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" Identifier="true" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;" QuickSearchPropertyName="Id"/>
+        <LyoProjectedColumn Field="WorkerType" Title="Worker Type" QuickSearchPropertyName="WorkerType"/>
+        <LyoProjectedColumn Field="MachineName" Title="Machine" QuickSearchPropertyName="MachineName"/>
+        <LyoProjectedColumn Field="ProcessId" Title="PID" Align="Align.Center" HeaderStyle="width: 80px;"/>
+        <LyoProjectedColumn Field="State" Title="State" Align="Align.Center" HeaderStyle="width: 110px;">
+            <CellContent Context="item">
+                @{
+                    var stateText = ProjectedValueHelper.GetDisplayValue(item, "State");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<JobWorkerInstanceState>(stateText, JobColorHelper.ForWorkerState, JobColorHelper.WorkerStateIcon))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="InFlightCount" Title="In Flight" Align="Align.Center" HeaderStyle="width: 90px;">
+            <CellContent Context="item">
+                @{
+                    var count = ProjectedValueHelper.GetDisplayValue(item, "InFlightCount");
+                }
+                <LyoChip Color="@(count is "0" or "" ? Color.Default : Color.Info)" Label="@count"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="LastHeartbeatUtc" Title="Last Heartbeat" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                @{
+                    var heartbeat = LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "LastHeartbeatUtc"));
+                }
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    <LyoTimestamp Value="@heartbeat" Kind="LyoTimestampKind.Relative"/>
+                    @if (JobColorHelper.IsHeartbeatStale(heartbeat)) {
+                        <LyoChip Color="Color.Error" Label="Stale"/>
+                    }
+                </MudStack>
+            </CellContent>
+        </LyoProjectedColumn>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewInstance(item))">View Details</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

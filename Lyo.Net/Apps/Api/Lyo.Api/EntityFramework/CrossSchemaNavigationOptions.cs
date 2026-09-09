@@ -1,0 +1,12 @@
+using Microsoft.EntityFrameworkCore;
+
+namespace Lyo.Api.EntityFramework;
+
+/// <summary>DI settings holding cross-schema or same-context navigations for <typeparamref name="TContext" />.</summary>
+/// <typeparam name="TContext">Host <see cref="Microsoft.EntityFrameworkCore.DbContext" /> type.</typeparam>
+public sealed class CrossSchemaNavigationOptions<TContext>
+    where TContext : DbContext
+{
+    /// <summary>Registrations applied by <see cref="LyoComposingModelCustomizer" /> after <c>OnModelCreating</c> runs.</summary>
+    public List<CrossSchemaNavigationRegistration> Registrations { get; } = [];
+}

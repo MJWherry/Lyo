@@ -1,0 +1,316 @@
+{
+  "id": "Lyo.Typecast.Client",
+  "name": "Lyo.Typecast.Client",
+  "area": "Integration",
+  "tagline": "HTTP client for Typecast TTS and voice catalog work. `TypecastClient` subclasses `Lyo.Api.Client.ApiClient`, sets `X-API-KEY` from `TypecastClientOptions`, and surfaces two…",
+  "description": "HTTP client for Typecast text-to-speech and voice catalog work. `TypecastClient` subclasses `Lyo.Api.Client.ApiClient`, sets the `X-API-KEY` header from `TypecastClientOptions`,\nand surfaces two managers (`TextToSpeech`, `Voices`) over the REST endpoints.\n\nMulti-targets `netstandard2.0` and `net10.0`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Add the client",
+      "language": "csharp",
+      "code": "// 1. Configuration-bound (defaults to the \"TypecastClient\" section)\nservices.AddTypecastClientFromConfiguration(builder.Configuration);\n\n// 2. Inline configuration\nservices.AddTypecastClient(o => {\n    o.ApiKey = \"your-api-key\";\n    o.BaseUrl = \"https://api.typecast.ai\";\n});\n\n// 3. Pre-built options object\nservices.AddTypecastClient(new TypecastClientOptions { ApiKey = \"your-api-key\" });"
+    },
+    {
+      "title": "Add the client (2)",
+      "language": "json",
+      "code": "{\n  \"TypecastClient\": {\n    \"ApiKey\": \"your-api-key\",\n    \"BaseUrl\": \"https://api.typecast.ai\"\n  }\n}"
+    },
+    {
+      "title": "`TypecastClient`",
+      "language": "csharp",
+      "code": "public readonly TextToSpeechManager TextToSpeech;\npublic readonly VoiceManager Voices;"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Service registration",
+      "text": "`IServiceCollection` has three DI extensions: every overload registers `TypecastClient` as a singleton. When the container has `ILoggerFactory` or `HttpClient`, those are used; otherwise the client falls back to sensible defaults. Example `appsettings.json`:"
+    },
+    {
+      "type": "table",
+      "title": "`TypecastClientOptions`",
+      "headers": [
+        "Property",
+        "Notes"
+      ],
+      "rows": [
+        [
+          "`ApiKey`",
+          "Required. Transmitted as `X-API-KEY`."
+        ],
+        [
+          "`BaseUrl`",
+          "Falls back to `https://api.typecast.ai`."
+        ],
+        [
+          "`SectionName`",
+          "`\"TypecastClient\"`. Default section for `AddTypecastClientFromConfiguration`."
+        ]
+      ],
+      "lead": "Subclass of `ApiClientOptions`, so the usual HTTP transport knobs come along (`BaseUrl`, timeouts, retry, etc.).",
+      "trail": "Serialization uses snake_case names, case-insensitive reads, and `WhenWritingNull` ignore so it matches Typecast's API."
+    },
+    {
+      "type": "table",
+      "title": "`TypecastClient` `TextToSpeechManager`",
+      "headers": [
+        "Method",
+        "Endpoint",
+        "Returns"
+      ],
+      "rows": [
+        [
+          "`SynthesizeAsync(TypecastTtsRequest request, ct = default)`",
+          "`POST /v1/text-to-speech`",
+          "`byte[]` (audio as WAV or MP3)."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "`TypecastClient` `VoiceManager`",
+      "headers": [
+        "Method",
+        "Endpoint",
+        "Returns"
+      ],
+      "rows": [
+        [
+          "`ListVoicesAsync(VoiceListReq? request = null, ct = default)`",
+          "`GET /v2/voices`",
+          "`List<Voice>` (empty list if none)."
+        ],
+        [
+          "`GetVoiceAsync(string voiceId, ct = default)`",
+          "`GET /v2/voices/{voiceId}`",
+          "`Voice?`"
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Request types",
+      "items": [
+        "**`TypecastTtsRequest`.** Subclasses `Lyo.Tts.Models.TtsRequest`. Fields: `VoiceId`, `Text`, `Model` (defaults to `TypecastModel.SsfmV30`), `Language` (`LanguageCodeInfo`, serialized as ISO 639-3), `Prompt`, `Output`, `Seed`, computed `AudioFormat`.",
+        "**`Prompt`.** emotion / style knobs (including the `\"smart\"` mode with optional `previous_text` / `next_text` context).",
+        "**`OutputSettings`.** volume / pitch / tempo / audio format.",
+        "**`VoiceListReq`.** optional `Model`, `Gender`, `Age`, `UseCases` filters.",
+        "**Enums under `Enums/`.** `Gender`, `AgeGroup`, `TypecastModel`.",
+        "**Response models under `Models/Voices/Response/`.** `Voice`, `VoiceModel`."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "`TypecastTtsRequestBuilder`",
+      "headers": [
+        "Method",
+        "Sets"
+      ],
+      "rows": [
+        [
+          "`New()` / `Create(voiceId, text)`",
+          "Static factories."
+        ],
+        [
+          "`WithVoiceId(string)` / `WithText(string)`",
+          "Mandatory fields."
+        ],
+        [
+          "`WithModel(string)`",
+          "e.g. `\"ssfm-v30\"`, `\"ssfm-v21\"`."
+        ],
+        [
+          "`WithLanguage(string)`",
+          "Tries ISO 639-3 before ISO 639-1; leaves language unset when the code is unknown."
+        ],
+        [
+          "`WithPrompt(Prompt)` / `WithPrompt(Action<Prompt>)`",
+          "Assign or configure in place."
+        ],
+        [
+          "`WithSmartPrompt(previousText?, nextText?)`",
+          "Shortcut for `\"smart\"` emotion mode."
+        ],
+        [
+          "`WithOutput(OutputSettings)` / `WithOutput(Action<OutputSettings>)`",
+          "Assign or configure in place."
+        ],
+        [
+          "`WithSeed(int)`",
+          "Fixed-seed generation."
+        ],
+        [
+          "`Build()`",
+          "Checks required fields, then returns the `TypecastTtsRequest`."
+        ]
+      ],
+      "lead": "Fluent helper that assembles a valid TTS request. `Build()` checks `VoiceId` and `Text`.\n\n```csharp\nvar request = TypecastTtsRequestBuilder\n    .Create(\"tc_60e5426de8b95f1d3000d7b5\", \"Hello, world!\")\n    .WithModel(\"ssfm-v30\")\n    .WithLanguage(\"eng\") // accepts ISO 639-3 or ISO 639-1\n    .WithSmartPrompt(previousText: \"Welcome.\", nextText: \"How are you?\")\n    .WithOutput(o => {\n        o.AudioFormat = \"mp3\";\n    })\n    .WithSeed(42)\n    .Build();\n\nvar audio = await client.TextToSpeech.SynthesizeAsync(request, ct);\n```"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Typecast/Lyo.Typecast.Client/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tts.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "AngleSharp",
+      "kind": "package",
+      "version": "1.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.RateLimiting",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

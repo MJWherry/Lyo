@@ -1,0 +1,212 @@
+{
+  "id": "Lyo.ContactUs.Postgres",
+  "name": "Lyo.ContactUs.Postgres",
+  "area": "Plugins",
+  "tagline": "PostgreSQL and EF Core implementation of `Lyo.ContactUs.IContactUsService` (`PostgresContactUsService`) through `ContactUsDbContext` and `PostgresContactUsOptions`.",
+  "description": "PostgreSQL and EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../Lyo.ContactUs/README.md) (`PostgresContactUsService`) through `ContactUsDbContext`, `PostgresContactUsOptions`, and `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>` so the host can apply schema upgrades on startup.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Package contents",
+      "items": [
+        "`ContactUsDbContext` + `ContactUsDbContextFactory` under `Database/`, with a single `DbSet<ContactSubmissionEntity>` (name / email / subject / message / phone / company / created timestamp; lengths match `ContactUsRequest`).",
+        "`PostgresContactUsService`. A `ContactUsServiceBase` subclass that persists each submission through the registered `IDbContextFactory<ContactUsDbContext>`, logs the new id, and implements `TestConnectionAsync` by issuing `Database.CanConnectAsync(...)`.",
+        "`PostgresContactUsOptions` (`SectionName = \"PostgresContactUs\"`, `Schema = \"contact\"`, `ConnectionString`, `EnableAutoMigrations`).",
+        "`InitialCreate` migration under `Migrations/`."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Service registration (`Extensions`)",
+      "headers": [
+        "Entry point",
+        "Effect"
+      ],
+      "rows": [
+        [
+          "`AddContactUsDbContext(string connectionString)`",
+          "Registers the DbContext factory plus a scoped `ContactUsDbContext` resolved from the factory. Useful for ad-hoc EF code."
+        ],
+        [
+          "`AddContactUsDbContextFactory(Action<PostgresContactUsOptions>)` *(plus `(options)` and `FromConfiguration` overloads)*",
+          "Registers `IOptions<PostgresContactUsOptions>`, `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>()`, and `IDbContextFactory<ContactUsDbContext>` (`UseNpgsql` + migrations history under the `contact` schema)."
+        ],
+        [
+          "`AddContactUsPostgres(Action<PostgresContactUsOptions>)` *(plus `(options)` and `FromConfiguration` overloads)*",
+          "Calls `AddContactUsDbContextFactory(...)`, ensures a `ContactUsServiceOptions` singleton exists (defaults if not provided), and registers `IContactUsService` → scoped `PostgresContactUsService`."
+        ]
+      ],
+      "trail": "`AddContactUsPostgres(...)` is the usual one-shot registration. Use `AddContactUsDbContextFactory(...)` plus your own service registration when you want to wrap or decorate the service yourself."
+    },
+    {
+      "type": "table",
+      "title": "Database schema",
+      "headers": [
+        "Column",
+        "Source"
+      ],
+      "rows": [
+        [
+          "`Id` *(PK, `Guid`)*",
+          "Generated in `PostgresContactUsService.SubmitCoreAsync`."
+        ],
+        [
+          "`Name`, `Email`, `Subject`, `Message`, `Phone`, `Company`",
+          "Copied verbatim from the validated `ContactUsRequest`."
+        ],
+        [
+          "`CreatedTimestamp`",
+          "`DateTime.UtcNow` at insert time."
+        ]
+      ],
+      "trail": "Migrations history is tracked in `__EFMigrationsHistory` under the `contact` schema configured on `PostgresContactUsOptions.Schema`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/ContactUs/Lyo.ContactUs.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.ContactUs",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

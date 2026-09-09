@@ -1,0 +1,35 @@
+using Lyo.Api.Client;
+using Microsoft.AspNetCore.Components;
+
+namespace Lyo.TestGateway.Components.TestGateway;
+
+public partial class ReportDesignHost
+{
+    [Parameter]
+    public Guid? DefinitionId { get; set; }
+
+    [Inject]
+    private IApiClient ApiClient { get; set; } = null!;
+
+    private string _apiBase = "http://localhost:5251";
+    private string _baseRoute = "Reporting";
+
+    protected override void OnInitialized()
+    {
+        _apiBase = (Configuration["JobDashboard:BaseApiUrl"] ?? Configuration["ApiClient:BaseUrl"] ?? "http://localhost:5251").TrimEnd('/');
+        _baseRoute = $"{_apiBase}/Reporting";
+    }
+
+    private Task DownloadFileAsync(Guid fileId, string? fileName, CancellationToken ct)
+    {
+        var url = $"{_apiBase}/{Models.Constants.FileStorageWorkbench.ApiRoutePrefix}/files/{fileId:D}/download";
+        if (!string.IsNullOrWhiteSpace(fileName))
+            url += $"?fileName={Uri.EscapeDataString(fileName)}";
+
+        Navigation.NavigateTo(url, true);
+        return Task.CompletedTask;
+    }
+
+    private Task<string?> ViewFileUrlAsync(Guid fileId, CancellationToken ct)
+        => Task.FromResult<string?>($"{_apiBase}/{Models.Constants.FileStorageWorkbench.ApiRoutePrefix}/files/{fileId:D}/download?inline=true");
+}

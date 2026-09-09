@@ -1,0 +1,37 @@
+using Lyo.Http.Client;
+using Lyo.Common.Json;
+using Lyo.Discord.Client.Managers;
+using Lyo.Exceptions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace Lyo.Discord.Client;
+
+/// <summary>Typed HTTP client for Discord entities exposed by the Lyo API (PostgreSQL-backed DTOs).</summary>
+public class LyoDiscordClient : LyoHttpClient
+{
+    public readonly AttachmentManager Attachments;
+    public readonly ChannelManager Channels;
+    public readonly EmojiManager Emojis;
+    public readonly GuildManager Guilds;
+    public readonly InteractionManager Interactions;
+    public readonly MemberManager Members;
+    public readonly MessageManager Messages;
+    public readonly RoleManager Roles;
+    public readonly UserManager Users;
+
+    public LyoDiscordClient(LyoDiscordClientOptions options, ILogger<LyoDiscordClient>? logger = null, HttpClient? httpClient = null)
+        : base(logger ?? NullLogger<LyoDiscordClient>.Instance, httpClient, LyoJsonSerializerOptions.Create(), options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        Guilds = new(this);
+        Users = new(this);
+        Channels = new(this);
+        Roles = new(this);
+        Emojis = new(this);
+        Interactions = new(this);
+        Messages = new(this);
+        Attachments = new(this);
+        Members = new(this);
+    }
+}

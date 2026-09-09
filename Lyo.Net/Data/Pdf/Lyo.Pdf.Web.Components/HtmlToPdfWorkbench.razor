@@ -1,0 +1,114 @@
+@using System.Text
+@using Lyo.Common.Core.Enums;
+@using Lyo.Web.Components.FileUpload
+@using Lyo.Web.WebRenderer
+@inject IWebRendererService WebRendererService
+@inject IJsInterop Js
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">HTML to PDF</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Paste HTML or upload an HTML file, then convert it to PDF with the web renderer service.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Spacing="3">
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.subtitle2">HTML file</MudText>
+                                <LyoFileUpload ValidFileTypes="FileTypeFlags.Html | FileTypeFlags.Htm | FileTypeFlags.Txt"
+                                               MaxFiles="1"
+                                               ButtonText="Upload HTML"
+                                               InlineLayout="true"
+                                               OnClientFileReady="OnHtmlFileReadyAsync"
+                                               OnClientFileRemoved="OnHtmlFileRemovedAsync"
+                                               OnUploadStarted="OnUploadStartedAsync"
+                                               OnUploadProgress="OnUploadProgressAsync"
+                                               OnUploadCompleted="OnUploadCompletedAsync"
+                                               OnUploadCancelled="OnUploadCancelledAsync"
+                                               OnUploadFailed="OnUploadFailedAsync"/>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Upload status: @_uploadStatus
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+
+                        <MudTextField T="string"
+                                      Label="HTML"
+                                      Variant="Variant.Outlined"
+                                      Lines="16"
+                                      FullWidth="true"
+                                      @bind-Value="_htmlContent"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConvertAsync" Disabled="@_busy">Convert to PDF</MudButton>
+                        </MudStack>
+
+                        <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_pdfBytes != null) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download PDF</MudButton>
+                        }
+                    </MudStack>
+
+                    @if (_pdfBytes == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Convert HTML to inspect the generated PDF details here.
+                        </MudText>
+                    }
+                    else {
+                        <MudSimpleTable Dense="true">
+                            <tbody>
+                            <tr>
+                                <td><strong>Source</strong></td>
+                                <td>@_inputSource</td>
+                            </tr>
+                            <tr>
+                                <td><strong>HTML size</strong></td>
+                                <td>@FileSizeUnitInfo.FormatBestFitAbbreviation(Encoding.UTF8.GetByteCount(_htmlContent), lowercaseAbbreviation: false)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>PDF size</strong></td>
+                                <td>@FileSizeUnitInfo.FormatBestFitAbbreviation(_pdfBytes.LongLength, lowercaseAbbreviation: false)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>File name</strong></td>
+                                <td>@_pdfFileName</td>
+                            </tr>
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+        private string _htmlContent = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <title>Lyo Gateway</title>
+    </head>
+    <body>
+      <h1>Hello from the test gateway</h1>
+      <p>This HTML will be converted into a PDF.</p>
+    </body>
+    </html>
+    """;
+}

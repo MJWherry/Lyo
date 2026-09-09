@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Benchmark\Lyo.Benchmark\Lyo.Benchmark.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Streams\Lyo.Streams\Lyo.Streams.csproj"/>
+        <ProjectReference Include="..\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\Lyo.Encryption.AesCcm\Lyo.Encryption.AesCcm.csproj"/>
+        <ProjectReference Include="..\Lyo.Encryption.AesSiv\Lyo.Encryption.AesSiv.csproj"/>
+        <ProjectReference Include="..\Lyo.Encryption.XChaCha20Poly1305\Lyo.Encryption.XChaCha20Poly1305.csproj"/>
+        <ProjectReference Include="..\..\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet"/>
+    </ItemGroup>
+
+</Project>
+

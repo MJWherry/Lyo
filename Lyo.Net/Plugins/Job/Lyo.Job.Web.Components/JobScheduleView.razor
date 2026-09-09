@@ -1,0 +1,201 @@
+@using Lyo.Schedule.Models
+@using LyoParameterEditor = Lyo.Web.Components.ParamTable.LyoParameterEditor
+
+<MudGrid Spacing="2">
+    <MudItem xs="12" md="4">
+        <MudPaper Elevation="1" Class="pa-2">
+            <MudStack Spacing="1">
+                <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="px-1">
+                    <MudText Typo="Typo.subtitle1">Schedules</MudText>
+                    <MudStack Row Spacing="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" title="Add schedule" aria-label="Add schedule" OnClick="AddSchedule"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete schedule" aria-label="Delete selected schedule"
+                                       Disabled="@(_selected == null)" OnClick="DeleteSchedule"/>
+                    </MudStack>
+                </MudStack>
+                <MudList T="JobScheduleRes" Dense>
+                    @if (_schedules.Count > 0) {
+                        @foreach (var s in _schedules) {
+                            <MudListItem T="JobScheduleRes" OnClick="@(() => SelectSchedule(s))"
+                                         Class="@(_selected?.Id == s.Id ? "mud-primary" : "")" Style="cursor:pointer;">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                    <div @onclick:stopPropagation="true">
+                                        <LyoChip Label="@s.Type.ToString()"
+                                                 Color="@(s.Enabled ? Color.Success : Color.Error)"
+                                                 Icon="@(s.Enabled ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                                 OnClick="@(() => ToggleSchedule(s))" Style="cursor:pointer;"/>
+                                    </div>
+                                    <MudText Typo="Typo.body2">@(s.Description ?? s.ToString())</MudText>
+                                </MudStack>
+                            </MudListItem>
+                        }
+                    }
+                    else {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary px-2 pb-2">No schedules</MudText>
+                    }
+                </MudList>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="8">
+        @if (_selected != null && _edit != null) {
+            <MudPaper Elevation="1" Class="pa-3">
+                <MudStack Spacing="2">
+                    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle1">Schedule Details</MudText>
+                        <MudStack Row Spacing="1">
+                            <MudButton Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="RunSchedule"
+                                       Disabled="@(_running || _paramsDirty)">
+                                Run now
+                            </MudButton>
+                            <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Save" OnClick="SaveSchedule">
+                                Save Schedule
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="6" md="3">
+                            <MudSelect T="ScheduleType" Label="Type" @bind-Value="_edit.Type" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                @foreach (var t in Enum.GetValues<ScheduleType>()) {
+                                    <MudSelectItem Value="t">@t</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="6" md="6">
+                            <MudTextField T="string" Label="Description" @bind-Value="_edit.Description" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudSwitch T="bool" Label="Enabled" @bind-Value="_edit.Enabled" Color="Color.Success" Size="Size.Small"/>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudStack Spacing="1">
+                                <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
+                                    <MudChip T="string" Size="Size.Small" Variant="@(DaysMatch(DayFlags.EveryDay) ? Variant.Filled : Variant.Outlined)"
+                                             Color="@(DaysMatch(DayFlags.EveryDay) ? Color.Primary : Color.Default)" Selected="@DaysMatch(DayFlags.EveryDay)"
+                                             OnClick="@(() => ApplyDays(DayFlags.EveryDay))">Every day</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Variant="@(DaysMatch(DayFlags.Weekdays) ? Variant.Filled : Variant.Outlined)"
+                                             Color="@(DaysMatch(DayFlags.Weekdays) ? Color.Primary : Color.Default)" Selected="@DaysMatch(DayFlags.Weekdays)"
+                                             OnClick="@(() => ApplyDays(DayFlags.Weekdays))">Weekdays</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Variant="@(DaysMatch(DayFlags.Weekends) ? Variant.Filled : Variant.Outlined)"
+                                             Color="@(DaysMatch(DayFlags.Weekends) ? Color.Primary : Color.Default)" Selected="@DaysMatch(DayFlags.Weekends)"
+                                             OnClick="@(() => ApplyDays(DayFlags.Weekends))">Weekends</MudChip>
+                                </MudStack>
+                                <MudSelect T="DayFlags" Label="Days" MultiSelection="true" @bind-SelectedValues="_edit.Days"
+                                           Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                    @foreach (var d in FlagEnumUi.AtomicValues<DayFlags>()) {
+                                        <MudSelectItem Value="d">@d</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudStack>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudStack Spacing="1">
+                                <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
+                                    <MudChip T="string" Size="Size.Small" Variant="@(MonthsMatch(MonthFlags.EveryMonth) ? Variant.Filled : Variant.Outlined)"
+                                             Color="@(MonthsMatch(MonthFlags.EveryMonth) ? Color.Primary : Color.Default)" Selected="@MonthsMatch(MonthFlags.EveryMonth)"
+                                             OnClick="@(() => ApplyMonths(MonthFlags.EveryMonth))">Every month</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Variant="@(MonthsMatch(MonthFlags.QuarterlyStart) ? Variant.Filled : Variant.Outlined)"
+                                             Color="@(MonthsMatch(MonthFlags.QuarterlyStart) ? Color.Primary : Color.Default)" Selected="@MonthsMatch(MonthFlags.QuarterlyStart)"
+                                             OnClick="@(() => ApplyMonths(MonthFlags.QuarterlyStart))">Quarter start</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Variant="@(MonthsMatch(MonthFlags.QuarterlyEnd) ? Variant.Filled : Variant.Outlined)"
+                                             Color="@(MonthsMatch(MonthFlags.QuarterlyEnd) ? Color.Primary : Color.Default)" Selected="@MonthsMatch(MonthFlags.QuarterlyEnd)"
+                                             OnClick="@(() => ApplyMonths(MonthFlags.QuarterlyEnd))">Quarter end</MudChip>
+                                </MudStack>
+                                <MudSelect T="MonthFlags" Label="Months" MultiSelection="true" @bind-SelectedValues="_edit.Months"
+                                           Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                    @foreach (var m in FlagEnumUi.AtomicValues<MonthFlags>()) {
+                                        <MudSelectItem Value="m">@m</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudStack>
+                        </MudItem>
+                        @if (_edit.Type == ScheduleType.Cron) {
+                            <MudItem xs="12">
+                                <MudTextField T="string" Label="Cron Expression" @bind-Value="_edit.CronExpression"
+                                              HelperText="Standard 5- or 6-field cron expression"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                            </MudItem>
+                        }
+                        @if (_edit.Type == ScheduleType.Interval) {
+                            <MudItem xs="6" md="3">
+                                <MudTimePicker Label="Start Time" @bind-Time="_edit.StartTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                            </MudItem>
+                            <MudItem xs="6" md="3">
+                                <MudTimePicker Label="End Time" @bind-Time="_edit.EndTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                            </MudItem>
+                            <MudItem xs="6" md="3">
+                                <MudNumericField T="int?" Label="Interval (min)" @bind-Value="_edit.IntervalMinutes" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                            </MudItem>
+                        }
+                        @if (_edit.Type is ScheduleType.SetTimes or ScheduleType.OneShot) {
+                            <MudItem xs="12">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body2"><b>Times</b> (wall-clock in the schedule time zone)</MudText>
+                                    <MudStack Row Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+                                        @foreach (var t in _edit.Times) {
+                                            <MudChip T="string" Size="Size.Small" OnClose="@(() => RemoveTime(t))">@t.ToString(@"hh\:mm")</MudChip>
+                                        }
+                                        <div style="width: 140px;">
+                                            <MudTimePicker Label="Add time" @bind-Time="_newTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </div>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" title="Add time" aria-label="Add run time to schedule" OnClick="AddTime"/>
+                                    </MudStack>
+                                </MudStack>
+                            </MudItem>
+                        }
+                        <MudItem xs="6" md="3">
+                            <MudSelect T="JobMisfirePolicy" Label="Misfire Policy" @bind-Value="_edit.MisfirePolicy" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                @foreach (var p in Enum.GetValues<JobMisfirePolicy>()) {
+                                    <MudSelectItem Value="p">@p</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudDatePicker Label="Start Date" @bind-Date="_edit.StartDate" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudDatePicker Label="End Date" @bind-Date="_edit.EndDate" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudAutocomplete T="string" Label="Time Zone" @bind-Value="_edit.TimeZoneId"
+                                             SearchFunc="SearchTimeZones" ToStringFunc="FormatTimeZone"
+                                             Clearable="true" ResetValueOnEmptyText="true" CoerceText="false"
+                                             Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudDivider/>
+
+                    <JobBlackoutCalendarEditor Calendar="_selected.JobBlackoutCalendar"
+                                               ScheduleId="_selected.Id"
+                                               ApiClient="ApiClient"
+                                               ScheduleRoute="@ScheduleRoute"
+                                               CalendarRoute="@CalendarRoute"
+                                               WindowRoute="@WindowRoute"
+                                               OnChanged="OnBlackoutChanged"/>
+
+                    <MudDivider/>
+
+                    <LyoParameterEditor Title="Schedule Parameters" Items="@_paramRows" ShowEnabled InheritFrom="InheritRows" ApiClient="ApiClient"
+                                        FormatterContext="@_formatterContext"
+                                        OnChanged="@(() => _paramsDirty = true)"/>
+
+                    @if (_paramsDirty) {
+                        <div>
+                            <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="SaveParameters" StartIcon="@Icons.Material.Filled.Save">
+                                Save Parameters
+                            </MudButton>
+                        </div>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+        else {
+            <MudPaper Elevation="1" Class="pa-4">
+                <MudText Typo="Typo.body1" Class="mud-text-secondary">Select a schedule to view details</MudText>
+            </MudPaper>
+        }
+    </MudItem>
+</MudGrid>

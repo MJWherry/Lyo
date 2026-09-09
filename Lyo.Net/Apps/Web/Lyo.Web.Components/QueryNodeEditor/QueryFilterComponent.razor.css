@@ -1,0 +1,49 @@
+/* Equal-width columns; pierce into MudBlazor so inputs don't flex-grow past the wrapper. */
+.lyo-filter-col {
+    flex: 0 0 11.5rem;
+    width: 11.5rem;
+    min-width: 11.5rem;
+    max-width: 11.5rem;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.lyo-filter-col ::deep .mud-input-control,
+.lyo-filter-col ::deep .mud-select,
+.lyo-filter-col ::deep .mud-text-field,
+.lyo-filter-col ::deep .mud-picker {
+    width: 100%;
+    max-width: 100%;
+}
+
+.lyo-filter-col ::deep .mud-input-root {
+    max-width: 100%;
+}
+
+/* Unique-values MudMenu: remove extra chrome so spacing matches MudSelect columns */
+.lyo-filter-col ::deep .lyo-filter-unique-menu.mud-menu {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+}
+
+.lyo-filter-col ::deep .lyo-filter-unique-menu .mud-menu-activator {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+.lyo-filter-col ::deep .lyo-filter-values-trigger {
+    width: 100%;
+    margin: 0;
+}
+
+/* Flat controls: no hover fill on values trigger (ripple off in markup) */
+.lyo-filter-col ::deep .lyo-filter-values-trigger:hover {
+    background-color: transparent !important;
+}

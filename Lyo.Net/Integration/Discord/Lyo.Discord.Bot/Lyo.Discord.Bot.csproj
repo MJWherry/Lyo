@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <RootNamespace>Lyo.Discord.Bot</RootNamespace>
+        <Description>DSharpPlus bot host that syncs Discord guild data to the Lyo API (DI, configuration, extensible base class).</Description>
+        <PackageTags>discord dsharpplus bot sync lyo</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Diff\Lyo.Diff\Lyo.Diff.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Notification\Lyo.Notification\Lyo.Notification.csproj"/>
+        <ProjectReference Include="..\Lyo.Discord.Client\Lyo.Discord.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DSharpPlus"/>
+        <PackageReference Include="DSharpPlus.CommandsNext"/>
+        <PackageReference Include="DSharpPlus.Interactivity"/>
+        <PackageReference Include="DSharpPlus.SlashCommands"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Diagnostics)]
+@inherits AuthorizedPage
+
+<PageTitle>Diagnostics</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <DiagnosticWorkbench/>
+</MudContainer>

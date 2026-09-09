@@ -1,0 +1,74 @@
+{
+  "id": "Lyo.Webhook",
+  "name": "Lyo.Webhook",
+  "area": "Communication",
+  "tagline": "ASP.NET Core inbound webhook verification: headers and raw body, HMAC helpers, `MapWebhook().Verify().Handle()`, and `Lyo.Metrics` timings.",
+  "description": "ASP.NET Core inbound webhook verification: headers and raw body, HMAC helpers, a fluent `MapWebhook().Verify().Handle()` pipeline, `Lyo.Metrics` counters and\ntimings, and structured logging via `Microsoft.Extensions.Logging`.\n\nAlgorithms that are provider-specific (e.g. Twilio) live in separate packages such as `Lyo.Webhook.Twilio`.",
+  "features": [
+    "**Abstractions.** `WebhookVerificationContext`, `IWebhookSignatureVerifier`, `WebhookVerificationResult`.",
+    "**Crypto.** `WebhookCrypto` (SHA1 / HMAC-SHA256, hex parse, constant-time compare).",
+    "**ASP.NET Core.** Raw body, header dictionary, public URL, optional form-urlencoded parameters for signed form posts.",
+    "**Fluent routes.** `MapWebhook(\"/path\").Verify(verifier).Handle(...)` or `HandleJson<T>(...)`.",
+    "**Metrics.** `lyo.webhook.verification.duration`, `lyo.webhook.request.duration`, `lyo.webhook.handler.duration`, verification success/failure counters, JSON parse failures, handler errors.",
+    "**Logging.** Category `Lyo.Webhook` (incoming requests at debug, failed verification / bad JSON at warning, handler exceptions at error)."
+  ],
+  "examples": [
+    {
+      "title": "Register in DI",
+      "language": "csharp",
+      "code": "services.AddLyoMetrics();\n// logging: AddLogging(), etc."
+    },
+    {
+      "title": "Fluent route mapping",
+      "language": "csharp",
+      "code": "app.MapWebhook(\"/webhooks/example\")\n    .Verify(myVerifier)\n    .Handle(async ctx =>\n    {\n        // ctx.Body is verified; ctx.HttpContext.Response...\n    })\n    .WithName(\"ExampleWebhook\");\n\napp.MapWebhook(\"/webhooks/json-example\")\n    .Verify(myVerifier)\n    .HandleJson<MyPayload>(async ctx =>\n    {\n        var payload = ctx.Request;\n    });"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Registration",
+      "text": "Register logging and `Lyo.Metrics` in your host. At runtime the webhook pipeline resolves `ILoggerFactory` and `IMetrics` from `HttpContext.RequestServices`. Missing `IMetrics` becomes `NullMetrics`. Missing `ILoggerFactory` becomes `NullLogger`."
+    },
+    {
+      "type": "markdown",
+      "title": "Fluent route mapping",
+      "body": "- 401 on a failed signature\n- 400 on invalid JSON (when using `HandleJson`)\n- The `route` metric tag is the route pattern string (keep cardinality low)"
+    },
+    {
+      "type": "paragraph",
+      "title": "Verify by hand (no fluent API)",
+      "text": "Build a `WebhookVerificationContext` from `WebhookCrypto`, `WebhookHeaders`, and `HttpRequest` extensions (`ToWebhookHeaderDictionary`, `ReadRawBodyAsync`, `GetPublicRequestUrl`) and call your `IWebhookSignatureVerifier` directly."
+    },
+    {
+      "type": "list",
+      "title": "Framework target",
+      "items": [
+        "Only net10.0."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Webhook/Lyo.Webhook/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

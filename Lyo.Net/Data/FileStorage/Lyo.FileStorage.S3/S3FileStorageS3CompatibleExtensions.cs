@@ -1,0 +1,254 @@
+using Lyo.Configuration;
+using Lyo.Exceptions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Lyo.FileStorage.S3;
+
+/// <summary>Helpers for common S3-compatible object stores (MinIO, Wasabi, Cloudflare R2, and similar).</summary>
+public static class S3FileStorageS3CompatibleExtensions
+{
+    /// <summary>Configuration section for MinIO-style <see cref="S3FileStorageOptions" /> (bucket, <see cref="S3FileStorageOptions.ServiceUrl" />, keys, optional region).</summary>
+    public const string MinioFileStorageConfigurationSectionName = "MinioFileStorage";
+
+    /// <summary>Configuration section for Wasabi (set <see cref="S3FileStorageOptions.Region" /> to the Wasabi region code).</summary>
+    public const string WasabiFileStorageConfigurationSectionName = "WasabiFileStorage";
+
+    /// <summary>Configuration section for DigitalOcean Spaces (set <see cref="S3FileStorageOptions.Region" /> to the region slug, e.g. <c>nyc3</c>).</summary>
+    public const string DigitalOceanSpacesFileStorageConfigurationSectionName = "DigitalOceanSpacesFileStorage";
+
+    /// <summary>Configuration section for Cloudflare R2 (set <see cref="S3FileStorageOptions.ProviderAccountId" /> to the account id).</summary>
+    public const string CloudflareR2FileStorageConfigurationSectionName = "CloudflareR2FileStorage";
+
+    /// <summary>Configuration section for Scaleway Object Storage (set <see cref="S3FileStorageOptions.Region" />, e.g. <c>fr-par</c>).</summary>
+    public const string ScalewayFileStorageConfigurationSectionName = "ScalewayFileStorage";
+
+    /// <summary>Configuration section for Linode Object Storage (set <see cref="S3FileStorageOptions.Region" />, e.g. <c>us-east-1</c>).</summary>
+    public const string LinodeObjectStorageConfigurationSectionName = "LinodeObjectStorage";
+
+    /// <summary>Returns a base URL for MinIO when only a host (and optional port) is given without a scheme; otherwise trims and removes a trailing slash.</summary>
+    public static string GetMinioServiceUrl(string hostOrUri)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(hostOrUri);
+        var t = hostOrUri.Trim().TrimEnd('/');
+        if (t.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || t.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return t;
+
+        return $"http://{t.Trim()}";
+    }
+
+    /// <summary>Wasabi S3 endpoint for the given region (e.g. <c>us-east-1</c>).</summary>
+    public static string GetWasabiServiceUrl(string wasabiRegion)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(wasabiRegion);
+        return $"https://s3.{wasabiRegion.Trim()}.wasabisys.com";
+    }
+
+    /// <summary>DigitalOcean Spaces endpoint for the region slug (e.g. <c>nyc3</c>, <c>ams3</c>).</summary>
+    public static string GetDigitalOceanSpacesServiceUrl(string regionSlug)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(regionSlug);
+        return $"https://{regionSlug.Trim()}.digitaloceanspaces.com";
+    }
+
+    /// <summary>Cloudflare R2 S3 API endpoint for the account id.</summary>
+    public static string GetCloudflareR2ServiceUrl(string accountId)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(accountId);
+        return $"https://{accountId.Trim()}.r2.cloudflarestorage.com";
+    }
+
+    /// <summary>Scaleway Object Storage endpoint for the region (e.g. <c>fr-par</c>, <c>nl-ams</c>).</summary>
+    public static string GetScalewayObjectStorageServiceUrl(string region)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(region);
+        return $"https://s3.{region.Trim()}.scw.cloud";
+    }
+
+    /// <summary>Linode Object Storage endpoint for the cluster region (e.g. <c>us-east-1</c>, <c>eu-central-1</c>).</summary>
+    public static string GetLinodeObjectStorageServiceUrl(string region)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(region);
+        return $"https://{region.Trim()}.linodeobjects.com";
+    }
+
+    /// <summary>
+    /// Normalizes <see cref="S3FileStorageOptions.ServiceUrl" /> and sets a default <see cref="S3FileStorageOptions.Region" /> for the AWS SDK when using a custom MinIO
+    /// endpoint. Does not set <see cref="S3FileStorageOptions.ServiceUrl" /> if it is empty — configure the MinIO server URL explicitly.
+    /// </summary>
+    public static void ApplyMinioDefaults(this S3FileStorageOptions options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        if (string.IsNullOrWhiteSpace(options.ServiceUrl))
+            return;
+
+        options.ServiceUrl = GetMinioServiceUrl(options.ServiceUrl);
+        options.Region ??= "us-east-1";
+    }
+
+    /// <summary>Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.Region" /> when the URL is not already set.</summary>
+    public static void ApplyWasabiDefaults(this S3FileStorageOptions options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.Region))
+            return;
+
+        options.ServiceUrl = GetWasabiServiceUrl(options.Region);
+    }
+
+    /// <summary>Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.Region" /> (Spaces region slug) when the URL is not already set.</summary>
+    public static void ApplyDigitalOceanSpacesDefaults(this S3FileStorageOptions options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.Region))
+            return;
+
+        options.ServiceUrl = GetDigitalOceanSpacesServiceUrl(options.Region);
+    }
+
+    /// <summary>
+    /// Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.ProviderAccountId" /> when the URL is not already set. Optionally set
+    /// <see cref="S3FileStorageOptions.Region" /> to <c>auto</c> for R2 if your tooling expects a region string.
+    /// </summary>
+    public static void ApplyCloudflareR2Defaults(this S3FileStorageOptions options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.ProviderAccountId))
+            return;
+
+        options.ServiceUrl = GetCloudflareR2ServiceUrl(options.ProviderAccountId);
+        options.Region ??= "auto";
+    }
+
+    /// <summary>Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.Region" /> when the URL is not already set.</summary>
+    public static void ApplyScalewayDefaults(this S3FileStorageOptions options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.Region))
+            return;
+
+        options.ServiceUrl = GetScalewayObjectStorageServiceUrl(options.Region);
+    }
+
+    /// <summary>Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.Region" /> when the URL is not already set.</summary>
+    public static void ApplyLinodeObjectStorageDefaults(this S3FileStorageOptions options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.Region))
+            return;
+
+        options.ServiceUrl = GetLinodeObjectStorageServiceUrl(options.Region);
+    }
+
+    private static S3FileStorageServiceBuilder AddKeyedForApply(
+        IServiceCollection services,
+        string keyName,
+        IConfiguration configuration,
+        string configSectionName,
+        Action<S3FileStorageOptions> applyDefaults)
+    {
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+        ArgumentHelpers.ThrowIfNull(applyDefaults);
+        RegisterOptionsFromConfiguration(services, configuration, configSectionName, applyDefaults);
+        return services.AddS3FileStorageServiceKeyed(keyName);
+    }
+
+    private static S3FileStorageServiceBuilder AddKeyedForConfigure(
+        IServiceCollection services,
+        string keyName,
+        Action<S3FileStorageOptions> configure,
+        Action<S3FileStorageOptions> applyDefaults)
+    {
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+        ArgumentHelpers.ThrowIfNull(configure);
+        ArgumentHelpers.ThrowIfNull(applyDefaults);
+        if (!services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
+            services.AddSingleton<S3FileStorageOptions>(_ => {
+                var options = new S3FileStorageOptions();
+                configure(options);
+                applyDefaults(options);
+                return options;
+            });
+        }
+
+        return services.AddS3FileStorageServiceKeyed(keyName);
+    }
+
+    private static void RegisterOptionsFromConfiguration(
+        IServiceCollection services,
+        IConfiguration configuration,
+        string configSectionName,
+        Action<S3FileStorageOptions> applyDefaults)
+    {
+        if (services.Any(s => s.ServiceType == typeof(S3FileStorageOptions)))
+            return;
+
+        services.AddSingleton<S3FileStorageOptions>(_ => {
+            var options = LyoOptions.Bind<S3FileStorageOptions>(configuration, configSectionName);
+
+            applyDefaults(options);
+            return options;
+        });
+    }
+
+    extension(IServiceCollection services)
+    {
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForMinio(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = MinioFileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyMinioDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForMinio(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyMinioDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForWasabi(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = WasabiFileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyWasabiDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForWasabi(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyWasabiDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForDigitalOceanSpaces(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = DigitalOceanSpacesFileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyDigitalOceanSpacesDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForDigitalOceanSpaces(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyDigitalOceanSpacesDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForCloudflareR2(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = CloudflareR2FileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyCloudflareR2Defaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForCloudflareR2(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyCloudflareR2Defaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForScaleway(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = ScalewayFileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyScalewayDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForScaleway(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyScalewayDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForLinodeObjectStorage(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = LinodeObjectStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyLinodeObjectStorageDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForLinodeObjectStorage(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyLinodeObjectStorageDefaults());
+    }
+}

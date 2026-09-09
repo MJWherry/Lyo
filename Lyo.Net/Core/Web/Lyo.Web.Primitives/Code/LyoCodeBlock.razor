@@ -1,0 +1,16 @@
+@namespace Lyo.Web.Primitives
+
+<div class="lyo-code-block @Class" style="@Style">
+    <div class="lyo-code-block-bar">
+        @if (!string.IsNullOrWhiteSpace(Language)) {
+            <MudText Typo="Typo.caption" Class="lyo-code-block-lang">@Language</MudText>
+        }
+        <MudSpacer/>
+        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                       Size="Size.Small"
+                       Disabled="@(string.IsNullOrEmpty(Code))"
+                       OnClick="CopyAsync"
+                       title="Copy"/>
+    </div>
+    <pre class="lyo-code-block-pre"><code>@Formatted</code></pre>
+</div>

@@ -1,0 +1,181 @@
+{
+  "id": "Lyo.Lock.Redis",
+  "name": "Lyo.Lock.Redis",
+  "area": "Core",
+  "tagline": "Redis-backed `ILockService` through StackExchange.Redis. Reach for this when several app instances must exclude each other on one logical key.",
+  "description": "Redis-backed `ILockService` through [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis). Reach for this when several app instances\nmust exclude each other on one logical key.\n\nKeyed semaphores (`IKeyedSemaphoreService`) are not implemented here. They stay in-process in [`Lyo.Lock`](../Lyo.Lock/README.md).",
+  "features": [
+    "**Cross-process / cross-host.** String keys for mutual exclusion.",
+    "**Acquire.** `SET key token NX PX ttl` (one unique token per holder).",
+    "**Release.** A Lua script deletes the key only while the stored value still matches the token (so another instance's lock is not deleted after expiry or misuse).",
+    "**Waiting.** Optional pub/sub wakeups on release (`UsePubSubForAcquireWait`) so waiters are not stuck on a fixed poll interval. Fallback polling uses `AcquirePollInterval`.",
+    "**TTL.** `DefaultLockDuration` / per-call `lockDuration` so a crashed process cannot hold a key forever.",
+    "**Shared multiplexer.** Reuse the same `IConnectionMultiplexer` as caching or other Redis consumers."
+  ],
+  "examples": [
+    {
+      "title": "Reuse an `IConnectionMultiplexer`",
+      "language": "csharp",
+      "code": "using Lyo.Lock.Redis;\nusing Microsoft.Extensions.DependencyInjection;\n\n// IConnectionMultiplexer must already be registered (e.g. shared cache setup)\nservices.AddRedisLock(options =>\n{\n    options.DefaultAcquireTimeout = TimeSpan.FromSeconds(30);\n    options.DefaultLockDuration = TimeSpan.FromSeconds(60);\n    options.UsePubSubForAcquireWait = true;\n});"
+    },
+    {
+      "title": "From a connection string",
+      "language": "csharp",
+      "code": "services.AddRedisLock(\"localhost:6379\", options =>\n{\n    options.AcquirePollInterval = TimeSpan.FromMilliseconds(10);\n});"
+    },
+    {
+      "title": "From configuration",
+      "language": "csharp",
+      "code": "services.AddRedisLockFromConfiguration(configuration);"
+    },
+    {
+      "title": "From configuration (2)",
+      "language": "csharp",
+      "code": "services.AddRedisLockFromConfiguration(configuration, redisSectionName: \"RedisCluster\");"
+    },
+    {
+      "title": "From configuration (3)",
+      "language": "json",
+      "code": "{\n  \"Redis\": {\n    \"ConnectionString\": \"localhost:6379\",\n    \"Password\": \"optional-password\"\n  },\n  \"LockOptions\": {\n    \"DefaultAcquireTimeout\": \"00:00:30\",\n    \"DefaultLockDuration\": \"00:01:00\",\n    \"KeyPrefix\": \"lyo:lock:\",\n    \"AcquirePollInterval\": \"00:00:00.010\",\n    \"UsePubSubForAcquireWait\": true,\n    \"EnableMetrics\": false,\n    \"SkipKeyNormalization\": false\n  }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "From a connection string",
+      "text": "Registers `IConnectionMultiplexer` with `TryAddSingleton` if it is missing, then the lock service:"
+    },
+    {
+      "type": "paragraph",
+      "title": "From configuration",
+      "text": "Binds `LockOptions` from the `LockOptions` section and reads Redis from the `Redis` section (`ConnectionString`, optional `Password`). A custom Redis section name throws `ConfigurationException` (from `Lyo.Exceptions`) if no connection string can be resolved. Example `appsettings.json`:"
+    },
+    {
+      "type": "table",
+      "title": "`RedisLockOptions` (builds on `LockOptions`)",
+      "headers": [
+        "Property",
+        "Default",
+        "What it controls"
+      ],
+      "rows": [
+        [
+          "`AcquirePollInterval`",
+          "10 ms",
+          "Retry delay when `UsePubSubForAcquireWait` is `false`."
+        ],
+        [
+          "`UsePubSubForAcquireWait`",
+          "`true`",
+          "While waiting, subscribe to a per-key notify channel. A successful Lua delete in `ReleaseAsync` publishes."
+        ]
+      ],
+      "trail": "From `LockOptions`: `DefaultLockDuration`, `DefaultAcquireTimeout`, `KeyPrefix`, `EnableMetrics`, `SkipKeyNormalization`."
+    },
+    {
+      "type": "list",
+      "title": "Internals",
+      "items": [
+        "**Redis key.** The normalized logical key plus `KeyPrefix` (unless normalization is skipped).",
+        "**Acquire loop.** Attempt `SET` with `NX` and expiry. On failure, wait on pub/sub with a bounded deadline, or `Task.Delay(AcquirePollInterval)`.",
+        "**Notify channel.** A separate Redis channel from the same prefix and key so waiters can retry promptly after a legitimate release.",
+        "**Release.** Lua compares the holder's token to the stored token. On match, `DEL` and publish to the notify channel."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Ops notes",
+      "items": [
+        "**TTL vs work duration.** Another instance can acquire if the key expires while the critical section still runs longer than `lockDuration`. Size `DefaultLockDuration` / per-call `lockDuration` above worst-case runtime, or shorten the guarded work.",
+        "**Clocks.** The client deadline uses `DateTime.UtcNow` for acquire timeout. Redis handles key TTL independently.",
+        "**Fairness.** These Redis locks are not strictly FIFO. Under contention, which waiter wins is nondeterministic.",
+        "**Metrics.** Same names as `Lyo.Lock.Constants.Metrics` when `EnableMetrics` is true (see [`Lyo.Lock` README](../Lyo.Lock/README.md#metrics-constants))."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Lock/Lyo.Lock.Redis/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Lock",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "StackExchange.Redis",
+      "kind": "package",
+      "version": "2.12.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

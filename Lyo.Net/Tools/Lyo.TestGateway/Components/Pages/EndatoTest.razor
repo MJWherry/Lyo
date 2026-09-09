@@ -1,0 +1,9 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Endato)]
+@inherits AuthorizedPage
+
+<PageTitle>Endato Search</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <EndatoSearchWorkbench/>
+</MudContainer>

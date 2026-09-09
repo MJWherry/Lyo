@@ -1,0 +1,62 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="DriftInstanceGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.RawId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All"
+                      AutoRefreshEnabled="true"
+                      QuickSearchProperties="@_quickSearchProperties">
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details" aria-label="View drift instance details"
+                                   OnClick="@(() => ViewInstance(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Stop" Size="Size.Small" Color="Color.Warning" title="Stop instance" aria-label="Stop drift instance"
+                                   Disabled="@(!CanStop(cell.Item))"
+                                   OnClick="@(() => StopInstance(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete instance" aria-label="Delete drift instance"
+                                   OnClick="@(() => DeleteInstance(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" Identifier="true" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;"/>
+        <LyoProjectedColumn Field="InstanceKey" Title="Key" QuickSearchPropertyName="InstanceKey"/>
+        <LyoProjectedColumn Field="MachineName" Title="Machine" QuickSearchPropertyName="MachineName"/>
+        <LyoProjectedColumn Field="ProcessId" Title="PID" Align="Align.Center" HeaderStyle="width: 80px;"/>
+        <LyoProjectedColumn Field="State" Title="State" Align="Align.Center" HeaderStyle="width: 110px;">
+            <CellContent Context="item">
+                @{
+                    var stateText = ProjectedValueHelper.GetDisplayValue(item, "State");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<DriftInstanceState>(stateText, DriftColorHelper.ForInstanceState, DriftColorHelper.InstanceStateIcon))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="LastHeartbeatUtc" Title="Last Heartbeat" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                @{
+                    var heartbeat = LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "LastHeartbeatUtc"));
+                }
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    <LyoTimestamp Value="@heartbeat" Kind="LyoTimestampKind.Relative"/>
+                    @if (DriftColorHelper.IsHeartbeatStale(heartbeat)) {
+                        <LyoChip Color="Color.Error" Label="Stale"/>
+                    }
+                </MudStack>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewInstance(item))">View Details</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.AccountTree" OnClick="@(() => ViewSnapshots(item))">View Snapshots</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Stop" Disabled="@(!CanStop(item))" OnClick="@(() => StopInstance(item))">Stop</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteInstance(item))">Delete</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

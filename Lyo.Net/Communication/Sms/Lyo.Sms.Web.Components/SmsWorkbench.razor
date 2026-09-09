@@ -1,0 +1,132 @@
+@using Lyo.Result
+@using Lyo.Sms.Builders
+@using Lyo.Sms.Models
+@using Lyo.Web.Primitives.ChipInput
+@using Lyo.Web.Components.Form
+@inject ISmsService SmsService
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">SMS / MMS</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Send SMS and MMS through the configured SMS service using provider-neutral request types.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudStack Spacing="3">
+                    <MudGrid>
+                        <MudItem xs="12" md="8">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">Recipients</MudText>
+                            <LyoChipInput Values="@_smsToValues"
+                                          ValuesChanged="OnSmsToValuesChanged"
+                                          Placeholder="Type phone number and press Enter"
+                                          ValidationPattern="@_phoneValidationPattern"
+                                          ValidationErrorMessage="Enter a valid phone number."/>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <LyoNullableTextField Label="From override" Value="@_smsFrom" ValueChanged="v => _smsFrom = v"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">Public media URLs</MudText>
+                        <LyoChipInput Values="@_smsMediaUrlValues"
+                                      ValuesChanged="OnSmsMediaUrlValuesChanged"
+                                      Placeholder="Type URL and press Enter"
+                                      ValidationPattern="@_publicMediaUrlValidationPattern"
+                                      ValidationErrorMessage="Enter a valid public http(s) URL."/>
+                    </div>
+
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        MMS media must be reachable by the configured SMS provider. Unsupported providers may ignore media URLs.
+                    </MudAlert>
+
+                    <MudTextField T="string" Label="Body" Lines="5" FullWidth="true" @bind-Value="_smsBody"/>
+
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendSmsAsync" Disabled="@_busy">Send SMS / MMS</MudButton>
+                        <MudButton Variant="Variant.Text" OnClick="TestSmsConnectionAsync" Disabled="@_busy">Test SMS Connection</MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-2">SMS Result</MudText>
+                    @if (_lastSmsBulkResult == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Send SMS or MMS to inspect the results here.</MudText>
+                    }
+                    else {
+                        <MudAlert Severity="@(_lastSmsBulkResult.IsCompleteSuccess ? Severity.Success : Severity.Warning)" Dense="true" Class="mb-3">
+                            @_lastSmsSummary
+                        </MudAlert>
+
+                        <MudSimpleTable Dense="true">
+                            <tbody>
+                            <tr>
+                                <td><strong>Total</strong></td>
+                                <td>@_lastSmsBulkResult.TotalCount</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Success</strong></td>
+                                <td>@_lastSmsBulkResult.SuccessCount</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Failure</strong></td>
+                                <td>@_lastSmsBulkResult.FailureCount</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Errors</strong></td>
+                                <td>@string.Join(" | ", _lastSmsBulkResult.ErrorMessages)</td>
+                            </tr>
+                            </tbody>
+                        </MudSimpleTable>
+
+                        <MudDivider Class="my-3"/>
+
+                        <LyoResponsiveTable>
+                            <TableContent>
+                                <MudSimpleTable Dense="true">
+                                    <thead>
+                                    <tr>
+                                        <th>To</th>
+                                        <th>Status</th>
+                                        <th>Details</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var smsResult in _lastSmsResults) {
+                                        <tr>
+                                            <td>@(smsResult.Data?.To ?? "(none)")</td>
+                                            <td>@(smsResult.IsSuccess ? "sent" : "failed")</td>
+                                            <td>@(smsResult.IsSuccess ? "OK" : LyoResultErrorFormatter.FormatErrors(smsResult.Errors))</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            </TableContent>
+                            <CardContent>
+                                @foreach (var smsResult in _lastSmsResults) {
+                                    <LyoRecordCard Title="@(smsResult.Data?.To ?? "(none)")">
+                                        <TitleContent>
+                                            <LyoChip Color="@(smsResult.IsSuccess ? Color.Success : Color.Error)" Label="@(smsResult.IsSuccess ? "sent" : "failed")"/>
+                                        </TitleContent>
+                                        <ChildContent>
+                                            <LyoRecordField Label="Details" Value="@(smsResult.IsSuccess ? "OK" : LyoResultErrorFormatter.FormatErrors(smsResult.Errors))"/>
+                                        </ChildContent>
+                                    </LyoRecordCard>
+                                }
+                            </CardContent>
+                        </LyoResponsiveTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+    </MudStack>
+</MudPaper>

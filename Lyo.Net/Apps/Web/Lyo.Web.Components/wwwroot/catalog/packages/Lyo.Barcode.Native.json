@@ -1,0 +1,157 @@
+{
+  "id": "Lyo.Barcode.Native",
+  "name": "Lyo.Barcode.Native",
+  "area": "Data",
+  "tagline": "Lyo.Barcode `IBarcodeService` with no third-party barcode generator.",
+  "description": "Lyo.Barcode `IBarcodeService` with no third-party barcode generator. Encodes Code 128 (subset B, ASCII 32 to 127), rasterizes to BMP (SixLabors.ImageSharp) or SVG, can draw a human-readable caption under the bars, and decodes images through ReadFromImageAsync via BarcodeZxingRead (ZXing.Net and ImageSharp).",
+  "features": [
+    "Code 128 subset B end to end. Code128Encoder computes start, checksum, and stop. Other symbologies return BARCODE_UNSUPPORTED_SYMBOLOGY.",
+    "BMP (BarcodeFormat.Bmp) and SVG (BarcodeFormat.Svg) from BarcodeImageRenderer.",
+    "Quiet zone is never smaller than the ISO minimum of 10 modules.",
+    "If BarcodeOptions.ShowHumanReadableTextBelow is set, BMP output paints the payload under the bars with BarcodeBmpCaptionRenderer (SixLabors.Fonts / SixLabors.ImageSharp.Drawing).",
+    "A frame comes from BarcodeOptions.ShowBorder, BorderWidthPixels, and BorderColorHex. Each axis grows by 2 × BorderWidthPixels. SVG uses an outer fill plus an inner background rect. BMP composites strips. Width stays between BarcodeServiceOptions.MinBorderWidthPixels and MaxBorderWidthPixels (defaults 1 to 64). BorderColorHex must be #RGB or #RRGGBB.",
+    "ReadFromImageAsync(byte[]) calls BarcodeZxingRead.Decode (Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix).",
+    "If BarcodeServiceOptions.EnableMetrics is true and an IMetrics is registered, generation timings plus success, failure, and cancellation counters under Lyo.Barcode.Constants.Metrics are emitted."
+  ],
+  "examples": [
+    {
+      "title": "Add the service in DI",
+      "language": "csharp",
+      "code": "using Lyo.Barcode;\nusing Lyo.Barcode.Native;\nusing Microsoft.Extensions.DependencyInjection;\n\nservices.AddNativeBarcodeService(o => {\n    o.DefaultFormat = BarcodeFormat.Svg;\n    o.DefaultModuleWidthPixels = 2;\n    o.DefaultBarHeightPixels = 64;\n    o.EnableMetrics = false;\n});"
+    },
+    {
+      "title": "Generate and decode",
+      "language": "csharp",
+      "code": "var barcodes = sp.GetRequiredService<IBarcodeService>();\n\nvar result = await barcodes.GenerateAsync(\n    \"HELLO-128\",\n    BarcodeSymbology.Code128,\n    new BarcodeOptions {\n        Format = BarcodeFormat.Bmp,\n        ModuleWidthPixels = 2,\n        BarHeightPixels = 80,\n        ShowHumanReadableTextBelow = true,\n        ShowBorder = true,\n        BorderWidthPixels = 6,\n        BorderColorHex = \"#000000\"\n    });\n\nif (result.IsSuccess && result is BarcodeResult br)\n    await File.WriteAllBytesAsync(\"out.bmp\", br.ImageBytes!);\n\nvar read = await barcodes.ReadFromImageAsync(File.ReadAllBytes(\"photo.png\"));"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Container helpers",
+      "items": [
+        "AddNativeBarcodeService(BarcodeServiceOptions options). Pass an options instance.",
+        "AddNativeBarcodeServiceFromConfiguration(IConfiguration, sectionName?). Binds BarcodeServiceOptions from the BarcodeService section by default (BarcodeServiceOptions.SectionName). No-op if the options were already registered."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Barcode/Lyo.Barcode.Native/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Barcode",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "SixLabors.Fonts",
+      "kind": "package",
+      "version": "2.1.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SixLabors.ImageSharp",
+      "kind": "package",
+      "version": "3.1.12",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SixLabors.ImageSharp.Drawing",
+      "kind": "package",
+      "version": "2.1.7",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ZXing.Net",
+      "kind": "package",
+      "version": "0.16.11",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ZXing.Net.Bindings.ImageSharp.V3",
+      "kind": "package",
+      "version": "0.16.18",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Web Automation Controls Page</title>
+</head>
+<body>
+<main id="controlsApp">
+    <h1 id="controlsHeadline">Web Automation Controls Page</h1>
+    <label for="searchInput">Search</label>
+    <input id="searchInput" name="searchInput" type="text" value=""/>
+    <button id="searchButton" type="button">Search</button>
+    <ul id="resultsList">
+        <li class="search-item">alpha</li>
+        <li class="search-item">beta</li>
+        <li class="search-item">gamma</li>
+    </ul>
+    <div id="assetContainer">
+        <img class="asset-image" src="/files/sample-a.txt"/>
+        <img class="asset-image" src="/files/sample-b.txt"/>
+    </div>
+    <p id="searchEcho"></p>
+    <div id="customDropdownWrap">
+        <button id="customDropdownTrigger" type="button">Pick</button>
+        <div id="customDropdownList" role="listbox" style="display:none;border:1px solid #ccc;margin-top:4px">
+            <div data-value="a" role="option">Option A</div>
+            <div data-value="b" role="option">Option B</div>
+        </div>
+    </div>
+    <p id="customDropdownEcho"></p>
+    <label for="planNativeSel">Native select</label>
+    <select id="planNativeSel">
+        <option value="a">A</option>
+        <option value="b">B</option>
+    </select>
+    <p id="planNativeEcho"></p>
+</main>
+<script>
+    (() => {
+        const input = document.getElementById('searchInput');
+        const button = document.getElementById('searchButton');
+        const echo = document.getElementById('searchEcho');
+        button.addEventListener('click', () => {
+            echo.textContent = `search:${input.value}`;
+        });
+    })();
+    (() => {
+        const trig = document.getElementById('customDropdownTrigger');
+        const list = document.getElementById('customDropdownList');
+        const echo = document.getElementById('customDropdownEcho');
+        if (!trig || !list || !echo) return;
+        trig.addEventListener('click', () => {
+            list.style.display = list.style.display === 'none' ? 'block' : 'none';
+        });
+        list.querySelectorAll('[role=option]').forEach(opt => {
+            opt.addEventListener('click', () => {
+                const v = opt.getAttribute('data-value') || '';
+                echo.textContent = 'picked:' + v;
+                list.style.display = 'none';
+            });
+        });
+    })();
+    (() => {
+        const sel = document.getElementById('planNativeSel');
+        const echo = document.getElementById('planNativeEcho');
+        if (!sel || !echo) return;
+        const update = () => {
+            echo.textContent = 'native:' + sel.value;
+        };
+        sel.addEventListener('change', update);
+        update();
+    })();
+</script>
+</body>
+</html>

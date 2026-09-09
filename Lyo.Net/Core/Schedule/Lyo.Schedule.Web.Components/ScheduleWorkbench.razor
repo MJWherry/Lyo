@@ -1,0 +1,372 @@
+@inject ISchedulerService SchedulerService
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Schedule Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Build, validate, and preview schedule definitions. Add test schedules to the in-process scheduler to inspect timing and next-run behaviour.
+            </MudText>
+        </div>
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+
+            <!-- ── Builder ── -->
+            <MudTabPanel Text="Builder">
+                <MudGrid>
+                    <MudItem xs="12" md="7">
+                        <MudPaper Outlined="true" Class="pa-4" Style="height: 100%;">
+                            <MudStack Spacing="3">
+
+                                <!-- Type + Enabled on the same row -->
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudSelect T="ScheduleType" Label="Schedule Type" @bind-Value="_type"
+                                               Variant="Variant.Outlined" Style="flex: 1;">
+                                        <MudSelectItem Value="ScheduleType.Cron">Cron</MudSelectItem>
+                                        <MudSelectItem Value="ScheduleType.SetTimes">Set Times</MudSelectItem>
+                                        <MudSelectItem Value="ScheduleType.Interval">Interval</MudSelectItem>
+                                        <MudSelectItem Value="ScheduleType.OneShot">One-Shot</MudSelectItem>
+                                    </MudSelect>
+                                    <MudSwitch T="bool" @bind-Value="_enabled" Label="Enabled"
+                                               Color="Color.Primary" Style="white-space: nowrap;"/>
+                                </MudStack>
+
+                                <MudTextField T="string" Label="Description (optional)" @bind-Value="_description"
+                                              Variant="Variant.Outlined" Lines="3"/>
+
+                                <!-- ── Cron ── -->
+                                @if (_type == ScheduleType.Cron) {
+                                    <MudTextField T="string" Label="Cron Expression" @bind-Value="_cronExpression"
+                                                  Variant="Variant.Outlined"
+                                                  HelperText="5-field: MIN HOUR DOM MON DOW  |  6-field: SEC MIN HOUR DOM MON DOW"
+                                                  Placeholder="e.g. 0 9 * * MON-FRI"/>
+
+                                    <MudAlert Severity="Severity.Info" Dense="true">
+                                        Examples: &nbsp;<b>0 9 * * MON-FRI</b> (9 am weekdays) &nbsp;|&nbsp;
+                                        <b>*/15 * * * *</b> (every 15 min) &nbsp;|&nbsp;
+                                        <b>0 0 1 * *</b> (1st of every month) &nbsp;|&nbsp;
+                                        <b>0 */6 * * *</b> (every 6 hours)
+                                    </MudAlert>
+                                }
+
+                                <!-- ── Set Times ── -->
+                                @if (_type == ScheduleType.SetTimes) {
+                                    <div>
+                                        <MudText Typo="Typo.subtitle2" Class="mb-1">Times to run</MudText>
+                                        <LyoChipInput Values="@_timesList"
+                                                      ValuesChanged="OnTimesChanged"
+                                                      Placeholder="Type time (HH:mm) and press Enter"
+                                                      ValidationPattern="@_timePattern"
+                                                      ValidationErrorMessage="Enter a valid time in HH:mm format (e.g. 09:30)."/>
+                                    </div>
+                                    <MudGrid>
+                                        <MudItem xs="12" md="6">
+                                            <LyoCheckSelect TValue="DayFlags"
+                                                            Label="Days"
+                                                            Placeholder="Select days..."
+                                                            Items="DayItems"
+                                                            SelectedValues="_selectedDays"
+                                                            SelectedValuesChanged="@(v => _selectedDays = v)"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <LyoCheckSelect TValue="MonthFlags"
+                                                            Label="Months"
+                                                            Placeholder="Select months..."
+                                                            Items="MonthItems"
+                                                            SelectedValues="_selectedMonths"
+                                                            SelectedValuesChanged="@(v => _selectedMonths = v)"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                }
+
+                                <!-- ── Interval ── -->
+                                @if (_type == ScheduleType.Interval) {
+                                    <MudGrid>
+                                        <MudItem xs="12" md="4">
+                                            <MudTimePicker Label="Start time" @bind-Time="_intervalStartTime"
+                                                           Variant="Variant.Outlined" AmPm="false"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudTimePicker Label="End time" @bind-Time="_intervalEndTime"
+                                                           Variant="Variant.Outlined" AmPm="false"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudNumericField T="int" Label="Interval (minutes)" @bind-Value="_intervalMinutes"
+                                                             Variant="Variant.Outlined" Min="1"/>
+                                        </MudItem>
+                                    </MudGrid>
+
+                                    <MudGrid>
+                                        <MudItem xs="12" md="6">
+                                            <LyoCheckSelect TValue="DayFlags"
+                                                            Label="Days"
+                                                            Placeholder="Select days..."
+                                                            Items="DayItems"
+                                                            SelectedValues="_selectedDays"
+                                                            SelectedValuesChanged="@(v => _selectedDays = v)"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <LyoCheckSelect TValue="MonthFlags"
+                                                            Label="Months"
+                                                            Placeholder="Select months..."
+                                                            Items="MonthItems"
+                                                            SelectedValues="_selectedMonths"
+                                                            SelectedValuesChanged="@(v => _selectedMonths = v)"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                }
+
+                                <!-- ── OneShot ── -->
+                                @if (_type == ScheduleType.OneShot) {
+                                    <MudGrid>
+                                        <MudItem xs="12" md="7">
+                                            <MudDatePicker Label="Date (UTC)" @bind-Date="_oneShotDate"
+                                                           Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"
+                                                           MinDate="@DateTime.UtcNow.Date"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="5">
+                                            <MudTimePicker Label="Time (UTC)" @bind-Time="_oneShotTime"
+                                                           Variant="Variant.Outlined" AmPm="false"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                }
+
+                                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                                               OnClick="ValidateSchedule" Disabled="@_busy">Validate
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Outlined" OnClick="PreviewNextRunsAsync"
+                                               Disabled="@_busy">Preview Next Runs
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                               OnClick="AddTestScheduleAsync" Disabled="@_busy">Add Test Schedule
+                                    </MudButton>
+                                </MudStack>
+
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+
+                    <!-- Result panel -->
+                    <MudItem xs="12" md="5">
+                        <MudPaper Outlined="true" Class="pa-4" Style="height: 100%;">
+                            <MudText Typo="Typo.h6" Class="mb-2">Result</MudText>
+                            @if (_validationError != null) {
+                                <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_validationError</MudAlert>
+                            }
+                            else if (_validationPassed) {
+                                <MudAlert Severity="Severity.Success" Dense="true" Class="mb-3">Definition is valid.</MudAlert>
+                            }
+
+                            @if (_previewRuns.Count > 0) {
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Next @_previewRuns.Count scheduled run(s):</MudText>
+
+                                <LyoResponsiveTable>
+                                    <TableContent>
+                                        <MudSimpleTable Dense="true">
+                                            <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>UTC</th>
+                                                <th>Local</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @for (var i = 0; i < _previewRuns.Count; i++) {
+                                                var run = _previewRuns[i];
+                                                var idx = i + 1;
+                                                <tr>
+                                                    <td>@idx</td>
+                                                    <td>@run.RunAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                                    <td>@run.RunAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </MudSimpleTable>
+                                    </TableContent>
+                                    <CardContent>
+                                        @for (var i = 0; i < _previewRuns.Count; i++) {
+                                            var run = _previewRuns[i];
+                                            <LyoRecordCard Title="@($"Run {i + 1}")">
+                                                <LyoRecordField Label="UTC" Value="@run.RunAt.ToString("yyyy-MM-dd HH:mm:ss")"/>
+                                                <LyoRecordField Label="Local" Value="@run.RunAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")"/>
+                                            </LyoRecordCard>
+                                        }
+                                    </CardContent>
+                                </LyoResponsiveTable>
+                            }
+                            else if (_previewRequested) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No upcoming runs found within the look-ahead window.</MudText>
+                            }
+                            else {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Validate or preview the schedule to see results here.</MudText>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <!-- ── Live Schedules ── -->
+            <MudTabPanel Text="@($"Live Schedules ({_liveSchedules.Count})")">
+                <MudStack Spacing="3">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+                        <LyoChip Spec="@LyoChips.FromBool(SchedulerService.IsRunning, "Scheduler Running", "Scheduler Stopped", Color.Success, Color.Default)"/>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small"
+                                   OnClick="StartSchedulerAsync"
+                                   Disabled="@(SchedulerService.IsRunning || _busy)">Start
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
+                                   OnClick="StopSchedulerAsync"
+                                   Disabled="@(!SchedulerService.IsRunning || _busy)">Stop
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="RefreshLive"
+                                   StartIcon="@Icons.Material.Filled.Refresh">Refresh
+                        </MudButton>
+                        <MudSpacer/>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small"
+                                   OnClick="RemoveAllTestSchedules"
+                                   Disabled="@(_addedIds.Count == 0 || _busy)">Remove All Test Schedules
+                        </MudButton>
+                    </MudStack>
+
+                    @if (_liveSchedules.Count == 0) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            No schedules registered. Use the Builder tab to add test schedules.
+                        </MudText>
+                    }
+                    else {
+                        <LyoResponsiveTable>
+                            <TableContent>
+                                <MudSimpleTable Dense="true" Hover="true">
+                                    <thead>
+                                    <tr>
+                                        <th>Name / ID</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Next Run (UTC)</th>
+                                        <th>Enabled</th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var s in _liveSchedules) {
+                                        <tr>
+                                            <td>
+                                                <MudText Typo="Typo.body2">@(s.Schedule.Name ?? s.Schedule.Id)</MudText>
+                                                @if (s.Schedule.Name != null) {
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@s.Schedule.Id</MudText>
+                                                }
+                                            </td>
+                                            <td>
+                                                <LyoChip Color="Color.Primary" Label="@s.Schedule.Definition.Type.ToString()"/>
+                                            </td>
+                                            <td>@(s.Schedule.Definition.Description ?? "—")</td>
+                                            <td>
+                                                @if (s.NextRun.HasValue) {
+                                                    <span>@s.NextRun.Value.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                                }
+                                                else {
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">none</MudText>
+                                                }
+                                            </td>
+                                            <td>
+                                                @EnabledIcon(s.Schedule.Definition.Enabled)
+                                            </td>
+                                            <td>
+                                                @RemoveScheduleButton(s.Schedule.Id)
+                                            </td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            </TableContent>
+                            <CardContent>
+                                @foreach (var s in _liveSchedules) {
+                                    <LyoRecordCard Title="@(s.Schedule.Name ?? s.Schedule.Id)" Subtitle="@(s.Schedule.Name != null ? s.Schedule.Id : null)">
+                                        <TitleContent>
+                                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                                                <LyoChip Color="Color.Primary" Label="@s.Schedule.Definition.Type.ToString()"/>
+                                                @EnabledIcon(s.Schedule.Definition.Enabled)
+                                            </MudStack>
+                                        </TitleContent>
+                                        <Actions>
+                                            @RemoveScheduleButton(s.Schedule.Id)
+                                        </Actions>
+                                        <ChildContent>
+                                            <LyoRecordField Label="Description" Value="@(s.Schedule.Definition.Description ?? "—")"/>
+                                            <LyoRecordField Label="Next Run (UTC)" Value="@(s.NextRun?.ToString("yyyy-MM-dd HH:mm:ss") ?? "none")"/>
+                                        </ChildContent>
+                                    </LyoRecordCard>
+                                }
+                            </CardContent>
+                        </LyoResponsiveTable>
+
+                        <MudDivider/>
+
+                        <div>
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Upcoming Runs (next 20 across all schedules)</MudText>
+                            @if (_upcomingRuns.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No upcoming runs found.</MudText>
+                            }
+                            else {
+                                <LyoResponsiveTable>
+                                    <TableContent>
+                                        <MudSimpleTable Dense="true">
+                                            <thead>
+                                            <tr>
+                                                <th>Run At (UTC)</th>
+                                                <th>Schedule</th>
+                                                <th>Type</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach (var run in _upcomingRuns) {
+                                                <tr>
+                                                    <td>@run.RunAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                                    <td>@(run.Schedule.Name ?? run.Schedule.Id)</td>
+                                                    <td>@run.Schedule.Definition.Type</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </MudSimpleTable>
+                                    </TableContent>
+                                    <CardContent>
+                                        @foreach (var run in _upcomingRuns) {
+                                            <LyoRecordCard Title="@(run.Schedule.Name ?? run.Schedule.Id)">
+                                                <TitleContent>
+                                                    <LyoChip Color="Color.Primary" Label="@run.Schedule.Definition.Type.ToString()"/>
+                                                </TitleContent>
+                                                <ChildContent>
+                                                    <LyoRecordField Label="Run At (UTC)" Value="@run.RunAt.ToString("yyyy-MM-dd HH:mm:ss")"/>
+                                                </ChildContent>
+                                            </LyoRecordCard>
+                                        }
+                                    </CardContent>
+                                </LyoResponsiveTable>
+                            }
+                        </div>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+        </MudTabs>
+
+        <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    private RenderFragment<bool> EnabledIcon => enabled => @<text>
+        <MudIcon Icon="@(enabled ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                 Color="@(enabled ? Color.Success : Color.Default)"
+                 Size="Size.Small"/>
+    </text>;
+
+    private RenderFragment<string> RemoveScheduleButton => id => @<text>
+        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                       title="Remove" OnClick="@(() => RemoveSchedule(id))"/>
+    </text>;
+
+}

@@ -1,0 +1,53 @@
+@using Lyo.Formatter
+@using Lyo.Formatter.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Formatter)]
+@inherits AuthorizedPage
+@inject IFormatterService Formatter
+
+<PageTitle>Formatter</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <MudText Typo="Typo.h4" Class="mb-2">Formatter</MudText>
+    <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+        Edit the template on the left. Type <code>{</code> to pick a context key (object values also list their properties). The preview on the right updates after a short pause. Matching colors — and hover — link template keys to the values that replaced them.
+    </MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Outlined="true">
+                <LyoFormatterTemplateEditor Session="_session" DebounceInterval="300" Lines="8"/>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4" Outlined="true">
+                <LyoFormatterPreview Session="_session"/>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4" Outlined="true">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Sample context</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                    The preview formats against this dictionary (parent-supplied; this package has no context editor). It is the same
+                    <code>CourtFormatterContext</code> the gateway registers for every formatter-typed parameter, so job and report parameter editors offer
+                    these keys too.
+                </MudText>
+                <MudSimpleTable Dense="true" Hover="true" Bordered="true" Striped="true">
+                    <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var pair in _context) {
+                        <tr>
+                            <td><code>@pair.Key</code></td>
+                            <td>@FormatContextValue(pair.Value)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>

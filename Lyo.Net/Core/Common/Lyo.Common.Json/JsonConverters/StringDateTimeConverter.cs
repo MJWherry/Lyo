@@ -1,0 +1,70 @@
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Lyo.Common.Core.Extensions;
+
+namespace Lyo.Common.Json.JsonConverters;
+
+public class StringDateTimeConverter(params string[] formats) : JsonConverter<DateTime>
+{
+    private readonly string[] _formats = formats;
+
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => reader.TokenType switch {
+            JsonTokenType.String => ParseStringValue(ref reader),
+            var _ => throw new JsonException($"Expected a string for DateTime value, got {reader.TokenType}.")
+        };
+
+    private DateTime ParseStringValue(ref Utf8JsonReader reader)
+    {
+#if NET9_0_OR_GREATER
+        var str = reader.GetString();
+        if (str.IsNullOrEmpty())
+            throw new JsonException("Cannot parse DateTime from null or empty string.");
+
+        foreach (var format in _formats) {
+            if (str.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                return dt;
+        }
+
+        return DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var fallback)
+            ? fallback
+            : throw new JsonException($"Could not parse DateTime: '{str}'");
+#else
+        var str = reader.GetString();
+        if (str.IsNullOrEmpty())
+            throw new JsonException("Cannot parse DateTime from null or empty string.");
+
+        foreach (var format in _formats) {
+            if (str.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                return dt;
+        }
+
+        return DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var fallback)
+            ? fallback
+            : throw new JsonException($"Could not parse DateTime: '{str}'");
+#endif
+    }
+
+    private static int GetFormatLength(string format)
+        =>
+            // Expected character count for each well-known format
+            format switch {
+                "yyyy-MM-dd" => 10,
+                "MM/dd/yyyy" => 10,
+                "dd/MM/yyyy" => 10,
+                "yyyyMMdd" => 8,
+                "yyyy-MM-ddTHH:mm:ss" => 19,
+                "yyyy-MM-ddTHH:mm:ss.fff" => 23,
+                "yyyy-MM-ddTHH:mm:ss.fffZ" => 24,
+                "HH:mm:ss" => 8,
+                "HH:mm" => 5,
+                var _ => format.Length // Unknown pattern: treat the format string length as the expected length
+            };
+
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        => throw
+            // Write cannot pick a format: the converter is not bound to a property, so it has no name or format hint.
+            // A per-format converter is the usual way to support round-trip serialization.
+            new("Deserializing accepts multiple formats, serializing does not.");
+}

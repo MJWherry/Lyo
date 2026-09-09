@@ -1,0 +1,12 @@
+using System.Diagnostics;
+using Lyo.Mathematics.Quantities;
+
+namespace Lyo.Mathematics.Models;
+
+/// <summary>Values passed into mathematics routines that solve a <c>AngularMotion</c> problem.</summary>
+/// <remarks>Handed to <c>Lyo.Mathematics.Functions</c> static APIs; validation lives on the matching <c>*Functions</c> member.</remarks>
+[DebuggerDisplay("{ToString(),nq}")]
+public readonly record struct AngularMotionInput(Angle AngularDisplacement, TimeInterval ElapsedTime)
+{
+    public override string ToString() => $"AngularDisplacement={AngularDisplacement}, ElapsedTime={ElapsedTime}";
+}

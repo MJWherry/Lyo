@@ -1,0 +1,95 @@
+{
+  "id": "Lyo.Tag",
+  "name": "Lyo.Tag",
+  "area": "Plugins",
+  "tagline": "Contracts for hanging tags on entities. The target is an `EntityRef`, and the person or system that applied the tag is an optional second `EntityRef`.",
+  "description": "Contracts for hanging tags on entities. The target is an `EntityRef`, and the person or system that applied the tag is an optional second `EntityRef`. A feature can attach tags without tying them through a foreign key.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "`ITagStore`",
+      "items": [
+        "`AddTagAsync(EntityRef forEntity, string tag, string tagType = \"tag\", EntityRef? fromEntity = null, string? slug = null, CancellationToken ct = default)` writes a tag. The same `(forEntity, tag, tagType, slug)` tuple is a no-op if it already exists. A null or whitespace `slug` becomes empty. Leave `fromEntity` off and the well-known system actor is recorded.",
+        "`RemoveTagAsync(EntityRef forEntity, string tag, string tagType = \"tag\", string? slug = null, CancellationToken ct = default)` drops the matching assignment. The `slug` you pass has to match what was stored, including empty when nothing was stored.",
+        "`GetTagsForEntityAsync(EntityRef forEntity, string? tagType = null, CancellationToken ct = default)` lists every `TagRecord` on that entity. Pass `tagType` to narrow the result.",
+        "`GetEntitiesWithTagAsync(string tag, string? forEntityType = null, string? tagType = null, CancellationToken ct = default)` lists every entity that carries that tag value. Entity type and tag type filters are optional.",
+        "`GetAllTagsForEntityTypeAsync(string forEntityType, string? tagType = null, CancellationToken ct = default)` lists the distinct tag values used on any entity of that type.",
+        "`RemoveAllTagsForEntityAsync(EntityRef forEntity, CancellationToken ct = default)` soft-deletes every tag assignment on that entity."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "`TagRecord`",
+      "items": [
+        "`Name`. Display text for the tag, such as `\"urgent\"`.",
+        "`TagType`. Namespace discriminator. Default is `\"tag\"`. Other usual values include `\"category\"` and `\"label\"`.",
+        "`Slug`. Optional slug suitable for URLs. Empty if none was given.",
+        "`SubjectRef` / `ActorRef`. Projected as `EntityRef`."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Tag/Lyo.Tag/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

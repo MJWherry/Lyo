@@ -1,0 +1,11 @@
+@using System.Globalization
+@inject ILyoTimeZone TimeZone
+
+@if (_display == null) {
+    <span>—</span>
+}
+else {
+    <MudTooltip Text="@_absolute">
+        <span>@_display</span>
+    </MudTooltip>
+}

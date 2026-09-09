@@ -1,0 +1,10 @@
+@using Lyo.Pdf.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.PdfAnnotator)]
+@rendermode InteractiveServer
+
+<PageTitle>PDF annotation test</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <PdfAnnotationWorkbench/>
+</MudContainer>

@@ -1,0 +1,373 @@
+using Lyo.Common.Core.Pathing;
+using System.Text.Json;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Lyo.Common.Core.Extensions;
+using Lyo.Common.Metadata.Records;
+using Lyo.Exceptions;
+using Lyo.FileMetadataStore.Models;
+using Lyo.FileStorage;
+using Lyo.FileStorage.Audit;
+using Lyo.FileStorage.Multipart;
+using Lyo.FileStorage.OperationContext;
+using Lyo.FileStorage.Policy;
+using Lyo.Metrics;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using CompleteMultipartUploadRequest = Lyo.FileStorage.Multipart.CompleteMultipartUploadRequest;
+
+namespace Lyo.FileStorage.S3.Multipart;
+
+/// <summary>
+/// Multipart uploads via the S3 multipart API, staged under <c>.multipart/{sessionId}/staging</c>, then streamed through
+/// <see cref="S3FileStorageService.SaveFromStreamAsync" />.
+/// </summary>
+public sealed class S3MultipartUploadService : IMultipartUploadService
+{
+    private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
+    private readonly IFileContentPolicy _contentPolicy;
+    private readonly ILogger<S3MultipartUploadService> _logger;
+    private readonly IMetrics _metrics;
+    private readonly IFileOperationContextAccessor _operationContextAccessor;
+    private readonly S3FileStorageOptions _options;
+    private readonly IAmazonS3 _s3;
+    private readonly IMultipartUploadSessionStore _sessions;
+    private readonly S3FileStorageService _storage;
+
+    public S3MultipartUploadService(
+        S3FileStorageService storage,
+        S3FileStorageOptions options,
+        IAmazonS3 s3,
+        IMultipartUploadSessionStore sessions,
+        IFileContentPolicy? contentPolicy = null,
+        IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
+        IFileOperationContextAccessor? operationContextAccessor = null,
+        ILoggerFactory? loggerFactory = null,
+        IMetrics? metrics = null)
+    {
+        ArgumentHelpers.ThrowIfNull(storage);
+        ArgumentHelpers.ThrowIfNull(options);
+        ArgumentHelpers.ThrowIfNull(s3);
+        ArgumentHelpers.ThrowIfNull(sessions);
+        _storage = storage;
+        _options = options;
+        _s3 = s3;
+        _sessions = sessions;
+        _contentPolicy = contentPolicy ?? new AllowAllFileContentPolicy();
+        _auditHandlers = auditHandlers == null ? [] : auditHandlers.ToList();
+        _operationContextAccessor = operationContextAccessor ?? NullFileOperationContextAccessor.Instance;
+        _metrics = metrics ?? NullMetrics.Instance;
+        _logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<S3MultipartUploadService>();
+    }
+
+    /// <inheritdoc />
+    public async Task<MultipartBeginResult> BeginAsync(MultipartBeginRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        const long s3MinimumPartSize = 5L * 1024 * 1024;
+        // S3 caps a part at 5 GiB; PartSizeBytes is an int, so it already sits below that ceiling.
+        OperationHelpers.ThrowIf(request.PartSizeBytes < s3MinimumPartSize, $"S3 multipart PartSizeBytes must be at least {s3MinimumPartSize} (5 MiB).");
+        OperationHelpers.ThrowIf(request.Encrypt && string.IsNullOrWhiteSpace(request.KeyId), "Multipart Encrypt=true requires KeyId.");
+        if (_options.MaxUploadSizeBytes is { } cap && request.DeclaredContentLength is { } len && len > cap)
+            throw new FilePolicyRejectedException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
+
+        FileStorageServiceBase.ValidatePathPrefix(request.PathPrefix);
+        var sessionId = Guid.NewGuid();
+        var targetFileId = Guid.NewGuid();
+        var ttl = request.SessionTtl ?? TimeSpan.FromHours(24);
+        var now = DateTime.UtcNow;
+        var stagingKey = BuildStagingKey(request.PathPrefix, sessionId);
+        var tenant = request.TenantId ?? _operationContextAccessor.Current?.TenantId;
+        string uploadId;
+        try {
+            await _contentPolicy.ValidateAsync(
+                    new() {
+                        ByteLength = request.DeclaredContentLength ?? 0,
+                        ContentType = request.ContentType,
+                        OriginalFileName = request.OriginalFileName,
+                        TenantId = tenant
+                    }, ct)
+                .ConfigureAwait(false);
+
+            try {
+                var initiate = new InitiateMultipartUploadRequest { BucketName = _options.BucketName, Key = stagingKey, ContentType = FileTypeInfo.Unknown.MimeType };
+                S3UploadServerSideEncryption.ApplyToInitiateMultipart(initiate, _options);
+                var init = await _s3.InitiateMultipartUploadAsync(initiate, ct).ConfigureAwait(false);
+                OperationHelpers.ThrowIf(string.IsNullOrWhiteSpace(init.UploadId), "S3 InitiateMultipartUpload returned no UploadId.");
+                uploadId = init.UploadId;
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "InitiateMultipartUpload failed for staging key {Key}", stagingKey);
+                throw;
+            }
+
+            var state = JsonSerializer.Serialize(new S3ProviderState { StagingKey = stagingKey, UploadId = uploadId });
+            var record = new MultipartUploadSessionRecord(
+                sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
+                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.AwsS3, state, request.DeclaredContentLength, request.PartSizeBytes);
+
+            try {
+                await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
+            }
+            catch (Exception) {
+                await TryAbortS3Async(stagingKey, uploadId, CancellationToken.None).ConfigureAwait(false);
+                throw;
+            }
+
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
+                        FileAuditOutcome.Success), ct, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            return new(sessionId, targetFileId, request.PartSizeBytes, record.ExpiresUtc, MultipartUploadProviderKind.AwsS3);
+        }
+        catch (Exception ex) {
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<MultipartPartDescriptor> GetPresignedPartUploadAsync(Guid sessionId, int partNumber, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(partNumber, 1);
+        return GetPresignedPartUploadCoreAsync(sessionId, partNumber, ct);
+    }
+
+    /// <inheritdoc />
+    public Task UploadPartAsync(Guid sessionId, int partNumber, Stream content, CancellationToken ct = default)
+        => throw new NotSupportedException("S3 multipart uploads use presigned PUT URLs per part; use GetPresignedPartUploadAsync.");
+
+    /// <inheritdoc />
+    public async Task<FileStoreResult> CompleteAsync(CompleteMultipartUploadRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        var session = await GetActiveSessionAsync(request.SessionId, MultipartUploadProviderKind.AwsS3, ct).ConfigureAwait(false);
+        var state = JsonSerializer.Deserialize<S3ProviderState>(session.ProviderStateJson);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(state?.StagingKey, nameof(session.ProviderStateJson));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(state.UploadId, nameof(session.ProviderStateJson));
+        var orderedParts = request.Parts.OrderBy(p => p.PartNumber).ToList();
+        OperationHelpers.ThrowIf(orderedParts.Count == 0, "At least one part is required.");
+        var partEtags = orderedParts.Select(p => new PartETag(p.PartNumber, NormalizeS3Etag(p.ETagOrBlockId))).ToList();
+        var stagingCommitted = false;
+        try {
+            try {
+                await _s3.CompleteMultipartUploadAsync(
+                        new() {
+                            BucketName = _options.BucketName,
+                            Key = state.StagingKey,
+                            UploadId = state.UploadId,
+                            PartETags = partEtags
+                        }, ct)
+                    .ConfigureAwait(false);
+
+                stagingCommitted = true;
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "CompleteMultipartUpload failed for session {SessionId}", request.SessionId);
+                throw;
+            }
+
+            FileStoreResult result;
+            if (!session.Compress && !session.Encrypt) {
+                result = await _storage.FinalizeMultipartFromStagingAsync(
+                        state.StagingKey, session.TargetFileId, session.OriginalFileName, session.ContentType, session.Charset, session.PathPrefix, session.TenantId, null, ct)
+                    .ConfigureAwait(false);
+            }
+            else {
+                using var getResponse = await _s3.GetObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, ct).ConfigureAwait(false);
+                var len = getResponse.ContentLength;
+                result = await _storage.SaveFromStreamAsync(
+                        getResponse.ResponseStream, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId,
+                        session.PathPrefix, null, session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, ct)
+                    .ConfigureAwait(false);
+            }
+
+            try {
+                await _s3.DeleteObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, ct).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to delete staging object {Key} after multipart complete", state.StagingKey);
+            }
+
+            await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Completed, ct).ConfigureAwait(false);
+            await _sessions.DeleteAsync(session.SessionId, ct).ConfigureAwait(false);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, result.Id, session.TenantId, _operationContextAccessor.Current?.ActorId, result.DataEncryptionKeyId,
+                        result.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            return result;
+        }
+        catch (Exception ex) {
+            // Mark Failed so the fault is visible and replays/cleanups can find it.
+            try {
+                await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Failed, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception statusEx) {
+                _logger.LogWarning(statusEx, "Failed to set session {SessionId} to Failed", session.SessionId);
+            }
+
+            // Multipart already committed but a later step failed — best-effort delete of the orphan staging object.
+            if (stagingCommitted) {
+                try {
+                    await _s3.DeleteObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception delEx) {
+                    _logger.LogWarning(delEx, "Best-effort delete of committed staging object {Key} failed after upstream completion failure", state.StagingKey);
+                }
+            }
+            else {
+                // Multipart never committed — abort so parts are released
+                await TryAbortS3Async(state.StagingKey, state.UploadId, CancellationToken.None).ConfigureAwait(false);
+            }
+
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId,
+                        null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task AbortAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        var s = await _sessions.GetAsync(sessionId, ct).ConfigureAwait(false);
+        if (s == null)
+            return;
+
+        try {
+            if (s.ProviderKind == MultipartUploadProviderKind.AwsS3) {
+                var state = JsonSerializer.Deserialize<S3ProviderState>(s.ProviderStateJson);
+                if (!string.IsNullOrWhiteSpace(state?.StagingKey) && !string.IsNullOrWhiteSpace(state.UploadId))
+                    await TryAbortS3Async(state.StagingKey, state.UploadId, ct).ConfigureAwait(false);
+            }
+
+            // Set Aborted first so a store that keeps rows after Delete still reports the right lifecycle state.
+            try {
+                await _sessions.SetStatusAsync(sessionId, MultipartSessionStatus.Aborted, ct).ConfigureAwait(false);
+            }
+            catch (Exception statusEx) {
+                _logger.LogDebug(statusEx, "Failed to set session {SessionId} status to Aborted prior to delete", sessionId);
+            }
+
+            await _sessions.DeleteAsync(sessionId, ct).ConfigureAwait(false);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
+                        FileAuditOutcome.Success), ct, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+    }
+
+    private static string SanitizeAuditError(string? message)
+    {
+        if (message.IsNullOrEmpty())
+            return string.Empty;
+
+        const int max = 512;
+        var s = message.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return s.Length > max ? s[..max] : s;
+    }
+
+    private async Task<MultipartPartDescriptor> GetPresignedPartUploadCoreAsync(Guid sessionId, int partNumber, CancellationToken ct)
+    {
+        var session = await GetActiveSessionAsync(sessionId, MultipartUploadProviderKind.AwsS3, ct).ConfigureAwait(false);
+        var state = JsonSerializer.Deserialize<S3ProviderState>(session.ProviderStateJson);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(state?.StagingKey, nameof(session.ProviderStateJson));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(state.UploadId, nameof(session.ProviderStateJson));
+        var request = new GetPreSignedUrlRequest {
+            BucketName = _options.BucketName,
+            Key = state.StagingKey,
+            Verb = HttpVerb.PUT,
+            Expires = DateTime.UtcNow.AddHours(1),
+            PartNumber = partNumber,
+            UploadId = state.UploadId
+        };
+
+        S3UploadServerSideEncryption.ApplyToPresignedPut(request, _options);
+        var url = await _s3.GetPreSignedURLAsync(request).ConfigureAwait(false);
+        return new(partNumber, url);
+    }
+
+    private async Task TryAbortS3Async(string stagingKey, string uploadId, CancellationToken ct)
+    {
+        try {
+            await _s3.AbortMultipartUploadAsync(new() { BucketName = _options.BucketName, Key = stagingKey, UploadId = uploadId }, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            _logger.LogDebug(ex, "AbortMultipartUpload for {Key} (best effort)", stagingKey);
+        }
+    }
+
+    private static string NormalizeS3Etag(string etag)
+    {
+        if (string.IsNullOrEmpty(etag))
+            return etag;
+
+        var t = etag.Trim();
+        return t.StartsWith('"') && t.EndsWith('"') && t.Length >= 2 ? t.Substring(1, t.Length - 2) : t;
+    }
+
+    private string BuildStagingKey(string? pathPrefix, Guid sessionId)
+    {
+        var keyParts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(_options.KeyPrefix))
+            keyParts.Add(_options.KeyPrefix.Trim().TrimStart('/', '\\').TrimEnd('/', '\\'));
+
+        if (!string.IsNullOrWhiteSpace(pathPrefix))
+            keyParts.Add(pathPrefix.Trim().Trim('/'));
+
+        keyParts.Add(".multipart");
+        keyParts.Add(sessionId.ToString("N"));
+        keyParts.Add("staging");
+        return string.Join("/", keyParts);
+    }
+
+    private async Task<MultipartUploadSessionRecord> GetActiveSessionAsync(Guid sessionId, MultipartUploadProviderKind expectedKind, CancellationToken ct)
+    {
+        var session = await _sessions.GetAsync(sessionId, ct).ConfigureAwait(false);
+        OperationHelpers.ThrowIfNull(session, $"Multipart session {sessionId} was not found.");
+        OperationHelpers.ThrowIf(session.ProviderKind != expectedKind, $"Session {sessionId} is not an {expectedKind} session.");
+        OperationHelpers.ThrowIf(session.Status != MultipartSessionStatus.Active, $"Session {sessionId} is not active.");
+        OperationHelpers.ThrowIf(DateTime.UtcNow > session.ExpiresUtc, $"Session {sessionId} has expired.");
+        return session;
+    }
+
+    private sealed class S3ProviderState
+    {
+        public string StagingKey { get; set; } = "";
+
+        public string UploadId { get; set; } = "";
+    }
+}

@@ -1,0 +1,13 @@
+<LyoDialog Title="Diff against another snapshot" OnSave="ComputeAsync" SaveText="Diff" Busy="_busy" SaveDisabled="@(_otherId is null || _otherId == Guid.Empty)">
+    <ChildContent>
+        <MudText Typo="Typo.body2" Class="mb-2">Compare snapshot @FromSnapshot.Id.ToString()[..8]… (@FromSnapshot.Kind) with another snapshot of the same kind and watch root.</MudText>
+        <MudSelect T="Guid?" @bind-Value="_otherId" Label="Other snapshot" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+            @foreach (var snap in _candidates) {
+                <MudSelectItem T="Guid?" Value="snap.Id">@($"{snap.TakenAtUtc:u} · {snap.Id.ToString()[..8]}…")</MudSelectItem>
+            }
+        </MudSelect>
+        @if (_error is not null) {
+            <MudAlert Severity="Severity.Error" Class="mt-2">@_error</MudAlert>
+        }
+    </ChildContent>
+</LyoDialog>

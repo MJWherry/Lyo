@@ -1,0 +1,36 @@
+.file-storage-tree-panel {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-height: 20rem;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.file-storage-tree-toolbar {
+    flex: 0 0 auto;
+}
+
+.file-storage-tree-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.file-storage-tree-item-drag {
+    cursor: grab;
+    flex: 1;
+    min-width: 0;
+}
+
+.file-storage-tree-item {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-storage-tree-drop-target {
+    outline: 1px dashed var(--mud-palette-primary);
+    border-radius: 4px;
+}

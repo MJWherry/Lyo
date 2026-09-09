@@ -1,0 +1,10 @@
+name: Setup Lyo
+description: Install the .NET SDK used to build and pack Lyo.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: "10.x"

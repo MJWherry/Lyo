@@ -1,0 +1,48 @@
+@using Lyo.Api.Models.Common.Response
+@using Lyo.Query.Models.Common.Request
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.Models
+@using Constants = Lyo.TestGateway.Models.Constants
+@inject IApiClient ApiClient
+@inject IDialogService DialogService
+
+<LyoDataGridProjected ApiClient="ApiClient"
+                      GridKey="EndatoCePersonGrid"
+                      Route="@Constants.EndatoCe.Person"
+                      KeySelector="@(i => ProjectedGridKeys.RawId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      RowMenuControls="@GetRowMenuControls()">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View details"
+                               OnClick="@(() => ViewPerson(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;" Identifier="true"/>
+        <LyoProjectedColumn Field="FirstName" Title="First Name" QuickSearchPropertyName="FirstName"/>
+        <LyoProjectedColumn Field="MiddleName" Title="Middle Name" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="LastName" Title="Last Name" QuickSearchPropertyName="LastName"/>
+        <LyoProjectedColumn Field="DateOfBirth" Title="DoB"/>
+        <LyoProjectedColumn Field="Addresses.Count" Title="Addresses"/>
+        <LyoProjectedColumn Field="EmailAddresses.Count" Title="Emails"/>
+        <LyoProjectedColumn Field="PhoneNumbers.Count" Title="Phones"/>
+    </Columns>
+</LyoDataGridProjected>
+
+@code {
+    private RenderFragment<object?> GetRowMenuControls()
+        => person => @<MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewPerson(person))">View</MudMenuItem>;
+}

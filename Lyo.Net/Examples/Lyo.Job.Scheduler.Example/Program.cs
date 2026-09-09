@@ -1,0 +1,36 @@
+using Lyo.Api.Client;
+using Lyo.Formatter;
+using Lyo.Job.Client;
+using Lyo.Job.Scheduler;
+using Lyo.MessageQueue.RabbitMq;
+using Lyo.Metrics;
+
+var host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices((context, services) => {
+        services.AddLogging(i => i.ClearProviders()
+            .AddSimpleConsole(c => {
+                c.SingleLine = true;
+                c.UseUtcTimestamp = true;
+            }));
+
+        services.AddLyoMetrics();
+        services.AddFormatterService();
+        services.SetupRabbitMqServiceFromConfiguration(context.Configuration, []);
+        services.Configure<ApiClientOptions>(context.Configuration.GetSection(ApiClientOptions.SectionName));
+        services.AddLyoApiClient();
+        services.AddJobClient(sp => sp.GetRequiredService<IApiClient>());
+        services.AddMqJobEventPublisherFromConfiguration(context.Configuration);
+        services.AddJobScheduler();
+        // string cannot become TimeZoneInfo via BindConfiguration, so look up IANA/Windows ids from config.
+        services.PostConfigure<JobSchedulerOptions>(options => {
+            var tzId = context.Configuration[$"{JobSchedulerOptions.SectionName}:TimeZone"];
+            if (string.IsNullOrWhiteSpace(tzId) || options.TimeZone != null)
+                return;
+
+            options.TimeZone = TimeZoneInfo.FindSystemTimeZoneById(tzId);
+        });
+        // Optional hook: services.AddJobWorkflowEngine();
+    })
+    .Build();
+
+await host.RunAsync();

@@ -1,0 +1,28 @@
+@namespace Lyo.Web.Primitives
+
+<MudPaper Outlined="@Outlined" Elevation="@Elevation" Class="@($"lyo-section {Class}")" Style="@Style">
+    @if (HasHeader) {
+        <div class="lyo-section-header">
+            <div class="lyo-section-heading">
+                <div class="lyo-section-title">
+                    @if (!string.IsNullOrWhiteSpace(Icon)) {
+                        <MudIcon Icon="@Icon" Size="Size.Small"/>
+                    }
+                    <MudText Typo="@TitleTypo">@Title</MudText>
+                    @TitleContent
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Description)) {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@Description</MudText>
+                }
+            </div>
+            @if (Actions is not null) {
+                <div class="lyo-section-actions">
+                    @Actions
+                </div>
+            }
+        </div>
+    }
+    <div class="@BodyCssClass">
+        @ChildContent
+    </div>
+</MudPaper>

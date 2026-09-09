@@ -1,0 +1,229 @@
+{
+  "id": "Lyo.Tts.Typecast",
+  "name": "Lyo.Tts.Typecast",
+  "area": "Communication",
+  "tagline": "Typecast TTS through `Lyo.Typecast.Client`. `TypecastTtsService` synthesizes audio through `TypecastClient`, can load the voice catalog for validation (`LoadVoicesAsync`), and uses the bulk pipeline plus Typecast-namespaced metrics from `Lyo.Tts`.",
+  "description": "Typecast TTS through [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md). `TypecastTtsService` synthesizes audio through `TypecastClient`, can load the\nvoice catalog for validation (`LoadVoicesAsync`), and uses the bulk pipeline and Typecast-namespaced metrics from [`Lyo.Tts`](../Lyo.Tts/README.md).\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "features": [],
+  "examples": [
+    {
+      "title": "Wire into DI",
+      "language": "csharp",
+      "code": "using Lyo.Tts.Typecast;\nusing Lyo.Typecast.Client;\n\nservices.AddTypecastClientFromConfiguration(configuration);\nservices.AddTypecastTtsServiceFromConfiguration(configuration);\n// Or with an inline configurator:\n// services.AddTypecastTtsService(opts => { opts.DefaultVoiceId = \"...\"; });"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Prerequisites",
+      "items": [
+        "Set up API access with [`AddTypecastClientFromConfiguration`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md) (section `TypecastClient` by default).",
+        "Add TTS options plus the service (`TypecastOptions` section defaults to `TypecastOptions`)."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Service registration",
+      "body": "Both `AddTypecastTtsService` and `AddTypecastTtsServiceFromConfiguration` wire:\n\n- `TypecastTtsService` (singleton; subclass of `TtsServiceBase<TypecastTtsRequest>`).\n- `ITtsService<TypecastTtsRequest>` resolved from the singleton above.\n- `TypecastTtsAppService` converts `TtsResult<TypecastTtsRequest>` into\n  `TtsSynthesisResult`.\n- `ITtsService` (non-generic) backed by `TypecastTtsAppService`, so consumers that only depend on the\n  simple contract can resolve it directly.\n\n`DefaultVoiceId`, `DefaultModel`, `MaxTextLength`, and bulk limits come from `TypecastOptions` (which\ninherits shared fields from [`TtsServiceOptions`](../Lyo.Tts.Models/README.md)). `TypecastTtsService`\nrequires a registered `TypecastClient`. Register it first via `AddTypecastClientFromConfiguration` or\n`AddTypecastClient` from [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md)."
+    },
+    {
+      "type": "paragraph",
+      "title": "Voice catalog checks",
+      "text": "During startup, call `await typecastService.LoadVoicesAsync()` so `SynthesizeAsync` can verify `(model, voiceId)` pairs against the downloaded catalog; validation is skipped when voices are not loaded (see logging in `TypecastTtsService`)."
+    },
+    {
+      "type": "paragraph",
+      "title": "Builder overload warning",
+      "text": "One overload is named `SynthesizeToFileAsync(TypecastTtsRequestBuilder, …)` on `TypecastTtsService` that never writes to disk. It only builds a request and returns audio bytes. Use the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …)` with `builder.Build()` when you need a file."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Speech/Lyo.Tts.Typecast/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tts",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Typecast.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tts.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "AngleSharp",
+      "kind": "package",
+      "version": "1.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.RateLimiting",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

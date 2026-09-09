@@ -1,0 +1,272 @@
+using System.Text.Json;
+using Lyo.Common.Core.Extensions;
+using Lyo.Exceptions;
+using Lyo.FileMetadataStore.Models;
+using Lyo.FileStorage.Audit;
+using Lyo.FileStorage.OperationContext;
+using Lyo.FileStorage.Policy;
+using Lyo.Metrics;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using DiskFileStorageOptions = Lyo.FileStorage.Models.DiskFileStorageOptions;
+
+namespace Lyo.FileStorage.Multipart;
+
+/// <summary>Multipart uploads staged on disk under the local file storage root (server-side <see cref="UploadPartAsync" />).</summary>
+public sealed class LocalMultipartUploadService : IMultipartUploadService
+{
+    private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
+    private readonly IFileContentPolicy _contentPolicy;
+    private readonly ILogger<LocalMultipartUploadService> _logger;
+    private readonly IMetrics _metrics;
+    private readonly IFileOperationContextAccessor _operationContextAccessor;
+    private readonly DiskFileStorageOptions _options;
+    private readonly IMultipartUploadSessionStore _sessions;
+    private readonly LocalFileStorageService _storage;
+
+    public LocalMultipartUploadService(
+        LocalFileStorageService storage,
+        IMultipartUploadSessionStore sessions,
+        DiskFileStorageOptions options,
+        IFileContentPolicy? contentPolicy = null,
+        IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
+        IFileOperationContextAccessor? operationContextAccessor = null,
+        ILoggerFactory? loggerFactory = null,
+        IMetrics? metrics = null)
+    {
+        ArgumentHelpers.ThrowIfNull(storage);
+        ArgumentHelpers.ThrowIfNull(sessions);
+        ArgumentHelpers.ThrowIfNull(options);
+        _storage = storage;
+        _sessions = sessions;
+        _options = options;
+        _contentPolicy = contentPolicy ?? new AllowAllFileContentPolicy();
+        _auditHandlers = auditHandlers == null ? [] : auditHandlers.ToList();
+        _operationContextAccessor = operationContextAccessor ?? NullFileOperationContextAccessor.Instance;
+        _metrics = metrics ?? NullMetrics.Instance;
+        _logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalMultipartUploadService>();
+    }
+
+    /// <inheritdoc />
+    public async Task<MultipartBeginResult> BeginAsync(MultipartBeginRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        OperationHelpers.ThrowIf(request.PartSizeBytes < 1024, "PartSizeBytes must be at least 1024.");
+        OperationHelpers.ThrowIf(request.Encrypt && string.IsNullOrWhiteSpace(request.KeyId), "Multipart Encrypt=true requires KeyId.");
+        if (_options.MaxUploadSizeBytes is { } cap && request.DeclaredContentLength is { } len && len > cap)
+            throw new FilePolicyRejectedException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
+
+        FileStorageServiceBase.ValidatePathPrefix(request.PathPrefix);
+        var sessionId = Guid.NewGuid();
+        var targetFileId = Guid.NewGuid();
+        var ttl = request.SessionTtl ?? TimeSpan.FromHours(24);
+        var now = DateTime.UtcNow;
+        var stagingDir = Path.Combine(_options.RootDirectoryPath, ".multipart", sessionId.ToString("N"));
+        var tenant = request.TenantId ?? _operationContextAccessor.Current?.TenantId;
+        try {
+            await _contentPolicy.ValidateAsync(
+                    new() {
+                        ByteLength = request.DeclaredContentLength ?? 0,
+                        ContentType = request.ContentType,
+                        OriginalFileName = request.OriginalFileName,
+                        TenantId = tenant
+                    }, ct)
+                .ConfigureAwait(false);
+
+            var record = new MultipartUploadSessionRecord(
+                sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
+                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.Local,
+                JsonSerializer.Serialize(new LocalProviderState { StagingDirectory = stagingDir }), request.DeclaredContentLength, request.PartSizeBytes);
+
+            // Persist the session before creating the staging directory so a session-store failure does not leave an orphan dir.
+            await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
+            Directory.CreateDirectory(stagingDir);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
+                        FileAuditOutcome.Success), ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            return new(sessionId, targetFileId, request.PartSizeBytes, record.ExpiresUtc, MultipartUploadProviderKind.Local);
+        }
+        catch (Exception ex) {
+            // best-effort cleanup if the directory was created
+            TryDeleteDir(stagingDir);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<MultipartPartDescriptor> GetPresignedPartUploadAsync(Guid sessionId, int partNumber, CancellationToken ct = default)
+        => throw new NotSupportedException("Local multipart uses server-side UploadPartAsync; presigned part URLs are not available.");
+
+    /// <inheritdoc />
+    public async Task UploadPartAsync(Guid sessionId, int partNumber, Stream content, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(content);
+        ArgumentHelpers.ThrowIfLessThan(partNumber, 1);
+        var session = await GetActiveSessionAsync(sessionId, ct).ConfigureAwait(false);
+        var dir = GetStagingDir(session);
+        var partPath = Path.Combine(dir, $"part-{partNumber:D5}.bin");
+        using var fs = File.Create(partPath);
+        await content.CopyToAsync(fs, 81920, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<FileStoreResult> CompleteAsync(CompleteMultipartUploadRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        var session = await GetActiveSessionAsync(request.SessionId, ct).ConfigureAwait(false);
+        try {
+            var dir = GetStagingDir(session);
+            var parts = request.Parts.OrderBy(p => p.PartNumber).ToList();
+            OperationHelpers.ThrowIf(parts.Count == 0, "At least one part is required.");
+            var mergedPath = Path.Combine(dir, "merged.bin");
+            using (var merged = File.Create(mergedPath)) {
+                foreach (var p in parts) {
+                    ArgumentHelpers.ThrowIfLessThan(p.PartNumber, 1);
+                    var partPath = Path.Combine(dir, $"part-{p.PartNumber:D5}.bin");
+                    if (!File.Exists(partPath))
+                        throw new FileNotFoundException($"Part {p.PartNumber} not found for session {request.SessionId}.");
+
+                    using var partStream = File.OpenRead(partPath);
+                    await partStream.CopyToAsync(merged, 81920, ct).ConfigureAwait(false);
+                }
+            }
+
+            var mergedInfo = new FileInfo(mergedPath);
+            using var input = File.OpenRead(mergedPath);
+            var result = await _storage.SaveFromStreamAsync(
+                    input, mergedInfo.Length, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix,
+                    null, session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, ct)
+                .ConfigureAwait(false);
+
+            await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Completed, ct).ConfigureAwait(false);
+            TryDeleteDir(dir);
+            await _sessions.DeleteAsync(session.SessionId, ct).ConfigureAwait(false);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, result.Id, session.TenantId, _operationContextAccessor.Current?.ActorId, result.DataEncryptionKeyId,
+                        result.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            return result;
+        }
+        catch (Exception ex) {
+            try {
+                await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Failed, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception statusEx) {
+                _logger.LogWarning(statusEx, "Failed to set session {SessionId} to Failed", session.SessionId);
+            }
+
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId,
+                        null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task AbortAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        var s = await _sessions.GetAsync(sessionId, ct).ConfigureAwait(false);
+        if (s == null)
+            return;
+
+        try {
+            try {
+                var dir = GetStagingDir(s);
+                TryDeleteDir(dir);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to delete multipart staging for session {SessionId}", sessionId);
+            }
+
+            // Mark the session Aborted first so a store that keeps rows after Delete can still show the right lifecycle state.
+            try {
+                await _sessions.SetStatusAsync(sessionId, MultipartSessionStatus.Aborted, ct).ConfigureAwait(false);
+            }
+            catch (Exception statusEx) {
+                _logger.LogDebug(statusEx, "Failed to set session {SessionId} status to Aborted prior to delete", sessionId);
+            }
+
+            await _sessions.DeleteAsync(sessionId, ct).ConfigureAwait(false);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
+                        FileAuditOutcome.Success), ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+    }
+
+    private static string SanitizeAuditError(string? message)
+    {
+        if (message.IsNullOrEmpty())
+            return string.Empty;
+
+        const int max = 512;
+        var s = message.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return s.Length > max ? s[..max] : s;
+    }
+
+    private async Task<MultipartUploadSessionRecord> GetActiveSessionAsync(Guid sessionId, CancellationToken ct)
+    {
+        var session = await _sessions.GetAsync(sessionId, ct).ConfigureAwait(false);
+        OperationHelpers.ThrowIfNull(session, $"Multipart session {sessionId} was not found.");
+        OperationHelpers.ThrowIf(session.Status != MultipartSessionStatus.Active, $"Session {sessionId} is not active.");
+        OperationHelpers.ThrowIf(DateTime.UtcNow > session.ExpiresUtc, $"Session {sessionId} has expired.");
+        return session;
+    }
+
+    private static string GetStagingDir(MultipartUploadSessionRecord session)
+    {
+        var state = JsonSerializer.Deserialize<LocalProviderState>(session.ProviderStateJson);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(state?.StagingDirectory, nameof(session.ProviderStateJson));
+        return state.StagingDirectory;
+    }
+
+    private static void TryDeleteDir(string dir)
+    {
+        try {
+            if (Directory.Exists(dir))
+                Directory.Delete(dir, true);
+        }
+        catch {
+            // best-effort cleanup
+        }
+    }
+
+    private sealed class LocalProviderState
+    {
+        public string StagingDirectory { get; set; } = "";
+    }
+}

@@ -1,0 +1,817 @@
+{
+  "id": "Lyo.Config.Api",
+  "name": "Lyo.Config.Api",
+  "area": "Apps",
+  "tagline": "HTTP host for central app configuration, backed by PostgreSQL and `Lyo.Config`.",
+  "description": "HTTP host for central app configuration, backed by PostgreSQL and [`Lyo.Config`](../../../Plugins/Config/Lyo.Config/README.md). Microservices resolve merged config per deployment identity and poll using ETags or an optional `version` query mirror.\n\nResolution contracts (`ConfigResolveConditionalResult`) live in [`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md). The HTTP typed client and `AddConfigApiClientFromConfiguration` live in `Lyo.Config.Api.Client` ([readme](../Lyo.Config.Api.Client/README.md)). Route slug to `EntityRef` mapping uses `AppConfigEntity` from `Lyo.Config`. Polling plus `IOptionsMonitor<T>` is [`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md).",
+  "features": [],
+  "examples": [
+    {
+      "title": "Embed the host (DI + middleware pipeline)",
+      "language": "csharp",
+      "code": "using Lyo.Config.Api;\nusing Lyo.Config.Api.Security;\n\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddConfigApi(builder.Configuration);\n\nvar app = builder.Build();\napp.UseMiddleware<RequireConfigApiKeyMiddleware>(); // BEFORE MapConfigApiEndpoints\napp.MapConfigApiEndpoints(); // default prefix /api/config\napp.Run();"
+    },
+    {
+      "title": "Samples (curl)",
+      "language": "bash",
+      "code": "# Latest snapshot\ncurl -sS \"http://localhost:5088/api/config/gateway/prod-west\"\n\n# Lightweight metadata only\ncurl -sSI \"http://localhost:5088/api/config/gateway/prod-west\"\n\n# Poll with previous ETag (quoted)\nETAG='\"A1B2C3...\"'\ncurl -sSI -H \"If-None-Match: $ETAG\" \"http://localhost:5088/api/config/gateway/prod-west\"\n\n# Same using version= (bare hex, no quotes)\ncurl -sSI \"http://localhost:5088/api/config/gateway/prod-west?version=A1B2C3D4...\""
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Embed the host (DI + middleware pipeline)",
+      "headers": [
+        "Member",
+        "Defined in",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`services.AddConfigApi(IConfiguration)`",
+          "[`Extensions.cs`](./Extensions.cs)",
+          "Registers `IConfigStore` via `AddPostgresConfigStoreFromConfiguration`, local cache, Lyo.Query, config query services, keyed `IEncryptionService` (`config-values`), and binds `ConfigApiSecurityOptions` / `ConfigApiHostingOptions`."
+        ],
+        [
+          "`app.MapConfigApiEndpoints(prefix = \"/api/config\", requireAuthentication = true)`",
+          "[`Extensions.cs`](./Extensions.cs)",
+          "Maps query/get/export at `Config/Definition` and `Config/Binding`, then mounts manage + resolve routes under `prefix`. The default prefix is `/api/config`. Pass `requireAuthentication: false` on TestApi so the Gateway workbench can call manage routes without scopes."
+        ],
+        [
+          "`UseMiddleware<RequireConfigApiKeyMiddleware>()`",
+          "[`Security/RequireConfigApiKeyMiddleware.cs`](./Security/RequireConfigApiKeyMiddleware.cs)",
+          "Path-scoped API-key gate (see below). Must run before `MapConfigApiEndpoints` in the request pipeline."
+        ]
+      ],
+      "lead": "`Lyo.Config.Api` can run standalone (see [`Lyo.Config.Api.Host`](../Lyo.Config.Api.Host/README.md)) or be embedded into another host that already owns the WebApplication pipeline. Two extensions plus one middleware, all in `Lyo.Config.Api`, are the registration surface:",
+      "trail": "How the standalone host is composed (and the pattern any embedding host should follow):"
+    },
+    {
+      "type": "list",
+      "title": "`RequireConfigApiKeyMiddleware` ordering and behavior",
+      "items": [
+        "Registered as a **pipeline middleware** (not an authorization filter). It checks `HttpContext.Request.Path.StartsWithSegments(\"/api/config\", …)` and **silently passes through any request outside that prefix**. If you relocate the API by passing a non-default prefix to `MapConfigApiEndpoints`, the middleware will not match it. `/api/config` is the hard-coded path check.",
+        "When `ConfigApiSecurity.RequireApiKey == false`, the middleware short-circuits to `_next` without inspecting headers. Toggling `RequireApiKey` to `true` requires the host to configure a non-empty `ApiKey`; otherwise matching requests get `500 Internal Server Error` with `{ \"detail\": \"API key enforcement is enabled but no server key has been configured.\" }`.",
+        "When enabled, the middleware accepts the secret via `X-Api-Key: <value>` or `Authorization: Bearer <value>` (other schemes are rejected). Comparison uses `CryptographicOperations.FixedTimeEquals` over UTF-8 bytes; missing / empty / mismatching credentials produce `401 Unauthorized` with no body.",
+        "Place this middleware **after** any TLS termination / proxy header middleware and **before** any logging that might leak request bodies, since it always returns before the endpoint runs on rejection."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Security options (`ConfigApiSecurityOptions`, section `ConfigApiSecurity`)",
+      "headers": [
+        "Key",
+        "Type",
+        "Default",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`ConfigApiSecurity:RequireApiKey`",
+          "`bool`",
+          "`false`",
+          "Master switch. When `false`, all routes are anonymous and the middleware is a no-op."
+        ],
+        [
+          "`ConfigApiSecurity:ApiKey`",
+          "`string`",
+          "`\"\"`",
+          "Shared secret compared in constant time. Must be non-empty when `RequireApiKey == true`."
+        ]
+      ],
+      "trail": "> **Note:** this project has no authorization policy or scopes/role check, only the constant-time secret comparison above. If you need finer-grained access control,\n> register your own auth middleware **before** `RequireConfigApiKeyMiddleware`, or replace it entirely."
+    },
+    {
+      "type": "table",
+      "title": "Hosting options (`ConfigApiHostingOptions`, section `ConfigApiHosting`)",
+      "headers": [
+        "Key",
+        "Type",
+        "Default",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`ConfigApiHosting:PollIntervalAdvisoryMilliseconds`",
+          "`int?`",
+          "`null`",
+          "When > 0, emitted on every resolve response as the `X-Config-Poll-Interval-Ms` header. Purely advisory, clients are free to ignore it."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "How routes map to `Lyo.Config`",
+      "headers": [
+        "URL segment",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "`{appKind}`",
+          "Taxonomy for the process (e.g. `api`, `gateway`, `worker`). Lowercase slug: letters, digits, `-`, `_`, `.`"
+        ],
+        [
+          "`{appId}`",
+          "Instance id (e.g. `checkout`, `550e8400-e29b-41d4-a716-446655440000`). Same slug rules after URL decode."
+        ]
+      ],
+      "lead": "A single store entity type `App` (`AppConfigEntity.AppEntityType`) is used for all API traffic for app config.",
+      "trail": "The persisted compound id:\n\n```text\nEntityType = \"App\"\nEntityId = \"{appKind}:{appId}\" // e.g. gateway:prod-west\n```\n\nDefinitions you create with `PUT /manage/definitions` should use `forEntityType`: `\"App\"`. Bindings must use the same `App` + that compound `forEntityId`, or use\nthe manage routes below."
+    },
+    {
+      "type": "paragraph",
+      "title": "At runtime: resolve and poll",
+      "text": "Base path (default): `/api/config`."
+    },
+    {
+      "type": "list",
+      "title": "At runtime: resolve and poll. `GET`, `HEAD`, `POST`. `/{appKind}/{appId}`",
+      "items": [
+        "`HEAD`: same `ETag` / **304** behaviour, no body on 200.",
+        "`POST`: same body as `GET` when you prefer not to put long ids in query strings."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Management (`/api/config/manage`)",
+      "headers": [
+        "Method",
+        "Path",
+        "Notes"
+      ],
+      "rows": [
+        [
+          "GET",
+          "`/definitions`",
+          "Lists definitions. Optional `?subjectEntityType=` (defaults to `App`)."
+        ],
+        [
+          "PUT",
+          "`/definitions`",
+          "Body: `ConfigDefinitionRecord`. `IsEncrypted` requires a registered encryption service on this host. Returns the saved record (with Id). Appends a definition revision. Toggling Encrypted rewrites stored defaults and all binding revisions for that definition."
+        ],
+        [
+          "GET",
+          "`/definitions/{definitionId}/revisions`",
+          "Definition metadata history, newest first."
+        ],
+        [
+          "POST",
+          "`/definitions/{definitionId}/revert`",
+          "Body: `{ \"revision\": <int> }`. Copies the snapshot and appends a new revision."
+        ],
+        [
+          "DELETE",
+          "`/definitions/{definitionId}`",
+          ""
+        ],
+        [
+          "PUT",
+          "`/bindings`",
+          "Body: `ConfigBindingRecord`. Returns the saved record. Encryption follows the definition flag on this host."
+        ],
+        [
+          "DELETE",
+          "`/bindings/{bindingId}`",
+          ""
+        ],
+        [
+          "GET",
+          "`/bindings/{bindingId}/revisions`",
+          ""
+        ],
+        [
+          "POST",
+          "`/bindings/{bindingId}/revert`",
+          "Body: `{ \"revision\": <int> }`"
+        ],
+        [
+          "GET",
+          "`/apps/{appKind}/{appId}/bindings`",
+          "Convenience list for one app identity."
+        ],
+        [
+          "GET",
+          "`/apps/{appKind}/{appId}/bindings/{key}/revisions`",
+          ""
+        ],
+        [
+          "POST",
+          "`/apps/{appKind}/{appId}/bindings/{key}/revert`",
+          "Body: `{ \"revision\": <int> }`"
+        ]
+      ],
+      "lead": "The same auth as the rest of `/api/config` is required when `ConfigApiSecurity.RequireApiKey` is true (`X-Api-Key` or `Authorization: Bearer`)."
+    },
+    {
+      "type": "paragraph",
+      "title": "Query routes and encryption",
+      "text": "Lyo.Query get/query/export at `Config/Definition` and `Config/Binding` (no generic CRUD writes) are also mapped by `MapConfigApiEndpoints`. Those queries deny `DefaultValueJson` and `EncryptedDefaultValue`. Value encryption uses a keyed `IEncryptionService` named `config-values` on this host and TestApi only. Clients send plaintext plus `IsEncrypted`; the API encrypts at rest. TestGateway does not register encryption — its workbench uses `ConfigApiStore` over HTTP so encryption still happens in TestApi."
+    },
+    {
+      "type": "list",
+      "title": "Configuration (`appsettings`)",
+      "items": [
+        "`PostgresConfig`: connection string and migrations for [`Lyo.Config.Postgres`](../../../Plugins/Config/Lyo.Config.Postgres/README.md).",
+        "`ConfigApiHosting`: optional `PollIntervalAdvisoryMilliseconds` (see *Host embedding → Hosting options* above).",
+        "`ConfigApiSecurity`: `RequireApiKey`, `ApiKey` (see *Host embedding → Security options* above)."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "C# consumer (`Lyo.Config.Api.Client`)",
+      "body": "Register the typed client:\n\n```csharp\nusing Lyo.Config.Api.Client;\n\nservices.AddConfigApiClientFromConfiguration(configuration);\n// Alternate section binding:\n// services.AddConfigApiClientFromConfiguration(configuration, configSectionName: \"MyConfigApi\");\n\nvar resolved = await configClient.ResolveForAppAsync(\n    appKind: \"gateway\",\n    appId: \"prod-west\",\n    ifNoneMatch: lastEtag,\n    version: null,\n    headOnly: false,\n    cancellationToken: ct);\n\n// Background poll\nvar merged = await ConfigPolling.PollUntilChangedAsync(\n    configClient,\n    appKind: \"api\",\n    appId: \"checkout\",\n    ifNoneMatch: null,\n    delayWhenNotModified: TimeSpan.FromSeconds(15),\n    cancellationToken: ct);\n```\n\nBind `ConfigApi` in configuration for `BaseUrl`, optional `ApiKey`, `PollInterval`, and similar ([\n`ConfigApiClientOptions`](../Lyo.Config.Api.Client/ConfigApiClientOptions.cs)). More examples: [`Lyo.Config.Api.Client/README.md`](../Lyo.Config.Api.Client/README.md)."
+    },
+    {
+      "type": "markdown",
+      "title": "Run locally",
+      "body": "```bash\ndotnet run --project Lyo.Net/Apps/Config/Lyo.Config.Api/Lyo.Config.Api.csproj\n```\n\n`/openapi/v1.json` is the Development OpenAPI document (ASP.NET convention). Scalar UI is mapped only when the environment is **Development**.\n"
+    },
+    {
+      "type": "list",
+      "title": "See also",
+      "items": [
+        "Feature docs: [`Lyo.Config/README.md`](../../../Plugins/Config/Lyo.Config/README.md)"
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Config/Lyo.Config.Api/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Export",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.AspNetCore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Google",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Keycloak",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.OpenIdConnect",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Config",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Config.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic.AspNetCore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diff",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Formatter",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Evaluation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "DynamicExpresso.Core",
+      "kind": "package",
+      "version": "2.19.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.OpenApi",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Analyzers",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Caching.Memory",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SmartFormat.NET",
+      "kind": "package",
+      "version": "3.6.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.ComponentModel.Annotations",
+      "kind": "package",
+      "version": "5.0.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

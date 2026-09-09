@@ -1,0 +1,24 @@
+using System.ComponentModel.DataAnnotations;
+using Lyo.EntityReference.Postgres.Database;
+
+namespace Lyo.People.Postgres.Database;
+
+/// <summary>PostgreSQL row for an email address.</summary>
+public sealed class EmailAddressEntity : EntitySourceEntityBase
+{
+    [Key]
+    public Guid Id { get; set; }
+
+    [Required]
+    [MaxLength(256)]
+    public string Email { get; set; } = string.Empty;
+
+    public DateTime? VerifiedAt { get; set; }
+
+    [MaxLength(100)]
+    public string? Label { get; set; }
+
+    public DateTime CreatedTimestamp { get; set; }
+
+    public DateTime? UpdatedTimestamp { get; set; }
+}

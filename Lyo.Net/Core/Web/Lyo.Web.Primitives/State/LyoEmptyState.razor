@@ -1,0 +1,16 @@
+@namespace Lyo.Web.Primitives
+
+<div class="lyo-empty-state @Class" style="@Style">
+    @if (!string.IsNullOrWhiteSpace(Icon)) {
+        <MudIcon Icon="@Icon" Size="@IconSize" Class="lyo-empty-state-icon"/>
+    }
+    <MudText Typo="@TitleTypo" Align="Align.Center">@Title</MudText>
+    @if (!string.IsNullOrWhiteSpace(Description)) {
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary">@Description</MudText>
+    }
+    @if (Actions is not null) {
+        <div class="lyo-empty-state-actions">
+            @Actions
+        </div>
+    }
+</div>

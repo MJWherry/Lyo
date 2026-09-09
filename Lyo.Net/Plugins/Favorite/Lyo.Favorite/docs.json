@@ -1,0 +1,89 @@
+{
+  "id": "Lyo.Favorite",
+  "name": "Lyo.Favorite",
+  "area": "Plugins",
+  "tagline": "Contracts for \"X favorited Y\" ties between any two entities. The boundary takes `EntityRef`.",
+  "description": "Contracts for \"X favorited Y\" ties between any two entities. The boundary takes `EntityRef`, so any feature can create a favorite. The default Postgres store writes subject/actor as nullable varchar (`for_entity_*` / `from_entity_*` columns). When callers put Guid strings in `EntityRef.EntityId`, it uses `EntityRefPersistedGuid.PersistedEntityId()`.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "`IFavoriteStore`",
+      "items": [
+        "`SaveAsync(FavoriteRecord favorite, Guid? tenantId = null, string? context = null, CancellationToken ct = default)` is idempotent. If an active row already exists for the same `(tenant, subject, actor, context)` tuple, the call does nothing.",
+        "`DeleteAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default)` soft-delete by row id.",
+        "`DeleteAsync(EntityRef forEntity, EntityRef fromEntity, Guid? tenantId = null, string? context = null, CancellationToken ct = default)` soft-delete the single row for a `(forEntity, fromEntity, context)` pair.",
+        "`DeleteForEntityAsync(EntityRef forEntity, ...)` soft-delete every row for a given target. You can also filter by `context`.",
+        "`DeleteFromEntityAsync(EntityRef fromEntity, ...)` soft-delete every row added by a given actor. You can also filter by `context`."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "`FavoriteRecord`",
+      "text": "Comes from `EntityRelationRow` (subject/actor endpoints: `SubjectEntityType` / `SubjectEntityId`, `ActorEntityType` / `ActorEntityId`; DB columns `for_entity_*` / `from_entity_*`), plus `TenantId`, `Context`, `Visibility`, and lifecycle fields. `SubjectRef` / `ActorRef` project `EntityRef` at the boundary."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Favorite/Lyo.Favorite/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -1,0 +1,16 @@
+@namespace Lyo.Authentication.Web.Components
+@using Lyo.Authentication.Models.Response
+
+<MudDialog>
+    <TitleContent>@(_isNew ? "Add claim" : "Edit claim")</TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField T="string" @bind-Value="_type" Label="Type" Variant="Variant.Outlined" Required="true"/>
+            <MudTextField T="string" @bind-Value="_value" Label="Value" Variant="Variant.Outlined" Required="true"/>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save" Disabled="_busy">Save</MudButton>
+    </DialogActions>
+</MudDialog>

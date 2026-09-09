@@ -1,0 +1,72 @@
+@using Lyo.DataTable.Models
+
+<LyoDialog DebugData="@Sheets">
+    <ChildContent>
+        @if (_sheets.Count == 0) {
+            <MudAlert Severity="Severity.Warning" Dense="true">No grids found in this report.</MudAlert>
+        }
+        else if (_sheets.Count == 1) {
+            <MudText Typo="Typo.subtitle2" Class="mb-2">@_sheets[0].Title</MudText>
+            @PreviewTable(_sheets[0])
+        }
+        else {
+            <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true">
+                @foreach (var sheet in _sheets) {
+                    <MudTabPanel Text="@sheet.Title">
+                        <div class="pa-1">
+                            @PreviewTable(sheet)
+                        </div>
+                    </MudTabPanel>
+                }
+            </MudTabs>
+        }
+    </ChildContent>
+</LyoDialog>
+
+@code {
+    private static RenderFragment<(string Title, IReadOnlyList<string> Headers, IReadOnlyList<string[]> Rows)> PreviewTable
+        => sheet => __builder => {
+            if (sheet.Headers.Count == 0) {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Empty table.</MudText>
+                return;
+            }
+
+            <LyoResponsiveTable>
+                <TableContent>
+                    <MudTable Items="@sheet.Rows" Dense Hover Striped Virtualize FixedHeader Height="60vh" Breakpoint="Breakpoint.None">
+                        <HeaderContent>
+                            @foreach (var header in sheet.Headers) {
+                                <MudTh>@header</MudTh>
+                            }
+                        </HeaderContent>
+                        <RowTemplate>
+                            @for (var i = 0; i < context.Length; i++) {
+                                var col = i;
+                                <MudTd DataLabel="@(col < sheet.Headers.Count ? sheet.Headers[col] : null)" Style="white-space: nowrap;">
+                                    <LyoTruncatedText Text="@context[col]" MaxLength="48"/>
+                                </MudTd>
+                            }
+                        </RowTemplate>
+                    </MudTable>
+                </TableContent>
+                <CardContent>
+                    @if (sheet.Rows.Count > CardRowLimit) {
+                        <MudAlert Severity="Severity.Info" Dense="true">
+                            Showing the first @CardRowLimit of @sheet.Rows.Count.ToString("N0") rows. Switch to the table layout or a wider screen for the rest.
+                        </MudAlert>
+                    }
+                    @foreach (var row in sheet.Rows.Take(CardRowLimit)) {
+                        <LyoRecordCard Title="@(row.Length > 0 ? row[0] : null)">
+                            @for (var i = row.Length > 0 ? 1 : 0; i < row.Length; i++) {
+                                var col = i;
+                                <LyoRecordField Label="@(col < sheet.Headers.Count ? sheet.Headers[col] : $"Column {col + 1}")">
+                                    <LyoTruncatedText Text="@row[col]" MaxLength="120"/>
+                                </LyoRecordField>
+                            }
+                        </LyoRecordCard>
+                    }
+                </CardContent>
+            </LyoResponsiveTable>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">@sheet.Rows.Count.ToString("N0") row(s)</MudText>
+        };
+}

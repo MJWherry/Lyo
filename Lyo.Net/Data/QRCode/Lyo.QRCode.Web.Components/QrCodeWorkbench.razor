@@ -1,0 +1,396 @@
+@using Lyo.Common.Metadata.Records
+@using Lyo.Images
+@using Lyo.QRCode.Models
+@using Lyo.QRCode.Payloads
+@inject IQRCodeService QrCodeService
+@inject IImageDecorationService Decoration
+@inject IJsInterop Js
+@inject IJSRuntime JsRuntime
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-3">
+    <MudStack Spacing="2">
+        <div>
+            <MudText Typo="Typo.h5">QR Code Generator</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mud-typography-body2-dense">
+                Generate QR codes with the configured QR code implementation and download the result.
+            </MudText>
+        </div>
+
+        <MudGrid Spacing="2">
+            @* Column 1: output / styling *@
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Outlined="true" Style="height:100%">
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.subtitle2">Output &amp; styling</MudText>
+
+                        @* Row: format + error correction *@
+                        <MudGrid Spacing="1">
+                            <MudItem xs="12" sm="6">
+                                <MudSelect T="QRCodeFormat" Label="Format" @bind-Value="_format" Variant="Variant.Outlined" dense="true" Margin="Margin.Dense">
+                                    @foreach (var format in SelectableFormats) {
+                                        <MudSelectItem Value="@format">@format</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudSelect T="QRCodeErrorCorrectionLevel" Label="Error correction" @bind-Value="_errorCorrectionLevel" Variant="Variant.Outlined" dense="true"
+                                           Margin="Margin.Dense">
+                                    @foreach (var level in Enum.GetValues<QRCodeErrorCorrectionLevel>()) {
+                                        <MudSelectItem Value="@level">@level</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+
+                        @* Row: output size preset + custom px / hint *@
+                        <MudGrid Spacing="1">
+                            <MudItem xs="12" sm="6">
+                                <MudSelect T="QrWorkbenchModulePreset" Label="Output size" Value="_modulePreset" ValueChanged="OnModulePresetChangedAsync"
+                                           Variant="Variant.Outlined" dense="true" Margin="Margin.Dense" HelperText="@ModulePresetHelper">
+                                    @foreach (var p in Enum.GetValues<QrWorkbenchModulePreset>()) {
+                                        <MudSelectItem Value="@p">@ModulePresetLabel(p)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                @if (_modulePreset == QrWorkbenchModulePreset.Custom) {
+                                    <MudNumericField T="int" Label="Pixels per module" Value="_size" ValueChanged="OnCustomModulePixelsChanged"
+                                                     Min="4" Max="128" Step="1" Variant="Variant.Outlined" dense="true" Margin="Margin.Dense"
+                                                     HelperText="Side ≈ modules × this (often ~33–55 for URLs)."/>
+                                }
+                                else {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mud-typography-caption-dense pt-1">
+                                        <strong>@_size</strong> px/module · @ApproxQrSideHint(_size)
+                                    </MudText>
+                                }
+                            </MudItem>
+                        </MudGrid>
+
+                        @* Row: quiet zone + dark + light *@
+                        <MudGrid Spacing="1">
+                            <MudItem xs="12" sm="4" Class="d-flex align-center">
+                                <MudCheckBox T="bool" Label="Quiet zone" @bind-Value="_drawQuietZones" dense="true" Size="Size.Small"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudColorPicker Label="Dark (modules)" @bind-Value="_darkColor" ColorPickerMode="ColorPickerMode.HEX" Class="mud-width-full"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudColorPicker Label="Light (background)" @bind-Value="_lightColor" ColorPickerMode="ColorPickerMode.HEX" Class="mud-width-full"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudDivider Class="my-1"/>
+
+                        @* Row: logo upload (chip truncates via LyoFileUpload) *@
+                        @if (LogoSupported) {
+                            <MudGrid Spacing="1">
+                                <MudItem xs="12">
+                                    <LyoFileUpload @ref="_logoFileUpload"
+                                                   MaxFiles="1"
+                                                   ValidFileTypes="LogoValidFileTypes"
+                                                   MaxFileSize="MaxLogoFileBytes"
+                                                   ButtonText="Logo"
+                                                   ButtonVariant="Variant.Outlined"
+                                                   ButtonFullWidth="false"
+                                                   ChipFileNameMaxLength="28"
+                                                   ChipMaxWidthCss="100%"
+                                                   ProgressViewType="LogoUploadProgressView"
+                                                   OnClientFileReady="OnLogoClientFileReadyAsync"
+                                                   OnClientFileRemoved="OnLogoClientFileRemovedAsync"/>
+                                </MudItem>
+                            </MudGrid>
+
+                            @* Row: logo size slider + border *@
+                            <MudGrid Spacing="1">
+                                <MudItem xs="12" sm="8">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mud-typography-caption-dense">Logo size %</MudText>
+                                    <MudSlider T="int" @bind-Value="_iconSizePercent" Min="1" Max="@QRCodeIconOptions.MaxIconSizePercent" Step="1"
+                                               ValueLabel="true" dense="true" Color="Color.Primary"
+                                               Disabled="@(_logoBytes == null || _logoBytes.Length == 0)"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="4" Class="d-flex align-center">
+                                    <MudCheckBox T="bool" Label="Logo border" @bind-Value="_drawIconBorder" dense="true" Size="Size.Small"
+                                                 Disabled="@(_logoBytes == null || _logoBytes.Length == 0)"/>
+                                </MudItem>
+                            </MudGrid>
+                        }
+                        else {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Logo row: PNG or SVG format only.</MudText>
+                        }
+
+                        <MudDivider Class="my-1"/>
+
+                        @* Row: frame preset *@
+                        <MudGrid Spacing="1">
+                            <MudItem xs="12">
+                                <MudSelect T="QrBadgePreset" Label="Frame style (PNG)" Value="SelectedFrameStyle" ValueChanged="OnFrameStyleChangedAsync"
+                                           Variant="Variant.Outlined" dense="true" Margin="Margin.Dense"
+                                           Disabled="@(_format != QRCodeFormat.Png)"
+                                           HelperText="Applied after generate.">
+                                    @foreach (var st in Enum.GetValues<QrBadgePreset>()) {
+                                        <MudSelectItem Value="@st">@FrameStyleLabel(st)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+
+                        @if (FrameShowsCaptionField) {
+                            @* Row: caption text *@
+                            <MudGrid Spacing="1">
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="Caption text" @bind-Value="_frameCaption" Variant="Variant.Outlined" dense="true" Margin="Margin.Dense"
+                                                  HelperText="Header title or footer line depending on frame"/>
+                                </MudItem>
+                            </MudGrid>
+
+                            @* Row: caption font + min header + auto-size (same grid pattern as quiet zone + colors) *@
+                            <MudGrid Spacing="1">
+                                <MudItem xs="12" sm="4">
+                                    <MudNumericField T="int" Label="Caption font (px)" @bind-Value="_frameCaptionFontSize" Min="0" Max="2048" Step="1"
+                                                     Variant="Variant.Outlined" dense="true" Margin="Margin.Dense"
+                                                     HelperText="0 = auto"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudNumericField T="int" Label="Min. header (px)" Value="_frameHeaderMinPx" ValueChanged="OnFrameHeaderMinPxChangedAsync"
+                                                     Min="0" Max="3200" Step="1"
+                                                     Variant="Variant.Outlined" dense="true" Margin="Margin.Dense"
+                                                     Disabled="@(SelectedFrameStyle != QrBadgePreset.BadgeWithHeader)"
+                                                     HelperText="Badge only"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="4" Class="d-flex align-center">
+                                    <MudCheckBox T="bool" Label="Auto-size header" @bind-Value="_frameAutoSizeHeader" dense="true" Size="Size.Small"
+                                                 Disabled="@(SelectedFrameStyle != QrBadgePreset.BadgeWithHeader)"/>
+                                </MudItem>
+                            </MudGrid>
+
+                            @* Row: header + caption + panel colors *@
+                            <MudGrid Spacing="1">
+                                <MudItem xs="12" sm="4">
+                                    <MudColorPicker Label="Header color" @bind-Value="_frameHeaderBg" ColorPickerMode="ColorPickerMode.HEX"
+                                                    Disabled="@(SelectedFrameStyle == QrBadgePreset.SimpleRoundedPanel || SelectedFrameStyle == QrBadgePreset.BorderOnly)"
+                                                    Class="mud-width-full"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudColorPicker Label="Caption color" @bind-Value="_frameCaptionColor" ColorPickerMode="ColorPickerMode.HEX" Class="mud-width-full"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudColorPicker Label="Panel color" @bind-Value="_framePanelBg" ColorPickerMode="ColorPickerMode.HEX" Class="mud-width-full"/>
+                                </MudItem>
+                            </MudGrid>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            @* Column 2: payload *@
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Outlined="true" Style="height:100%">
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.subtitle2">Payload</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Encoded string only; format/size use the left column.
+                        </MudText>
+                        <MudSelect T="QrPayloadKind" Label="Payload type" Value="_payloadKind" ValueChanged="OnQrPayloadKindChangedAsync" Variant="Variant.Outlined" dense="true"
+                                   Margin="Margin.Dense">
+                            @foreach (var k in Enum.GetValues<QrPayloadKind>()) {
+                                <MudSelectItem Value="@k">@PayloadKindLabel(k)</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        @switch (_payloadKind) {
+                            case QrPayloadKind.PlainText:
+                                <MudTextField T="string" Label="Text" Variant="Variant.Outlined" Lines="5" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_plainText"/>
+
+                                break;
+                            case QrPayloadKind.Url:
+                                <MudTextField T="string" Label="URL" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_urlText"/>
+
+                                <MudCheckBox T="bool" Label="Force https" Value="_urlForceHttps" ValueChanged="OnUrlForceHttpsChanged" dense="true" Size="Size.Small"/>
+
+                                break;
+                            case QrPayloadKind.Wifi:
+                                <MudTextField T="string" Label="SSID" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_wifiSsid"/>
+
+                                <MudTextField T="string" Label="Password" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              InputType="InputType.Password" @bind-Value="_wifiPassword"/>
+
+                                <MudSelect T="QrWifiSecurityType" Label="Security" Value="_wifiSecurity" ValueChanged="OnWifiSecurityChangedAsync" Variant="Variant.Outlined"
+                                           dense="true" Margin="Margin.Dense">
+                                    @foreach (var s in Enum.GetValues<QrWifiSecurityType>()) {
+                                        <MudSelectItem Value="@s">@s</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                <MudCheckBox T="bool" Label="Hidden SSID" Value="_wifiHidden" ValueChanged="OnWifiHiddenChanged" dense="true" Size="Size.Small"/>
+
+                                break;
+                            case QrPayloadKind.Mailto:
+                                <MudTextField T="string" Label="To" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_mailtoTo"/>
+
+                                <MudTextField T="string" Label="Subject" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_mailtoSubject"/>
+
+                                <MudTextField T="string" Label="Body" Variant="Variant.Outlined" Lines="3" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_mailtoBody"/>
+
+                                break;
+                            case QrPayloadKind.Tel:
+                                <MudTextField T="string" Label="Phone" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              HelperText="Digits; + kept for E.164" @bind-Value="_telNumber"/>
+
+                                break;
+                            case QrPayloadKind.Sms:
+                                <MudTextField T="string" Label="Phone" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_smsNumber"/>
+
+                                <MudTextField T="string" Label="Message" Variant="Variant.Outlined" Lines="2" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_smsBody"/>
+
+                                <MudCheckBox T="bool" Label="Use smsto: (Messages can crash with long body)" Value="_smsUseSmsto" ValueChanged="OnSmsUseSmstoChanged" dense="true"
+                                             Size="Size.Small"/>
+
+                                break;
+                            case QrPayloadKind.Geo:
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudTextField T="string" Label="Latitude" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                                      @bind-Value="_geoLat"/>
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudTextField T="string" Label="Longitude" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                                      @bind-Value="_geoLon"/>
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudTextField T="string" Label="Map label" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                                      @bind-Value="_geoLabel"/>
+                                    </MudItem>
+                                </MudGrid>
+
+                                break;
+                            case QrPayloadKind.VCard3:
+                                <MudTextField T="string" Label="Full name" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcFn"/>
+
+                                <MudTextField T="string" Label="Telephone" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcTel"/>
+
+                                <MudTextField T="string" Label="Email" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcEmail"/>
+
+                                <MudTextField T="string" Label="Organization" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcOrg"/>
+
+                                <MudTextField T="string" Label="URL" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcUrl"/>
+
+                                break;
+                            case QrPayloadKind.MeCard:
+                                <MudTextField T="string" Label="Display name" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_meName"/>
+
+                                <MudTextField T="string" Label="Telephone" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_meTel"/>
+
+                                <MudTextField T="string" Label="Email" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_meEmail"/>
+
+                                break;
+                            case QrPayloadKind.WhatsApp:
+                                <MudTextField T="string" Label="Phone (digits)" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_waPhone"/>
+
+                                break;
+                            case QrPayloadKind.Telegram:
+                                <MudTextField T="string" Label="Username" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              HelperText="No leading at-sign; 4-32 chars" @bind-Value="_tgUsername"/>
+
+                                break;
+                            case QrPayloadKind.Signal:
+                                <MudTextField T="string" Label="E.164 (+required)" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_signalPhone"/>
+
+                                break;
+                        }
+
+                        <MudTextField T="string" Label="Encoded preview" Variant="Variant.Outlined" Lines="3" FullWidth="true" ReadOnly="true" dense="true" Margin="Margin.Dense"
+                                      Value="@_encodedPreview"/>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" dense="true" OnClick="@(() => {
+                                                                                                      RefreshEncodedPreview();
+                                                                                                      StateHasChanged();
+                                                                                                  })">Refresh preview
+                        </MudButton>
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="GenerateAsync" Disabled="@_busy" FullWidth="true">Generate</MudButton>
+
+                        <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity" Class="mt-1"/>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            @* Column 3: result *@
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Outlined="true" Style="height:100%">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.subtitle2">Result</MudText>
+                            @if (_imageBytes != null) {
+                                <MudButton Variant="Variant.Text" Size="Size.Small" dense="true" Color="Color.Secondary" OnClick="DownloadAsync">Download</MudButton>
+                            }
+                        </MudStack>
+
+                        @if (_imageBytes == null) {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Generate to preview.</MudText>
+                        }
+                        else {
+                            <MudGrid Spacing="1">
+                                <MudItem xs="12" sm="4">
+                                    <MudPaper Class="pa-2" Outlined="true">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Format</MudText>
+                                        <MudText Typo="Typo.body2">@_format</MudText>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudPaper Class="pa-2" Outlined="true">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">File size</MudText>
+                                        <MudText Typo="Typo.body2">@FileSizeUnitInfo.FormatBestFitAbbreviation(_imageBytes.LongLength, lowercaseAbbreviation: false)</MudText>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudPaper Class="pa-2" Outlined="true">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Frame</MudText>
+                                        <MudText Typo="Typo.body2">@(_format == QRCodeFormat.Png ? FrameStyleLabel(SelectedFrameStyle) : "—")</MudText>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudPaper Class="pa-2" Outlined="true">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Module scale</MudText>
+                                        <MudText Typo="Typo.body2">@_size px/module</MudText>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudPaper Class="pa-2" Outlined="true">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Dimensions</MudText>
+                                        @if (_lastOutputWidth is > 0 && _lastOutputHeight is > 0) {
+                                            <MudText Typo="Typo.body2">@_lastOutputWidth × @_lastOutputHeight px</MudText>
+
+                                            @if (_format == QRCodeFormat.Png && SelectedFrameStyle != QrBadgePreset.None) {
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">Includes frame.</MudText>
+                                            }
+                                        }
+                                        else {
+                                            <MudText Typo="Typo.body2">—</MudText>
+                                        }
+                                    </MudPaper>
+                                </MudItem>
+                            </MudGrid>
+
+                            <MudDivider Class="my-1"/>
+
+                            @if (ResultPreviewHref != null && ResultThumbnailSrc != null) {
+                                <MudPaper Class="pa-2 d-flex justify-center" Outlined="true">
+                                    <a href="@ResultPreviewHref" target="_blank" rel="noopener noreferrer" class="d-flex justify-center mud-width-full" style="cursor: zoom-in;">
+                                        <img src="@ResultThumbnailSrc" alt="Generated QR code (open in new tab)"
+                                             style="max-width: 100%; max-height: 260px; width: 100%; object-fit: contain;"/>
+                                    </a>
+                                </MudPaper>
+                            }
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>

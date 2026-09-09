@@ -1,0 +1,124 @@
+using Lyo.Api.Services.Crud.Read.Project;
+using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Common.Core.Enums;
+using Lyo.Query.Models.Common;
+using Lyo.Query.Models.Common.Request;
+using Lyo.Query.Models.Enums;
+
+namespace Lyo.Api.Tests;
+
+public sealed class QueryCacheTagBuilderTests
+{
+    [Fact]
+    public void EntityTypeTag_UsesLowercaseFullName()
+        => Assert.Equal("entity:lyo.api.tests.querycachetagbuildertests", QueryCacheTagBuilder.EntityTypeTag(typeof(QueryCacheTagBuilderTests)));
+
+    [Fact]
+    public void EntityTypeTag_DistinguishesSameNamedTypesInDifferentNamespaces()
+        => Assert.NotEqual(QueryCacheTagBuilder.EntityTypeTag(typeof(TagScopeA.Widget)), QueryCacheTagBuilder.EntityTypeTag(typeof(TagScopeB.Widget)));
+
+    [Fact]
+    public void FormatPrimaryKeySegment_IsTypeTaggedAndLengthPrefixed()
+    {
+        Assert.Equal("[2:i:1|s:1:a]", QueryCacheTagBuilder.FormatPrimaryKeySegment([1, "a"]));
+        Assert.NotEqual(QueryCacheTagBuilder.FormatPrimaryKeySegment([1]), QueryCacheTagBuilder.FormatPrimaryKeySegment(["1"]));
+    }
+
+    [Fact]
+    public void FormatPrimaryKeySegment_EscapesDelimiterInsideComponents()
+        => Assert.NotEqual(QueryCacheTagBuilder.FormatPrimaryKeySegment(["a|b", "c"]), QueryCacheTagBuilder.FormatPrimaryKeySegment(["a", "b|c"]));
+
+    [Fact]
+    public void EntityInstanceTag_AppendsSegmentAfterEntityTypeTag()
+    {
+        var t = typeof(QueryCacheTagBuilderTests);
+        Assert.StartsWith("entity:lyo.api.tests.querycachetagbuildertests:", QueryCacheTagBuilder.EntityInstanceTag(t, [42]), StringComparison.Ordinal);
+        Assert.EndsWith(QueryCacheTagBuilder.FormatPrimaryKeySegment([42]), QueryCacheTagBuilder.EntityInstanceTag(t, [42]), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void QueryScopeTag_IsQueries() => Assert.Equal("queries", QueryCacheTagBuilder.QueryScopeTag);
+
+    [Fact]
+    public void FormatProjShapeTag_IsStableAcrossSelectOrder()
+    {
+        var specs1 = new[] { new ProjectedFieldSpec("a", "Alpha", ["Alpha"]), new ProjectedFieldSpec("b", "Beta", ["Beta"]) };
+        var specs2 = new[] { new ProjectedFieldSpec("b", "Beta", ["Beta"]), new ProjectedFieldSpec("a", "Alpha", ["Alpha"]) };
+        var shape1 = QueryCacheTagBuilder.FormatProjShapeTag(specs1, [], false);
+        var shape2 = QueryCacheTagBuilder.FormatProjShapeTag(specs2, [], false);
+        Assert.Equal(shape1, shape2);
+        Assert.StartsWith("projshape:", shape1, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FormatProjShapeTag_ChangesWhenNormalizedPathSetDiffers()
+    {
+        var specsA = new[] { new ProjectedFieldSpec("a", "A", ["A"]) };
+        var specsB = new[] { new ProjectedFieldSpec("b", "B", ["B"]) };
+        Assert.NotEqual(QueryCacheTagBuilder.FormatProjShapeTag(specsA, [], false), QueryCacheTagBuilder.FormatProjShapeTag(specsB, [], false));
+    }
+
+    [Fact]
+    public void BuildSingleEntityGetCacheKey_BaseMatchesEntityInstanceTag()
+    {
+        var t = typeof(QueryCacheTagBuilderTests);
+        object[] pk = [42];
+        Assert.Equal(QueryCacheTagBuilder.EntityInstanceTag(t, pk), QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk));
+    }
+
+    [Fact]
+    public void BuildSingleEntityGetCacheKey_RawSuffix()
+    {
+        var t = typeof(QueryCacheTagBuilderTests);
+        object[] pk = [7];
+        Assert.Equal(QueryCacheTagBuilder.EntityInstanceTag(t, pk) + ":raw", QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk, null, true));
+    }
+
+    [Fact]
+    public void BuildProjectedSqlQueryTagsBroad_IncludesScopeEntitiesShapeAndRefTypes()
+    {
+        var specs = new[] { new ProjectedFieldSpec("a", "A", ["A"]) };
+        var tags = QueryCacheTagBuilder.BuildProjectedSqlQueryTagsBroad<QueryCacheTagBuilderTests>(specs, [], false, [typeof(string)]);
+        Assert.Contains(QueryCacheTagBuilder.QueryScopeTag, tags);
+        Assert.Contains(QueryCacheTagBuilder.QueryProjectScopeTag, tags);
+        Assert.Contains("entities", tags);
+        Assert.Contains(QueryCacheTagBuilder.EntityTypeTag(typeof(QueryCacheTagBuilderTests)), tags);
+        Assert.Contains(QueryCacheTagBuilder.EntityTypeTag(typeof(string)), tags);
+        Assert.Contains(QueryCacheTagBuilder.FormatProjShapeTag(specs, [], false), tags);
+    }
+
+    [Fact]
+    public void BuildSingleEntityGetRootTypeTags_MatchesEntitiesAndType()
+    {
+        var tags = QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<QueryCacheTagBuilderTests>();
+        Assert.Equal(new[] { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(QueryCacheTagBuilderTests)) }, tags);
+    }
+
+    [Fact]
+    public void BuildProjectionCacheKey_LongComputedTemplate_UsesHashedSegment()
+    {
+        var request = new ProjectionQueryReq { Select = ["Name"], ComputedFields = [new("Label", new('x', 3000))] };
+        var key = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(request);
+        Assert.Contains(":computed=sha256:", key, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BuildProjectionCacheKey_CanonicalizesCaseAndWhitespaceForSelectFields()
+    {
+        var a = new ProjectionQueryReq { Select = [" Name ", "id"] };
+        var b = new ProjectionQueryReq { Select = ["ID", "name"] };
+        var keyA = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(a);
+        var keyB = QueryCacheKeyBuilder.Build<QueryCacheTagBuilderTests, object>(b);
+        Assert.Equal(keyA, keyB);
+    }
+
+    [Fact]
+    public void BuildTreeCacheKey_CanonicalizesEquivalentSortPriorities()
+    {
+        var sortA = new[] { new SortBy("Name", SortDirection.Asc), new SortBy("Id", SortDirection.Desc) };
+        var sortB = new[] { new SortBy("Name", SortDirection.Asc, 0), new SortBy("Id", SortDirection.Desc, 1) };
+        var keyA = QueryCacheKeyBuilder.BuildTree<QueryCacheTagBuilderTests, object>(null, 0, 100, [], sortA, QueryTotalCountMode.None, QueryIncludeFilterMode.Full);
+        var keyB = QueryCacheKeyBuilder.BuildTree<QueryCacheTagBuilderTests, object>(null, 0, 100, [], sortB, QueryTotalCountMode.None, QueryIncludeFilterMode.Full);
+        Assert.Equal(keyA, keyB);
+    }
+}

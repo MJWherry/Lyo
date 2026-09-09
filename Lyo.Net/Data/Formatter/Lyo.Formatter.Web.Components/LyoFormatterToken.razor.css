@@ -1,0 +1,23 @@
+.lyo-fmt-token {
+    --lyo-fmt-mix: 34%;
+    border-radius: 3px;
+    color: var(--mud-palette-text-primary);
+    background: color-mix(in srgb, hsl(var(--lyo-fmt-hue, 0) 58% 52%) var(--lyo-fmt-mix), var(--mud-palette-surface));
+    outline: 1px solid transparent;
+}
+
+.lyo-fmt-token-unresolved {
+    --lyo-fmt-mix: 16%;
+    text-decoration: underline dashed;
+    text-underline-offset: 2px;
+    background: color-mix(in srgb, var(--mud-palette-text-primary) var(--lyo-fmt-mix), var(--mud-palette-surface));
+}
+
+.lyo-fmt-token-active {
+    --lyo-fmt-mix: 52%;
+    outline-color: color-mix(in srgb, hsl(var(--lyo-fmt-hue, 0) 58% 52%) 70%, var(--mud-palette-text-primary));
+}
+
+.lyo-fmt-token-unresolved.lyo-fmt-token-active {
+    outline-color: var(--mud-palette-text-secondary);
+}

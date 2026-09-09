@@ -1,0 +1,46 @@
+.lyo-section {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.lyo-section-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.lyo-section-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+}
+
+.lyo-section-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.lyo-section-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+    margin-left: auto;
+}
+
+.lyo-section-body {
+    padding: 1rem;
+}
+
+.lyo-section-body-flush {
+    padding: 0;
+}

@@ -1,0 +1,106 @@
+@using Lyo.Common.Core.Enums;
+@inject AwsPollyTtsService TtsService
+@inject AwsPollyOptions TtsOptions
+@inject IJsInterop Js
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">AWS Polly TTS</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Generate speech with the configured AWS Polly implementation and preview it inline.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Spacing="3">
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudSelect T="AwsPollyVoiceId" Label="Voice" @bind-Value="_selectedVoiceId">
+                                    @foreach (var voice in _availableVoices) {
+                                        <MudSelectItem Value="@voice">@voice</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudSelect T="AudioFormat" Label="Format" @bind-Value="_audioFormat">
+                                    <MudSelectItem Value="@AudioFormat.Mp3">mp3</MudSelectItem>
+                                    <MudSelectItem Value="@AudioFormat.Wav">wav</MudSelectItem>
+                                    <MudSelectItem Value="@AudioFormat.Ogg">ogg</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudSelect T="string" Label="Language" @bind-Value="_selectedLanguage">
+                                    <MudSelectItem Value="@AutoLanguage">Default</MudSelectItem>
+                                    @foreach (var language in _languages) {
+                                        <MudSelectItem Value="@language.Bcp47">@language.Description (@language.Bcp47)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="string"
+                                      Label="Text"
+                                      Variant="Variant.Outlined"
+                                      Lines="8"
+                                      FullWidth="true"
+                                      @bind-Value="_text"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SynthesizeAsync" Disabled="@_busy">
+                                Synthesize
+                            </MudButton>
+                            <MudButton Variant="Variant.Text" OnClick="TestConnectionAsync" Disabled="@_busy">Test Connection</MudButton>
+                        </MudStack>
+
+                        <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_audioBytes != null) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download Audio</MudButton>
+                        }
+                    </MudStack>
+
+                    @if (_audioBytes == null || string.IsNullOrWhiteSpace(_audioSource)) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Synthesize speech to preview the generated audio here.
+                        </MudText>
+                    }
+                    else {
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Voice</MudText>
+                                    <MudText Typo="Typo.body1">@_selectedVoiceId</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Format</MudText>
+                                    <MudText Typo="Typo.body1">@_audioFormat</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Audio size</MudText>
+                                    <MudText Typo="Typo.body1">@FileSizeUnitInfo.FormatBestFitAbbreviation(_audioBytes.LongLength, lowercaseAbbreviation: false)</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <audio controls style="width: 100%; margin-top: 16px;" src="@_audioSource"></audio>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>

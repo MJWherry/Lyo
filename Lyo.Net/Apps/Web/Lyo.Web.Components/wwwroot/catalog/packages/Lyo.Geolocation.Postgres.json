@@ -1,0 +1,239 @@
+{
+  "id": "Lyo.Geolocation.Postgres",
+  "name": "Lyo.Geolocation.Postgres",
+  "area": "Core",
+  "tagline": "Entity Framework Core persistence of canonical geolocation data in PostgreSQL.",
+  "description": "Entity Framework Core persistence of canonical geolocation data in PostgreSQL.\n\n**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md) persist via `IGeolocationStore` in the host. See [package layout](../../../docs/package-layout.md).",
+  "features": [],
+  "examples": [
+    {
+      "title": "How to use it",
+      "language": "csharp",
+      "code": "services.AddPostgresGeolocationStoreFromConfiguration(configuration);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Overview",
+      "text": "`address` (canonical normalized addresses from `Lyo.Geolocation.Models.Address`) and `address_source` (provenance per import: `source_entity_*` + `imported_at`, owner `address_id`, lookup index on `source_entity_*`) live in schema `geolocation`. There is no `geocode_cache` table. References stop at `Lyo.Geolocation`, `Lyo.Geolocation.Models`, and `Lyo.EntityReference.Postgres`. Not Google, Endato, or other vendors."
+    },
+    {
+      "type": "list",
+      "title": "How to use it",
+      "items": [
+        "Call a vendor client (e.g. Google Maps) from a separate integration assembly.",
+        "Project onto `Address` plus `EntitySourceRecord.From(externalRef, importedAt)` on `Sources`. Save assigns the owner id.",
+        "Idempotent ingest uses `await store.SaveAddressAsync(address, ct)` or `GetBySourceAsync` (queries `source_entity_*`)."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Migrations",
+      "text": "Schema: `geolocation`. Design-time connection: `GEOLOCATION_CONNECTION_STRING`."
+    },
+    {
+      "type": "paragraph",
+      "title": "Related reading",
+      "text": "[`Lyo.Geolocation`](../Lyo.Geolocation/README.md)"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Geolocation/Lyo.Geolocation.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Geolocation",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Geolocation.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

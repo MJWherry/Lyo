@@ -1,0 +1,165 @@
+@namespace Lyo.Web.Components.ParamTable
+@using Microsoft.AspNetCore.Components.Web
+
+<MudStack Spacing="2">
+    <MudStack Row Wrap="Wrap.Wrap" Spacing="2" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="TitleTypo">@Title</MudText>
+        <MudStack Row Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+            @if (ShowLayoutToggle) {
+                <MudToggleGroup T="LyoParameterLayout" Value="@Layout" ValueChanged="SetLayout"
+                                Size="Size.Small" CheckMark="false" Color="Color.Primary">
+                    <MudToggleItem Value="LyoParameterLayout.Table">
+                        <MudIcon Icon="@Icons.Material.Filled.TableRows" Size="Size.Small" title="Table layout"/>
+                    </MudToggleItem>
+                    <MudToggleItem Value="LyoParameterLayout.Cards">
+                        <MudIcon Icon="@Icons.Material.Filled.ViewAgenda" Size="Size.Small" title="Card layout"/>
+                    </MudToggleItem>
+                </MudToggleGroup>
+            }
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add" OnClick="AddRow">
+                Add Parameter
+            </MudButton>
+        </MudStack>
+    </MudStack>
+
+    @if (Items.Count == 0) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">No parameters defined</MudText>
+    }
+    else if (Layout == LyoParameterLayout.Cards) {
+        <MudStack Spacing="2">
+            @for (var i = 0; i < Items.Count; i++) {
+                var index = i;
+                var row = Items[index];
+                <LyoParameterCard Item="row"
+                                  Expanded="@IsExpanded(row)"
+                                  AllowReorder="AllowReorder"
+                                  CanMoveUp="@(index > 0)"
+                                  CanMoveDown="@(index < Items.Count - 1)"
+                                  IsDropTarget="@IsDropTarget(index)"
+                                  IsDragging="@IsDragging(index)"
+                                  ShowRequired="ShowRequired"
+                                  ShowEncrypt="ShowEncrypt"
+                                  ShowEnabled="ShowEnabled"
+                                  ShowOptionsEditor="ShowOptionsEditor"
+                                  ShowDefaultKind="ShowDefaultKind"
+                                  InheritFrom="InheritFrom"
+                                  ApiClient="ApiClient"
+                                  SiblingValues="SiblingMap"
+                                  DefaultValueHint="@ResolvedDefaultHint"
+                                  FormatterContext="@FormatterContext"
+                                  KeyChanged="@(v => SetKey(row, v))"
+                                  TypeChanged="@(v => SetType(row, v))"
+                                  RequiredChanged="@(v => Set(() => row.Required = v))"
+                                  EncryptChanged="@(v => SetEncrypt(row, v))"
+                                  EnabledChanged="@(v => Set(() => row.Enabled = v))"
+                                  OnToggleExpanded="@(() => ToggleExpanded(row))"
+                                  OnDelete="@(() => DeleteRow(row))"
+                                  OnMoveUp="@(() => Move(index, index - 1))"
+                                  OnMoveDown="@(() => Move(index, index + 1))"
+                                  OnDragStart="@(e => OnRowDragStart(e, index))"
+                                  OnDragEnter="@(() => OnDragEnterRow(index))"
+                                  OnDragEnd="OnDragEnd"
+                                  OnDrop="@(() => OnRowDrop(index))"
+                                  OnChanged="OnChanged"/>
+            }
+        </MudStack>
+    }
+    else {
+        <div class="lyo-param-table-scroll @(AllowReorder ? "lyo-param-table-reorder" : null)">
+            <MudSimpleTable Dense Hover Elevation="0">
+                <thead>
+                <tr>
+                    @if (AllowReorder) {
+                        <th class="lyo-param-col-handle"></th>
+                        <th class="lyo-param-col-order">#</th>
+                    }
+                    <th class="lyo-param-col-expand"></th>
+                    <th class="lyo-param-col-key">Key</th>
+                    <th class="lyo-param-col-type">Type</th>
+                    <th class="lyo-param-col-flags">Options</th>
+                    <th class="lyo-param-col-actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                @for (var i = 0; i < Items.Count; i++) {
+                    var index = i;
+                    var row = Items[index];
+                    var expanded = IsExpanded(row);
+                    <tr class="@(IsDropTarget(index) ? "lyo-param-drop-target" : null) @(IsDragging(index) ? "lyo-param-dragging" : null)"
+                        @ondragover:preventDefault="AllowReorder"
+                        @ondragenter="@(() => OnDragEnterRow(index))"
+                        @ondrop="@(() => OnRowDrop(index))"
+                        @ondrop:preventDefault="AllowReorder">
+                        @if (AllowReorder) {
+                            <td class="lyo-param-cell-center">
+                                <MudStack Row Spacing="0" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                    <span draggable="true"
+                                          title="Drag to reorder"
+                                          class="lyo-param-drag-handle"
+                                          @ondragstart="@(e => OnRowDragStart(e, index))"
+                                          @ondragend="@OnDragEnd">
+                                        <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mud-text-secondary"/>
+                                    </span>
+                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" title="Move up"
+                                                   Disabled="@(index == 0)" OnClick="@(() => Move(index, index - 1))"/>
+                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" title="Move down"
+                                                   Disabled="@(index == Items.Count - 1)" OnClick="@(() => Move(index, index + 1))"/>
+                                </MudStack>
+                            </td>
+                            <td class="lyo-param-cell-center">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@(row.Order + 1)</MudText>
+                            </td>
+                        }
+                        <td class="lyo-param-cell-center">
+                            <MudIconButton Icon="@(expanded ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)"
+                                           Size="Size.Small"
+                                           title="@(expanded ? "Collapse details" : "Expand details")"
+                                           OnClick="@(() => ToggleExpanded(row))"/>
+                        </td>
+                        <td>
+                            <LyoParameterKeyField Key="@row.Key" KeyChanged="@(v => SetKey(row, v))" InheritFrom="InheritFrom"/>
+                        </td>
+                        <td>
+                            <LyoTypeSelect Value="@row.Type" ValueChanged="@(v => SetType(row, v))" ShowFullNameField="false"/>
+                        </td>
+                        <td>
+                            <LyoParameterFlags Item="row"
+                                               ShowRequired="ShowRequired"
+                                               ShowEncrypt="ShowEncrypt"
+                                               ShowEnabled="ShowEnabled"
+                                               RequiredChanged="@(v => Set(() => row.Required = v))"
+                                               EncryptChanged="@(v => SetEncrypt(row, v))"
+                                               EnabledChanged="@(v => Set(() => row.Enabled = v))"/>
+                        </td>
+                        <td class="lyo-param-cell-actions">
+                            @if (row.IsNew) {
+                                <LyoChip Color="Color.Success" Label="New"/>
+                            }
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete parameter"
+                                           OnClick="@(() => DeleteRow(row))"/>
+                        </td>
+                    </tr>
+                    @if (expanded) {
+                        <tr>
+                            <td colspan="@ColSpan">
+                                <MudPaper Outlined="true" Class="pa-3" Elevation="0">
+                                    <LyoParameterDetails Item="row"
+                                                         ShowOptionsEditor="ShowOptionsEditor"
+                                                         ShowDefaultKind="ShowDefaultKind"
+                                                         ApiClient="ApiClient"
+                                                         SiblingValues="SiblingMap"
+                                                         DefaultValueHint="@ResolvedDefaultHint"
+                                                         FormatterContext="@FormatterContext"
+                                                         TypeChanged="@(v => SetType(row, v))"
+                                                         OnChanged="OnChanged"/>
+                                </MudPaper>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </MudSimpleTable>
+        </div>
+    }
+</MudStack>

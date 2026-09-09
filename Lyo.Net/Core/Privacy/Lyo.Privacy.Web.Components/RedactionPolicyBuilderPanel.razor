@@ -1,0 +1,167 @@
+@inject ISnackbar Snackbar
+@inject IJsInterop Js
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.body2" Color="Color.Secondary">
+        Rules follow JSON policy order: national IDs → detectors → API patterns → support-export token regexes → custom regex chips. Use <strong>Apply to Redaction tab</strong> to
+        test.
+    </MudText>
+
+    <MudPaper Class="pa-3" Outlined="true">
+        <MudStack Spacing="2">
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.subtitle2">Templates</MudText>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.Minimal)))">Minimal</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.Logging)))">Logging</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.SupportExport)))">Support export</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.PublicSurface)))">Public surface</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.RegressionTesting)))">Regression testing
+                </MudButton>
+                <MudDivider Vertical="true" FlexItem="true" Class="mx-1"/>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="ApplyAsync">Apply to Redaction tab</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" OnClick="CopyDraftJsonAsync">Copy
+                    draft JSON
+                </MudButton>
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+
+    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" Border="true">
+        <MudTabPanel Text="Policy shell" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="3">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_policyLabel" Label="Policy label (metrics / JSON name)" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_placeholder" Label="Placeholder" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudSwitch T="bool" @bind-Value="_mergeAdjacent" Color="Color.Primary" Label="Merge adjacent redaction runs"/>
+                        </MudItem>
+                    </MudGrid>
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">Never redact (literal substrings)</MudText>
+                        <LyoChipInput Values="@_neverRedactChips"
+                                      ValuesChanged="OnNeverRedactChipsChanged"
+                                      Placeholder="Type literal and press Enter — each chip is one never-redact substring"
+                                      ShowClearButton="true"/>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">Ordinal match; entire substring is left unchanged.</MudText>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="National IDs" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="2">
+                    <MudCheckBox T="bool" @bind-Value="_idUsSsn" Label="United States SSN (###-##-#### heuristics)"/>
+                    <MudCheckBox T="bool" @bind-Value="_idUkNino" Label="UK NINO (loose pattern)"/>
+                    <MudCheckBox T="bool" @bind-Value="_idDeSteuer" Label="Germany Steuer-ID (11 digits)"/>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Run before phone/email so SSN-shaped lines are not missed when phone rules use a higher digit minimum.
+                    </MudText>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Common detectors" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleEmail" Label="Email"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_rulePhone" Label="Phone"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleCard" Label="Payment card (Luhn)"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleUrl" Label="URL"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleIp" Label="IPv4 / IPv6"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleAddress" Label="Postal address heuristic"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleIban" Label="IBAN"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleBank" Label="Bank account digit run"/>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Phone options" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="3">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="4">
+                            <MudSelect T="string" @bind-Value="_phoneMode" Label="Mask mode" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                                <MudSelectItem Value="@("lastDigits")">Last digits visible</MudSelectItem>
+                                <MudSelectItem Value="@("full")">Full placeholder</MudSelectItem>
+                                <MudSelectItem Value="@("firstOfLast")">First digit of last group</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudNumericField T="int" @bind-Value="_phoneDigitsParam" Label="Digits parameter" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" Max="15"
+                                             FullWidth="true"
+                                             HelperText="Last-N visible or window for first-of-last."/>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudNumericField T="int" @bind-Value="_phoneMinDigits" Label="Minimum digit count" Variant="Variant.Outlined" Margin="Margin.Dense" Min="7" Max="19"
+                                             FullWidth="true"/>
+                        </MudItem>
+                    </MudGrid>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Applies when Phone is enabled on Common detectors.</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="IP &amp; bank" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="3">
+                    <MudSelect T="string" @bind-Value="_ipMode" Label="IPv4 mode" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                        <MudSelectItem Value="@("truncate")">Truncate last octet</MudSelectItem>
+                        <MudSelectItem Value="@("full")">Redact full address</MudSelectItem>
+                    </MudSelect>
+                    <MudNumericField T="ulong" @bind-Value="_bankMinNumeric" Label="Bank account: minimum numeric value (0 = off)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                     FullWidth="true"/>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">IPv4 mode applies when IPv4 / IPv6 detector is enabled.</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="API &amp; tokens" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="2">
+                    <MudCheckBox T="bool" @bind-Value="_apiAws" Label="AWS access key id (AKIA…)"/>
+                    <MudCheckBox T="bool" @bind-Value="_apiGithub" Label="GitHub PAT (ghp_ / ghs_ …)"/>
+                    <MudCheckBox T="bool" @bind-Value="_apiAssignment" Label="High-entropy KEY=value assignments"/>
+                    <MudNumericField T="double" @bind-Value="_apiMinEntropy" Label="Minimum entropy (bits/char, 0 = off)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                     FullWidth="true"/>
+                    <MudDivider Class="my-1"/>
+                    <MudCheckBox T="bool" @bind-Value="_extraBearerJwt" Label="Support-export extras: Bearer + JWT-shaped strings (regex rules)"/>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Custom regex" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle2">Additional regex rules</MudText>
+                    <LyoChipInput Values="@_regexChips"
+                                  ValuesChanged="OnRegexChipsChanged"
+                                  Placeholder="One .NET regex per chip — Enter to add (kind Custom)"
+                                  ShowClearButton="true"/>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Each chip becomes a regex rule with the policy placeholder per match. Invalid patterns fail on Apply.
+                    </MudText>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+    </MudTabs>
+</MudStack>

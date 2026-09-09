@@ -1,0 +1,97 @@
+{
+  "id": "Lyo.Diff",
+  "name": "Lyo.Diff",
+  "area": "Core",
+  "tagline": "Compare human-readable text and object graphs side by side.",
+  "description": "Compare human-readable text and object graphs side by side. Two subsystems sit behind `IDiffService`, and you can inject either one on its own.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register in DI",
+      "language": "csharp",
+      "code": "using Lyo.Diff;\n\nbuilder.Services.AddLyoDiff(); // ITextTokenizer, ITextDiffService, IObjectGraphDiffService, IDiffService"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Diffing text (`Lyo.Diff.Text`)",
+      "items": [
+        "**`ITextTokenizer` (`TextTokenizer`).** Uses `TextDiffOptions` to split input into `TextToken[]` (`TextTokenizeMode` chooses line, word, or character; ignore case; ignore whitespace; `MaxTokensPerSide` safety cap). The cap throws when exceeded so pathological input cannot run away with memory.",
+        "**`ITextDiffService` (`TextDiffService`).** Myers-diffs two parallel token streams and returns a `TextDiffResult` whose ordered `TextDiffChunk` segments carry a `TextDiffKind` (equal, insert, delete).",
+        "**`MyersDiffCalculator`.** The algorithm, applied to spans that are already tokenized."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Diffing object graphs (`Lyo.Diff.ObjectGraph`)",
+      "items": [
+        "**`IObjectGraphDiffService` (`ObjectGraphDiffService`).** Walks two instances of the same nominal type (or compatible graphs), compares reachable properties and nested objects under `ObjectGraphDiffOptions`, and yields `ObjectGraphDifference` entries (path/context plus old/new leaf values).",
+        "**`ObjectGraphLeafContext`.** Records where in the graph the change happened, for UI or logging."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Facade",
+      "items": [
+        "**`IDiffService`.** Surfaces `Text` and `Objects` so a single injection covers both."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Registration",
+      "text": "Defaults register as singletons. Aside from options you pass per call, the services hold no state."
+    },
+    {
+      "type": "list",
+      "title": "Notes on design",
+      "items": [
+        "EF and JSON are not dependencies. You pass a `string` or CLR objects you already hydrated.",
+        "Nothing is persisted automatically. Snapshot a \"before\" state yourself if you need one.",
+        "**Security.** Diffing arbitrary user text can leak secrets in logs. Sanitize `TextDiffResult` before you expose it — the same caution as storing raw payloads."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Related reading",
+      "items": [
+        "[`Lyo.Diagnostic`](../../Diagnostic/Lyo.Diagnostic/README.md). Enrich stack and metadata when triage tooling consumes the diff output."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Diff/Lyo.Diff/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

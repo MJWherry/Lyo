@@ -1,0 +1,36 @@
+namespace Lyo.ContentThreatScan.Tests;
+
+public sealed class DefaultContentThreatScannerTests
+{
+    [Fact]
+    public async Task Harmless_Json_Produces_Clean_Contribution_List_When_Eligible()
+    {
+        var opts = new ContentThreatHeuristicOptions();
+        DefaultContentThreatScanner sut = new(opts);
+        var ctx = new ContentThreatScanContext("data.json", "application/json");
+        var harmless = "{\"hello\":\"world\"}"u8.ToArray();
+        var hits = await sut.CollectHeuristicContributionsAsync(harmless, ctx, TestContext.Current.CancellationToken);
+        Assert.Empty(hits);
+    }
+
+    [Fact]
+    public async Task Union_Select_Boosts_Scores_For_Json_Eligible_Streams()
+    {
+        var opts = new ContentThreatHeuristicOptions();
+        DefaultContentThreatScanner sut = new(opts);
+        var hostile = "{\"payload\":\" UNION SELECT username FROM accounts\"}"u8.ToArray();
+        var hits = await sut.CollectHeuristicContributionsAsync(hostile, new("evil.json", "application/json"), TestContext.Current.CancellationToken);
+        Assert.Contains(hits, contribution => string.Equals(contribution.RuleId, "sql.union_select", StringComparison.Ordinal));
+        Assert.True(hits.Sum(point => point.Points) >= 35m);
+    }
+
+    [Fact]
+    public async Task Binary_Prefix_Short_Circuits_When_Nul_Presence_Detected()
+    {
+        ContentThreatHeuristicOptions opts = new() { SkipIfLikelyBinary = true, TreatNullOctetAsBinary = true };
+        DefaultContentThreatScanner sut = new(opts);
+        var buffer = "{a,,,,,,,,\0}"u8.ToArray();
+        var hits = await sut.CollectHeuristicContributionsAsync(buffer, new("sample.json", "application/json"), TestContext.Current.CancellationToken);
+        Assert.Empty(hits);
+    }
+}

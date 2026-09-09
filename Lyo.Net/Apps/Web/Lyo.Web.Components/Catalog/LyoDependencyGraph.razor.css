@@ -1,0 +1,31 @@
+.lyo-dep-graph {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+}
+
+.lyo-dep-graph-root {
+    min-width: 12rem;
+}
+
+.lyo-dep-graph-edges {
+    width: 2px;
+    height: 1rem;
+    margin-left: 1.5rem;
+    background: var(--mud-palette-lines-default);
+}
+
+.lyo-dep-graph-deps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.lyo-dep-graph-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-top: 0.25rem;
+}

@@ -1,0 +1,73 @@
+using System.Text;
+
+namespace Lyo.Streams.Tests;
+
+public sealed class ConcatenatedStreamTests
+{
+    [Fact]
+    public void Reads_Concatenated_Content_From_Multiple_Streams()
+    {
+        var s1 = new MemoryStream("Hello "u8.ToArray());
+        var s2 = new MemoryStream("World"u8.ToArray());
+        using var concat = new ConcatenatedStream([s1, s2]);
+        using var reader = new StreamReader(concat);
+        var result = reader.ReadToEnd();
+        Assert.Equal("Hello World", result);
+    }
+
+    [Fact]
+    public void ReadAsync_Returns_Concatenated_Content()
+    {
+        var s1 = new MemoryStream("A"u8.ToArray());
+        var s2 = new MemoryStream("B"u8.ToArray());
+        var s3 = new MemoryStream("C"u8.ToArray());
+        using var concat = new ConcatenatedStream([s1, s2, s3]);
+        var buffer = new byte[10];
+        var total = 0;
+        int read;
+        while ((read = concat.Read(buffer, total, buffer.Length - total)) > 0)
+            total += read;
+
+        Assert.Equal("ABC", Encoding.UTF8.GetString(buffer, 0, total));
+    }
+
+    [Fact]
+    public void Throws_On_Null_Streams()
+    {
+        Assert.Throws<ArgumentNullException>(() => new ConcatenatedStream(null!));
+        Assert.Throws<ArgumentNullException>(() => new ConcatenatedStream([new MemoryStream(), null!]));
+    }
+
+    [Fact]
+    public void Throws_On_Empty_Streams() => Assert.Throws<InvalidOperationException>(() => new ConcatenatedStream([]));
+
+    [Fact]
+    public void Length_Throws_NotSupportedException()
+    {
+        using var concat = new ConcatenatedStream([new MemoryStream("x"u8.ToArray())]);
+        Assert.Throws<NotSupportedException>(() => _ = concat.Length);
+    }
+
+    [Fact]
+    public void Seek_Throws_NotSupportedException()
+    {
+        using var concat = new ConcatenatedStream([new MemoryStream("x"u8.ToArray())]);
+        Assert.Throws<NotSupportedException>(() => concat.Seek(0, SeekOrigin.Begin));
+    }
+
+    [Fact]
+    public void Write_Throws_NotSupportedException()
+    {
+        using var concat = new ConcatenatedStream([new MemoryStream("x"u8.ToArray())]);
+        var buf = new byte[1];
+        Assert.Throws<NotSupportedException>(() => concat.Write(buf, 0, 1));
+    }
+
+    [Fact]
+    public void Params_Constructor_Works()
+    {
+        using var concat = new ConcatenatedStream(false, new MemoryStream("a"u8.ToArray()), new MemoryStream(Encoding.UTF8.GetBytes("b")));
+        using var reader = new StreamReader(concat);
+        Assert.Equal("ab", reader.ReadToEnd());
+    }
+}

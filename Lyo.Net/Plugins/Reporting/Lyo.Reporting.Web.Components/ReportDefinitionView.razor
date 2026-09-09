@@ -1,0 +1,68 @@
+@inject IApiClient ApiClient
+
+<LyoDialog DebugData="@Definition">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Definition.Name) ? "Report Definition" : Definition.Name)</MudText>
+    </TitleContent>
+    <TitleChips>
+        @if (Definition.DefaultFormat is { } format) {
+            <LyoChip Spec="@ReportColorHelper.ForFormatChip(format)"/>
+        }
+        <LyoChip Spec="@LyoChips.FromBool(Definition.IsActive, "Active", "Off", Color.Success, Color.Default)"/>
+        @if (!string.IsNullOrWhiteSpace(Definition.GenerationProfileKey)) {
+            <LyoChip Variant="Variant.Outlined" Label="@Definition.GenerationProfileKey"/>
+        }
+        @if (Design.HasDelegate) {
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.DashboardCustomize" OnClick="OnDesign">Design</MudButton>
+        }
+    </TitleChips>
+    <ChildContent>
+        <MudGrid Class="pa-0" Spacing="1">
+            <MudItem xs="12" sm="6" md="3">
+                <LyoIdField Label="ID" Value="@Definition.Id"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Created By" Value="@(Definition.CreatedBy ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Created" Value="@Definition.CreatedTimestamp.ToString("g")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Updated" Value="@(Definition.UpdatedTimestamp?.ToString("g") ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Path Prefix" Value="@(Definition.DefaultPathPrefix ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField T="string" Label="File Name" Value="@(Definition.DefaultFileName ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Tags" Value="@(Definition.Tags ?? "-")" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            @if (!string.IsNullOrWhiteSpace(Definition.Description)) {
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Description" Value="@Definition.Description" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                </MudItem>
+            }
+            <MudItem xs="12">
+                <MudExpansionPanels Elevation="0" Dense="true">
+                    <MudExpansionPanel Text="ReportDataJson">
+                        <MudTextField T="string"
+                                      Value="@Definition.ReportDataJson"
+                                      ReadOnly
+                                      Variant="Variant.Outlined"
+                                      Lines="6"
+                                      Class="mud-width-full"/>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            </MudItem>
+            <MudItem xs="12">
+                <ReportParameterView Parameters="Definition.Parameters"
+                                     Definition="Definition"
+                                     ReportDefinitionId="Definition.Id"
+                                     ApiClient="ApiClient"
+                                     DefinitionRoute="@DefinitionRoute"/>
+            </MudItem>
+        </MudGrid>
+    </ChildContent>
+</LyoDialog>

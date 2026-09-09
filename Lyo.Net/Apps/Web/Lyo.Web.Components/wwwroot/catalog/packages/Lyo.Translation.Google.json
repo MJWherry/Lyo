@@ -1,0 +1,231 @@
+{
+  "id": "Lyo.Translation.Google",
+  "name": "Lyo.Translation.Google",
+  "area": "Communication",
+  "tagline": "Google Cloud Translation v2 that implements `ITranslationService`. `GoogleTranslationService` extends `TranslationServiceBase` and calls the REST API over HTTP.",
+  "description": "Google Cloud Translation v2 that implements `ITranslationService`. `GoogleTranslationService` extends `TranslationServiceBase` and calls the REST API over HTTP.\n\n**Target frameworks:** `netstandard2.0;net10.0`",
+  "features": [],
+  "examples": [
+    {
+      "title": "Wire into DI",
+      "language": "csharp",
+      "code": "using Lyo.Translation.Google;\n\nservices.AddGoogleTranslationServiceFromConfiguration(configuration);\n// Override the configuration section name (default: \"GoogleTranslationOptions\"):\n// services.AddGoogleTranslationServiceFromConfiguration(configuration, \"MyGoogle\");"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Service registration",
+      "items": [
+        "`AddGoogleTranslationService(Action<GoogleTranslationOptions> configure)` takes configuration inline.",
+        "`AddGoogleTranslationService(GoogleTranslationOptions options)` takes a ready-made options instance."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "`GoogleTranslationOptions`",
+      "headers": [
+        "Property",
+        "Type",
+        "Default",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`ApiKey`",
+          "`string?`",
+          "`null`",
+          "Google Cloud API key. Required by `TranslateCoreAsync`. The service throws when that key is missing."
+        ],
+        [
+          "`ProjectId`",
+          "`string?`",
+          "`null`",
+          "GCP project id, used with service-account credentials."
+        ],
+        [
+          "`ServiceAccountJsonPath`",
+          "`string?`",
+          "`null`",
+          "Optional path to a service-account credentials JSON file."
+        ],
+        [
+          "`ApiEndpoint`",
+          "`string`",
+          "`https://translation.googleapis.com/language/translate/v2`",
+          "REST endpoint base; trailing slashes are dropped at startup."
+        ]
+      ],
+      "lead": "Inherits all of [`TranslationServiceOptions`](../Lyo.Translation/README.md). and adds:",
+      "trail": "Configuration section name: `GoogleTranslationOptions.SectionName = \"GoogleTranslationOptions\"`."
+    },
+    {
+      "type": "table",
+      "title": "Runtime notes",
+      "headers": [
+        "Area",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "API",
+          "POSTs to `{ApiEndpoint}?key={ApiKey}` with `{ q, target, source }` (source left out when unset so the API can auto-detect)."
+        ],
+        [
+          "Language codes",
+          "Google Translate uses ISO 639-1; the service takes that from `LanguageCodeInfo.Iso6391` (falls back to the first segment of `Bcp47`)."
+        ],
+        [
+          "Detection",
+          "`TranslateCoreAsync` maps the API's `detectedSourceLanguage` through `LanguageCodeInfo.FromISO639_1` when that field is present."
+        ],
+        [
+          "Metrics",
+          "Replaces the base `MetricNames` with `translation.google.*` (see `Lyo.Translation.Google.Constants.Metrics`)."
+        ],
+        [
+          "Disposal",
+          "`Dispose` disposes the HTTP client the service created. An externally supplied `HttpClient` is also disposed when passed in, so inject a long-lived client via DI and letting the consumer manage its lifetime."
+        ]
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Translation/Lyo.Translation.Google/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Translation",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

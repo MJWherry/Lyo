@@ -1,0 +1,38 @@
+@namespace Lyo.Web.Components.Catalog
+
+@if (_loading) {
+    <LyoSkeletonPanel Rows="4"/>
+}
+else if (!string.IsNullOrEmpty(_error)) {
+    <MudAlert Severity="Severity.Warning">@_error</MudAlert>
+}
+else if (_doc is null) {
+    <LyoEmptyState Title="No package selected" Icon="@Icons.Material.Filled.AccountTree"/>
+}
+else if (_doc.Dependencies.Count == 0) {
+    <LyoEmptyState Title="No dependencies listed" Description="@($"{_doc.Name} has an empty dependency list in the catalog.")" Icon="@Icons.Material.Filled.AccountTree"/>
+}
+else {
+    <div class="lyo-dep-graph">
+        <MudPaper Outlined="true" Class="pa-3 lyo-dep-graph-root">
+            <MudText Typo="Typo.subtitle1">@_doc.Name</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@_doc.Area</MudText>
+        </MudPaper>
+        <div class="lyo-dep-graph-edges" aria-hidden="true"/>
+        <div class="lyo-dep-graph-deps">
+            @foreach (var group in Grouped) {
+                <div>
+                    <MudText Typo="Typo.overline">@group.Key</MudText>
+                    <div class="lyo-dep-graph-chips">
+                        @foreach (var dependency in group) {
+                            <LyoChip Label="@ChipLabel(dependency)"
+                                     Color="@(dependency.Kind == "lyo" ? Color.Primary : Color.Default)"
+                                     Variant="Variant.Outlined"
+                                     Title="@dependency.Name"/>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

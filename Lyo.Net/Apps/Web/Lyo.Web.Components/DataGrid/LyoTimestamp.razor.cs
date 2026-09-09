@@ -1,0 +1,47 @@
+using System.Globalization;
+using Microsoft.AspNetCore.Components;
+
+namespace Lyo.Web.Components.DataGrid;
+
+public partial class LyoTimestamp
+{
+    /// <summary>UTC instant to display (DateTime, DateTimeOffset, ISO string, or projected JSON).</summary>
+    [Parameter]
+    public object? Value { get; set; }
+
+    /// <summary>Display mode. Default is absolute local date/time.</summary>
+    [Parameter]
+    public LyoTimestampKind Kind { get; set; } = LyoTimestampKind.Absolute;
+
+    /// <summary>.NET format string for the absolute form (and tooltip). Default <c>g</c>.</summary>
+    [Parameter]
+    public string AbsoluteFormat { get; set; } = "g";
+
+    /// <summary>
+    /// ± window for <see cref="LyoTimestampKind.Relative" />, <see cref="LyoTimestampKind.TimeUntil" />, and <see cref="LyoTimestampKind.TimeSince" />.
+    /// Instants outside this duration from now draw as absolute. Default is 24 hours.
+    /// </summary>
+    [Parameter]
+    public TimeSpan RelativeWindow { get; set; } = TimeSpan.FromHours(24);
+
+    private string? _display;
+    private string _absolute = "";
+
+    /// <inheritdoc/>
+    protected override async Task OnParametersSetAsync()
+    {
+        var utc = LyoDateTimeDisplay.ToUtc(Value);
+        if (utc is null) {
+            _display = null;
+            _absolute = "";
+            return;
+        }
+
+        var zone = await TimeZone.GetAsync();
+        var local = TimeZoneInfo.ConvertTimeFromUtc(utc.Value, zone);
+        var tz = LyoDateTimeDisplay.FormatTimeZoneLabel(zone, local);
+        var localText = local.ToString(AbsoluteFormat, CultureInfo.CurrentCulture);
+        _absolute = $"{localText} {tz}";
+        _display = LyoDateTimeDisplay.FormatKind(Kind, utc.Value, _absolute, RelativeWindow);
+    }
+}

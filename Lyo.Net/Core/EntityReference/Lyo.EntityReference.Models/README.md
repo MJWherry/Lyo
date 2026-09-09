@@ -1,0 +1,67 @@
+# Lyo.EntityReference.Models
+
+Typed pair of logical entity kind (`EntityType`) and identifier string (`EntityId`), with helpers for composite keys, JSON, opaque tokens, validation, and domain row shapes. No database or EF dependency.
+
+## Examples
+
+### First steps
+
+```csharp
+using System.Text.Json;
+using Lyo.EntityReference.Models;
+
+// From CLR type + Guid key (logical type from attribute or FullName)
+var r = EntityRef.For<MyAggregate>(aggregate.Id);
+
+// From entity instance + collection expression keys
+var rEntity = EntityRef.For(person, p => [p.Id]);
+
+// Logical type name only
+var typeName = EntityRef.LogicalTypeName<MyAggregate>();
+
+// Explicit type + id
+var r2 = EntityRef.ForKey("Comic.Issue", issueId.ToString());
+
+// JSON: register converter once
+var options = new JsonSerializerOptions();
+options.Converters.Add(new EntityRefJsonConverter());
+JsonSerializer.Serialize(r, options); // {"entityType":"...","entityId":"..."}
+
+// Relation endpoints (For = subject, From = actor)
+var endpoints = EntityRelationBuilder.For<Volume>(volumeId).From<User>(userId);
+EntityRelationValidation.RequireSubjectActor(endpoints.Subject, endpoints.Actor);
+
+// Import provenance (owner id assigned on persist)
+var source = EntitySourceRecord.From<EndatoPsPerson>(externalId, DateTime.UtcNow);
+EntitySourceValidation.RequireSource(source);
+
+// Map EntityRef to persisted string columns (Guid ids become "d290f1ee-6c54-4b01-90e6-d701748f0851")
+var subjectId = EntityRefPersistedGuid.PersistedEntityId(subjectRef);
+```
+
+## Ideas in play
+
+- **`EntityRef`.** Immutable value (`readonly record struct`) used at API boundaries. Constructors reject whitespace-only type and id.
+- **Stable type names.** Mark CLR types with `[EntityRefLogicalType("MyModule.Widget")]` so persisted `EntityType` does not depend on `Type.FullName`.
+- **Composite ids.** Multiple key segments are sorted lexically and joined via `EntityRefCompositeEncoding` so a literal `:` inside a segment stays unambiguous.
+- **Relation vs source.** Two persistence shapes:
+- **Relations** (note, favorite, comment, …). Actor + subject endpoints. Domain types use `ActorEntityId` / `SubjectEntityType`. PostgreSQL columns remain `from_entity_*` / `for_entity_*`.
+- **Source links** (`*_source`). External import provenance only: `source_entity_id` / `source_entity_type` + `imported_at`. Owner identity lives on the parent aggregate (for example `person_id`), not in EntityReference.
+- **String persistence.** Endpoint and source ids are nullable varchar at the DB. Stores and validation helpers enforce required values per use case. Callers still pass `EntityRef` at API boundaries. Use `EntityRefPersistedGuid.PersistedEntityId()` (or `RequirePersistedGuid` when comparing to row `Guid` primary keys) when `EntityId` is a single GUID string.
+- **`EntityRelationRow`.** Abstract domain mirror of a tenant-scoped relation row (actor/subject, visibility, soft-delete, metadata). Endpoint properties are `string?`, aligned with persisted columns.
+- **`EntitySourceRecord`.** Provenance shape: `(EntityRef Source, DateTime ImportedAt)`. Use `EntitySourceRecord.From(source, importedAt)` at import. The owning aggregate id is set when persisting child `*_source` rows.
+- **`IEntitySourceDerived`.** Aggregates imported from external sources carry optional `EntitySourceRecord? Source` and `LocallyModifiedAt` when local edits diverge from the external source.
+
+## Debugging
+
+`EntityRelationRow`, `EntityRef`, `EntityRefActionContext`, and `EntityRefOptions` use `[DebuggerDisplay(...)]` for compact watches. Several types override `ToString()` for readable logs, distinct from `ToOpaqueToken()` on `EntityRef`.
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Common.Core` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

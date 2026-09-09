@@ -1,0 +1,143 @@
+@page "/auth/login"
+@page "/auth/login/{*ReturnUrl}"
+@using Lyo.Authentication.Models.Records
+
+@inject IAuthSignInLauncher SignInLauncher
+@inject IAuthProviderCatalog ProviderCatalog
+@inject AuthenticationStateProvider AuthState
+@inject LyoAuthWebComponentsOptions Options
+@inject IServiceProvider Services
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Sign in</PageTitle>
+
+<LyoElementRoot DefaultId="LyoAuthLoginPage" ElementId="@ElementId">
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8 mb-8">
+        <MudPaper Class="pa-6" Elevation="3">
+            @if (_loading) {
+                <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                    <MudProgressCircular Indeterminate="true"/>
+                </MudStack>
+            }
+            else if (_currentUser is not null) {
+                <MudStack Spacing="3">
+                    <MudText Typo="Typo.h5">Already signed in</MudText>
+                    <MudText Typo="Typo.body1">
+                        You're signed in as <strong>@ResolveDisplayName(_currentUser)</strong>.
+                    </MudText>
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.ArrowForward"
+                                   OnClick="GoToReturnUrlAsync">
+                            Continue
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Logout"
+                                   OnClick="SignOutAsync">
+                            Sign out
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            }
+            else {
+                <MudStack Spacing="4">
+                    <div>
+                        <MudText Typo="Typo.h5" GutterBottom="true">Sign in</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Choose an identity provider to continue.
+                        </MudText>
+                    </div>
+
+                    @if (_providers.Count == 0) {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                            No identity providers are configured. Add entries under <code>LyoAuthWebComponents:Providers</code> in app configuration.
+                        </MudAlert>
+                    }
+                    else {
+                        <MudStack Spacing="2">
+                            @foreach (var provider in _providers) {
+                                var thisBusy = _providerBusy && string.Equals(_busyProvider, provider.Name, StringComparison.Ordinal);
+                                <MudButton FullWidth="true"
+                                           Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           Size="Size.Large"
+                                           Disabled="@(_providerBusy || _passwordBusy)"
+                                           StartIcon="@(thisBusy ? null : provider.IconKey ?? Icons.Material.Filled.AccountCircle)"
+                                           OnClick="@(() => StartProviderSignInAsync(provider.Name))">
+                                    @if (thisBusy) {
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+                                        <span>Signing in...</span>
+                                    }
+                                    else {
+                                        @provider.DisplayName
+                                    }
+                                </MudButton>
+                            }
+                        </MudStack>
+                    }
+
+                    @if (_showPasswordCard) {
+                        <MudDivider Class="my-2"/>
+
+                        <MudText Typo="Typo.overline" Align="Align.Center" Color="Color.Secondary">or</MudText>
+
+                        <MudPaper Outlined="true" Class="pa-4">
+                            <EditForm Model="_passwordForm" OnValidSubmit="SubmitPasswordAsync">
+                                <MudStack Spacing="3">
+                                    <MudTextField @bind-Value="_passwordForm.Username"
+                                                  Label="Username or email"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true"
+                                                  Margin="Margin.Dense"
+                                                  Disabled="@(_passwordBusy || _providerBusy)"/>
+
+                                    <MudTextField @bind-Value="_passwordForm.Password"
+                                                  Label="Password"
+                                                  Variant="Variant.Outlined"
+                                                  InputType="@(_passwordVisible ? InputType.Text : InputType.Password)"
+                                                  Adornment="Adornment.End"
+                                                  AdornmentIcon="@(_passwordVisible ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                                  OnAdornmentClick="TogglePasswordVisibility"
+                                                  Required="true"
+                                                  Margin="Margin.Dense"
+                                                  Disabled="@(_passwordBusy || _providerBusy)"/>
+
+                                    @if (Options.ShowRememberMe) {
+                                        <MudCheckBox @bind-Value="_passwordForm.RememberMe"
+                                                     Color="Color.Primary"
+                                                     Label="Remember me"
+                                                     Disabled="@(_passwordBusy || _providerBusy)"/>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(_passwordError)) {
+                                        <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">
+                                            @_passwordError
+                                        </MudAlert>
+                                    }
+
+                                    <MudButton ButtonType="ButtonType.Submit"
+                                               FullWidth="true"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Disabled="@(_passwordBusy || _providerBusy)"
+                                               StartIcon="@(_passwordBusy ? null : Icons.Material.Filled.Login)">
+                                        @if (_passwordBusy) {
+                                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+                                            <span>Signing in...</span>
+                                        }
+                                        else {
+                                            <span>Sign in</span>
+                                        }
+                                    </MudButton>
+                                </MudStack>
+                            </EditForm>
+                        </MudPaper>
+                    }
+                </MudStack>
+            }
+        </MudPaper>
+    </MudContainer>
+</LyoElementRoot>

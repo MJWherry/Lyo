@@ -1,0 +1,42 @@
+namespace Lyo.Streams.Tests;
+
+public sealed class ProgressStreamTests
+{
+    [Fact]
+    public void Reports_Write_Progress()
+    {
+        var dest = new MemoryStream();
+        var reported = new List<long>();
+        var progress = new Progress<long>(reported.Add);
+        var data = "hello"u8.ToArray();
+        using var progressStream = new ProgressStream(dest, writeProgress: progress);
+        progressStream.Write(data, 0, data.Length);
+        Assert.Equal(5L, progressStream.TotalBytesWritten);
+        Assert.Equal(5, dest.Length);
+    }
+
+    [Fact]
+    public void Reports_Read_Progress()
+    {
+        var src = new MemoryStream("abc"u8.ToArray());
+        var progress = new Progress<long>(_ => { });
+        var buffer = new byte[3];
+        using var progressStream = new ProgressStream(src, progress);
+        progressStream.ReadExactly(buffer, 0, buffer.Length);
+        Assert.Equal(3L, progressStream.TotalBytesRead);
+    }
+
+    [Fact]
+    public void TotalBytesWritten_Tracks_Writes()
+    {
+        var dest = new MemoryStream();
+        using var progressStream = new ProgressStream(dest);
+        progressStream.Write("12"u8.ToArray(), 0, 2);
+        Assert.Equal(2L, progressStream.TotalBytesWritten);
+        progressStream.Write("345"u8.ToArray(), 0, 3);
+        Assert.Equal(5L, progressStream.TotalBytesWritten);
+    }
+
+    [Fact]
+    public void Throws_On_Null_Base_Stream() => Assert.Throws<ArgumentNullException>(() => new ProgressStream(null!));
+}

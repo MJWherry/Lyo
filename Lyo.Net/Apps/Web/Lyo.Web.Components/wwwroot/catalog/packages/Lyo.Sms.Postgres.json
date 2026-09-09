@@ -1,0 +1,240 @@
+{
+  "id": "Lyo.Sms.Postgres",
+  "name": "Lyo.Sms.Postgres",
+  "area": "Communication",
+  "tagline": "PostgreSQL EF Core store for outbound SMS logs (`SmsLogEntity`). The package never sends SMS. It wires `SmsDbContext` so workers or gateways can store send outcomes.",
+  "description": "PostgreSQL EF Core store for outbound SMS logs (`SmsLogEntity`). The package never sends SMS. It wires `SmsDbContext` so workers or gateways can persist send outcomes after [`Lyo.Sms`](../Lyo.Sms/README.md) / [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md) completes.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Schema and row type",
+      "items": [
+        "**Schema.** `sms` (`PostgresSmsOptions.Schema` = `\"sms\"`).",
+        "**`SmsLogEntity`.** `Id` (guid), `To` / `From`, `Body`, `MediaUrlsJson` (serialized MMS attachments), `IsSuccess`, `Message`, `ErrorMessage`, `ElapsedTimeMs`, `MessageId`, `Status`, `ErrorCode`, timeline fields (`DateCreated`, `DateSent`, `DateUpdated`), and `CreatedAt`."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "`PostgresSmsOptions`",
+      "headers": [
+        "Member",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "`SectionName`",
+          "`\"PostgresSms\"` for `IConfiguration` binding"
+        ],
+        [
+          "`ConnectionString`",
+          "Required"
+        ],
+        [
+          "`EnableAutoMigrations`",
+          "Honored through [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) migration host integration"
+        ],
+        [
+          "Implements `IPostgresMigrationConfig`",
+          "Schema = `sms`"
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Service registration",
+      "items": [
+        "`AddSmsDbContext(string connectionString)` registers a factory plus a scoped `SmsDbContext` (the scoped registration pulls a fresh context from `IDbContextFactory<SmsDbContext>`).",
+        "`AddSmsDbContextFactory(PostgresSmsOptions)` / `AddSmsDbContextFactory` (`Action<PostgresSmsOptions>`) wire singleton options plus `AddDbContextFactory` with `UseNpgsql` and the migration history schema.",
+        "`AddSmsDbContextFactoryFromConfiguration(IConfiguration, section = PostgresSmsOptions.SectionName)` binds `PostgresSms` (or an override), then registers the factory."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "When `Lyo.Sms.Twilio.Postgres` fits better",
+      "text": "If `TwilioSmsResult` is what you need (price, segments, account SID, direction), use [`Lyo.Sms.Twilio.Postgres`](../Lyo.Sms.Twilio.Postgres/README.md) (`TwilioSmsLogEntity`, keyed by Twilio message SID)."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Sms/Lyo.Sms.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Sms",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Sms.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

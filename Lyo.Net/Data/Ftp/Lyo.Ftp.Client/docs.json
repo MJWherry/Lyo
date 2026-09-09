@@ -1,0 +1,143 @@
+{
+  "id": "Lyo.Ftp.Client",
+  "name": "Lyo.Ftp.Client",
+  "area": "Data",
+  "tagline": "FluentFTP client with a connection pool, PathHelpers jail, logging, and Lyo.Metrics. Prefer `*Async`.",
+  "description": "FluentFTP wrapper for FTP/FTPS used by Lyo hosts and storage adapters (`Lyo.IO.Temp.Ftp`, `Lyo.FileStorage.Ftp`). Call `*Async` from hosts (`Task` + `CancellationToken`). Those methods hit FluentFTP's async API and the await-safe pool/per-client gates. Sync methods wait on that async path. Pooled connections are leased, POSIX paths stay under `RootRemoteDirectory` through `Lyo.Common.Core.Pathing.PathHelpers`, and FTPS can encrypt the session. `ILogger` and `ftp.*` metrics are recorded. Callers may run concurrently up to `MaxPooledClients`. Do not share one leased `Stream` across threads.",
+  "features": [
+    "**Async.** Hosts and adapters should call `*Async`. Sync wrappers wait on the async implementation. No `Task.Run`.",
+    "**Pooled leases.** Up to `MaxPooledClients` FluentFTP clients at once. Each client serializes work across awaits with a `SemaphoreSlim`.",
+    "**Concurrent callers.** Parallelism stops at the pool size. A single leased stream is not thread-safe.",
+    "**Path jail.** Paths stay under `RootRemoteDirectory` with `PathStyle.Posix`.",
+    "**FTPS.** `FtpEncryptionMode` (`None` / `Explicit` / `Implicit`) plus `FtpTlsPolicy` (`ValidateCertificate` / `AcceptAny`).",
+    "**Logging and metrics.** `ILogger` and `IMetrics` (`ftp.connect`, `ftp.operation`, `ftp.bytes`, `ftp.pool`, `ftp.errors`). Turning `EnableMetrics` off uses `NullMetrics`.",
+    "**DI.** `AddFtpClient` / `AddFtpClientFromConfiguration`."
+  ],
+  "examples": [
+    {
+      "title": "DI setup",
+      "language": "csharp",
+      "code": "services.AddFtpClient(o =>\n{\n    o.Host = \"ftp.example.com\";\n    o.Username = \"lyo\";\n    o.Password = secret;\n    o.RootRemoteDirectory = \"/data/lyo\";\n    o.Port = PortInfo.Ftp;\n    o.EncryptionMode = FtpEncryptionMode.None;\n});"
+    },
+    {
+      "title": "Upload and download asynchronously",
+      "language": "csharp",
+      "code": "await client.UploadAsync(\"report.bin\", bytes, ct);\nvar copy = await client.DownloadBytesAsync(\"report.bin\", ct);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Ftp/Lyo.Ftp.Client/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "FluentFTP",
+      "kind": "package",
+      "version": "54.2.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -1,0 +1,61 @@
+@namespace Lyo.Web.Primitives
+
+<MudMenu Disabled="@IsDisabled"
+         Dense="@Dense"
+         Class="@Class"
+         AnchorOrigin="@AnchorOrigin"
+         TransformOrigin="@TransformOrigin"
+         PopoverFixed="@PopoverFixed"
+         PopoverClass="@PopoverClass"
+         @attributes="AdditionalAttributes">
+    <ActivatorContent>
+        @if (HasLabel) {
+            @if (string.IsNullOrWhiteSpace(Tooltip)) {
+                <MudButton Size="Size.Small"
+                           Variant="@Variant"
+                           Color="@Color"
+                           StartIcon="@Icon"
+                           EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                           Disabled="@IsDisabled"
+                           OnClick="@context.ToggleAsync">
+                    @Label
+                </MudButton>
+            }
+            else {
+                <MudTooltip Text="@Tooltip">
+                    <MudButton Size="Size.Small"
+                               Variant="@Variant"
+                               Color="@Color"
+                               StartIcon="@Icon"
+                               EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                               Disabled="@IsDisabled"
+                               OnClick="@context.ToggleAsync">
+                        @Label
+                    </MudButton>
+                </MudTooltip>
+            }
+        }
+        else {
+            @if (string.IsNullOrWhiteSpace(Tooltip)) {
+                <MudIconButton Icon="@Icon"
+                               Size="Size.Small"
+                               Color="@Color"
+                               Disabled="@IsDisabled"
+                               OnClick="@context.ToggleAsync"
+                               title="@Tooltip"/>
+            }
+            else {
+                <MudTooltip Text="@Tooltip">
+                    <MudIconButton Icon="@Icon"
+                                   Size="Size.Small"
+                                   Color="@Color"
+                                   Disabled="@IsDisabled"
+                                   OnClick="@context.ToggleAsync"/>
+                </MudTooltip>
+            }
+        }
+    </ActivatorContent>
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+</MudMenu>

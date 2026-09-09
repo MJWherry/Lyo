@@ -1,0 +1,9 @@
+<span style="display: inline-flex; align-items: center; flex-shrink: 0;">
+    @if (Policy is null) {
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="white-space: nowrap;">FP: —</MudText>
+    }
+    else {
+        var fp = RedactionPolicyFingerprint.ComputeSha256HexPrefix(Policy);
+        <LyoChip Variant="Variant.Outlined" Label="@fp" Title="@($"Fingerprint: {fp}")"/>
+    }
+</span>

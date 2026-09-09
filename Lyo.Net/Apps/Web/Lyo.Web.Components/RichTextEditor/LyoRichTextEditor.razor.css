@@ -1,0 +1,200 @@
+.lyo-rte-shell {
+    overflow: hidden;
+}
+
+.lyo-rte-toolbar {
+    padding: 8px;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+    background: color-mix(in srgb, var(--mud-palette-surface) 96%, var(--mud-palette-text-primary) 4%);
+}
+
+.lyo-rte-format-select {
+    min-width: 160px;
+    margin-right: 4px;
+}
+
+.lyo-rte-native-select {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    background: var(--mud-palette-surface);
+    color: var(--mud-palette-text-primary);
+    font: inherit;
+}
+
+.lyo-rte-font-select {
+    min-width: 150px;
+}
+
+.lyo-rte-size-select {
+    min-width: 96px;
+}
+
+.lyo-rte-code-language-select {
+    min-width: 140px;
+}
+
+.lyo-rte-color-picker-wrap {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    background: var(--mud-palette-surface);
+    color: var(--mud-palette-text-primary);
+}
+
+.lyo-rte-color-picker-wrap.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.lyo-rte-color-picker {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.lyo-rte-divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--mud-palette-lines-default);
+    margin: 2px 4px;
+}
+
+.lyo-rte-surface {
+    padding: 14px 16px;
+    outline: none;
+    overflow-y: auto;
+    background: var(--mud-palette-background);
+    color: var(--mud-palette-text-primary);
+    line-height: 1.55;
+}
+
+.lyo-rte-surface:empty::before {
+    content: attr(data-placeholder);
+    color: var(--mud-palette-text-disabled);
+    pointer-events: none;
+}
+
+.lyo-rte-surface ::deep h1,
+.lyo-rte-surface ::deep h2,
+.lyo-rte-surface ::deep h3,
+.lyo-rte-surface ::deep h4,
+.lyo-rte-surface ::deep h5,
+.lyo-rte-surface ::deep p,
+.lyo-rte-surface ::deep blockquote,
+.lyo-rte-surface ::deep pre,
+.lyo-rte-surface ::deep ul,
+.lyo-rte-surface ::deep ol {
+    margin-top: 0;
+}
+
+.lyo-rte-surface ::deep blockquote {
+    margin-left: 0;
+    padding-left: 12px;
+    border-left: 4px solid var(--mud-palette-primary);
+    color: var(--mud-palette-text-secondary);
+}
+
+.lyo-rte-surface ::deep pre {
+    position: relative;
+    padding: 28px 12px 14px;
+    border-radius: 4px;
+    overflow-x: auto;
+    border: 1px solid color-mix(in srgb, var(--mud-palette-lines-default) 70%, transparent 30%);
+    background: color-mix(in srgb, var(--mud-palette-surface) 92%, var(--mud-palette-text-primary) 8%);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    line-height: 1.5;
+}
+
+.lyo-rte-surface ::deep pre code {
+    display: block;
+    min-height: 1.5em;
+    white-space: pre-wrap;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    tab-size: 4;
+}
+
+.lyo-rte-surface ::deep pre code.hljs {
+    background: transparent;
+    color: var(--mud-palette-text-primary);
+}
+
+.lyo-rte-surface ::deep pre .hljs-comment,
+.lyo-rte-surface ::deep pre .hljs-quote {
+    color: var(--mud-palette-text-secondary);
+    font-style: italic;
+}
+
+.lyo-rte-surface ::deep pre .hljs-keyword,
+.lyo-rte-surface ::deep pre .hljs-selector-tag,
+.lyo-rte-surface ::deep pre .hljs-section,
+.lyo-rte-surface ::deep pre .hljs-name,
+.lyo-rte-surface ::deep pre .hljs-attribute {
+    color: var(--mud-palette-primary);
+}
+
+.lyo-rte-surface ::deep pre .hljs-string,
+.lyo-rte-surface ::deep pre .hljs-regexp,
+.lyo-rte-surface ::deep pre .hljs-addition,
+.lyo-rte-surface ::deep pre .hljs-bullet {
+    color: var(--mud-palette-success);
+}
+
+.lyo-rte-surface ::deep pre .hljs-number,
+.lyo-rte-surface ::deep pre .hljs-literal,
+.lyo-rte-surface ::deep pre .hljs-symbol,
+.lyo-rte-surface ::deep pre .hljs-variable,
+.lyo-rte-surface ::deep pre .hljs-template-variable {
+    color: var(--mud-palette-warning);
+}
+
+.lyo-rte-surface ::deep pre .hljs-title,
+.lyo-rte-surface ::deep pre .hljs-title.function_,
+.lyo-rte-surface ::deep pre .hljs-function,
+.lyo-rte-surface ::deep pre .hljs-built_in,
+.lyo-rte-surface ::deep pre .hljs-type,
+.lyo-rte-surface ::deep pre .hljs-class .hljs-title {
+    color: var(--mud-palette-info);
+}
+
+.lyo-rte-surface ::deep pre .hljs-meta,
+.lyo-rte-surface ::deep pre .hljs-meta .hljs-string,
+.lyo-rte-surface ::deep pre .hljs-doctag {
+    color: color-mix(in srgb, var(--mud-palette-primary) 70%, var(--mud-palette-text-primary) 30%);
+}
+
+.lyo-rte-surface ::deep pre .hljs-deletion {
+    color: var(--mud-palette-error);
+}
+
+.lyo-rte-surface ::deep pre[data-language]::before {
+    content: attr(data-language);
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--mud-palette-text-secondary);
+}
+
+.lyo-rte-surface ::deep img {
+    max-width: 100%;
+    height: auto;
+}
+
+.lyo-rte-surface ::deep a {
+    color: var(--mud-palette-primary);
+}

@@ -1,0 +1,90 @@
+{
+  "id": "Lyo.Metrics.DependencyInjection",
+  "name": "Lyo.Metrics.DependencyInjection",
+  "area": "Core",
+  "tagline": "Service-collection registration for Lyo.Metrics, split out so the metrics library itself has no NuGet dependencies.",
+  "description": "Service-collection registration for Lyo.Metrics, split out so the metrics library itself has no NuGet dependencies. Ships `AddLyoMetrics` in four option shapes, `AddLyoMetricsFromConfiguration`, and `AddNullMetrics`.",
+  "features": [
+    "**Same namespace.** Extensions remain in `namespace Lyo.Metrics`, so consumers add a `ProjectReference` and skip `using` edits.",
+    "**Option shapes.** `Action<MetricsOptions>`, parameterless, `Action<IServiceProvider, MetricsOptions>`, and `Func<IServiceProvider, MetricsOptions>`.",
+    "**Configuration binding.** On start, `AddLyoMetricsFromConfiguration(IConfiguration, string configSectionName = \"MetricsOptions\")` binds and validates.",
+    "**No-op registration.** `AddNullMetrics()` binds `NullMetrics` to `IMetrics` for tests or when recording is off.",
+    "**Why it is separate.** `Microsoft.Extensions.Configuration.Binder` comes in with `Microsoft.Extensions.Options.ConfigurationExtensions`. Leaving that out of `Lyo.Metrics` lets a package instrument itself for one dependency-free reference."
+  ],
+  "examples": [
+    {
+      "title": "Register the in-memory implementation",
+      "language": "csharp",
+      "code": "using Lyo.Metrics;\nusing Microsoft.Extensions.DependencyInjection;\n\n// Defaults\nservices.AddLyoMetrics();\n\n// With options\nservices.AddLyoMetrics(options =>\n{\n    options.MaxEventQueueSize = 50000;\n    options.SamplingRate = 0.1; // Sample 10% of metrics\n    options.ValidateTags = true;\n});\n\n// With the service provider available\nservices.AddLyoMetrics((serviceProvider, options) =>\n{\n    var config = serviceProvider.GetRequiredService<IConfiguration>();\n    options.MaxEventQueueSize = config.GetValue<int>(\"Metrics:MaxEventQueueSize\");\n    options.SamplingRate = config.GetValue<double>(\"Metrics:SamplingRate\");\n});"
+    },
+    {
+      "title": "Bind from config",
+      "language": "csharp",
+      "code": "// Binds the \"MetricsOptions\" section and validates on start\nservices.AddLyoMetricsFromConfiguration(builder.Configuration);\n\n// Or a custom section\nservices.AddLyoMetricsFromConfiguration(builder.Configuration, configSectionName: \"MyMetrics\");"
+    },
+    {
+      "title": "Disable recording",
+      "language": "csharp",
+      "code": "// Registers NullMetrics for IMetrics. Call sites keep working; nothing is recorded\n// and StartTimer allocates nothing.\nservices.AddNullMetrics();"
+    },
+    {
+      "title": "Use the registration",
+      "language": "csharp",
+      "code": "public sealed class MyService(IMetrics metrics)\n{\n    public async Task ProcessAsync()\n    {\n        using (metrics.StartTimer(\"my_service.process\"))\n        {\n            metrics.IncrementCounter(\"my_service.calls\");\n            await DoWorkAsync();\n        }\n    }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "When this package is needed",
+      "text": "Host entry points that register `IMetrics` in a container should reference this package. Libraries that only *record* metrics should reference `Lyo.Metrics` alone: take `IMetrics` (or `IMetrics?` defaulting to `NullMetrics.Instance`) as a constructor parameter and let the host choose the bound implementation."
+    },
+    {
+      "type": "paragraph",
+      "title": "How it relates to Lyo.Metrics.OpenTelemetry",
+      "text": "[Lyo.Metrics.OpenTelemetry](../Lyo.Metrics.OpenTelemetry/README.md) owns `AddLyoMetricsWithOpenTelemetry` and registers its own `IMetrics` implementation. It does not depend on this package; choose one registration path or the other."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Metrics/Lyo.Metrics.DependencyInjection/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

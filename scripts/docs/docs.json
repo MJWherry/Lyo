@@ -1,0 +1,27 @@
+{
+  "id": "scripts.docs.document",
+  "name": "Document tooling (HTML + Markdown)",
+  "tagline": "Config-driven HTML and GFM from one JSON/Python document, with a shared {{ }} expression language.",
+  "description": "Resolve a Pydantic document or table config against a data dict (repeat_for, group_by, named styles), then emit HTML (html.py) or GitHub-flavored Markdown (markdown.py). Expressions live in lyo_tooling.expression so other scripts can import them after sys.path.insert(scripts). Package docs.json pipelines are unchanged this pass.",
+  "commands": [
+    {
+      "cmd": "python3 scripts/docs/render.py config.json --data data.json --format html",
+      "blurb": "Resolve config + data and print an HTML fragment (use --format md for GFM, -o to write a file)"
+    },
+    {
+      "cmd": "PYTHONPATH=scripts/docs python3 -m pytest scripts/docs/tests -q",
+      "blurb": "Expression, table, grouping, document-block, fluent-builder, and dual-emit tests (needs pydantic v2)"
+    }
+  ],
+  "notes": [
+    "Requires pydantic v2 (`pip install pydantic`)",
+    "Import: sys.path.insert(0, 'scripts/docs'); from html import build; from document import resolve; from builder import HtmlBuilder. Expressions: sys.path.insert(0, 'scripts'); from lyo_tooling.expression import ExpressionRunner",
+    "html.py shadows the stdlib html module when scripts/docs is on sys.path; it re-exports escape/unescape so pygments/pytest still work. Do not `import html` inside html.py",
+    "Expressions run only inside {{ }}. `a > 0` is literal text; `{{a > 0}}` is the condition. style_rules.when must be `{{a > 0}}`. CSS rule braces stay single (`body{margin:0}`); interpolate with `#{{table_id}}` or `color: {{item.urgent ? \"red\" : \"#333\"}}`",
+    "repeat_for without braces is a key/path lookup (spaces allowed). Wrap in {{ }} for a full expression. group_by on a repeat_for row sorts by those fields first, moves matching cells left, and sets rowspan on equal runs",
+    "Inside {{ }}: Python-like and/or/not, (), in / not in / contains, lower/upper/strip, calls (count(item.rows) or item.rows.count()), ?? coalesce, cond ? a : b, :format specs",
+    "Styles are dicts; keys normalize to kebab-case (border_bottom / backgroundColor → border-bottom). extends is named-style composition. Markdown ignores CSS, rowspan, and striping; grouped cells keep the value on the first row of a run",
+    "build(config, data, format='html'|'md') accepts a bare table or a document with blocks: table, section, heading, paragraph, list, code, hr, html"
+  ],
+  "readmePath": "scripts/docs/README.md"
+}

@@ -1,0 +1,242 @@
+using System.Diagnostics;
+using Lyo.Result.Interfaces;
+
+namespace Lyo.Result;
+
+/// <summary>Result of an operation that can either succeed with data or fail with errors.</summary>
+/// <typeparam name="T">Type of the data returned on success.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
+public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = null) : ResultBase, IResult<T>
+{
+    public override IReadOnlyList<Error>? Errors { get; } = Errors;
+
+    public override IReadOnlyDictionary<string, object>? Metadata { get; init; }
+
+    /// <summary>Builds a successful result with data.</summary>
+    public static Result<T> Success(T data, DateTime? timestamp = null, IReadOnlyDictionary<string, object>? metadata = null)
+        => new(true, data) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
+
+    /// <summary>Builds a failed result with errors.</summary>
+    public static Result<T> Failure(IReadOnlyList<Error> errors, DateTime? timestamp = null, IReadOnlyDictionary<string, object>? metadata = null)
+        => new(false, default, errors) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
+
+    /// <summary>Builds a failed result with a single error.</summary>
+    public static Result<T> Failure(Error error, DateTime? timestamp = null, IReadOnlyDictionary<string, object>? metadata = null)
+        => new(false, default, [error]) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
+
+    /// <summary>Builds a failed result with error details.</summary>
+    public static Result<T> Failure(
+        string message,
+        string code,
+        string? stackTrace = null,
+        Error? innerError = null,
+        IReadOnlyDictionary<string, object>? metadata = null,
+        DateTime? timestamp = null)
+        => new(false, default, [new(message, code, stackTrace, innerError, metadata) { Timestamp = timestamp ?? DateTime.UtcNow }]) {
+            Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata
+        };
+
+    /// <summary>Builds a failed result from an exception.</summary>
+    public static Result<T> Failure(Exception exception, string? code = null, IReadOnlyDictionary<string, object>? metadata = null, DateTime? timestamp = null)
+        => new(false, default, [Error.FromException(exception, code, metadata, timestamp)]) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
+
+    /// <summary>Attempts to read the value from a successful result.</summary>
+    public bool TryGetValue(out T value)
+    {
+        if (IsSuccess && Data != null) {
+            value = Data;
+            return true;
+        }
+
+        value = default!;
+        return false;
+    }
+
+    /// <summary>Reads the value from a successful result, or throws when failed.</summary>
+    /// <exception cref="InvalidOperationException">Thrown if the result is not successful.</exception>
+    public T ValueOrThrow()
+    {
+        if (IsSuccess && Data != null)
+            return Data;
+
+        var errorMessages = Errors != null && Errors.Count > 0 ? string.Join("; ", Errors.Select(e => $"{e.Code}: {e.Message}")) : "Operation failed";
+        throw new InvalidOperationException(errorMessages);
+    }
+
+    /// <summary>Reads the value from a successful result, or returns the default when failed.</summary>
+    public T ValueOrDefault(T defaultValue) => IsSuccess && Data != null ? Data : defaultValue;
+
+    /// <summary>Reads the value from a successful result, or returns the factory value when failed.</summary>
+    public T ValueOrDefault(Func<T> defaultValueFactory) => IsSuccess && Data != null ? Data : defaultValueFactory();
+
+    /// <summary>Transforms the success value using a mapping function, propagating failure unchanged.</summary>
+    public Result<TOut> Map<TOut>(Func<T, TOut> mapper)
+        => IsSuccess ? Result<TOut>.Success(mapper(Data!), Timestamp, Metadata) : Result<TOut>.Failure(Errors!, Timestamp, Metadata);
+
+    /// <summary>Asynchronously transforms the success value using a mapping function, propagating failure unchanged.</summary>
+    public async Task<Result<TOut>> MapAsync<TOut>(Func<T, Task<TOut>> mapper)
+        => IsSuccess ? Result<TOut>.Success(await mapper(Data!).ConfigureAwait(false), Timestamp, Metadata) : Result<TOut>.Failure(Errors!, Timestamp, Metadata);
+
+    /// <summary>Runs a side-effect action on success without transforming the result.</summary>
+    public Result<T> Tap(Action<T> action)
+    {
+        if (IsSuccess && Data != null)
+            action(Data);
+
+        return this;
+    }
+
+    /// <summary>Asynchronously runs a side-effect action on success without transforming the result.</summary>
+    public async Task<Result<T>> TapAsync(Func<T, Task> action)
+    {
+        if (IsSuccess && Data != null)
+            await action(Data).ConfigureAwait(false);
+
+        return this;
+    }
+
+    /// <summary>Pattern matching — returns a value based on whether the result is successful or failed.</summary>
+    public TResult Match<TResult>(Func<T, TResult> onSuccess, Func<IReadOnlyList<Error>, TResult> onFailure) => IsSuccess ? onSuccess(Data!) : onFailure(Errors ?? []);
+
+    /// <summary>Runs actions based on whether the result is successful or failed.</summary>
+    public Result<T> Switch(Action<T> onSuccess, Action<IReadOnlyList<Error>> onFailure)
+    {
+        if (IsSuccess && Data != null)
+            onSuccess(Data);
+        else
+            onFailure(Errors ?? []);
+
+        return this;
+    }
+
+    /// <summary>Provides a fallback value when the result failed.</summary>
+    public T Recover(T fallbackValue) => IsSuccess && Data != null ? Data : fallbackValue;
+
+    /// <summary>Provides a fallback value from a function when the result failed.</summary>
+    public T Recover(Func<IReadOnlyList<Error>, T> fallback) => IsSuccess && Data != null ? Data : fallback(Errors ?? []);
+
+    /// <summary>Attempts to recover from failure by running a recovery operation.</summary>
+    public Result<T> RecoverWith(Func<IReadOnlyList<Error>, Result<T>> recovery) => IsSuccess ? this : recovery(Errors ?? []);
+
+    /// <summary>Filters the result — only stays successful when the predicate is true.</summary>
+    public Result<T> Where(Func<T, bool> predicate, string errorCode, string errorMessage)
+    {
+        if (!IsSuccess)
+            return this;
+
+        if (Data != null && predicate(Data))
+            return this;
+
+        return Failure(errorMessage, errorCode, null, null, Metadata, Timestamp);
+    }
+
+    /// <summary>All errors including recursively flattened inner errors.</summary>
+    public IReadOnlyList<Error> GetAllErrors()
+    {
+        var allErrors = new List<Error>();
+        if (Errors != null) {
+            foreach (var error in Errors) {
+                allErrors.Add(error);
+                FlattenInnerErrors(error, allErrors);
+            }
+        }
+
+        return allErrors;
+    }
+
+    private static void FlattenInnerErrors(Error error, List<Error> accumulator)
+    {
+        var current = error.InnerError;
+        while (current != null) {
+            accumulator.Add(current);
+            current = current.InnerError;
+        }
+    }
+
+    /// <summary>Deconstructs the result into its components.</summary>
+    public void Deconstruct(out bool isSuccess, out T? data, out IReadOnlyList<Error>? errors)
+    {
+        isSuccess = IsSuccess;
+        data = Data;
+        errors = Errors;
+    }
+
+    /// <summary>Implicit conversion from T to Result&lt;T&gt; (success).</summary>
+    public static implicit operator Result<T>(T value) => Success(value);
+
+    /// <summary>Implicit conversion from Error to Result&lt;T&gt; (failure).</summary>
+    public static implicit operator Result<T>(Error error) => Failure(error);
+
+    public override string ToString()
+        => IsSuccess
+            ? $"Success: {Data}, Timestamp={Timestamp:O}, Metadata Count={Metadata?.Count ?? 0}"
+            : $"Failure: {string.Join("; ", Errors ?? [])}, Timestamp={Timestamp:O}, Metadata Count={Metadata?.Count ?? 0}";
+}
+
+/// <summary>Result of an operation that carries both the original request and the result data.</summary>
+/// <typeparam name="TRequest">Type of the request object.</typeparam>
+/// <typeparam name="TResult">Type of the data returned on success.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record Result<TRequest, TResult>(bool IsSuccess, TRequest? Request, TResult? Data, IReadOnlyList<Error>? Errors = null)
+    : Result<TResult>(IsSuccess, Data, Errors)
+{
+    /// <summary>Builds a successful result with request and data.</summary>
+    public static Result<TRequest, TResult> Success(TRequest request, TResult data, DateTime? timestamp = null, IReadOnlyDictionary<string, object>? metadata = null)
+        => new(true, request, data) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
+
+    /// <summary>Builds a failed result with request and errors.</summary>
+    public static Result<TRequest, TResult> Failure(TRequest request, IReadOnlyList<Error> errors, DateTime? timestamp = null, IReadOnlyDictionary<string, object>? metadata = null)
+        => new(false, request, default, errors) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
+
+    /// <summary>Builds a failed result with request and a single error.</summary>
+    public static Result<TRequest, TResult> Failure(TRequest request, Error error, DateTime? timestamp = null, IReadOnlyDictionary<string, object>? metadata = null)
+        => new(false, request, default, [error]) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
+
+    /// <summary>Builds a failed result with request and error details.</summary>
+    public static Result<TRequest, TResult> Failure(
+        TRequest request,
+        string message,
+        string code,
+        string? stackTrace = null,
+        Error? innerError = null,
+        IReadOnlyDictionary<string, object>? metadata = null,
+        DateTime? timestamp = null)
+        => new(false, request, default, [new(message, code, stackTrace, innerError, metadata) { Timestamp = timestamp ?? DateTime.UtcNow }]) {
+            Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata
+        };
+
+    /// <summary>Builds a failed result with request from an exception.</summary>
+    public static Result<TRequest, TResult> Failure(
+        TRequest request,
+        Exception exception,
+        string? code = null,
+        IReadOnlyDictionary<string, object>? metadata = null,
+        DateTime? timestamp = null)
+        => new(false, request, default, [Error.FromException(exception, code, metadata, timestamp)]) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
+
+    /// <summary>Attempts to read the request object.</summary>
+    public bool TryGetRequest(out TRequest request)
+    {
+        if (Request != null) {
+            request = Request;
+            return true;
+        }
+
+        request = default!;
+        return false;
+    }
+
+    /// <summary>Deconstructs the result into its components.</summary>
+    public void Deconstruct(out bool isSuccess, out TRequest? request, out TResult? data, out IReadOnlyList<Error>? errors)
+    {
+        isSuccess = IsSuccess;
+        request = Request;
+        data = Data;
+        errors = Errors;
+    }
+
+    public override string ToString()
+        => IsSuccess
+            ? $"Success: Request={Request}, Data={Data}, Timestamp={Timestamp:O}, Metadata Count={Metadata?.Count ?? 0}"
+            : $"Failure: Request={Request}, Errors={string.Join("; ", Errors ?? [])}, Timestamp={Timestamp:O}, Metadata Count={Metadata?.Count ?? 0}";
+}

@@ -1,0 +1,717 @@
+@using Lyo.Reporting.Models.Controls
+@using Lyo.Web.Components.ParamOptions
+@using Lyo.Web.Components.ParamTable
+@using LyoParameterEditor = Lyo.Web.Components.ParamTable.LyoParameterEditor
+
+<div class="lyo-report-design" @onkeydown="OnDesignKey">
+<MudStack Spacing="2" Style="height: 100%; min-height: 0; overflow: hidden;">
+    <MudPaper Class="px-2 py-1 lyo-report-design-toolbar" Outlined="true">
+        <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1">
+            <MudTextField @bind-Value="_definitionName" @bind-Value:after="OnInspectorChanged" Label="Definition name" Variant="Variant.Outlined" Margin="Margin.Dense" Class="lyo-design-toolbar-field" Style="min-width: 180px;"/>
+            <MudSelect T="Guid?" Value="_loadedDefinitionId" ValueChanged="OnDefinitionPicked" Label="Load definition" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Class="lyo-design-toolbar-field" Style="min-width: 200px;">
+                @foreach (var def in _definitions) {
+                    <MudSelectItem T="Guid?" Value="@def.Id">@def.Name</MudSelectItem>
+                }
+            </MudSelect>
+            <MudMenu Label="Templates" Variant="Variant.Text" Size="Size.Small" Dense="true" StartIcon="@Icons.Material.Filled.DashboardCustomize">
+                <MudMenuItem OnClick="@(() => ApplyTemplateAsync(ReportDesignTemplates.Blank(), "Untitled report"))">Blank</MudMenuItem>
+                <MudMenuItem OnClick="@(() => ApplyTemplateAsync(ReportDesignTemplates.ControlsGallery(), "Controls gallery"))">Controls gallery</MudMenuItem>
+                <MudMenuItem OnClick="@(() => ApplyTemplateAsync(ReportDesignTemplates.SalesSummary(), "Sales summary"))">Sales summary</MudMenuItem>
+                <MudMenuItem OnClick="@(() => ApplyTemplateAsync(ReportDesignTemplates.Invoice(), "Invoice"))">Invoice</MudMenuItem>
+                <MudMenuItem OnClick="@(() => ApplyTemplateAsync(ReportDesignTemplates.OperationsDashboard(), "Operations dashboard"))">Operations dashboard</MudMenuItem>
+            </MudMenu>
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" Disabled="_busy" OnClick="SaveDefinitionAsync">Save</MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.SaveAs" Disabled="_busy" OnClick="SaveAsDefinitionAsync">Save as</MudButton>
+            <MudSelect T="ReportFormat" @bind-Value="_generateFormat" Label="Format" Variant="Variant.Outlined" Margin="Margin.Dense" Class="lyo-design-toolbar-field" Style="max-width: 108px;">
+                @foreach (var format in Enum.GetValues<ReportFormat>()) {
+                    <MudSelectItem T="ReportFormat" Value="@format">@format</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow" Disabled="_busy" OnClick="GenerateAsync">Generate</MudButton>
+            @if (_loadedDefinitionId is { } loadedId) {
+                <LyoIdField Label="Definition" Value="@loadedId" Compact="true"/>
+            }
+            @if (_dirty) {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Unsaved</MudText>
+            }
+        </MudStack>
+    </MudPaper>
+
+    <div class="lyo-report-design-body">
+        <MudPaper Outlined="true" Class="lyo-report-design-left">
+            <MudTabs @bind-ActivePanelIndex="_editorTab" Rounded="true" ApplyEffectsToContainer="true">
+                <MudTabPanel Text="Design">
+                    <MudStack Spacing="2" Class="pa-2 lyo-design-tab">
+                        <div class="lyo-design-add-bar">
+                            <MudButtonGroup Size="Size.Small" Variant="Variant.Text">
+                                <MudButton OnClick="AddSection">Section</MudButton>
+                                <MudButton Disabled="_section is null" OnClick="AddSubsection" title="Add subsection">Sub</MudButton>
+                                <MudButton Disabled="_section is null" OnClick="AddCard">Card</MudButton>
+                                <MudButton Disabled="_section is null" OnClick="AddTable">Table</MudButton>
+                                <MudButton Disabled="_section is null" OnClick="AddGrid">Grid</MudButton>
+                            </MudButtonGroup>
+                            <MudMenu Label="Block" Variant="Variant.Text" Size="Size.Small" Disabled="_section is null" Dense="true" MaxHeight="220" ListClass="lyo-design-add-menu">
+                                @foreach (var type in BlockTypes) {
+                                    <MudMenuItem OnClick="@(() => AddBlock(type))">@type</MudMenuItem>
+                                }
+                            </MudMenu>
+                            <span class="lyo-design-add-sep"></span>
+                            <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" Disabled="_target == DesignTarget.Report" OnClick="@(() => MoveSelected(-1))" title="Move up"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" Disabled="_target == DesignTarget.Report" OnClick="@(() => MoveSelected(1))" title="Move down"/>
+                            <MudMenu Icon="@Icons.Material.Filled.DriveFileMove" Variant="Variant.Text" Size="Size.Small" Disabled="!CanRelocateSelected" Dense="true" title="Move to section">
+                                @foreach (var dest in RelocateDestinations()) {
+                                    var captured = dest;
+                                    <MudMenuItem OnClick="@(() => RelocateSelectedTo(captured))">@(captured.Title ?? "Section")</MudMenuItem>
+                                }
+                            </MudMenu>
+                            <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small" Disabled="_undo.Count == 0" OnClick="Undo" title="Undo (Ctrl+Z)"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Redo" Size="Size.Small" Disabled="_redo.Count == 0" OnClick="Redo" title="Redo (Ctrl+Y)"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" Disabled="!CanDuplicate" OnClick="DuplicateSelected" title="Duplicate (Ctrl+D)"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" Disabled="_target == DesignTarget.Report" OnClick="DeleteSelected" title="Delete"/>
+                        </div>
+                        <MudPaper Outlined="true" Class="pa-1 lyo-design-tree">
+                            <MudDropContainer T="DesignBodyDrop" @ref="_dropContainer" Items="_bodyDrops" ItemsSelector="@((item, zone) => item.ZoneId == zone)" ItemDropped="OnBodyDropped">
+                                <ChildContent>
+                                    <MudList T="string" Dense="true">
+                                        <MudListItem T="string" OnClick="SelectReport" Icon="@Icons.Material.Filled.Description" Class="@TreeRowClass(_target == DesignTarget.Report)"
+                                                     data-lyo-design="@ReportDesignTreeExpand.ReportKey">
+                                            @(_report.Title ?? "Report")
+                                        </MudListItem>
+                                        @foreach (var section in _report.Sections.OrderBy(s => s.Order)) {
+                                            @RenderSectionNode(section, 1)
+                                        }
+                                    </MudList>
+                                </ChildContent>
+                                <ItemRenderer>
+                                    @RenderBodyDrop(context)
+                                </ItemRenderer>
+                            </MudDropContainer>
+                        </MudPaper>
+                        <MudText Typo="Typo.subtitle2">@InspectorTitle</MudText>
+                        <div class="lyo-design-inspector" @key="_target" @onfocusout="OnInspectorChanged">
+                            <MudExpansionPanels Dense="true" Elevation="0" Outlined="true" MultiExpansion="false">
+                                @if (_target == DesignTarget.Report) {
+                                    <MudExpansionPanel Text="Identity" Expanded="true">
+                                        <MudStack Spacing="2">
+                                            <MudTextField T="string" @bind-Value="_report.Title" Label="Title" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="_report.Subtitle" Label="Subtitle" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="_report.Description" Label="Description" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"/>
+                                            <MudTextField T="string" @bind-Value="_report.Footer" Label="Footer" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                    <MudExpansionPanel Text="Page">
+                                        <MudStack Spacing="2">
+                                            <MudSelect T="string" @bind-Value="Layout.PageSize" Label="Page size" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                                                <MudSelectItem Value="@("Auto")">Auto</MudSelectItem>
+                                                <MudSelectItem Value="@("Letter")">Letter</MudSelectItem>
+                                                <MudSelectItem Value="@("A4")">A4</MudSelectItem>
+                                            </MudSelect>
+                                            <MudSelect T="string" @bind-Value="Layout.Orientation" Label="Orientation" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                                                <MudSelectItem Value="@("Portrait")">Portrait</MudSelectItem>
+                                                <MudSelectItem Value="@("Landscape")">Landscape</MudSelectItem>
+                                            </MudSelect>
+                                            <MudTextField T="string" @bind-Value="Layout.Padding" Label="Body padding" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="CSS shorthand, e.g. 24px"/>
+                                            <MudTextField T="string" @bind-Value="Layout.Margin" Label="Print margin" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="@("@page margin, e.g. 1in")"/>
+                                            <MudSwitch T="bool" @bind-Value="Layout.ShowPageNumbers" Label="Show page numbers" Color="Color.Primary"/>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                    <MudExpansionPanel Text="Appearance">
+                                        <MudStack Spacing="2">
+                                            <MudTextField T="string" @bind-Value="Layout.AccentColor" Label="Accent color" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudSelect T="string" @bind-Value="Layout.Theme" Label="Theme" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                                                <MudSelectItem Value="@("Default")">Default</MudSelectItem>
+                                                <MudSelectItem Value="@("Compact")">Compact</MudSelectItem>
+                                                <MudSelectItem Value="@("Formal")">Formal</MudSelectItem>
+                                            </MudSelect>
+                                            <MudTextField T="string" @bind-Value="Layout.HeaderText" Label="Header text" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="Layout.LogoUrl" Label="Logo URL" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="Layout.Watermark" Label="Watermark" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="Layout.RootComponentType" Label="Root component FullName" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="Optional full-page component instead of ReportViewer"/>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                    <MudExpansionPanel Text="CSS">
+                                        <MudStack Spacing="2">
+                                            @foreach (var kvp in _report.Styles.ToList()) {
+                                                var captured = kvp.Key;
+                                                <MudStack Row="true" Spacing="1">
+                                                    <MudTextField T="string" Value="@captured" ValueChanged="@(k => RenameStyle(captured, k))" Label="Property" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                                    <MudTextField T="string" Value="@kvp.Value" ValueChanged="@(v => SetStyleValue(captured, v))" Label="Value" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => RemoveStyle(captured))"/>
+                                                </MudStack>
+                                            }
+                                            <MudMenu Label="Add style" Variant="Variant.Text" Size="Size.Small" Dense="true">
+                                                @foreach (var key in CommonStyleKeys) {
+                                                    <MudMenuItem OnClick="@(() => AddStyle(key))">@key</MudMenuItem>
+                                                }
+                                                <MudMenuItem OnClick="@(() => AddStyle("custom-property"))">Custom…</MudMenuItem>
+                                            </MudMenu>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                }
+                                else if (_target == DesignTarget.Section && _section is not null) {
+                                    <MudExpansionPanel Text="Content" Expanded="true">
+                                        <MudStack Spacing="2">
+                                            <MudTextField T="string" @bind-Value="_section.Title" Label="Title" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="_section.Subtitle" Label="Subtitle" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="_section.Description" Label="Description" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2"/>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                    <MudExpansionPanel Text="Visibility">
+                                        <MudStack Spacing="2">
+                                            <MudTextField T="string" @bind-Value="_section.VisibleWhen" Label="Visible when" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="Key, !Key, Key=value, or Key!=value"/>
+                                            <MudTextField T="string" @bind-Value="_section.Id" Label="Id" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudSwitch T="bool" @bind-Value="_section.Collapsed" @bind-Value:after="OnInspectorChanged" Label="Collapsed" Color="Color.Primary"/>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                }
+                                else if (_target == DesignTarget.Card && _card is not null) {
+                                    <MudExpansionPanel Text="Content" Expanded="true">
+                                        <MudStack Spacing="2">
+                                            <MudTextField T="string" @bind-Value="_card.Label" Label="Label" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Value="@CellText(_card.Value)" ValueChanged="@(v => _card.Value = v)" Label="Value" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="Use {ParamKey} placeholders"/>
+                                            <MudTextField T="string" @bind-Value="_card.Width" Label="Width" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="_card.Alignment" Label="Alignment" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudSwitch T="bool" @bind-Value="_card.Emphasized" @bind-Value:after="OnInspectorChanged" Label="Emphasized" Color="Color.Primary"/>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                }
+                                else if (_target == DesignTarget.Block && _block is not null) {
+                                    <MudExpansionPanel Text="Content" Expanded="true">
+                                        <MudStack Spacing="2">
+                                            <MudSelect T="ContentType" @bind-Value="_block.ContentType" @bind-Value:after="OnInspectorChanged" Label="Type" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                                @foreach (var type in BlockTypes) {
+                                                    <MudSelectItem T="ContentType" Value="@type">@type</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                            @if (ShowBlockContent(_block.ContentType)) {
+                                                <MudTextField T="string" @bind-Value="_block.Content" Label="Content" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="3"/>
+                                            }
+                                            @if (ShowBlockCaption(_block.ContentType)) {
+                                                <MudTextField T="string" @bind-Value="_block.Caption" Label="Caption" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            }
+                                            @if (ShowBlockSource(_block.ContentType)) {
+                                                <MudTextField T="string" @bind-Value="_block.Source" Label="Source / URL" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            }
+                                            @if (ShowBlockAlt(_block.ContentType)) {
+                                                <MudTextField T="string" @bind-Value="_block.Alt" Label="Alt text" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            }
+                                            @if (ShowBlockLevel(_block.ContentType)) {
+                                                <MudTextField T="int?" @bind-Value="_block.Level" Label="Level / percent / spacer px" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            }
+                                            @if (ShowBlockTone(_block.ContentType)) {
+                                                <MudSelect T="string" @bind-Value="_block.Tone" Label="Tone" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                                                    <MudSelectItem Value="@("info")">info</MudSelectItem>
+                                                    <MudSelectItem Value="@("success")">success</MudSelectItem>
+                                                    <MudSelectItem Value="@("warning")">warning</MudSelectItem>
+                                                    <MudSelectItem Value="@("error")">error</MudSelectItem>
+                                                </MudSelect>
+                                            }
+                                            @if (_block.ContentType == ContentType.Chart) {
+                                                <MudSelect T="ChartKind?" @bind-Value="_block.ChartKind" Label="Chart kind" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                                    <MudSelectItem T="ChartKind?" Value="ChartKind.Bar">Bar</MudSelectItem>
+                                                    <MudSelectItem T="ChartKind?" Value="ChartKind.Line">Line</MudSelectItem>
+                                                    <MudSelectItem T="ChartKind?" Value="ChartKind.Doughnut">Doughnut</MudSelectItem>
+                                                    <MudSelectItem T="ChartKind?" Value="ChartKind.Pie">Pie</MudSelectItem>
+                                                    <MudSelectItem T="ChartKind?" Value="ChartKind.Sparkline">Sparkline</MudSelectItem>
+                                                    <MudSelectItem T="ChartKind?" Value="ChartKind.Gauge">Gauge</MudSelectItem>
+                                                </MudSelect>
+                                                <MudTextField T="int?" @bind-Value="_block.Level" Label="Height (px)" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            }
+                                            @if (_block.ContentType == ContentType.Component) {
+                                                <MudSelect T="string" Value="_block.ComponentType" ValueChanged="OnComponentTypeChanged" Label="Component type" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                                                    @foreach (var name in ReportEmbedBinder.KnownComponentTypes) {
+                                                        <MudSelectItem T="string" Value="@name">@name</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                                <MudTextField T="string" @bind-Value="_block.ComponentType" Label="Component FullName" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="Any loaded IComponent FullName"/>
+                                            }
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                    <MudExpansionPanel Text="Data">
+                                        <MudStack Spacing="2">
+                                            @if (_block.ContentType == ContentType.Chart) {
+                                                <MudSelect T="DataSourceKind?" @bind-Value="_block.DataSourceKind" Label="Data source" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                                                    <MudSelectItem T="DataSourceKind?" Value="DataSourceKind.Static">Static series</MudSelectItem>
+                                                    <MudSelectItem T="DataSourceKind?" Value="DataSourceKind.FromParameter">From parameter</MudSelectItem>
+                                                </MudSelect>
+                                                @if (_block.DataSourceKind == DataSourceKind.FromParameter) {
+                                                    <MudTextField T="string" @bind-Value="_block.DataParameterKey" Label="Data parameter key" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                                    <MudTextField T="string" @bind-Value="_block.ChartLabelField" Label="Label field" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                                    <MudTextField T="string" @bind-Value="_block.ChartValueField" Label="Value field" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                                }
+                                                else {
+                                                <MudTextField T="string" Value="@ListItemsText(_block)" ValueChanged="@(v => { SetListItems(_block, v); OnInspectorChanged(); })" Label="Series (label|value per line)" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="4"/>
+                                                }
+                                            }
+                                            else if (_block.ContentType == ContentType.Component) {
+                                                @foreach (var row in ComponentBindingRows()) {
+                                                    var captured = row;
+                                                    <MudStack Row="true" Spacing="1">
+                                                        <MudText Typo="Typo.caption" Style="min-width: 100px; padding-top: 8px;">@captured.Name</MudText>
+                                                        <MudSelect T="ComponentBindingKind" Value="@captured.Kind" ValueChanged="@(k => SetBindingKind(captured.Name, k))" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 120px;">
+                                                            <MudSelectItem T="ComponentBindingKind" Value="ComponentBindingKind.Param">Param</MudSelectItem>
+                                                            <MudSelectItem T="ComponentBindingKind" Value="ComponentBindingKind.Literal">Literal</MudSelectItem>
+                                                        </MudSelect>
+                                                        <MudTextField T="string" Value="@captured.Value" ValueChanged="@(v => SetBindingValue(captured.Name, v))" Label="Value" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                                    </MudStack>
+                                                }
+                                                <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="AddMissingComponentParams">Add missing report params</MudButton>
+                                            }
+                                            else if (ShowBlockListItems(_block.ContentType)) {
+                                                <MudTextField T="string" Value="@ListItemsText(_block)" ValueChanged="@(v => { SetListItems(_block, v); OnInspectorChanged(); })" Label="@ListItemsLabel(_block)" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="4"/>
+                                            }
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                    <MudExpansionPanel Text="Layout">
+                                        <MudStack Spacing="2">
+                                            <MudTextField T="string" @bind-Value="_block.VisibleWhen" Label="Visible when" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            @if (_block.ContentType != ContentType.PageBreak) {
+                                            <MudSwitch T="bool" Value="@ReportKeepTogether.Effective(_block)" ValueChanged="@(v => { _block.KeepTogether = v; OnInspectorChanged(); })" Label="Keep together" Color="Color.Primary"/>
+                                            }
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                }
+                                else if (_target == DesignTarget.Table && _table is not null) {
+                                    <MudExpansionPanel Text="Table" Expanded="true">
+                                        <MudStack Spacing="2">
+                                            <MudTextField T="string" @bind-Value="_table.Title" Label="Title" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="_table.Caption" Label="Caption" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudSwitch T="bool" @bind-Value="_table.ShowHeaders" @bind-Value:after="OnInspectorChanged" Label="Headers" Color="Color.Primary"/>
+                                            <MudSwitch T="bool" @bind-Value="_table.ShowRowNumbers" @bind-Value:after="OnInspectorChanged" Label="Row numbers" Color="Color.Primary"/>
+                                            <MudSwitch T="bool" @bind-Value="_table.Striped" @bind-Value:after="OnInspectorChanged" Label="Striped" Color="Color.Primary"/>
+                                            <MudSwitch T="bool" @bind-Value="_table.Bordered" @bind-Value:after="OnInspectorChanged" Label="Bordered" Color="Color.Primary"/>
+                                            <MudNumericField T="int" Value="TableColumnCount" ValueChanged="SetTableColumnCount" Label="Columns" Min="1" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudNumericField T="int" Value="TableRowCount" ValueChanged="SetTableRowCount" Label="Rows" Min="0" Disabled="@(!TableRowsEditable)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                             HelperText="@(TableRowsEditable ? null : "Row count is driven by the data source")"/>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                    <MudExpansionPanel Text="Data source">
+                                        <MudStack Spacing="2">
+                                            <MudSelect T="DataSourceKind" Value="_table.DataSourceKind" ValueChanged="OnTableDataSourceKindChanged" Label="Data source" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                                <MudSelectItem T="DataSourceKind" Value="DataSourceKind.Static">Static rows</MudSelectItem>
+                                                <MudSelectItem T="DataSourceKind" Value="DataSourceKind.FromParameter">From parameter</MudSelectItem>
+                                                <MudSelectItem T="DataSourceKind" Value="DataSourceKind.Query">Query</MudSelectItem>
+                                                <MudSelectItem T="DataSourceKind" Value="DataSourceKind.Sproc">Sproc</MudSelectItem>
+                                            </MudSelect>
+                                            @if (_table.DataSourceKind == DataSourceKind.FromParameter) {
+                                                <MudTextField T="string" @bind-Value="_table.DataParameterKey" Label="Data parameter key" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                              HelperText="Parameter whose value is a JSON array of row objects"/>
+                                            }
+                                            @if (_table.DataSourceKind is DataSourceKind.Query or DataSourceKind.Sproc) {
+                                                <LyoParameterOptionsEditor ShowKindSelect="false" OptionsJson="@_table.Options" OptionsJsonChanged="OnTableOptionsChanged"/>
+                                            }
+                                            @if (_table.DataSourceKind != DataSourceKind.Static) {
+                                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Field map: column Field → dataset column. Leave empty to use the Field name.</MudText>
+                                                @foreach (var col in _table.Columns) {
+                                                    var captured = col;
+                                                    var fieldKey = string.IsNullOrWhiteSpace(captured.Field) ? captured.Header : captured.Field;
+                                                    var mapped = fieldKey is not null && _table.FieldMap.TryGetValue(fieldKey, out var existing) ? existing : captured.Field;
+                                                    <MudTextField T="string" Value="@mapped" ValueChanged="@(v => SetTableFieldMap(captured, v))" Label="@($"Map {captured.Header}")"
+                                                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                                }
+                                            }
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                    <MudExpansionPanel Text="Layout">
+                                        <MudSwitch T="bool" Value="@ReportKeepTogether.Effective(_table)" ValueChanged="@(v => { _table.KeepTogether = v; OnInspectorChanged(); })" Label="Keep together" Color="Color.Primary"/>
+                                    </MudExpansionPanel>
+                                }
+                                else if (_target == DesignTarget.Grid && _grid is not null) {
+                                    <MudExpansionPanel Text="Grid" Expanded="true">
+                                        <MudStack Spacing="2">
+                                            <MudTextField T="string" @bind-Value="_grid.Title" Label="Title" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudNumericField T="int" @bind-Value="_grid.ColumnCount" @bind-Value:after="OnInspectorChanged" Label="Columns" Min="1" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                             HelperText="Equal columns. Ignored when template columns is a CSS track list."/>
+                                            <MudTextField T="string" @bind-Value="_grid.Gap" Label="Gap" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="CSS gap, e.g. 16px"/>
+                                            <MudTextField T="string" @bind-Value="_grid.TemplateColumns" Label="Template columns" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                          HelperText="Optional. e.g. 1fr 2fr or repeat(auto-fit, minmax(220px, 1fr)). Leave empty to use Columns."/>
+                                            <MudStack Row="true" Spacing="1">
+                                                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="AddCard">Card</MudButton>
+                                                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="AddTable">Table</MudButton>
+                                                <MudMenu Label="Block" Variant="Variant.Text" Size="Size.Small" Dense="true" MaxHeight="220" ListClass="lyo-design-add-menu">
+                                                    @foreach (var type in BlockTypes) {
+                                                        <MudMenuItem OnClick="@(() => AddBlock(type))">@type</MudMenuItem>
+                                                    }
+                                                </MudMenu>
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                    <MudExpansionPanel Text="Layout">
+                                        <MudSwitch T="bool" Value="@ReportKeepTogether.Effective(_grid)" ValueChanged="@(v => { _grid.KeepTogether = v; OnInspectorChanged(); })" Label="Keep together" Color="Color.Primary"/>
+                                    </MudExpansionPanel>
+                                }
+                                else if (_target == DesignTarget.TableColumn && _tableColumn is not null) {
+                                    <MudExpansionPanel Text="Content" Expanded="true">
+                                        <MudStack Spacing="2">
+                                            <MudTextField T="string" @bind-Value="_tableColumn.Header" Label="Header" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="_tableColumn.Field" Label="Field" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="_tableColumn.Width" Label="Width" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" @bind-Value="_tableColumn.Alignment" Label="Alignment" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                }
+                                else if (_target == DesignTarget.TableRow && _table is not null && _tableRow is not null) {
+                                    <MudExpansionPanel Text="Content" Expanded="true">
+                                        <MudStack Spacing="2">
+                                            <MudSwitch T="bool" @bind-Value="_tableRow.Emphasized" @bind-Value:after="OnInspectorChanged" Label="Emphasized" Color="Color.Primary"/>
+                                            @for (var i = 0; i < _table.Columns.Count; i++) {
+                                                var index = i;
+                                                var header = string.IsNullOrWhiteSpace(_table.Columns[index].Header) ? $"Cell {index + 1}" : _table.Columns[index].Header;
+                                                var current = index < _tableRow.Cells.Count ? CellText(_tableRow.Cells[index]) : string.Empty;
+                                                <MudTextField T="string" Value="@current" ValueChanged="@(v => SetCell(_tableRow, index, v))" Label="@header" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            }
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                }
+                            </MudExpansionPanels>
+                        </div>
+                    </MudStack>
+                </MudTabPanel>
+                <MudTabPanel Text="Parameters">
+                    <MudStack Spacing="2" Class="pa-2">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            Schema is what generate requires. Example values bind <c>{Key}</c> placeholders in the live preview without saving a generation.
+                        </MudText>
+                        <LyoParameterEditor Title="Parameter schema"
+                                            TitleTypo="Typo.subtitle2"
+                                            Items="@_paramRows"
+                                            ShowRequired
+                                            ShowOptionsEditor
+                                            ShowDefaultKind
+                                            ApiClient="ApiClient"
+                                            DefaultValueHint="Definition default. Example values below drive the preview."
+                                            OnChanged="OnSchemaChanged"/>
+                        <MudDivider/>
+                        <LyoParameterValueGrid Title="Example values (preview)"
+                                               Entries="_exampleEntries"
+                                               ApiClient="ApiClient"
+                                               ValueChanged="StateHasChanged"/>
+                    </MudStack>
+                </MudTabPanel>
+                <MudTabPanel Text="JSON">
+                    <MudStack Spacing="2" Class="pa-2">
+                        <MudTextField T="string" @bind-Value="_jsonDraft" Label="Composition JSON" Variant="Variant.Outlined" Lines="22" Class="mud-width-full"/>
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="ApplyJsonDraft">Apply JSON</MudButton>
+                    </MudStack>
+                </MudTabPanel>
+            </MudTabs>
+        </MudPaper>
+        <MudPaper Outlined="true" Class="lyo-report-design-right pa-2">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="lyo-report-design-preview-bar mb-2">
+                <MudText Typo="Typo.subtitle2">Live preview</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Bound with example parameters</MudText>
+            </MudStack>
+            @if (!string.IsNullOrWhiteSpace(_previewError)) {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2">@_previewError</MudAlert>
+            }
+            <div class="lyo-report-design-canvas">
+                <ReportDesignCanvas Report="_report"
+                                    PreviewParameters="PreviewParameterMap()"
+                                    Selection="CurrentSelection()"
+                                    OnHit="OnCanvasHit"
+                                    OnDrop="OnCanvasDrop"
+                                    OnDelete="OnCanvasDelete"
+                                    OnAdd="OnCanvasAdd"
+                                    OnCardDrop="OnCanvasCardDrop"
+                                    OnGridColumnDrop="OnCanvasGridColumnDrop"/>
+            </div>
+        </MudPaper>
+    </div>
+</MudStack>
+</div>
+
+<style>
+    .lyo-report-design {
+        height: calc(100dvh - 7rem);
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .lyo-report-design-toolbar {
+        flex: 0 0 auto;
+    }
+
+    .lyo-report-design-toolbar .mud-button,
+    .lyo-report-design-toolbar .mud-button-root,
+    .lyo-design-add-bar .mud-button,
+    .lyo-design-add-bar .mud-button-root {
+        text-transform: none !important;
+        letter-spacing: normal !important;
+        min-height: 28px;
+        padding: 0 8px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+    .lyo-report-design-toolbar .mud-icon-button,
+    .lyo-design-add-bar .mud-icon-button {
+        width: 28px;
+        height: 28px;
+        padding: 2px;
+    }
+
+    .lyo-design-toolbar-field {
+        margin-top: 0 !important;
+    }
+
+    .lyo-design-toolbar-field .mud-input-control,
+    .lyo-design-toolbar-field.mud-input-control {
+        margin-top: 0;
+    }
+
+    .lyo-report-design-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        gap: 8px;
+        overflow: hidden;
+    }
+
+    .lyo-report-design-left {
+        flex: 0 0 34%;
+        min-width: 280px;
+        max-width: 480px;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .lyo-report-design-left > .mud-tabs {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .lyo-report-design-left .mud-tabs-panels,
+    .lyo-report-design-left .mud-tab-panels {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .lyo-design-tab {
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .lyo-design-add-bar {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 4px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex: 0 0 auto;
+        padding-bottom: 2px;
+        scrollbar-width: thin;
+    }
+
+    .lyo-design-add-bar > * {
+        flex: 0 0 auto;
+    }
+
+    .lyo-design-add-sep {
+        width: 1px;
+        align-self: stretch;
+        min-height: 18px;
+        background: var(--mud-palette-divider);
+        margin: 2px 2px;
+        flex: 0 0 auto;
+    }
+
+    .lyo-design-tree {
+        flex: 1 1 42%;
+        min-height: 8rem;
+        max-height: min(42vh, 22rem);
+        overflow: auto;
+    }
+
+    .lyo-design-inspector {
+        flex: 1 1 50%;
+        min-height: 6rem;
+        overflow: auto;
+    }
+
+    .lyo-report-design-right {
+        flex: 1 1 auto;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #f8fafc;
+    }
+
+    .lyo-report-design-preview-bar {
+        flex: 0 0 auto;
+    }
+
+    .lyo-report-design-right > .mud-alert {
+        flex: 0 0 auto;
+    }
+
+    .lyo-report-design-canvas {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+    }
+
+    .lyo-design-tree-row {
+        border-left: 3px solid transparent;
+        box-sizing: border-box;
+    }
+
+    .lyo-design-tree-row.lyo-design-tree-selected {
+        border-left-color: var(--mud-palette-primary);
+        background: color-mix(in srgb, var(--mud-palette-primary) 18%, transparent);
+    }
+
+    .lyo-design-tree-row.lyo-design-tree-selected .mud-list-item {
+        background: transparent;
+    }
+
+    .lyo-design-add-menu {
+        max-height: min(220px, 40vh) !important;
+        overflow-y: auto !important;
+    }
+
+    @@media (max-width: 960px) {
+        .lyo-report-design {
+            height: auto;
+            overflow: visible;
+        }
+
+        .lyo-report-design-body {
+            flex-direction: column;
+            overflow: visible;
+        }
+
+        .lyo-report-design-left,
+        .lyo-report-design-right {
+            flex: none;
+            max-width: none;
+            max-height: 70vh;
+            overflow: auto;
+        }
+
+        .lyo-design-tree,
+        .lyo-design-inspector {
+            max-height: none;
+            flex: none;
+        }
+    }
+</style>
+
+@code {
+    private RenderFragment RenderSectionNode(Section section, int depth) => @<text>
+        @{
+            var sectionKey = ReportDesignTreeExpand.SectionKey(section);
+            var expanded = IsExpanded(sectionKey);
+        }
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0" Style="@($"padding-left:{8 + depth * 12}px")" Class="@TreeRowClass(CurrentSelection().Matches(section))" data-lyo-design="@sectionKey">
+            @RenderExpandToggle(sectionKey, expanded)
+            <MudListItem T="string" OnClick="@(() => SelectSection(section))" Icon="@Icons.Material.Filled.ViewAgenda">
+                @(section.Title ?? "Section")
+            </MudListItem>
+        </MudStack>
+        <MudDropZone T="DesignBodyDrop" Identifier="@ReportDesignTreeExpand.LiveKey(section)" AllowReorder="true" Style="@(expanded ? null : "min-height: 8px;")"/>
+    </text>;
+
+    private RenderFragment RenderBodyDrop(DesignBodyDrop drop) => @<text>
+        @if (IsExpanded(ReportDesignTreeExpand.SectionKey(drop.Section))) {
+            @switch (drop.Item.Kind) {
+                case SectionBodyKind.Control when drop.Item.Control is not null:
+                    @RenderControlNode(drop.Section, drop.Item.Control, 24)
+                    break;
+                case SectionBodyKind.Subsection when drop.Item.Subsection is not null:
+                    @RenderSectionNode(drop.Item.Subsection, 2)
+                    break;
+            }
+        }
+    </text>;
+
+    private RenderFragment RenderControlNode(Section section, Control control, int indent) => @<text>
+        @switch (control) {
+            case Card card:
+                <MudListItem T="string" OnClick="@(() => SelectCard(section, card))" Icon="@Icons.Material.Filled.CreditCard" Style="@($"padding-left: {indent}px;")" Class="@TreeRowClass(CurrentSelection().Matches(card))"
+                             data-lyo-design="@ReportDesignTreeExpand.CardKey(section, card)">
+                    @(card.Label ?? "Card")
+                </MudListItem>
+                break;
+            case Lyo.Reporting.Models.Controls.Block block:
+                <MudListItem T="string" OnClick="@(() => SelectBlock(section, block))" Icon="@Icons.Material.Filled.Notes" Style="@($"padding-left: {indent}px;")" Class="@TreeRowClass(CurrentSelection().Matches(block))"
+                             data-lyo-design="@ReportDesignTreeExpand.BlockKey(section, block)">
+                    @block.ContentType
+                </MudListItem>
+                break;
+            case Table table:
+                @RenderTableNode(section, table, indent)
+                break;
+            case Grid grid:
+                @RenderGridNode(section, grid, indent)
+                break;
+        }
+    </text>;
+
+    private RenderFragment RenderTableNode(Section section, Table table, int indent) => @<text>
+        @{
+            var tableKey = ReportDesignTreeExpand.TableKey(section, table);
+            var tableOpen = IsExpanded(tableKey);
+        }
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0" Style="@($"padding-left: {indent}px;")" Class="@TreeRowClass(CurrentSelection().Matches(table))" data-lyo-design="@tableKey">
+            @RenderExpandToggle(tableKey, tableOpen)
+            <MudListItem T="string" OnClick="@(() => SelectTable(section, table))" Icon="@Icons.Material.Filled.TableChart">
+                @(table.Title ?? "Table")
+            </MudListItem>
+        </MudStack>
+        @if (tableOpen) {
+            @foreach (var col in table.Columns) {
+                var capturedCol = col;
+                <MudListItem T="string" OnClick="@(() => SelectTableColumn(section, table, capturedCol))" Style="@($"padding-left: {indent + 28}px;")" Class="@TreeRowClass(CurrentSelection().Matches(capturedCol))"
+                             data-lyo-design="@ReportDesignTreeExpand.TableColumnKey(section, table, capturedCol)">
+                    Col: @(col.Header)
+                </MudListItem>
+            }
+            @foreach (var rowEntry in table.Rows.Select((r, i) => (Row: r, Index: i))) {
+                var capturedRow = rowEntry.Row;
+                var label = rowEntry.Index + 1;
+                <MudListItem T="string" OnClick="@(() => SelectTableRow(section, table, capturedRow))" Style="@($"padding-left: {indent + 28}px;")" Class="@TreeRowClass(CurrentSelection().Matches(capturedRow))"
+                             data-lyo-design="@ReportDesignTreeExpand.TableRowKey(section, table, capturedRow)">
+                    Row @label
+                </MudListItem>
+            }
+        }
+    </text>;
+
+    private RenderFragment RenderGridNode(Section section, Grid grid, int indent) => @<text>
+        @{
+            var gridKey = ReportDesignTreeExpand.GridKey(section, grid);
+            var gridOpen = IsExpanded(gridKey);
+        }
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0" Style="@($"padding-left: {indent}px;")" Class="@TreeRowClass(_target == DesignTarget.Grid && ReferenceEquals(_grid, grid))" data-lyo-design="@gridKey">
+            @RenderExpandToggle(gridKey, gridOpen)
+            <MudListItem T="string" OnClick="@(() => SelectGrid(section, grid))" Icon="@Icons.Material.Filled.GridView">
+                @(grid.Title ?? "Grid")
+            </MudListItem>
+        </MudStack>
+        @if (gridOpen) {
+            @foreach (var child in grid.Controls) {
+                var captured = child;
+                @RenderControlNode(section, captured, indent + 28)
+            }
+        }
+    </text>;
+
+    private RenderFragment RenderExpandToggle(string key, bool expanded) => @<text>
+        <span @onpointerdown:stopPropagation="true" @onclick:stopPropagation="true" draggable="false">
+            <MudIconButton Icon="@(expanded ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)" Size="Size.Small"
+                           OnClick="@(() => ToggleExpanded(key))" title="@(expanded ? "Collapse" : "Expand")"/>
+        </span>
+    </text>;
+}

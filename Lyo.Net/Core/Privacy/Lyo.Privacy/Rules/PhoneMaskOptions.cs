@@ -1,0 +1,84 @@
+using System.Diagnostics;
+using System.Text;
+using Lyo.Privacy.Enums;
+using Lyo.Privacy.Policy;
+
+namespace Lyo.Privacy.Rules;
+
+/// <summary>Controls how digits and separators appear for <see cref="PhoneRedactionRule" /> matches.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed class PhoneMaskOptions
+{
+    /// <summary>Replace the whole match with <see cref="RedactionPolicy.Placeholder" />.</summary>
+    public static PhoneMaskOptions PolicyPlaceholder { get; } = new() { UsePolicyPlaceholder = true };
+
+    /// <summary>When true, <see cref="LeadingDigitsVisible" /> and the remaining fields are ignored.</summary>
+    public bool UsePolicyPlaceholder { get; set; }
+
+    /// <summary>How many digits to show from the start of the digit run (0-based index in the digit sequence).</summary>
+    public int LeadingDigitsVisible { get; set; }
+
+    /// <summary>How many digits to show from the end (for example 4 = “last four only”). Combined with <see cref="LeadingDigitsVisible" />.</summary>
+    public int TrailingDigitsVisible { get; set; }
+
+    /// <summary>
+    /// When set, leading/trailing counts are ignored: among the last N digits, only the first of that window stays visible (the earlier “first digit of last group” behaviour). Use
+    /// <see cref="DigitsOnlyOutput" /> to drop separators.
+    /// </summary>
+    public int? OnlyFirstDigitAmongLastN { get; set; }
+
+    /// <summary>Retain <c>+ ( ) - . space</c> when next to at least one visible digit; otherwise emit <see cref="MaskChar" />.</summary>
+    public bool PreserveSeparators { get; set; } = true;
+
+    /// <summary>When true, emit only digit and mask characters (no <c>+ - ( )</c>).</summary>
+    public bool DigitsOnlyOutput { get; set; }
+
+    public char MaskChar { get; set; } = '*';
+
+    /// <summary>Shows only the last four digits (optional digits-only output).</summary>
+    public static PhoneMaskOptions LastFourDigits(bool digitsOnly = false) => new() { TrailingDigitsVisible = 4, DigitsOnlyOutput = digitsOnly };
+
+    /// <summary>Shows the last <paramref name="trailingVisible" /> digits.</summary>
+    public static PhoneMaskOptions LastNDigits(int trailingVisible, bool digitsOnly = false) => new() { TrailingDigitsVisible = trailingVisible, DigitsOnlyOutput = digitsOnly };
+
+    /// <summary>Among the last <paramref name="n" /> digits, only the first stays visible; digits-only output.</summary>
+    public static PhoneMaskOptions FirstDigitOfLastNDigits(int n) => new() { OnlyFirstDigitAmongLastN = n, DigitsOnlyOutput = true, PreserveSeparators = false };
+
+    /// <summary>Combines leading and trailing visible digit counts.</summary>
+    public static PhoneMaskOptions LeadAndTrailDigits(int leadingVisible, int trailingVisible, bool digitsOnly = false)
+        => new() { LeadingDigitsVisible = leadingVisible, TrailingDigitsVisible = trailingVisible, DigitsOnlyOutput = digitsOnly };
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        if (UsePolicyPlaceholder)
+            return "PhoneMaskOptions { UsePolicyPlaceholder = true }";
+
+        var sb = new StringBuilder();
+        sb.Append("PhoneMaskOptions { ");
+        sb.Append("LeadingDigitsVisible = ")
+            .Append(LeadingDigitsVisible)
+            .Append(", TrailingDigitsVisible = ")
+            .Append(TrailingDigitsVisible)
+            .Append(", OnlyFirstDigitAmongLastN = ");
+
+        sb.Append(OnlyFirstDigitAmongLastN?.ToString() ?? "null");
+        sb.Append(", PreserveSeparators = ")
+            .Append(PreserveSeparators)
+            .Append(", DigitsOnlyOutput = ")
+            .Append(DigitsOnlyOutput)
+            .Append(", MaskChar = ")
+            .Append(MaskChar)
+            .Append(" }");
+
+        return sb.ToString();
+    }
+
+    internal static PhoneMaskOptions FromLegacy(PhoneMaskMode mode, int digitsParameter)
+        => mode switch {
+            PhoneMaskMode.Full => PolicyPlaceholder,
+            PhoneMaskMode.LastDigits => new() { TrailingDigitsVisible = digitsParameter },
+            PhoneMaskMode.FirstDigitOfLastGroup => new() { OnlyFirstDigitAmongLastN = digitsParameter, DigitsOnlyOutput = true, PreserveSeparators = false },
+            var _ => PolicyPlaceholder
+        };
+}

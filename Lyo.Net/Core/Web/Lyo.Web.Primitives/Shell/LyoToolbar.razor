@@ -1,0 +1,28 @@
+@namespace Lyo.Web.Primitives
+
+<CascadingValue Value="this" IsFixed="true">
+    <div class="@RootCssClass @Class" style="@Style" role="toolbar">
+        @if (UseRows) {
+            @Rows
+        }
+        else {
+            <div class="lyo-toolbar-row">
+                @if (Start is not null) {
+                    <div class="@LyoToolbarLayout.Group(false, false)">
+                        @Start
+                    </div>
+                }
+                @if (ChildContent is not null) {
+                    <div class="@LyoToolbarLayout.Group(true, false)">
+                        @ChildContent
+                    </div>
+                }
+                @if (End is not null) {
+                    <div class="@LyoToolbarLayout.Group(false, true)">
+                        @End
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</CascadingValue>

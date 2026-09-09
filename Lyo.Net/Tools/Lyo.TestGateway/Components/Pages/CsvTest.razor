@@ -1,0 +1,11 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.CsvXlsx)]
+@attribute [Route("/csv")]
+@attribute [Route("/xlsx")]
+@inherits AuthorizedPage
+
+<PageTitle>CSV / XLSX</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <CsvXlsxWorkbench InitialTab="csv"/>
+</MudContainer>

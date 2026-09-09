@@ -1,0 +1,108 @@
+{
+  "id": "Lyo.Tts.Models",
+  "name": "Lyo.Tts.Models",
+  "area": "Communication",
+  "tagline": "Shared TTS requests, results, options, and event payloads. Provider packages depend on this package instead of on each other.",
+  "description": "Shared TTS requests, results, options, and event payloads. Provider packages depend on this package instead of on each other.\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Types",
+      "headers": [
+        "Type",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`TtsRequest`",
+          "Abstract base: `Text`, plus protected internal backing fields (`VoiceIdInternal`, …) for enums / formats"
+        ],
+        [
+          "`TtsResult<TRequest>`",
+          "`Result`-based outcome that may include `AudioData`, `RequestId`, `AudioSize`"
+        ],
+        [
+          "`TtsSynthesisResult`",
+          "Small struct used by [`ITtsService`](../Lyo.Tts/README.md) facades"
+        ],
+        [
+          "`TtsServiceOptions`",
+          "Defaults (`DefaultVoiceId`, `DefaultOutputFormat`), limits (`MaxTextLength`, bulk caps), and a metrics toggle"
+        ],
+        [
+          "`TtsSynthesizingEventArgs<T>` / `TtsSynthesizedEventArgs<T>`",
+          "Per-request events"
+        ],
+        [
+          "`TtsBulkSynthesizingEventArgs<T>` / `TtsBulkSynthesizedEventArgs<T>`",
+          "Batch events"
+        ]
+      ],
+      "trail": "Implementations usually derive a typed request from `TtsRequest` (for example AWS Polly or Typecast) and keep the JSON shape under their control."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Speech/Lyo.Tts.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

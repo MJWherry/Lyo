@@ -1,0 +1,42 @@
+@page "/auth/admin"
+@page "/auth/admin/users/{UserId:guid}"
+@namespace Lyo.Authentication.Web.Components
+@using Lyo.Authentication.Models
+
+<PageTitle>Auth admin</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Auth admin</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Manage Lyo users, opaque tokens, extra JWT claims, authorization scopes, linked identities, and audit events. Token revoke keeps the row; hard-delete destroys the hash.
+            </MudText>
+        </div>
+        @if (_selectedUserId is { } selected) {
+            <LyoChip Color="Color.Primary" OnClose="ClearSelectedUser" CloseIcon="@Icons.Material.Filled.Close">
+                User @selected.ToString("D")[..8]…
+            </LyoChip>
+        }
+        <MudTabs @bind-ActivePanelIndex="_tabIndex" KeepPanelsAlive="true" Rounded="true" Color="Color.Primary">
+            <MudTabPanel Text="Users">
+                <AuthUserGrid @ref="_userGrid" ApiClient="ResolvedApiClient" BaseRoute="@BaseRoute" OnOpenUser="OpenUser"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Tokens">
+                <AuthTokenGrid ApiClient="ResolvedApiClient" BaseRoute="@BaseRoute" AllowHardDelete="true" AllowRevoke="true" OnViewUser="OpenUserFromToken"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Claims">
+                <AuthClaimGrid ApiClient="ResolvedApiClient" BaseRoute="@BaseRoute"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Scopes">
+                <AuthScopeGrid ApiClient="ResolvedApiClient" BaseRoute="@BaseRoute"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Identities">
+                <AuthLinkedIdentityGrid ApiClient="ResolvedApiClient" BaseRoute="@BaseRoute"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Audit">
+                <AuthEventGrid ApiClient="ResolvedApiClient" BaseRoute="@BaseRoute"/>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudContainer>

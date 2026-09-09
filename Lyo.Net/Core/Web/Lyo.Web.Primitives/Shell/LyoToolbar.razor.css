@@ -1,0 +1,84 @@
+.lyo-toolbar {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.lyo-toolbar-dense {
+    padding: 0.25rem 0;
+    gap: 0.375rem;
+}
+
+.lyo-toolbar-row,
+.lyo-toolbar ::deep .lyo-toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: inherit;
+    width: 100%;
+    min-width: 0;
+}
+
+.lyo-toolbar ::deep .lyo-toolbar-row-collapsed {
+    display: none;
+}
+
+.lyo-toolbar-group,
+.lyo-toolbar ::deep .lyo-toolbar-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: inherit;
+    min-width: 0;
+}
+
+.lyo-toolbar-grow,
+.lyo-toolbar ::deep .lyo-toolbar-grow {
+    flex: 1 1 auto;
+}
+
+.lyo-toolbar-end,
+.lyo-toolbar ::deep .lyo-toolbar-end {
+    margin-inline-start: auto;
+}
+
+.lyo-toolbar ::deep .lyo-toolbar-sep {
+    width: 1px;
+    align-self: stretch;
+    min-height: 1.25rem;
+    background: var(--mud-palette-lines-default);
+    flex: 0 0 1px;
+}
+
+.lyo-toolbar ::deep .lyo-toolbar-field {
+    min-width: 0;
+}
+
+.lyo-toolbar ::deep .lyo-toolbar-field-grow {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.lyo-toolbar ::deep .mud-button,
+.lyo-toolbar ::deep .mud-button-root {
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    min-height: 28px;
+    padding: 0 8px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.lyo-toolbar ::deep .mud-icon-button {
+    width: 28px;
+    height: 28px;
+    padding: 2px;
+}
+
+.lyo-toolbar ::deep .mud-input-control {
+    margin-top: 0;
+}

@@ -1,0 +1,59 @@
+using System.Diagnostics;
+using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
+
+namespace Lyo.QRCode.Payloads;
+
+/// <summary>One-line meCard contact format (<c>MECARD:</c>).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed class MeCardPayload : IQrPayload
+{
+    /// <summary>Display name (<c>N:</c>).</summary>
+    public string DisplayName { get; }
+
+    /// <summary>Optional <c>TEL:</c>.</summary>
+    public string? Telephone { get; }
+
+    /// <summary>Optional <c>EMAIL:</c>.</summary>
+    public string? Email { get; }
+
+    /// <summary>Builds a meCard payload.</summary>
+    public MeCardPayload(string displayName, string? telephone = null, string? email = null)
+    {
+        ArgumentHelpers.ThrowIfNull(displayName);
+        DisplayName = displayName.Trim();
+        Telephone = telephone?.Trim();
+        Email = email?.Trim();
+    }
+
+    /// <inheritdoc />
+    public string ToQrString()
+    {
+        ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(DisplayName), "Display name cannot be empty.", nameof(DisplayName));
+        if (DisplayName.Contains(';') || DisplayName.Contains('\r') || DisplayName.Contains('\n'))
+            throw new InvalidFormatException("Display name cannot contain semicolons or newlines in meCard.", nameof(DisplayName), DisplayName, "Jane Doe");
+
+        var sb = new StringBuilder("MECARD:");
+        sb.Append("N:").Append(DisplayName).Append(';');
+        if (!string.IsNullOrWhiteSpace(Telephone)) {
+            if (Telephone.Contains(';'))
+                throw new InvalidFormatException("Telephone cannot contain ';' in meCard.", nameof(Telephone), Telephone);
+
+            sb.Append("TEL:").Append(Telephone).Append(';');
+        }
+
+        if (!string.IsNullOrWhiteSpace(Email)) {
+            if (Email.Contains(';'))
+                throw new InvalidFormatException("Email cannot contain ';' in meCard.", nameof(Email), Email);
+
+            sb.Append("EMAIL:").Append(Email).Append(';');
+        }
+
+        // meCard ends with ';' after the last field plus one more ';' (so ';;' after the last value).
+        sb.Append(';');
+        return sb.ToString();
+    }
+
+    /// <inheritdoc />
+    public override string ToString() => $"MeCardPayload N={DisplayName}, TEL={Telephone ?? "(none)"}, EMAIL={Email ?? "(none)"}";
+}

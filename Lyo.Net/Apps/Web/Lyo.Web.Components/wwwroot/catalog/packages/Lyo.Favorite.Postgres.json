@@ -1,0 +1,251 @@
+{
+  "id": "Lyo.Favorite.Postgres",
+  "name": "Lyo.Favorite.Postgres",
+  "area": "Plugins",
+  "tagline": "Entity Framework Core store for `Lyo.Favorite` on PostgreSQL. Rows live in `favorite.favorite` (`PostgresFavoriteOptions.Schema = \"favorite\"`).",
+  "description": "Entity Framework Core store for `Lyo.Favorite` on PostgreSQL. Rows live in `favorite.favorite` (`PostgresFavoriteOptions.Schema = \"favorite\"`), and the package includes migrations. Favorites carry **subject** / **actor** (`for_entity_*` / `from_entity_*`). `SaveAsync` blocks a second active row for the same `(tenant, ForEntity, FromEntity, context)` tuple.\n\n`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth` (`HealthCheckName = \"favorite-postgres\"`). Registering the store also exposes a database liveness probe.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register the store",
+      "language": "csharp",
+      "code": "services.AddPostgresFavoriteStore(new PostgresFavoriteOptions {\n    ConnectionString = \"...\",\n    EnableAutoMigrations = true\n});"
+    },
+    {
+      "title": "appsettings.json",
+      "language": "json",
+      "code": "{\n  \"PostgresFavorite\": {\n    \"ConnectionString\": \"Host=localhost;Database=favorite;...\",\n    \"EnableAutoMigrations\": true\n  }\n}"
+    },
+    {
+      "title": "Bind from configuration",
+      "language": "csharp",
+      "code": "services.AddPostgresFavoriteStoreFromConfiguration(configuration);"
+    },
+    {
+      "title": "A user favorites an article",
+      "language": "csharp",
+      "code": "await favoriteStore.SaveAsync(new FavoriteRecord {\n    SubjectEntityType = \"Article\",\n    SubjectEntityId = articleId.ToString(),\n    ActorEntityType = \"User\",\n    ActorEntityId = userId.ToString()\n});\n\nvar isFavorited = await favoriteStore.IsFavoritedAsync(\n    EntityRef.ForGuid(\"Article\", articleId),\n    EntityRef.ForGuid(\"User\", userId));\n\nvar count = await favoriteStore.GetCountForEntityAsync(\n    EntityRef.ForGuid(\"Article\", articleId));\n\n// Batch count multiple targets in one round-trip.\nvar counts = await favoriteStore.GetFavoriteCountsForEntitiesAsync(\n    \"Article\", new[] { id1, id2, id3 });"
+    },
+    {
+      "title": "Add a migration",
+      "language": "bash",
+      "code": "export FAVORITE_CONNECTION_STRING=\"Host=localhost;Database=favorite;Username=postgres;Password=postgres\"\ndotnet ef migrations add MigrationName --project Plugins/Favorite/Lyo.Favorite.Postgres"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Service registration",
+      "items": [
+        "`AddFavoriteDbContextFactory(Action<PostgresFavoriteOptions>)` / `AddFavoriteDbContextFactory(PostgresFavoriteOptions)` register the `IDbContextFactory<FavoriteDbContext>` only.",
+        "`AddFavoriteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)` does the same, bound from configuration. Default section: `PostgresFavorite`.",
+        "`AddPostgresFavoriteStore(Action<PostgresFavoriteOptions>)` / `AddPostgresFavoriteStore(PostgresFavoriteOptions)` register the DbContext factory **and** the `IFavoriteStore` singleton.",
+        "`AddPostgresFavoriteStoreFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)` registers the store by binding configuration."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "From configuration",
+      "text": "The same registration from configuration:"
+    },
+    {
+      "type": "markdown",
+      "title": "Building an EntityRef",
+      "body": "Create refs with `Lyo.EntityReference.Models.EntityRef`, either generic or from strings:\n\n```csharp\n// Generic: uses typeof(T).FullName, keys joined with \":\"\nvar forArticle = EntityRef.For<Article>(articleId);\nvar fromUser = EntityRef.For<User>(userId);\n\n// String-based\nvar forEntity = EntityRef.ForGuid(\"Article\", articleGuid);\nvar fromEntity = EntityRef.ForKey(\"User\", \"123\");\n```"
+    },
+    {
+      "type": "markdown",
+      "title": "Tenant isolation",
+      "body": "Every read and write on `PostgresFavoriteStore` takes an optional `Guid? tenantId`. `TenancyResolver` applies the policy in `PostgresFavoriteOptions.Tenancy`. When that is unset, it inherits `EntityRefOptions.Mode`. Because `tenant_id` is non-null, only `SingleTenantDefault` and `MultiTenantStrict` are valid. Construction rejects `SystemOnly`. Every query gets a `WhereTenant` filter, so one tenant's favorites cannot appear in another. The policy matrix and an `appsettings.json` snippet live in [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy).\n\n```json\n{\n  \"PostgresFavorite\": {\n    \"ConnectionString\": \"Host=localhost;Database=lyo;...\",\n    \"Tenancy\": { \"Mode\": \"MultiTenantStrict\" }\n  }\n}\n```"
+    },
+    {
+      "type": "list",
+      "title": "Database schema",
+      "items": [
+        "**favorite.favorite.** `EntityRelationEntityBase`: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, and `metadata` (jsonb)."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Favorite/Lyo.Favorite.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Favorite",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

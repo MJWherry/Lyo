@@ -1,0 +1,94 @@
+using Lyo.DataTable.Models;
+
+namespace Lyo.DataTable.Models.Tests;
+
+public sealed class DataTableFormatMapTests
+{
+    [Fact]
+    public void SetFormat_Null_Removes_Key()
+    {
+        var table = new DataTable();
+        table.SetCell(0, 0, "x", new(FontBold: true));
+        Assert.True(table.HasFormats);
+        Assert.True(table.GetFormat(0, 0)?.FontBold == true);
+        table.SetFormat(0, 0, null);
+        Assert.Null(table.GetFormat(0, 0));
+        Assert.False(table.HasFormats);
+    }
+
+    [Fact]
+    public void ClearCell_Removes_Value_And_Format()
+    {
+        var table = new DataTable();
+        table.SetCell(0, 1, "y", new(FontColor: "#FF0000"));
+        table.ClearCell(0, 1);
+        Assert.Equal("", table[0, 1].DisplayValue);
+        Assert.Null(table.GetFormat(0, 1));
+    }
+
+    [Fact]
+    public void SetCell_ValueOnly_Leaves_Existing_Format()
+    {
+        var table = new DataTable();
+        table.SetCell(0, 0, "a", new(FontBold: true));
+        table.SetCell(0, 0, "b");
+        Assert.Equal("b", table[0, 0].DisplayValue);
+        Assert.True(table.GetFormat(0, 0)?.FontBold == true);
+    }
+
+    [Fact]
+    public void Formats_Returns_Snapshot()
+    {
+        var table = new DataTable();
+        table.SetFormat(-1, 0, new(FontBold: true));
+        var snapshot = table.Formats;
+        table.SetFormat(-1, 1, new(FontItalic: true));
+        Assert.Single(snapshot);
+        Assert.Equal(2, table.Formats.Count);
+    }
+
+    [Fact]
+    public void ValueInterner_Shares_Equal_Strings_Above_Threshold()
+    {
+        var options = new DataTablePoolingOptions { PoolValues = true, PoolFormats = false, PoolingCellThreshold = 0 };
+        var interner = new DataTableValueInterner(options, 1);
+        var a = interner.Intern(new string('x', 3));
+        var b = interner.Intern(new string('x', 3));
+        Assert.Same(a, b);
+    }
+
+    [Fact]
+    public void ValueInterner_Disabled_Below_Threshold()
+    {
+        var options = new DataTablePoolingOptions { PoolValues = true, PoolingCellThreshold = 1000 };
+        var interner = new DataTableValueInterner(options, 10);
+        Assert.False(interner.PoolsValues);
+        Assert.False(interner.PoolsFormats);
+    }
+
+    [Fact]
+    public void Concurrent_SetFormat_GetFormat_Smoke()
+    {
+        var table = new DataTable();
+        Parallel.For(
+            0, 200, i => {
+                var col = i % 20;
+                table.SetFormat(0, col, new(FontBold: true));
+                _ = table.GetFormat(0, col);
+                if (i % 3 == 0)
+                    table.ClearFormat(0, col);
+            });
+
+        Assert.True(table.Formats.Count <= 20);
+    }
+
+    [Fact]
+    public void ValueInterner_Shares_Equal_Formats_When_Enabled()
+    {
+        var options = new DataTablePoolingOptions { PoolValues = false, PoolFormats = true, PoolingCellThreshold = 0 };
+        var interner = new DataTableValueInterner(options, 1);
+        var a = interner.Intern(new DataTableCellFormat(FontBold: true));
+        var b = interner.Intern(new DataTableCellFormat(FontBold: true));
+        Assert.Same(a, b);
+    }
+}

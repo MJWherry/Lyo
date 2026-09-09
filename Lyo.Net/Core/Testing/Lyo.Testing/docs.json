@@ -1,0 +1,237 @@
+{
+  "id": "Lyo.Testing",
+  "name": "Lyo.Testing",
+  "area": "Core",
+  "tagline": "Helpers for xUnit v3: fluent `Should*` asserts, exception and collection helpers, polling checks, and a logger backed by `ITestOutputHelper`.",
+  "description": "Helpers for xUnit v3: fluent `Should*` asserts, exception and collection helpers,\nasynchronous polling checks, and a logger that writes through `ITestOutputHelper`.",
+  "features": [
+    "**TestData.** Reproducible seeded byte payloads (`TestData.Seed` / `Create` / `Fill`). Shares its seed with `BenchmarkData.PayloadSeed` and `DeterministicPayloadStream.DefaultSeed`."
+  ],
+  "examples": [
+    {
+      "title": "Payloads from a seed",
+      "language": "csharp",
+      "code": "using Lyo.Testing;\n\nvar plaintext = TestData.Create(1024);\nvar wrongKey = TestData.Create(32, TestData.Seed ^ 1);\nTestData.Fill(buffer);"
+    },
+    {
+      "title": "Wait-and-assert",
+      "language": "csharp",
+      "code": "// Async — boolean predicate, value match, custom predicate, or no-exception loop.\nawait PollAssert.ThatAsync(() => queue.Count == 0, TimeSpan.FromSeconds(5));\nawait PollAssert.ThatAsync(() => provider.GetState(), expectedValue: \"Ready\", TimeSpan.FromSeconds(5));\nawait PollAssert.ThatAsync(() => provider.GetState(), s => s.IsHealthy, TimeSpan.FromSeconds(5),\n                            failureMessage: \"Provider never became healthy\");\nawait PollAssert.NoExceptionAsync(() => probe.PingAsync(), TimeSpan.FromSeconds(5));\n\n// Synchronous equivalents\nPollAssert.That(() => queue.Count == 0, TimeSpan.FromSeconds(5));\nPollAssert.That(() => provider.GetState(), expectedValue: \"Ready\", TimeSpan.FromSeconds(5));\nPollAssert.That(() => provider.GetState(), s => s.IsHealthy, TimeSpan.FromSeconds(5));\nPollAssert.NoException(() => probe.Ping(), TimeSpan.FromSeconds(5));"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Asserts",
+      "items": [
+        "**Comparing values.** `ShouldBe(expected)`, `ShouldNotBe(unexpected)`, `ShouldBeSameAs`, `ShouldNotBeSameAs`, `ShouldBeAssignableTo<T>()`, `ShouldBeOfType<T>()`.",
+        "**Nulls.** `ShouldBeNull` / `ShouldNotBeNull` (overloads for reference and nullable-value types. `[NotNull]` flows from the `NotNull` variants for nullable-flow analysis).",
+        "**Booleans.** `ShouldBeFalse(message?)`, `ShouldBeTrue(message?)`.",
+        "**Ordering / ranges (where `T : IComparable<T>`).** `ShouldBeLessThan`, `ShouldBeLessThanOrEqualTo`, `ShouldBeGreaterThan`, `ShouldBeGreaterThanOrEqualTo`, `ShouldBeBetween`.",
+        "**Time.** `TimeSpan.ShouldBeCloseTo(expected, tolerance)`, `DateTime.ShouldBeCloseTo(expected, tolerance)`.",
+        "**Strings.** `ShouldEndWith`, `ShouldStartWith`, `ShouldContain(substring)`, `ShouldNotContain`, `ShouldMatch(pattern)`, `ShouldNotMatch`, `ShouldBeEmpty`, `ShouldNotBeEmpty`.",
+        "**Collections.** `ShouldNotBeEmpty`, `ShouldBeEmpty`, `ShouldContain(item)`, `ShouldNotContain`, `ShouldContainAll(expected)`, `ShouldContainNone(excluded)`, `ShouldHaveCount(count)`, `ShouldHaveCount(count, predicate)`, `ShouldAllSatisfy(predicate)`, `ShouldAnySatisfy(predicate)`, `ShouldHaveUniqueItems`, `ShouldBeEquivalentTo(expected)`, plus `ShouldBeOrdered` / `ShouldBeOrderedDescending` for `IComparable<T>` collections."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Exceptions",
+      "items": [
+        "`Throws<T>(action, message?)` / `ThrowsAsync<T>(func, message?)`",
+        "`ThrowsAny(action, params Type[])` / `ThrowsAnyAsync(func, params Type[])`. Succeeds when `GetType()` of the captured exception is in the supplied list.",
+        "`ThrowsWithInnerException<T>(action, innerType)` / `ThrowsWithInnerExceptionAsync<T>(func, innerType)`. Checks both the outer and inner exception types.",
+        "`DoesNotThrow(action)` / `DoesNotThrowAsync(func)`."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Wait-and-assert",
+      "body": "`Lyo.Testing.PollAssert` wraps Polly retry and timeout policies for wait-until-true checks.\n\n\n\nEvery overload takes an optional `pollInterval` (defaults to `100 ms`) and, on the predicate variants, an optional `failureMessage`."
+    },
+    {
+      "type": "paragraph",
+      "title": "Logging",
+      "text": "`XunitLoggerProvider(ITestOutputHelper output)` is an `ILoggerProvider` that forwards `ILogger` calls to `ITestOutputHelper.WriteLine` with `HH:mm:ss.fff` timestamps and `TRACE|DEBUG|INFO|WARN|ERROR|CRITICAL|NONE` level tags. Wire it via `services.AddLogging(b => b.AddProvider(new XunitLoggerProvider(output)))` when using `Xunit.DependencyInjection`. Writes that fail against the output helper are swallowed (the runner can already be torn down when the last logs flush)."
+    },
+    {
+      "type": "paragraph",
+      "title": "Utilities",
+      "text": "`Lyo.Testing.Utilities.AppendBytesToFile(string path, long sizeInBytes)` grows (or creates) a file by the requested number of bytes and creates parent directories if needed. Handy for filesystem tests that care about size."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Testing/Lyo.Testing/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.NET.Test.Sdk",
+      "kind": "package",
+      "version": "18",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Polly",
+      "kind": "package",
+      "version": "8.7.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Xunit.DependencyInjection",
+      "kind": "package",
+      "version": "11.3.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "coverlet.collector",
+      "kind": "package",
+      "version": "10.0.1",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "xunit.runner.visualstudio",
+      "kind": "package",
+      "version": "3.1.5",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "xunit.v3",
+      "kind": "package",
+      "version": "3.2.2",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

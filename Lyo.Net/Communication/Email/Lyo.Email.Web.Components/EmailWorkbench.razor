@@ -1,0 +1,164 @@
+@using Lyo.Email.Builders
+@using Lyo.Email.Models
+@using Lyo.Result
+@using Lyo.Web.Primitives.ChipInput
+@using Lyo.Web.Components.FileUpload
+@using Lyo.Web.Components.Form
+@using Lyo.Web.Components.RichTextEditor
+@inject IEmailService EmailService
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Email</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Compose and send email through the configured email service implementation.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">To</MudText>
+                        <LyoChipInput Values="@_emailToValues"
+                                      ValuesChanged="OnEmailToValuesChanged"
+                                      Placeholder="Type email and press Enter"
+                                      ValidationPattern="@_emailValidationPattern"
+                                      ValidationErrorMessage="Enter a valid email address."/>
+                    </div>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" Label="From override" @bind-Value="_emailFromAddress"/>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <LyoNullableTextField Label="From name" Value="@_emailFromName" ValueChanged="v => _emailFromName = v"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">CC</MudText>
+                            <LyoChipInput Values="@_emailCcValues"
+                                          ValuesChanged="OnEmailCcValuesChanged"
+                                          Placeholder="Type email and press Enter"
+                                          ValidationPattern="@_emailValidationPattern"
+                                          ValidationErrorMessage="Enter a valid email address."/>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">BCC</MudText>
+                            <LyoChipInput Values="@_emailBccValues"
+                                          ValuesChanged="OnEmailBccValuesChanged"
+                                          Placeholder="Type email and press Enter"
+                                          ValidationPattern="@_emailValidationPattern"
+                                          ValidationErrorMessage="Enter a valid email address."/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudTextField T="string" Label="Subject" @bind-Value="_emailSubject"/>
+
+                    <LyoRichTextEditor Value="@_emailHtmlBody"
+                                       ValueChanged="OnEmailHtmlBodyChangedAsync"
+                                       Label="HTML body"
+                                       Placeholder="Compose the email HTML body..."
+                                       MinHeightPx="260"/>
+                    <MudTextField T="string"
+                                  Label="Text body fallback (plain HTML source)"
+                                  HelperText="Raw HTML string. The rich editor updates this when the HTML changes."
+                                  Lines="6"
+                                  FullWidth="true"
+                                  Immediate="false"
+                                  Style="font-family: ui-monospace, monospace;"
+                                  Value="@_emailTextBody"
+                                  ValueChanged="OnEmailTextBodyChangedAsync"/>
+
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Attachments</MudText>
+                            <LyoFileUpload MaxFiles="5"
+                                           ButtonText="Add attachments"
+                                           InlineLayout="true"
+                                           OnClientFileReady="OnEmailAttachmentReadyAsync"
+                                           OnClientFileRemoved="OnEmailAttachmentRemovedAsync"
+                                           OnUploadStarted="OnAttachmentUploadStartedAsync"
+                                           OnUploadProgress="OnAttachmentUploadProgressAsync"
+                                           OnUploadCompleted="OnAttachmentUploadCompletedAsync"
+                                           OnUploadCancelled="OnAttachmentUploadCancelledAsync"
+                                           OnUploadFailed="OnAttachmentUploadFailedAsync"/>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Last upload event: @_attachmentUploadStatus
+                            </MudText>
+                            @if (_attachmentUploadLog.Count > 0) {
+                                <MudList T="string" Dense="true" Class="upload-log-list">
+                                    @foreach (var entry in _attachmentUploadLog) {
+                                        <MudListItem T="string">@entry</MudListItem>
+                                    }
+                                </MudList>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendEmailAsync" Disabled="@_busy">Send Email</MudButton>
+                        <MudButton Variant="Variant.Text" OnClick="TestEmailConnectionAsync" Disabled="@_busy">Test Email Connection</MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-2">Email Result</MudText>
+                    @if (_lastEmailResult == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Send an email to inspect the provider response here.</MudText>
+                    }
+                    else {
+                        <MudAlert Severity="@(_lastEmailResult.IsSuccess ? Severity.Success : Severity.Error)" Dense="true" Class="mb-3">
+                            @_lastEmailSummary
+                        </MudAlert>
+
+                        <MudSimpleTable Dense="true">
+                            <tbody>
+                            <tr>
+                                <td><strong>Subject</strong></td>
+                                <td>@(_lastEmailResult.Data?.Subject ?? "(none)")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>To</strong></td>
+                                <td>@string.Join(", ", _lastEmailResult.Data?.ToAddresses ?? [])</td>
+                            </tr>
+                            <tr>
+                                <td><strong>CC</strong></td>
+                                <td>@string.Join(", ", _lastEmailResult.Data?.CcAddresses ?? [])</td>
+                            </tr>
+                            <tr>
+                                <td><strong>BCC</strong></td>
+                                <td>@string.Join(", ", _lastEmailResult.Data?.BccAddresses ?? [])</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Message Id</strong></td>
+                                <td>@(_lastEmailProviderResult?.MessageId ?? "(none)")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sent Date</strong></td>
+                                <td>@(_lastEmailProviderResult?.SentDate?.ToString("u") ?? "(none)")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SMTP Response</strong></td>
+                                <td>@(_lastEmailProviderResult?.SmtpResponse ?? "(none)")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Errors</strong></td>
+                                <td>@LyoResultErrorFormatter.FormatErrors(_lastEmailResult.Errors)</td>
+                            </tr>
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+    </MudStack>
+</MudPaper>

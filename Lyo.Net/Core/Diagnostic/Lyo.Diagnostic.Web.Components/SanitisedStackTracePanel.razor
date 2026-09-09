@@ -1,0 +1,84 @@
+@if (Trace is null) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">No sanitised trace yet.</MudText>
+}
+else {
+    <MudStack Spacing="2">
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+            <LyoChip Label="@($"Fingerprint: {Trace.Fingerprint}")"/>
+            <LyoChip Label="@($"Frames: {Trace.Frames.Count}")"/>
+            <LyoChip Label="@($"Crash confidence: {Trace.CrashSiteConfidence}")"/>
+            @if (Trace.HasRecursion) {
+                <LyoChip Color="Color.Warning" Label="Recursion"/>
+            }
+        </MudStack>
+        @if (!string.IsNullOrWhiteSpace(Trace.CrashSite)) {
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-1">Crash site (sanitised)</MudText>
+                <MudText Typo="Typo.body2">@Trace.CrashSite</MudText>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Trace.ExceptionMessage)) {
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-1">Exception message (sanitised)</MudText>
+                <MudPaper Outlined="true" Class="pa-2">
+                    <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@Trace.ExceptionMessage</MudText>
+                </MudPaper>
+            </div>
+        }
+        <MudText Typo="Typo.subtitle2">Frames</MudText>
+        @if (Trace.Frames.Count == 0) {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No frames.</MudText>
+        }
+        else {
+            <LyoResponsiveTable>
+                <TableContent>
+                    <MudSimpleTable Dense="true" Hover="true" Style="overflow:auto; max-height:280px;">
+                        <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Method</th>
+                            <th>Location</th>
+                            <th>Flags</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var f in Trace.Frames) {
+                            <tr>
+                                <td>@f.Category</td>
+                                <td style="font-family: monospace; font-size: 0.85rem;">@f.ShortMethod</td>
+                                <td>@(f.LocationSummary ?? "—")</td>
+                                <td>@FrameFlags(f)</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </MudSimpleTable>
+                </TableContent>
+                <CardContent>
+                    @foreach (var f in Trace.Frames) {
+                        <LyoRecordCard Title="@f.ShortMethod" Subtitle="@f.Category.ToString()">
+                            <LyoRecordField Label="Location" Value="@(f.LocationSummary ?? "—")"/>
+                            <LyoRecordField Label="Flags">@FrameFlags(f)</LyoRecordField>
+                        </LyoRecordCard>
+                    }
+                </CardContent>
+            </LyoResponsiveTable>
+        }
+        @if (Trace.InnerExceptions.Count > 0) {
+            <MudExpansionPanels MultiExpansion="true">
+                @foreach (var inner in Trace.InnerExceptions) {
+                    <MudExpansionPanel Text="@($"Inner exception ({inner.Frames.Count} frames)")">
+                        <SanitisedStackTracePanel Trace="inner"/>
+                    </MudExpansionPanel>
+                }
+            </MudExpansionPanels>
+        }
+    </MudStack>
+}
+
+@code {
+
+    private RenderFragment<SanitisedFrame> FrameFlags => frame => @<text>
+        @(frame.IsAsync ? "async " : "")@(frame.IsLambda ? "lambda" : "")@(!frame.IsAsync && !frame.IsLambda ? "—" : "")
+    </text>;
+
+}

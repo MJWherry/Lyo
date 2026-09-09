@@ -1,0 +1,147 @@
+using System.Diagnostics;
+using Lyo.Encryption;
+
+namespace Lyo.FileMetadataStore.Models;
+
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed class FileMetadataEntity
+{
+    public string Id { get; set; } = null!;
+
+    public string? OriginalFileName { get; set; }
+
+    public long OriginalFileSize { get; set; }
+
+    public byte[] OriginalFileHash { get; set; } = null!;
+
+    public string SourceFileName { get; set; } = null!;
+
+    public long SourceFileSize { get; set; }
+
+    public byte[] SourceFileHash { get; set; } = null!;
+
+    public bool IsCompressed { get; set; }
+
+    public string? CompressionAlgorithm { get; set; }
+
+    public long? CompressedFileSize { get; set; }
+
+    public byte[]? CompressedFileHash { get; set; }
+
+    public bool IsEncrypted { get; set; }
+
+    public string? DataEncryptionKeyAlgorithm { get; set; }
+
+    public string? KeyEncryptionKeyAlgorithm { get; set; }
+
+    public long? EncryptedFileSize { get; set; }
+
+    public byte[]? EncryptedFileHash { get; set; }
+
+    public byte[]? EncryptedDataEncryptionKey { get; set; }
+
+    public string? DataEncryptionKeyId { get; set; }
+
+    public string? DataEncryptionKeyVersion { get; set; }
+
+    public byte[]? KeyEncryptionKeySalt { get; set; }
+
+    /// <summary>Plaintext DEK length in bytes (two-key stream header). Null on legacy rows.</summary>
+    public byte? DekKeyMaterialBytes { get; set; }
+
+    public DateTime Timestamp { get; set; }
+
+    public string? PathPrefix { get; set; }
+
+    /// <summary>Hash used when computing OriginalFileHash. Null on legacy files (treated as Sha256).</summary>
+    public string? HashAlgorithm { get; set; }
+
+    public string? ContentType { get; set; }
+
+    /// <summary>Client-declared character encoding of the plaintext (IANA/web name). Null when omitted.</summary>
+    public string? Charset { get; set; }
+
+    public string? TenantId { get; set; }
+
+    public string? Availability { get; set; }
+
+    /// <summary>When set (UTC), logical delete — row kept for audit; omitted from reads and duplicate detection.</summary>
+    public DateTime? DeletedAt { get; set; }
+
+    /// <summary>
+    /// Principal that uploaded or owns this file (a user id, group id, or other domain owner). Null for system-uploaded files and rows created before ownership tracking.
+    /// Indexed for ownership lookups and later file-sharing.
+    /// </summary>
+    public Guid? OwnerId { get; set; }
+
+    public FileStoreResult ToFileStoreResult()
+    {
+        var compressionAlgorithm = Compression.Models.CompressionAlgorithm.TryFromName(CompressionAlgorithm);
+        EncryptionAlgorithm? dekAlgorithm = null;
+        if (!string.IsNullOrEmpty(DataEncryptionKeyAlgorithm) && Enum.TryParse<EncryptionAlgorithm>(DataEncryptionKeyAlgorithm, out var dekAlg))
+            dekAlgorithm = dekAlg;
+
+        EncryptionAlgorithm? kekAlgorithm = null;
+        if (!string.IsNullOrEmpty(KeyEncryptionKeyAlgorithm) && Enum.TryParse<EncryptionAlgorithm>(KeyEncryptionKeyAlgorithm, out var kekAlg))
+            kekAlgorithm = kekAlg;
+
+        HashAlgorithm? hashAlgorithm = null;
+        if (!string.IsNullOrEmpty(HashAlgorithm) && Enum.TryParse<HashAlgorithm>(HashAlgorithm, out var hashAlg))
+            hashAlgorithm = hashAlg;
+
+        var availability = FileAvailability.Available;
+        if (!string.IsNullOrEmpty(Availability) && Enum.TryParse<FileAvailability>(Availability, out var av))
+            availability = av;
+        if (DeletedAt != null)
+            availability = FileAvailability.Deleted;
+
+        return new(
+            Guid.Parse(Id), OriginalFileName, OriginalFileSize, OriginalFileHash, SourceFileName, SourceFileSize, SourceFileHash, IsCompressed, compressionAlgorithm,
+            CompressedFileSize, CompressedFileHash, IsEncrypted, dekAlgorithm, kekAlgorithm, EncryptedFileSize, EncryptedFileHash, EncryptedDataEncryptionKey, DataEncryptionKeyId,
+            DataEncryptionKeyVersion, KeyEncryptionKeySalt, Timestamp, PathPrefix, hashAlgorithm, ContentType, Charset, TenantId, availability, DekKeyMaterialBytes, DeletedAt,
+            OwnerId);
+    }
+
+    public static FileMetadataEntity FromFileStoreResult(FileStoreResult result)
+        => new() {
+            Id = result.Id.ToString(),
+            OriginalFileName = result.OriginalFileName,
+            OriginalFileSize = result.OriginalFileSize,
+            OriginalFileHash = result.OriginalFileHash,
+            SourceFileName = result.SourceFileName,
+            SourceFileSize = result.SourceFileSize,
+            SourceFileHash = result.SourceFileHash,
+            IsCompressed = result.IsCompressed,
+            CompressionAlgorithm = result.CompressionAlgorithm?.ToString(),
+            CompressedFileSize = result.CompressedFileSize,
+            CompressedFileHash = result.CompressedFileHash,
+            IsEncrypted = result.IsEncrypted,
+            DataEncryptionKeyAlgorithm = result.DataEncryptionKeyAlgorithm?.ToString(),
+            KeyEncryptionKeyAlgorithm = result.KeyEncryptionKeyAlgorithm?.ToString(),
+            EncryptedFileSize = result.EncryptedFileSize,
+            EncryptedFileHash = result.EncryptedFileHash,
+            EncryptedDataEncryptionKey = result.EncryptedDataEncryptionKey,
+            DataEncryptionKeyId = result.DataEncryptionKeyId,
+            DataEncryptionKeyVersion = result.DataEncryptionKeyVersion,
+            KeyEncryptionKeySalt = result.KeyEncryptionKeySalt,
+            DekKeyMaterialBytes = result.DekKeyMaterialBytes,
+            Timestamp = result.Timestamp,
+            PathPrefix = result.PathPrefix,
+            HashAlgorithm = result.HashAlgorithm?.ToString(),
+            ContentType = result.ContentType,
+            Charset = result.Charset,
+            TenantId = result.TenantId,
+            Availability = result.DeletedAt.HasValue ? nameof(FileAvailability.Deleted) : result.Availability.ToString(),
+            DeletedAt = result.DeletedAt.HasValue ? DateTime.SpecifyKind(result.DeletedAt.Value, DateTimeKind.Utc) : null,
+            OwnerId = result.OwnerId
+        };
+
+    /// <summary>Marks a logical delete: writes <see cref="DeletedAt" /> (UTC) and sets <see cref="Availability" /> to <see cref="FileAvailability.Deleted" />.</summary>
+    public void MarkDeleted()
+    {
+        DeletedAt = DateTime.UtcNow;
+        Availability = nameof(FileAvailability.Deleted);
+    }
+
+    public override string ToString() => $"FileMetadataEntity: {Id}, {OriginalFileName}, size={OriginalFileSize}, encrypted={IsEncrypted}, compressed={IsCompressed}";
+}

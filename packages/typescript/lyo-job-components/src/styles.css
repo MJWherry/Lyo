@@ -1,0 +1,5 @@
+/* Job management — hosts typically already define Lyo tokens. */
+.lyo-job-management {
+  min-width: 0;
+  width: 100%;
+}

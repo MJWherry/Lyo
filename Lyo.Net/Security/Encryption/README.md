@@ -1,0 +1,1195 @@
+# Lyo Encryption Library
+
+A production-ready .NET encryption library providing secure, authenticated encryption with support for multiple algorithms, key management, and envelope encryption patterns.
+
+## Documentation map (this folder)
+
+| Document                                                       | Scope                                                                                                                                                      |
+|----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`README.md` (this file)**                                    | Umbrella guide: algorithms, on-disk formats, examples, security practices, stream layouts, exceptions.                                                     |
+| **[`Lyo.Encryption/README.md`](Lyo.Encryption/README.md)**     | **`Lyo.Encryption`** assembly: service matrix, **`IEncryptionService`** / **`ITwoKeyEncryptionService`**, DI helpers on **`EncryptionServiceExtensions`**. |
+| **[`Lyo.KeyStore/README.md`](Lyo.KeyStore/README.md)**         | **`Lyo.KeyStore`** assembly: **`IKeyStore`**, **`LocalKeyStore`**, key derivation utilities, inventory contracts.                                          |
+| **[`Lyo.KeyStore.Aws/README.md`](Lyo.KeyStore.Aws/README.md)** | AWS-backed **`IKeyStore`** implementation.                                                                                                                 |
+
+Start here for narrative and threat-modeling context; use the per-project READMEs when you only care about one package’s surface area.
+
+## Table of Contents
+
+- [Features](#-features)
+- [Target frameworks: net10.0 and netstandard2.0](#-target-frameworks-net100-and-netstandard20)
+- [Quick Start](#-quick-start)
+- [Usage Examples](#-usage-examples)
+    - [AES-GCM Encryption](#1-aes-gcm-encryption)
+    - [ChaCha20Poly1305 Encryption](#2-chacha20poly1305-encryption)
+    - [RSA Encryption](#3-rsa-encryption)
+    - [Hybrid AES-GCM-RSA Encryption](#4-hybrid-aes-gcm-rsa-encryption)
+    - [Two-Key (Envelope) Encryption](#5-two-key-envelope-encryption)
+    - [Key Management](#6-key-management)
+    - [Stream Operations](#7-stream-operations)
+    - [Using Direct Keys](#8-using-direct-keys-without-keystore)
+    - [Secure Key Generation](#8a-secure-key-generation)
+    - [Custom KeyStore Implementation](#9-custom-keystore-implementation)
+    - [Service Configuration](#10-service-configuration-options)
+    - [Error Handling](#11-error-handling)
+    - [Dependency Injection](#12-dependency-injection-aspnet-core)
+- [Security Best Practices](#-security-best-practices)
+- [Architecture](#-architecture)
+    - [Lyo ciphertext files and metadata](#lyo-ciphertext-files-and-metadata)
+- [API Reference](#-api-reference)
+- [Performance](#-performance)
+- [Thread Safety](#-thread-safety)
+- [Important Notes](#-important-notes)
+- [Additional Resources](#-additional-resources)
+
+## Features
+
+- **Modern Authenticated Encryption**
+    - AES-GCM (256-bit keys)
+    - ChaCha20Poly1305
+    - AES-CCM (12-byte nonce, 16-byte tag)
+    - AES-SIV (RFC 5297, 256/384/512-bit key material)
+    - XChaCha20-Poly1305 (extended 24-byte nonce)
+    - RSA (with OAEP padding)
+    - AES-GCM-RSA (hybrid encryption)
+
+- **Key Management**
+    - Multi-tenant key support (keyId-based)
+    - Key versioning and rotation support
+    - Pluggable KeyStore interface
+    - LocalKeyStore for development/local apps
+    - Production-ready KeyStore implementations (AWS KMS, Azure Key Vault, etc.)
+    - Easy key rotation with `UpdateKey` methods
+
+- **Envelope Encryption**
+    - Two-key encryption service for envelope encryption patterns
+    - Unique Data Encryption Key (DEK) per encryption operation
+    - Key Encryption Key (KEK) stored securely in KeyStore
+
+- **Security Features**
+    - Hybrid nonce generation (prevents nonce reuse)
+    - Secure memory clearing
+    - Constant-time comparisons
+    - Input validation and DoS protection
+    - Stream format versioning with `StreamFormatVersion` enum for future compatibility
+
+- **Production Ready**
+    - Thread-safe operations
+    - Comprehensive error handling
+    - Extensive test coverage
+    - Well-documented API
+
+On-disk layouts, default file extensions, and MIME types for Lyo ciphertext are **Lyo-specific** (registered on `FileTypeInfo` in **Lyo.Common.Core**); they describe interoperability
+within this stack, not a single industry-wide “AES-GCM file” or “RSA file” format. See [Lyo ciphertext files and metadata](#lyo-ciphertext-files-and-metadata).
+
+## Target frameworks: net10.0 and netstandard2.0
+
+**Lyo.Encryption** multi-targets **`net10.0`** and **`netstandard2.0`**. The **supported algorithms and acceptable key material sizes are the same** on both: blobs encrypted on one
+target decrypt on the other when keys and formats match.
+
+| Algorithm (typical service)                                                                                                 | Key / IV sizes                                                                                                                                                                                             | `net10.0`                                                                                                         | `netstandard2.0`                                                                |
+|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| **AES-GCM** (`AesGcmEncryptionService`, DEK layer in `TwoKeyEncryptionService`, data layer in `AesGcmRsaEncryptionService`) | **AES-128 / 192 / 256** → **16, 24, or 32-byte** keys; **12-byte** nonce (96-bit); **16-byte** tag (128-bit)                                                                                               | `System.Security.Cryptography.AesGcm`                                                                             | BouncyCastle AES-GCM (**same** sizes and on-the-wire layout)                    |
+| **ChaCha20-Poly1305** (`ChaCha20Poly1305EncryptionService`)                                                                 | **32-byte** key; **12-byte** nonce; **16-byte** tag                                                                                                                                                        | `System.Security.Cryptography.ChaCha20Poly1305`                                                                   | BouncyCastle (**same** sizes and layout)                                        |
+| **AES-CCM** (`AesCcmEncryptionService`)                                                                                     | **16 / 24 / 32-byte** keys; **12-byte** nonce; **16-byte** tag                                                                                                                                             | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
+| **AES-SIV** (`AesSivEncryptionService`)                                                                                     | **32, 48, or 64-byte** keys (`AesSivKeySizeBits`: 256 / 384 / 512-bit key material per RFC 5297)                                                                                                           | Dorssel.Security.Cryptography.AesExtra                                                                            | Dorssel.Security.Cryptography.AesExtra                                          |
+| **XChaCha20-Poly1305** (`XChaCha20Poly1305EncryptionService`)                                                               | **32-byte** key; **24-byte** nonce; **16-byte** tag                                                                                                                                                        | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
+| **RSA** (`RsaEncryptor` / `RsaDecryptor`, RSA leg of `AesGcmRsaEncryptionService`)                                          | **≥ 2048-bit** RSA modulus (enforced by `RsaEncryptor` / `RsaDecryptor`; **3072+** recommended for new keys). Default **OAEP-SHA256**. Usable plaintext size per operation depends on modulus and padding. | `RSA` + PEM/PFX via BCL (`ImportSubjectPublicKeyInfo` / `ImportPkcs8PrivateKey`, `X509CertificateLoader` for PFX) | `RSA` + **BouncyCastle PEM** import for SPKI/PKCS#8; PFX via `X509Certificate2` |
+
+**Interop:** File extensions, stream headers, and chunk framing are **not** TFM-specific.
+
+**Errors:** On **net10.0**, BCL AEAD decrypt paths may throw **`AuthenticationTagMismatchException`**, which some call sites map to **`DecryptionFailedException`**. On *
+*netstandard2.0**, the same failure is usually a **`CryptographicException`** (still wrapped as **`DecryptionFailedException`** where applicable).
+
+## Quick Start
+
+### Basic Encryption with AES-GCM
+
+```csharp
+using Lyo.Encryption.AesGcm;
+using Lyo.KeyStore;
+
+// Create a key store and add a key
+var keyStore = new LocalKeyStore();
+const string keyId = "my-app-key";
+keyStore.UpdateKeyFromString(keyId, "my-secret-key");
+
+// Create encryption service
+var encryptionService = new AesGcmEncryptionService(keyStore);
+
+// Encrypt data (specify keyId)
+var plaintext = "Hello, World!"u8.ToArray();
+var encrypted = encryptionService.Encrypt(plaintext, keyId: keyId);
+
+// Decrypt data (keyId is read from encrypted data, or specify explicitly)
+var decrypted = encryptionService.Decrypt(encrypted, keyId: keyId);
+var decryptedText = System.Text.Encoding.UTF8.GetString(decrypted);
+Console.WriteLine(decryptedText); // "Hello, World!"
+```
+
+### Choosing the Right Encryption Algorithm
+
+- **AES-GCM** (Recommended) - Best for most use cases
+    - Excellent performance (200-800 MB/s)
+    - Widely supported and standardized
+    - Hardware acceleration available
+
+- **ChaCha20Poly1305** - Modern alternative
+    - Excellent performance (300-1000 MB/s)
+    - Good for systems without AES hardware acceleration
+    - Modern, well-regarded algorithm
+
+- **RSA** - For small data or key exchange
+    - Asymmetric encryption
+    - Good for encrypting small amounts of data
+    - Use for key exchange scenarios
+
+- **AES-GCM-RSA** - Hybrid encryption
+    - Combines AES-GCM (data) with RSA (key exchange)
+    - Generates random AES key per encryption
+    - Good for scenarios requiring asymmetric key exchange
+
+- **Two-Key Encryption** - Envelope encryption
+    - Unique DEK per encryption operation
+    - KEK stored in KeyStore
+    - Best for cloud storage scenarios
+
+## Usage Examples
+
+### 1. AES-GCM Encryption
+
+AES-GCM is recommended for most use cases - it provides excellent performance and strong security.
+
+```csharp
+using Lyo.Encryption.AesGcm;
+using Lyo.KeyStore;
+
+// Setup
+const string keyId = "my-app-key";
+var keyStore = new LocalKeyStore();
+keyStore.UpdateKeyFromString(keyId, "my-encryption-key");
+
+var service = new AesGcmEncryptionService(keyStore);
+
+// Encrypt bytes (specify keyId)
+var data = System.Text.Encoding.UTF8.GetBytes("Sensitive data");
+var encrypted = service.Encrypt(data, keyId: keyId);
+
+// Decrypt bytes (keyId is read from encrypted data, or specify explicitly)
+var decrypted = service.Decrypt(encrypted, keyId: keyId);
+var result = System.Text.Encoding.UTF8.GetString(decrypted);
+
+// Encrypt/Decrypt strings
+var encryptedString = service.EncryptString("Hello World", keyId: keyId);
+var decryptedString = service.DecryptString(encryptedString, keyId: keyId);
+
+// Encrypt/Decrypt files
+await service.EncryptToFileAsync(data, "encrypted.ag", keyId: keyId);
+var decryptedData = await service.DecryptFromFileAsync("encrypted.ag", keyId: keyId);
+
+// Stream encryption (for large files)
+await using var inputStream = File.OpenRead("large-file.txt");
+await using var outputStream = File.Create("large-file.ag");
+await service.EncryptToStreamAsync(inputStream, outputStream, keyId: keyId);
+```
+
+### 2. ChaCha20Poly1305 Encryption
+
+ChaCha20Poly1305 offers excellent performance and is a modern alternative to AES-GCM.
+
+```csharp
+using Lyo.Encryption.ChaCha20Poly1305;
+using Lyo.KeyStore;
+
+const string keyId = "my-app-key";
+var keyStore = new LocalKeyStore();
+keyStore.UpdateKeyFromString(keyId, "my-key");
+
+var service = new ChaCha20Poly1305EncryptionService(keyStore);
+
+var encrypted = service.Encrypt("Hello"u8.ToArray(), keyId: keyId);
+var decrypted = service.Decrypt(encrypted, keyId: keyId);
+```
+
+### 3. RSA Encryption
+
+RSA is suitable for encrypting small amounts of data or for key exchange scenarios.
+
+```csharp
+using Lyo.Encryption.Rsa;
+using System.Security.Cryptography;
+
+// Encryptor uses the public key; decryptor uses the private key.
+using var encryptor = new RsaEncryptor(
+    publicPemPath: "public.pem",
+    padding: RSAEncryptionPadding.OaepSHA256
+);
+using var decryptor = new RsaDecryptor(
+    privatePemPath: "private.pem",
+    padding: RSAEncryptionPadding.OaepSHA256
+);
+
+var encrypted = encryptor.Encrypt("Small data"u8.ToArray());
+var decrypted = decryptor.Decrypt(encrypted);
+
+// Using a PFX certificate (contains the private key, usable for both)
+using var encryptor2 = new RsaEncryptor(pfxPath: "certificate.pfx", password: "pfx-password");
+using var decryptor2 = new RsaDecryptor(pfxPath: "certificate.pfx", password: "pfx-password");
+```
+
+### 4. Hybrid AES-GCM-RSA Encryption
+
+Combines AES-GCM for data encryption with RSA for key exchange. Generates a random AES key per encryption operation.
+
+```csharp
+using Lyo.Encryption.AesGcmRsa;
+
+using var service = new AesGcmRsaEncryptionService(
+    publicPemPath: "public.pem",
+    privatePemPath: "private.pem"
+);
+
+// Encrypts with random AES key, encrypts key with RSA
+var encrypted = service.Encrypt("Large data"u8.ToArray());
+
+// Decrypts RSA-encrypted key, then decrypts data with AES
+var decrypted = service.Decrypt(encrypted);
+```
+
+### 5. Two-Key (Envelope) Encryption
+
+Envelope encryption pattern where each encryption uses a unique Data Encryption Key (DEK) that is encrypted with a Key Encryption Key (KEK) from the KeyStore.
+
+```csharp
+using Lyo.Encryption.TwoKey;
+using Lyo.Encryption.AesGcm;
+using Lyo.KeyStore;
+
+// Setup KeyStore with KEK
+const string keyId = "my-app-key";
+var keyStore = new LocalKeyStore();
+keyStore.UpdateKeyFromString(keyId, "master-key");
+
+// Create DEK encryption service (for encrypting data)
+var dekService = new AesGcmEncryptionService(keyStore);
+
+// Create two-key service
+var twoKeyService = new TwoKeyEncryptionService(dekService, keyStore);
+
+// Encrypt - generates unique DEK per operation (specify keyId)
+var result = twoKeyService.Encrypt("Sensitive data"u8.ToArray(), keyId: keyId);
+// result.EncryptedData - encrypted data
+// result.EncryptedDataEncryptionKey - encrypted DEK
+// result.KeyId - keyId used for KEK
+
+// Decrypt (keyId is read from result, or specify explicitly)
+var decrypted = twoKeyService.Decrypt(
+    result.EncryptedData,
+    result.EncryptedDataEncryptionKey,
+    keyId: result.KeyId
+);
+```
+
+### 6. Key Management
+
+#### Understanding keyId and Multi-Tenancy
+
+The encryption library uses a `keyId`-based approach for multi-tenant key management:
+
+- **`keyId`**: A string identifier for a key (e.g., "client-1-key", "tenant-abc-key")
+- **`version`**: An integer version number for key rotation (automatically managed)
+- **Key Resolution**: When encrypting/decrypting, you can:
+    - Provide `keyId` to use the current key from KeyStore
+    - Provide `key` directly (takes precedence over `keyId`)
+    - For decryption, `keyId` and `version` are read from encrypted data if not provided
+
+```csharp
+// Single service can handle multiple clients
+var service = new AesGcmEncryptionService(keyStore);
+
+// Encrypt for client 1
+var encrypted1 = service.Encrypt(data1, keyId: "client-1-key");
+
+// Encrypt for client 2
+var encrypted2 = service.Encrypt(data2, keyId: "client-2-key");
+
+// Decrypt (keyId is read from encrypted data)
+var decrypted1 = service.Decrypt(encrypted1);
+```
+
+#### Using LocalKeyStore (Development/Local Apps)
+
+```csharp
+using Lyo.KeyStore;
+
+var keyStore = new LocalKeyStore();
+const string keyId = "my-app-key";
+
+// Add initial key (automatically sets version to 1)
+keyStore.UpdateKeyFromString(keyId, "key-v1");
+
+// Get current key
+var currentKey = keyStore.GetCurrentKey(keyId);
+
+// Get current version
+var currentVersion = keyStore.GetCurrentVersion(keyId); // Returns 1
+
+// Get specific version
+var v1Key = keyStore.GetKey(keyId, 1);
+
+// Key rotation (automatically increments version)
+keyStore.UpdateKeyFromString(keyId, "key-v2"); // Now version 2 is current
+keyStore.UpdateKeyFromString(keyId, "key-v3"); // Now version 3 is current
+
+// Old versions remain available for decryption
+var v1Key = keyStore.GetKey(keyId, 1); // Still accessible
+var v2Key = keyStore.GetKey(keyId, 2); // Still accessible
+var v3Key = keyStore.GetKey(keyId, 3); // Current version
+```
+
+#### Multi-Tenant Key Management
+
+The KeyStore supports multiple keys (one per client/tenant):
+
+```csharp
+var keyStore = new LocalKeyStore();
+
+// Each client/tenant has their own keyId
+keyStore.UpdateKeyFromString("client-1-key", "client-1-secret");
+keyStore.UpdateKeyFromString("client-2-key", "client-2-secret");
+keyStore.UpdateKeyFromString("client-3-key", "client-3-secret");
+
+// Use the appropriate keyId when encrypting/decrypting
+var service = new AesGcmEncryptionService(keyStore);
+var encrypted = service.Encrypt(data, keyId: "client-1-key");
+var decrypted = service.Decrypt(encrypted, keyId: "client-1-key");
+```
+
+#### Key Metadata
+
+```csharp
+using Lyo.KeyStore;
+
+const string keyId = "my-app-key";
+var keyStore = new LocalKeyStore();
+keyStore.UpdateKeyFromString(keyId, "my-key");
+
+// Set metadata for current version
+var currentVersion = keyStore.GetCurrentVersion(keyId);
+var metadata = new KeyMetadata
+{
+    CreatedAt = DateTime.UtcNow,
+    ExpiresAt = DateTime.UtcNow.AddYears(1),
+    Algorithm = "AES-256-GCM",
+    AdditionalData = new Dictionary<string, string>
+    {
+        { "Description", "Production encryption key" }
+    }
+};
+keyStore.SetKeyMetadata(keyId, currentVersion, metadata);
+
+// Get metadata
+var retrievedMetadata = keyStore.GetKeyMetadata(keyId, currentVersion);
+if (retrievedMetadata?.IsExpired == true)
+{
+    // Handle expired key
+}
+```
+
+### 7. Stream Operations
+
+For large files, use stream operations to avoid loading everything into memory. The library uses **single-pass streaming
+** with **no temporary files** for optimal performance:
+
+#### AES-GCM Stream Operations
+
+```csharp
+using Lyo.Encryption.AesGcm;
+using Lyo.KeyStore;
+
+const string keyId = "my-app-key";
+var keyStore = new LocalKeyStore();
+keyStore.UpdateKeyFromString(keyId, "stream-key");
+
+var service = new AesGcmEncryptionService(keyStore);
+
+// Encrypt large file (single-pass, no temp files)
+await using var inputStream = File.OpenRead("large-file.dat");
+await using var encryptedStream = File.Create("large-file.ag");
+await service.EncryptToStreamAsync(inputStream, encryptedStream, keyId: keyId, chunkSize: 2 * 1024 * 1024); // 2MB chunks
+
+// Decrypt large file
+await using var encryptedInput = File.OpenRead("large-file.ag");
+await using var decryptedOutput = File.Create("large-file-decrypted.dat");
+await service.DecryptToStreamAsync(encryptedInput, decryptedOutput, keyId: keyId);
+```
+
+#### Two-Key Encryption Stream Operations
+
+Two-key encryption streams include a structured header with key metadata:
+
+```csharp
+using Lyo.Encryption.TwoKey;
+using Lyo.Encryption.AesGcm;
+using Lyo.KeyStore;
+
+const string keyId = "my-app-key";
+var keyStore = new LocalKeyStore();
+keyStore.UpdateKeyFromString(keyId, "master-key");
+
+var dekService = new AesGcmEncryptionService(keyStore);
+var twoKeyService = new TwoKeyEncryptionService(dekService, keyStore);
+
+// Encrypt large file (single-pass streaming with header). Extension is inner DEK service + two-key suffix (e.g. .ag + 2k => .ag2k).
+await using var inputStream = File.OpenRead("large-file.dat");
+await using var encryptedStream = File.Create("large-file.ag2k");
+await twoKeyService.EncryptToStreamAsync(inputStream, encryptedStream, keyId: keyId, chunkSize: 2 * 1024 * 1024);
+
+// Decrypt large file (reads header automatically)
+await using var encryptedInput = File.OpenRead("large-file.ag2k");
+await using var decryptedOutput = File.Create("large-file-decrypted.dat");
+await twoKeyService.DecryptToStreamAsync(encryptedInput, decryptedOutput, keyId: keyId);
+```
+
+#### Reading Stream Headers
+
+You can read the encryption header from a stream without decrypting the entire file:
+
+```csharp
+using Lyo.Encryption;
+
+// Read header from encrypted file
+await using var fileStream = File.OpenRead("large-file.ag2k");
+var header = EncryptionHeader.Read(fileStream);
+
+Console.WriteLine($"KeyId: {header.KeyId}");
+Console.WriteLine($"KeyVersion: {header.KeyVersion}");
+Console.WriteLine($"Format Version: {header.FormatVersion}"); // byte value (1)
+Console.WriteLine($"DEK Algorithm ID: {header.DekAlgorithmId}");
+Console.WriteLine($"KEK Algorithm ID: {header.KekAlgorithmId}");
+
+// The stream position is now after the header, ready for chunk reading
+```
+
+### 8. Using Direct Keys (Without KeyStore)
+
+You can also provide keys directly without using a KeyStore:
+
+```csharp
+using Lyo.Encryption.AesGcm;
+using Lyo.KeyStore;
+using System.Security.Cryptography;
+
+// KeyStore is still required for initialization, but you can pass keys directly
+const string keyId = "my-app-key";
+var keyStore = new LocalKeyStore();
+keyStore.UpdateKeyFromString(keyId, "dummy"); // Required for initialization
+
+var service = new AesGcmEncryptionService(keyStore);
+
+// Generate a key
+var key = RandomNumberGenerator.GetBytes(32); // 32 bytes for AES-256
+
+// Encrypt with direct key (ignores KeyStore key, keyId is ignored when key is provided)
+var encrypted = service.Encrypt("data"u8.ToArray(), key: key);
+
+// Decrypt with direct key
+var decrypted = service.Decrypt(encrypted, key: key);
+```
+
+### 8a. Secure Key Generation
+
+```csharp
+using Lyo.KeyStore;
+
+// Generate secure random key (32 bytes = 256 bits)
+var key = SecureKeyGenerator.GenerateKey(32);
+
+// Generate key with salt
+var (key, salt) = SecureKeyGenerator.GenerateKeyWithSalt(32, 16);
+
+// Generate secure key string
+var keyString = SecureKeyGenerator.GenerateKeyString(32, includeSpecialChars: true);
+
+// Store in KeyStore
+const string keyId = "my-app-key";
+var keyStore = new LocalKeyStore();
+keyStore.UpdateKey(keyId, key);
+```
+
+### 9. Custom KeyStore Implementation
+
+For production, implement `IKeyStore` for your key management system:
+
+```csharp
+using Lyo.KeyStore;
+using System.Threading.Tasks;
+
+// Example: Azure Key Vault KeyStore (pseudo-code)
+public class AzureKeyVaultKeyStore : IKeyStore
+{
+    private readonly KeyVaultClient _client;
+    private readonly string _vaultUrl;
+    
+    public AzureKeyVaultKeyStore(KeyVaultClient client, string vaultUrl)
+    {
+        _client = client;
+        _vaultUrl = vaultUrl;
+    }
+    
+    public byte[]? GetCurrentKey(string keyId)
+    {
+        var version = GetCurrentVersion(keyId); // string?
+        return version is null ? null : GetKey(keyId, version);
+    }
+
+    public byte[]? GetKey(string keyId, string version)
+    {
+        // Retrieve key from Azure Key Vault (versions are arbitrary strings, not integers)
+        var secret = _client.GetSecretAsync(_vaultUrl, $"{keyId}/{version}").Result;
+        return Convert.FromBase64String(secret.Value);
+    }
+    
+    // Implement other IKeyStore methods...
+}
+
+// Usage
+var keyStore = new AzureKeyVaultKeyStore(keyVaultClient, "https://myvault.vault.azure.net/");
+var encryptionService = new AesGcmEncryptionService(keyStore);
+```
+
+### 10. Service Configuration Options
+
+All encryption services use `EncryptionServiceOptions` for configuration. Each service creates default options in its constructor, but you can understand the available options:
+
+```csharp
+using Lyo.Encryption;
+
+// Options are automatically configured by each service:
+// - CurrentFormatVersion: Format version for encrypted data (defaults to V1, null for RSA/AES-GCM-RSA)
+// - MaxInputSize: Maximum allowed input size in bytes (defaults to long.MaxValue)
+// - MinInputSize: Minimum allowed input size in bytes (defaults to 1)
+// - FileExtension: File extension for encrypted files (e.g., ".ag", ".rsa", ".chacha")
+
+// Services create options automatically:
+var service = new AesGcmEncryptionService(keyStore);
+// Options are: CurrentFormatVersion=V1, MaxInputSize=long.MaxValue, MinInputSize=1, FileExtension=".ag"
+
+// Note: Services validate that FileExtension is not null or empty during construction
+```
+
+**Default Options by Service:**
+
+- **AES-GCM**: FormatVersion=V1, MaxInputSize=long.MaxValue, MinInputSize=1, FileExtension=".ag"
+- **ChaCha20Poly1305**: FormatVersion=V1, MaxInputSize=long.MaxValue, MinInputSize=1, FileExtension=".chacha"
+- **RSA**: FormatVersion=null, MaxInputSize=long.MaxValue, MinInputSize=1, FileExtension=".rsa"
+- **AES-GCM-RSA**: FormatVersion=null, MaxInputSize=long.MaxValue, MinInputSize=1, FileExtension=".agr"
+- **Two-Key**: Uses the inner `IEncryptionService.FileExtension` plus `FileTypeInfo.TwoKeyEnvelopeSuffix` (`"2k"`). With AES-GCM as the DEK service, default ciphertext files use *
+  *`.ag2k`**.
+
+### 11. Error Handling
+
+The library throws specific exceptions for different error conditions. Always handle exceptions appropriately:
+
+```csharp
+using Lyo.Encryption.AesGcm;
+using Lyo.Encryption.Exceptions;
+using Lyo.Exceptions;
+using Lyo.KeyStore;
+
+try
+{
+    const string keyId = "my-app-key";
+    var keyStore = new LocalKeyStore();
+    keyStore.UpdateKeyFromString(keyId, "key");
+    
+    var service = new AesGcmEncryptionService(keyStore);
+    
+    // Empty data is not allowed
+    var encrypted = service.Encrypt([]); // Throws ArgumentOutsideRangeException
+}
+catch (ArgumentNullException ex)
+{
+    // Null parameter (for nullable parameters like keyId, key)
+    Console.WriteLine($"Null parameter: {ex.Message}");
+}
+catch (ArgumentOutsideRangeException ex)
+{
+    // Empty data, data too large, or data too small (for decryption)
+    // Empty byte arrays and empty strings are rejected
+    Console.WriteLine($"Invalid data size: {ex.Message}");
+}
+catch (ArgumentException ex)
+{
+    // Invalid parameter (e.g., invalid keyId/key parameters for RSA)
+    Console.WriteLine($"Invalid parameter: {ex.Message}");
+}
+catch (DecryptionFailedException ex)
+{
+    // Wrong key, corrupted data, authentication failure, or tampered data
+    Console.WriteLine($"Decryption failed: {ex.Message}");
+}
+catch (InvalidDataException ex)
+{
+    // Invalid encrypted data format, unsupported format version, or corrupted data
+    Console.WriteLine($"Invalid data format: {ex.Message}");
+}
+catch (KeyNotFoundException ex)
+{
+    // Key Encryption Key missing from the KeyStore (TwoKey envelope decryption)
+    Console.WriteLine($"Key not found: {ex.Message}");
+}
+catch (ConfigurationException ex)
+{
+    // No RSA key configuration provided (neither PEM paths nor PFX)
+    Console.WriteLine($"Configuration error: {ex.Message}");
+}
+catch (InvalidOperationException ex)
+{
+    // Missing keyId or key parameter, or keyId not found in KeyStore
+    Console.WriteLine($"Configuration error: {ex.Message}");
+}
+catch (FileNotFoundException ex)
+{
+    // File not found (for file operations)
+    Console.WriteLine($"File not found: {ex.Message}");
+}
+catch (EndOfStreamException ex)
+{
+    // Stream ended unexpectedly while reading encrypted data
+    Console.WriteLine($"Stream error: {ex.Message}");
+}
+catch (NotSupportedException ex)
+{
+    // Unsupported stream format version
+    Console.WriteLine($"Unsupported format: {ex.Message}");
+}
+catch (OperationCanceledException ex)
+{
+    // Operation cancelled via CancellationToken
+    Console.WriteLine($"Operation cancelled: {ex.Message}");
+}
+```
+
+**Exception Reference:**
+
+- `ArgumentNullException` - Thrown when nullable parameters (like `keyId`, `key`) are null and required
+- `ArgumentOutsideRangeException` - Thrown when:
+    - Data is empty (length < MinInputSize, typically 1)
+    - Data exceeds maximum allowed size (MaxInputSize)
+    - Encrypted data is too small (below minimum required size for the algorithm)
+- `ArgumentException` - Thrown for invalid parameters (e.g., providing keyId/key to RSA service)
+- `DecryptionFailedException` - Thrown when decryption fails due to wrong key, corrupted data, authentication failure, or tampered data
+- `InvalidDataException` - Thrown when encrypted data format is invalid, unsupported format version, or corrupted
+- `InvalidOperationException` - Thrown when no encryption/decryption key is available (neither keyId nor key provided, or keyId not found in KeyStore)
+- `KeyNotFoundException` (`Lyo.KeyStore`) - Thrown by TwoKey envelope decryption when the Key Encryption Key is missing from the KeyStore
+- `ConfigurationException` (`Lyo.Exceptions`) - Thrown by `RsaEncryptor`/`RsaDecryptor`/`AesGcmRsaEncryptionService` when no RSA key configuration is provided
+- `InvalidKeyException` (`Lyo.KeyStore`) - Thrown when key material is unusable (e.g. PFX without a private key, wrong Ed25519 seed length)
+- `InvalidFormatException` (`Lyo.Exceptions`) - Thrown by `RsaKeyLoader` for malformed or non-RSA PEM content
+- `FileNotFoundException` - Thrown when a required file does not exist
+- `EndOfStreamException` - Thrown when a stream ends unexpectedly while reading encrypted data
+- `NotSupportedException` - Thrown when stream format version is not supported
+- `OperationCanceledException` - Thrown when an operation is cancelled via CancellationToken
+
+### 12. Dependency Injection (ASP.NET Core)
+
+Package-level guides: [`Lyo.Encryption`](Lyo.Encryption/README.md), [`Lyo.KeyStore`](Lyo.KeyStore/README.md), addons ([`AesCcm`](Lyo.Encryption.AesCcm/README.md), [
+`AesSiv`](Lyo.Encryption.AesSiv/README.md), [`XChaCha20Poly1305`](Lyo.Encryption.XChaCha20Poly1305/README.md)). For compression, see [
+`Lyo.Compression`](../../Data/Compression/Lyo.Compression/README.md).
+
+#### Registration overview (encryption)
+
+| Step                 | Extension                                                               | What is registered                                                      |
+|----------------------|-------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| Keys                 | `AddLocalKeyStore(configure)` / `AddKeyedLocalKeyStore(key, configure)` | `LocalKeyStore`, `IKeyStore`                                            |
+| Envelope (prod)      | `AddEncryptionServiceKeyed` / `Add*EncryptionServiceKeyed`              | Keyed concretes + `IEncryptionService` + **`ITwoKeyEncryptionService`** |
+| Single alg (unkeyed) | `AddAesCcmEncryption()` etc.                                            | Concrete algorithm service only                                         |
+| Interface default    | `AddDefaultEncryptionService<T>()`                                      | Unkeyed `IEncryptionService` → `T`                                      |
+
+Configure secrets with **`configure => { ... }`** on the key store and read **`IConfiguration`** inside that callback. Encryption does not ship
+`AddEncryptionServiceFromConfiguration`; bind appsettings in the keystore `configure` delegate (see [`Lyo.KeyStore` DI section](Lyo.KeyStore/README.md#dependency-injection)).
+
+#### Keyed two-key (file storage, Comic.Api, etc.)
+
+```csharp
+using Lyo.Encryption;
+using Lyo.Encryption.AesGcm;
+using Lyo.Encryption.Extensions;
+using Lyo.Encryption.Symmetric.Aes.AesCcm;
+using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
+using Lyo.Encryption.TwoKey;
+using Lyo.KeyStore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+const string keyName = "primary";
+
+// 1) Key store — configure via lambda (IConfiguration inside configure)
+services.AddKeyedLocalKeyStore(keyName, store =>
+{
+    store.UpdateKeyFromString("default-key", configuration["Encryption:KekSecret"]!);
+});
+
+// 2) Two-key envelope — built-in AES-GCM / ChaCha, or addon keyed helpers:
+services.AddEncryptionServiceKeyed(keyName, keyStoreName: keyName);
+// services.AddAesCcmEncryptionServiceKeyed(keyName, keyName);
+// services.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(keyName, keyName);
+
+// 3) Consume
+public sealed class MyService([FromKeyedServices("primary")] ITwoKeyEncryptionService envelope)
+{
+    public TwoKeyEncryptionResult Protect(byte[] payload, string keyId = "default-key")
+        => envelope.Encrypt(payload, kekKeyId: keyId);
+}
+```
+
+#### Unkeyed addon + default interface
+
+```csharp
+services.AddLocalKeyStore(ks => ks.UpdateKeyFromString("k", configuration["Encryption:KekSecret"]!));
+services.AddAesCcmEncryption();
+services.AddXChaCha20Poly1305Encryption();
+services.AddDefaultEncryptionService<AesCcmEncryptionService>(); // pick one default IEncryptionService
+```
+
+#### Compression (same app)
+
+```csharp
+using Lyo.Compression;
+using Lyo.Compression.Models;
+
+services.AddCompressionService(options => options.DefaultAlgorithm = CompressionAlgorithm.Brotli);
+services.AddDefaultCompressionService<CompressionService>();
+// AddCompressionService also registers ICompressionResolver (same CompressionService instance).
+// File storage reads use metadata CompressionAlgorithm via the resolver — register addon factories for historical codecs.
+// Or: AddCompressionServiceFromConfiguration(configuration, CompressionServiceOptions.SectionName);
+```
+
+The generic keyed helpers support `AesGcmEncryptionService`, `ChaCha20Poly1305EncryptionService`, and addon types (`AesCcmEncryptionService`, `AesSivEncryptionService`,
+`XChaCha20Poly1305EncryptionService`). Other combinations use manual registration or throw `InvalidOperationException` from the generic helper.
+
+## Security Best Practices
+
+### Key Management
+
+1. **Production Key Storage**
+    - **Don't use** `LocalKeyStore` in production servers
+    - **Use** HSM, Azure Key Vault, AWS KMS, or similar
+    - Implement `IKeyStore` interface for your key management system
+
+2. **Key Rotation**
+   ```csharp
+   const string keyId = "my-app-key";
+   
+   // Initial key (version 1)
+   keyStore.UpdateKeyFromString(keyId, "initial-key");
+   
+   // Rotate to new key (automatically increments to version 2)
+   keyStore.UpdateKeyFromString(keyId, "new-key");
+   
+   // Old data encrypted with version 1 can still be decrypted
+   // New encryptions automatically use version 2
+   
+   // Rotate again (now version 3)
+   keyStore.UpdateKeyFromString(keyId, "latest-key");
+   ```
+
+3. **Key Generation**
+   ```csharp
+   using Lyo.KeyStore;
+   
+   const string keyId = "my-app-key";
+   
+   // Generate secure random key
+   var key = SecureKeyGenerator.GenerateKey(32); // 32 bytes = 256 bits
+   
+   // Store in KeyStore (automatically sets version to 1)
+   keyStore.UpdateKey(keyId, key);
+   
+   // Or generate and store in one step
+   var keyString = SecureKeyGenerator.GenerateKeyString(32);
+   keyStore.UpdateKeyFromString(keyId, keyString);
+   ```
+
+### Encryption Practices
+
+1. **Always use authenticated encryption** (AES-GCM, ChaCha20Poly1305)
+2. **Never reuse nonces** - The library handles this automatically with hybrid nonce generation
+3. **Validate input sizes** - The library enforces maximum sizes (configurable via `MaxInputSize` in options) to prevent DoS attacks
+4. **Empty data is not allowed** - The library rejects empty byte arrays and empty strings (enforced by `MinInputSize` in options, default 1) to prevent invalid encryption
+   operations
+5. **Handle exceptions properly** - Don't expose sensitive information in error messages
+6. **Service options are configured automatically** - Each service creates appropriate default options, including format version, input size limits, and file extension
+
+### Production Deployment
+
+1. **Use production KeyStore**
+   ```csharp
+   // Example: Azure Key Vault KeyStore (pseudo-code)
+   public class AzureKeyVaultKeyStore : IKeyStore
+   {
+       // Implementation using Azure Key Vault SDK
+   }
+   
+   var keyStore = new AzureKeyVaultKeyStore();
+   var service = new AesGcmEncryptionService(keyStore);
+   ```
+
+2. **Monitor encryption failures**
+    - Log `DecryptionFailedException` occurrences
+    - Alert on repeated failures (possible attack)
+
+3. **Key rotation strategy**
+    - Rotate keys periodically (e.g., annually)
+    - Keep old keys for decryption
+    - Use key expiration metadata
+
+## Architecture
+
+### Lyo ciphertext files and metadata
+
+Algorithms such as AES-GCM and RSA are standardized; **how** ciphertext is framed on disk (headers, chunks, default extensions) is defined by this library and related packages.
+Those defaults are not interchangeable with arbitrary third-party “`.aes`” or ad-hoc blobs. Symmetric AEAD services also implement **`IRawAead`** (`EncryptRaw` / `DecryptRaw`): a headerless `[nonce][tag][ciphertext]` blob (AES-SIV: RFC 5297 `SIV || ciphertext`) that a stock AES-GCM or ChaCha client can open after slicing those regions. Framed `Encrypt` and raw `EncryptRaw` are different wire formats; do not mix them. Raw blobs do not record key id or version.
+
+- **`FileTypeInfo` (Lyo.Common.Core)** registers human-readable names, canonical extensions (for example `.ag`, `.chacha`, `.ag2k` for two-key with an AES-GCM inner encryptor), and
+  vendor MIME types such as `application/x-lyo-ciphertext-aes-gcm`. Use these when you need consistent content typing or UI labels.
+- **Two-key file names** append `FileTypeInfo.TwoKeyEnvelopeSuffix` (`"2k"`) to the inner encryption service’s extension (for example `.ag` → `.ag2k`).
+  `ITwoKeyEncryptionService.FileExtension` exposes the combined value.
+- **Lyo.FileStorage** (when resolving stored blobs without explicit metadata) considers `FileTypeInfo.CommonStorageResolutionSuffixes`, which includes stream-compression suffixes
+  and Lyo ciphertext extensions.
+
+### Encryption Services
+
+All encryption services implement `IEncryptionService`:
+
+- `AesGcmEncryptionService` - AES-GCM authenticated encryption (`Lyo.Encryption.AesGcm`)
+- `ChaCha20Poly1305EncryptionService` - ChaCha20Poly1305 authenticated encryption (`Lyo.Encryption.ChaCha20Poly1305`)
+- `AesCcmEncryptionService` - AES-CCM authenticated encryption (`Lyo.Encryption.Symmetric.Aes.AesCcm`)
+- `AesSivEncryptionService` - AES-SIV deterministic authenticated encryption (`Lyo.Encryption.Symmetric.Aes.AesSiv`)
+- `XChaCha20Poly1305EncryptionService` - XChaCha20-Poly1305 with 24-byte nonces (`Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305`)
+- `AesGcmRsaEncryptionService` - Hybrid AES-GCM + RSA
+- `TwoKeyEncryptionService` - Envelope encryption pattern (composes any of the above as DEK and KEK)
+
+RSA is asymmetric and is split into single-responsibility types instead of implementing `IEncryptionService`:
+
+- `RsaEncryptor` - RSA encryption with a public key (`IEncryptor`)
+- `RsaDecryptor` - RSA decryption with a private key (`IDecryptor`)
+
+### Key Management
+
+- `IKeyStore` - Interface for key storage and retrieval with multi-tenant support
+- `LocalKeyStore` - In-memory KeyStore for development/local apps
+- Production KeyStores should implement `IKeyStore` (e.g., AWS KMS, Azure Key Vault)
+- Keys are identified by `keyId` (for multi-tenancy) and `version` (for rotation)
+- `UpdateKey` and `UpdateKeyFromString` methods simplify key rotation
+
+### Stream Format
+
+Encryption services use optimized single-pass streaming formats with structured headers:
+
+#### Standard Encryption Services (AES-GCM, ChaCha20Poly1305, etc.)
+
+Stream format: `[FormatVersion: 1 byte][AlgorithmId: 1 byte][Reserved: 2 bytes][Chunks...]`
+
+- **FormatVersion**: `StreamFormatVersion` enum value (currently `V1 = 1`)
+- **AlgorithmId**: Algorithm identifier — see the table below
+- **Reserved**: 2 bytes reserved for future use
+- **Chunks**: `[Length: 4 bytes][EncryptedChunk]...` (encrypted data chunks)
+
+##### `EncryptionAlgorithm` enum IDs
+
+| Value | Name                | Notes                                              |
+|------:|---------------------|----------------------------------------------------|
+|     0 | `AesGcm`            | Default DEK algorithm; `.ag` extension.            |
+|     1 | `ChaCha20Poly1305`  | `.chacha`.                                         |
+|     2 | `AesGcmRsa`         | Hybrid: AES-GCM payload + RSA-wrapped DEK; `.agr`. |
+|     3 | `Rsa`               | Pure RSA-OAEP; `.rsa`.                             |
+|     4 | `AesCcm`            | AES-CCM authenticated encryption.                  |
+|     5 | `AesSiv`            | AES-SIV (RFC 5297).                                |
+|     6 | `XChaCha20Poly1305` | Extended 24-byte nonce variant.                    |
+
+#### Two-Key Encryption Service
+
+Stream format:
+`[FormatVersion: 1 byte][DEKAlgorithmId: 1 byte][KEKAlgorithmId: 1 byte][KeyIdLength: 4 bytes][KeyId][KeyVersionLength: 4 bytes][KeyVersion][KeyEncryptionKeySaltLength: 4 bytes][KeyEncryptionKeySalt][EncryptedDEKLength: 4 bytes][EncryptedDEK][DekKeyMaterialBytes: 1 byte][Chunks...]`
+
+- **FormatVersion**: `StreamFormatVersion` enum value (currently `V1 = 1`)
+- **DEKAlgorithmId**: `EncryptionAlgorithm` ID used for the Data Encryption Key payload (see table above)
+- **KEKAlgorithmId**: `EncryptionAlgorithm` ID used to wrap the DEK
+- **KeyIdLength**: Length of the KeyId string in bytes
+- **KeyId**: UTF-8 encoded key identifier (variable length)
+- **KeyVersionLength**: Length of the KeyVersion string in bytes
+- **KeyVersion**: String version of the Key Encryption Key (KEK) — versions are arbitrary strings, not integers
+- **KeyEncryptionKeySaltLength**: Length of the KEK-derivation salt (0 when not derived)
+- **KeyEncryptionKeySalt**: Salt used to derive the KEK (variable length)
+- **EncryptedDEKLength**: Length of the wrapped DEK ciphertext
+- **EncryptedDEK**: The wrapped DEK (variable length)
+- **DekKeyMaterialBytes**: 1 byte declaring the symmetric key-material size used for the DEK (validated against `TwoKeyDekValidation` on decrypt)
+- **Chunks**: `[Length: 4 bytes][EncryptedChunk]...` (encrypted data chunks)
+
+#### Byte Array Format (AES-GCM, ChaCha20Poly1305)
+
+Format: `[FormatVersion: 1 byte][KeyIdLength: 4 bytes][KeyId][KeyVersionLength: 4 bytes][KeyVersion][nonceLength: 4 bytes][nonce][tag][ciphertext]`
+
+- **FormatVersion**: `StreamFormatVersion` enum value (currently `V1 = 1`)
+- **KeyIdLength**: Length of the KeyId string in bytes (0 if using direct key)
+- **KeyId**: UTF-8 encoded key identifier (variable length, omitted if length is 0)
+- **KeyVersionLength**: Length of the KeyVersion string in bytes
+- **KeyVersion**: String version of the key (empty if using direct key)
+- **nonceLength**: Length of the nonce in bytes
+- **nonce**: Nonce/IV used for encryption
+- **tag**: Authentication tag
+- **ciphertext**: Encrypted data
+
+#### Single-Pass Streaming
+
+The `EncryptToStreamAsync` and `DecryptToStreamAsync` methods use **single-pass streaming** with **no temporary files**:
+
+- **Memory Efficient**: Data flows through the pipeline without buffering entire files
+- **No Temp Files**: All processing happens in memory using `MemoryStream` for intermediate stages
+- **Single Pass**: Data is read once and processed through compression → encryption → output in one pass
+- **Header Support**: The `EncryptionHeader` helper class (`Lyo.Encryption`) provides easy reading/writing of the stream header
+- **Version Management**: `StreamFormatVersion` enum ensures type-safe version handling
+
+#### Using EncryptionHeader Helper
+
+```csharp
+using Lyo.Encryption;
+
+// Read header from a stream (two-key example path)
+using var fileStream = File.OpenRead("encrypted.ag2k");
+var header = EncryptionHeader.Read(fileStream);
+
+// Access header properties
+Console.WriteLine($"KeyId: {header.KeyId}");
+Console.WriteLine($"KeyVersion: {header.KeyVersion}");
+Console.WriteLine($"Format Version: {header.FormatVersion}"); // byte value (1)
+Console.WriteLine($"DEK Algorithm ID: {header.DekAlgorithmId}");
+Console.WriteLine($"KEK Algorithm ID: {header.KekAlgorithmId}");
+
+// Create a new header with updated values
+var updatedHeader = header.With(
+    keyId: "new-key-id",
+    keyVersion: 2,
+    encryptedDataEncryptionKey: newEncryptedDek);
+
+// Write header to a buffer
+var buffer = new List<byte>();
+updatedHeader.Write(buffer);
+```
+
+## API Reference
+
+### Core Interfaces
+
+- `IEncryptionService` - Core encryption interface
+- `IKeyStore` - Key management interface
+- `ITwoKeyEncryptionService` - Envelope encryption interface
+
+### Main Classes
+
+- `EncryptionServiceBase` - Base class with common functionality (requires `EncryptionServiceOptions`)
+- `AesGcmEncryptionService` - AES-GCM implementation
+- `ChaCha20Poly1305EncryptionService` - ChaCha20Poly1305 implementation
+- `RsaEncryptor` / `RsaDecryptor` - RSA implementation (encrypt with public key / decrypt with private key)
+- `AesGcmRsaEncryptionService` - Hybrid implementation
+- `TwoKeyEncryptionService` - Envelope encryption with single-pass streaming
+- `LocalKeyStore` - Development KeyStore
+
+### Configuration Classes
+
+- `EncryptionServiceOptions` - Options for configuring encryption service behavior:
+    - `CurrentFormatVersion` (byte?) - Format version for encryption (defaults to V1, null for services that don't use it)
+    - `MaxInputSize` (long) - Maximum allowed input size in bytes (defaults to long.MaxValue)
+    - `MinInputSize` (long) - Minimum allowed input size in bytes (defaults to 1)
+    - `FileExtension` (string) - File extension for encrypted files (required, set by each service)
+
+### Helper Classes (Lyo.Encryption)
+
+- `EncryptionHeader` - Sealed record for reading/writing encryption stream headers
+- `StreamFormatVersion` - Enum for stream format versions (`Unknown = 0`, `V1 = 1`)
+- `EncryptionHeaderVersion` - Enum for encryption header format versions (`Unknown = 0`, `V1 = 1`)
+
+### Exceptions
+
+- `EncryptionException` - Base exception for encryption errors
+- `DecryptionFailedException` - Thrown when decryption fails (wrong key, corrupted data, authentication failure, tampered data)
+- `ArgumentOutsideRangeException` - Thrown when data is empty, too large, or too small
+- `InvalidDataException` - Thrown when encrypted data format is invalid, unsupported format version, or corrupted
+- `InvalidOperationException` - Thrown when no encryption/decryption key is available
+- `FileNotFoundException` - Thrown when a required file does not exist
+- `EndOfStreamException` - Thrown when a stream ends unexpectedly
+- `NotSupportedException` - Thrown when stream format version is not supported
+- `OperationCanceledException` - Thrown when an operation is cancelled
+
+## Performance
+
+BenchmarkDotNet suite: [`Lyo.Encryption.Benchmarks`](Lyo.Encryption.Benchmarks/) — full write-up in [`BENCHMARK_SUMMARY.md`](Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md) (last
+run **June 14, 2026 @ 19:02**, .NET 10.0.9, Linux Mint 22.1, Intel Core Ultra 7 155U, **AES-NI**). Payloads use **random bytes**.
+
+### Benchmark coverage
+
+| Algorithm / pattern                          | BenchmarkDotNet | Unit tests (`Lyo.Encryption.Tests`) |
+|----------------------------------------------|:---------------:|:-----------------------------------:|
+| **AES-GCM**                                  |                 |                                     |
+| **ChaCha20-Poly1305**                        |                 |                                     |
+| **AES-CCM**                                  |                 |                                     |
+| **AES-SIV**                                  |                 |                                     |
+| **XChaCha20-Poly1305**                       |                 |                                     |
+| **RSA** (2048 OAEP-SHA256)                   |                 |                                     |
+| **AES-GCM-RSA hybrid**                       |                 |                                     |
+| **Two-key envelope** (AES or ChaCha DEK/KEK) |                 |    (incl. mixed DEK/KEK combos)     |
+| **Large-file streaming**                     |                 |                  —                  |
+
+### Benchmark highlights (June 2026, this hardware)
+
+**Symmetric @ 1 MB (in-memory, encrypt / decrypt):**
+
+| Algorithm              |                Encrypt |    Decrypt | vs AES-GCM (encrypt) |
+|------------------------|-----------------------:|-----------:|---------------------:|
+| **AES-GCM**            | **667 µs** (~1.5 GB/s) | **621 µs** |                1.00× |
+| **ChaCha20-Poly1305**  |                 920 µs |     899 µs |                1.38× |
+| **XChaCha20-Poly1305** |                2.54 ms |    2.34 ms |                 3.8× |
+| **AES-CCM**            |                12.2 ms |    11.1 ms |                  18× |
+| **AES-SIV**            |                17.0 ms |    16.4 ms |                  25× |
+
+**Other patterns:**
+
+| Workload                        | Result                 | Notes                 |
+|---------------------------------|------------------------|-----------------------|
+| Stream encrypt 100 MB (AES-GCM) | **114 ms** (~873 MB/s) | ChaCha 133 ms         |
+| Two-key encrypt 1 MB (AES-GCM)  | **880 µs**             | ~1.3× single-key      |
+| Two-key encrypt 1 KB            | **7.0 µs**             | ~2.7× single-key      |
+| Hybrid AES-GCM-RSA encrypt 1 MB | **692 µs**             | Near pure GCM         |
+| Hybrid decrypt 1 KB             | **468 µs**             | RSA unwrap dominates  |
+| RSA decrypt 1 MB                | **2.51 s**             | Chunked; not for bulk |
+
+On systems **with AES-NI**, **AES-GCM is the default production choice** for bulk data. ChaCha20-Poly1305 is ~30–40% slower here. XChaCha, CCM, and SIV trade throughput for
+nonce/protocol properties. RSA and hybrid are for key wrapping and small secrets — use hybrid (AES-GCM-RSA) when encrypting large blobs to a public key.
+
+Two-key adds modest overhead at 1 MB+; avoid envelope mode for high-frequency sub-4 KB payloads if latency-sensitive.
+
+For large files, use `EncryptToStreamAsync` / `DecryptToStreamAsync` to avoid memory issues. These methods use **single-pass streaming** with **no temporary files**, processing
+data efficiently through compression → encryption → output in one pass.
+
+## Testing
+
+The library includes comprehensive test coverage. See `Lyo.Encryption.Tests` for examples.
+
+## Thread Safety
+
+All encryption services are **thread-safe**. Multiple threads can safely call methods concurrently on the same instance. Each operation uses its own cryptographic context (nonce,
+key material).
+
+## Important Notes
+
+1. **LocalKeyStore is for local use only** - Don't use in production servers
+2. **KeyStore must be thread-safe** - If using a custom KeyStore, ensure thread safety
+3. **Key security** - Protect your keys! Use secure key storage in production
+4. **Nonce management** - The library handles nonce generation automatically (hybrid IV + counter)
+
+## Additional Resources
+
+- [`BENCHMARK_SUMMARY.md`](Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md) — BenchmarkDotNet results (all symmetric AEAD, RSA, hybrid, two-key, streaming; June 2026)
+- See `PRODUCTION_REVIEW.md` for detailed security analysis
+- See XML documentation in code for detailed API documentation
+- See `Lyo.Encryption.Tests` for usage examples (all symmetric add-ons + RSA/hybrid)
+
+## Advanced Usage
+
+### Custom Encoding
+
+```csharp
+var service = new AesGcmEncryptionService(keyStore);
+service.SetEncryptionEncoding(Encoding.UTF32); // Change the encoding used by EncryptString
+service.SetDecryptionEncoding(Encoding.UTF32); // Change the encoding used by DecryptString
+
+// Or specify per operation
+var encrypted = service.EncryptString("Hello 世界", encoding: Encoding.UTF32);
+var decrypted = service.DecryptString(encrypted, encoding: Encoding.UTF32);
+```
+
+### Key Rotation Example
+
+```csharp
+const string keyId = "my-app-key";
+var keyStore = new LocalKeyStore();
+
+// Initial setup (version 1)
+keyStore.UpdateKeyFromString(keyId, "initial-key");
+
+var service = new AesGcmEncryptionService(keyStore);
+var encryptedV1 = service.Encrypt("data"u8.ToArray(), keyId: keyId);
+
+// Rotate to new key (automatically increments to version 2)
+keyStore.UpdateKeyFromString(keyId, "new-key");
+
+// New encryptions use version 2
+var encryptedV2 = service.Encrypt("new-data"u8.ToArray(), keyId: keyId);
+
+// Old data can still be decrypted (keyId and version are stored in encrypted data)
+// For two-key encryption, keyId is stored in the result
+```
+
+### Working with Large Files
+
+The library uses **single-pass streaming** with **no temporary files** for optimal performance:
+
+```csharp
+// Encrypt large file efficiently (single-pass, no temp files)
+await using var input = File.OpenRead("large-file.dat");
+await using var output = File.Create("large-file.ag");
+
+// Use larger chunks for better performance (default is 1MB)
+const string keyId = "my-app-key";
+await service.EncryptToStreamAsync(input, output, keyId: keyId, chunkSize: 4 * 1024 * 1024); // 4MB chunks
+
+// Decrypt (also single-pass)
+await using var encryptedInput = File.OpenRead("large-file.ag");
+await using var decryptedOutput = File.Create("large-file-decrypted.dat");
+await service.DecryptToStreamAsync(encryptedInput, decryptedOutput, keyId: keyId);
+```
+
+#### Performance Benefits
+
+- **No Temporary Files**: All processing happens in memory using `MemoryStream`
+- **Single Pass**: Data flows through compression → encryption → output in one pass
+- **Memory Efficient**: Only chunks are buffered, not entire files
+- **Header Support**: Two-key encryption includes structured headers with `EncryptionHeader` helper
+
+## Acknowledgments
+
+Built with security best practices in mind, following:
+
+- OWASP 2023 recommendations
+- NIST SP 800-38D (AES-GCM)
+- RFC 9106 (Argon2)
+- NIST SP 800-57 (RSA key sizes)
+
+## Dependencies
+
+*(Synchronized from `Lyo.Encryption.csproj`.)*
+
+**Target framework:** `netstandard2.0;net10.0`
+
+### NuGet packages
+
+| Package                                                 | Version  | Notes                 |
+|---------------------------------------------------------|----------|-----------------------|
+| `BouncyCastle.Cryptography`                             | `2.6.2`  | *netstandard2.0 only* |
+| `Microsoft.Bcl.AsyncInterfaces`                         | `10.0.0` | *netstandard2.0 only* |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`  |                       |
+| `System.Threading.Tasks.Extensions`                     | `4.6.3`  | *netstandard2.0 only* |
+
+### Related / optional packages
+
+- [`Lyo.Encryption.AesSiv`](Lyo.Encryption.AesSiv/README.md) — AES-SIV / `Dorssel.Security.Cryptography.AesExtra`
+- [`Lyo.Encryption.AesCcm`](Lyo.Encryption.AesCcm/README.md), [`Lyo.Encryption.XChaCha20Poly1305`](Lyo.Encryption.XChaCha20Poly1305/README.md) — algorithm add-ons
+
+### Project references
+
+- [`Lyo.Common.Core`](../../Core/Common/Lyo.Common.Core/README.md)
+- [`Lyo.Exceptions`](../../Core/Exceptions/Lyo.Exceptions/README.md)
+- [`Lyo.Result`](../../Core/Result/Lyo.Result/README.md)
+- [`Lyo.Streams`](../../Core/Streams/Lyo.Streams/README.md)
+- [`Lyo.Hashing`](../Hashing/Lyo.Hashing/README.md)
+- [`Lyo.KeyStore`](Lyo.KeyStore/README.md)

@@ -1,0 +1,54 @@
+@using Microsoft.AspNetCore.Components.Forms
+@typeparam TModel
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-lyo-form">
+    <EditForm Model="@Model" OnValidSubmit="@HandleSubmit">
+        <CascadingValue Value="this" Name="ChangeTrackingForm" IsFixed="true">
+            @if (!ShowActions) {
+                @ChildContent
+            }
+            else {
+                <MudCard>
+                    <MudCardContent>
+                        @ChildContent
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Disabled="@(!HasChanges)">
+                            Save Changes
+                        </MudButton>
+                        <MudButton OnClick="@ResetChanges"
+                                   Variant="Variant.Outlined"
+                                   Color="Color.Default"
+                                   Disabled="@(!HasChanges)">
+                            Reset
+                        </MudButton>
+                        @if (HasChanges) {
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                @{
+                                    var propertyChangeCount = _changes.Values.Count(c => c.HasChanged);
+                                    var createCount = _operations.Count(o => o.ChangeType == ChangeType.Create);
+                                    var updateCount = _operations.Count(o => o.ChangeType == ChangeType.Update);
+                                    var deleteCount = _operations.Count(o => o.ChangeType == ChangeType.Delete);
+                                }
+                                @if (propertyChangeCount > 0) {
+                                    <LyoChip Color="Color.Info" Label="@($"{propertyChangeCount} change{(propertyChangeCount != 1 ? "s" : "")}")"/>
+                                }
+                                @if (createCount > 0) {
+                                    <LyoChip Color="Color.Success" Label="@($"{createCount} addition{(createCount != 1 ? "s" : "")}")"/>
+                                }
+                                @if (updateCount > 0) {
+                                    <LyoChip Color="Color.Warning" Label="@($"{updateCount} update{(updateCount != 1 ? "s" : "")}")"/>
+                                }
+                                @if (deleteCount > 0) {
+                                    <LyoChip Color="Color.Error" Label="@($"{deleteCount} deletion{(deleteCount != 1 ? "s" : "")}")"/>
+                                }
+                            </MudStack>
+                        }
+                    </MudCardActions>
+                </MudCard>
+            }
+        </CascadingValue>
+    </EditForm>
+</LyoElementRoot>

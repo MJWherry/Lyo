@@ -1,0 +1,23 @@
+using Lyo.Query.Models.Common.Request;
+
+namespace Lyo.Query.Web.Components;
+
+/// <summary>Server-persisted query workbench state (request plus run targets). Response is never stored.</summary>
+public sealed class QueryWorkbenchPersistedState
+{
+    /// <summary><c>/QueryConcrete</c> body (full entities). Missing in older saved state — derived from <see cref="QueryRequest" /> on load.</summary>
+    public QueryConcreteReq? EntityQuery { get; set; }
+
+    public ProjectionQueryReq QueryRequest { get; set; } = new() { Start = 0, Amount = 20 };
+
+    /// <summary>Root <c>/Query</c> body (From/Joins). Missing in older saved state.</summary>
+    public QueryReq? RootQuery { get; set; }
+
+    public List<string> IncludeAll { get; set; } = [];
+
+    public List<string> SelectAll { get; set; } = [];
+
+    public List<string> KeysAll { get; set; } = [];
+
+    public QueryWorkbenchRunConfiguration Run { get; set; } = new();
+}

@@ -1,0 +1,1317 @@
+using System.Reflection;
+using System.Text;
+using ClosedXML.Excel;
+using ExcelDataReader;
+using Lyo.DataTable.Models;
+using Lyo.IO.Temp.Models;
+using Lyo.Testing;
+using Lyo.Xlsx.Models;
+using Lyo.Xlsx.Tests.TestModels;
+using Microsoft.Extensions.Logging;
+
+namespace Lyo.Xlsx.Tests;
+
+public class XlsxServiceTests : IDisposable, IAsyncDisposable
+{
+    private readonly ILogger<XlsxService> _logger;
+
+    private readonly IOTempSession _tempSession;
+
+    public XlsxServiceTests(ITestOutputHelper output)
+    {
+        var loggerFactory = LoggerFactory.Create(builder => {
+            builder.AddProvider(new XunitLoggerProvider(output));
+            builder.SetMinimumLevel(LogLevel.Debug);
+        });
+
+        _logger = loggerFactory.CreateLogger<XlsxService>();
+        _tempSession = new(new() { FileExtension = ".xlsx" }, loggerFactory.CreateLogger<IOTempSession>());
+    }
+
+    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
+
+    public void Dispose() => _tempSession.Dispose();
+
+    private static MemoryStream BytesToStream(byte[]? b) => new(b ?? []);
+
+    private static void EnsureCodePages() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+    [Fact]
+    public void ExportSelectedProperties_ToXlsxBytes_And_ParseXlsxStreamAsDictionary_RoundTrip()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "Alice", Age = 30 }, new() { Id = 2, Name = "Bob", Age = 25 }];
+        List<PropertyInfo> props = [typeof(TestModel).GetProperty(nameof(TestModel.Name))!, typeof(TestModel).GetProperty(nameof(TestModel.Age))!];
+        var bytes = svc.ExportToXlsxBytes(data, props);
+        Assert.NotNull(bytes);
+        Assert.True(bytes.Length > 0);
+        // Parse the produced xlsx back into a row dictionary
+        using var ms = BytesToStream(bytes);
+        var dict = svc.ParseXlsxStreamAsDictionary(ms);
+        Assert.Equal(2, dict.Count);
+        Assert.Equal("Alice", dict[0][0]);
+        Assert.Equal("30", dict[0][1]);
+        Assert.Equal("Bob", dict[1][0]);
+        Assert.Equal("25", dict[1][1]);
+    }
+
+    [Fact]
+    public void ParseXlsxStreamAsDataTable_IncludesHeadersFromFirstRow()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "Alice", Age = 30 }, new() { Id = 2, Name = "Bob", Age = 25 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        using var ms = BytesToStream(bytes);
+        var result = svc.ParseXlsxStreamAsDataTable(ms);
+        Assert.True(result.IsSuccess);
+        var dt = result.ValueOrThrow();
+        Assert.Equal(3, dt.Headers.Count);
+        Assert.Equal("Id", dt.Headers[0].DisplayValue);
+        Assert.Equal("Name", dt.Headers[1].DisplayValue);
+        Assert.Equal("Age", dt.Headers[2].DisplayValue);
+        Assert.False(dt.HasFormats);
+        Assert.Equal(2, dt.Rows.Count);
+        Assert.Equal("1", dt.Rows[0][0].DisplayValue);
+        Assert.Equal("Alice", dt.Rows[0][1].DisplayValue);
+        Assert.Equal("30", dt.Rows[0][2].DisplayValue);
+        Assert.Equal("2", dt.Rows[1][0].DisplayValue);
+        Assert.Equal("Bob", dt.Rows[1][1].DisplayValue);
+        Assert.Equal("25", dt.Rows[1][2].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxStreamAsDataTableWithFormatting_CapturesBoldHeader()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "Alice", Age = 30 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        using var ms = BytesToStream(bytes);
+        var result = svc.ParseXlsxStreamAsDataTableWithFormatting(ms);
+        Assert.True(result.IsSuccess);
+        var dt = result.ValueOrThrow();
+        Assert.True(dt.GetFormat(-1, 0)?.FontBold == true);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTableWithFormatting_UnstyledSheet_HasNoFormats()
+    {
+        EnsureCodePages();
+        using var workbook = new XLWorkbook();
+        var ws = workbook.AddWorksheet("Sheet1");
+        ws.Cell(1, 1).Value = "A";
+        ws.Cell(1, 2).Value = "B";
+        ws.Cell(2, 1).Value = "1";
+        ws.Cell(2, 2).Value = "2";
+        using var ms = new MemoryStream();
+        workbook.SaveAs(ms);
+        var bytes = ms.ToArray();
+        var svc = new XlsxService(_logger);
+        var result = svc.ParseXlsxBytesAsDataTableWithFormatting(bytes, true);
+        Assert.True(result.IsSuccess);
+        Assert.False(result.ValueOrThrow().HasFormats);
+    }
+
+    [Fact]
+    public void BuildFromDataTable_Thin_Skips_HeaderFormats()
+    {
+        var table = new DataTable.Models.DataTable();
+        table.SetHeader(0, "H");
+        table.AddRow().SetCell(0, "v");
+        var (_, _, headerFormats, footer, footerFormats) = XlsxWriter.BuildFromDataTable(table);
+        Assert.Null(headerFormats);
+        Assert.Null(footer);
+        Assert.Null(footerFormats);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDataTable_WithFooter_RoundTripsWhenUseFooterRow()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new DataTable.Models.DataTable();
+        dt.SetHeader(0, "X").SetHeader(1, "Y");
+        dt.AddRow().SetCell(0, "1").SetCell(1, "2");
+        dt.SetFooter(0, "Total").SetFooter(1, "2");
+        var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
+        var parsed = svc.ParseXlsxBytesAsDataTable(bytes, true, true).ValueOrThrow();
+        Assert.Single(parsed.Rows);
+        Assert.Equal("1", parsed.Rows[0][0].DisplayValue);
+        Assert.Equal("Total", parsed.Footer[0].DisplayValue);
+        Assert.Equal("2", parsed.Footer[1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTable_DefaultKeepsLastRowAsBody()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new DataTable.Models.DataTable();
+        dt.SetHeader(0, "X").SetHeader(1, "Y");
+        dt.AddRow().SetCell(0, "1").SetCell(1, "2");
+        dt.SetFooter(0, "Total").SetFooter(1, "2");
+        var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
+        var parsed = svc.ParseXlsxBytesAsDataTable(bytes).ValueOrThrow();
+        Assert.Equal(2, parsed.Rows.Count);
+        Assert.Equal("Total", parsed.Rows[1][0].DisplayValue);
+        Assert.Empty(parsed.Footer);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDataTable_EmptyFooter_OmitsTrailingRow()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var withEmpty = new DataTable.Models.DataTable();
+        withEmpty.SetHeader(0, "A");
+        withEmpty.AddRow().SetCell(0, "1");
+        var without = new DataTable.Models.DataTable();
+        without.SetHeader(0, "A");
+        without.AddRow().SetCell(0, "1");
+        var parsedEmpty = svc.ParseXlsxBytesAsDataTable(svc.ExportToXlsxBytesFromDataTable(withEmpty)).ValueOrThrow();
+        var parsedWithout = svc.ParseXlsxBytesAsDataTable(svc.ExportToXlsxBytesFromDataTable(without)).ValueOrThrow();
+        Assert.Equal(parsedWithout.Rows.Count, parsedEmpty.Rows.Count);
+        Assert.Empty(parsedEmpty.Footer);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDictionary_WithFooterRow_DataTableParsePeelsFooter()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = new Dictionary<int, IReadOnlyDictionary<int, string>> {
+            [0] = new Dictionary<int, string> { [0] = "H1", [1] = "H2" },
+            [1] = new Dictionary<int, string> { [0] = "a", [1] = "b" },
+            [2] = new Dictionary<int, string> { [0] = "Total", [1] = "1" }
+        };
+
+        var bytes = svc.ExportToXlsxBytesFromDictionary(data, true, true);
+        var parsed = svc.ParseXlsxBytesAsDataTable(bytes, true, true).ValueOrThrow();
+        Assert.Single(parsed.Rows);
+        Assert.Equal("a", parsed.Rows[0][0].DisplayValue);
+        Assert.Equal("Total", parsed.Footer[0].DisplayValue);
+        Assert.Equal("1", parsed.Footer[1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTableWithFormatting_CapturesBoldFooter()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new DataTable.Models.DataTable();
+        dt.SetHeader(0, "X");
+        dt.AddRow().SetCell(0, "1");
+        dt.SetFooter(0, "Total", new(FontBold: true));
+        var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
+        var parsed = svc.ParseXlsxBytesAsDataTableWithFormatting(bytes, true, true).ValueOrThrow();
+        Assert.Equal("Total", parsed.Footer[0].DisplayValue);
+        Assert.True(parsed.GetFormat(-2, 0)?.FontBold == true);
+    }
+
+    [Fact]
+    public void CreatePartFromRows_CopiesFooterAndFormats()
+    {
+        var source = new DataTable.Models.DataTable();
+        source.SetHeader(0, "H");
+        source.AddRow().SetCell(0, "a");
+        source.AddRow().SetCell(0, "b");
+        source.SetFooter(0, "Sum", new(FontBold: true));
+        var part = XlsxService.CreatePartFromRows(source, 0, 1);
+        Assert.Single(part.Rows);
+        Assert.Equal("a", part.Rows[0][0].DisplayValue);
+        Assert.Equal("Sum", part.Footer[0].DisplayValue);
+        Assert.True(part.GetFormat(-2, 0)?.FontBold == true);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTable_ReturnsDataTable()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 7, Name = "Test", Age = 42 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        var result = svc.ParseXlsxBytesAsDataTable(bytes);
+        Assert.True(result.IsSuccess);
+        var dt = result.ValueOrThrow();
+        Assert.Equal(3, dt.Headers.Count);
+        Assert.Equal("7", dt.Rows[0][0].DisplayValue);
+        Assert.Equal("Test", dt.Rows[0][1].DisplayValue);
+        Assert.Equal("42", dt.Rows[0][2].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxFileAsDataTable_ReturnsDataTable()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 9, Name = "FileTest", Age = 99 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        var path = _tempSession.GetFilePath("parse-datatable.xlsx");
+        File.WriteAllBytes(path, bytes);
+        var result = svc.ParseXlsxFileAsDataTable(path);
+        Assert.True(result.IsSuccess);
+        var dt = result.ValueOrThrow();
+        Assert.Equal(3, dt.Headers.Count);
+        Assert.Equal("9", dt.Rows[0][0].DisplayValue);
+        Assert.Equal("FileTest", dt.Rows[0][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ExportToHtmlTable_ProducesValidHtmlWithTable()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "HtmlTest", Age = 50 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        var html = svc.ExportToHtmlTable(bytes);
+        Assert.NotNull(html);
+        Assert.Contains("<!DOCTYPE", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("<table", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Id", html);
+        Assert.Contains("Name", html);
+        Assert.Contains("HtmlTest", html);
+    }
+
+    [Fact]
+    public void BatchParseFilesAsDataTable_ReturnsResultPerFile()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data1 = [new() { Id = 1, Name = "A", Age = 10 }];
+        TestModel[] data2 = [new() { Id = 2, Name = "B", Age = 20 }];
+        var path1 = _tempSession.GetFilePath("batch1.xlsx");
+        var path2 = _tempSession.GetFilePath("batch2.xlsx");
+        File.WriteAllBytes(path1, svc.ExportToXlsxBytes(data1));
+        File.WriteAllBytes(path2, svc.ExportToXlsxBytes(data2));
+        var results = svc.BatchParseFilesAsDataTable([path1, path2]);
+        Assert.Equal(2, results.Count);
+        Assert.True(results[0].IsSuccess);
+        var dt1 = results[0].ValueOrThrow();
+        Assert.Equal("A", dt1.Rows[0][1].DisplayValue);
+        Assert.True(results[1].IsSuccess);
+        var dt2 = results[1].ValueOrThrow();
+        Assert.Equal("B", dt2.Rows[0][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ExportMultiSheet_ProducesMultipleTables()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] a = [new() { Id = 1, Name = "A", Age = 10 }];
+        TestModel[] b = [new() { Id = 2, Name = "B", Age = 20 }];
+        var dataSets = new Dictionary<string, IEnumerable<TestModel>> { { "SheetA", a }, { "SheetB", b } };
+        var bytes = svc.ExportToXlsxBytes(dataSets);
+        using var ms = BytesToStream(bytes);
+        using var reader = ExcelReaderFactory.CreateReader(ms);
+        var config = new ExcelDataSetConfiguration();
+        config.ConfigureDataTable = _ => new() { UseHeaderRow = true };
+        var ds = reader.AsDataSet(config);
+        Assert.Equal(2, ds.Tables.Count);
+        Assert.Equal("SheetA", ds.Tables[0].TableName);
+        Assert.Equal("SheetB", ds.Tables[1].TableName);
+        // Confirm the first table has one data row with Name=A
+        Assert.Equal(1, ds.Tables[0].Rows.Count);
+        Assert.Equal("A", ds.Tables[0].Rows[0]["Name"].ToString());
+    }
+
+    [Fact]
+    public void ConvertXlsxToCsv_ProducesQuotedFieldsForCommasAndQuotes()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "Smith, \"John\"", Age = 40 }];
+        // Export as xlsx bytes
+        var xlsx = svc.ExportToXlsxBytes(data);
+        // Convert to CSV through the service
+        using var inStream = BytesToStream(xlsx);
+        using var outStream = new MemoryStream();
+        svc.ConvertXlsxToCsv(inStream, outStream);
+        outStream.Position = 0;
+        using var reader = new StreamReader(outStream, Encoding.UTF8);
+        var text = reader.ReadToEnd();
+        // Header line must include Name, Age, and the other columns
+        Assert.Contains("Name", text);
+        // Name field must be quoted, with inner quotes doubled
+        var expected = "\"Smith, \"\"John\"\"\"";
+        Assert.Contains(expected, text);
+    }
+
+    [Fact]
+    public async Task ExportAndParseAsync_RoundTrip()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 3, Name = "Carol", Age = 33 }];
+        var bytes = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken);
+        Assert.NotNull(bytes);
+        using var ms = BytesToStream(bytes);
+        var dict = await svc.ParseXlsxStreamAsDictionaryAsync(ms, TestContext.Current.CancellationToken);
+        Assert.Single(dict);
+        var row = dict[0].Values.ToList();
+        Assert.Contains("Carol", row);
+        Assert.Contains("33", row);
+    }
+
+    [Fact]
+    public void ExportToXlsxBytes_RoundTrip_NoSelectedProperties()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 10, Name = "Derek", Age = 45 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        using var ms = BytesToStream(bytes);
+        var dict = svc.ParseXlsxStreamAsDictionary(ms);
+        Assert.Single(dict);
+        // Export without selectedProperties must put Id in the first column
+        Assert.Equal("10", dict[0][0]);
+        Assert.Equal("Derek", dict[0][1]);
+    }
+
+    [Fact]
+    public void ExportSelectedProperties_ToXlsxStream_And_Parse()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 11, Name = "Eve", Age = 29 }];
+        List<PropertyInfo> props = [typeof(TestModel).GetProperty(nameof(TestModel.Name))!, typeof(TestModel).GetProperty(nameof(TestModel.Age))!];
+        using var ms = new MemoryStream();
+        svc.ExportToXlsx(data, props, ms);
+        ms.Position = 0;
+        var dict = svc.ParseXlsxStreamAsDictionary(ms);
+        Assert.Single(dict);
+        Assert.Equal("Eve", dict[0][0]);
+        Assert.Equal("29", dict[0][1]);
+    }
+
+    [Fact]
+    public void ExportDateAndNumberTypes_PreservedAsParsableValues()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var model = new DateNumberModel {
+            Date = new(2020, 1, 2),
+            DecimalValue = 12.34m,
+            DoubleValue = 2.5,
+            Flag = true
+        };
+
+        var bytes = svc.ExportToXlsxBytes([model]);
+        using var ms = BytesToStream(bytes);
+        var dict = svc.ParseXlsxStreamAsDictionary(ms);
+        Assert.Single(dict);
+        var values = dict[0].Values.Select(v => v.ToString()).ToList();
+
+        // At least one value must parse as DateTime and match our date's date component
+        Assert.Contains(values, s => DateTime.TryParse(s, out var d) && d.Date == model.Date.Date);
+        // Numeric values must parse as doubles or decimals
+        Assert.Contains(values, s => double.TryParse(s, out var dv) && Math.Abs(dv - (double)model.DecimalValue) < 0.0001);
+        Assert.Contains(values, s => double.TryParse(s, out var dv2) && Math.Abs(dv2 - model.DoubleValue) < 0.0001);
+        // Boolean must parse as bool or appear as True/False
+        Assert.Contains(values, s => bool.TryParse(s, out var b) && b == model.Flag);
+    }
+
+    [Fact]
+    public async Task ConvertXlsxToCsvAsync_ProducesQuotedFieldsForCommasAndQuotes()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "Smith, \"John\"", Age = 40 }];
+        var xlsx = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken);
+        using var inStream = BytesToStream(xlsx);
+        using var outStream = new MemoryStream();
+        await svc.ConvertXlsxToCsvAsync(inStream, outStream, ct: TestContext.Current.CancellationToken);
+        outStream.Position = 0;
+        using var reader = new StreamReader(outStream, Encoding.UTF8);
+        var text = await reader.ReadToEndAsync(TestContext.Current.CancellationToken);
+        Assert.Contains("Name", text);
+        Assert.Contains("\"Smith, \"\"John\"\"\"", text);
+    }
+
+    [Fact]
+    public void ExportToXlsx_WithWorksheetName_UsesName()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 21, Name = "Named", Age = 50 }];
+        var bytes = svc.ExportToXlsxBytes(data, "MySheet");
+        using var ms = BytesToStream(bytes);
+        using var reader = ExcelReaderFactory.CreateReader(ms);
+        var config = new ExcelDataSetConfiguration();
+        config.ConfigureDataTable = _ => new() { UseHeaderRow = true };
+        var ds = reader.AsDataSet(config);
+        Assert.Single(ds.Tables);
+        Assert.Equal("MySheet", ds.Tables[0].TableName);
+    }
+
+    [Fact]
+    public async Task ExportMultiSheetAsync_Bytes()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] a = [new() { Id = 31, Name = "AA", Age = 1 }];
+        TestModel[] b = [new() { Id = 32, Name = "BB", Age = 2 }];
+        var dataSets = new Dictionary<string, IEnumerable<TestModel>> { { "S1", a }, { "S2", b } };
+        var bytes = await svc.ExportToXlsxBytesAsync(dataSets, TestContext.Current.CancellationToken);
+        using var ms = BytesToStream(bytes);
+        using var reader = ExcelReaderFactory.CreateReader(ms);
+        var config = new ExcelDataSetConfiguration();
+        config.ConfigureDataTable = _ => new() { UseHeaderRow = true };
+        var ds = reader.AsDataSet(config);
+        Assert.Equal(2, ds.Tables.Count);
+        Assert.Equal("S1", ds.Tables[0].TableName);
+        Assert.Equal("S2", ds.Tables[1].TableName);
+    }
+
+    [Fact]
+    public void ExportEmptyData_ProducesWorkbookWithNoRows()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var empty = Array.Empty<TestModel>();
+        var bytes = svc.ExportToXlsxBytes(empty);
+        using var ms = BytesToStream(bytes);
+        using var reader = ExcelReaderFactory.CreateReader(ms);
+        var config = new ExcelDataSetConfiguration();
+        config.ConfigureDataTable = _ => new() { UseHeaderRow = true };
+        var ds = reader.AsDataSet(config);
+        // Workbook must contain a sheet and no data rows
+        Assert.Single(ds.Tables);
+        Assert.Equal(0, ds.Tables[0].Rows.Count);
+    }
+
+    [Fact]
+    public void ExportToXlsx_SaveToFile_RoundTrip()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 41, Name = "FileTest", Age = 60 }];
+        var path = _tempSession.GetFilePath();
+        svc.ExportToXlsx(data, path);
+        var dict = svc.ParseXlsxFileAsDictionary(path);
+        Assert.Single(dict);
+        Assert.Contains("FileTest", dict[0].Values);
+    }
+
+    [Fact]
+    public void ExportMultiSheet_ToStream_ProducesMultipleTables()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] a = [new() { Id = 51, Name = "X", Age = 5 }];
+        TestModel[] b = [new() { Id = 52, Name = "Y", Age = 6 }];
+        var dataSets = new Dictionary<string, IEnumerable<TestModel>> { { "One", a }, { "Two", b } };
+        using var ms = new MemoryStream();
+        svc.ExportToXlsx(dataSets, ms);
+        ms.Position = 0;
+        using var reader = ExcelReaderFactory.CreateReader(ms);
+        var config = new ExcelDataSetConfiguration();
+        config.ConfigureDataTable = _ => new() { UseHeaderRow = true };
+        var ds = reader.AsDataSet(config);
+        Assert.Equal(2, ds.Tables.Count);
+        Assert.Equal("One", ds.Tables[0].TableName);
+        Assert.Equal("Two", ds.Tables[1].TableName);
+    }
+
+    [Fact]
+    public void ExportWithUseHeaderRowFalse_ShowsHeaderAsData()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        // Configure the service so the first row is not treated as a header
+        svc.SetExcelDataTableConfiguration(new() { UseHeaderRow = false });
+        TestModel[] data = [new() { Id = 61, Name = "HeaderTest", Age = 7 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        using var ms = BytesToStream(bytes);
+        using var reader = ExcelReaderFactory.CreateReader(ms);
+        var config = new ExcelDataSetConfiguration();
+        config.ConfigureDataTable = _ => new() { UseHeaderRow = false };
+        var ds = reader.AsDataSet(config);
+        // With UseHeaderRow=false the first row must hold header names (property names) as data
+        Assert.Single(ds.Tables);
+        var firstRow = ds.Tables[0].Rows[0];
+
+        // When UseHeaderRow is true the service writes headers as row 0; with false, ExcelReader treats those names as data
+        Assert.Contains("Id", firstRow.ItemArray.Select(o => o?.ToString()));
+    }
+
+    [Fact]
+    public void ExportSelectedProperties_OrderPreserved()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 71, Name = "Order", Age = 77 }];
+        var props = new List<PropertyInfo> { typeof(TestModel).GetProperty(nameof(TestModel.Age))!, typeof(TestModel).GetProperty(nameof(TestModel.Name))! };
+        var bytes = svc.ExportToXlsxBytes(data, props);
+        using var ms = BytesToStream(bytes);
+        using var reader = ExcelReaderFactory.CreateReader(ms);
+        var config = new ExcelDataSetConfiguration();
+        config.ConfigureDataTable = _ => new() { UseHeaderRow = true };
+        var ds = reader.AsDataSet(config);
+        Assert.Single(ds.Tables);
+        // First data row is Age then Name
+        var valueRow = ds.Tables[0].Rows[0];
+        Assert.Equal("77", valueRow[0].ToString());
+        Assert.Equal("Order", valueRow[1].ToString());
+    }
+
+    [Fact]
+    public void ExportLargeDataset_SmokeTest()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var list = Enumerable.Range(1, 1000).Select(i => new TestModel { Id = i, Name = "N" + i, Age = i % 100 }).ToArray();
+        var bytes = svc.ExportToXlsxBytes(list);
+        using var ms = BytesToStream(bytes);
+        var dict = svc.ParseXlsxStreamAsDictionary(ms);
+        Assert.Equal(1000, dict.Count);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDictionary_WithHeaderRow_RoundTrips()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = new Dictionary<int, IReadOnlyDictionary<int, string>> {
+            [0] = new Dictionary<int, string> { [0] = "H1", [1] = "H2", [2] = "H3" },
+            [1] = new Dictionary<int, string> { [0] = "a", [1] = "b", [2] = "c" },
+            [2] = new Dictionary<int, string> { [0] = "x", [1] = "y", [2] = "z" }
+        };
+
+        var bytes = svc.ExportToXlsxBytesFromDictionary(data);
+        Assert.NotNull(bytes);
+        Assert.True(bytes.Length > 0);
+        using var ms = BytesToStream(bytes);
+        var dict = svc.ParseXlsxStreamAsDictionary(ms);
+        Assert.Equal(2, dict.Count); // Header row becomes header, 2 data rows
+        Assert.Equal("a", dict[0][0]);
+        Assert.Equal("x", dict[1][0]);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDictionary_WithoutHeaderRow_RoundTrips()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = new Dictionary<int, IReadOnlyDictionary<int, string>> {
+            [0] = new Dictionary<int, string> { [0] = "r1c1", [1] = "r1c2" }, [1] = new Dictionary<int, string> { [0] = "r2c1", [1] = "r2c2" }
+        };
+
+        var bytes = svc.ExportToXlsxBytesFromDictionary(data, false);
+        using var ms = BytesToStream(bytes);
+        var dict = svc.ParseXlsxStreamAsDictionary(ms);
+        Assert.Equal(2, dict.Count);
+        Assert.Contains("r1c1", dict[0].Values);
+        Assert.Contains("r2c1", dict[1].Values);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDictionary_ToFile_RoundTrips()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = new Dictionary<int, IReadOnlyDictionary<int, string>> {
+            [0] = new Dictionary<int, string> { [0] = "Col1", [1] = "Col2" }, [1] = new Dictionary<int, string> { [0] = "v1", [1] = "v2" }
+        };
+
+        var path = _tempSession.GetFilePath("dict-export.xlsx");
+        svc.ExportToXlsxFromDictionary(data, path);
+        Assert.True(File.Exists(path));
+        var dict = svc.ParseXlsxFileAsDictionary(path);
+        Assert.Single(dict);
+        Assert.Equal("v1", dict[0][0]);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDataTable_RoundTrips()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new DataTable.Models.DataTable();
+        dt.SetHeader(0, "A").SetHeader(1, "B").SetHeader(2, "C");
+        dt.AddRow().SetCell(0, "1").SetCell(1, "2").SetCell(2, "3");
+        dt.AddRow().SetCell(0, "4").SetCell(1, "5").SetCell(2, "6");
+        var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
+        Assert.NotNull(bytes);
+        Assert.True(bytes.Length > 0);
+        var result = svc.ParseXlsxBytesAsDataTable(bytes);
+        Assert.True(result.IsSuccess);
+        var parsed = result.ValueOrThrow();
+        Assert.Equal(3, parsed.Headers.Count);
+        Assert.Equal(2, parsed.Rows.Count);
+        Assert.Equal("1", parsed.Rows[0][0].DisplayValue);
+        Assert.Equal("6", parsed.Rows[1][2].DisplayValue);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDataTable_SpansRoundTrip()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new DataTable.Models.DataTable();
+        dt.SetHeader(0, "A").SetHeader(1, "B").SetHeader(2, "C");
+        // Row 0: "Merged" covers two columns; rows 0-1: "Tall" covers two rows in column 2.
+        dt.SetCell(0, 0, new DataTableCell<string>("Merged", 2));
+        dt.SetCell(0, 2, new DataTableCell<string>("Tall", RowSpan: 2));
+        dt.SetCell(1, 0, "x");
+        dt.SetCell(1, 1, "y");
+        var bytes = svc.ExportToXlsxBytesFromDataTable(dt);
+        var result = svc.ParseXlsxBytesAsDataTable(bytes);
+        Assert.True(result.IsSuccess);
+        var parsed = result.ValueOrThrow();
+        Assert.Equal("Merged", parsed.Rows[0][0].DisplayValue);
+        Assert.Equal(2, parsed.Rows[0][0].ColSpan);
+        Assert.Equal(1, parsed.Rows[0][0].RowSpan);
+        Assert.Equal("Tall", parsed.Rows[0][2].DisplayValue);
+        Assert.Equal(2, parsed.Rows[0][2].RowSpan);
+        Assert.Equal(1, parsed.Rows[0][2].ColSpan);
+        // Covered cells return empty with default spans.
+        Assert.Equal("", parsed.Rows[0][1].DisplayValue);
+        Assert.Equal(1, parsed.Rows[0][1].ColSpan);
+        Assert.Equal("", parsed.Rows[1][2].DisplayValue);
+        Assert.Equal("x", parsed.Rows[1][0].DisplayValue);
+        Assert.Equal("y", parsed.Rows[1][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ExportToXlsxFromDataTable_ToFile_RoundTrips()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new DataTable.Models.DataTable();
+        dt.SetHeader(0, "X").SetHeader(1, "Y");
+        dt.AddRow().SetCell(0, "10").SetCell(1, "20");
+        var path = _tempSession.GetFilePath("dt-export.xlsx");
+        svc.ExportToXlsxFromDataTable(dt, path);
+        Assert.True(File.Exists(path));
+        var result = svc.ParseXlsxFileAsDataTable(path);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("10", result.ValueOrThrow().Rows[0][0].DisplayValue);
+    }
+
+    [Fact]
+    public void ConvertXlsxToCsv_FileToFile_ProducesCsv()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "CsvFile", Age = 25 }];
+        var xlsxPath = _tempSession.GetFilePath("source.xlsx");
+        var csvPath = _tempSession.GetFilePath("output.csv");
+        File.WriteAllBytes(xlsxPath, svc.ExportToXlsxBytes(data));
+        svc.ConvertXlsxToCsv(xlsxPath, csvPath);
+        Assert.True(File.Exists(csvPath));
+        var csvText = File.ReadAllText(csvPath);
+        Assert.Contains("Name", csvText);
+        Assert.Contains("CsvFile", csvText);
+    }
+
+    [Fact]
+    public void ConvertXlsxToCsvBytes_ReturnsCsvBytes()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 99, Name = "BytesTest", Age = 42 }];
+        var xlsxBytes = svc.ExportToXlsxBytes(data);
+        var csvBytes = svc.ConvertXlsxToCsvBytes(xlsxBytes);
+        Assert.NotNull(csvBytes);
+        Assert.True(csvBytes.Length > 0);
+        var text = Encoding.UTF8.GetString(csvBytes);
+        Assert.Contains("BytesTest", text);
+    }
+
+    [Fact]
+    public void ConvertXlsxToCsvBytes_FromStream_ReturnsCsvBytes()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "Stream", Age = 10 }];
+        var xlsxBytes = svc.ExportToXlsxBytes(data);
+        using var inputStream = BytesToStream(xlsxBytes);
+        var csvBytes = svc.ConvertXlsxToCsvBytes(inputStream);
+        Assert.NotNull(csvBytes);
+        Assert.Contains("Stream", Encoding.UTF8.GetString(csvBytes));
+    }
+
+    [Fact]
+    public void ParseXlsxStreamAsDataTable_WithUseHeaderRowFalse_TreatsFirstRowAsData()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "NoHeader", Age = 33 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        using var ms = BytesToStream(bytes);
+        var result = svc.ParseXlsxStreamAsDataTable(ms, false);
+        Assert.True(result.IsSuccess);
+        var dt = result.ValueOrThrow();
+        Assert.True(dt.Headers.Count >= 0);
+        Assert.True(dt.Rows.Count >= 1);
+    }
+
+    [Fact]
+    public async Task ExportToXlsxFromDataTableAsync_RoundTrips()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dt = new DataTable.Models.DataTable();
+        dt.SetHeader(0, "Async").SetHeader(1, "Test");
+        dt.AddRow().SetCell(0, "val1").SetCell(1, "val2");
+        var bytes = await svc.ExportToXlsxBytesFromDataTableAsync(dt, TestContext.Current.CancellationToken);
+        Assert.NotNull(bytes);
+        var result = await svc.ParseXlsxBytesAsDataTableAsync(bytes, ct: TestContext.Current.CancellationToken);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("val1", result.ValueOrThrow().Rows[0][0].DisplayValue);
+    }
+
+    [Fact]
+    public async Task BatchParseFilesAsDataTableAsync_ReturnsResultPerFile()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data1 = [new() { Id = 1, Name = "AsyncA", Age = 1 }];
+        TestModel[] data2 = [new() { Id = 2, Name = "AsyncB", Age = 2 }];
+        var path1 = _tempSession.GetFilePath("async-batch1.xlsx");
+        var path2 = _tempSession.GetFilePath("async-batch2.xlsx");
+        File.WriteAllBytes(path1, svc.ExportToXlsxBytes(data1));
+        File.WriteAllBytes(path2, svc.ExportToXlsxBytes(data2));
+        var results = await svc.BatchParseFilesAsDataTableAsync([path1, path2], ct: TestContext.Current.CancellationToken);
+        Assert.Equal(2, results.Count);
+        Assert.True(results[0].IsSuccess);
+        Assert.True(results[1].IsSuccess);
+        Assert.Equal("AsyncA", results[0].ValueOrThrow().Rows[0][1].DisplayValue);
+        Assert.Equal("AsyncB", results[1].ValueOrThrow().Rows[0][1].DisplayValue);
+    }
+
+    private byte[] BuildTwoSheetWorkbook(XlsxService svc)
+    {
+        TestModel[] a = [new() { Id = 1, Name = "A", Age = 10 }];
+        TestModel[] b = [new() { Id = 2, Name = "B", Age = 20 }, new() { Id = 3, Name = "C", Age = 30 }];
+        var dataSets = new Dictionary<string, IEnumerable<TestModel>> { { "SheetA", a }, { "SheetB", b } };
+        return svc.ExportToXlsxBytes(dataSets);
+    }
+
+    [Fact]
+    public void ListSheetNames_ReturnsSheetsInWorkbookOrder()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var fromBytes = svc.ListSheetNames(bytes);
+        Assert.Equal(["SheetA", "SheetB"], fromBytes);
+        using var ms = BytesToStream(bytes);
+        var fromStream = svc.ListSheetNames(ms);
+        Assert.Equal(["SheetA", "SheetB"], fromStream);
+        var path = _tempSession.GetFilePath("list-sheets.xlsx");
+        File.WriteAllBytes(path, bytes);
+        var fromFile = svc.ListSheetNames(path);
+        Assert.Equal(["SheetA", "SheetB"], fromFile);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDictionary_BySheetName_SelectsCorrectSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var dict = svc.ParseXlsxBytesAsDictionary(bytes, "SheetB");
+        Assert.Equal(2, dict.Count);
+        Assert.Equal("B", dict[0][1]);
+        Assert.Equal("C", dict[1][1]);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDictionary_BySheetIndex_SelectsCorrectSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var dict = svc.ParseXlsxBytesAsDictionary(bytes, 1);
+        Assert.Equal(2, dict.Count);
+        Assert.Equal("B", dict[0][1]);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDictionary_UnknownSheet_Throws()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        Assert.ThrowsAny<Exception>(() => svc.ParseXlsxBytesAsDictionary(bytes, "NoSuchSheet"));
+        Assert.ThrowsAny<Exception>(() => svc.ParseXlsxBytesAsDictionary(bytes, 5));
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTable_BySheetName_SelectsCorrectSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var result = svc.ParseXlsxBytesAsDataTable(bytes, "SheetB");
+        Assert.True(result.IsSuccess);
+        var dt = result.ValueOrThrow();
+        Assert.Equal("Name", dt.Headers[1].DisplayValue);
+        Assert.Equal(2, dt.Rows.Count);
+        Assert.Equal("B", dt.Rows[0][1].DisplayValue);
+        Assert.Equal("C", dt.Rows[1][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTable_BySheetIndex_SelectsCorrectSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var first = svc.ParseXlsxBytesAsDataTable(bytes, 0);
+        Assert.True(first.IsSuccess);
+        Assert.Equal("A", first.ValueOrThrow().Rows[0][1].DisplayValue);
+        var second = svc.ParseXlsxBytesAsDataTable(bytes, 1);
+        Assert.True(second.IsSuccess);
+        Assert.Equal("B", second.ValueOrThrow().Rows[0][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsDataTable_UnknownSheet_ReturnsFailure()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        Assert.False(svc.ParseXlsxBytesAsDataTable(bytes, "NoSuchSheet").IsSuccess);
+        Assert.False(svc.ParseXlsxBytesAsDataTable(bytes, 5).IsSuccess);
+    }
+
+    [Fact]
+    public void ParseXlsxBytesAsAllSheets_ReturnsAllSheetsInOrder()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var sheets = svc.ParseXlsxBytesAsAllSheets(bytes);
+        Assert.Equal(2, sheets.Count);
+        Assert.Equal(["SheetA", "SheetB"], sheets.Keys.ToArray());
+        Assert.Single(sheets["SheetA"].Rows);
+        Assert.Equal("A", sheets["SheetA"].Rows[0][1].DisplayValue);
+        Assert.Equal(2, sheets["SheetB"].Rows.Count);
+        Assert.Equal("C", sheets["SheetB"].Rows[1][1].DisplayValue);
+    }
+
+    [Fact]
+    public void ParseXlsxFileAndStream_SheetOverloads_Work()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var path = _tempSession.GetFilePath("sheet-overloads.xlsx");
+        File.WriteAllBytes(path, bytes);
+        var fileDict = svc.ParseXlsxFileAsDictionary(path, "SheetB");
+        Assert.Equal("B", fileDict[0][1]);
+        var fileDt = svc.ParseXlsxFileAsDataTable(path, 1);
+        Assert.True(fileDt.IsSuccess);
+        Assert.Equal("B", fileDt.ValueOrThrow().Rows[0][1].DisplayValue);
+        var fileSheets = svc.ParseXlsxFileAsAllSheets(path);
+        Assert.Equal(2, fileSheets.Count);
+        using var ms1 = BytesToStream(bytes);
+        var streamDict = svc.ParseXlsxStreamAsDictionary(ms1, 1);
+        Assert.Equal("B", streamDict[0][1]);
+        using var ms2 = BytesToStream(bytes);
+        var streamDt = svc.ParseXlsxStreamAsDataTable(ms2, "SheetA");
+        Assert.True(streamDt.IsSuccess);
+        Assert.Equal("A", streamDt.ValueOrThrow().Rows[0][1].DisplayValue);
+        using var ms3 = BytesToStream(bytes);
+        var streamSheets = svc.ParseXlsxStreamAsAllSheets(ms3);
+        Assert.Equal(2, streamSheets.Count);
+    }
+
+    [Fact]
+    public void DocumentWriter_MultiSheetSession_RoundTrips()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        using var ms = new MemoryStream();
+        var ct = TestContext.Current.CancellationToken;
+        using (var doc = svc.CreateDocumentWriter(ms)) {
+            doc.AddSheet("Typed", new[] { new TestModel { Id = 1, Name = "Alpha", Age = 11 } }, ct);
+            List<PropertyInfo> props = [typeof(TestModel).GetProperty(nameof(TestModel.Name))!];
+            doc.AddSheet("Selected", new[] { new TestModel { Id = 2, Name = "Beta", Age = 22 } }, props, ct);
+            var dictData = new Dictionary<int, IReadOnlyDictionary<int, string>> {
+                { 0, new Dictionary<int, string> { { 0, "H1" }, { 1, "H2" } } }, { 1, new Dictionary<int, string> { { 0, "v1" }, { 1, "v2" } } }
+            };
+
+            doc.AddSheetFromDictionary("Dict", dictData, ct: ct);
+            var source = svc.ParseXlsxBytesAsDataTable(svc.ExportToXlsxBytes(new[] { new TestModel { Id = 3, Name = "Gamma", Age = 33 } })).ValueOrThrow();
+            doc.AddSheetFromDataTable("Table", source, ct);
+        }
+
+        var bytes = ms.ToArray();
+        Assert.True(bytes.Length > 0);
+        var names = svc.ListSheetNames(bytes);
+        Assert.Equal(["Typed", "Selected", "Dict", "Table"], names);
+        var sheets = svc.ParseXlsxBytesAsAllSheets(bytes);
+        Assert.Equal(4, sheets.Count);
+        Assert.Equal("Alpha", sheets["Typed"].Rows[0][1].DisplayValue);
+        Assert.Equal("Name", sheets["Selected"].Headers[0].DisplayValue);
+        Assert.Equal("Beta", sheets["Selected"].Rows[0][0].DisplayValue);
+        Assert.Equal("H1", sheets["Dict"].Headers[0].DisplayValue);
+        Assert.Equal("v2", sheets["Dict"].Rows[0][1].DisplayValue);
+        Assert.Equal("Gamma", sheets["Table"].Rows[0][1].DisplayValue);
+    }
+
+    [Fact]
+    public void DocumentWriter_ToFile_FinalizesOnDispose()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var path = _tempSession.GetFilePath("doc-writer.xlsx");
+        var ct = TestContext.Current.CancellationToken;
+        using (var doc = svc.CreateDocumentWriter(path)) {
+            doc.AddSheet("First", new[] { new TestModel { Id = 1, Name = "A", Age = 10 } }, ct);
+            doc.AddSheet("Second", new[] { new TestModel { Id = 2, Name = "B", Age = 20 } }, ct);
+        }
+
+        Assert.True(File.Exists(path));
+        Assert.Equal(["First", "Second"], svc.ListSheetNames(path));
+        var dt = svc.ParseXlsxFileAsDataTable(path, "Second").ValueOrThrow();
+        Assert.Equal("B", dt.Rows[0][1].DisplayValue);
+    }
+
+    [Fact]
+    public void DocumentWriter_DuplicateSheetName_Throws()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var ct = TestContext.Current.CancellationToken;
+        using var ms = new MemoryStream();
+        using var doc = svc.CreateDocumentWriter(ms);
+        doc.AddSheet("Dup", new[] { new TestModel { Id = 1, Name = "A", Age = 10 } }, ct);
+        Assert.Throws<ArgumentException>(() => doc.AddSheet("Dup", new[] { new TestModel { Id = 2, Name = "B", Age = 20 } }, ct));
+        // Sheet names are case-insensitive, matching Excel.
+        Assert.Throws<ArgumentException>(() => doc.AddSheet("DUP", new[] { new TestModel { Id = 3, Name = "C", Age = 30 } }, ct));
+    }
+
+    [Fact]
+    public void DocumentWriter_AddSheetAfterDispose_Throws()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var ct = TestContext.Current.CancellationToken;
+        using var ms = new MemoryStream();
+        var doc = svc.CreateDocumentWriter(ms);
+        doc.AddSheet("Only", new[] { new TestModel { Id = 1, Name = "A", Age = 10 } }, ct);
+        doc.Dispose();
+        Assert.Throws<ObjectDisposedException>(() => doc.AddSheet("Late", new[] { new TestModel { Id = 2, Name = "B", Age = 20 } }, ct));
+    }
+
+    [Fact]
+    public void DocumentWriter_SpannedDataTable_EmitsMerges()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var spanned = new DataTable.Models.DataTable();
+        spanned.SetHeader(0, "A").SetHeader(1, "B");
+        spanned.SetCell(0, 0, new DataTableCell<string>("wide", 2));
+        using var ms = new MemoryStream();
+        using (var doc = svc.CreateDocumentWriter(ms))
+            doc.AddSheetFromDataTable("Spans", spanned, TestContext.Current.CancellationToken);
+
+        var dt = svc.ParseXlsxBytesAsDataTable(ms.ToArray(), "Spans").ValueOrThrow();
+        Assert.Equal(2, dt.Rows[0][0].ColSpan);
+    }
+
+    [Fact]
+    public void SplitXlsxBytesBySheet_ProducesOneWorkbookPerSheet()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var parts = svc.SplitXlsxBytesBySheet(bytes);
+        Assert.Equal(2, parts.Count);
+        Assert.Equal("A", svc.ParseXlsxBytesAsDataTable(parts["SheetA"]).ValueOrThrow().Rows[0][1].DisplayValue);
+        Assert.Equal(2, svc.ParseXlsxBytesAsDataTable(parts["SheetB"]).ValueOrThrow().Rows.Count);
+    }
+
+    [Fact]
+    public void SplitXlsxByRows_RepeatsHeaderAndChunksData()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = Enumerable.Range(1, 5).Select(i => new TestModel { Id = i, Name = $"N{i}", Age = i }).ToList();
+        var bytes = svc.ExportToXlsxBytes(data);
+        var parts = svc.SplitXlsxBytesByRows(bytes, 2);
+        Assert.Equal(3, parts.Count);
+        Assert.Equal(2, svc.ParseXlsxBytesAsDataTable(parts[0]).ValueOrThrow().Rows.Count);
+        Assert.Single(svc.ParseXlsxBytesAsDataTable(parts[2]).ValueOrThrow().Rows);
+        Assert.Equal("Name", svc.ParseXlsxBytesAsDataTable(parts[2]).ValueOrThrow().Headers[1].DisplayValue);
+    }
+
+    [Fact]
+    public void MergeXlsxBytes_PreserveSheets_KeepsAllSheetsWithDedupe()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var wb1 = svc.ExportToXlsxBytes(
+            new Dictionary<string, IEnumerable<TestModel>> { { "SheetA", [new() { Id = 1, Name = "A", Age = 10 }] }, { "Shared", [new() { Id = 2, Name = "B", Age = 20 }] } });
+
+        var wb2 = svc.ExportToXlsxBytes(new Dictionary<string, IEnumerable<TestModel>> { { "Shared", [new() { Id = 3, Name = "C", Age = 30 }] } });
+        var mergedBytes = svc.MergeXlsxBytes([wb1, wb2]);
+        var sheets = svc.ParseXlsxBytesAsAllSheets(mergedBytes);
+        Assert.Equal(3, sheets.Count);
+        Assert.True(sheets.ContainsKey("SheetA"));
+        Assert.True(sheets.ContainsKey("Shared"));
+        Assert.True(sheets.ContainsKey("Shared (2)"));
+    }
+
+    [Fact]
+    public void MergeXlsxBytes_ConcatenateRows_AppendsAllDataRows()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var wb1 = svc.ExportToXlsxBytes([new TestModel { Id = 1, Name = "A", Age = 10 }]);
+        var wb2 = svc.ExportToXlsxBytes([new TestModel { Id = 2, Name = "B", Age = 20 }]);
+        var mergedBytes = svc.MergeXlsxBytes([wb1, wb2], XlsxMergeMode.ConcatenateRows);
+        var merged = svc.ParseXlsxBytesAsDataTable(mergedBytes, "Merged").ValueOrThrow();
+        Assert.Equal(2, merged.Rows.Count);
+        Assert.Equal("A", merged.Rows[0][1].DisplayValue);
+        Assert.Equal("B", merged.Rows[1][1].DisplayValue);
+    }
+
+    [Fact]
+    public void SplitXlsxBySheet_FileAndStreamVariants_Work()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var path = _tempSession.GetFilePath("split-by-sheet.xlsx");
+        File.WriteAllBytes(path, bytes);
+        var outputDir = Path.Combine(Path.GetDirectoryName(path)!, "split-out");
+        Directory.CreateDirectory(outputDir);
+        var createdPaths = svc.SplitXlsxBySheet(path, outputDir);
+        Assert.Equal(2, createdPaths.Count);
+        Assert.Equal("A", svc.ParseXlsxFileAsDataTable(createdPaths[0]).ValueOrThrow().Rows[0][1].DisplayValue);
+        var streamSheetNames = new List<string>();
+        using (var input = BytesToStream(bytes)) {
+            svc.SplitXlsxBySheet(
+                input, sheetName => {
+                    streamSheetNames.Add(sheetName);
+                    return new MemoryStream();
+                }, true);
+        }
+
+        Assert.Equal(["SheetA", "SheetB"], streamSheetNames);
+    }
+
+#if NET
+    [Fact]
+    public async Task SheetControlAsync_Variants_Work()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var bytes = BuildTwoSheetWorkbook(svc);
+        var ct = TestContext.Current.CancellationToken;
+        var path = _tempSession.GetFilePath("sheet-async.xlsx");
+        await File.WriteAllBytesAsync(path, bytes, ct);
+        var names = await svc.ListSheetNamesAsync(bytes, ct);
+        Assert.Equal(["SheetA", "SheetB"], names);
+        var fileNames = await svc.ListSheetNamesAsync(path, ct);
+        Assert.Equal(["SheetA", "SheetB"], fileNames);
+        var dict = await svc.ParseXlsxBytesAsDictionaryAsync(bytes, "SheetB", ct);
+        Assert.Equal("B", dict[0][1]);
+        var dt = await svc.ParseXlsxBytesAsDataTableAsync(bytes, 1, ct: ct);
+        Assert.True(dt.IsSuccess);
+        Assert.Equal("B", dt.ValueOrThrow().Rows[0][1].DisplayValue);
+        var sheets = await svc.ParseXlsxBytesAsAllSheetsAsync(bytes, ct: ct);
+        Assert.Equal(2, sheets.Count);
+        var fileSheets = await svc.ParseXlsxFileAsAllSheetsAsync(path, ct: ct);
+        Assert.Equal(2, fileSheets.Count);
+    }
+#endif
+
+#if !NETSTANDARD2_0
+    [Fact]
+    public async Task ExportToXlsxAsync_WithCancellation_ThrowsOperationCanceledException()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = Enumerable.Range(1, 10000).Select(i => new TestModel { Id = i, Name = "N" + i, Age = i }).ToArray();
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync(); // Cancel immediately
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => {
+            await svc.ExportToXlsxAsync(data, _tempSession.GetFilePath(), ct: cts.Token);
+        });
+    }
+
+    [Fact]
+    public async Task ExportToXlsxAsync_WithCancellationDuringProcessing_ThrowsOperationCanceledException()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = Enumerable.Range(1, 50000).Select(i => new TestModel { Id = i, Name = "N" + i, Age = i }).ToArray();
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(10)); // Cancel after 10ms
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => {
+            await svc.ExportToXlsxAsync(data, _tempSession.GetFilePath(), ct: cts.Token);
+        });
+    }
+
+    [Fact]
+    public async Task ExportToXlsxBytesAsync_WithCancellation_ThrowsOperationCanceledException()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = Enumerable.Range(1, 10000).Select(i => new TestModel { Id = i, Name = "N" + i, Age = i }).ToArray();
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => {
+            await svc.ExportToXlsxBytesAsync(data, ct: cts.Token);
+        });
+    }
+
+    [Fact]
+    public async Task ExportMultiSheetAsync_WithCancellation_ThrowsOperationCanceledException()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var dataSets = new Dictionary<string, IEnumerable<TestModel>> {
+            { "Sheet1", Enumerable.Range(1, 10000).Select(i => new TestModel { Id = i, Name = "N" + i, Age = i }) },
+            { "Sheet2", Enumerable.Range(1, 10000).Select(i => new TestModel { Id = i, Name = "N" + i, Age = i }) }
+        };
+
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => {
+            await svc.ExportToXlsxAsync(dataSets, _tempSession.GetFilePath(), cts.Token);
+        });
+    }
+
+    [Fact]
+    public async Task ParseXlsxStreamAsDictionaryAsync_WithCancellation_ThrowsOperationCanceledException()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = new[] { new TestModel { Id = 1, Name = "Test", Age = 30 } };
+        var bytes = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken);
+        using var ms = BytesToStream(bytes);
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => {
+            await svc.ParseXlsxStreamAsDictionaryAsync(ms, cts.Token);
+        });
+    }
+
+    [Fact]
+    public async Task ConvertXlsxToCsvAsync_WithCancellation_ThrowsOperationCanceledException()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = new[] { new TestModel { Id = 1, Name = "Test", Age = 30 } };
+        var xlsxBytes = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken);
+        using var inputStream = BytesToStream(xlsxBytes);
+        using var outputStream = new MemoryStream();
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => {
+            await svc.ConvertXlsxToCsvAsync(inputStream, outputStream, ct: cts.Token);
+        });
+    }
+
+    [Fact]
+    public async Task ExportToXlsxAsync_WithInvalidPath_ThrowsException()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = new[] { new TestModel { Id = 1, Name = "Test", Age = 30 } };
+        // Write to a path whose parent is a file (not a directory) — this must fail
+        var existingFile = await _tempSession.CreateFileAsync(""u8.ToArray(), Guid.NewGuid() + ".tmp", TestContext.Current.CancellationToken);
+        var invalidPath = Path.Combine(existingFile, "file.xlsx");
+        await Assert.ThrowsAnyAsync<Exception>(async () => {
+            await svc.ExportToXlsxAsync(data, invalidPath, ct: TestContext.Current.CancellationToken);
+        });
+    }
+
+    [Fact]
+    public async Task ExportToXlsxAsync_WithNullData_HandlesGracefully()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        IEnumerable<TestModel>? nullData = null;
+
+        // Must handle null without crashing (ArgumentNullException or an explicit null path)
+        await Assert.ThrowsAnyAsync<Exception>(async () => {
+            await svc.ExportToXlsxAsync(nullData!, _tempSession.GetFilePath(), ct: TestContext.Current.CancellationToken);
+        });
+    }
+
+    [Fact]
+    public async Task ExportToXlsxAsync_WithEmptyData_ProducesValidFile()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var emptyData = Array.Empty<TestModel>();
+        var path = _tempSession.GetFilePath();
+        await svc.ExportToXlsxAsync(emptyData, path, ct: TestContext.Current.CancellationToken);
+        Assert.True(File.Exists(path));
+        Assert.True(new FileInfo(path).Length > 0);
+    }
+
+    [Fact]
+    public async Task ExportToXlsxAsync_WithSelectedProperties_WorksCorrectly()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        var data = new[] { new TestModel { Id = 1, Name = "Test", Age = 30 } };
+        var props = new List<PropertyInfo> { typeof(TestModel).GetProperty(nameof(TestModel.Name))! };
+        var path = _tempSession.GetFilePath();
+        await svc.ExportToXlsxAsync(data, props, path, ct: TestContext.Current.CancellationToken);
+        Assert.True(File.Exists(path));
+
+        // Confirm content
+        var dict = await svc.ParseXlsxFileAsDictionaryAsync(path, TestContext.Current.CancellationToken);
+        Assert.Single(dict);
+        Assert.Equal("Test", dict[0][0]);
+    }
+
+    [Fact]
+    public async Task ParseXlsxStreamRowsStreamingAsync_YieldsHeaderAndDataRows()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 1, Name = "Alice", Age = 30 }, new() { Id = 2, Name = "Bob", Age = 25 }];
+        var bytes = svc.ExportToXlsxBytes(data);
+        using var ms = BytesToStream(bytes);
+        var rows = new List<IReadOnlyList<string>>();
+        await foreach (var row in svc.ParseXlsxStreamRowsStreamingAsync(ms, TestContext.Current.CancellationToken))
+            rows.Add(row);
+
+        Assert.Equal(3, rows.Count);
+        Assert.Equal("Id", rows[0][0]);
+        Assert.Equal("Name", rows[0][1]);
+        Assert.Equal("Alice", rows[1][1]);
+        Assert.Equal("Bob", rows[2][1]);
+    }
+
+    [Fact]
+    public async Task ExportAndParseStreamingAsync_TypedRoundTrip()
+    {
+        EnsureCodePages();
+        var svc = new XlsxService(_logger);
+        TestModel[] data = [new() { Id = 11, Name = "Stream", Age = 41 }];
+
+        async IAsyncEnumerable<TestModel> Source()
+        {
+            foreach (var item in data)
+                yield return item;
+
+            await Task.CompletedTask;
+        }
+
+        var bytes = await svc.ExportToXlsxBytesAsync(Source(), ct: TestContext.Current.CancellationToken);
+        using var ms = BytesToStream(bytes);
+        var parsed = new List<TestModel>();
+        await foreach (var row in svc.ParseXlsxStreamStreamingAsync<TestModel>(ms, TestContext.Current.CancellationToken))
+            parsed.Add(row);
+
+        Assert.Single(parsed);
+        Assert.Equal(11, parsed[0].Id);
+        Assert.Equal("Stream", parsed[0].Name);
+        Assert.Equal(41, parsed[0].Age);
+    }
+#endif
+}

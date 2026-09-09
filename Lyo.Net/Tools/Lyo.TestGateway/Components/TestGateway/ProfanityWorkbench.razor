@@ -1,0 +1,203 @@
+@using System.Diagnostics
+@using Lyo.Common.Metadata.Records
+@using Lyo.Profanity
+@using Lyo.Profanity.Models
+@using Lyo.Web.Primitives.ChipInput
+@inject FileProfanityFilterOptions BaseOptions
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Profanity Filter</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Test profanity detection and replacement with the configured sources plus inline words for quick experimentation.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Spacing="3">
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="string" Label="Language" @bind-Value="_selectedLanguage">
+                                    @foreach (var language in _languages) {
+                                        <MudSelectItem Value="@language.Bcp47">@language.Description (@language.Bcp47)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="ProfanityReplacementStrategy" Label="Replacement strategy" @bind-Value="_replacementStrategy">
+                                    @foreach (var strategy in _replacementStrategies) {
+                                        <MudSelectItem Value="@strategy">@strategy</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudSwitch T="bool" Label="Case sensitive" @bind-Value="_caseSensitive"/>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudSwitch T="bool" Label="Whole words only" @bind-Value="_matchWholeWordsOnly"/>
+                            </MudItem>
+                            @if (_replacementStrategy is ProfanityReplacementStrategy.ReplaceWithChar or ProfanityReplacementStrategy.Mask or ProfanityReplacementStrategy.PreserveBoundary) {
+                                <MudItem xs="12" md="4">
+                                    <MudTextField T="string"
+                                                  Label="Replacement char"
+                                                  MaxLength="1"
+                                                  @bind-Value="_replacementCharText"/>
+                                </MudItem>
+                            }
+                            @if (_replacementStrategy == ProfanityReplacementStrategy.ReplaceWithWord) {
+                                <MudItem xs="12" md="4">
+                                    <MudTextField T="string"
+                                                  Label="Replacement word"
+                                                  @bind-Value="_replacementWord"/>
+                                </MudItem>
+                            }
+                        </MudGrid>
+
+                        <MudTextField T="string"
+                                      Label="Text"
+                                      Variant="Variant.Outlined"
+                                      Lines="10"
+                                      FullWidth="true"
+                                      @bind-Value="_inputText"/>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <div>
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">Additional words</MudText>
+                                    <LyoChipInput Values="@_additionalWords"
+                                                  ValuesChanged="OnAdditionalWordsChanged"
+                                                  Placeholder="Type a word and press Enter"/>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                        Adds inline words to the configured profanity sources.
+                                    </MudText>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <div>
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">Excluded words</MudText>
+                                    <LyoChipInput Values="@_excludedWords"
+                                                  ValuesChanged="OnExcludedWordsChanged"
+                                                  Placeholder="Type a word and press Enter"/>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                        Prevents specific words from being flagged.
+                                    </MudText>
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string"
+                                              Label="Words file path override"
+                                              HelperText="Optional. Falls back to configured paths when blank."
+                                              FullWidth="true"
+                                              @bind-Value="_wordsFilePath"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string"
+                                              Label="Words URL override"
+                                              HelperText="Optional. Falls back to configured URLs when blank."
+                                              FullWidth="true"
+                                              @bind-Value="_wordsUrl"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FilterAsync" Disabled="@_busy">Filter Text</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CheckAsync" Disabled="@_busy">Check Only</MudButton>
+                            <MudButton Variant="Variant.Text" OnClick="ResetToDefaults" Disabled="@_busy">Reset Defaults</MudButton>
+                        </MudStack>
+
+                        <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-2">Result</MudText>
+
+                    @if (_filterResult == null && _containsResult == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Run the filter or checker to inspect matches and output here.
+                        </MudText>
+                    }
+                    else {
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Language</MudText>
+                                    <MudText Typo="Typo.body1">@CurrentLanguage.Description</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Contains</MudText>
+                                    <MudText Typo="Typo.body1">@FormatContainsResult()</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Matches</MudText>
+                                    <MudText Typo="Typo.body1">@(_filterResult?.Matches.Count ?? 0)</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="string"
+                                      Label="Filtered text"
+                                      Variant="Variant.Outlined"
+                                      Lines="8"
+                                      FullWidth="true"
+                                      Value="@(_filterResult?.FilteredText ?? string.Empty)"
+                                      ReadOnly="true"
+                                      Class="mt-3"/>
+
+                        @if (_filterResult is { Matches.Count: > 0 }) {
+                            <LyoResponsiveTable>
+                                <TableContent>
+                                    <MudSimpleTable Dense="true" Class="mt-3">
+                                        <thead>
+                                        <tr>
+                                            <th>Match</th>
+                                            <th>Index</th>
+                                            <th>Rule</th>
+                                            <th>Severity</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach (var match in _filterResult.Value.Matches) {
+                                            <tr>
+                                                <td>@match.OriginalText</td>
+                                                <td>@match.Index</td>
+                                                <td>@match.Entry.Id</td>
+                                                <td>@match.Entry.Severity</td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </TableContent>
+                                <CardContent>
+                                    @foreach (var match in _filterResult.Value.Matches) {
+                                        <LyoRecordCard Title="@match.OriginalText">
+                                            <LyoRecordField Label="Index" Value="@match.Index.ToString()"/>
+                                            <LyoRecordField Label="Rule" Value="@match.Entry.Id"/>
+                                            <LyoRecordField Label="Severity" Value="@match.Entry.Severity.ToString()"/>
+                                        </LyoRecordCard>
+                                    }
+                                </CardContent>
+                            </LyoResponsiveTable>
+                        }
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>

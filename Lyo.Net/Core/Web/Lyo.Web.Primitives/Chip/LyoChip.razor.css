@@ -1,0 +1,9 @@
+.lyo-chip-hue {
+    --lyo-chip-saturation: 58%;
+    --lyo-chip-lightness: 46%;
+    --lyo-chip-fill-mix: 78%;
+    --lyo-chip-border-mix: 45%;
+    background-color: color-mix(in srgb, hsl(var(--lyo-chip-hue) var(--lyo-chip-saturation) var(--lyo-chip-lightness)) var(--lyo-chip-fill-mix), var(--mud-palette-surface)) !important;
+    color: var(--mud-palette-text-primary) !important;
+    border-color: color-mix(in srgb, hsl(var(--lyo-chip-hue) var(--lyo-chip-saturation) var(--lyo-chip-lightness)) var(--lyo-chip-border-mix), var(--mud-palette-lines-default)) !important;
+}

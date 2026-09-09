@@ -1,0 +1,186 @@
+@page "/auth/profile"
+@page "/auth/profile/{UserId:guid}"
+
+@inject IAuthUserClient UserClient
+@inject IServiceProvider Services
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Profile</PageTitle>
+
+<LyoElementRoot DefaultId="LyoAuthProfilePage" ElementId="@ElementId">
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+        @if (_loading) {
+            <MudStack AlignItems="AlignItems.Center" Class="pa-8">
+                <MudProgressCircular Indeterminate="true"/>
+            </MudStack>
+        }
+        else if (_error is not null) {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">@_error</MudAlert>
+        }
+        else if (_snapshot is null) {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                @(UserId is null ? "No active session. Sign in to view your profile." : "User not found, or you do not have permission to view this user.")
+            </MudAlert>
+        }
+        else {
+            var user = _snapshot.User;
+            <MudPaper Class="pa-6" Elevation="3">
+                <MudStack Spacing="4">
+                    @if (user.IsDisabled) {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Block">
+                            <strong>Account disabled.</strong>
+                            @if (!string.IsNullOrWhiteSpace(user.DisabledReason)) {
+                                <text> Reason: @user.DisabledReason.</text>
+                            }
+                            @if (user.DisabledAt is not null) {
+                                <text> Disabled <LyoTimestamp Value="@user.DisabledAt" Kind="LyoTimestampKind.Relative"/>.</text>
+                            }
+                        </MudAlert>
+                    }
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
+                        <MudAvatar Size="Size.Large" Style="width: 96px; height: 96px;">
+                            @if (!string.IsNullOrWhiteSpace(user.AvatarUrl)) {
+                                <MudImage Src="@user.AvatarUrl" Alt="@user.DisplayName" Fluid="true"/>
+                            }
+                            else {
+                                @(InitialsOf(user.DisplayName))
+                            }
+                        </MudAvatar>
+                        <div>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.h5">@user.DisplayName</MudText>
+                                @if (ApiClient is not null) {
+                                    <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="EditAsync">Edit</MudButton>
+                                }
+                            </MudStack>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" Color="Color.Secondary"/>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">@user.Email</MudText>
+                                @if (user.EmailVerified) {
+                                    <MudTooltip Text="Verified">
+                                        <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success" Size="Size.Small"/>
+                                    </MudTooltip>
+                                }
+                            </MudStack>
+                            @if (UserId is null) {
+                                <LyoChip Color="Color.Info" Variant="Variant.Outlined" Class="mt-1" Label="You"/>
+                            }
+                        </div>
+                    </MudStack>
+
+                    <MudDivider/>
+
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.overline" Color="Color.Secondary">User id</MudText>
+                            <MudText Typo="Typo.body2" Style="font-family: monospace;">@user.Id.ToString("D")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.overline" Color="Color.Secondary">Preferred language</MudText>
+                            <MudText Typo="Typo.body2">@(user.PreferredLanguageBcp47 ?? "(unset)")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.overline" Color="Color.Secondary">Created</MudText>
+                            <LyoTimestamp Value="@user.CreatedAt" Kind="LyoTimestampKind.Relative"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.overline" Color="Color.Secondary">Last login</MudText>
+                            @if (user.LastLoginAt is { } lastLogin) {
+                                <LyoTimestamp Value="@lastLogin" Kind="LyoTimestampKind.Relative"/>
+                            }
+                            else {
+                                <MudText Typo="Typo.body2">(never)</MudText>
+                            }
+                        </MudItem>
+                    </MudGrid>
+
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">Scopes</MudText>
+                        @if (ApiClient is not null) {
+                            <AuthScopeGrid ApiClient="ApiClient" UserId="@user.Id"/>
+                        }
+                        else if (_snapshot.Scopes.Length == 0) {
+                            <MudText Color="Color.Secondary" Typo="Typo.body2">No scopes granted.</MudText>
+                        }
+                        else {
+                            <MudChipSet T="string" ReadOnly="true">
+                                @foreach (var scope in _snapshot.Scopes) {
+                                    <MudChip T="string" Value="@scope" Color="Color.Primary" Size="Size.Small">@scope</MudChip>
+                                }
+                            </MudChipSet>
+                        }
+                    </div>
+
+                    @if (ApiClient is not null) {
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Claims</MudText>
+                            <AuthClaimGrid ApiClient="ApiClient" UserId="@user.Id"/>
+                        </div>
+                    }
+
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">Linked identities</MudText>
+                        @if (_snapshot.LinkedIdentities.Length == 0) {
+                            <MudText Color="Color.Secondary" Typo="Typo.body2">No external identities linked.</MudText>
+                        }
+                        else {
+                            <LyoResponsiveTable>
+                                <TableContent>
+                                    <MudSimpleTable Dense="true" Hover="true">
+                                        <thead>
+                                        <tr>
+                                            <th>Provider</th>
+                                            <th>Subject</th>
+                                            <th>Email at link</th>
+                                            <th>Linked at</th>
+                                            <th>Last used</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach (var link in _snapshot.LinkedIdentities) {
+                                            <tr>
+                                                <td><LyoChip Spec="@LyoChips.Of(link.Provider, Color.Info, variant: Variant.Outlined)"/></td>
+                                                <td><code>@link.Subject</code></td>
+                                                <td>@(link.EmailAtLink ?? "—")</td>
+                                                <td><LyoTimestamp Value="@link.LinkedAt" Kind="LyoTimestampKind.Relative"/></td>
+                                                <td>
+                                                    @if (link.LastUsedAt is { } lastUsed) {
+                                                        <LyoTimestamp Value="@lastUsed" Kind="LyoTimestampKind.Relative"/>
+                                                    }
+                                                    else {
+                                                        <text>—</text>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </TableContent>
+                                <CardContent>
+                                    @foreach (var link in _snapshot.LinkedIdentities) {
+                                        <LyoRecordCard Title="@link.Provider" Subtitle="@link.Subject">
+                                            <LyoRecordField Label="Email at link" Value="@(link.EmailAtLink ?? "—")"/>
+                                            <LyoRecordField Label="Linked at">
+                                                <LyoTimestamp Value="@link.LinkedAt" Kind="LyoTimestampKind.Relative"/>
+                                            </LyoRecordField>
+                                            <LyoRecordField Label="Last used">
+                                                @if (link.LastUsedAt is { } lastUsed) {
+                                                    <LyoTimestamp Value="@lastUsed" Kind="LyoTimestampKind.Relative"/>
+                                                }
+                                                else {
+                                                    <text>—</text>
+                                                }
+                                            </LyoRecordField>
+                                        </LyoRecordCard>
+                                    }
+                                </CardContent>
+                            </LyoResponsiveTable>
+                        }
+                    </div>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudContainer>
+</LyoElementRoot>

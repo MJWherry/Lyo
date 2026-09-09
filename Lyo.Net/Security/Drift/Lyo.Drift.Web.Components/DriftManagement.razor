@@ -1,0 +1,20 @@
+@inject IApiClient ApiClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudTabs @bind-ActivePanelIndex="_tabIndex" Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2">
+    <MudTabPanel Text="Instances">
+        <DriftInstanceGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" OnViewSnapshots="@HandleViewSnapshots"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Snapshots">
+        <DriftSnapshotGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"
+                           InstanceId="@_snapshotInstanceId"
+                           InstanceIdChanged="@(id => _snapshotInstanceId = id)"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Diffs">
+        <DriftDiffGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Changes">
+        <DriftChangeGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" InstanceId="@_snapshotInstanceId"/>
+    </MudTabPanel>
+</MudTabs>

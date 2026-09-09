@@ -1,0 +1,383 @@
+using System.Collections;
+using System.Linq.Expressions;
+using System.Reflection;
+using Lyo.Query.Models.Common.Request;
+using Lyo.Query.Models.Enums;
+using Lyo.Query.Models.Exceptions;
+using Microsoft.EntityFrameworkCore;
+
+namespace Lyo.Api.Services.Crud.Read.Query.Root;
+
+/// <summary>
+/// Executes root From/Joins as EF-translatable joins (arbitrary ON columns, chained aliases). Left:
+/// <c>SelectMany(o =&gt; inner.Where(on).DefaultIfEmpty(), …)</c>. Right inverts the driver. FullOuter is Left
+/// concatenated with right-only rows. Final Select is sparse only.
+/// </summary>
+internal static class RootQueryJoinExecutor
+{
+    public static Task<List<object?[]>> ExecuteAsync(
+        IQueryable fromSet,
+        Type fromClr,
+        int start,
+        int amount,
+        IReadOnlyList<IQueryable> scopedJoinSets,
+        RootQueryShapePlan plan,
+        CancellationToken ct)
+    {
+        if (scopedJoinSets.Count != plan.Joins.Count)
+            throw new ArgumentException("scopedJoinSets count must match plan.Joins.");
+
+        // +1 slot for From PK used to collapse join fan-out (ValueTuple max 7 without Rest nesting). RootQueryValidator rejects both cases with a 400. These are the backstop.
+        if (plan.SelectSpecs.Count < 1 || plan.SelectSpecs.Count > RootQueryValidator.MaxSelectFields)
+            throw new InvalidQueryException($"Root /Query Select must have 1–{RootQueryValidator.MaxSelectFields} fields in v1.");
+
+        if (plan.Joins.Count > RootQueryValidator.MaxJoins)
+            throw new InvalidQueryException($"Root /Query supports at most {RootQueryValidator.MaxJoins} joins in v1.");
+
+        var method = typeof(RootQueryJoinExecutor).GetMethod(nameof(ExecuteCore), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(fromClr);
+        return (Task<List<object?[]>>)method.Invoke(null, [fromSet, start, amount, scopedJoinSets, plan, ct])!;
+    }
+
+    private static async Task<List<object?[]>> ExecuteCore<TFrom>(
+        IQueryable fromSet,
+        int start,
+        int amount,
+        IReadOnlyList<IQueryable> scopedJoinSets,
+        RootQueryShapePlan plan,
+        CancellationToken ct)
+        where TFrom : class
+    {
+        var deferPaging = plan.Joins.Any(static j => j.Type is JoinType.Right or JoinType.FullOuter);
+        var carrier = deferPaging ? (IQueryable)(IQueryable<TFrom>)fromSet : ApplySkipTake((IQueryable<TFrom>)fromSet, start, amount);
+        var carrierType = typeof(TFrom);
+        var aliasAccess = new Dictionary<string, Func<Expression, Expression>>(StringComparer.OrdinalIgnoreCase) { [plan.FromAlias] = e => e };
+        var fromMayBeNull = false;
+        for (var ji = 0; ji < plan.Joins.Count; ji++) {
+            var joinPlan = plan.Joins[ji];
+            var joinClr = scopedJoinSets[ji].ElementType;
+            var joinSet = scopedJoinSets[ji];
+            var pairType = typeof(RootJoinPair<,>).MakeGenericType(carrierType, joinClr);
+            carrier = joinPlan.Type switch {
+                JoinType.Right => ApplyRightJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, ref fromMayBeNull),
+                JoinType.FullOuter => ApplyFullOuterJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, ref fromMayBeNull),
+                JoinType.Left => ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, leftOuter: true),
+                var _ => ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, leftOuter: false)
+            };
+
+            carrierType = pairType;
+            var prevAccess = new Dictionary<string, Func<Expression, Expression>>(aliasAccess, StringComparer.OrdinalIgnoreCase);
+            aliasAccess.Clear();
+            foreach (var (alias, access) in prevAccess)
+                aliasAccess[alias] = CaptureOuter(access, pairType);
+
+            aliasAccess[joinPlan.Alias] = e => Expression.Property(e, nameof(RootJoinPair<object, object>.Inner));
+        }
+
+        // Row = [FromPk, ...SelectSpecs] so join fan-out can collapse to one item per From.
+        var selectTypes = new Type[1 + plan.SelectSpecs.Count];
+        selectTypes[0] = NullableIfNeeded(plan.FromPrimaryKey.PropertyType, fromMayBeNull);
+        for (var s = 0; s < plan.SelectSpecs.Count; s++) {
+            var t = plan.SelectSpecs[s].Property.PropertyType;
+            var mayBeNull = !plan.SelectSpecs[s].IsFromSide || fromMayBeNull;
+            if (mayBeNull && t.IsValueType && Nullable.GetUnderlyingType(t) is null)
+                t = typeof(Nullable<>).MakeGenericType(t);
+
+            selectTypes[s + 1] = t;
+        }
+
+        var rowType = MakeValueTupleType(selectTypes);
+        var rowP = Expression.Parameter(carrierType, "row");
+        var elems = new Expression[selectTypes.Length];
+        var fromEntity = aliasAccess[plan.FromAlias](rowP);
+        elems[0] = NullSafeProperty(fromEntity, plan.FromPrimaryKey, selectTypes[0]);
+        for (var s = 0; s < plan.SelectSpecs.Count; s++) {
+            var spec = plan.SelectSpecs[s];
+            if (!aliasAccess.TryGetValue(spec.Alias, out var entityAccess))
+                throw new InvalidQueryException($"Select alias '{spec.Alias}' unknown.");
+
+            var entity = entityAccess(rowP);
+            elems[s + 1] = NullSafeProperty(entity, spec.Property, selectTypes[s + 1]);
+        }
+
+        // Right/FullOuter drive off the join set, so a Skip/Take over the projected stream pages fan-out rows rather than result items. Page the distinct From keys instead and
+        // pull every row belonging to that key page. The collapse step then yields exactly the requested number of items.
+        if (deferPaging)
+            carrier = await PageOnDistinctFromKeysAsync(carrier, carrierType, rowP, elems[0], selectTypes[0], start, amount, ct).ConfigureAwait(false);
+
+        var projected = carrier.Provider.CreateQuery(
+            Expression.Call(
+                typeof(Queryable), nameof(Queryable.Select), [carrierType, rowType], carrier.Expression,
+                Expression.Quote(Expression.Lambda(typeof(Func<,>).MakeGenericType(carrierType, rowType), Expression.New(rowType.GetConstructor(selectTypes)!, elems), rowP))));
+
+        var list = await ToListAsync(projected, rowType, ct).ConfigureAwait(false);
+        var fields = Enumerable.Range(0, selectTypes.Length).Select(i => rowType.GetField("Item" + (i + 1))!).ToArray();
+        var result = new List<object?[]>(list.Count);
+        foreach (var row in list) {
+            var values = new object?[fields.Length];
+            for (var i = 0; i < fields.Length; i++)
+                values[i] = fields[i].GetValue(row);
+
+            result.Add(values);
+        }
+
+        return result;
+    }
+
+    private static IQueryable ApplyLeftOrInnerJoin(
+        IQueryable carrier,
+        Type carrierType,
+        IQueryable joinSet,
+        Type joinClr,
+        Type pairType,
+        IReadOnlyDictionary<string, Func<Expression, Expression>> aliasAccess,
+        IReadOnlyList<RootQueryOnPlan> ons,
+        bool leftOuter)
+    {
+        var outerP = Expression.Parameter(carrierType, "outer");
+        var innerP = Expression.Parameter(joinClr, "inner");
+        var onEqual = BuildOnPredicate(ons, outerP, aliasAccess, innerP);
+        var whereCall = Expression.Call(typeof(Queryable), nameof(Queryable.Where), [joinClr], joinSet.Expression, Expression.Quote(Expression.Lambda(onEqual, innerP)));
+        Expression collection = leftOuter
+            ? Expression.Call(typeof(Queryable), nameof(Queryable.DefaultIfEmpty), [joinClr], whereCall)
+            : whereCall;
+
+        var collectionSel = Expression.Lambda(typeof(Func<,>).MakeGenericType(carrierType, typeof(IEnumerable<>).MakeGenericType(joinClr)), collection, outerP);
+        var resultOuterP = Expression.Parameter(carrierType, "o");
+        var resultInnerP = Expression.Parameter(joinClr, "j");
+        var pairNew = CreatePairInit(pairType, resultOuterP, resultInnerP);
+        var resultSel = Expression.Lambda(typeof(Func<,,>).MakeGenericType(carrierType, joinClr, pairType), pairNew, resultOuterP, resultInnerP);
+        return carrier.Provider.CreateQuery(
+            Expression.Call(
+                typeof(Queryable), nameof(Queryable.SelectMany), [carrierType, joinClr, pairType], carrier.Expression, Expression.Quote(collectionSel),
+                Expression.Quote(resultSel)));
+    }
+
+    private static IQueryable ApplyRightJoin(
+        IQueryable carrier,
+        Type carrierType,
+        IQueryable joinSet,
+        Type joinClr,
+        Type pairType,
+        IReadOnlyDictionary<string, Func<Expression, Expression>> aliasAccess,
+        IReadOnlyList<RootQueryOnPlan> ons,
+        ref bool fromMayBeNull)
+    {
+        fromMayBeNull = true;
+        var joinP = Expression.Parameter(joinClr, "j");
+        var outerP = Expression.Parameter(carrierType, "outer");
+        var onEqual = BuildOnPredicate(ons, outerP, aliasAccess, joinP);
+        var whereCall = Expression.Call(typeof(Queryable), nameof(Queryable.Where), [carrierType], carrier.Expression, Expression.Quote(Expression.Lambda(onEqual, outerP)));
+        var defaultIfEmpty = Expression.Call(typeof(Queryable), nameof(Queryable.DefaultIfEmpty), [carrierType], whereCall);
+        var collectionSel = Expression.Lambda(typeof(Func<,>).MakeGenericType(joinClr, typeof(IEnumerable<>).MakeGenericType(carrierType)), defaultIfEmpty, joinP);
+        var resultJoinP = Expression.Parameter(joinClr, "rj");
+        var resultOuterP = Expression.Parameter(carrierType, "ro");
+        var pairNew = CreatePairInit(pairType, resultOuterP, resultJoinP);
+        var resultSel = Expression.Lambda(typeof(Func<,,>).MakeGenericType(joinClr, carrierType, pairType), pairNew, resultJoinP, resultOuterP);
+        return joinSet.Provider.CreateQuery(
+            Expression.Call(
+                typeof(Queryable), nameof(Queryable.SelectMany), [joinClr, carrierType, pairType], joinSet.Expression, Expression.Quote(collectionSel),
+                Expression.Quote(resultSel)));
+    }
+
+    private static IQueryable ApplyFullOuterJoin(
+        IQueryable carrier,
+        Type carrierType,
+        IQueryable joinSet,
+        Type joinClr,
+        Type pairType,
+        IReadOnlyDictionary<string, Func<Expression, Expression>> aliasAccess,
+        IReadOnlyList<RootQueryOnPlan> ons,
+        ref bool fromMayBeNull)
+    {
+        fromMayBeNull = true;
+        var left = ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, ons, leftOuter: true);
+        var right = ApplyRightJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, ons, ref fromMayBeNull);
+        var pairP = Expression.Parameter(pairType, "p");
+        var outerProp = Expression.Property(pairP, nameof(RootJoinPair<object, object>.Outer));
+        Expression outerIsNull = carrierType.IsValueType
+            ? Expression.Constant(false)
+            : Expression.Equal(outerProp, Expression.Constant(null, carrierType));
+        var rightOnly = right.Provider.CreateQuery(
+            Expression.Call(typeof(Queryable), nameof(Queryable.Where), [pairType], right.Expression, Expression.Quote(Expression.Lambda(outerIsNull, pairP))));
+        return left.Provider.CreateQuery(
+            Expression.Call(typeof(Queryable), nameof(Queryable.Concat), [pairType], left.Expression, rightOnly.Expression));
+    }
+
+    /// <summary>Combines every <c>ON</c> clause with <c>AND</c>. Each clause resolves its own left alias, so a chained join can key off both the From row and an earlier join.</summary>
+    private static Expression BuildOnPredicate(
+        IReadOnlyList<RootQueryOnPlan> ons,
+        ParameterExpression outerP,
+        IReadOnlyDictionary<string, Func<Expression, Expression>> aliasAccess,
+        Expression innerEntity)
+    {
+        Expression? combined = null;
+        foreach (var on in ons) {
+            if (!aliasAccess.TryGetValue(on.LeftAlias, out var leftEntityAccess))
+                throw new InvalidQueryException($"Join ON left alias '{on.LeftAlias}' is unknown.");
+
+            var predicate = BuildOnEqual(leftEntityAccess(outerP), innerEntity, on);
+            combined = combined is null ? predicate : Expression.AndAlso(combined, predicate);
+        }
+
+        return combined ?? throw new InvalidQueryException("Join requires at least one ON clause.");
+    }
+
+    /// <summary>
+    /// Restricts the carrier to one page of distinct From primary keys. Two round trips: the key page, then every carrier row whose From key is on it. A From row that fans out
+    /// to twenty join rows therefore still counts as one item toward <paramref name="amount" />.
+    /// </summary>
+    private static async Task<IQueryable> PageOnDistinctFromKeysAsync(
+        IQueryable carrier,
+        Type carrierType,
+        ParameterExpression rowP,
+        Expression fromKey,
+        Type keyType,
+        int start,
+        int amount,
+        CancellationToken ct)
+    {
+        var keySelector = Expression.Lambda(typeof(Func<,>).MakeGenericType(carrierType, keyType), fromKey, rowP);
+        var keyQuery = carrier.Provider.CreateQuery(
+            Expression.Call(typeof(Queryable), nameof(Queryable.Select), [carrierType, keyType], carrier.Expression, Expression.Quote(keySelector)));
+
+        keyQuery = keyQuery.Provider.CreateQuery(Expression.Call(typeof(Queryable), nameof(Queryable.Distinct), [keyType], keyQuery.Expression));
+        var keyParam = Expression.Parameter(keyType, "k");
+        keyQuery = keyQuery.Provider.CreateQuery(
+            Expression.Call(
+                typeof(Queryable), nameof(Queryable.OrderBy), [keyType, keyType], keyQuery.Expression,
+                Expression.Quote(Expression.Lambda(typeof(Func<,>).MakeGenericType(keyType, keyType), keyParam, keyParam))));
+
+        var keys = await ToListAsync(ApplySkipTake(keyQuery, start, amount), keyType, ct).ConfigureAwait(false);
+        var listType = typeof(List<>).MakeGenericType(keyType);
+        var present = (IList)Activator.CreateInstance(listType)!;
+        var includeNull = false;
+        foreach (var key in keys) {
+            if (key is null)
+                includeNull = true;
+            else
+                present.Add(key);
+        }
+
+        Expression? predicate = null;
+        if (present.Count > 0) {
+            var containsMethod = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .First(m => m.Name == nameof(Enumerable.Contains) && m.GetParameters().Length == 2)
+                .MakeGenericMethod(keyType);
+
+            predicate = Expression.Call(containsMethod, Expression.Constant(present, typeof(IEnumerable<>).MakeGenericType(keyType)), fromKey);
+        }
+
+        // Right-only rows carry no From key. SQL IN never matches NULL, so they need their own branch.
+        if (includeNull && (!keyType.IsValueType || Nullable.GetUnderlyingType(keyType) != null)) {
+            Expression isNull = Expression.Equal(fromKey, Expression.Constant(null, keyType));
+            predicate = predicate is null ? isNull : Expression.OrElse(predicate, isNull);
+        }
+
+        predicate ??= Expression.Constant(false);
+        return carrier.Provider.CreateQuery(
+            Expression.Call(
+                typeof(Queryable), nameof(Queryable.Where), [carrierType], carrier.Expression,
+                Expression.Quote(Expression.Lambda(typeof(Func<,>).MakeGenericType(carrierType, typeof(bool)), predicate, rowP))));
+    }
+
+    private static Expression BuildOnEqual(Expression leftEntity, Expression rightEntity, RootQueryOnPlan on)
+    {
+        Expression leftKey = Expression.Property(leftEntity, on.LeftProperty);
+        Expression rightKey = Expression.Property(rightEntity, on.RightProperty);
+        if (leftKey.Type != rightKey.Type) {
+            if (Nullable.GetUnderlyingType(leftKey.Type) == rightKey.Type)
+                rightKey = Expression.Convert(rightKey, leftKey.Type);
+            else if (Nullable.GetUnderlyingType(rightKey.Type) == leftKey.Type)
+                leftKey = Expression.Convert(leftKey, rightKey.Type);
+            else
+                throw new InvalidQueryException($"Join ON key type mismatch: {leftKey.Type} vs {rightKey.Type}.");
+        }
+
+        Expression onEqual = Expression.Equal(leftKey, rightKey);
+        if (!leftEntity.Type.IsValueType)
+            onEqual = Expression.AndAlso(Expression.NotEqual(leftEntity, Expression.Constant(null, leftEntity.Type)), onEqual);
+
+        return onEqual;
+    }
+
+    private static MemberInitExpression CreatePairInit(Type pairType, Expression outer, Expression inner)
+        => Expression.MemberInit(
+            Expression.New(pairType), Expression.Bind(pairType.GetProperty(nameof(RootJoinPair<object, object>.Outer))!, outer),
+            Expression.Bind(pairType.GetProperty(nameof(RootJoinPair<object, object>.Inner))!, inner));
+
+    private static Expression NullSafeProperty(Expression entity, PropertyInfo property, Type targetType)
+    {
+        Expression value = Expression.Property(entity, property);
+        value = AlignType(value, targetType);
+        if (entity.Type.IsValueType)
+            return value;
+
+        return Expression.Condition(
+            Expression.Equal(entity, Expression.Constant(null, entity.Type)), Expression.Default(targetType), value);
+    }
+
+    private static Type NullableIfNeeded(Type type, bool mayBeNull)
+    {
+        if (!mayBeNull || !type.IsValueType || Nullable.GetUnderlyingType(type) != null)
+            return type;
+
+        return typeof(Nullable<>).MakeGenericType(type);
+    }
+
+    private static Func<Expression, Expression> CaptureOuter(Func<Expression, Expression> prevAccess, Type pairType)
+        => carrier => prevAccess(Expression.Property(carrier, nameof(RootJoinPair<object, object>.Outer)));
+
+    private static IQueryable ApplySkipTake(IQueryable source, int start, int amount)
+    {
+        var t = source.ElementType;
+        var skipped = source.Provider.CreateQuery(Expression.Call(typeof(Queryable), nameof(Queryable.Skip), [t], source.Expression, Expression.Constant(start)));
+        return skipped.Provider.CreateQuery(Expression.Call(typeof(Queryable), nameof(Queryable.Take), [t], skipped.Expression, Expression.Constant(amount)));
+    }
+
+    private static async Task<IList> ToListAsync(IQueryable query, Type elementType, CancellationToken ct)
+    {
+        var method = typeof(EntityFrameworkQueryableExtensions).GetMethods()
+            .First(m => m.Name == nameof(EntityFrameworkQueryableExtensions.ToListAsync) && m.GetParameters().Length == 2)
+            .MakeGenericMethod(elementType);
+
+        var task = (Task)method.Invoke(null, [query, ct])!;
+        await task.ConfigureAwait(false);
+        return (IList)task.GetType().GetProperty("Result")!.GetValue(task)!;
+    }
+
+    private static Type MakeValueTupleType(Type[] args)
+        => args.Length switch {
+            1 => typeof(ValueTuple<>).MakeGenericType(args),
+            2 => typeof(ValueTuple<,>).MakeGenericType(args),
+            3 => typeof(ValueTuple<,,>).MakeGenericType(args),
+            4 => typeof(ValueTuple<,,,>).MakeGenericType(args),
+            5 => typeof(ValueTuple<,,,,>).MakeGenericType(args),
+            6 => typeof(ValueTuple<,,,,,>).MakeGenericType(args),
+            7 => typeof(ValueTuple<,,,,,,>).MakeGenericType(args),
+            8 => typeof(ValueTuple<,,,,,,,>).MakeGenericType(args),
+            var _ => throw new InvalidQueryException("Unsupported select arity.")
+        };
+
+    private static Expression AlignType(Expression expr, Type targetType) => expr.Type == targetType ? expr : Expression.Convert(expr, targetType);
+}
+
+/// <summary>EF-translatable join carrier (class plus properties. ValueTuple GroupJoin is not translated).</summary>
+internal sealed class RootJoinPair<TOuter, TInner>
+{
+    public TOuter Outer { get; set; } = default!;
+
+    public TInner? Inner { get; set; }
+}
+
+internal sealed record RootQueryShapePlan(
+    string FromAlias,
+    PropertyInfo FromPrimaryKey,
+    IReadOnlyList<RootQuerySelectSpec> SelectSpecs,
+    IReadOnlyList<RootQueryJoinPlan> Joins,
+    IReadOnlyList<string> EntityTypeNames);
+
+internal sealed record RootQuerySelectSpec(string RequestedPath, string Alias, string PropertyName, PropertyInfo Property, bool IsFromSide, string? JoinResultName);
+
+internal sealed record RootQueryJoinPlan(string Alias, string EntityTypeName, string ResultName, JoinType Type, IReadOnlyList<RootQueryOnPlan> On, SourceQueryScope? SourceQuery);
+
+internal sealed record RootQueryOnPlan(string LeftAlias, PropertyInfo LeftProperty, string RightAlias, PropertyInfo RightProperty);

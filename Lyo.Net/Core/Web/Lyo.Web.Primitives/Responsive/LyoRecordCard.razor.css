@@ -1,0 +1,81 @@
+.lyo-record-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: var(--mud-default-borderradius);
+}
+
+.lyo-record-card-selected {
+    border-color: var(--mud-palette-primary);
+    background-color: var(--mud-palette-action-default-hover);
+}
+
+.lyo-record-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.lyo-record-card-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.lyo-record-card-title {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.lyo-record-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+}
+
+.lyo-record-card-fields {
+    display: grid;
+    /* Label/value pairs sit side by side when there is room and stack on the narrowest phones. */
+    grid-template-columns: minmax(6rem, 10rem) 1fr;
+    gap: 4px 12px;
+    margin: 0;
+}
+
+/* Fields come from LyoRecordField, so they need ::deep to be reached from the card's scope. */
+.lyo-record-card-fields ::deep .lyo-record-card-field {
+    display: contents;
+}
+
+.lyo-record-card-fields ::deep .lyo-record-card-label {
+    margin: 0;
+    color: var(--mud-palette-text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    overflow-wrap: anywhere;
+}
+
+.lyo-record-card-fields ::deep .lyo-record-card-value {
+    margin: 0;
+    min-width: 0;
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 24rem) {
+    .lyo-record-card-fields {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .lyo-record-card-fields ::deep .lyo-record-card-label {
+        line-height: 1.1rem;
+        margin-top: 6px;
+    }
+}

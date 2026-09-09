@@ -1,0 +1,60 @@
+@if (Policy is null) {
+    <MudText Typo="Typo.caption" Color="Color.Secondary">Select a preset or load a policy to redact text.</MudText>
+}
+else {
+    <MudGrid Class="privacy-redaction-io-grid" Style="align-items: stretch;">
+        @* Input *@
+        <MudItem xs="12" md="4" Style="display: flex;">
+            <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                <MudText Typo="Typo.h6" Class="mb-2" Style="flex-shrink:0;">Input</MudText>
+                <MudTextField @bind-Value="_input"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Lines="14"
+                              FullWidth="true"
+                              Class="privacy-mono-field"
+                              Style="flex:1 1 auto; min-height:0;"/>
+            </MudPaper>
+        </MudItem>
+        @* Actions (matches FileTransform-style middle column) *@
+        <MudItem xs="12" md="4" Style="display: flex;">
+            <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                <MudText Typo="Typo.h6" Class="mb-2" Style="flex-shrink:0;">Redaction</MudText>
+                <MudStack Spacing="2" Style="flex:1 1 auto; min-height:0; overflow-y:auto;">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               OnClick="Redact">
+                        Redact
+                    </MudButton>
+                    @if (_result is { } r) {
+                        <MudStack Spacing="1">
+                            <LyoChip Label="@($"Runs: {r.TotalRuns}")" Color="@(r.HadRedactions ? Color.Warning : Color.Default)"/>
+                            <LyoChip Variant="Variant.Outlined" Label="@($"In: {r.InputUtf16Length?.ToString() ?? "—"}")"/>
+                            <LyoChip Variant="Variant.Outlined" Label="@($"Out: {r.OutputUtf16Length?.ToString() ?? "—"}")"/>
+                        </MudStack>
+                    }
+                    else {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Change the active policy if needed, then run redaction. Sample text stays when you switch presets.
+                        </MudText>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+        @* Output *@
+        <MudItem xs="12" md="4" Style="display: flex;">
+            <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                <MudText Typo="Typo.h6" Class="mb-2" Style="flex-shrink:0;">Output</MudText>
+                <MudTextField @bind-Value="_outputText"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Lines="14"
+                              FullWidth="true"
+                              ReadOnly="true"
+                              Class="privacy-mono-field"
+                              Style="flex:1 1 auto; min-height:0;"/>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}

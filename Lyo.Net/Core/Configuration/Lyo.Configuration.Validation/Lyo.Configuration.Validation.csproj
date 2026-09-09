@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Validates IConfiguration against data-driven ValidationSchema rules: evaluates where-clause constraints directly over configuration keys, or binds a section to a typed options class and validates the bound instance.</Description>
+        <PackageTags>configuration validation options schema rules</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\Lyo.Configuration\Lyo.Configuration.csproj"/>
+        <ProjectReference Include="..\..\Validation\Lyo.Validation\Lyo.Validation.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Evaluation\Lyo.Query.Evaluation.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Options"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Text.Json"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Configuration.Validation.Tests"/>
+    </ItemGroup>
+
+</Project>

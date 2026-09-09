@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Webhook</RootNamespace>
+        <AssemblyName>Lyo.Webhook</AssemblyName>
+        <NoWarn>$(NoWarn);SYSLIB0021</NoWarn>
+        <!-- SYSLIB0021: HMAC-SHA1 is obsolete in the BCL. Twilio's X-Twilio-Signature contract is HMAC-SHA1; do not replace. -->
+        <Description>Abstractions, ASP.NET Core mapping, Lyo.Metrics, and logging for inbound webhooks. Provider-specific verifiers live in separate packages.</Description>
+        <PackageTags>webhook hmac security aspnetcore metrics</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

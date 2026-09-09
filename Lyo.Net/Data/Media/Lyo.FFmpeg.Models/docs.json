@@ -1,0 +1,59 @@
+{
+  "id": "Lyo.FFmpeg.Models",
+  "name": "Lyo.FFmpeg.Models",
+  "area": "Data",
+  "tagline": "FFmpeg host options and command-line model for Lyo.FFmpeg.",
+  "description": "FFmpeg-specific options and command line model. Audio/video contracts live in [`Lyo.Media.Models`](../Lyo.Media.Models/README.md). No DI lives here. Register in [`Lyo.FFmpeg`](../Lyo.FFmpeg/README.md).",
+  "features": [
+    "**FFmpegOptions.** Binary paths, ForAudio-style defaults (codec/sample rate/channels/format as config strings), GlobalArguments, metrics, ProcessOutputMode, ProcessTimeout. SectionName = FFmpegOptions. Validate() at DI; do not mutate from a convert.",
+    "**FFmpegCommand.** ExecutablePath plus ArgumentList. Arguments is display-only."
+  ],
+  "examples": [],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Public types",
+      "headers": [
+        "Type",
+        "Description"
+      ],
+      "rows": [
+        [
+          "FFmpegOptions",
+          "Binary paths, audio defaults, GlobalArguments, metrics, ProcessOutputMode, ProcessTimeout."
+        ],
+        [
+          "FFmpegCommand",
+          "ExecutablePath plus ArgumentList. Arguments is display-only."
+        ],
+        [
+          "FFmpegProcessOutputMode",
+          "Suppress or Passthrough leftover stdout/stderr."
+        ]
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Media/Lyo.FFmpeg.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

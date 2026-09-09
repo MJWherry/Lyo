@@ -1,0 +1,40 @@
+---
+description: Never git checkout/restore/reset/clean to undo agent mistakes or generated churn
+alwaysApply: true
+---
+
+# No silent git restore
+
+Never discard, overwrite, or resurrect working-tree or index state to clean up after yourself. If a command dirtied files you did not mean to touch, **stop and tell the user**. Do not "put it back."
+
+## Forbidden unless the user named the exact command
+
+- `git checkout --`
+- `git checkout -- .` / `git checkout -- $(git diff …)`
+- `git restore` / `git restore --staged` / `git restore --source`
+- `git reset` / `git reset --hard` / `git reset --mixed`
+- `git clean -f` / `git clean -fd`
+- `git revert` (only when the user asked for a revert commit)
+- `git stash` / `git stash drop` / `git stash pop` to hide or undo agent work
+- piping `git diff --name-only` (or `git status`) into `xargs git checkout` / `git restore`
+
+```text
+# ❌ BAD — docs render / build / format touched extra files, so "undo the churn"
+git diff --name-only | xargs git checkout --
+git restore --source=HEAD -- path/that/was-already-dirty
+
+# ✅ GOOD — leave the mess, report the paths, ask
+# "project-docs.py render modified 200 READMEs. I did not restore them. How do you want to proceed?"
+```
+
+## Why
+
+Restoring from HEAD or the index also wipes **the user's uncommitted work** on those same files, including work from other chats and the other clone. Staged-but-uncommitted files come back. Tracked edits disappear. That is not a cleanup; it is data loss.
+
+## Allowed
+
+- `git status`, `git diff`, `git log`, `git show` (read-only)
+- `git add` / `git commit` only when the user asked to commit (follow the commit protocol)
+- `git mv` when the user asked to move those paths
+
+If you are unsure whether a git command writes the worktree or index, do not run it.

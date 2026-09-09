@@ -1,0 +1,145 @@
+using Lyo.Testing;
+using Microsoft.Extensions.Logging;
+
+namespace Lyo.Lock.Tests;
+
+public class LocalKeyedSemaphoreServiceTests
+{
+    private readonly LocalKeyedSemaphoreService _service;
+
+    public LocalKeyedSemaphoreServiceTests(ITestOutputHelper output)
+    {
+        var loggerFactory = LoggerFactory.Create(builder => {
+            builder.AddProvider(new XunitLoggerProvider(output));
+            builder.SetMinimumLevel(LogLevel.Debug);
+        });
+
+        _service = new(loggerFactory.CreateLogger<LocalKeyedSemaphoreService>());
+    }
+
+    [Fact]
+    public async Task AcquireAsync_ReturnsPermitHandle()
+    {
+        var handle = await _service.AcquireAsync("semaphore-key-1", 2, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        handle.ShouldNotBeNull();
+        await handle.ReleaseAsync();
+    }
+
+    [Fact]
+    public async Task AcquireAsync_AllowsConcurrencyUpToMax()
+    {
+        var handle1 = await _service.AcquireAsync("semaphore-key-2", 2, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var handle2 = await _service.AcquireAsync("semaphore-key-2", 2, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var handle3 = await _service.AcquireAsync("semaphore-key-2", 2, TimeSpan.FromMilliseconds(100), TestContext.Current.CancellationToken);
+        handle1.ShouldNotBeNull();
+        handle2.ShouldNotBeNull();
+        handle3.ShouldBeNull();
+        await handle1.ReleaseAsync();
+        await handle2.ReleaseAsync();
+    }
+
+    [Fact]
+    public async Task AcquireAsync_AfterRelease_AllowsDifferentFutureConcurrency()
+    {
+        var handle1 = await _service.AcquireAsync("semaphore-key-3", 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        handle1.ShouldNotBeNull();
+        await handle1.ReleaseAsync();
+        var handle2 = await _service.AcquireAsync("semaphore-key-3", 3, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        handle2.ShouldNotBeNull();
+        await handle2.ReleaseAsync();
+    }
+
+    [Fact]
+    public async Task AcquireAsync_WhenMaxChangesWhileActive_Throws()
+    {
+        var handle = await _service.AcquireAsync("semaphore-key-4", 2, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        handle.ShouldNotBeNull();
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.AcquireAsync(
+            "semaphore-key-4", 3, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
+
+        Assert.Contains("max concurrency 2", ex.Message, StringComparison.Ordinal);
+        await handle.ReleaseAsync();
+    }
+
+    [Fact]
+    public async Task AcquireAsync_KeyNormalizedToLowercase()
+    {
+        var handle1 = await _service.AcquireAsync("Semaphore-Key-MixedCase", 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        handle1.ShouldNotBeNull();
+        var handle2 = await _service.AcquireAsync("semaphore-key-mixedcase", 1, TimeSpan.FromMilliseconds(100), TestContext.Current.CancellationToken);
+        handle2.ShouldBeNull();
+        await handle1.ReleaseAsync();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RunsAction()
+    {
+        var executed = false;
+        await _service.ExecuteAsync(
+            "semaphore-key-5", 2, async ct => {
+                await Task.Delay(10, ct);
+                executed = true;
+            }, ct: TestContext.Current.CancellationToken);
+
+        executed.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ReturnsValue()
+    {
+        var result = await _service.ExecuteAsync("semaphore-key-6", 2, _ => Task.FromResult(42), ct: TestContext.Current.CancellationToken);
+        result.ShouldBe(42);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenMaxReached_ThrowsTimeoutException()
+    {
+        var handle = await _service.AcquireAsync("semaphore-key-7", 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        handle.ShouldNotBeNull();
+        await Assert.ThrowsAsync<TimeoutException>(async () => await _service.ExecuteAsync(
+            "semaphore-key-7", 1, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), TestContext.Current.CancellationToken));
+
+        await handle.ReleaseAsync();
+    }
+
+    [Fact]
+    public async Task AcquireAsync_ThrowsOnInvalidArguments()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _service.AcquireAsync(null!, 1, ct: TestContext.Current.CancellationToken).AsTask());
+        await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("", 1, ct: TestContext.Current.CancellationToken).AsTask());
+        await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("   ", 1, ct: TestContext.Current.CancellationToken).AsTask());
+        await Assert.ThrowsAnyAsync<ArgumentOutOfRangeException>(() => _service.AcquireAsync("semaphore-key-8", 0, ct: TestContext.Current.CancellationToken).AsTask());
+    }
+
+    [Fact]
+    public async Task Release_IsIdempotent()
+    {
+        var handle = await _service.AcquireAsync("semaphore-key-9", 2, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        handle.ShouldNotBeNull();
+        await handle.ReleaseAsync();
+        await handle.ReleaseAsync();
+        handle.Dispose();
+    }
+
+    [Fact]
+    public async Task DifferentKeys_CanBeAcquiredConcurrently()
+    {
+        var handle1 = await _service.AcquireAsync("semaphore-key-a", 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var handle2 = await _service.AcquireAsync("semaphore-key-b", 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        handle1.ShouldNotBeNull();
+        handle2.ShouldNotBeNull();
+        await handle1.ReleaseAsync();
+        await handle2.ReleaseAsync();
+    }
+
+    [Fact]
+    public async Task AcquireAsync_RespectsCancellation()
+    {
+        var handle = await _service.AcquireAsync("semaphore-key-10", 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        handle.ShouldNotBeNull();
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(10);
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await _service.AcquireAsync("semaphore-key-10", 1, TimeSpan.FromSeconds(30), cts.Token));
+        await handle.ReleaseAsync();
+    }
+}

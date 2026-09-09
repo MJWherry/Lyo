@@ -1,0 +1,14 @@
+@using Lyo.Web.Components.DataGrid
+@namespace Lyo.Web.Components.Export
+
+@* Host must be a Parameter — MudMenu popovers do not reliably receive cascading values *@
+<MudMenu Label="Export"
+         StartIcon="@Icons.Material.Filled.Download"
+         AnchorOrigin="Origin.TopLeft"
+         TransformOrigin="Origin.TopRight"
+         Variant="Variant.Outlined"
+         Size="Size.Small"
+         Disabled="@(ExportHost is null || !ExportHost.CanExport)"
+         Dense>
+    @ChildContent
+</MudMenu>

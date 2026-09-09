@@ -1,0 +1,28 @@
+using System.Diagnostics;
+
+namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
+
+/// <summary>Outcome of the move or copy path-prefix dialog.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record FileStorePathPrefixDialogResult(string? PathPrefix)
+{
+    /// <inheritdoc />
+    public override string ToString() => $"FileStorePathPrefixDialogResult: PathPrefix={PathPrefix ?? "(none)"}";
+}
+
+/// <summary>Outcome of the rename dialog (metadata display name only).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record FileStoreRenameDialogResult(string OriginalFileName)
+{
+    /// <inheritdoc />
+    public override string ToString() => $"FileStoreRenameDialogResult: OriginalFileName={OriginalFileName}";
+}
+
+/// <summary>Outcome of the rotate-DEK dialog.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record FileStoreRotateDekDialogResult(string? TargetKeyId, string? TargetKeyVersion, int BatchSize)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => $"FileStoreRotateDekDialogResult: TargetKeyId={TargetKeyId ?? "(none)"}, TargetKeyVersion={TargetKeyVersion ?? "(none)"}, BatchSize={BatchSize}";
+}

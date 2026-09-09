@@ -1,0 +1,15 @@
+@namespace Lyo.FileStorage.Web.Components.FileMetadata
+
+<LyoDialog>
+    <ChildContent>
+        @if (string.IsNullOrWhiteSpace(Html)) {
+            <MudAlert Severity="Severity.Warning" Dense="true">This HTML file is empty.</MudAlert>
+        }
+        else {
+            <iframe srcdoc="@Html"
+                    title="HTML preview"
+                    style="width: 100%; height: 70vh; border: 0; background: white;"
+                    sandbox="allow-same-origin allow-scripts allow-popups"></iframe>
+        }
+    </ChildContent>
+</LyoDialog>

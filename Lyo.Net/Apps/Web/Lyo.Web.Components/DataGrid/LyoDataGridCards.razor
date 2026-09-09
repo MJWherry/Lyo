@@ -1,0 +1,61 @@
+@namespace Lyo.Web.Components.DataGrid
+
+<div class="lyo-dg-cards">
+    @if (Loading && Items.Count == 0) {
+        @if (LoadingContent is not null) {
+            @LoadingContent
+        }
+        else {
+            <div class="d-flex justify-center pa-4">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            </div>
+        }
+    }
+    else if (Items.Count == 0) {
+        @if (NoRecordsContent is not null) {
+            @NoRecordsContent
+        }
+        else {
+            <div class="d-flex flex-column align-center pa-4">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="mb-2"/>
+                <MudText Typo="Typo.h6">No records found</MudText>
+            </div>
+        }
+    }
+    else {
+        @foreach (var item in Items) {
+            <MudPaper Outlined="true" Elevation="0" Class="@CardCssClass(item)">
+                @if (ShowHeader) {
+                    <div class="lyo-dg-card-header">
+                        @if (Selectable) {
+                            <MudCheckBox T="bool"
+                                         Value="@IsSelected(item)"
+                                         ValueChanged="@(_ => SelectionToggled.InvokeAsync(item))"
+                                         Size="Size.Small"
+                                         Dense="true"
+                                         Class="lyo-dg-card-select"/>
+                        }
+                        <div class="lyo-dg-card-title">
+                            @if (TitleColumn is { } titleColumn) {
+                                @titleColumn.Cell(item)
+                            }
+                        </div>
+                        @if (RowMenu is not null) {
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                                @RowMenu(item)
+                            </MudMenu>
+                        }
+                    </div>
+                }
+                <dl class="lyo-dg-card-fields">
+                    @foreach (var column in FieldColumns) {
+                        <div class="lyo-dg-card-field">
+                            <dt class="lyo-dg-card-label">@column.Label</dt>
+                            <dd class="lyo-dg-card-value">@column.Cell(item)</dd>
+                        </div>
+                    }
+                </dl>
+            </MudPaper>
+        }
+    }
+</div>

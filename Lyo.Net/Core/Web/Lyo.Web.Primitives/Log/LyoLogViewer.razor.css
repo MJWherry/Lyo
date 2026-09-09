@@ -1,0 +1,45 @@
+.lyo-log-viewer {
+    display: flex;
+    flex-direction: column;
+    min-height: 12rem;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.lyo-log-viewer-body {
+    flex: 1 1 auto;
+    min-height: 8rem;
+    max-height: 32rem;
+    overflow: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    background: var(--mud-palette-background-gray);
+}
+
+.lyo-log-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+    min-height: 28px;
+    white-space: nowrap;
+}
+
+.lyo-log-time {
+    color: var(--mud-palette-text-secondary);
+    flex: 0 0 auto;
+}
+
+.lyo-log-source {
+    color: var(--mud-palette-text-secondary);
+    flex: 0 0 auto;
+}
+
+.lyo-log-message {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre;
+}

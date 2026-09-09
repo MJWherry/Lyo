@@ -1,0 +1,24 @@
+using Lyo.Api.Services.Crud.Create;
+using Lyo.Api.Services.Crud.Delete;
+using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Api.Services.Crud.Update;
+using Microsoft.EntityFrameworkCore;
+
+namespace Lyo.Api.Services.Crud;
+
+/// <summary>Facade that exposes every CRUD/query service for a <typeparamref name="TContext" /> (optional convenience for callers).</summary>
+public interface ILyoRepository<TContext>
+    where TContext : DbContext
+{
+    IQueryService<TContext> Query { get; }
+
+    ICreateService<TContext> Create { get; }
+
+    IUpdateService<TContext> Update { get; }
+
+    IPatchService<TContext> Patch { get; }
+
+    IDeleteService<TContext> Delete { get; }
+
+    IUpsertService<TContext> Upsert { get; }
+}

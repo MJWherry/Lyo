@@ -1,0 +1,11 @@
+import { MatrixCell } from "../lib/matrixCell.js";
+import { ScenarioFactory } from "../lib/scenarioFactory.js";
+
+const cell = MatrixCell.fromEnv({ endpointKind: "queryproject", profile: "load" });
+const scenario = ScenarioFactory.create(cell);
+
+export const options = scenario.options;
+
+export default function () {
+  scenario.run();
+}

@@ -1,0 +1,206 @@
+using Lyo.EntityReference.Models;
+using Lyo.EntityReference.Postgres;
+using Lyo.Exceptions;
+using Lyo.Health;
+using Lyo.Postgres;
+using Lyo.Tag.Postgres.Database;
+using Microsoft.EntityFrameworkCore;
+
+namespace Lyo.Tag.Postgres;
+
+/// <summary>Postgres-backed ITagStore.</summary>
+public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IHealth
+{
+    private const string ModuleKey = "Tag";
+
+    private readonly IDbContextFactory<TagDbContext> _contextFactory;
+
+    /// <summary>Constructs a new PostgresTagStore.</summary>
+    public PostgresTagStore(
+        IDbContextFactory<TagDbContext> contextFactory,
+        EntityRefOptions entityRefOptions,
+        PostgresTagOptions tagOptions,
+        IEnumerable<IEntityRefActionInterceptor>? interceptors = null)
+        : base(entityRefOptions, tagOptions?.Tenancy ?? throw new ArgumentNullException(nameof(tagOptions)), interceptors)
+    {
+        ArgumentHelpers.ThrowIfNull(contextFactory);
+        _contextFactory = contextFactory;
+    }
+
+    /// <inheritdoc />
+    public string HealthCheckName => "tag-postgres";
+
+    /// <inheritdoc />
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
+        => PostgresHealth.CheckAsync(_contextFactory, PostgresTagOptions.Schema, ct);
+
+    /// <inheritdoc />
+    public async Task AddTagAsync(
+        EntityRef forEntity,
+        string tag,
+        string tagType = "tag",
+        EntityRef? fromEntity = null,
+        string? slug = null,
+        Guid? tenantId = null,
+        CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
+        var forEntityId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
+        var resolvedTenant = ResolveTenant(tenantId);
+        var actor = fromEntity ?? EntityRef.ForGuid(EntityRefWellKnown.SystemActorType, EntityRefWellKnown.SystemActorId);
+        var fromEntityId = EntityRefPersistedGuid.PersistedEntityId(actor);
+        var slugNormalized = NormalizeSlug(slug);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var exists = await context.Tags.WhereActive()
+            .WhereTenant(resolvedTenant)
+            .AnyAsync(t => t.SubjectEntityType == forEntity.EntityType && t.SubjectEntityId == forEntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized, ct)
+            .ConfigureAwait(false);
+
+        if (exists)
+            return;
+
+        var entity = new TagEntity {
+            Id = Guid.NewGuid(),
+            SubjectEntityType = forEntity.EntityType,
+            SubjectEntityId = forEntityId,
+            ActorEntityType = actor.EntityType,
+            ActorEntityId = fromEntityId,
+            TenantId = resolvedTenant,
+            Name = tag,
+            TagType = tagType,
+            Slug = slugNormalized,
+            Visibility = EntityRefVisibility.Private
+        };
+
+        await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.BeforePersist, entity, ct).ConfigureAwait(false);
+        context.Tags.Add(entity);
+        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+        await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.AfterPersist, entity, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task RemoveTagAsync(EntityRef forEntity, string tag, string tagType = "tag", string? slug = null, Guid? tenantId = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
+        var forEntityId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
+        var resolvedTenant = ResolveTenant(tenantId);
+        var slugNormalized = NormalizeSlug(slug);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entities = await context.Tags.WhereActive()
+            .WhereTenant(resolvedTenant)
+            .Where(t => t.SubjectEntityType == forEntity.EntityType && t.SubjectEntityId == forEntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        foreach (var e in entities)
+            await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.BeforeSoftDelete, e, ct).ConfigureAwait(false);
+
+        foreach (var e in entities)
+            e.DeletedAt = DateTime.UtcNow;
+
+        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+        foreach (var e in entities)
+            await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TagRecord>> GetTagsForEntityAsync(EntityRef forEntity, string? tagType = null, Guid? tenantId = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        var forEntityId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
+        var resolvedTenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.SubjectEntityType == forEntity.EntityType && t.SubjectEntityId == forEntityId);
+        if (!string.IsNullOrWhiteSpace(tagType))
+            query = query.Where(t => t.TagType == tagType);
+
+        var entities = await query.OrderBy(t => t.Name).ToListAsync(ct).ConfigureAwait(false);
+        return entities.Select(ToRecord).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TagRecord>> GetEntitiesWithTagAsync(
+        string tag,
+        string? forEntityType = null,
+        string? tagType = null,
+        Guid? tenantId = null,
+        CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
+        var resolvedTenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.Name == tag);
+        if (!string.IsNullOrWhiteSpace(forEntityType))
+            query = query.Where(t => t.SubjectEntityType == forEntityType);
+
+        if (!string.IsNullOrWhiteSpace(tagType))
+            query = query.Where(t => t.TagType == tagType);
+
+        var entities = await query.OrderBy(t => t.SubjectEntityType).ThenBy(t => t.SubjectEntityId).ToListAsync(ct).ConfigureAwait(false);
+        return entities.Select(ToRecord).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> GetAllTagsForEntityTypeAsync(string forEntityType, string? tagType = null, Guid? tenantId = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
+        var resolvedTenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.SubjectEntityType == forEntityType);
+        if (!string.IsNullOrWhiteSpace(tagType))
+            query = query.Where(t => t.TagType == tagType);
+
+        return await query.Select(t => t.Name).Distinct().OrderBy(t => t).ToListAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task RemoveAllTagsForEntityAsync(EntityRef forEntity, Guid? tenantId = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        var forEntityId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
+        var resolvedTenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entities = await context.Tags.WhereActive()
+            .WhereTenant(resolvedTenant)
+            .Where(t => t.SubjectEntityType == forEntity.EntityType && t.SubjectEntityId == forEntityId)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        foreach (var e in entities)
+            await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.BeforeSoftDelete, e, ct).ConfigureAwait(false);
+
+        foreach (var e in entities)
+            e.DeletedAt = DateTime.UtcNow;
+
+        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+        foreach (var e in entities)
+            await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
+    }
+
+    private static TagRecord ToRecord(TagEntity e)
+        => new() {
+            Id = e.Id,
+            SubjectEntityType = e.SubjectEntityType,
+            SubjectEntityId = e.SubjectEntityId,
+            ActorEntityType = e.ActorEntityType,
+            ActorEntityId = e.ActorEntityId,
+            TenantId = e.TenantId,
+            Context = e.Context,
+            CreatedAt = e.CreatedAt,
+            ExpiresAt = e.ExpiresAt,
+            DeletedAt = e.DeletedAt,
+            DeletedByType = e.DeletedByType,
+            DeletedById = e.DeletedById,
+            MetadataJson = e.MetadataJson,
+            Visibility = e.Visibility,
+            Name = e.Name,
+            TagType = e.TagType,
+            Slug = e.Slug
+        };
+
+    private static string NormalizeSlug(string? slug) => string.IsNullOrWhiteSpace(slug) ? string.Empty : slug.Trim();
+}

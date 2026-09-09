@@ -1,0 +1,221 @@
+{
+  "id": "Lyo.Translation.Aws",
+  "name": "Lyo.Translation.Aws",
+  "area": "Communication",
+  "tagline": "Amazon Translate that implements `ITranslationService`. Translates text, runs bounded bulk translation, infers language via a Translate call, and probes connectivity with `ListLanguages`.",
+  "description": "[Amazon Translate](https://docs.aws.amazon.com/translate/) that implements [`ITranslationService`](../Lyo.Translation/README.md). Translates text, runs bounded bulk translation,\ninfers language via a Translate call, and probes connectivity with `ListLanguages`.\n\n**Target frameworks:** `netstandard2.0`, `net10.0`",
+  "features": [],
+  "examples": [
+    {
+      "title": "Wire into DI",
+      "language": "csharp",
+      "code": "using Lyo.Translation.Aws;\nusing Microsoft.Extensions.DependencyInjection;\n\n// From configuration section \"AwsTranslationOptions\" — also registers IAmazonTranslate from the\n// same section if no IAmazonTranslate is already in the container.\nservices.AddAwsTranslationServiceFromConfiguration(configuration);\n\n// Inline configuration\nservices.AddAwsTranslationService(o =>\n{\n    o.Region = \"us-east-1\";\n    // Prefer IAM/instance profile when possible instead of keys\n});\n\n// Pre-built options instance\nservices.AddAwsTranslationService(new AwsTranslationOptions { Region = \"us-east-1\" });"
+    }
+  ],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "Wire into DI",
+      "body": "`AddAwsTranslationService` and `AddAwsTranslationServiceFromConfiguration` wire:\n\n- `AwsTranslationOptions` (singleton).\n- `AwsTranslationService` (singleton; subclass of `TranslationServiceBase`).\n- `ITranslationService` resolved from `AwsTranslationService`.\n\n`AddAwsTranslationServiceFromConfiguration` also registers `IAmazonTranslate` from\n`AwsTranslationOptions` if no `IAmazonTranslate` is already registered. The other two overloads do\nnot wire an `IAmazonTranslate`. Bring your own when you want explicit credentials or sharing.\nThe service constructor accepts an optional `IAmazonTranslate` and resolves one from DI when present.\n\n`AwsTranslationOptions` and `IAmazonTranslate` should agree on region and credentials."
+    },
+    {
+      "type": "table",
+      "title": "`AwsTranslationOptions`",
+      "headers": [
+        "Property",
+        "Type",
+        "Default",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "`AccessKeyId`",
+          "`string?`",
+          "`null`",
+          "Static AWS access key id (prefer IAM roles)."
+        ],
+        [
+          "`SecretAccessKey`",
+          "`string?`",
+          "`null`",
+          "Static AWS secret key (prefer IAM roles)."
+        ],
+        [
+          "`Region`",
+          "`string`",
+          "`us-east-1`",
+          "AWS region the Translate client uses."
+        ],
+        [
+          "`ServiceUrl`",
+          "`string?`",
+          "`null`",
+          "Override endpoint (useful for local testing)."
+        ]
+      ],
+      "lead": "Inherits all of [`TranslationServiceOptions`](../Lyo.Translation/README.md). and adds:",
+      "trail": "Configuration section name: `AwsTranslationOptions.SectionName = \"AwsTranslationOptions\"`."
+    },
+    {
+      "type": "table",
+      "title": "Runtime notes",
+      "headers": [
+        "Feature",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Language codes",
+          "Target/source are mapped to ISO 639-1 (and BCP-47 prefixes) that Translate expects"
+        ],
+        [
+          "`DetectLanguageAsync`",
+          "Uses `TranslateText` with `auto` source and English target to infer the source language"
+        ],
+        [
+          "Metrics",
+          "Provider keys in `Constants.Metrics` remap the base keys from [`Lyo.Translation`](../Lyo.Translation/README.md)"
+        ]
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Translation/Lyo.Translation.Aws/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Translation",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "AWSSDK.Translate",
+      "kind": "package",
+      "version": "4.0.100.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

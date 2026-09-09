@@ -1,0 +1,13 @@
+/* Long contexts (a job run graph reaches the catalog's 80-path cap) scroll instead of pushing the value editor off screen. */
+.lyo-fmt-token-list {
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.lyo-fmt-token-preview {
+    color: var(--mud-palette-text-secondary);
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

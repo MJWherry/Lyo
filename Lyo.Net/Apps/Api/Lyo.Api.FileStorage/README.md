@@ -1,0 +1,87 @@
+# Lyo.Api.FileStorage
+
+HTTP endpoints for Lyo file storage. After a keyed `IFileStorageService` (plus multipart and archive) is registered, hosts map `BuildFileStorageApi`. FileMetadata Query/QueryProject is included. `GET key-ids` lists encryption key identifiers; keystore CRUD is not part of this API.
+
+## Examples
+
+### Set up the host
+
+```csharp
+app.BuildFileStorageApi(); // defaults: FileStorage, keyed gateway-filestorage
+// or:
+app.BuildFileStorageApi(new FileStorageApiOptions {
+    Route = "FileStorage",
+    ServiceKey = "gateway-filestorage"
+});
+```
+
+## Routes this maps
+
+At `FileStorageApiOptions.Route` the group exposes: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`.
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Api` (direct, lyo)
+- `Lyo.Api.FileStorage.Models` (direct, lyo)
+- `Lyo.Cache` (direct, lyo)
+- `Lyo.Common.Metadata` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.FileMetadataStore.Postgres` (direct, lyo)
+- `Lyo.FileStorage` (direct, lyo)
+- `Lyo.KeyStore` (direct, lyo)
+- `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Common.Core` (transitive, lyo)
+- `Lyo.Common.Json` (transitive, lyo)
+- `Lyo.Compression` (transitive, lyo)
+- `Lyo.Configuration` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.Diagnostic.AspNetCore` (transitive, lyo)
+- `Lyo.Diff` (transitive, lyo)
+- `Lyo.Encryption` (transitive, lyo)
+- `Lyo.FileMetadataStore` (transitive, lyo)
+- `Lyo.Formatter` (transitive, lyo)
+- `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
+- `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Lock` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.Parameters` (transitive, lyo)
+- `Lyo.Postgres` (transitive, lyo)
+- `Lyo.Query` (transitive, lyo)
+- `Lyo.Query.Evaluation` (transitive, lyo)
+- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Lyo.Streams` (transitive, lyo)
+- `Lyo.Validation` (transitive, lyo)
+- `Lyo.Validation.Models` (transitive, lyo)
+- `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
+- `DynamicExpresso.Core` `2.19.3` (transitive, third-party)
+- `EasyCompressor` `2.1.0` (transitive, third-party)
+- `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
+- `Microsoft.AspNetCore.OpenApi` `10.0.5` (transitive, microsoft)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Caching.Memory` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)
+- `SmartFormat.NET` `3.6.1` (transitive, third-party)
+- `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
+- `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
+- `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

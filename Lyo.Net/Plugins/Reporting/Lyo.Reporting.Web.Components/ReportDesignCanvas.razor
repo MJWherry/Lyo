@@ -1,0 +1,198 @@
+@using Lyo.Reporting.Models.Composition
+@using Lyo.Reporting.Models.Controls
+@using Lyo.Reporting.Models.Models
+@using Lyo.Reporting.Web.Components
+@using Microsoft.AspNetCore.Components.Web
+
+@if (!string.IsNullOrEmpty(Paint.PageRuleCss)) {
+    <style>@Paint.PageRuleCss</style>
+}
+
+@if (!string.IsNullOrWhiteSpace(RootComponentCaption)) {
+    <p style="font-size: 13px; color: #64748b; margin: 0 0 12px 0;">@RootComponentCaption</p>
+}
+
+<div style="@Paint.GetRootStyles()">
+    @if (!string.IsNullOrEmpty(Layout.Watermark)) {
+        <div style="@Paint.GetWatermarkStyles()">@Paint.P(Layout.Watermark)</div>
+    }
+
+    @if (!string.IsNullOrEmpty(Layout.HeaderText) || !string.IsNullOrEmpty(Layout.LogoUrl)) {
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;" @onclick="SelectReportChrome" @onclick:stopPropagation="true">
+            @if (!string.IsNullOrEmpty(Paint.SafeLogoUrl)) {
+                <img src="@Paint.SafeLogoUrl" alt="" style="max-height: 48px; max-width: 160px;" />
+            }
+            @if (!string.IsNullOrEmpty(Layout.HeaderText)) {
+                <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: @Paint.AccentColor;">@Paint.P(Layout.HeaderText)</div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Report.Title)) {
+        <div data-lyo-design="@ReportDesignTreeExpand.ReportKey" style="@TitleStyle" @onclick="SelectReportChrome" @onclick:stopPropagation="true">
+            <h1 style="margin: 0; font-size: @(Paint.IsCompact ? "28px" : "36px"); font-weight: 700; color: @Paint.InkColor;">@Paint.P(Report.Title)</h1>
+            @if (!string.IsNullOrEmpty(Report.Subtitle)) {
+                <p style="margin: 8px 0 0 0; color: @Paint.MutedColor; font-size: 18px;">@Paint.P(Report.Subtitle)</p>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Report.Description)) {
+        <div style="margin-bottom: 30px; padding: 15px; background: #f1f5f9; border-left: 4px solid @Paint.AccentColor; border-radius: 4px;">
+            <p style="margin: 0; color: @Paint.BodyColor; line-height: 1.6;">@Paint.P(Report.Description)</p>
+        </div>
+    }
+
+    @foreach (var section in Report.Sections.OrderBy(s => s.Order)) {
+        @RenderDesignSection(section, 0, showSectionToolbar: true)
+    }
+
+    @if (!string.IsNullOrEmpty(Report.Footer) || Layout.ShowPageNumbers) {
+        <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 13px;">
+            @if (!string.IsNullOrEmpty(Report.Footer)) {
+                <div>@Paint.P(Report.Footer)</div>
+            }
+            @if (Layout.ShowPageNumbers) {
+                <div style="margin-top: 6px;">Page 1</div>
+            }
+        </div>
+    }
+
+    @if (ReportChartBootstrap.ReportHasChart(Report.Sections)) {
+        @ReportChartBootstrap.Render(false, ChartScriptUrl)
+    }
+</div>
+
+@code {
+    private RenderFragment RenderDesignSection(Section section, int depth, bool showSectionToolbar) => @<text>
+        @{
+            var sectionKey = ReportDesignTreeExpand.SectionKey(section);
+            var sectionSelected = Selection?.Matches(section) == true;
+            var sectionHover = IsHover(sectionKey);
+            var sectionActive = IsChromeActive(sectionKey, sectionSelected);
+        }
+        <div class="lyo-design"
+             data-lyo-design="@sectionKey"
+             style="@(Paint.GetSectionStyles(section, depth) + ChromeBox(sectionSelected, sectionHover) + HiddenDim(section.VisibleWhen) + CollapsedDim(section) + " cursor: pointer;")"
+             @onclick="@(() => Hit(new() { Section = section }))"
+             @onclick:stopPropagation="true"
+             @onmouseenter="@(() => SetHover(sectionKey))"
+             @onmouseleave="@(() => ClearHover(sectionKey))">
+            @if (showSectionToolbar) {
+                @RenderToolbar(sectionActive, moveItem: null, deleteHit: new() { Section = section }, addSection: section, addMenu: ChromeAdd.Section, addGrid: null)
+            }
+            @Paint.RenderSectionChrome(section, depth)
+            @{
+                var items = SectionBody.Enumerate(section);
+            }
+            @for (var i = 0; i <= items.Count; i++) {
+                var insertAt = i;
+                @RenderDropSlot(section, insertAt)
+                @if (i < items.Count) {
+                    var item = items[i];
+                    @RenderBodyChrome(section, item, depth)
+                }
+            }
+        </div>
+    </text>;
+
+    private RenderFragment RenderBodyChrome(Section section, SectionBodyItem item, int depth) => @<text>
+        @{
+            var key = ReportDesignTreeExpand.BodyItemKey(item);
+            var selected = ItemSelected(item);
+            var hover = IsHover(key);
+            var active = IsChromeActive(key, selected);
+            var deleteHit = ItemDeleteHit(section, item);
+            var addSection = item.Kind == SectionBodyKind.Subsection ? item.Subsection : item.Kind == SectionBodyKind.Control && item.Control is Grid ? item.Section : null;
+            var addMenu = item.Kind switch {
+                SectionBodyKind.Subsection => ChromeAdd.Section,
+                SectionBodyKind.Control when item.Control is Grid => ChromeAdd.Grid,
+                _ => ChromeAdd.None
+            };
+            var addGrid = item.Control as Grid;
+            var visibleWhen = item.Control is Lyo.Reporting.Models.Controls.Block block ? block.VisibleWhen : null;
+        }
+        <div class="lyo-design"
+             data-lyo-design="@key"
+             style="@("position: relative; padding-top: 4px;" + ChromeBox(selected, hover) + HiddenDim(visibleWhen))"
+             @onclick="@(() => HitBody(section, item))"
+             @onclick:stopPropagation="true"
+             @onmouseenter="@(() => SetHover(key))"
+             @onmouseleave="@(() => ClearHover(key))">
+            @RenderToolbar(active, item, deleteHit, addSection, addMenu, addGrid)
+            @if (item.Kind == SectionBodyKind.Subsection && item.Subsection is not null) {
+                @RenderDesignSection(item.Subsection, depth + 1, showSectionToolbar: false)
+            }
+            else if (item.Control is Grid layoutGrid) {
+                <div @ondragover:preventDefault="true"
+                     @ondrop="@(() => DropOnGrid(section, layoutGrid))"
+                     @ondrop:preventDefault="true">
+                    <ReportBodyItemView Painter="Paint" Item="item" Selection="Selection" OnHit="OnHit" OnCardDrop="OnCardDrop" OnGridColumnDrop="OnGridColumnDrop"/>
+                </div>
+            }
+            else {
+                <ReportBodyItemView Painter="Paint" Item="item" Selection="Selection" OnHit="OnHit" OnCardDrop="OnCardDrop" OnGridColumnDrop="OnGridColumnDrop"/>
+            }
+        </div>
+    </text>;
+
+    private RenderFragment RenderDropSlot(Section section, int insertIndex) => @<text>
+        @{
+            var slotKey = SlotKey(section, insertIndex);
+            var over = string.Equals(_dropSlot, slotKey, StringComparison.Ordinal);
+            var dragging = _dragging is not null;
+        }
+        <div class="lyo-design-slot"
+             style="@SlotStyle(over, dragging)"
+             @ondragover="@(() => _dropSlot = slotKey)"
+             @ondragover:preventDefault="true"
+             @ondragleave="@(() => ClearDropSlot(slotKey))"
+             @ondrop="@(() => DropOn(section, insertIndex))"
+             @ondrop:preventDefault="true">
+        </div>
+    </text>;
+
+    private RenderFragment RenderToolbar(bool active, SectionBodyItem? moveItem, ReportDesignHit deleteHit, Section? addSection, ChromeAdd addMenu, Grid? addGrid) => @<text>
+        <div class="lyo-design-toolbar"
+             style="position: absolute; top: 4px; right: 4px; z-index: 3; display: flex; align-items: center; gap: 2px; padding: 2px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(15,23,42,0.15); opacity: @(active ? "1" : "0"); pointer-events: @(active ? "auto" : "none");"
+             @onclick:stopPropagation="true">
+            @if (moveItem is not null) {
+                <span draggable="true"
+                      title="Move"
+                      style="cursor: grab; display: inline-flex; align-items: center; color: #64748b;"
+                      ondragstart="if(event.dataTransfer){event.dataTransfer.setData('text/plain','lyo-design');event.dataTransfer.effectAllowed='move';}"
+                      @onmousedown="@(() => OnMoveDragStart(moveItem))"
+                      @ondragend="OnMoveDragEnd">
+                    <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small"/>
+                </span>
+            }
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete" OnClick="@(() => DeleteHit(deleteHit))"/>
+            @if (addSection is not null && addMenu != ChromeAdd.None) {
+                <MudMenu Icon="@Icons.Material.Filled.Add" Size="Size.Small" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                    @if (addMenu == ChromeAdd.Grid && addGrid is not null) {
+                        <MudMenuItem OnClick="@(() => Add(new() { Section = addSection, Kind = ReportDesignAddKind.Card, Grid = addGrid }))">Card</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => Add(new() { Section = addSection, Kind = ReportDesignAddKind.Table, Grid = addGrid }))">Table</MudMenuItem>
+                        <MudMenu Label="Block" Dense="true" MaxHeight="220" ListClass="lyo-design-add-menu" AnchorOrigin="Origin.TopLeft" TransformOrigin="Origin.TopRight">
+                            @foreach (var type in AddBlockTypes) {
+                                var captured = type;
+                                <MudMenuItem OnClick="@(() => Add(new() { Section = addSection, Kind = ReportDesignAddKind.Block, BlockType = captured, Grid = addGrid }))">@captured</MudMenuItem>
+                            }
+                        </MudMenu>
+                    }
+                    else {
+                        <MudMenu Label="Block" Dense="true" MaxHeight="220" ListClass="lyo-design-add-menu" AnchorOrigin="Origin.TopLeft" TransformOrigin="Origin.TopRight">
+                            @foreach (var type in AddBlockTypes) {
+                                var captured = type;
+                                <MudMenuItem OnClick="@(() => Add(new() { Section = addSection, Kind = ReportDesignAddKind.Block, BlockType = captured }))">@captured</MudMenuItem>
+                            }
+                        </MudMenu>
+                        <MudMenuItem OnClick="@(() => Add(new() { Section = addSection, Kind = ReportDesignAddKind.Card }))">Card</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => Add(new() { Section = addSection, Kind = ReportDesignAddKind.Table }))">Table</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => Add(new() { Section = addSection, Kind = ReportDesignAddKind.Grid }))">Grid</MudMenuItem>
+                        <MudMenuItem OnClick="@(() => Add(new() { Section = addSection, Kind = ReportDesignAddKind.Subsection }))">Subsection</MudMenuItem>
+                    }
+                </MudMenu>
+            }
+        </div>
+    </text>;
+}

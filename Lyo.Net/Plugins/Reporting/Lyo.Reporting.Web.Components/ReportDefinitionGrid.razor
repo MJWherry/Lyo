@@ -1,0 +1,90 @@
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="ReportDefinitionGrid"
+                      Route="@_definitionRoute"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <LeftControls>
+        <MudButton OnClick="@OpenRunDialog"
+                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                   Size="Size.Small"
+                   Variant="Variant.Outlined"
+                   Color="Color.Default">
+            Run Report
+        </MudButton>
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small" Color="Color.Primary" title="Run report"
+                                   OnClick="@(() => RunDefinition(cell.Item))"/>
+                    @if (Design.HasDelegate) {
+                        <MudIconButton Icon="@Icons.Material.Filled.DashboardCustomize" Size="Size.Small" title="Design report"
+                                       OnClick="@(() => DesignDefinition(cell.Item))"/>
+                    }
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit definition"
+                                   OnClick="@(() => ViewDefinition(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete definition"
+                                   OnClick="@(() => DeleteDefinition(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="IsActive" Title="Active" Align="Align.Center" HeaderStyle="width: 96px;">
+            <CellContent Context="item">
+                @{
+                    var active = GetActive(item);
+                }
+                <LyoChip Spec="@LyoChips.FromBool(active, "Active", "Off", Color.Success, Color.Default)"
+                         Style="cursor: pointer;"
+                         OnClick="@(() => ToggleActiveAsync(item))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, "Id")" Abbreviation="LyoIdAbbreviation.Prefix" AbbreviationLength="8"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="Description" Title="Description" QuickSearchPropertyName="Description" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="DefaultFormat" Title="Format" Align="Align.Center" HeaderStyle="width: 100px;">
+            <CellContent Context="item">
+                @{
+                    var formatText = ProjectedValueHelper.GetDisplayValue(item, "DefaultFormat");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<ReportFormat>(formatText, ReportColorHelper.ForFormatChip))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="GenerationProfileKey" Title="Profile"/>
+        <LyoProjectedColumn Field="Generations.CreatedTimestamp" Title="Last Generation" Sortable="false" CellStyle="white-space: nowrap;"
+                            Timestamp="LyoTimestampKind.Relative" TimestampLatest="true"/>
+        <LyoProjectedColumn Field="CreatedBy" Title="Created By" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="UpdatedTimestamp" Title="Updated" HiddenByDefault="true" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="Tags" Title="Tags" HiddenByDefault="true"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => ViewDefinition(item))">Edit</MudMenuItem>
+        @if (Design.HasDelegate) {
+            <MudMenuItem Icon="@Icons.Material.Filled.DashboardCustomize" OnClick="@(() => DesignDefinition(item))">Design</MudMenuItem>
+        }
+        <MudMenuItem Icon="@Icons.Material.Filled.PlayArrow" OnClick="@(() => RunDefinition(item))">Run</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteDefinition(item))">Delete</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

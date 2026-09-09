@@ -1,0 +1,38 @@
+@using Lyo.Common.Core.Extensions;
+@using Lyo.Web.Components.ParamTable
+@inject ISnackbar Snackbar
+
+<LyoDialog Busy="@_submitting" OnSave="Submit" SaveDisabled="@(!IsValid())" SaveText="Create Job Run" CloseText="Cancel" DebugData="@_selectedDef">
+    <MudStack Spacing="2">
+        <MudGrid Spacing="2">
+            <MudItem xs="12">
+                <MudSelect T="JobDefinitionRes"
+                           Value="_selectedDef"
+                           ValueChanged="OnDefinitionChanged"
+                           Label="Job Definition"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           ToStringFunc="@(d => d?.Name ?? "")"
+                           Required>
+                    @foreach (var def in (JobDefinitions ?? []).Where(d => d.Enabled)) {
+                        <MudSelectItem T="JobDefinitionRes" Value="def">
+                            <MudText Typo="Typo.body1">@def.Name</MudText>
+                            @if (!string.IsNullOrEmpty(def.Description)) {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@def.Description</MudText>
+                            }
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_createdBy" Label="Created By" Variant="Variant.Outlined" Margin="Margin.Dense" Required MaxLength="128"/>
+            </MudItem>
+            <MudItem xs="12" md="6" Class="d-flex align-center">
+                <MudSwitch T="bool" @bind-Value="_allowTriggers" Label="Allow Triggers" Color="Color.Primary" Size="Size.Small"/>
+            </MudItem>
+        </MudGrid>
+
+        <LyoParameterValueGrid Entries="@_parameters" ApiClient="ApiClient" ShowEncrypt="true" FormatterContext="@_formatterContext" ValueChanged="StateHasChanged"/>
+
+    </MudStack>
+</LyoDialog>

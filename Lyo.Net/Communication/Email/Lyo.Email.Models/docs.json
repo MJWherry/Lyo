@@ -1,0 +1,150 @@
+{
+  "id": "Lyo.Email.Models",
+  "name": "Lyo.Email.Models",
+  "area": "Communication",
+  "tagline": "Shared models, options, failure codes, and event payloads for the `Lyo.Email` SMTP sender.",
+  "description": "Shared models, options, failure codes, and event payloads for the [`Lyo.Email`](../Lyo.Email/README.md)\nSMTP sender.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Request and result types",
+      "items": [
+        "`EmailRequest`. Sender, recipients, subject, optional `TextBody` / `HtmlBody`, and optional attachment metadata carried as the `Result<EmailRequest>.Data` payload.",
+        "`EmailAttachment`. File name and bytes, plus optional `ContentType` and `MetadataJson`. The logging schema does not persist attachment bytes.",
+        "`EmailResult`. `Result<EmailRequest>` that adds `MessageId`, `SentDate`, and `SmtpResponse`. Built via `EmailResult.FromSuccess`, `EmailResult.FromException`, and `EmailResult.FromError`."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Options",
+      "items": [
+        "`EmailServiceOptions`. Settings for `EmailService` (host, port, SSL, default sender, optional SMTP credentials, metrics toggle, `BulkEmailConcurrencyLimit` (default `10`), `MaxBulkEmailLimit` (default `1000`), `MaxAttachmentCountPerEmail` (default `20`)). Section name constant: `EmailServiceOptions.SectionName = \"EmailServiceOptions\"`.",
+        "`EmailServiceOptionsValidator`. `IValidateOptions<EmailServiceOptions>` that demands `Host`, port range `1..65535`, `DefaultFromAddress`/`DefaultFromName`, and `MaxAttachmentCountPerEmail > 0`."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Failure codes",
+      "headers": [
+        "Constant",
+        "Value",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "`SendFailed`",
+          "`EMAIL_SEND_FAILED`",
+          "The SMTP send threw."
+        ],
+        [
+          "`BuildFailed`",
+          "`EMAIL_BUILD_FAILED`",
+          "The builder could not produce a message."
+        ],
+        [
+          "`OperationCancelled`",
+          "`EMAIL_OPERATION_CANCELLED`",
+          "The operation was cancelled."
+        ]
+      ],
+      "lead": "`EmailErrorCodes` constants hung on failed `EmailResult` values:"
+    },
+    {
+      "type": "list",
+      "title": "Event payloads",
+      "items": [
+        "`EmailSendingEventArgs(EmailRequest EmailRequest)`. Raised before a single send.",
+        "`EmailSentEventArgs(EmailResult EmailResult)`. After one send (success or failure). `EmailResult` carries `MessageId`, `SentDate`, and `SmtpResponse`.",
+        "`EmailBulkSendingEventArgs(IReadOnlyList<EmailRequest> BulkEmailMessage)`. Before a bulk send starts.",
+        "`BulkEmailSentEventArgs(BulkResult<EmailRequest> BulkEmailResult)`. After a bulk send finishes.",
+        "`ConnectionTestedEventArgs(bool IsSuccess, TimeSpan ElapsedTime, Exception? Exception)`. After `TestConnectionAsync` finishes."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Supported frameworks",
+      "text": "`netstandard2.0;net10.0`"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Email/Lyo.Email.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

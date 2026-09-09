@@ -1,0 +1,191 @@
+<MudExpansionPanels Elevation="0" Outlined="true" Dense="true">
+    <MudExpansionPanel Dense="true" @bind-Expanded="_expanded">
+        <TitleContent>
+            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100 pr-2">
+                <MudText Typo="Typo.subtitle1">Blackout Calendar</MudText>
+                <div @onclick:stopPropagation="true">
+                    @if (Calendar == null) {
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddCalendar">
+                            Add blackout calendar
+                        </MudButton>
+                    }
+                    else {
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="RemoveCalendar">
+                            Remove calendar
+                        </MudButton>
+                    }
+                </div>
+            </MudStack>
+        </TitleContent>
+        <ChildContent>
+            @if (_edit == null) {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">No blackout calendar. Linked schedules fire on every matching slot.</MudText>
+            }
+            else {
+                <MudStack Spacing="2" Class="pt-2">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="5">
+                            <MudTextField T="string" Label="Name" @bind-Value="_edit.Name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        </MudItem>
+                        <MudItem xs="12" md="5">
+                            <MudTextField T="string" Label="Description" @bind-Value="_edit.Description" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        </MudItem>
+                        <MudItem xs="12" md="2" Class="d-flex align-center">
+                            <MudSwitch T="bool" Label="Enabled" @bind-Value="_edit.Enabled" Color="Color.Success" Size="Size.Small"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle2">Windows</MudText>
+                        <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+                            <MudSelect T="string" Label="Holidays" MultiSelection="true" SelectedValues="SelectedHolidaySlugs" SelectedValuesChanged="OnSelectedHolidaysChanged"
+                                       MultiSelectionTextFunc="HolidaySelectSummary" SelectAll="true" SelectAllText="Select all"
+                                       Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Style="width: 16rem;">
+                                @foreach (var holiday in KnownHolidays) {
+                                    <MudSelectItem Value="@holiday.Slug">@holiday.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddWindow">
+                                Add window
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+
+                    @if (_edit.Windows.Count == 0) {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No windows. Add weekdays, calendar days, a dated range, or pick holidays above.</MudText>
+                    }
+                    else {
+                        @foreach (var window in _edit.Windows) {
+                            <MudPaper Outlined="true" Class="pa-2" Elevation="0" @key="@(window.Id ?? window.ClientKey)">
+                                <MudGrid Spacing="2">
+                                    @if (window.Kind != WindowKind.Holiday) {
+                                        <MudItem xs="12" md="3">
+                                            <MudTextField T="string" Label="Name" @bind-Value="window.Name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                    }
+                                    <MudItem xs="6" md="2">
+                                        <MudSelect T="JobBlackoutPolicy" Label="Policy" @bind-Value="window.Policy" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                            @foreach (var p in Enum.GetValues<JobBlackoutPolicy>()) {
+                                                <MudSelectItem Value="p">@p</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="6" md="2">
+                                        <MudSelect T="WindowKind" Label="Kind" @bind-Value="window.Kind" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                            @foreach (var kind in Enum.GetValues<WindowKind>()) {
+                                                <MudSelectItem Value="@kind">@KindLabel(kind)</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    @if (window.Kind == WindowKind.CalendarDays) {
+                                        <MudItem xs="6" md="2" Class="d-flex align-center">
+                                            <MudSwitch T="bool" Label="Repeat" @bind-Value="window.Repeat" Color="Color.Info" Size="Size.Small"/>
+                                        </MudItem>
+                                    }
+                                    @if (window.Kind == WindowKind.Holiday) {
+                                        <MudItem xs="6" md="3" Class="d-flex align-center">
+                                            <MudSwitch T="bool" Label="Include observed date" @bind-Value="window.IncludeObservedDate" Color="Color.Info" Size="Size.Small"/>
+                                        </MudItem>
+                                    }
+                                    <MudItem xs="6" md="2" Class="d-flex align-center">
+                                        <MudSwitch T="bool" Label="Enabled" @bind-Value="window.Enabled" Color="Color.Success" Size="Size.Small"/>
+                                    </MudItem>
+                                    <MudItem xs="6" md="1" Class="d-flex align-center justify-end">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete window" aria-label="Delete blackout window"
+                                                       OnClick="@(() => RemoveWindow(window))"/>
+                                    </MudItem>
+                                    @if (window.Kind == WindowKind.Weekdays) {
+                                        <MudItem xs="12" md="6">
+                                            <MudSelect T="DayFlags" Label="Days" MultiSelection="true" @bind-SelectedValues="window.Days"
+                                                       Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                                @foreach (var d in FlagEnumUi.AtomicValues<DayFlags>()) {
+                                                    <MudSelectItem Value="d">@d</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                    }
+                                    else if (window.Kind == WindowKind.CalendarDays) {
+                                        <MudItem xs="12">
+                                            <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
+                                                <MudChip T="string" Size="Size.Small"
+                                                         Variant="@(window.MonthsMatch(MonthFlags.EveryMonth) ? Variant.Filled : Variant.Outlined)"
+                                                         Color="@(window.MonthsMatch(MonthFlags.EveryMonth) ? Color.Primary : Color.Default)"
+                                                         Selected="@window.MonthsMatch(MonthFlags.EveryMonth)"
+                                                         OnClick="@(() => window.ApplyMonths(MonthFlags.EveryMonth))">Every month</MudChip>
+                                                <MudChip T="string" Size="Size.Small"
+                                                         Variant="@(window.MonthsMatch(MonthFlags.QuarterlyStart) ? Variant.Filled : Variant.Outlined)"
+                                                         Color="@(window.MonthsMatch(MonthFlags.QuarterlyStart) ? Color.Primary : Color.Default)"
+                                                         Selected="@window.MonthsMatch(MonthFlags.QuarterlyStart)"
+                                                         OnClick="@(() => window.ApplyMonths(MonthFlags.QuarterlyStart))">Quarter start</MudChip>
+                                                <MudChip T="string" Size="Size.Small"
+                                                         Variant="@(window.MonthsMatch(MonthFlags.QuarterlyEnd) ? Variant.Filled : Variant.Outlined)"
+                                                         Color="@(window.MonthsMatch(MonthFlags.QuarterlyEnd) ? Color.Primary : Color.Default)"
+                                                         Selected="@window.MonthsMatch(MonthFlags.QuarterlyEnd)"
+                                                         OnClick="@(() => window.ApplyMonths(MonthFlags.QuarterlyEnd))">Quarter end</MudChip>
+                                            </MudStack>
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudSelect T="MonthFlags" Label="Months" MultiSelection="true" @bind-SelectedValues="window.Months"
+                                                       Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                                @foreach (var m in FlagEnumUi.AtomicValues<MonthFlags>()) {
+                                                    <MudSelectItem Value="m">@m</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudSelect T="int" Label="Days of month" MultiSelection="true" @bind-SelectedValues="window.DaysOfMonth"
+                                                       Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                                @for (var day = 1; day <= 31; day++) {
+                                                    var captured = day;
+                                                    <MudSelectItem Value="@captured">@captured</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                    }
+                                    else if (window.Kind == WindowKind.DateRange) {
+                                        <MudItem xs="6" md="3">
+                                            <MudDatePicker Label="Start Date (UTC)" @bind-Date="window.StartDateUtc" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="6" md="3">
+                                            <MudDatePicker Label="End Date (UTC)" @bind-Date="window.EndDateUtc" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                    }
+                                    else {
+                                        <MudItem xs="12" md="6">
+                                            <MudSelect T="string" Label="Holiday" Value="window.HolidaySlug" ValueChanged="window.SetHolidaySlug"
+                                                       Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                                @foreach (var holiday in KnownHolidays) {
+                                                    <MudSelectItem Value="@holiday.Slug">@holiday.Name</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                    }
+                                    <MudItem xs="6" md="3">
+                                        <MudTimePicker Label="Start Time" @bind-Time="window.StartTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                    </MudItem>
+                                    <MudItem xs="6" md="3">
+                                        <MudTimePicker Label="End Time" @bind-Time="window.EndTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                    </MudItem>
+                                    @if (window.Kind == WindowKind.CalendarDays && !window.Repeat) {
+                                        <MudItem xs="6" md="3">
+                                            <MudDatePicker Label="Start Date (UTC)" @bind-Date="window.StartDateUtc" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                        <MudItem xs="6" md="3">
+                                            <MudDatePicker Label="End Date (UTC)" @bind-Date="window.EndDateUtc" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            </MudPaper>
+                        }
+                    }
+
+                    <div>
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveBlackout">
+                            Save blackout
+                        </MudButton>
+                    </div>
+                </MudStack>
+            }
+        </ChildContent>
+    </MudExpansionPanel>
+</MudExpansionPanels>

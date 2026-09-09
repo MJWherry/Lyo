@@ -1,0 +1,108 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudStack Spacing="2" Class="@(Compact ? null : "mt-3")">
+    @if (DefinitionId is null) {
+        @if (!Compact) {
+            <MudAlert Severity="Severity.Info" Dense="true">Open History on a definition to inspect and revert metadata revisions.</MudAlert>
+        }
+    }
+    else if (_loadError != null) {
+        <MudAlert Severity="Severity.Error" Dense="true">@_loadError</MudAlert>
+    }
+    else {
+        @if (!Compact) {
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@_items.Count revision(s) for definition</MudText>
+                <LyoIdField Compact="true" Value="@DefinitionId"/>
+            </MudStack>
+            <MudAlert Severity="Severity.Info" Dense="true">Revert copies that snapshot and appends a new revision so history stays linear.</MudAlert>
+        }
+        <LyoResponsiveTable>
+            <TableContent>
+                <MudTable Items="_items" Dense="true" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Loading="_loading">
+                    <HeaderContent>
+                        <MudTh></MudTh>
+                        <MudTh>Revision</MudTh>
+                        <MudTh>Key</MudTh>
+                        <MudTh>Type</MudTh>
+                        <MudTh>Required</MudTh>
+                        <MudTh>Encrypted</MudTh>
+                        <MudTh>Created</MudTh>
+                        <MudTh>Default</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Actions">
+                            @RevertButton(context)
+                        </MudTd>
+                        <MudTd DataLabel="Revision">@context.Revision</MudTd>
+                        <MudTd DataLabel="Key">@context.Key</MudTd>
+                        <MudTd DataLabel="Type">
+                            <LyoTruncatedText Text="@context.ForValueType"/>
+                        </MudTd>
+                        <MudTd DataLabel="Required">
+                            <LyoChip Spec="@LyoChips.FromBool(context.IsRequired, "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+                        </MudTd>
+                        <MudTd DataLabel="Encrypted">
+                            <LyoChip Spec="@LyoChips.FromBool(context.IsEncrypted, "Encrypted", "Plain", Color.Warning, Color.Default)"/>
+                        </MudTd>
+                        <MudTd DataLabel="Created">
+                            <LyoTimestamp Value="@context.CreatedTimestamp" Kind="LyoTimestampKind.Absolute"/>
+                        </MudTd>
+                        <MudTd DataLabel="Default">
+                            <LyoTruncatedText Text="@ConfigDisplay.Json(context.DefaultValue?.Json, context.IsEncrypted)"/>
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">No revisions for this definition. Save the key once to create revision 1.</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </TableContent>
+            <CardContent>
+                @if (_loading) {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
+                }
+                else if (_items.Count == 0) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">No revisions for this definition. Save the key once to create revision 1.</MudText>
+                }
+                else {
+                    @foreach (var revision in _items) {
+                        <LyoRecordCard Title="@revision.Key" Subtitle="@($"Revision {revision.Revision}")">
+                            <TitleContent>
+                                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                    <LyoChip Spec="@LyoChips.FromBool(revision.IsRequired, "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+                                    <LyoChip Spec="@LyoChips.FromBool(revision.IsEncrypted, "Encrypted", "Plain", Color.Warning, Color.Default)"/>
+                                </MudStack>
+                            </TitleContent>
+                            <Actions>
+                                @RevertButton(revision)
+                            </Actions>
+                            <ChildContent>
+                                <LyoRecordField Label="Type">
+                                    <LyoTruncatedText Text="@revision.ForValueType"/>
+                                </LyoRecordField>
+                                <LyoRecordField Label="Created">
+                                    <LyoTimestamp Value="@revision.CreatedTimestamp" Kind="LyoTimestampKind.Absolute"/>
+                                </LyoRecordField>
+                                <LyoRecordField Label="Default">
+                                    <LyoTruncatedText Text="@ConfigDisplay.Json(revision.DefaultValue?.Json, revision.IsEncrypted)"/>
+                                </LyoRecordField>
+                            </ChildContent>
+                        </LyoRecordCard>
+                    }
+                }
+            </CardContent>
+        </LyoResponsiveTable>
+    }
+</MudStack>
+
+@code {
+
+    private RenderFragment<ConfigDefinitionRevisionRecord> RevertButton => revision => @<text>
+        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning"
+                   Disabled="@_busy" OnClick="@(() => RevertAsync(revision))">
+            Revert
+        </MudButton>
+    </text>;
+
+}

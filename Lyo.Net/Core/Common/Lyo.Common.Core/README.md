@@ -1,0 +1,88 @@
+# Lyo.Common.Core
+
+The slice of the old `Lyo.Common` that nothing else has to pay for is `Lyo.Common.Core`. It holds the identifier generators, the enum vocabulary, the string and scalar extensions, the `TypeConversion` engine, the temp-spool and path helpers, cryptographic randomness, and the HTTP header and content-disposition constants — everything that needs no logger and no configuration binder.
+
+Reference this directly when you only need primitives. If you also need the record catalogs (`LyoTypeInfo`, `FileTypeInfo`, `LanguageCodeInfo`) reference [`Lyo.Common.Metadata`](../Lyo.Common.Metadata/README.md), which includes this package; for `LyoJsonSerializerOptions` and the scalar converters use [`Lyo.Common.Json`](../Lyo.Common.Json/README.md).
+
+Every namespace here sits under the package name — `Lyo.Common.Core` plus `.Conversion`, `.Attributes`, `.Extensions`, `.Enums`, `.Records`, `.Net`, `.Identifiers`, `.Security`, and `.Pathing`. There is no longer a `Lyo.Common` package or namespace: the facade that once carried that name is gone, and each sibling owns its own.
+
+## Features
+
+- **ID generators** (`Identifiers/`). `LyoGuid`, `Ksuid`, `Snowflake`, `NanoId`, `Ulid`, and `AutoIncrementIdGenerator` for thread-safe, sortable identifiers.
+- **`MediaContainer` (`Records/`).** Extensible container catalog (`Mp4`, `WebM`, `Wav`, `Mp3`, `S16le`, …) with `Format`, `Extension`, `TryFromName` / `TryFromFormat` / `TryFromExtension`, `Custom`, and `TryFromAudioFormat` (TTS `AudioFormat` stays). Lookups are thread-safe. Resolve MIME via `FileTypeInfo.FromExtension` in Metadata; Core does not reference Metadata.
+- **Enum vocabulary** (`Enums/`). `FileTypeFlags` (including `Video`), `FileSizeUnit`, `FileTypeCategory`, `LyoTypeCategory`, `PortCategory`, `HttpStatusCodeCategory`, `HttpHeaderCategory`, `HttpHeaderPresence`, `LyoTypeEditorKind`, `TextLetterCase`, `SortDirection`, `USState` / `CountryCode`, and the calendar and demographic enums. MIME strings live on `MimeTypeInfo` in [`Lyo.Common.Metadata`](../Lyo.Common.Metadata/README.md), not as a Core enum.
+- **String and scalar extensions** (`Extensions/`). `StringExtensions` (ellipsis, truncate, null/whitespace probes), `ScalarExtensions` (`ToScalar<T>` and parsing helpers), `DictionaryExtensions` (`GetValueAs<T>`), and `StreamExtensions` (copy helpers, bounded reads).
+- **`CollectionExtensions`.** Materialization helpers (`AsReadOnlyCollectionOrToList`, `AsListOrToList`) that skip a copy when the source is already the right shape.
+- **HTTP primitives** (`Net/`). `LyoHttpHeaders` (`X-Api-Key`, `Authorization`, `X-Request-Id`, `X-Correlation-Id`, plus the `CorrelationIds` probe order), `LyoContentEncodings` (`deflate` / `gzip` / `zstd` / `br` / `identity`), and `ContentDisposition.Inline` / `.Attachment`, which emit RFC 5987 `filename*` alongside an ASCII `filename` so non-Latin names survive every browser.
+- **Cryptographic random** (`Security/CryptographicRandom`). `RandomNumberGenerator`-backed int, byte, and string helpers. Other Lyo packages use this instead of `System.Random` for security-adjacent work.
+- **Conversion surface** (`Conversion/`). The `TypeConversion` engine (`GetUnderlyingType`, `ConvertTo`, `EnumOrDefault<T>`, `EnumOrNull<T>`, `IsObjectEnumerable`), `TypeConversionException` (carrying `SourceType`, `Value`, `TargetType`), and `TypeConversionExtensions`, the reflection helpers `IsNullable()`, `IsNumericType()`, `GetCollectionElementType()`, `IsCollectionType()`, `IsObjectEnumerable()`, `GetFriendlyTypeName()`, and `TryGetAsEnumerable<T>()`.
+- **`LyoReflection`.** Extension members on `Type`, `object`, `Expression`, `MemberInfo`, `PropertyInfo`, and `FieldInfo`: ignore-case `FindProperty` / `FindField` / `FindMethod`, dotted `GetPropertyValue` / `SetPropertyValue`, `TryGetMemberPath`, `PublicStaticFields<T>` catalog discovery, `IsScalar` / `IsSimple`, and `TryCreateInstance` / `DefaultValue`. Named so it does not clash with `System.Reflection`.
+- **Temp and path handling** (`Pathing/`). `PathHelpers` for cross-platform joining, normalization, and traversal rejection against a `PathStyle` (`Windows` / `Posix` / `Native`), and `TempSpool` for scratch directories and files with best-effort cleanup. `TryDeleteDirectory` / `TryDelete` return `false` rather than logging, so the caller decides whether a failed cleanup is worth a log line.
+- **`Utilities`.** File-size conversion across `FileSizeUnit` (1024-based), URI redaction for secret-looking query values, SHA256 over a buffer, path, or stream, and `GetPropertyPath` / `GetPropertyName` / `IsScalarType` wrappers over `LyoReflection`.
+- **`Disposable`.** Base class plus lambda `IAsyncDisposable` / `IDisposable` factories.
+- **`HashCodeHelpers`.** `HashCode.Combine`-style helpers for `netstandard2.0`.
+- **`StringValueAttribute`** (`Attributes/`). Attaches a string token to an enum field; the metadata extensions in `Lyo.Common.Metadata` read it.
+
+## Examples
+
+### Identifiers and scalars
+
+```csharp
+using Lyo.Common.Core.Identifiers;
+using Lyo.Common.Core.Extensions;
+
+string ksuid = Ksuid.NewId(); // sortable 27-char base62
+string nano = NanoId.New(size: 21); // url-safe random
+string ulid = Ulid.NewUlid();
+Guid guid = LyoGuid.NewSequential(); // UUID v7-style, for index locality
+
+int parsed = "42".ToScalar<int>();
+string shortened = ksuid.Truncated(start: 6, end: 20);
+```
+
+### Member paths and scalars
+
+```csharp
+using Lyo.Common.Core;
+
+object? city = person.GetPropertyValue("Address.City");
+bool isScalar = typeof(Guid?).IsScalar();
+string? path = expr.TryGetMemberPath(); // Convert-wrapped Guid? lambdas included
+```
+
+### Downloads and secure randomness
+
+```csharp
+using Lyo.Common.Core.Net;
+using Lyo.Common.Core.Security;
+
+// RFC 5987 filename* plus an ASCII fallback, so non-Latin names survive every browser.
+response.Headers["Content-Disposition"] = ContentDisposition.Attachment("отчёт.pdf");
+response.Headers[LyoHttpHeaders.CorrelationId] = correlationId;
+
+string token = CryptographicRandom.GetString(32);
+```
+
+## Identifier matrix
+
+| Generator | Sortable | Length | Notes |
+| -------------------------- | ------------- | --------------------------- | ------------------------------------------------------- |
+| `Ksuid` | (time-prefix) | 27 chars (base62) | Drop-in monotonic-ish id; good URL safety. |
+| `LyoGuid` | (sequential) | 36 chars (GUID) | UUID v7-style for DB index locality. |
+| `NanoId` | | configurable (default 21) | URL-safe random; collision rates documented per length. |
+| `Snowflake` | | int64 | Configurable worker + datacenter ids. |
+| `Ulid` | | 26 chars (Crockford base32) | ULID spec. |
+| `AutoIncrementIdGenerator` | | int64 | Pure in-process counter for tests / fixtures. |
+
+## Why this package exists
+
+A reference to `Lyo.Common` just to use an enum also dragged in a configuration binder and a logging abstraction. Record catalogs and the JSON contract now live in their own packages, so taking a dependency for `FileTypeFlags` no longer brings those along. `System.Text.Json` is still referenced here on `netstandard2.0` only, for the JSON branch of `TypeConversion`. On `net10.0` the serializer is in-box; the split is about a clearer graph, not a smaller payload.
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Exceptions` (direct, lyo)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (direct, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` (direct, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)

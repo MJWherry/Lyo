@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\Compression\Lyo.Compression.Lz4\Lyo.Compression.Lz4.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption.AesSiv\Lyo.Encryption.AesSiv.csproj"/>
+        <ProjectReference Include="..\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+    </ItemGroup>
+
+</Project>

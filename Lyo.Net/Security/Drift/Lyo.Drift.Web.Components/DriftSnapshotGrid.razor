@@ -1,0 +1,60 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="DriftSnapshotGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.RawId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@ApplyQuery"
+                      Features="@LyoDataGridFeatureFlags.All"
+                      QuickSearchProperties="@_quickSearchProperties">
+    <LeftControls>
+        @if (InstanceId is { } instanceId) {
+            <LyoChip Color="Color.Primary"
+                     OnClose="@ClearInstanceFilter" CloseIcon="@Icons.Material.Filled.Close">
+                Instance: @instanceId.ToString()[..8]
+            </LyoChip>
+        }
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View payload" aria-label="View snapshot payload"
+                                   OnClick="@(() => ViewSnapshot(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.CompareArrows" Size="Size.Small" title="Diff against" aria-label="Diff this snapshot against another"
+                                   OnClick="@(() => DiffAgainst(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" Identifier="true" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;"/>
+        <LyoProjectedColumn Field="InstanceId" Title="Instance" Identifier="true" HeaderStyle="width: 140px;"/>
+        <LyoProjectedColumn Field="Kind" Title="Kind" Align="Align.Center" HeaderStyle="width: 120px;">
+            <CellContent Context="item">
+                @{
+                    var kindText = ProjectedValueHelper.GetDisplayValue(item, "Kind");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<DriftSnapshotKind>(kindText, DriftColorHelper.ForSnapshotKind))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="WatchRoot" Title="Watch Root" QuickSearchPropertyName="WatchRoot" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="TakenAtUtc" Title="Taken" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="ContentHashAlgorithm" Title="Hash" Align="Align.Center" HeaderStyle="width: 90px;">
+            <CellContent Context="item">
+                @{
+                    var algo = ProjectedValueHelper.GetDisplayValue(item, "ContentHashAlgorithm");
+                }
+                <LyoChip Variant="Variant.Outlined" Label="@(string.IsNullOrWhiteSpace(algo) ? "—" : algo.ToLowerInvariant())"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="ContentHash" Title="Content Hash" MaxDisplayLength="16"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewSnapshot(item))">View Payload</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.CompareArrows" OnClick="@(() => DiffAgainst(item))">Diff Against…</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

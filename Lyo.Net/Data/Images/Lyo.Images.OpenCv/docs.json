@@ -1,0 +1,76 @@
+{
+  "id": "Lyo.Images.OpenCv",
+  "name": "Lyo.Images.OpenCv",
+  "area": "Data",
+  "tagline": "OpenCvSharp4 helpers for .NET. Split from higher-level pipelines (e.g. comic overlay) so hosts take native OpenCV only where they need it.",
+  "description": "OpenCvSharp4 helpers for .NET. Split from higher-level pipelines (e.g. comic overlay) so hosts take native OpenCV only where they need it.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "Inpaint a color ROI",
+      "body": "**Contract.** [`IOpenCvRoiInpaint`](IOpenCvRoiInpaint.cs) [`InpaintColorRoiPng`](IOpenCvRoiInpaint.cs) decodes a color PNG ROI, builds a binary mask (255 inside the\nrectangle, 0 elsewhere), runs OpenCV inpaint with optional Telea or Navier-Stokes ([`OpenCvInpaintAlgorithm`](OpenCvInpaintAlgorithm.cs)), and returns PNG-encoded BGR\nat the decoded source width and height.\n\n- **Without DI.** [`OpenCvRoiInpaint`](OpenCvRoiInpaint.cs) (`InpaintColorRoiPng`, `InpaintTelea`) forwards to a shared [`OpenCvRoiInpaintService`](OpenCvRoiInpaintService.cs).\n- **With DI.** [`AddOpenCvRoiInpaint()`](OpenCvImageServiceCollectionExtensions.cs) maps `IOpenCvRoiInpaint` → `OpenCvRoiInpaintService` when that mapping is not already registered.\n\nFailure codes: `OpenCvInpaint.DecodeFailed`, `OpenCvInpaint.InpaintError`."
+    },
+    {
+      "type": "paragraph",
+      "title": "Native runtimes on NuGet",
+      "text": "`OpenCvSharp4.official.runtime.linux-x64` is referenced here for Linux CI and local Linux work. On Windows or other RIDs, add the matching official runtime package to the executable (e.g. Gateway) or to this library's `.csproj`. Search NuGet for `OpenCvSharp4.official.runtime` for your OS. If native libraries fail to load, confirm the right runtime package was restored and copied next to the app output."
+    },
+    {
+      "type": "markdown",
+      "title": "How to run tests",
+      "body": "See [`../Lyo.Images.OpenCv.Tests/`](../Lyo.Images.OpenCv.Tests/). The repo uses xUnit v3 with `OutputType` Exe. Run:\n\n```bash\ndotnet run --project Lyo.Net/Data/Images/Lyo.Images.OpenCv.Tests/Lyo.Images.OpenCv.Tests.csproj\n```\n\n`dotnet test` may restore without always running the v3 in-process runner the same way. Prefer `dotnet run` for this project.\n\nTests need a working OpenCV native load, the same as a Linux host at runtime."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Images/Lyo.Images.OpenCv/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "OpenCvSharp4",
+      "kind": "package",
+      "version": "4.13.0.20260627",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "OpenCvSharp4.official.runtime.linux-x64",
+      "kind": "package",
+      "version": "4.13.0.20260627",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

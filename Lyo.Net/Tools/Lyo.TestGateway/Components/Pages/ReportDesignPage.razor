@@ -1,0 +1,10 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.ReportDesign)]
+@attribute [Route("/" + Constants.Page.ReportDesign + "/{DefinitionId:guid}")]
+@inherits AuthorizedPage
+
+<PageTitle>Report design</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-4 mb-6 px-4">
+    <Lyo.TestGateway.Components.TestGateway.ReportDesignHost DefinitionId="DefinitionId"/>
+</MudContainer>

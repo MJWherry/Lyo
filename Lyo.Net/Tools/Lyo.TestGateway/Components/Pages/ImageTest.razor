@@ -1,0 +1,10 @@
+@using Lyo.Images.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.ImageWorkbench)]
+@inherits AuthorizedPage
+
+<PageTitle>Image Workbench</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <ImageWorkbench/>
+</MudContainer>

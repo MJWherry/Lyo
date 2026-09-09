@@ -1,0 +1,43 @@
+@namespace Lyo.Formatter.Web.Components
+@implements IDisposable
+
+<MudStack Spacing="1">
+    <LyoFormatterTemplateEditor Session="_session" Label="@Label" Lines="4" Disabled="@ReadOnly"/>
+    @if (Required && string.IsNullOrWhiteSpace(_session.Template)) {
+        <MudText Typo="Typo.caption" Color="Color.Error">A template is required.</MudText>
+    }
+    <MudStack Row Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center">
+        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="TogglePreview"
+                   StartIcon="@(_showPreview ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)">
+            Preview
+        </MudButton>
+        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="ToggleTokens"
+                   StartIcon="@(_showTokens ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)">
+            @($"Available tokens ({_tokens.Count})")
+        </MudButton>
+    </MudStack>
+    @if (_showPreview) {
+        <LyoFormatterPreview Session="_session"/>
+    }
+    @if (_showTokens) {
+        <MudPaper Outlined="true" Elevation="0" Class="pa-2">
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">Click a token to append it. Values shown are examples, not the values this will resolve to at run time.</MudText>
+            <div class="lyo-fmt-token-list">
+                <MudSimpleTable Dense="true" Hover="true" Elevation="0">
+                    <tbody>
+                    @foreach (var token in _tokens) {
+                        <tr>
+                            <td>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" Disabled="@ReadOnly" OnClick="@(() => AppendToken(token))">
+                                    <code>@token.Path</code>
+                                </MudButton>
+                            </td>
+                            <td class="lyo-fmt-token-preview">@token.Preview</td>
+                        </tr>
+                    }
+                    </tbody>
+                </MudSimpleTable>
+            </div>
+        </MudPaper>
+    }
+</MudStack>

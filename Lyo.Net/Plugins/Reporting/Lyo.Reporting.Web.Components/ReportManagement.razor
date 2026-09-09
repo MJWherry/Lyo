@@ -1,0 +1,20 @@
+@inject IApiClient ApiClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudTabs @bind-ActivePanelIndex="_tabIndex" Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2">
+    <MudTabPanel Text="Definitions">
+        <ReportDefinitionGrid ApiClient="ApiClient"
+                              BaseRoute="@BaseRoute"
+                              DownloadFileAsync="DownloadFileAsync"
+                              ViewFileUrlAsync="ViewFileUrlAsync"
+                              Generated="OnGenerated"
+                              Design="Design"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Generations">
+        <ReportGenerationGrid ApiClient="ApiClient"
+                              BaseRoute="@BaseRoute"
+                              DownloadFileAsync="DownloadFileAsync"
+                              ViewFileUrlAsync="ViewFileUrlAsync"/>
+    </MudTabPanel>
+</MudTabs>

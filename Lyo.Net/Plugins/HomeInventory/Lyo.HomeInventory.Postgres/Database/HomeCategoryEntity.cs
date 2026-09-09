@@ -1,0 +1,37 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Lyo.HomeInventory.Postgres.Database;
+
+public sealed class HomeCategoryEntity
+{
+    [Key]
+    public Guid Id { get; set; }
+
+    /// <summary>tenant scope. <see langword="null" /> means system / no tenant; non-null indicates a tenant-scoped category. Present only when supplied.</summary>
+    public Guid? TenantId { get; set; }
+
+    public Guid? ParentCategoryId { get; set; }
+
+    [Required]
+    [MaxLength(300)]
+    public string Name { get; set; } = string.Empty;
+
+    [MaxLength(200)]
+    public string? Slug { get; set; }
+
+    [MaxLength(8192)]
+    public string? Description { get; set; }
+
+    public int SortOrder { get; set; }
+
+    [Required]
+    public DateTime CreatedTimestamp { get; set; }
+
+    public DateTime? UpdatedTimestamp { get; set; }
+
+    public HomeCategoryEntity? Parent { get; set; }
+
+    public List<HomeCategoryEntity> Children { get; set; } = [];
+
+    public List<HomeItemEntity> Items { get; set; } = [];
+}

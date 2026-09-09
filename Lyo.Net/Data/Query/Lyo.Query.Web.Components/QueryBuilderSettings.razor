@@ -1,0 +1,19 @@
+<MudPaper Elevation="0" Outlined="true" Class="pa-3">
+    <MudStack Spacing="1">
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+            <MudSwitch T="bool"
+                       Value="@AllowFilterDragDrop"
+                       ValueChanged="@AllowFilterDragDropChanged"
+                       Color="Color.Primary"
+                       Label="Allow filter drag/drop"/>
+            <MudSwitch T="bool"
+                       Value="@AutoSelectNewFilterNode"
+                       ValueChanged="@AutoSelectNewFilterNodeChanged"
+                       Color="Color.Primary"
+                       Label="Auto-select new filter node"/>
+        </MudStack>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            Selected filter node: @GetSelectedWhereClauseLabel()
+        </MudText>
+    </MudStack>
+</MudPaper>

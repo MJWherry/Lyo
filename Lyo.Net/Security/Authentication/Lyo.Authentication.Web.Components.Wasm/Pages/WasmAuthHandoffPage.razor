@@ -1,0 +1,31 @@
+@page "/auth/handoff"
+
+@inject WasmAuthApiClient AuthApi
+@inject WasmAuthSessionStore Sessions
+@inject WasmAuthStateProvider StateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Signing in...</PageTitle>
+
+<LyoElementRoot DefaultId="LyoWasmAuthHandoffPage" ElementId="@ElementId">
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+        <MudPaper Class="pa-6" Elevation="3">
+            <MudStack Spacing="3" AlignItems="AlignItems.Center">
+                @if (_error is null) {
+                    <MudProgressCircular Indeterminate="true"/>
+
+                    <MudText Typo="Typo.body1">Completing sign-in...</MudText>
+                }
+                else {
+                    <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Size="Size.Large"/>
+
+                    <MudText Typo="Typo.h6">Sign-in failed</MudText>
+
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">@_error</MudText>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/auth/login">Try again</MudButton>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudContainer>
+</LyoElementRoot>

@@ -1,0 +1,20 @@
+using Lyo.Api.Models.Common.Request;
+using Lyo.Api.Models.Common.Response;
+using Lyo.Discord.Models;
+using Lyo.Discord.Models.Request;
+using Lyo.Discord.Models.Response;
+using Lyo.Query.Models.Common.Request;
+
+namespace Lyo.Discord.Client.Managers;
+
+/// <summary>Attachment endpoints on the Lyo API.</summary>
+public sealed class AttachmentManager(LyoDiscordClient client)
+{
+    public Task<QueryRes<DiscordAttachmentRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
+        => client.PostAsAsync<QueryConcreteReq, QueryRes<DiscordAttachmentRes>>($"{Constants.Rest.Discord.Attachments}/QueryConcrete", request, ct: ct);
+
+    /// <summary>Submit <c>{entity}/Bulk/Upsert</c> (same contract as API <c>WithUpsertBulk</c> / <c>ApiFeatureFlag.UpsertBulk</c>).</summary>
+    public Task<UpsertBulkResult<DiscordAttachmentRes>> UpsertBulkAsync(IReadOnlyList<UpsertRequest<DiscordAttachmentReq>> requests, CancellationToken ct = default)
+        => client.PostAsAsync<IReadOnlyList<UpsertRequest<DiscordAttachmentReq>>, UpsertBulkResult<DiscordAttachmentRes>>(
+            $"{Constants.Rest.Discord.Attachments}/Bulk/Upsert", requests, ct: ct);
+}

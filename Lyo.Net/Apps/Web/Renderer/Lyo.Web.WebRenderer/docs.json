@@ -1,0 +1,255 @@
+{
+  "id": "Lyo.Web.WebRenderer",
+  "name": "Lyo.Web.WebRenderer",
+  "area": "Apps",
+  "tagline": "Server-side Razor rendering and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by **PuppeteerSharp** against a…",
+  "description": "Server-side Razor rendering and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by\n**PuppeteerSharp** against a locally-installed Chromium/Chrome browser.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register in DI ([`Extensions.cs`](Extensions.cs))",
+      "language": "csharp",
+      "code": "services.AddWebRendererServiceFromConfiguration(builder.Configuration);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "`IWebRendererService` methods",
+      "text": "Three families of operations sit on the service, plus three observability events."
+    },
+    {
+      "type": "table",
+      "title": "Render Razor components to HTML",
+      "headers": [
+        "Method (sync + `Async` overloads)",
+        "What you get"
+      ],
+      "rows": [
+        [
+          "`RenderToHtml<T>(parameterDictionary?)`",
+          "HTML string for component `T : IComponent`. Generic, `Type`, and FullName-string overloads share one code path (`LyoTypeInfo.TryResolveClrType`)."
+        ],
+        [
+          "`RenderToHtml<T, TOptions>(options)`",
+          "HTML string that passes a strongly-typed options object as the `Options` parameter."
+        ],
+        [
+          "`RenderToHtmlBytes<T>(parameterDictionary?)`",
+          "UTF-8 bytes (records a size metric)."
+        ],
+        [
+          "`RenderToHtmlBytes<T, TOptions>(options)`",
+          "Same, with typed options."
+        ],
+        [
+          "`RenderToFile<T>(filePath, parameterDictionary?)`",
+          "Writes HTML to disk at `filePath`."
+        ],
+        [
+          "`RenderToFile<T, TOptions>(filePath, options)`",
+          "Same, with typed options."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Turn HTML into PDF",
+      "headers": [
+        "Method (sync + `Async` overloads)",
+        "What you get"
+      ],
+      "rows": [
+        [
+          "`ConvertHtmlToPdf(string htmlContent)`",
+          "PDF bytes from an HTML string."
+        ],
+        [
+          "`ConvertHtmlToPdf(byte[] htmlBytes)`",
+          "PDF bytes from already-encoded HTML."
+        ],
+        [
+          "`ConvertHtmlToPdfFromFile(string htmlFilePath)`",
+          "PDF bytes from an HTML file on disk."
+        ],
+        [
+          "`ConvertHtmlToPdfFile(string htmlContent, string pdfFilePath)`",
+          "Writes PDF to `pdfFilePath`."
+        ],
+        [
+          "`ConvertHtmlToPdfFile(byte[] htmlBytes, string pdfFilePath)`",
+          "Same, from bytes."
+        ],
+        [
+          "`ConvertHtmlFileToPdfFile(string htmlFilePath, string? pdfFilePath = null)`",
+          "End-to-end file → file (PDF path defaults to `<htmlFilePath>.pdf` when null)."
+        ]
+      ],
+      "trail": "> Only Razor render and HTML→PDF are on the current interface; there is no in-process screenshot API. For raw screenshots, use PuppeteerSharp directly through `BrowserExePath`."
+    },
+    {
+      "type": "paragraph",
+      "title": "Events",
+      "text": "`ComponentRenderedToBytes`, `ComponentRendered`, `ComponentSavedToFile` fire after the matching render operations and carry the resulting payload plus parameter and options snapshots, used for archival or diffing."
+    },
+    {
+      "type": "table",
+      "title": "Options ([`WebRenderOptions`](WebRenderOptions.cs))",
+      "headers": [
+        "Property",
+        "Default",
+        "What it controls"
+      ],
+      "rows": [
+        [
+          "`BrowserExePath`",
+          "`Utilities.DetectBrowserPath(SupportedBrowser.Chrome)`",
+          "Chromium/Chrome executable path PuppeteerSharp uses for HTML→PDF."
+        ],
+        [
+          "`EnableMetrics`",
+          "`false`",
+          "When `true` and an `IMetrics` is registered, records timers/counters/gauges (see below)."
+        ]
+      ],
+      "lead": "`WebRenderOptions` is the configuration section name.",
+      "trail": "The service uses `NullMetrics.Instance` when `EnableMetrics` is `false` (default), so registering `IMetrics` is optional.\n\nMetrics emitted (see [`Constants.cs`](Constants.cs)) include `webrenderer.render_to_html(.bytes|_to_file).{duration,success,failure,size_bytes}` and\n`webrenderer.convert_html_to_pdf.{duration,success,failure,size_bytes,input_size_bytes}`, tagged with `component_type` / `operation`."
+    },
+    {
+      "type": "paragraph",
+      "title": "Register in DI ([`Extensions.cs`](Extensions.cs))",
+      "text": "The `WebRenderOptions` configuration section is bound, then a scoped `Microsoft.AspNetCore.Components.Web.HtmlRenderer` (host `IServiceProvider` and `ILoggerFactory`) and a scoped `IWebRendererService` → `WebRendererService` are registered. Registered `ILogger<WebRendererService>` and `IMetrics` are consumed when present. `configSectionName` selects a non-default section. There is no inline-options overload. To skip configuration binding, register `WebRenderOptions` yourself before the extension runs."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Web/Renderer/Lyo.Web.WebRenderer/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.Components.Web",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "PuppeteerSharp",
+      "kind": "package",
+      "version": "24.0.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

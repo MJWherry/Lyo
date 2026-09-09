@@ -1,0 +1,78 @@
+using System.Collections.Concurrent;
+using Lyo.Authentication.Models.Format;
+using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Security;
+using Lyo.Exceptions;
+
+namespace Lyo.Authentication.OpenIdConnect.Handoff;
+
+/// <summary>
+/// Single-process <see cref="IHandoffCodeStore" /> backed by a <see cref="ConcurrentDictionary{TKey,TValue}" />. Fine for single-instance dev/test and for
+/// hosts where the consumer exchanges the code in the same process that issued it. For multi-instance production use a distributed implementation
+/// (Redis/Postgres).
+/// </summary>
+public sealed class InMemoryHandoffCodeStore : IHandoffCodeStore
+{
+    /// <summary>Wire prefix on every issued id (<c>lyoh_</c>).</summary>
+    public const string IdPrefix = "lyoh_";
+
+    private readonly ConcurrentDictionary<string, Entry> _entries = new(StringComparer.Ordinal);
+    private readonly Func<DateTime> _now;
+
+    /// <summary>Builds a store using <see cref="DateTime.UtcNow" /> for expiry checks.</summary>
+    public InMemoryHandoffCodeStore()
+        : this(static () => DateTime.UtcNow) { }
+
+    /// <summary>Builds a store with an injectable clock for tests.</summary>
+    public InMemoryHandoffCodeStore(Func<DateTime> nowProvider)
+    {
+        ArgumentHelpers.ThrowIfNull(nowProvider);
+        _now = nowProvider;
+    }
+
+    /// <inheritdoc />
+    public Task StoreAsync(LyoHandoffCode code, TimeSpan ttl, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(code);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(code.Id);
+        if (ttl <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(ttl), "Handoff code TTL must be positive.");
+
+        var expires = _now() + ttl;
+        _entries[code.Id] = new(code, expires);
+        SweepExpired();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<LyoHandoffCode?> ConsumeAsync(string id, string callerOrigin, CancellationToken ct = default)
+    {
+        if (id.IsNullOrWhitespace() || callerOrigin.IsNullOrWhitespace())
+            return Task.FromResult<LyoHandoffCode?>(null);
+
+        if (!_entries.TryRemove(id, out var entry))
+            return Task.FromResult<LyoHandoffCode?>(null);
+
+        if (_now() >= entry.ExpiresAt)
+            return Task.FromResult<LyoHandoffCode?>(null);
+
+        if (!string.Equals(entry.Code.IssuedTo, callerOrigin, StringComparison.OrdinalIgnoreCase))
+            return Task.FromResult<LyoHandoffCode?>(null);
+
+        return Task.FromResult<LyoHandoffCode?>(entry.Code);
+    }
+
+    /// <summary>Generates a fresh handoff id using a cryptographically secure RNG (16 bytes → ~122 bits of entropy). Wire form <c>lyoh_&lt;base64url&gt;</c>.</summary>
+    public static string NewId() => IdPrefix + Base64Url.Encode(CryptographicRandom.GetBytes(16));
+
+    private void SweepExpired()
+    {
+        var now = _now();
+        foreach (var kvp in _entries) {
+            if (now >= kvp.Value.ExpiresAt)
+                _entries.TryRemove(kvp.Key, out var _);
+        }
+    }
+
+    private readonly record struct Entry(LyoHandoffCode Code, DateTime ExpiresAt);
+}

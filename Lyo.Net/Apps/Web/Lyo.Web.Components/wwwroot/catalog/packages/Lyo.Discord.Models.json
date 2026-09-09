@@ -1,0 +1,202 @@
+{
+  "id": "Lyo.Discord.Models",
+  "name": "Lyo.Discord.Models",
+  "area": "Integration",
+  "tagline": "Wire-level DTOs and shared constants for the Discord integration. `Lyo.Discord.Client` (typed HTTP client) and `Lyo.Discord.Postgres` (API host + persistence) both use these so request and response shapes stay aligned.",
+  "description": "Wire-level DTOs and shared constants for the Discord integration. Used by [`Lyo.Discord.Client`](../Lyo.Discord.Client/README.md) (typed HTTP client) and [`Lyo.Discord.Postgres`](../Lyo.Discord.Postgres/README.md) (API host + persistence) so request and response shapes stay aligned.",
+  "features": [],
+  "examples": [],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Inbound DTOs ([`Request/`](Request))",
+      "text": "Mutable request DTOs that the API host maps onto its EF entities (CRUD hooks stamp audit timestamps, not clients). One per Discord domain entity: `DiscordUserReq`, `DiscordGuildReq`, `DiscordChannelReq`, `DiscordEmojiReq`, `DiscordRoleReq`, `DiscordInteractionReq`, `DiscordMessageReq`, `DiscordAttachmentReq`, `DiscordMemberReq`."
+    },
+    {
+      "type": "paragraph",
+      "title": "Outbound DTOs ([`Response/`](Response))",
+      "text": "Sealed `record`s for read shapes (usually a subset of entity columns, omitting audit timestamps): `DiscordUserRes`, `DiscordGuildRes`, `DiscordChannelRes`, `DiscordEmojiRes`, `DiscordRoleRes`, `DiscordInteractionRes`, `DiscordMessageRes`, `DiscordAttachmentRes`, `DiscordMemberRes`."
+    },
+    {
+      "type": "table",
+      "title": "Guild-level settings ([`DiscordGuildSettings.cs`](DiscordGuildSettings.cs))",
+      "headers": [
+        "Property",
+        "Description"
+      ],
+      "rows": [
+        [
+          "`Version`",
+          "Schema version (`CurrentSchemaVersion = 3`); advanced through `NormalizeForRead` / `NormalizeForPersistence`."
+        ],
+        [
+          "`CommandChannelId`",
+          "Channel where the bot accepts commands (`null` = no channel restriction)."
+        ],
+        [
+          "`LogChannelId`",
+          "Channel where the bot posts errors and operational notices (`null` = disabled)."
+        ],
+        [
+          "`AdminRoleId`",
+          "Role treated as server admin for bot permission checks."
+        ],
+        [
+          "`ModRoleId`",
+          "Role treated as moderator for bot permission checks."
+        ],
+        [
+          "`Revision`",
+          "Monotonic config-binding revision; filled on read, cleared before write so it is never persisted."
+        ],
+        [
+          "`ComicReaderChannelId`",
+          "When set, comic reading is limited to this channel."
+        ],
+        [
+          "`ComicDefaultLanguage`",
+          "Optional BCP-47 language filter for comic search and chapter lists."
+        ],
+        [
+          "`ComicNsfwAllowed`",
+          "When false (default), comic reading is rejected in NSFW channels."
+        ]
+      ],
+      "lead": "`DiscordGuildSettings` is the document the config store persists under `EntityRef.For<DiscordGuild>(guildId)`. Versioned so older snapshots can be upgraded:",
+      "trail": "`NormalizeForRead()` upgrades older snapshots in-place (e.g. v1 → v2 → v3). `NormalizeForPersistence()` calls `NormalizeForRead()` and stamps `Version = CurrentSchemaVersion`\nbefore save."
+    },
+    {
+      "type": "table",
+      "title": "Shared route constants ([`Constants.cs`](Constants.cs))",
+      "headers": [
+        "Constant / helper",
+        "Value"
+      ],
+      "rows": [
+        [
+          "`Route`",
+          "`\"Discord\"`"
+        ],
+        [
+          "`Users`, `Guilds`, `Channels`, `Emojis`, `Roles`, `Interactions`, `Messages`, `Attachments`, `Members`",
+          "`\"Discord/User\"`, `\"Discord/Guild\"`, etc."
+        ],
+        [
+          "`GuildSettings(guildId)`",
+          "`Discord/Guild/{guildId}/GuildSettings`"
+        ],
+        [
+          "`GuildSettingsRevisions(guildId)`",
+          "`Discord/Guild/{guildId}/GuildSettings/Revisions`"
+        ],
+        [
+          "`GuildSettingsRevert(guildId, revision)`",
+          "`Discord/Guild/{guildId}/GuildSettings/Revert/{revision}`"
+        ]
+      ],
+      "lead": "`Constants.Rest.Discord` holds route segments shared by client managers and host endpoints:"
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Discord/Lyo.Discord.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

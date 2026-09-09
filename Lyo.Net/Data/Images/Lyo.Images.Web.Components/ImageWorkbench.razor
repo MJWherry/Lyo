@@ -1,0 +1,275 @@
+@using Lyo.Common.Core.Enums;
+@using Lyo.Result
+@using Lyo.Web.Components.FileUpload
+@using ResizeMode = Lyo.Images.Models.ResizeMode
+@inject IImageService ImageService
+@inject IJsInterop Js
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Image Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Upload one image, inspect metadata/palette, and apply common image operations using your image library.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Source image</MudText>
+                            <LyoFileUpload MaxFiles="1"
+                                           ValidFileTypes="FileTypeFlags.Images"
+                                           ButtonText="Choose image"
+                                           InlineLayout="true"
+                                           OnClientFileReady="OnClientFileReadyAsync"
+                                           OnClientFileRemoved="OnClientFileRemovedAsync"/>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Palette</MudText>
+                            <MudNumericField T="int" Label="Color count" Min="1" Max="256" @bind-Value="_paletteColorCount"/>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExtractPaletteAsync" Disabled="@(!HasImage || _busy)">
+                                Extract palette
+                            </MudButton>
+
+                            @if (_paletteColors.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No palette yet.</MudText>
+                            }
+                            else {
+                                <MudGrid Spacing="1">
+                                    @foreach (var color in _paletteColors) {
+                                        <MudItem xs="4" sm="3">
+                                            <MudPaper Class="pa-1" Outlined="true">
+                                                <div style="height: 28px; border-radius: 4px; background-color: @color; border: 1px solid var(--mud-palette-lines-default);"></div>
+                                                <MudText Typo="Typo.caption">@color</MudText>
+                                            </MudPaper>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Operations</MudText>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Resize</MudText>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="W" Min="1" Max="8192" Margin="Margin.Dense" @bind-Value="_resizeWidth"/>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="H" Min="1" Max="8192" Margin="Margin.Dense" @bind-Value="_resizeHeight"/>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ResizeMode" Label="Mode" Margin="Margin.Dense" @bind-Value="_resizeMode">
+                                            @foreach (var mode in Enum.GetValues<ResizeMode>()) {
+                                                <MudSelectItem Value="@mode">@mode</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_resizeFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_resizeQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="4" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyResizeAsync" Disabled="@(!HasImage || _busy)">
+                                            Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Crop</MudText>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="X" Min="0" Max="8192" Margin="Margin.Dense" @bind-Value="_cropX"/>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="Y" Min="0" Max="8192" Margin="Margin.Dense" @bind-Value="_cropY"/>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="W" Min="1" Max="8192" Margin="Margin.Dense" @bind-Value="_cropWidth"/>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="H" Min="1" Max="8192" Margin="Margin.Dense" @bind-Value="_cropHeight"/>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_cropFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_cropQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="4" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyCropAsync" Disabled="@(!HasImage || _busy)">Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Rotate</MudText>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="float" Label="Degrees" Min="-3600" Max="3600" Margin="Margin.Dense" Value="_rotateDegrees"
+                                                         ValueChanged="OnRotateDegreesChangedAsync" Immediate="true"/>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_rotateFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_rotateQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="6">
+                                        <MudSwitch T="bool" @bind-Value="_liveRotate" Color="Color.Primary" Label="Live rotate"/>
+                                    </MudItem>
+                                    <MudItem xs="6" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyRotateAsync"
+                                                   Disabled="@(!HasImage || _busy || _liveRotate)">Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Compress</MudText>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_compressFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_compressQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="4" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyCompressAsync" Disabled="@(!HasImage || _busy)">
+                                            Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Convert format</MudText>
+                                    </MudItem>
+                                    <MudItem xs="6">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_convertFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_convertQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="3" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyConvertFormatAsync"
+                                                   Disabled="@(!HasImage || _busy)">Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudButton Variant="Variant.Outlined" OnClick="ResetToOriginalAsync" Disabled="@(!CanReset || _busy)">
+                                Reset to original
+                            </MudButton>
+                        </MudStack>
+                    </MudPaper>
+
+                    <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.h6">Preview</MudText>
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadCurrentAsync" Disabled="@(!HasImage || _busy)">
+                                Download
+                            </MudButton>
+                        </MudStack>
+
+                        @if (string.IsNullOrWhiteSpace(_previewDataUrl)) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Upload an image to preview.</MudText>
+                        }
+                        else {
+                            <MudPaper Class="pa-4 d-flex justify-center mt-2" Outlined="true">
+                                <img src="@_previewDataUrl" alt="Image preview" style="max-width: 100%; height: auto; border: 1px solid var(--mud-palette-lines-default);"/>
+                            </MudPaper>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-2">Metadata</MudText>
+                        @if (_metadata == null) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">No image metadata yet.</MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Format</strong></td>
+                                    <td>@_metadata.Format</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dimensions</strong></td>
+                                    <td>@($"{_metadata.Width} x {_metadata.Height}")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>File size</strong></td>
+                                    <td>@(_metadata.FileSizeBytes.HasValue ? $"{_metadata.FileSizeBytes.Value:N0} bytes" : "Unknown")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Has alpha</strong></td>
+                                    <td>@_metadata.HasAlpha</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>

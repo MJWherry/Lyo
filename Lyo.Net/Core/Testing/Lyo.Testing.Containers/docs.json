@@ -1,0 +1,245 @@
+{
+  "id": "Lyo.Testing.Containers",
+  "name": "Lyo.Testing.Containers",
+  "area": "Core",
+  "tagline": "Testcontainers fixtures for xUnit v3 covering Redis, RabbitMQ, and PostgreSQL, plus a DI-wired Postgres service fixture.",
+  "description": "Testcontainers fixtures for xUnit v3. The shipped helpers start and dispose Redis, RabbitMQ, and PostgreSQL containers, and `ContainerTestHost` covers backends with no\nTestcontainers module of their own.\n\nInternal-only: `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects. Do not pack it.",
+  "features": [
+    "**Per-backend containers and fixtures.** `RabbitMqTestContainer` / `RabbitMqContainerFixtureBase`, `PostgresTestContainer` / `PostgresContainerFixtureBase`, and `RedisTestContainer` / `RedisContainerFixtureBase`, each with an `*ContainerOptions` class exposing `Image` and a `ConfigureBuilder` hook.",
+    "**`PostgresServiceFixtureBase<TContext>`.** The shape almost every `Lyo.*.Postgres.Tests` fixture needs: starts a Postgres container, builds a `ServiceProvider` from the abstract `ConfigureServices(services, connectionString)`, migrates `TContext`, then exposes `ContextFactory`, `ServiceProvider`, and `CreateScope()`. Override `OnMigratedAsync` to seed and `MinimumLogLevel` to change log verbosity.",
+    "**`ContainerTestHost.TryStartAsync`.** Starts a raw `ContainerBuilder` container and returns `null` (rather than throwing) when Docker is unavailable, so integration suites skip cleanly instead of failing. Takes an optional `readyDelay` for servers whose wait strategy fires before they accept connections."
+  ],
+  "examples": [
+    {
+      "title": "xUnit v3 class fixture",
+      "language": "csharp",
+      "code": "using Lyo.Testing.Containers;\n\npublic sealed class MyFeatureFixture : PostgresContainerFixtureBase\n{\n    protected override async ValueTask OnContainerStartedAsync(string connectionString, CancellationToken ct)\n    {\n        // e.g. apply EF Core migrations against the new database\n        using var ctx = new MyDbContext(BuildContextOptions(connectionString));\n        await ctx.Database.MigrateAsync(ct);\n    }\n\n    private static DbContextOptions<MyDbContext> BuildContextOptions(string connectionString) =>\n        new DbContextOptionsBuilder<MyDbContext>().UseNpgsql(connectionString).Options;\n}\n\npublic sealed class MyFeatureTests(MyFeatureFixture fixture) : IClassFixture<MyFeatureFixture>\n{\n    [Fact]\n    public async Task ConnectsAndQueries()\n    {\n        using var ctx = new MyDbContext(new DbContextOptionsBuilder<MyDbContext>()\n            .UseNpgsql(fixture.ConnectionString).Options);\n        Assert.NotNull(await ctx.Database.GetDbConnection().ServerVersionAsync());\n    }\n}"
+    },
+    {
+      "title": "Customize the container",
+      "language": "csharp",
+      "code": "public sealed class TrgmFixture() : PostgresContainerFixtureBase(new PostgresContainerOptions {\n    Image = \"postgres:17-alpine\",\n    ConfigureBuilder = builder => builder\n        .WithEnvironment(\"POSTGRES_DB\", \"lyo_tests\")\n        .WithCommand(\"postgres\", \"-c\", \"shared_preload_libraries=pg_trgm\"),\n});"
+    },
+    {
+      "title": "Standalone use (no fixture)",
+      "language": "csharp",
+      "code": "await using var container = new PostgresTestContainer();\nawait container.StartAsync(ct);\nvar connectionString = container.ConnectionString;\n\nawait using var broker = new RabbitMqTestContainer();\nawait broker.StartAsync(ct);\nvar (host, port, adminUrl) = (broker.Host, broker.Port, broker.AdminUrl);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Types",
+      "headers": [
+        "Type",
+        "Role"
+      ],
+      "rows": [
+        [
+          "`PostgresTestContainer`",
+          "`IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`."
+        ],
+        [
+          "`PostgresContainerOptions`",
+          "`Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, and similar."
+        ],
+        [
+          "`PostgresContainerFixtureBase`",
+          "Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`."
+        ],
+        [
+          "`RabbitMqTestContainer`",
+          "`IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`."
+        ],
+        [
+          "`RabbitMqContainerOptions`",
+          "`Image` (defaults to `rabbitmq:4-management-alpine`, which must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook."
+        ],
+        [
+          "`RabbitMqContainerFixtureBase`",
+          "Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown."
+        ],
+        [
+          "`RedisTestContainer`",
+          "`IAsyncDisposable` wrapper around `RedisContainer`. Call `StartAsync(CancellationToken)`, then read `ConnectionString`."
+        ],
+        [
+          "`RedisContainerOptions`",
+          "`Image` (defaults to `redis:7-alpine`) and optional `ConfigureBuilder(Action<RedisBuilder>)` hook."
+        ],
+        [
+          "`RedisContainerFixtureBase`",
+          "Abstract xUnit `IAsyncLifetime` fixture exposing `ConnectionString`, with the same `OnContainerStartedAsync` / `OnContainerDisposingAsync` hooks as the other fixtures."
+        ],
+        [
+          "`PostgresServiceFixtureBase<TContext>`",
+          "Postgres fixture that also owns a DI container. Implement `ConfigureServices(services, connectionString)`; the base builds the provider, runs `MigrateAsync`, calls `OnMigratedAsync` for seeding, and exposes `ServiceProvider`, `ContextFactory`, and `CreateScope()`. `OnContainerStartedAsync` is sealed."
+        ],
+        [
+          "`ContainerTestHost.TryStartAsync(image, configure, ct, readyDelay)`",
+          "Raw `ContainerBuilder` start for backends without a Testcontainers module. Returns `null` and disposes the partial container when the start fails, so callers can skip instead of fail."
+        ]
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Sharing one container across an assembly",
+      "body": "```csharp\n[assembly: AssemblyFixture(typeof(MyFeatureFixture))]\n```\n\nBecause `OnContainerStartedAsync` runs exactly once and `OnContainerDisposingAsync` runs once at teardown, `PostgresContainerFixtureBase` is safe as an assembly fixture.\n"
+    },
+    {
+      "type": "markdown",
+      "title": "RabbitMQ fixture",
+      "body": "The same fixture pattern is `RabbitMqContainerFixtureBase`. `Lyo.MessageQueue.RabbitMq.Tests` drives\n`RabbitMqService` against a live broker with it:\n\n```csharp\npublic sealed class RabbitMqBrokerFixture : RabbitMqContainerFixtureBase\n{\n    public RabbitMqService CreateService(Action<RabbitMqOptions>? configure = null)\n    {\n        var options = new RabbitMqOptions { Host = Host, Port = Port, AdminUrl = AdminUrl, Username = Username, Password = Password };\n        configure?.Invoke(options);\n        var factory = new ConnectionFactory { HostName = options.Host, Port = options.Port, UserName = options.Username, Password = options.Password };\n        return new(options, factory);\n    }\n}\n\n[assembly: AssemblyFixture(typeof(RabbitMqBrokerFixture))]\n```\n\nPeek and queue-statistics tests need the management HTTP API (`AdminUrl`), which the fixture exposes.\n"
+    },
+    {
+      "type": "list",
+      "title": "See also",
+      "items": [
+        "`Lyo.Testing`. Shared assertion, fake, and time-control helpers used by tests across the solution.",
+        "Testcontainers for .NET documentation. Builder configuration (volumes, networks, wait strategies)."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Testing/Lyo.Testing.Containers/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Console",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Testcontainers",
+      "kind": "package",
+      "version": "4.13.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Testcontainers.PostgreSql",
+      "kind": "package",
+      "version": "4.13.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Testcontainers.RabbitMq",
+      "kind": "package",
+      "version": "4.13.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Testcontainers.Redis",
+      "kind": "package",
+      "version": "4.13.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "xunit.v3.extensibility.core",
+      "kind": "package",
+      "version": "3.2.2",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

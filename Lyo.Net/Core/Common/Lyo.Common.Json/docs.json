@@ -1,0 +1,93 @@
+{
+  "id": "Lyo.Common.Json",
+  "name": "Lyo.Common.Json",
+  "area": "Core",
+  "tagline": "`LyoJsonSerializerOptions` — the HTTP JSON contract every Lyo API and first-party client shares — plus opt-in converters for upstreams that quote their scalars.",
+  "description": "The JSON contract Lyo APIs, clients, and message-queue envelopes serialize against lives in `Lyo.Common.Json`: camelCase properties, case-insensitive reads, nulls omitted on write, camelCase string enums, and `ReferenceHandler.IgnoreCycles` so EF-shaped graphs serialize without blowing up.\n\nConverters under `JsonConverters/` stay **unregistered** by default. They exist for vendor payloads that quote numbers or spell booleans as `0` / `1`; add them per integration through `LyoJsonSerializerOptionsBuilder`.\n\n[`Lyo.Common.Metadata`](../Lyo.Common.Metadata/README.md) is intentionally not referenced. The two converters that need registry records ship there, which keeps both packages acyclic. Namespaces match the package: options are `Lyo.Common.Json.LyoJsonSerializerOptions` and converters live in `Lyo.Common.Json.JsonConverters`.",
+  "features": [
+    "**`LyoJsonSerializerOptions`.** `Create()` returns a fresh options instance — safe to hand to DI or mutate further — and `Create(configure)` applies a delegate to it. `ApplyTo(target)` copies the defaults onto an existing instance for ASP.NET Core's `ConfigureHttpJsonOptions`, which requires in-place mutation, and skips converters already present.",
+    "**`LyoJsonSerializerOptionsBuilder`.** Fluent composition over the defaults, or over a supplied baseline: `AddConverter`, `WithWriteIndented`, `WithDefaultIgnoreCondition`, then `Build()` for a copy.",
+    "**`ObjectJsonConverter`.** Opt-in STJ adapter over `TypeConversion.FromJsonElement`: `object` properties and collection items deserialize as CLR primitives (string, number, bool, list) instead of `JsonElement`.",
+    "**String-wrapped booleans.** `StringIntBoolConverter` and its nullable counterpart accept real JSON booleans, numbers, and quoted spellings alike.",
+    "**`StringEnumConverter<TEnum>`.** Enum round-tripping for a specific enum type, for the cases where the suite-wide `JsonStringEnumConverter` naming policy is not what the upstream sends.",
+    "**`StringDateTimeConverter`.** Constructed with the exact formats an integration uses (`params string[] formats`), for upstreams whose timestamps are not round-trippable."
+  ],
+  "examples": [
+    {
+      "title": "Serialize against the shared contract",
+      "language": "csharp",
+      "code": "using Lyo.Common.Json;\n\nvar options = LyoJsonSerializerOptions.Create();\nvar json = JsonSerializer.Serialize(dto, options);\nvar back = JsonSerializer.Deserialize<MyDto>(json, options);"
+    },
+    {
+      "title": "Apply the defaults to ASP.NET Core",
+      "language": "csharp",
+      "code": "using Lyo.Common.Json;\n\n// ConfigureHttpJsonOptions hands you the live instance, so copy onto it rather than replacing it.\nbuilder.Services.ConfigureHttpJsonOptions(o => LyoJsonSerializerOptions.ApplyTo(o.SerializerOptions));"
+    },
+    {
+      "title": "A variant for one integration",
+      "language": "csharp",
+      "code": "using Lyo.Common.Json;\nusing Lyo.Common.Json.JsonConverters;\n\n// This upstream quotes its numbers and sends booleans as 0/1.\nvar options = new LyoJsonSerializerOptionsBuilder()\n    .AddConverter(new StringIntConverter())\n    .AddConverter(new StringIntBoolConverter())\n    .AddConverter(new StringDateTimeConverter(\"yyyyMMdd\", \"yyyy-MM-dd HH:mm\"))\n    .Build();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Why record converters live in the other package",
+      "text": "`SocialPlatformInfoJsonConverter` and `LanguageCodeInfoJsonConverter` resolve a code to a registry record, so they would drag `Lyo.Common.Metadata` in behind them. Keeping them on the metadata side means a project that only wants the scalar converters does not acquire the catalogs, and neither package references the other."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Common/Lyo.Common.Json/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

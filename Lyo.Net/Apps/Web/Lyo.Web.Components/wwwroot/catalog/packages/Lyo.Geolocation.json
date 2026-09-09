@@ -1,0 +1,142 @@
+{
+  "id": "Lyo.Geolocation",
+  "name": "Lyo.Geolocation",
+  "area": "Core",
+  "tagline": "Geospatial operations and persistence contracts that do not pick a vendor.",
+  "description": "Geospatial operations and persistence contracts that do not pick a vendor.\n\n**Archetype A (Lyo domain).** Vendor Maps clients (e.g. [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md)) are Archetype C under `Integration/{Vendor}/`. See [package layout](../../../docs/package-layout.md).",
+  "features": [],
+  "examples": [
+    {
+      "title": "How a consumer composes this",
+      "language": "csharp",
+      "code": "// Host project references: Lyo.Geolocation.Postgres, Lyo.Google.Geolocation.Client, …\nservices.AddPostgresGeolocationStoreFromConfiguration(configuration);\nservices.AddGoogleMapsClientFromConfiguration(configuration);\nservices.AddGoogleMapsGeolocationService();\n\n// Ingest: call IGeolocationService, map to Address + EntitySourceRecord, then:\nawait geolocationStore.SaveAddressAsync(address, ct);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Assemblies",
+      "headers": [
+        "Package",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "[`Lyo.Geolocation.Models`](../Lyo.Geolocation.Models/README.md)",
+          "Domain DTOs (`GeocodeResult`, `Address`, `Route`, …)"
+        ],
+        [
+          "`Lyo.Geolocation` (this)",
+          "`IGeolocationService`, `IGeolocationStore`, `GeolocationQueryKey`, `GeolocationMath`"
+        ],
+        [
+          "[`Lyo.Geolocation.Postgres`](../Lyo.Geolocation.Postgres/README.md)",
+          "EF Core persistence (`geolocation` schema)"
+        ]
+      ],
+      "trail": "HTTP clients and vendor SDKs are not referenced here. Wire providers and import mappers in the host (API, worker, tool)."
+    },
+    {
+      "type": "paragraph",
+      "title": "`IGeolocationService`",
+      "text": "The contract for routing, geocoding, distance, and time zone work (implementations live in separate integration packages)."
+    },
+    {
+      "type": "list",
+      "title": "`IGeolocationStore`",
+      "items": [
+        "Canonical rows in `geolocation.address`",
+        "`geolocation.address_source`. Import provenance: `source_entity_*` + `imported_at` (owner `address_id` on parent). The importing app supplies external type strings, for example `GoogleMapsPlace`.",
+        "`SaveAddressAsync` / `GetBySourceAsync` (matches `source_entity_*`). Parent `Address` implements `IEntitySourceDerived` (`Sources`, optional `LocallyModifiedAt`)."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "How a consumer composes this",
+      "text": "The API or worker registers provider(s) and the store, and maps vendor DTOs onto `Address` + `Sources`. Vendor-specific `EntityRef` type names (for example `GoogleMapsPlace`) belong in the integration package that does the mapping, not this assembly."
+    },
+    {
+      "type": "paragraph",
+      "title": "Related reading",
+      "text": "Internal people rows with their own `*_source` tables: [`Lyo.People.Models`](../People/Lyo.People.Models/README.md). At import time, link across stores with `EntityRef`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Geolocation/Lyo.Geolocation/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Geolocation.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

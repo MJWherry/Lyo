@@ -1,0 +1,10 @@
+/* Type and Shape sit side by side while there is room, then Shape wraps under Type instead of squeezing both. */
+.lyo-type-element {
+    flex: 1 1 176px;
+    min-width: 150px;
+}
+
+.lyo-type-shape {
+    flex: 0 1 116px;
+    min-width: 96px;
+}

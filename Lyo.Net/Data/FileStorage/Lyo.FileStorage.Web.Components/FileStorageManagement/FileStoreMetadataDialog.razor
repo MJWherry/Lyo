@@ -1,0 +1,11 @@
+@using Lyo.FileMetadataStore.Models
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
+
+<MudDialog>
+    <DialogContent>
+        <FileStoreMetadataTable Metadata="Metadata"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>

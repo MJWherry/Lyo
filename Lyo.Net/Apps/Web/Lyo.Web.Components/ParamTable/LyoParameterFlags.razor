@@ -1,0 +1,18 @@
+@namespace Lyo.Web.Components.ParamTable
+
+@if (HasAny) {
+    <MudStack Row="@Horizontal" Wrap="Wrap.Wrap" Spacing="@(Horizontal ? 2 : 0)" AlignItems="@(Horizontal ? AlignItems.Center : AlignItems.Start)">
+        @if (ShowRequired) {
+            <MudCheckBox T="bool" Value="@Item.Required" ValueChanged="OnRequiredChanged"
+                         Label="Required" Dense="true" Class="ma-0"/>
+        }
+        @if (ShowEncrypt) {
+            <MudCheckBox T="bool" Value="@Item.IsEncrypted" ValueChanged="OnEncryptChanged"
+                         Label="Encrypt" Dense="true" Color="Color.Warning" Class="ma-0"/>
+        }
+        @if (ShowEnabled) {
+            <MudCheckBox T="bool" Value="@Item.Enabled" ValueChanged="OnEnabledChanged"
+                         Label="Enabled" Dense="true" Class="ma-0"/>
+        }
+    </MudStack>
+}

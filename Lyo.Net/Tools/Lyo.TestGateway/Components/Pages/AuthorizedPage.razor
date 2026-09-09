@@ -1,0 +1,10 @@
+@using System.Security.Claims
+@using Lyo.TestGateway.Stores
+@using Lyo.Web.Components.Models
+@implements IDisposable
+
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IUserStore UserStore
+@inject NavigationManager NavigationManager
+
+<PageTitle>@PageName</PageTitle>

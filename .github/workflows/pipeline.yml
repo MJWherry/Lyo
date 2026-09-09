@@ -1,0 +1,302 @@
+# Dispatcher: build / pack / publish Lyo libraries.
+# Auto-runs only on push to main (release → nuget.org).
+# Every other branch, including dev, is Actions → Run workflow.
+# Tests run from _test.yml on workflow_dispatch when channel=preview (Category=Fast). Never auto on main/release.
+name: CI - Pipeline
+# Same shape as job titles (CI - {branch} - v{version}). run-name is frozen at
+# dispatch, so empty version uses preview.{run_number} (off main) or #{run_number}.
+run-name: "${{ format('CI - {0} - {1}{2}', github.ref_name, github.event_name == 'workflow_dispatch' && inputs.version && format('v{0}{1}', inputs.version, (github.ref_name != 'main' || inputs.channel == 'preview') && !contains(inputs.version, '-') && format('-preview.{0}', github.run_number) || '') || github.ref_name != 'main' && format('preview.{0}', github.run_number) || format('#{0}', github.run_number), github.event_name == 'workflow_dispatch' && inputs.dry_run && ' dry-run' || '') }}"
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: What to pack
+        required: true
+        type: choice
+        options:
+          - changed
+          - named
+          - all
+        default: changed
+      packages:
+        description: "Names or globs when scope=named (space-separated)"
+        required: false
+        type: string
+        default: ""
+      since:
+        description: "Git ref for scope=changed (empty = last v* tag, else HEAD~1)"
+        required: false
+        type: string
+        default: ""
+      version:
+        description: "SemVer. Empty = latest v* tag (patch-bump) or the tag on HEAD. Preview adds -preview.<run_number>."
+        required: false
+        type: string
+        default: ""
+      stages:
+        description: Which stages to run
+        required: true
+        type: choice
+        options:
+          - build
+          - pack
+          - build-and-pack
+          - pack-and-publish
+          - all
+        default: all
+      destination:
+        description: "Where to publish. auto = main/dev → nuget.org, else none."
+        required: false
+        type: choice
+        options:
+          - auto
+          - none
+          - github
+          - nuget.org
+          - both
+        default: auto
+      channel:
+        description: "preview or release. auto = main → release, else preview. release is main-only."
+        required: false
+        type: choice
+        options:
+          - auto
+          - preview
+          - release
+        default: auto
+      force:
+        description: Force rebuild of the selected pack set
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: Pack and upload artifacts; skip all pushes
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    name: Resolve CI - ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.cfg.outputs.version }}
+      channel: ${{ steps.cfg.outputs.channel }}
+      destination: ${{ steps.cfg.outputs.destination }}
+      scope: ${{ steps.cfg.outputs.scope }}
+      stages: ${{ steps.cfg.outputs.stages }}
+      do_build: ${{ steps.cfg.outputs.do_build }}
+      do_pack: ${{ steps.cfg.outputs.do_pack }}
+      do_publish_nuget: ${{ steps.cfg.outputs.do_publish_nuget }}
+      do_publish_github: ${{ steps.cfg.outputs.do_publish_github }}
+      dry_run: ${{ steps.cfg.outputs.dry_run }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Resolve pipeline config
+        id: cfg
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          python3 scripts/nuget/ci_pack.py --emit-config \
+            --scope "${{ github.event_name == 'workflow_dispatch' && inputs.scope || 'changed' }}" \
+            --packages "${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}" \
+            --since "${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}" \
+            --version "${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}" \
+            --stages "${{ github.event_name == 'workflow_dispatch' && inputs.stages || 'all' }}" \
+            --destination "${{ github.event_name == 'workflow_dispatch' && inputs.destination || '' }}" \
+            --channel "${{ github.event_name == 'workflow_dispatch' && inputs.channel || '' }}" \
+            ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Plan summary
+        env:
+          VERSION: ${{ steps.cfg.outputs.version }}
+          CHANNEL: ${{ steps.cfg.outputs.channel }}
+          DESTINATION: ${{ steps.cfg.outputs.destination }}
+          SCOPE: ${{ steps.cfg.outputs.scope }}
+          STAGES: ${{ steps.cfg.outputs.stages }}
+          DRY_RUN: ${{ steps.cfg.outputs.dry_run }}
+          PACKAGES: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
+          SINCE: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+        run: |
+          python3 scripts/nuget/ci_summary.py --phase plan \
+            --branch "${{ github.ref_name }}" \
+            --sha "${{ github.sha }}" \
+            --event "${{ github.event_name }}" \
+            --version "$VERSION" \
+            --channel "$CHANNEL" \
+            --destination "$DESTINATION" \
+            --scope "$SCOPE" \
+            --packages "$PACKAGES" \
+            --since "$SINCE" \
+            --stages "$STAGES" \
+            --dry-run "$DRY_RUN" \
+            --force "$FORCE"
+
+  build:
+    needs: resolve
+    if: ${{ needs.resolve.outputs.do_build == 'true' && needs.resolve.outputs.do_pack != 'true' }}
+    name: Build CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
+    uses: ./.github/workflows/_build.yml
+    with:
+      version: ${{ needs.resolve.outputs.version }}
+
+  # Test: workflow_dispatch + preview channel only (never auto on main/release).
+  test:
+    needs: [resolve, build]
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.resolve.outputs.channel == 'preview' }}
+    uses: ./.github/workflows/_test.yml
+    with:
+      scope: ${{ needs.resolve.outputs.scope }}
+      packages: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
+      since: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+
+  pack:
+    needs: [resolve, build]
+    if: ${{ always() && needs.resolve.result == 'success' && needs.resolve.outputs.do_pack == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
+    name: Pack CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
+    uses: ./.github/workflows/_pack.yml
+    with:
+      version: ${{ needs.resolve.outputs.version }}
+      channel: ${{ needs.resolve.outputs.channel }}
+      scope: ${{ needs.resolve.outputs.scope }}
+      packages: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
+      since: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+      force: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+
+  publish-nuget:
+    needs: [resolve, pack]
+    if: ${{ always() && needs.pack.result == 'success' && needs.resolve.outputs.do_publish_nuget == 'true' }}
+    name: Publish CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
+    uses: ./.github/workflows/publish-nuget.yml
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+    with:
+      artifact_name: nuget-packages
+      dry_run: false
+      version: ${{ needs.resolve.outputs.version }}
+
+  publish-github:
+    needs: [resolve, pack]
+    if: ${{ always() && needs.pack.result == 'success' && needs.resolve.outputs.do_publish_github == 'true' }}
+    name: Publish GH CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
+    uses: ./.github/workflows/_publish-github.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      artifact_name: nuget-packages
+      version: ${{ needs.resolve.outputs.version }}
+
+  # After nuget.org push succeeds. Tagging at push start would leave a v* tag
+  # for a version that never shipped if the push failed.
+  tag:
+    needs: [resolve, publish-nuget]
+    if: ${{ always() && needs.publish-nuget.result == 'success' && needs.resolve.outputs.channel == 'release' && github.ref_name == 'main' }}
+    name: Tag CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Tag release
+        run: python3 scripts/nuget/ci_tag.py --version "${{ needs.resolve.outputs.version }}"
+
+  summary:
+    needs: [resolve, build, pack, publish-nuget, publish-github, tag]
+    if: ${{ always() }}
+    name: Summary CI - ${{ github.ref_name }} - v${{ needs.resolve.outputs.version }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Download pack artifacts
+        if: ${{ needs.pack.result == 'success' || needs.pack.result == 'failure' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts/nuget
+
+      - name: Download nuget.org push report
+        if: ${{ needs.publish-nuget.result == 'success' || needs.publish-nuget.result == 'failure' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-push-nuget
+          path: artifacts/push-nuget
+
+      - name: Download GitHub Packages push report
+        if: ${{ needs.publish-github.result == 'success' || needs.publish-github.result == 'failure' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-push-github
+          path: artifacts/push-github
+
+      - name: Run summary
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+          CHANNEL: ${{ needs.resolve.outputs.channel }}
+          DESTINATION: ${{ needs.resolve.outputs.destination }}
+          SCOPE: ${{ needs.resolve.outputs.scope }}
+          STAGES: ${{ needs.resolve.outputs.stages }}
+          DRY_RUN: ${{ needs.resolve.outputs.dry_run }}
+          PACKAGES: ${{ github.event_name == 'workflow_dispatch' && inputs.packages || '' }}
+          SINCE: ${{ github.event_name == 'workflow_dispatch' && inputs.since || '' }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+        run: |
+          python3 scripts/nuget/ci_summary.py --phase result \
+            --branch "${{ github.ref_name }}" \
+            --sha "${{ github.sha }}" \
+            --event "${{ github.event_name }}" \
+            --version "$VERSION" \
+            --channel "$CHANNEL" \
+            --destination "$DESTINATION" \
+            --scope "$SCOPE" \
+            --packages "$PACKAGES" \
+            --since "$SINCE" \
+            --stages "$STAGES" \
+            --dry-run "$DRY_RUN" \
+            --force "$FORCE" \
+            --pack-report artifacts/nuget/pack-report.json \
+            --nupkg-dir artifacts/nuget \
+            --push-report nuget=artifacts/push-nuget/push-report.json \
+            --push-report github=artifacts/push-github/push-report.json \
+            --job "resolve=${{ needs.resolve.result }}" \
+            --job "build=${{ needs.build.result }}" \
+            --job "pack=${{ needs.pack.result }}" \
+            --job "publish-nuget=${{ needs.publish-nuget.result }}" \
+            --job "publish-github=${{ needs.publish-github.result }}" \
+            --job "tag=${{ needs.tag.result }}"

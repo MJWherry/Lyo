@@ -1,0 +1,321 @@
+using Lyo.Cache.Fusion;
+using Lyo.Testing;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using ZiggyCreatures.Caching.Fusion;
+
+namespace Lyo.Cache.Tests;
+
+public class CacheServiceTests : IDisposable
+{
+    private readonly IFusionCache _fusionCache;
+    private readonly ILogger<LocalCacheService> _localLogger;
+    private readonly ILogger<FusionCacheService> _logger;
+    private readonly IMemoryCache _memoryCache;
+    private readonly CacheOptions _options;
+
+    public CacheServiceTests(ITestOutputHelper output)
+    {
+        var loggerFactory = LoggerFactory.Create(builder => {
+            builder.AddProvider(new XunitLoggerProvider(output));
+            builder.SetMinimumLevel(LogLevel.Debug);
+        });
+
+        _logger = loggerFactory.CreateLogger<FusionCacheService>();
+        _localLogger = loggerFactory.CreateLogger<LocalCacheService>();
+        _options = new() { Enabled = true, DefaultExpiration = TimeSpan.FromMinutes(5) };
+        var services = new ServiceCollection();
+        services.AddMemoryCache();
+        services.AddFusionCache().TryWithAutoSetup();
+        var serviceProvider = services.BuildServiceProvider();
+        _fusionCache = serviceProvider.GetRequiredService<IFusionCache>();
+        _memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
+    }
+
+    public void Dispose() => _fusionCache.Dispose();
+
+    [Fact]
+    public void Constructor_WithEnabledCache_CreatesService()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        service.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithDisabledCache_CreatesService()
+    {
+        var disabledOptions = new CacheOptions { Enabled = false };
+        var service = new LocalCacheService(_memoryCache, _localLogger, disabledOptions);
+        service.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_WithEnabledCache_ReturnsCachedValue()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var key = "test-key-1";
+        var expectedValue = "test-value";
+        var result = await service.GetOrSetAsync<string>(
+            key, async ct => {
+                await Task.Delay(10, ct);
+                return expectedValue;
+            }, token: TestContext.Current.CancellationToken);
+
+        result.ShouldBe(expectedValue);
+
+        // Second call should hit cache (factory must not run again).
+        var callCount = 0;
+        var cachedResult = await service.GetOrSetAsync<string>(
+            key, async ct => {
+                callCount++;
+                await Task.Delay(10, ct);
+                return "different-value";
+            }, token: TestContext.Current.CancellationToken);
+
+        cachedResult.ShouldBe(expectedValue);
+        callCount.ShouldBe(0); // Factory should not be called
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_WithDisabledCache_AlwaysCallsFactory()
+    {
+        var disabledOptions = new CacheOptions { Enabled = false };
+        var service = new LocalCacheService(_memoryCache, _localLogger, disabledOptions);
+        var key = "test-key-2";
+        var callCount = 0;
+        var result1 = await service.GetOrSetAsync<string>(
+            key, _ => {
+                callCount++;
+                return Task.FromResult("value-1")!;
+            }, token: TestContext.Current.CancellationToken);
+
+        var result2 = await service.GetOrSetAsync<string>(
+            key, _ => {
+                callCount++;
+                return Task.FromResult("value-2")!;
+            }, token: TestContext.Current.CancellationToken);
+
+        result1.ShouldBe("value-1");
+        result2.ShouldBe("value-2");
+        callCount.ShouldBe(2); // Factory should be called each time
+    }
+
+    [Fact]
+    public void GetOrSet_WithEnabledCache_ReturnsCachedValue()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var key = "test-key-3";
+        var expectedValue = 42;
+        var result = service.GetOrSet(key, _ => expectedValue);
+        result.ShouldBe(expectedValue);
+        var callCount = 0;
+        var cachedResult = service.GetOrSet(
+            key, _ => {
+                callCount++;
+                return 999;
+            });
+
+        cachedResult.ShouldBe(expectedValue);
+        callCount.ShouldBe(0);
+    }
+
+    [Fact]
+    public void Set_WithEnabledCache_StoresValue()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var key = "test-key-4";
+        var value = "stored-value";
+        service.Set(key, value);
+        var result = service.GetOrSet<string>(key, _ => "default-value");
+        result.ShouldBe(value);
+    }
+
+    [Fact]
+    public void Set_WithDisabledCache_DoesNothing()
+    {
+        var disabledOptions = new CacheOptions { Enabled = false };
+        var service = new LocalCacheService(_memoryCache, _localLogger, disabledOptions);
+        var key = "test-key-5";
+        var value = "stored-value";
+        service.Set(key, value); // must not throw
+
+        // Confirm the key is absent.
+        var result = service.GetOrSet<string>(key, _ => "default-value");
+        result.ShouldBe("default-value");
+    }
+
+    [Fact]
+    public async Task InvalidateCacheItem_WithEnabledCache_RemovesItem()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var key = "test-key-6";
+        var value = "cached-value";
+
+        // Set the value, then confirm it is cached.
+        service.Set(key, value);
+        var cached = service.GetOrSet<string>(key, _ => "default");
+        cached.ShouldBe(value);
+
+        // Drop the key.
+        await service.InvalidateCacheItem(key);
+
+        // Confirm the key is gone.
+        var afterInvalidate = service.GetOrSet<string>(key, _ => "default");
+        afterInvalidate.ShouldBe("default");
+    }
+
+    [Fact]
+    public async Task InvalidateCacheItem_WithDisabledCache_DoesNothing()
+    {
+        var disabledOptions = new CacheOptions { Enabled = false };
+        var service = new LocalCacheService(_memoryCache, _localLogger, disabledOptions);
+        var key = "test-key-7";
+        await service.InvalidateCacheItem(key); // must not throw
+    }
+
+    [Fact]
+    public async Task InvalidateCacheItemByTag_WithEnabledCache_RemovesTaggedItems()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var tag = "test-tag";
+        var key1 = "test-key-tag-1";
+        var key2 = "test-key-tag-2";
+        var key3 = "test-key-tag-3";
+
+        // Seed several tagged items.
+        service.Set(key1, "value1", [tag]);
+        service.Set(key2, "value2", [tag]);
+        service.Set(key3, "value3", ["other-tag"]);
+
+        // Confirm the seeded items are cached.
+        service.GetOrSet<string>(key1, _ => "default").ShouldBe("value1");
+        service.GetOrSet<string>(key2, _ => "default").ShouldBe("value2");
+        service.GetOrSet<string>(key3, _ => "default").ShouldBe("value3");
+
+        // Drop entries that share the tag.
+        await service.InvalidateCacheItemByTag(tag);
+
+        // Tagged items should vanish; the untagged item should stay.
+        service.GetOrSet<string>(key1, _ => "default").ShouldBe("default");
+        service.GetOrSet<string>(key2, _ => "default").ShouldBe("default");
+        service.GetOrSet<string>(key3, _ => "default").ShouldBe("value3");
+    }
+
+    [Fact]
+    public async Task InvalidateQueryCacheAsync_WithEnabledCache_RemovesQueryCache()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var entityTag = Constants.Tags.EntityType(typeof(TestModels.TestEntity));
+        var key1 = "test-query-1";
+        var key2 = "test-query-2";
+
+        // Seed items that share an entity tag.
+        service.Set(key1, "value1", [entityTag]);
+        service.Set(key2, "value2", [entityTag]);
+        service.GetOrSet<string>(key1, _ => "default").ShouldBe("value1");
+        service.GetOrSet<string>(key2, _ => "default").ShouldBe("value2");
+
+        // Drop the query-cache set.
+        await service.InvalidateQueryCacheAsync<TestModels.TestEntity>();
+
+        // Confirm those items are gone.
+        service.GetOrSet<string>(key1, _ => "default").ShouldBe("default");
+        service.GetOrSet<string>(key2, _ => "default").ShouldBe("default");
+    }
+
+    [Fact]
+    public async Task InvalidateAllCachedQueriesAsync_WithEnabledCache_RemovesAllQueries()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var queriesTag = "queries";
+        var key1 = "query-1";
+        var key2 = "query-2";
+        service.Set(key1, "value1", [queriesTag]);
+        service.Set(key2, "value2", [queriesTag]);
+        service.GetOrSet<string>(key1, _ => "default").ShouldBe("value1");
+        service.GetOrSet<string>(key2, _ => "default").ShouldBe("value2");
+        await service.InvalidateAllCachedQueriesAsync();
+        service.GetOrSet<string>(key1, _ => "default").ShouldBe("default");
+        service.GetOrSet<string>(key2, _ => "default").ShouldBe("default");
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_WithException_FallsBackToFactory()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var key = "test-key-exception";
+        var callCount = 0;
+
+        // First call should succeed.
+        var result1 = await service.GetOrSetAsync<string>(
+            key, _ => {
+                callCount++;
+                return Task.FromResult("value-1")!;
+            }, token: TestContext.Current.CancellationToken);
+
+        result1.ShouldBe("value-1");
+        callCount.ShouldBe(1);
+
+        // Force a cache miss on a different key so the factory runs again.
+        // Fallback should invoke the factory a second time.
+        var result2 = await service.GetOrSetAsync<string>(
+            key + "-new", _ => {
+                callCount++;
+                if (callCount == 1)
+                    throw new("Cache error");
+
+                return Task.FromResult("value-2")!;
+            }, token: TestContext.Current.CancellationToken);
+
+        // Expect a factory fallback that returns value-2.
+        result2.ShouldBe("value-2");
+    }
+
+    [Fact]
+    public void Items_Property_ReturnsReadOnlyCollection()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var items = service.Items;
+        items.ShouldNotBeNull();
+        items.ShouldBeAssignableTo<IReadOnlyCollection<CacheItem>>();
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_WithTags_StoresTags()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var key = "test-key-tags";
+        var tags = new[] { "tag1", "tag2" };
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, tags, TestContext.Current.CancellationToken);
+
+        // Confirm the item is present.
+        var result = service.GetOrSet<string>(key, _ => "default");
+        result.ShouldBe("value");
+
+        // Drop entries that share the tag.
+        await service.InvalidateCacheItemByTag("tag1");
+
+        // The item should now be gone.
+        var afterInvalidate = service.GetOrSet<string>(key, _ => "default");
+        afterInvalidate.ShouldBe("default");
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_WithCancellationToken_RespectsCancellation()
+    {
+        var service = new FusionCacheService(_fusionCache, _logger, _options);
+        var key = "test-key-cancellation";
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+        var ex = await ExceptionAssertions.ThrowsAsync<TaskCanceledException>(async () => {
+            await service.GetOrSetAsync<string>(
+                key, async ct => {
+                    await Task.Delay(1000, ct);
+                    return "value";
+                }, token: cts.Token);
+        });
+
+        ex.ShouldNotBeNull();
+    }
+}

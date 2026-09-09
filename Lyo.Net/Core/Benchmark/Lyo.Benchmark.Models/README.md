@@ -1,0 +1,147 @@
+# Lyo.Benchmark.Models
+
+Models and builders for the Lyo benchmark report schema (`lyo.bench/v1`). One polymorphic document covers both BenchmarkDotNet micro-benchmarks and k6 load tests. A viewer or portfolio / test gateway can render any report file by switching on one discriminator.
+
+Depends only on `System.Text.Json`. Targets `netstandard2.0;net10.0`. BenchmarkDotNet and Testcontainers stay in [`Lyo.Benchmark`](../Lyo.Benchmark/README.md).
+
+## Examples
+
+### Reading a report
+
+```csharp
+using System.Text.Json;
+using Lyo.Benchmark.Models;
+
+var report = JsonSerializer.Deserialize<BenchmarkReport>(json)!;
+switch (report) {
+    case MicroBenchmarkReport micro:
+        foreach (var group in micro.Groups) { /* render Method x Parameters */ }
+        break;
+    case LoadTestReport load:
+        foreach (var scenario in load.Scenarios) { /* render p95 / throughput */ }
+        break;
+}
+```
+
+## Polymorphic report tree
+
+| Type | Discriminator | Role |
+| ---------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------- |
+| `BenchmarkReport` (abstract) | | Shared envelope: `Schema`, `Name`, `Title`, `Description`, `RunId`, `GeneratedAt`, `Environment`, `Notes`. |
+| `MicroBenchmarkReport` | `micro` | BenchmarkDotNet: `Groups` (classes -> measurements) + optional `Comparison` table + `Slo` / `Grades`. |
+| `LoadTestReport` | `load` | k6: `Cases`, `Scenarios`, `Rollups`, `Slo`, `Grades`. |
+
+## Descriptive context
+
+- `BenchmarkReport.Description`. Suite-level methodology (what / how, the data set, payload kinds).
+- `BenchmarkGroup.Description`. What a class measures. `BenchmarkMeasurement.Description` is what a single method does.
+- `BenchmarkGroup.Parameters` / `ComparisonTable.Parameters`. A list of `ParameterDescriptor { Name, Unit, Description }` explaining each `[Params]` value, for example `DataSize` is bytes, `RowCount` is rows.
+- `BenchmarkGroup.Dataset`. A `DatasetDescriptor` of the data structure: `TypeName`, `ColumnCount`, `MaxNestingDepth`, and a `Columns` tree of `ColumnDescriptor { Name, Type, Kind (scalar|object|collection), Children }`. Nested-property complexity, such as a CSV/XLSX row type or a mapping entity with a nested child collection, is visible here. A row count alone hides it.
+- `LoadTestReport.Cases`. A list of `LoadCase { Case, Endpoint, Description, WhereClauses, Filters, SortFields, Includes, SelectionFieldCount }` describing each k6 query case's structure, so `query_with_subquery` vs `baseline` is interpretable. `Hotspot.Case` joins to it.
+
+## SLAs / business standards (micro)
+
+k6 reports and micro reports share one SLA assessment model. The exporter fills these fields from a `[BenchmarkSla]` budget on every measurement and comparison row:
+
+- `BenchmarkMeasurement`. `ThroughputMbps` (size-based suites), `SlaTarget` (for example `<= 2 ms`, `>= 300 MB/s`), `SlaResult` (`Meets` / `Exceeds` / `Miss`), `SlaStandard` (the
+  business-standard text).
+- `ComparisonRow`. `ThroughputMbps`, `SlaTarget`, `SlaResult`.
+- `MicroBenchmarkReport.Slo`. Each benchmark contributes a single worst-case `SloRow`, using the same `SloRow` type as the load report. `GradeRow` is reused by `MicroBenchmarkReport.Grades`. Those fields drive an "SLA assessment" block in the viewer, and a verdict badge column on the measurement and comparison tables.
+
+`[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]` names the discriminator `type`,
+the same convention as the
+`WhereClause` AST in [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md).
+Default camelCase policy applies to JSON property names.
+
+```jsonc
+// micro report (truncated)
+{
+  "type": "micro",
+  "schema": "lyo.bench/v1",
+  "name": "hashing",
+  "title": "Hashing",
+  "runId": "20260627-101500",
+  "generatedAt": "2026-06-27T14:15:00+00:00",
+  "environment": { "tool": "BenchmarkDotNet", "toolVersion": "0.15.8", "runtime": ".NET 10.0", "cpu": "..." },
+  "description": "SHA-2/MD5 content digests ... payloads are random bytes of DataSize.",
+  "groups": [
+    {
+      "name": "AlgorithmComparisonBenchmarks",
+      "description": "Hashes the same random buffer with SHA-256/384/512 and MD5 ...",
+      "parameters": [ { "name": "DataSize", "unit": "bytes", "description": "Size of the random input buffer (1 KB, 1 MB, 10 MB)." } ],
+      "measurements": [
+        { "method": "Sha256_Hash", "description": "SHA-256 digest of the payload (baseline).",
+          "parameters": { "DataSize": "1048576" },
+          "meanNs": 512345.6, "allocatedBytes": 80, "ratioToBaseline": 1.0, "isBaseline": true, "axis": "Hash",
+          "throughputMbps": 2046.0, "slaTarget": ">= 150 MB/s", "slaResult": "Exceeds",
+          "slaStandard": "SHA-2 on AES-NI hardware should sustain >= 150 MB/s." }
+      ]
+    }
+  ],
+  "comparison": {
+    "baseline": "Sha256",
+    "parameters": [ { "name": "DataSize", "unit": "bytes" } ],
+    "groups": [ { "axis": "Hash", "rows": [ { "algorithm": "Sha256", "paramLabel": "1 MB", "meanNs": 512345.6, "ratioToBaseline": 1.0, "throughputMbps": 2046.0, "slaTarget": ">= 150 MB/s", "slaResult": "Exceeds" } ] } ]
+  },
+  "slo": [ { "area": "Sha256_Hash", "target": ">= 150 MB/s — SHA-2 on AES-NI hardware should sustain >= 150 MB/s.", "latest": "512.35 µs (2046 MB/s)", "result": "Exceeds" } ]
+}
+```
+
+Each group on a `csv` micro report also carries a `dataset` that describes the row shape behind the row count:
+
+```jsonc
+"dataset": {
+  "typeName": "SampleRecord", "columnCount": 7, "maxNestingDepth": 0,
+  "columns": [
+    { "name": "Id", "type": "int", "kind": "scalar" },
+    { "name": "Balance", "type": "decimal", "kind": "scalar" },
+    { "name": "CreatedAt", "type": "DateTime", "kind": "scalar" }
+  ],
+  "notes": "Flat record generated by SampleRecord.Generate ..."
+}
+```
+
+```jsonc
+// load report (truncated)
+{
+  "type": "load",
+  "schema": "lyo.bench/v1",
+  "name": "query-api",
+  "title": "Query API (k6)",
+  "description": "k6 load/stress/spike/soak against the person API ...",
+  "cases": [
+    { "case": "complex_querynode", "endpoint": "query",
+      "description": "Nested AND/OR QueryNode where-clause tree ...", "sortFields": [], "includes": [] },
+    { "case": "projection_roots", "endpoint": "queryproject",
+      "description": "Root scalar fields only ...", "selectionFieldCount": 5 }
+  ],
+  "scenarios": [
+    { "name": "query_load", "profile": "load", "endpoint": "query",
+      "latency": { "p95": 86.9, "p99": 122.8, "avg": 18.4, "unit": "ms" },
+      "throughput": 6.99, "requests": 1260, "checksPass": 100.0, "droppedIterations": 0, "hotspots": [] }
+  ],
+  "rollups": [ { "endpoint": "query", "totalRequests": 1260, "checksPass": 100.0 } ],
+  "slo": [ { "area": "Query load", "target": "300-700 ms", "latest": "86 ms", "result": "Exceeds target" } ],
+  "grades": [ { "category": "Query load", "grade": "A", "rationale": "86 ms p95 with 100% checks" } ]
+}
+```
+
+Both kinds share `MetricStat`. Micro samples use `ns`; load samples use `ms`
+(see `Unit`).
+
+## Reading a report
+
+Deserialize as `BenchmarkReport` and pattern-match the concrete type — the base type round-trips polymorphically:
+
+## Builders
+
+| Builder | Produces | Notes |
+| ----------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MicroBenchmarkReportBuilder` | `MicroBenchmarkReport` | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddMeasurement(group, m)`, `DescribeGroup(group, description, parameters, dataset)`, `WithComparison`, `AddSlo`, `AddGrade`. |
+| `LoadTestReportBuilder` | `LoadTestReport` | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddCase`, `AddScenario`, `AddRollup`, `AddSlo`, `AddGrade`. |
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)

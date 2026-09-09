@@ -1,0 +1,149 @@
+@using System.Text
+@using Lyo.Barcode.Models
+@using Lyo.Common.Metadata.Records
+@using MudBlazor.Utilities
+@inject IBarcodeService BarcodeService
+@inject IJsInterop Js
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Barcode Generator</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Code 128 (subset B) generated in-process — BMP or SVG, no barcode NuGet packages.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudStack Spacing="3">
+                        <MudSelect T="BarcodeFormat" Label="Format" @bind-Value="_format">
+                            @foreach (var format in Enum.GetValues<BarcodeFormat>()) {
+                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="int" Label="Module width (px)" @bind-Value="_moduleWidth"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="int" Label="Bar height (px)" @bind-Value="_barHeight"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="int" Label="Quiet zone (modules)" @bind-Value="_quietZone"/>
+
+                        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                            <MudColorPicker Label="Bars" @bind-Value="_darkColor"/>
+                            <MudColorPicker Label="Background" @bind-Value="_lightColor"/>
+                        </MudStack>
+
+                        <MudCheckBox T="bool" Label="Border around barcode" @bind-Value="_showBorder" Color="Color.Primary" Dense="true"/>
+                        @if (_showBorder) {
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudNumericField T="int" Label="Border width (px)" @bind-Value="_borderWidthPx" Min="1" Max="64"/>
+                                </MudItem>
+                                <MudItem xs="12" md="6" Class="d-flex align-center">
+                                    <MudColorPicker Label="Border color" @bind-Value="_borderColor"/>
+                                </MudItem>
+                            </MudGrid>
+                        }
+
+                        <MudCheckBox T="bool" Label="Show text under bars (human-readable)" @bind-Value="_showHumanReadable" Color="Color.Primary" Dense="true"/>
+
+                        @if (_showHumanReadable) {
+                            <MudTextField T="string"
+                                          Label="Caption override (optional)"
+                                          HelperText="Leave empty to print the same text as the barcode data."
+                                          Variant="Variant.Outlined"
+                                          @bind-Value="_humanReadableOverride"/>
+
+                            <MudGrid>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField T="int" Label="Caption font (px)" @bind-Value="_humanReadableFontPx" Min="8" Max="128"/>
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField T="int" Label="Gap above caption (px)" @bind-Value="_humanReadableMarginTopPx" Min="0" Max="64"/>
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField T="int" Label="Padding below caption (px)" @bind-Value="_humanReadableMarginBottomPx" Min="0" Max="64"/>
+                                </MudItem>
+                            </MudGrid>
+
+                            <MudColorPicker Label="Caption color (optional)" @bind-Value="_humanReadableColor"/>
+                        }
+
+                        <MudTextField T="string"
+                                      Label="Data (ASCII 32–127)"
+                                      Variant="Variant.Outlined"
+                                      Lines="4"
+                                      FullWidth="true"
+                                      @bind-Value="_data"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateAsync" Disabled="@_busy">Generate</MudButton>
+                        </MudStack>
+
+                        <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_imageBytes != null) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download</MudButton>
+                        }
+                    </MudStack>
+
+                    @if (_imageBytes == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Generate a barcode to preview it here.
+                        </MudText>
+                    }
+                    else {
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Format</MudText>
+                                    <MudText Typo="Typo.body1">@_format</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Size</MudText>
+                                    <MudText Typo="Typo.body1">@($"{_widthPx} × {_heightPx} px")</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">File size</MudText>
+                                    <MudText Typo="Typo.body1">@FileSizeUnitInfo.FormatBestFitAbbreviation(_imageBytes.LongLength, lowercaseAbbreviation: false)</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudDivider Class="my-3"/>
+
+                        @if (_format == BarcodeFormat.Svg) {
+                            <MudPaper Class="pa-4" Outlined="true">
+                                @((MarkupString)_svgMarkup)
+                            </MudPaper>
+                        }
+                        else {
+                            <MudPaper Class="pa-4 d-flex justify-center" Outlined="true">
+                                <img src="@_imageSource" alt="Generated barcode" style="max-width: 100%; height: auto; object-fit: contain;"/>
+                            </MudPaper>
+                        }
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>

@@ -1,0 +1,173 @@
+# Local workbench stack: TestApi, TestGateway, job worker/scheduler examples, plus Postgres,
+# RabbitMQ, and Redis on one network. Not the benchmark runner (see docker-compose.yml at repo root).
+#
+#   python3 scripts/docker/run_workbench.py up
+#   python3 scripts/docker/run_workbench.py down
+#
+# From the repo root:
+#   docker compose -f docker/workbench/compose.yml --project-name lyo-workbench up -d --build
+
+name: lyo-workbench
+
+x-build: &build
+  context: ../..
+  dockerfile: docker/workbench/Dockerfile
+
+x-rabbit: &rabbit
+  RabbitMqOptions__Host: rabbitmq
+  RabbitMqOptions__Port: "5672"
+  RabbitMqOptions__Username: guest
+  RabbitMqOptions__Password: guest
+  RabbitMqOptions__VirtualHost: /
+  RabbitMqOptions__AdminUrl: http://rabbitmq:15672
+
+x-postgres: &postgres "Host=postgres;Port=5432;Database=lyo;Username=lyo;Password=lyo"
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: lyo
+      POSTGRES_PASSWORD: lyo
+      POSTGRES_DB: lyo
+    ports:
+      - "5438:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lyo -d lyo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - lyo-workbench
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./rabbitmq/load_definitions.conf:/etc/rabbitmq/conf.d/load_definitions.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_port_listener 5672"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks:
+      - lyo-workbench
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - lyo-workbench
+
+  testapi:
+    image: lyo-workbench-testapi
+    build:
+      <<: *build
+      args:
+        PROJECT: Lyo.Net/Tools/Lyo.TestApi/Lyo.TestApi.csproj
+    command: ["Lyo.TestApi.dll"]
+    ports:
+      - "5251:8080"
+    environment:
+      <<: *rabbit
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__Postgres: *postgres
+      PostgresFileMetadataStore__ConnectionString: *postgres
+      PostgresUser__ConnectionString: *postgres
+      PostgresUserEvent__ConnectionString: *postgres
+      Redis__ConnectionString: redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+    networks:
+      - lyo-workbench
+
+  testgateway:
+    image: lyo-workbench-testgateway
+    build:
+      <<: *build
+      args:
+        PROJECT: Lyo.Net/Tools/Lyo.TestGateway/Lyo.TestGateway.csproj
+        INSTALL_CHROME: "1"
+    command: ["Lyo.TestGateway.dll"]
+    ports:
+      - "5138:8080"
+    environment:
+      <<: *rabbit
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_ENVIRONMENT: Development
+      ApiClient__BaseUrl: http://testapi:8080/
+      LyoAuthClient__AuthBaseUrl: http://testapi:8080
+      JobDashboard__BaseApiUrl: http://testapi:8080
+      PUPPETEER_EXECUTABLE_PATH: /usr/local/bin/chromium-docker
+      CHROME_PATH: /usr/local/bin/chromium-docker
+      WebRenderOptions__BrowserExePath: /usr/local/bin/chromium-docker
+    depends_on:
+      testapi:
+        condition: service_healthy
+    networks:
+      - lyo-workbench
+
+  job-worker:
+    image: lyo-workbench-job-worker
+    build:
+      <<: *build
+      args:
+        PROJECT: Lyo.Net/Examples/Lyo.Job.Worker.Example/Lyo.Job.Worker.Example.csproj
+    command: ["Lyo.Job.Worker.Example.dll"]
+    environment:
+      <<: *rabbit
+      DOTNET_ENVIRONMENT: Development
+      JobWorker__ApiBaseUrl: http://testapi:8080
+    depends_on:
+      testapi:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - lyo-workbench
+
+  job-scheduler:
+    image: lyo-workbench-job-scheduler
+    build:
+      <<: *build
+      args:
+        PROJECT: Lyo.Net/Examples/Lyo.Job.Scheduler.Example/Lyo.Job.Scheduler.Example.csproj
+    command: ["Lyo.Job.Scheduler.Example.dll"]
+    environment:
+      <<: *rabbit
+      DOTNET_ENVIRONMENT: Development
+      JobScheduler__ApiBaseUrl: http://testapi:8080
+    depends_on:
+      testapi:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - lyo-workbench
+
+networks:
+  lyo-workbench:
+    name: lyo-workbench

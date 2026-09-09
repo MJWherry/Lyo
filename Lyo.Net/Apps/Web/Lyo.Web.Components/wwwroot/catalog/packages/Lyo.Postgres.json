@@ -1,0 +1,166 @@
+{
+  "id": "Lyo.Postgres",
+  "name": "Lyo.Postgres",
+  "area": "Data",
+  "tagline": "Shared PostgreSQL host bits for Lyo libraries that own an EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.): migrations, schema/option building, design-time factories, and health checks.",
+  "description": "Shared PostgreSQL host bits for Lyo libraries that own an EF Core schema (Audit, Email, ChangeTracker, EntityReference, etc.). When the consumer options opt in, a thin `IHostedService` calls `DbContext.Database.MigrateAsync` at host startup. The rest of the package supplies the pieces every `Lyo.*.Postgres` package used to re-implement: schema-scoped `DbContextOptions` building, `IDbContextFactory<TContext>` registration, design-time option construction, and a standard health probe.\n\n> Out of scope: entity models and mappings. Each consumer package owns its own `DbContext`, entities, and migrations; this package only supplies the plumbing around them.",
+  "features": [
+    "**Hosted migrations.** `AddPostgresMigrations<TContext, TOptions>()` plus `PostgresMigrationHostedService<TContext, TOptions>`, driven from the `IPostgresMigrationConfig` options contract.",
+    "**`PostgresOptionsBase`.** Base options class that implements `IPostgresMigrationConfig` with `ConnectionString`, `EnableAutoMigrations`, and a `Validate()` hook. Derived options supply the schema through the abstract `SchemaName` property, so a package declares its schema once instead of repeating it on every path that builds a connection.",
+    "**`PostgresSchema`.** `BuildOptions<TContext>(connectionString, schema)` and `CreateContext<TContext>` produce a context whose migrations history lives at `\"<schema>\".\"__EFMigrationsHistory\"`. `EnsureAsync` issues `CREATE SCHEMA IF NOT EXISTS` with the schema name escaped.",
+    "**`PostgresDesignTime.CreateOptions<TContext>`.** Builds `DbContextOptions<TContext>` for `dotnet ef` from an environment variable plus an optional fallback connection string, so each package's `IDesignTimeDbContextFactory` stays a one-liner.",
+    "**`PostgresHealth.CheckAsync`.** Yields a `Lyo.Health` `HealthResult` from either an `IDbContextFactory<TContext>` or a live `DbContext`, and reports the schema under the `database` metadata key.",
+    "**`AddPostgresDbContextFactory<TContext, TOptions>(options)`.** Registers the options instance plus a pooled-style `IDbContextFactory<TContext>` bound to that options' connection string and schema."
+  ],
+  "examples": [
+    {
+      "title": "Usage",
+      "language": "csharp",
+      "code": "using Lyo.Postgres;\nusing Microsoft.Extensions.DependencyInjection;\n\npublic sealed class AuditDbOptions : IPostgresMigrationConfig\n{\n    public string ConnectionString { get; init; } = \"\";\n    public bool EnableAutoMigrations { get; init; }\n    public string Schema { get; init; } = \"audit\";\n}\n\nservices.Configure<AuditDbOptions>(configuration.GetSection(\"Audit:Postgres\"));\nservices.AddPostgresMigrations<AuditDbContext, AuditDbOptions>();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Types",
+      "headers": [
+        "Type",
+        "Role"
+      ],
+      "rows": [
+        [
+          "`IPostgresMigrationConfig`",
+          "Options contract for hosted migrations. Members are `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`."
+        ],
+        [
+          "`PostgresMigrationHostedService<TContext, TOptions>`",
+          "`IHostedService` that, on `StartAsync`, scopes a fresh `TContext` over the configured connection string, runs `CREATE SCHEMA IF NOT EXISTS \"<Schema>\"`, then calls `MigrateAsync`."
+        ],
+        [
+          "`Extensions.AddPostgresMigrations<TContext, TOptions>()`",
+          "Registers the hosted service. Both type parameters are constrained (`TContext : DbContext`, `TOptions : class, IPostgresMigrationConfig`)."
+        ],
+        [
+          "`Extensions.AddPostgresDbContextFactory<TContext, TOptions>(options)`",
+          "Registers `options` as a singleton and an `IDbContextFactory<TContext>` over `PostgresSchema.BuildOptions`. Every `Add{Feature}Postgres` shares this registration."
+        ],
+        [
+          "`PostgresOptionsBase`",
+          "Abstract `IPostgresMigrationConfig` implementation. Derived options declare their schema once via the protected abstract `SchemaName`, and override `Validate()` for package-specific checks."
+        ],
+        [
+          "`PostgresSchema`",
+          "`MigrationsHistoryTable` constant, `BuildOptions<TContext>` / `CreateContext<TContext>` (schema-scoped `UseNpgsql`), plus `EnsureAsync` (`CREATE SCHEMA IF NOT EXISTS`)."
+        ],
+        [
+          "`PostgresDesignTime.CreateOptions<TContext>`",
+          "Design-time `DbContextOptions<TContext>` from an environment variable, plus an optional fallback connection string for local `dotnet ef` runs."
+        ],
+        [
+          "`PostgresHealth.CheckAsync`",
+          "`HealthResult` probe over an `IDbContextFactory<TContext>` or a live `DbContext`. Reports the schema under the `database` metadata key."
+        ]
+      ],
+      "trail": "The hosted service activates a `TContext` instance via `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so each consumer DbContext **must expose a public\nconstructor that takes a single `DbContextOptions<TContext>`**. The migrations history table is stored in the schema returned by `IPostgresMigrationConfig.Schema` as\n`\"<schema>\".\"__EFMigrationsHistory\"`.\n\n`StartAsync` short-circuits when `EnableAutoMigrations` is false. If the flag is true, both `ConnectionString` and `Schema` are required (whitespace throws via\n`Lyo.Exceptions.ArgumentHelpers`)."
+    },
+    {
+      "type": "list",
+      "title": "Usage",
+      "items": [
+        "The hosted service resolves `IOptions<AuditDbOptions>`.",
+        "When `EnableAutoMigrations` is false, it returns immediately.",
+        "Otherwise it builds an `AuditDbContext` with `UseNpgsql(connectionString, opt => opt.MigrationsHistoryTable(\"__EFMigrationsHistory\", schema))`.",
+        "It runs `CREATE SCHEMA IF NOT EXISTS \"<schema>\"` (the schema name is escaped by doubling embedded `\"` characters before interpolation).",
+        "Then it runs `Database.MigrateAsync(ct)`."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Consumers",
+      "items": [
+        "`Lyo.Audit.Postgres`",
+        "`Lyo.Email.Postgres`",
+        "`Lyo.ChangeTracker.Postgres`",
+        "`Lyo.EntityReference.Postgres`",
+        "`Lyo.FileMetadataStore.Postgres`"
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Postgres/Lyo.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -1,0 +1,73 @@
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="5" md="4">
+                <MudTextField T="string"
+                              Label="Subject entity type"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              @bind-Value="_typeDraft"
+                              OnKeyDown="OnToolbarKeyDown"/>
+            </MudItem>
+            <MudItem xs="12" sm="5" md="4">
+                <MudTextField T="string"
+                              Label="Subject entity id"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              HelperText="Required for Resolved and bindings (e.g. gateway:local)."
+                              @bind-Value="_idDraft"
+                              OnKeyDown="OnToolbarKeyDown"/>
+            </MudItem>
+            <MudItem xs="12" sm="2" md="4" Class="d-flex align-end">
+                <MudStack Row="true" Spacing="1" Class="mb-1">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Check"
+                               OnClick="ApplyScope">
+                        Apply
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="Refresh">
+                        Refresh
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTabs @bind-ActivePanelIndex="_tabIndex" Color="Color.Primary" SliderColor="Color.Secondary">
+        <MudTabPanel Text="Definitions">
+            <ConfigDefinitionGrid Store="Store"
+                                  ApiClient="ApiClient"
+                                  SubjectEntityType="@_subjectEntityType"
+                                  DataVersion="_dataVersion"
+                                  OnChanged="Refresh"
+                                  OnViewDefinitionHistory="HandleViewDefinitionHistory"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Resolved">
+            <ConfigResolvedView Store="Store"
+                                SubjectEntityType="@_subjectEntityType"
+                                SubjectEntityId="@_subjectEntityId"
+                                DataVersion="_dataVersion"
+                                OnChanged="Refresh"
+                                OnViewRevisions="HandleViewValueHistory"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Definition history">
+            <ConfigDefinitionRevisionList Store="Store"
+                                          DefinitionId="_selectedDefinitionId"
+                                          DataVersion="_dataVersion"
+                                          OnChanged="Refresh"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Value history">
+            <ConfigRevisionList Store="Store"
+                                BindingId="_selectedBindingId"
+                                DataVersion="_dataVersion"
+                                OnChanged="Refresh"/>
+        </MudTabPanel>
+    </MudTabs>
+</MudStack>

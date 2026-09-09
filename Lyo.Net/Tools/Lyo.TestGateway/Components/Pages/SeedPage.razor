@@ -1,0 +1,54 @@
+@using Constants = Constants
+@using Lyo.People.Models
+@using Lyo.Seed
+@using Lyo.TestGateway.Seeds
+@attribute [Route("/" + Constants.Page.Seed)]
+@inherits AuthorizedPage
+@inject IApiClient ApiClient
+@inject ISeedRunner SeedRunner
+@inject ISnackbar Snackbar
+
+<PageTitle>Seed</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4 mb-6">
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.h5">Seed</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Posts generated <code>PersonReq</code> rows to TestApi <code>POST Person/Bulk</code> through <code>ApiSeedTransport</code>. Nested contacts are not persisted by the current Person create mapping.
+            </MudText>
+            <MudNumericField T="int" Label="Count" @bind-Value="_count" Min="1" Max="2000"/>
+            <MudTextField T="string" Label="Random seed (optional)" @bind-Value="_seedText"/>
+            <MudCheckBox T="bool" @bind-Value="_skipIfNotEmpty" Label="Skip if Person already has rows"/>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Science"
+                       Disabled="@_running"
+                       OnClick="SeedPeopleAsync">
+                Seed people
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mt-4" Outlined="true">
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.h6">Report definitions</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Posts the designer samples (controls gallery, sales summary, invoice, operations dashboard) to TestApi
+                <code>POST Reporting/Definition/Bulk</code>. Example parameter JSON is copied onto definition values so generate and the canvas have sample rows. Count above is ignored.
+            </MudText>
+            <MudCheckBox T="bool" @bind-Value="_skipReportsIfNotEmpty" Label="Skip if report definitions already exist"/>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.Assessment"
+                       Disabled="@_running"
+                       OnClick="SeedReportsAsync">
+                Seed report templates
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    @if (_lastMessage != null) {
+        <MudAlert Class="mt-4" Severity="@_lastSeverity">@_lastMessage</MudAlert>
+    }
+</MudContainer>

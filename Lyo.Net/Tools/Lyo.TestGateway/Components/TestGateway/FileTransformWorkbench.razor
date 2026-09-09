@@ -1,0 +1,343 @@
+@using System.Text
+@using Lyo.Common.Metadata.Records
+@using Lyo.Compression.Models
+@using Lyo.Encryption
+@using Lyo.Encryption.AesSiv
+@using Lyo.Web.Components
+@using Lyo.Web.Components.FileUpload
+@using Lyo.Web.Components.Models
+@inject TestGatewayFileTransformer Transformer
+@inject IJsInterop Js
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Encryption / Compression</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Choose compression and/or encryption, then run forward or reverse on a file or raw text. When both are selected, forward runs compression then encryption, and
+                reverse runs decryption then decompression. In raw text mode, forward uses UTF-8 plaintext in the text box; reverse expects Base64 (type or paste into the text
+                area, or load via <strong>Input from clipboard</strong>; whitespace ignored when decoding).
+            </MudText>
+        </div>
+
+        <MudGrid Class="file-transform-workbench-grid" Style="align-items: stretch;">
+            @* Left: input *@
+            <MudItem xs="12" md="4" Style="display: flex;">
+                <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                    <MudText Typo="Typo.h6" Class="mb-2" Style="flex-shrink:0;">Input</MudText>
+                    <MudStack Spacing="2" Style="flex:1 1 auto; min-height:0; display:flex; flex-direction:column;">
+                        <MudStack Spacing="2" Style="flex:1 1 auto; min-height:0; overflow-y:auto;">
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.subtitle2">Source</MudText>
+                                <MudButtonGroup OverrideStyles="false"
+                                                Variant="Variant.Outlined"
+                                                Size="Size.Small"
+                                                Class="file-transform-workbench-input-toggle">
+                                    <MudButton OnClick="@(() => OnInputModeToggleClicked(false))"
+                                               Variant="@(!_useRawText ? Variant.Filled : Variant.Outlined)"
+                                               Color="@(!_useRawText ? Color.Primary : Color.Default)">File
+                                    </MudButton>
+                                    <MudButton OnClick="@(() => OnInputModeToggleClicked(true))"
+                                               Variant="@(_useRawText ? Variant.Filled : Variant.Outlined)"
+                                               Color="@(_useRawText ? Color.Primary : Color.Default)">Raw text
+                                    </MudButton>
+                                </MudButtonGroup>
+                            </MudStack>
+                            @if (_useRawText) {
+                                @if (_reverse) {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        Enter Base64-encoded ciphertext or compressed bytes; whitespace is ignored when decoding. Use the button below to paste from the clipboard.
+                                    </MudText>
+
+                                    <MudTextField T="string"
+                                                  @bind-Value="_rawText"
+                                                  Label="Input (Base64)"
+                                                  Variant="Variant.Outlined"
+                                                  Lines="8"
+                                                  FullWidth="true"
+                                                  HelperText="Paste or type Base64; or load from clipboard below."/>
+
+                                    @if (!string.IsNullOrEmpty(_rawText)) {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @_rawText.Length characters in input.
+                                        </MudText>
+                                    }
+                                }
+                                else {
+                                    <MudTextField T="string"
+                                                  @bind-Value="_rawText"
+                                                  Label="Input (UTF-8 text)"
+                                                  Variant="Variant.Outlined"
+                                                  Lines="8"
+                                                  FullWidth="true"
+                                                  HelperText="Plaintext is encoded as UTF-8 before compress/encrypt. Use the button below to paste from the clipboard."/>
+                                }
+                            }
+                            else {
+                                <LyoFileUpload MaxFiles="1"
+                                               ButtonText="Choose file"
+                                               InlineLayout="true"
+                                               OnClientFileReady="OnClientFileReadyAsync"
+                                               OnClientFileRemoved="OnClientFileRemovedAsync"
+                                               OnUploadStarted="OnUploadStartedAsync"
+                                               OnUploadProgress="OnUploadProgressAsync"
+                                               OnUploadCompleted="OnUploadCompletedAsync"
+                                               OnUploadCancelled="OnUploadCancelledAsync"
+                                               OnUploadFailed="OnUploadFailedAsync"/>
+
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Upload status: @_uploadStatus
+                                </MudText>
+                            }
+                        </MudStack>
+                        @if (_useRawText) {
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Style="flex-shrink:0; margin-top: 4px;">
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.ContentPaste"
+                                           OnClick="LoadRawTextFromClipboardAsync"
+                                           Disabled="@_busy">
+                                    Input from clipboard
+                                </MudButton>
+                                @if (!string.IsNullOrEmpty(_rawText)) {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Clear"
+                                                   aria-label="Clear input"
+                                                   Color="Color.Default"
+                                                   Size="Size.Small"
+                                                   OnClick="ClearRawText"/>
+                                }
+                            </MudStack>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            @* Middle: compression + encryption; actions at bottom *@
+            <MudItem xs="12" md="4" Style="display: flex;">
+                <MudPaper Class="pa-4 file-transform-workbench-settings" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                    <MudStack Spacing="3" Style="flex:1 1 auto; min-height:0; overflow-y:auto;">
+                        <MudText Typo="Typo.h6">Compression &amp; encryption</MudText>
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="2">
+                                <MudSelect T="CompressionAlgorithm?" Label="@(_reverse ? "Decompression algorithm" : "Compression algorithm")" @bind-Value="_compressionAlgorithm">
+                                    <MudSelectItem Value="@((CompressionAlgorithm?)null)">None</MudSelectItem>
+                                    @foreach (var algorithm in CompressionAlgorithm.All) {
+                                        <MudSelectItem Value="@((CompressionAlgorithm?)algorithm)">@algorithm</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudStack>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="2">
+                                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.subtitle2">Encryption</MudText>
+                                    <MudButtonGroup OverrideStyles="false"
+                                                    Variant="Variant.Outlined"
+                                                    Size="Size.Small"
+                                                    Class="file-transform-workbench-encryption-mode-toggle">
+                                        <MudButton OnClick="@(() => OnTwoKeyEncryptionToggleClicked(false))"
+                                                   Variant="@(!_useTwoKeyEncryption ? Variant.Filled : Variant.Outlined)"
+                                                   Color="@(!_useTwoKeyEncryption ? Color.Primary : Color.Default)">Normal
+                                        </MudButton>
+                                        <MudButton OnClick="@(() => OnTwoKeyEncryptionToggleClicked(true))"
+                                                   Variant="@(_useTwoKeyEncryption ? Variant.Filled : Variant.Outlined)"
+                                                   Color="@(_useTwoKeyEncryption ? Color.Primary : Color.Default)">Two-key
+                                        </MudButton>
+                                    </MudButtonGroup>
+                                </MudStack>
+
+                                @if (_useTwoKeyEncryption) {
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Data (payload)</MudText>
+
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="@(ShowsTwoKeyDataKeySize ? 6 : 12)">
+                                            <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Data decryption algorithm" : "Data encryption algorithm")"
+                                                       @bind-Value="_dataEncryptionAlgorithm">
+                                                <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
+                                                @foreach (var algorithm in SymmetricWorkbenchAlgorithms) {
+                                                    <MudSelectItem Value="@((EncryptionAlgorithm?)algorithm)">@FormatEncryptionAlgorithmLabel(algorithm)</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        @if (UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm)) {
+                                            <MudItem xs="12" sm="6">
+                                                <MudSelect T="AesGcmKeySizeBits" Label="Data AES key size (GCM / CCM)" @bind-Value="_dataAesGcmKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                        @if (_dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
+                                            <MudItem xs="12" sm="6">
+                                                <MudSelect T="AesSivKeySizeBits" Label="Data AES-SIV key size" @bind-Value="_dataAesSivKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                    </MudGrid>
+
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary mt-2">Key wrapping (KEK)</MudText>
+
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="@(ShowsTwoKeyKekKeySize ? 6 : 12)">
+                                            <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Key decryption algorithm" : "Key encryption algorithm")"
+                                                       @bind-Value="_keyEncryptionAlgorithm">
+                                                <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
+                                                @foreach (var algorithm in SymmetricWorkbenchAlgorithms) {
+                                                    <MudSelectItem Value="@((EncryptionAlgorithm?)algorithm)">@FormatEncryptionAlgorithmLabel(algorithm)</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        @if (UsesAesGcmOrCcmKeySize(_keyEncryptionAlgorithm)) {
+                                            <MudItem xs="12" sm="6">
+                                                <MudSelect T="AesGcmKeySizeBits" Label="Key AES key size (GCM / CCM)" @bind-Value="_keyAesGcmKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                        @if (_keyEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
+                                            <MudItem xs="12" sm="6">
+                                                <MudSelect T="AesSivKeySizeBits" Label="Key AES-SIV key size" @bind-Value="_keyAesSivKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                    </MudGrid>
+                                }
+                                else {
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="@(ShowsNormalKeySize ? 6 : 12)">
+                                            <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Decryption algorithm" : "Encryption algorithm")"
+                                                       @bind-Value="_dataEncryptionAlgorithm">
+                                                <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
+                                                @foreach (var algorithm in SymmetricWorkbenchAlgorithms) {
+                                                    <MudSelectItem Value="@((EncryptionAlgorithm?)algorithm)">@FormatEncryptionAlgorithmLabel(algorithm)</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        @if (UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm)) {
+                                            <MudItem xs="12" sm="6">
+                                                <MudSelect T="AesGcmKeySizeBits" Label="AES key size (GCM / CCM)" @bind-Value="_dataAesGcmKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                        @if (_dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
+                                            <MudItem xs="12" sm="6">
+                                                <MudSelect T="AesSivKeySizeBits" Label="AES-SIV key size" @bind-Value="_dataAesSivKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                    </MudGrid>
+                                }
+
+                                @if (HasEncryptionSelection) {
+                                    <MudTextField T="string"
+                                                  Label="Secret"
+                                                  InputType="@(_showSecret ? InputType.Text : InputType.Password)"
+                                                  Adornment="Adornment.End"
+                                                  AdornmentIcon="@(_showSecret ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                                  OnAdornmentClick="ToggleSecretVisibility"
+                                                  HelperText="The gateway derives key material from this secret (SHA-256 for most symmetric algorithms; SHA-512 truncated for AES-SIV key lengths) and uses the services without keystore-based roundtripping."
+                                                  FullWidth="true"
+                                                  @bind-Value="_secret"/>
+                                }
+                            </MudStack>
+                        </MudPaper>
+                    </MudStack>
+
+                    <MudStack Spacing="2" Class="mt-3" Style="flex-shrink:0;">
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="TransformAsync" Disabled="@ActionButtonsDisabled">
+                                @GetActionButtonText()
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ProbeFileAsync" Disabled="@ActionButtonsDisabled">
+                                Probe header / compression
+                            </MudButton>
+                            <MudButtonGroup OverrideStyles="false"
+                                            Variant="Variant.Outlined"
+                                            Size="Size.Small"
+                                            Class="file-transform-workbench-direction-toggle">
+                                <MudButton OnClick="@(() => OnDirectionToggleClicked(false))"
+                                           Variant="@(!_reverse ? Variant.Filled : Variant.Outlined)"
+                                           Color="@(!_reverse ? Color.Primary : Color.Default)">Forward
+                                </MudButton>
+                                <MudButton OnClick="@(() => OnDirectionToggleClicked(true))"
+                                           Variant="@(_reverse ? Variant.Filled : Variant.Outlined)"
+                                           Color="@(_reverse ? Color.Primary : Color.Default)">Reverse
+                                </MudButton>
+                            </MudButtonGroup>
+                        </MudStack>
+
+                        <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity" Class="my-1"/>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            @* Right: result *@
+            <MudItem xs="12" md="4" Style="display: flex;">
+                <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2" Style="flex-shrink:0;">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_result != null && _result.OutputBytes.Length > 0) {
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download Result</MudButton>
+                                <MudTooltip Text="@CopyResultTooltip">
+                                    <span>
+                                        <MudButton Variant="Variant.Text"
+                                                   Color="Color.Secondary"
+                                                   StartIcon="@Icons.Material.Filled.ContentCopy"
+                                                   OnClick="CopyResultToClipboardAsync"
+                                                   Disabled="@(!CanCopyResultToClipboard)">
+                                            Copy
+                                        </MudButton>
+                                    </span>
+                                </MudTooltip>
+                            </MudStack>
+                        }
+                    </MudStack>
+
+                    <MudStack Spacing="2" Style="flex:1 1 auto; min-height:0; overflow-y:auto;">
+                        @if (_result == null) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Run a transform or use <strong>Probe header / compression</strong> to see the output file and step details here.
+                            </MudText>
+                        }
+                        else {
+                            <MudText Typo="Typo.subtitle2">@(_result.OutputBytes.Length > 0 ? "Output File" : "Analysis")</MudText>
+
+                            <MudText Typo="Typo.body2">@_result.OutputFileName</MudText>
+
+                            <MudDivider/>
+
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                @foreach (var detail in _result.Details) {
+                                    <tr>
+                                        <td><strong>@detail.Key</strong></td>
+                                        <td>@detail.Value</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>

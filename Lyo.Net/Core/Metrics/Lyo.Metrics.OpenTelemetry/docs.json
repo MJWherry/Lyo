@@ -1,0 +1,178 @@
+{
+  "id": "Lyo.Metrics.OpenTelemetry",
+  "name": "Lyo.Metrics.OpenTelemetry",
+  "area": "Core",
+  "tagline": "`IMetrics` implementation that exports through OpenTelemetry to OpenTelemetry-compatible backends.",
+  "description": "OpenTelemetry-backed `IMetrics` that ships metrics to OpenTelemetry-compatible backends.",
+  "features": [
+    "`IMetrics` implementation sitting on OpenTelemetry instruments",
+    "Sanitizes metric names to OpenTelemetry conventions",
+    "Converts tags into attributes",
+    "Records metrics in a thread-safe way",
+    "`OpenTelemetryOptions` with `AddLyoMetricsWithOpenTelemetry` / `FromConfiguration`",
+    "OTLP export (and `ILogger`) when `Endpoint` or `OTEL_EXPORTER_OTLP_ENDPOINT` is set",
+    "Optional Console / Prometheus exporters via `configureMeterProvider`"
+  ],
+  "examples": [
+    {
+      "title": "Register from a configure delegate",
+      "language": "csharp",
+      "code": "using Lyo.Metrics.OpenTelemetry;\n\nservices.AddLyoMetricsWithOpenTelemetry(o =>\n{\n    o.ServiceName = \"MyApp.Metrics\";\n    o.Protocol = \"grpc\";\n    o.MetricExportIntervalMs = 1000;\n    // Leave Endpoint empty so OTEL_EXPORTER_OTLP_ENDPOINT (JetBrains plugin) can supply it.\n});"
+    },
+    {
+      "title": "Bind from appsettings",
+      "language": "csharp",
+      "code": "services.AddLyoMetricsWithOpenTelemetryFromConfiguration(builder.Configuration);\n\n// appsettings.json:\n// \"OpenTelemetry\": { \"ServiceName\": \"MyApp\", \"Protocol\": \"grpc\", \"MetricExportIntervalMs\": 1000 }"
+    },
+    {
+      "title": "Export to Prometheus",
+      "language": "csharp",
+      "code": "services.AddLyoMetricsWithOpenTelemetry(o => o.ServiceName = \"MyApp.Metrics\", configureMeterProvider: builder =>\n{\n    builder.AddPrometheusExporter(options =>\n    {\n        options.ScrapeEndpointPath = \"/metrics\";\n    });\n});"
+    },
+    {
+      "title": "Add a console exporter",
+      "language": "csharp",
+      "code": "services.AddLyoMetricsWithOpenTelemetry(o => o.ServiceName = \"MyApp.Metrics\", configureMeterProvider: builder =>\n{\n    builder.AddConsoleExporter();\n});"
+    },
+    {
+      "title": "Sample",
+      "language": "csharp",
+      "code": "services.AddLyoMetricsWithOpenTelemetryFromConfiguration(builder.Configuration);\n\nvar metrics = serviceProvider.GetRequiredService<IMetrics>();\nmetrics.IncrementCounter(\"requests.total\", tags: [(\"method\", \"GET\"), (\"status\", \"200\")]);\nusing (metrics.StartTimer(\"operation.duration\"))\n{\n    // Your operation here\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "OTLP environment",
+      "items": [
+        "`OpenTelemetry:Endpoint` — optional collector URL. Leave empty in committed config; the JetBrains plugin injects `OTEL_EXPORTER_OTLP_ENDPOINT` (`http://localhost:<port>` gRPC).",
+        "`OpenTelemetry:Protocol` / `OTEL_EXPORTER_OTLP_PROTOCOL` — `grpc` or `http/protobuf`. The JetBrains plugin expects `grpc`.",
+        "`OpenTelemetry:MetricExportIntervalMs` / `OTEL_METRIC_EXPORT_INTERVAL` — flush interval in milliseconds (use `1000` so the plugin updates quickly).",
+        "When neither options `Endpoint` nor the OTLP endpoint variables are set, `IMetrics` still records on OpenTelemetry instruments but nothing is exported."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "How metric types map",
+      "items": [
+        "**Counters.** OpenTelemetry `Counter<long>` is what `IncrementCounter` becomes.",
+        "**Gauges.** OpenTelemetry `Histogram<double>` (push-based) is what `RecordGauge` becomes.",
+        "**Histograms / timings.** OpenTelemetry `Histogram<double>` is what `RecordHistogram` / `RecordTiming` become.",
+        "**Errors.** OpenTelemetry `Counter<long>` plus error attributes is what `RecordError` becomes.",
+        "**Events.** OpenTelemetry `Counter<long>` is what `RecordEvent` becomes."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Sanitizing metric names",
+      "items": [
+        "Dots (`.`) become underscores (`_`)",
+        "Hyphens (`-`) become underscores (`_`)",
+        "A leading `_` is added when a name starts with a digit"
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Turning tags into attributes",
+      "items": [
+        "Dots and hyphens in tag keys become underscores",
+        "Tag values are left as-is"
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Metrics/Lyo.Metrics.OpenTelemetry/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "OpenTelemetry",
+      "kind": "package",
+      "version": "1.16.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "OpenTelemetry.Exporter.Console",
+      "kind": "package",
+      "version": "1.16.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "OpenTelemetry.Exporter.OpenTelemetryProtocol",
+      "kind": "package",
+      "version": "1.16.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "OpenTelemetry.Extensions.Hosting",
+      "kind": "package",
+      "version": "1.16.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

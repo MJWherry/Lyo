@@ -1,0 +1,111 @@
+@namespace Lyo.Web.Components.DataGrid
+@implements IDisposable
+
+<CascadingValue Name="LyoDataGridExportHost" Value="@((IDataGridExportHost)this)" IsFixed="true">
+    <LyoElementRoot ElementId="@ElementId" DefaultId="@GridRootElementId.DataGridProjected(GridKey)" style="display: contents;">
+        <LyoDataGridToolbar @ref="_toolbar" Host="this"/>
+
+        @* Data Grid *@
+        @{
+            _columnRegistry.Clear();
+            _relatedRegistry.Clear();
+        }
+        @if (CardMode) {
+            <LyoDataGridCards Items="@CardItems"
+                              Columns="@_cardColumns"
+                              RowMenu="@RowMenuItems"
+                              Selectable="@IsSelectable"
+                              ItemIsSelected="IsCardRowSelected"
+                              SelectionToggled="ToggleCardSelection"
+                              Loading="@_loading"
+                              NoRecordsContent="@NoRecordsContent"
+                              LoadingContent="@LoadingContent"/>
+        }
+        @* Card mode keeps the grid mounted for loading, paging and selection and hides only the table. *@
+        <div class="@TableHostCssClass">
+            <MudDataGrid @ref="_dataGrid"
+                     T="object?"
+                     Class="@GridClass"
+                     ServerData="LoadServerData"
+                     RowsPerPage="_rowsPerPage"
+                     Loading="@_loading"
+                     LoadingProgressColor="Color.Primary"
+                     Filterable="false"
+                     SortMode="SortMode.Multiple"
+                     Hover Striped Dense
+                     ColumnResizeMode="ResizeMode.Column"
+                     Height="70vh"
+                     FixedHeader
+                     MultiSelection="@IsSelectable"
+                     SelectOnRowClick="false"
+                     Hideable="_hideable"
+                     ColumnsPanelReordering="_columnsPanelReorderingEnabled"
+                     @bind-CurrentPage="_gridCurrentPage"
+                     SelectedItems="SelectedItems"
+                     SelectedItemsChanged="OnGridSelectedItemsChanged">
+            <Columns>
+                @if (IsSelectable) {
+                    <SelectColumn T="object?" Hideable="false" HeaderStyle="@LyoDataGridColumnStyles.SelectHeaderStyle" CellStyle="@LyoDataGridColumnStyles.SelectCellStyle"/>
+                }
+                <CascadingValue Name="LyoDataGridProjectedColumnRegistry" Value="_columnRegistry">
+                    <CascadingValue Name="LyoDataGridColumnVisibilityBinder" Value="_visibilityBinder">
+                        <CascadingValue Name="LyoDataGridQuickSearchText" Value="CurrentQuickSearchText">
+                            <CascadingValue Name="LyoDataGridRelatedColumnRegistry" Value="_relatedRegistry">
+                                <CascadingValue Name="LyoDataGridRelatedEntityLookup" Value="_relatedLookup">
+                                    @Columns
+                                </CascadingValue>
+                            </CascadingValue>
+                        </CascadingValue>
+                    </CascadingValue>
+                </CascadingValue>
+                <TemplateColumn T="object?" Sortable="false" Hideable="false" Tag="@RowActionsColumnTag">
+                    <CellTemplate Context="row">
+                        <MudMenu Size="Size.Small" Icon="@Icons.Material.Filled.MoreVert" Dense>
+                            @RowMenuItems(row.Item)
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <NoRecordsContent>
+                @if (NoRecordsContent != null) {
+                    @NoRecordsContent
+                }
+                else {
+                    <div class="d-flex flex-column align-center pa-4">
+                        <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="mb-2"/>
+                        <MudText Typo="Typo.h6">@(QueryError is not null ? "Unable to connect to the database" : "No records found")</MudText>
+                    </div>
+                }
+            </NoRecordsContent>
+            <LoadingContent>
+                @if (LoadingContent != null) {
+                    @LoadingContent
+                }
+                else {
+                    <div class="d-flex justify-center pa-4">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+                    </div>
+                }
+            </LoadingContent>
+            <PagerContent>
+                <MudDataGridPager T="object?" Disabled="@_loading" PageSizeOptions="@PageSizes" PageSizeSelector="true"/>
+            </PagerContent>
+            </MudDataGrid>
+        </div>
+    </LyoElementRoot>
+</CascadingValue>
+
+@code {
+
+    /// <summary>Row menu items shared by the table's action column and the card layout, so a row offers the same actions in both.</summary>
+    private RenderFragment<object?> RowMenuItems => row =>
+        @<text>
+            @if (RowMenuControls is not null) {
+                @RowMenuControls(row)
+            }
+            <MudMenu Label="Dev" StartIcon="@Icons.Material.Filled.Visibility">
+                <MudMenuItem OnClick="@(() => ShowInJsonDialog(row))">View Json</MudMenuItem>
+            </MudMenu>
+        </text>;
+
+}

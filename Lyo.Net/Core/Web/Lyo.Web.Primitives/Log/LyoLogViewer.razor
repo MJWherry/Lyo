@@ -1,0 +1,50 @@
+@namespace Lyo.Web.Primitives
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+
+<div class="lyo-log-viewer @Class" style="@Style">
+    <LyoToolbar Dense="true">
+        <Start>
+            @foreach (var level in FilterLevels) {
+                <MudChip T="LyoLogLevel"
+                         Size="Size.Small"
+                         Variant="@(_minLevel == level ? Variant.Filled : Variant.Outlined)"
+                         Color="@ColorFor(level)"
+                         OnClick="@(() => SetMinLevel(level))"
+                         Text="@level.ToString()"/>
+            }
+        </Start>
+        <ChildContent>
+            <MudTextField @bind-Value="_search"
+                          @bind-Value:after="OnSearchChanged"
+                          Immediate="true"
+                          Clearable="true"
+                          Placeholder="Search"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Margin="Margin.Dense"
+                          Variant="Variant.Outlined"/>
+        </ChildContent>
+        <End>
+            <MudSwitch @bind-Value="_followTail" Color="Color.Primary" Label="Follow"/>
+            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" Disabled="@(!HasRows)" OnClick="CopyAsync" title="Copy visible lines"/>
+            <MudIconButton Icon="@Icons.Material.Filled.Download" Size="Size.Small" Disabled="@(!HasRows)" OnClick="DownloadAsync" title="Download visible lines"/>
+        </End>
+    </LyoToolbar>
+    <div class="lyo-log-viewer-body">
+        @if (!HasRows) {
+            <LyoEmptyState Title="No log lines" Description="@EmptyHint" Icon="@Icons.Material.Filled.Terminal" IconSize="Size.Medium" TitleTypo="Typo.subtitle2"/>
+        }
+        else {
+            <Virtualize Items="@Visible" ItemSize="28" OverscanCount="12" @ref="_virtualize">
+                <div class="lyo-log-line">
+                    <span class="lyo-log-time">@context.Timestamp.ToLocalTime().ToString("HH:mm:ss.fff")</span>
+                    <LyoStatusChip Status="@context.Level.ToString()" ShowIcon="false" Size="Size.Small" Class="lyo-log-level"/>
+                    @if (!string.IsNullOrWhiteSpace(context.Source)) {
+                        <span class="lyo-log-source">@context.Source</span>
+                    }
+                    <span class="lyo-log-message">@context.Message</span>
+                </div>
+            </Virtualize>
+        }
+    </div>
+</div>

@@ -1,0 +1,9 @@
+@using Lyo.Query.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.QueryBuilder)]
+@rendermode InteractiveServer
+@inherits AuthorizedPage
+
+<PageTitle>Query Builder Example</PageTitle>
+
+<QueryBuilderWorkbench Routes="@Routes"/>

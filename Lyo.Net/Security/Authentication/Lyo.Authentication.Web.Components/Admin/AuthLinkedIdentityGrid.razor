@@ -1,0 +1,41 @@
+@namespace Lyo.Authentication.Web.Components
+@using Lyo.Authentication.Models
+@using Lyo.Query.Models.Common
+@using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="AuthLinkedIdentityGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@ApplyQuery"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <LyoProjectedColumn Field="Provider" Title="Provider" QuickSearchPropertyName="Provider">
+            <CellContent Context="item">
+                <LyoChip Spec="@AuthChipHelper.Provider(item)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Subject" Title="Subject" QuickSearchPropertyName="Subject"/>
+        <LyoProjectedColumn Field="EmailAtLink" Title="Email at link"/>
+        <LyoProjectedColumn Field="UserId" Title="User" HiddenByDefault="@(UserId is not null)" HeaderStyle="width: 140px; min-width: 140px;" CellStyle="min-width: 140px;">
+            <CellContent Context="item">
+                <AuthProjectedGuid Item="item" Field="UserId"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="LinkedTimestamp" Title="Linked" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+        <LyoProjectedColumn Field="LastUsedTimestamp" Title="Last used" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+        <LyoProjectedColumn Field="UnlinkedTimestamp" Title="Unlinked" HiddenByDefault="true" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+    </Columns>
+</LyoDataGridProjected>

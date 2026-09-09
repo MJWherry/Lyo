@@ -1,0 +1,69 @@
+@using Lyo.Parameters
+@using Lyo.Query.Models.Parameters
+@using Lyo.Web.Components.QueryRequestBuilder
+<MudStack Spacing="2">
+    @if (ShowKindSelect) {
+        <MudSelect T="ParameterOptionsKind?"
+                   Value="_kind"
+                   ValueChanged="OnKindChanged"
+                   Label="Options kind"
+                   Variant="Variant.Outlined"
+                   Margin="Margin.Dense"
+                   Clearable="true"
+                   HelperText="Leave empty for no picker (typed Value input only)">
+            <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Static">Static list</MudSelectItem>
+            <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Query">Root query</MudSelectItem>
+            <MudSelectItem T="ParameterOptionsKind?" Value="ParameterOptionsKind.Sproc">Stored procedure</MudSelectItem>
+        </MudSelect>
+    }
+
+    @if (_kind == ParameterOptionsKind.Static) {
+        <MudStack Spacing="1">
+            @for (var i = 0; i < _items.Count; i++) {
+                var index = i;
+                <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+                    <MudTextField T="string" Value="@_items[index].Key" ValueChanged="@(v => SetItem(index, v, _items[index].Label))"
+                                  Label="Key" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1"/>
+                    <MudTextField T="string" Value="@_items[index].Label" ValueChanged="@(v => SetItem(index, _items[index].Key, v))"
+                                  Label="Label" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => RemoveItem(index))"/>
+                </MudStack>
+            }
+            <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddItem">Add item</MudButton>
+        </MudStack>
+    }
+    else if (_kind == ParameterOptionsKind.Query) {
+        <MudTextField T="string" Value="@_queryRoute" ValueChanged="OnQueryRouteChanged" Label="Query route" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" HelperText="Default: Query (root /Query endpoint)"/>
+
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+            Use ComputedFields named Key and Value (or Select Id + Name). Sibling params bind as {{ParamKey}} in filters.
+        </MudText>
+
+        <QueryRootForm Request="_query" RequestChanged="OnQueryChanged"/>
+    }
+    else if (_kind == ParameterOptionsKind.Sproc) {
+        <MudTextField T="string" Value="@_storedProcName" ValueChanged="OnStoredProcNameChanged" Label="Stored proc (schema.func)" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" HelperText="Qualified PostgreSQL function name"/>
+        <MudTextField T="string" Value="@_keyField" ValueChanged="OnKeyFieldChanged" Label="Key field" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        <MudTextField T="string" Value="@_labelField" ValueChanged="OnLabelFieldChanged" Label="Label field" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">Argument values may use @("{{ParamKey}}") to bind sibling parameters.</MudText>
+        <MudStack Spacing="1">
+            @for (var i = 0; i < _sprocArgs.Count; i++) {
+                var index = i;
+                <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+                    <MudTextField T="string" Value="@_sprocArgs[index].Name" ValueChanged="@(v => SetSprocArg(index, v, _sprocArgs[index].Value))"
+                                  Label="Arg" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1"/>
+                    <MudTextField T="string" Value="@_sprocArgs[index].Value" ValueChanged="@(v => SetSprocArg(index, _sprocArgs[index].Name, v))"
+                                  Label="Value" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => RemoveSprocArg(index))"/>
+                </MudStack>
+            }
+            <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddSprocArg">Add argument</MudButton>
+        </MudStack>
+    }
+
+    @if (!string.IsNullOrEmpty(_error)) {
+        <MudAlert Severity="Severity.Warning" Dense="true">@_error</MudAlert>
+    }
+</MudStack>

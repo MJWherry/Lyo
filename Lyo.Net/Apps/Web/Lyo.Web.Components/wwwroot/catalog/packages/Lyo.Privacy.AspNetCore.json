@@ -1,0 +1,149 @@
+{
+  "id": "Lyo.Privacy.AspNetCore",
+  "name": "Lyo.Privacy.AspNetCore",
+  "area": "Core",
+  "tagline": "DI wiring for `Lyo.Privacy` on ASP.NET Core: registers `ITextRedactor` / `IStructuredRedactor`, binds `PrivacyRedactorOptions` from configuration, and allows keyed per-tenant or per-feature…",
+  "description": "DI wiring for [`Lyo.Privacy`](../Lyo.Privacy/README.md) on ASP.NET Core: registers `ITextRedactor` / `IStructuredRedactor`, binds `PrivacyRedactorOptions` from configuration, and allows keyed per-tenant or per-feature policies.",
+  "features": [],
+  "examples": [
+    {
+      "title": "First steps",
+      "language": "csharp",
+      "code": "using Lyo.Privacy.AspNetCore;\n\nservices.AddLyoPrivacy(builder.Configuration, configureDefaultPolicy: p => p\n    .RedactEmail()\n    .RedactCreditCards());\n\n// Keyed: support-tier policy with looser PII rules\nservices.AddLyoPrivacyPolicy(\"Support\", p => p\n    .RedactCreditCards());"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "`PrivacyServiceCollectionExtensions`",
+      "headers": [
+        "Extension",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "`services.AddLyoPrivacy(IConfiguration? configuration = null, Action<PrivacyRedactorOptions>? configureOptions = null, Action<RedactionPolicyBuilder>? configureDefaultPolicy = null)`",
+          "When an `IConfiguration` is supplied, binds `PrivacyRedactorOptions` from section `PrivacyRedactorOptions.SectionName`, applies an optional inline overrides callback, and registers singleton `ITextRedactor` (`TextRedactor`) plus `IStructuredRedactor` (`JsonRedactor`). If `PrivacyRedactorOptions.JsonApplyTextRulesToStrings` is `true`, the structured redactor reuses the text redactor. `IMetrics` is used when present; otherwise `NullMetrics.Instance`."
+        ],
+        [
+          "`services.AddLyoPrivacyPolicy(object serviceKey, Action<RedactionPolicyBuilder> configure)`",
+          "Registers a keyed `ITextRedactor` built from a custom `RedactionPolicyBuilder`. Reach for this when one host needs different redaction rules per workload (e.g. `\"Support\"`, `\"Marketing\"`). When `Name` is unset, the policy defaults it to `serviceKey.ToString()`."
+        ]
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Privacy/Lyo.Privacy.AspNetCore/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Privacy",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Collections.Immutable",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

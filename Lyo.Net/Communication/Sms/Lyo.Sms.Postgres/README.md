@@ -1,0 +1,52 @@
+# Lyo.Sms.Postgres
+
+PostgreSQL EF Core store for outbound SMS logs (`SmsLogEntity`). The package never sends SMS. It wires `SmsDbContext` so workers or gateways can persist send outcomes after [`Lyo.Sms`](../Lyo.Sms/README.md) / [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md) completes.
+
+## Schema and row type
+
+- **Schema.** `sms` (`PostgresSmsOptions.Schema` = `"sms"`).
+- **`SmsLogEntity`.** `Id` (guid), `To` / `From`, `Body`, `MediaUrlsJson` (serialized MMS attachments), `IsSuccess`, `Message`, `ErrorMessage`, `ElapsedTimeMs`, `MessageId`, `Status`, `ErrorCode`, timeline fields (`DateCreated`, `DateSent`, `DateUpdated`), and `CreatedAt`.
+
+## `PostgresSmsOptions`
+
+| Member | Meaning |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `SectionName` | `"PostgresSms"` for `IConfiguration` binding |
+| `ConnectionString` | Required |
+| `EnableAutoMigrations` | Honored through [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) migration host integration |
+| Implements `IPostgresMigrationConfig` | Schema = `sms` |
+
+## Service registration
+
+- `AddSmsDbContext(string connectionString)` registers a factory plus a scoped `SmsDbContext` (the scoped registration pulls a fresh context from `IDbContextFactory<SmsDbContext>`).
+- `AddSmsDbContextFactory(PostgresSmsOptions)` / `AddSmsDbContextFactory` (`Action<PostgresSmsOptions>`) wire singleton options plus `AddDbContextFactory` with `UseNpgsql` and the migration history schema.
+- `AddSmsDbContextFactoryFromConfiguration(IConfiguration, section = PostgresSmsOptions.SectionName)` binds `PostgresSms` (or an override), then registers the factory.
+
+## When `Lyo.Sms.Twilio.Postgres` fits better
+
+If `TwilioSmsResult` is what you need (price, segments, account SID, direction), use [`Lyo.Sms.Twilio.Postgres`](../Lyo.Sms.Twilio.Postgres/README.md) (`TwilioSmsLogEntity`, keyed by Twilio message SID).
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Configuration` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Postgres` (direct, lyo)
+- `Lyo.Sms` (direct, lyo)
+- `Lyo.Common.Core` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
+- `Lyo.Metrics` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
+- `Lyo.Sms.Models` (transitive, lyo)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)
+- `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
+- `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

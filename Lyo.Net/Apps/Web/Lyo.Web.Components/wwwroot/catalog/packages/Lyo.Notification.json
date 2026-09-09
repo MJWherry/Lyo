@@ -1,0 +1,125 @@
+{
+  "id": "Lyo.Notification",
+  "name": "Lyo.Notification",
+  "area": "Core",
+  "tagline": "Small domain events via in-process publish/subscribe. Not distributed, not durable, and not ordered across machines. Only useful when every publisher and handler lives in the same process.",
+  "description": "Small domain events via in-process publish/subscribe. Not distributed, not durable, and not ordered across machines. Only useful when every publisher and handler lives in the same DI container (typical worker or ASP.NET Core host). For cross-service messaging use `Lyo.MessageQueue` (RabbitMQ, and similar brokers).",
+  "features": [
+    "`AddLyoNotification` registers `INotificationPublisher` as `NotificationPublisher` (singleton). The publisher captures `IServiceProvider` so each publish can resolve the current handler set. Scoped handlers work only if you resolve `INotificationPublisher` from the same scope that contains those handlers, which is fragile. Prefer transient or singleton handlers, or resolve handlers explicitly in tests."
+  ],
+  "examples": [
+    {
+      "title": "Register in DI",
+      "language": "csharp",
+      "code": "using Lyo.Notification;\n\nbuilder.Services.AddLyoNotification();\nbuilder.Services.AddSingleton<INotificationHandler<OrderPlacedNotification>, SendEmail>();\nbuilder.Services.AddSingleton<INotificationHandler<OrderPlacedNotification>, UpdateInventoryProjection>();"
+    },
+    {
+      "title": "Publishing",
+      "language": "csharp",
+      "code": "public class CheckoutService(INotificationPublisher bus)\n{\n    public async Task CompleteAsync(Guid orderId, CancellationToken ct)\n    {\n        // ... persistence ...\n        await bus.PublishAsync(new OrderPlacedNotification(orderId), ct);\n    }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Why the package exists",
+      "text": "Use this when a feature should fire in-process side effects without knowing each handler. MediatR-style pipelines (open generics, behaviors, pipeline ordering) are out of scope. You get a marker type, one or more handlers per notification, and a publisher that resolves handlers from DI and awaits them sequentially."
+    },
+    {
+      "type": "table",
+      "title": "Types at the core",
+      "headers": [
+        "Type",
+        "Role"
+      ],
+      "rows": [
+        [
+          "`INotification`",
+          "Marker interface. Your event DTO implements it (can be a `record` with whatever payload you need)."
+        ],
+        [
+          "`INotificationHandler<TNotification>`",
+          "`HandleAsync(TNotification, CancellationToken)`. Many handlers can be registered for the same `TNotification`. All are invoked."
+        ],
+        [
+          "`INotificationPublisher`",
+          "`PublishAsync<T>(T, CancellationToken)` dispatches to every registered handler of that `T`."
+        ],
+        [
+          "`NotificationPublisher`",
+          "Default implementation: `GetServices<INotificationHandler<T>>()`, then await each handler in registration order."
+        ]
+      ],
+      "trail": "There is no built-in only-one-handler or stop-on-first-handler rule. Every matching handler runs every time unless you unregister it."
+    },
+    {
+      "type": "list",
+      "title": "Registration",
+      "items": [
+        "`AddLyoNotification` registers `INotificationPublisher` as `NotificationPublisher` (singleton). The publisher captures `IServiceProvider` so each publish can resolve the current handler set. Scoped handlers work only if you resolve `INotificationPublisher` from the same scope that contains those handlers, which is fragile. Prefer transient or singleton handlers, or resolve handlers explicitly in tests."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Publishing",
+      "body": "Handlers run one after another; `PublishAsync` awaits each in sequence. There is no parallel fan-out."
+    },
+    {
+      "type": "paragraph",
+      "title": "What happens on errors",
+      "text": "`NotificationPublisher` wraps each handler in try/catch. On exception, the error is logged at Error level (notification type and handler type in the structured log payload). Remaining handlers still run. Failures do not abort the publisher or rethrow. Notifications are best-effort side effects: log and continue. If you need fail-closed behavior or transactional semantics, call handlers explicitly or wrap `PublishAsync` yourself. `CancellationToken` is passed through to `HandleAsync`. If cancelled mid-loop, handlers that observe the token stop. Handlers already running complete unless they cancel internally."
+    },
+    {
+      "type": "list",
+      "title": "When to skip this package",
+      "items": [
+        "Cross-pod or cross-process events → message bus.",
+        "Guaranteed delivery / dead-letter / retries → queue + outbox patterns.",
+        "Pipelines that must run middleware in order across all handlers → mediator library.",
+        "You need mediator request/response (query objects with return values) → this is publish-only (`Task`, no aggregate return value from `PublishAsync`)."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Related reading",
+      "items": [
+        "Broker-backed messaging: [`Lyo.MessageQueue`](../../../Communication/MessageQueue/Lyo.MessageQueue/README.md).",
+        "Example integration host that pulls in diff and other utilities: [`Lyo.Discord.Bot`](../../../Integration/Discord/Lyo.Discord.Bot/README.md)."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Notification/Lyo.Notification/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

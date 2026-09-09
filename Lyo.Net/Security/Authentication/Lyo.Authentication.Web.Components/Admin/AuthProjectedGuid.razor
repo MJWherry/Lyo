@@ -1,0 +1,9 @@
+@namespace Lyo.Authentication.Web.Components
+@using Lyo.Web.Components.Form
+
+@if (_value is Guid guid) {
+    <LyoIdField Compact="true" Value="@guid"/>
+}
+else {
+    <span>—</span>
+}

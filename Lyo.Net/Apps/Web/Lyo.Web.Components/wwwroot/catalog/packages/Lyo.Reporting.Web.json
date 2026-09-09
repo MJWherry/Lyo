@@ -1,0 +1,187 @@
+{
+  "id": "Lyo.Reporting.Web",
+  "name": "Lyo.Reporting.Web",
+  "area": "Plugins",
+  "tagline": "Blazor `ReportViewer` plus `IReportRenderer` producing HTML and PDF.",
+  "description": "`IReportRenderer` writes HTML and PDF; the package also ships a Blazor `ReportViewer`. Sample business-document templates live in `Lyo.Reporting.Business.Example`.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Wire into DI",
+      "language": "csharp",
+      "code": "services.AddWebRenderer(...); // Lyo.Web.WebRenderer\nservices.AddReportingWebRenderer();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Dependency injection",
+      "text": "Composition types come from `Lyo.Reporting.Models`. The package does not reference Postgres or EF. `AddReportingWebRenderer` registers `HtmlPdfReportRenderer` as scoped so it can consume scoped `IWebRendererService` / `HtmlRenderer`."
+    },
+    {
+      "type": "list",
+      "title": "Safe markup",
+      "items": [
+        "Before `ReportViewer` emits markup, `ReportHtmlSanitizer` runs an allowlist of elements and attributes over `Html`, `Chart`, and `Image` blocks, so composition JSON cannot smuggle script, event handlers, or `javascript:` URLs. Nested section/control `Styles` maps are sanitized the same way as report-level CSS. Unknown `ContentType.Component` FullNames render a sanitized placeholder instead of crashing. The same paint path (`ReportViewPainter` / `ReportBodyItemView`) is what `HtmlPdfReportRenderer` uses. Optional `Layout.RootComponentType` renders a named Blazor type instead of `ReportViewer`. Renderers run `ReportCompositionProcessor` first so `{Key}` placeholders and `VisibleWhen` match generate output. The design canvas interpolates example parameters at paint time without cloning, paints TOC headings and FromParameter tables/charts from the example map, and dims `Collapsed` sections instead of using HTML `hidden`. Cards, blocks, and layout grids default to `break-inside: avoid` (`KeepTogether`); tables split unless the flag is on. A `Grid` paints with `display:grid`. The workbench live editor is `ReportDesignCanvas` in `Lyo.Reporting.Web.Components` — generate output never includes drag handles or selection rings.",
+        "Chart builders therefore ship data rather than code: they emit a `canvas` whose `data-lyo-chart` attribute holds configuration, and `ReportViewer` appends a single script — the Chart.js bundle plus a loader that paints every such canvas. Canvas ids are stable per block instance; the loader destroys and redraws when the config fingerprint changes so Blazor re-renders do not leave a blank chart.",
+        "This package vendors the Chart.js bundle. `ChartScriptUrl` falls back to `Constants.Charts.DefaultScriptUrl` = `_content/Lyo.Reporting.Web/scripts/chart.umd.min.js` (the static web asset), so drawing charts needs no outbound network; override with `Constants.Charts.CdnScriptUrl` (or any host-served URL), or leave it empty to skip charts. **Breaking change** — the public CDN used to be the default.",
+        "`InlineChartScript` is set by `HtmlPdfReportRenderer`, which inlines the bundle: the PDF converter receives a standalone file, and a relative asset URL would resolve against nothing."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Reporting/Lyo.Reporting.Web/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Reporting.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.WebRenderer",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.AspNetCore.Components.Web",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "PuppeteerSharp",
+      "kind": "package",
+      "version": "24.0.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

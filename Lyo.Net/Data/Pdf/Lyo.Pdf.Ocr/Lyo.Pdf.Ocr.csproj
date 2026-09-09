@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>OCR pipeline for PDF pages: rasterize (PDFium), run IOcrEngine, map pixel boxes to PDF points.</Description>
+        <PackageTags>pdf ocr rendering</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Images\Lyo.Images.Ocr\Lyo.Images.Ocr.csproj"/>
+        <ProjectReference Include="..\Lyo.Pdf.Models\Lyo.Pdf.Models.csproj"/>
+        <ProjectReference Include="..\Lyo.Pdf.Rendering\Lyo.Pdf.Rendering.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

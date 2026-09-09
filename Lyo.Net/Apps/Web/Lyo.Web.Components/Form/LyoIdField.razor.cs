@@ -1,0 +1,103 @@
+using Microsoft.AspNetCore.Components;
+
+namespace Lyo.Web.Components.Form;
+
+public partial class LyoIdField
+{
+    /// <summary>Optional HTML <c>id</c> override for the root node.</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    /// <summary>Field label (for example ID, Definition ID, File Id).</summary>
+    [Parameter]
+    public string? Label { get; set; }
+
+    /// <summary>Identifier to display. Null or empty draws <c>null</c> without copy/toggle.</summary>
+    [Parameter]
+    public Guid? Value { get; set; }
+
+    /// <summary>When <see cref="Value" /> is unset, optional raw id string (non-GUID identifiers).</summary>
+    [Parameter]
+    public string? Text { get; set; }
+
+    /// <summary>Which end to keep when abbreviating. Default is suffix. Digit-only values are never abbreviated.</summary>
+    [Parameter]
+    public LyoIdAbbreviation Abbreviation { get; set; } = LyoIdAbbreviation.Suffix;
+
+    /// <summary>Character count kept for prefix/suffix abbreviation. Default 9.</summary>
+    [Parameter]
+    public int AbbreviationLength { get; set; } = 9;
+
+    /// <summary>If true, renders a compact inline row (copy, value, optional expand) instead of a labeled text field. Use in grid cells.</summary>
+    [Parameter]
+    public bool Compact { get; set; }
+
+    [Parameter]
+    public Variant Variant { get; set; } = Variant.Outlined;
+
+    [Parameter]
+    public Margin Margin { get; set; } = Margin.Dense;
+
+    private bool _showFull;
+
+    private string? FullValue {
+        get {
+            if (Value is Guid guid)
+                return guid.ToString("D");
+
+            return string.IsNullOrWhiteSpace(Text) ? null : Text.Trim();
+        }
+    }
+
+    private bool HasValue => FullValue is not null;
+
+    private LyoIdAbbreviation EffectiveAbbreviation
+        => FullValue is { } text && IsNumericId(text) ? LyoIdAbbreviation.None : Abbreviation;
+
+    private bool ShowsToggle => HasValue && EffectiveAbbreviation != LyoIdAbbreviation.None && FullValue!.Length > Math.Max(1, AbbreviationLength);
+
+    private string DisplayValue
+        => FullValue is null ? "null" : _showFull ? FullValue : Abbreviate(FullValue, EffectiveAbbreviation, AbbreviationLength);
+
+    private string ToggleIcon => _showFull ? Icons.Material.Filled.Compress : Icons.Material.Filled.OpenInFull;
+
+    private string ToggleTitle => _showFull ? "Show abbreviated ID" : "Show full ID";
+
+    /// <summary>Abbreviates <paramref name="value" /> to <paramref name="length" /> characters from the start or end.</summary>
+    public static string Abbreviate(string? value, LyoIdAbbreviation abbreviation = LyoIdAbbreviation.Suffix, int length = 9)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "null";
+
+        var text = value.Trim();
+        if (abbreviation == LyoIdAbbreviation.None || length < 1 || text.Length <= length)
+            return text;
+
+        return abbreviation == LyoIdAbbreviation.Prefix ? text[..length] : text[^length..];
+    }
+
+    private static bool IsNumericId(string value)
+    {
+        foreach (var c in value) {
+            if (!char.IsDigit(c))
+                return false;
+        }
+
+        return value.Length > 0;
+    }
+
+    private void ToggleFull()
+    {
+        if (ShowsToggle)
+            _showFull = !_showFull;
+    }
+
+    private async Task CopyAsync()
+    {
+        if (FullValue is null)
+            return;
+
+        await Js.SendToClipboard(FullValue);
+        Snackbar.Add("Copied to clipboard", Severity.Info);
+    }
+}

@@ -1,0 +1,85 @@
+@using Lyo.Api.Models.Builders
+@using Lyo.Api.Models.Common.Request
+@using Lyo.Api.Models.Common.Response
+@using Lyo.Web.Components.Form
+@using Constants = Lyo.TestGateway.Models.Constants
+@inject IApiClient ApiClient
+@inject ISnackbar Snackbar
+
+@if (CurrentPerson is null) {
+    <MudAlert Severity="Severity.Warning">No person was provided to the form.</MudAlert>
+}
+else {
+    <LyoForm TModel="PersonRes" Model="CurrentPerson" OnSubmit="@(changes => HandleSaveChanges(changes))" @ref="_formRef">
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Basic Info">
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="Guid"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.Id)"
+                                      Label="Id"
+                                      AllowEditing="false"/>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="Guid?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.EndatoPersonId)"
+                                      Label="Endato Person Id"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.SourceEntityType)"
+                                      Label="Source"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.NamePrefix)"
+                                      Label="Prefix"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.FirstName)"
+                                      Label="First Name"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.MiddleName)"
+                                      Label="Middle Name"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.LastName)"
+                                      Label="Last Name"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.NameSuffix)"
+                                      Label="Suffix"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+        </MudTabs>
+    </LyoForm>
+}

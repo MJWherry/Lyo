@@ -1,0 +1,396 @@
+{
+  "id": "Lyo.FileMetadataStore.Sqlite",
+  "name": "Lyo.FileMetadataStore.Sqlite",
+  "area": "Data",
+  "tagline": "EF Core SQLite IFileMetadataStore. Same store and adjunct services as Lyo.FileMetadataStore.Postgres, for embedded, offline-first, and local-dev hosts.",
+  "description": "EF Core SQLite IFileMetadataStore. Same store and adjunct services as [Lyo.FileMetadataStore.Postgres](../Lyo.FileMetadataStore.Postgres/README.md), for embedded, offline-first, and local-dev hosts.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Add the SQLite store",
+      "language": "csharp",
+      "code": "using Lyo.FileMetadataStore.Sqlite;\n\n// Simple\nservices.AddSqliteFileMetadataStore(\"Data Source=./filestore.db\");\n\n// With auto-migrations at host startup\nservices.AddSqliteFileMetadataStoreDbContextFactoryFromConfiguration(configuration);\nservices.AddSqliteFileMetadataStore();\nservices.AddSqliteFileAuditSink();\nservices.AddSqliteFileDownloadAccessService();\n\n// Keyed (multi-store hosts)\nservices.AddSqliteFileMetadataStoreKeyed(\"sqlite-metadata\")\n    .ConfigureSqliteFileStore(options => {\n        options.ConnectionString = \"Data Source=./filestore.db\";\n        options.EnableAutoMigrations = true;\n    })\n    .Build();"
+    },
+    {
+      "title": "appsettings.json",
+      "language": "json",
+      "code": "{\n  \"SqliteFileMetadataStore\": {\n    \"ConnectionString\": \"Data Source=./filestore.db\",\n    \"EnableAutoMigrations\": true\n  }\n}"
+    },
+    {
+      "title": "Attach to keyed file storage",
+      "language": "csharp",
+      "code": "services.AddS3FileStorageServiceKeyed(\"my-files\")\n    .UseFileMetadataStore(\"sqlite-metadata\")\n    .Build(configuration);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Types",
+      "headers": [
+        "Component",
+        "Role"
+      ],
+      "rows": [
+        [
+          "SqliteFileMetadataStore",
+          "IFileMetadataStore + IHealth"
+        ],
+        [
+          "SqliteFileAuditSink",
+          "IFileAuditEventHandler. Append-only audit rows."
+        ],
+        [
+          "SqliteMultipartUploadSessionStore",
+          "IMultipartUploadSessionStore"
+        ],
+        [
+          "SqliteFileDownloadAccessService",
+          "Time-limited download access tokens"
+        ],
+        [
+          "SqliteFileMetadataStoreDbContext",
+          "EF Core context (5 tables, same shape as Postgres)"
+        ]
+      ],
+      "trail": "Tables: `file_metadata`, `file_data`, `file_audit_events`, `multipart_upload_session`, `file_download_access_links`."
+    },
+    {
+      "type": "paragraph",
+      "title": "How to register",
+      "text": "`appsettings.json`: Point blob storage at the keyed metadata store the same way as Postgres:"
+    },
+    {
+      "type": "paragraph",
+      "title": "How migrations run",
+      "text": "Migrations ship in this package. Turn on EnableAutoMigrations (via [`Lyo.Sqlite`](../../Sqlite/Lyo.Sqlite/README.md)) or run `dotnet ef database update` using SqliteFileMetadataStoreDbContextFactory. Design-time connection string: FILEMETADATASTORE_CONNECTION_STRING or FILESTORE_CONNECTION_STRING (defaults to `Data Source=./filestore-design.db`). `DropStagedFileUpload` removes the former `staged_file_upload` table."
+    },
+    {
+      "type": "paragraph",
+      "title": "Writer limits",
+      "text": "SQLite is single-writer. Fine for embedded clients, local tools, and low-concurrency dev hosts. High-throughput multi-instance ingestion should use Postgres. Enable WAL at the connection level if the host opens many concurrent readers (`PRAGMA journal_mode=WAL`)."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/FileMetadataStore/Lyo.FileMetadataStore.Sqlite/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Configuration",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileMetadataStore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileStorage",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Lock",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Sqlite",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Sqlite",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.DataAnnotations",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

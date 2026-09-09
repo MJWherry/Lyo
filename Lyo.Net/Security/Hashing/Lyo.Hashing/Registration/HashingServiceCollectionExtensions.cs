@@ -1,0 +1,41 @@
+using Lyo.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Lyo.Hashing.Registration;
+
+/// <summary>Registers <see cref="IHashingService" /> / <see cref="HashingService" /> with the container.</summary>
+public static class HashingServiceCollectionExtensions
+{
+    extension(IServiceCollection services)
+    {
+        /// <summary>
+        /// Adds <see cref="IHashingService" />: uses <see cref="HashingService.Shared" /> when <paramref name="configure" /> is null; otherwise registers a singleton
+        /// <see cref="HashingOptions" /> from <paramref name="configure" /> and a <see cref="HashingService" /> bound to those options.
+        /// </summary>
+        public IServiceCollection AddLyoHashing(Action<HashingOptions>? configure = null)
+        {
+            if (configure is null) {
+                services.AddSingleton<IHashingService>(_ => HashingService.Shared);
+                return services;
+            }
+
+            services.AddSingleton(_ => {
+                var o = new HashingOptions();
+                configure(o);
+                return o;
+            });
+
+            services.AddSingleton<IHashingService, HashingService>();
+            return services;
+        }
+
+        /// <summary>Adds <see cref="IHashingService" /> with an explicit options instance (singleton next to the service).</summary>
+        public IServiceCollection AddLyoHashing(HashingOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(options);
+            services.AddSingleton(options);
+            services.AddSingleton<IHashingService, HashingService>();
+            return services;
+        }
+    }
+}

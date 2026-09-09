@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Result\Lyo.Result\Lyo.Result.csproj"/>
+        <ProjectReference Include="..\..\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <!-- This suite covers the whole Common family, so it names every member rather than leaning on
+             one of them to drag in the rest. Each of the four grants InternalsVisibleTo to this project.
+             Lyo.TextEncoding is deliberately absent: it has its own suite and grants internals to that. -->
+        <ProjectReference Include="..\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
+        <ProjectReference Include="..\..\SystemInformation\Lyo.SystemInformation\Lyo.SystemInformation.csproj"/>
+    </ItemGroup>
+
+</Project>

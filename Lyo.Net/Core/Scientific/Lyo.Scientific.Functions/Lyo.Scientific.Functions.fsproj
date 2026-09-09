@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>F# scientific calculations for chemistry, astronomy, thermodynamics, fluid dynamics, compressible flow, and solid mechanics built on top of the Lyo scientific and mathematics contracts.</Description>
+        <PackageTags>scientific functions fsharp chemistry astronomy engineering thermodynamics fluids mechanics</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Common.fs"/>
+        <Compile Include="Chemistry.fs"/>
+        <Compile Include="Astronomy.fs"/>
+        <Compile Include="Thermodynamics.fs"/>
+        <Compile Include="FluidDynamics.fs"/>
+        <Compile Include="Mechanics.fs"/>
+        <Compile Include="CompressibleFlow.fs"/>
+        <Compile Include="SolidMechanics.fs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FSharp.Core"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Scientific\Lyo.Scientific.csproj"/>
+        <ProjectReference Include="..\..\Mathematics\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

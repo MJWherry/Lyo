@@ -1,0 +1,320 @@
+using Lyo.Api.ApiEndpoint.Config;
+using Lyo.Api.Mapping;
+using Lyo.Api.Models.Common.Response;
+using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Api.Services.Crud.Validation;
+using Lyo.Cache;
+using Lyo.Common.Core;
+using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
+using Lyo.Metrics;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Constants = Lyo.Api.Models.Constants;
+
+namespace Lyo.Api.Services.Crud.Create;
+
+/// <inheritdoc cref="ICreateService{TContext}" />
+public class CreateService<TContext>(
+    IDbContextFactory<TContext> contextFactory,
+    ILyoMapper mapper,
+    BulkOperationOptions bulkOptions,
+    ICacheService cache,
+    IServiceProvider serviceProvider,
+    ILogger<CreateService<TContext>>? logger = null,
+    IMetrics? metrics = null)
+    : BaseService<TContext>(contextFactory, mapper, logger, metrics), ICreateService<TContext>
+    where TContext : DbContext
+{
+    public async Task<CreateResult<TResult>> CreateAsync<TRequest, TDbModel, TResult>(
+        TRequest request,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? before = null,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? after = null,
+        Func<CreateContext<TRequest, TDbModel, TContext>, Task>? afterAsync = null,
+        CancellationToken ct = default)
+        where TDbModel : class
+    {
+        const string operation = "create";
+        ArgumentHelpers.ThrowIfNull(request);
+        using var scope = BeginActionScope("CREATE", typeof(TRequest), typeof(TDbModel), typeof(TResult));
+        RecordCrudRequest(operation, typeof(TDbModel));
+        using var timer = StartCrudTimer(operation, typeof(TDbModel));
+        await using var context = await ContextFactory.CreateDbContextAsync(ct);
+        var result = await CreateInternal<TRequest, TDbModel, TResult>(request, context, before, after, afterAsync, ct);
+        if (result.IsSuccess) {
+            await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<TDbModel>(cache, ct, Logger).ConfigureAwait(false);
+            await InvalidatePrincipalTypeCachesAsync<TDbModel>(context).ConfigureAwait(false);
+        }
+
+        if (result.IsSuccess)
+            RecordCrudSuccess(operation, typeof(TDbModel));
+        else
+            RecordCrudFailure(operation, typeof(TDbModel));
+
+        return result;
+    }
+
+    public async Task<CreateBulkResult<TResult>> CreateBulkAsync<TRequest, TDbModel, TResult>(
+        IEnumerable<TRequest> requests,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? before = null,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? after = null,
+        Func<CreateContext<TRequest, TDbModel, TContext>, Task>? afterAsync = null,
+        CancellationToken ct = default)
+        where TDbModel : class
+    {
+        const string operation = "create_bulk";
+        var requestList = requests.AsReadOnlyList();
+        ArgumentHelpers.ThrowIfNullOrEmpty(requestList, nameof(requests));
+        using var scope = BeginActionScope("CREATE BULK", typeof(TRequest), typeof(TDbModel), typeof(TResult));
+        RecordCrudRequest(operation, typeof(TDbModel), true);
+        using var timer = StartCrudTimer(operation, typeof(TDbModel), true);
+        var bulkValidation = BulkListRequestValidator.Validate(new(requestList.Count, bulkOptions.MaxAmount));
+        if (!bulkValidation.IsSuccess) {
+            var err = bulkValidation.Errors![0];
+            Logger.LogWarning("Bulk create size validation failed: {Code} {Message}", err.Code, err.Message);
+            throw new BadRequestException(err.Message) { ErrorCode = err.Code };
+        }
+
+        var bulkResult = await TryBulkCreateAll<TRequest, TDbModel, TResult>(requestList, before, after, afterAsync, ct);
+        if (bulkResult != null) {
+            Logger.LogInformation("Bulk create completed successfully for {Count} requests", requestList.Count);
+            if (bulkResult.CreatedCount > 0)
+                RecordCrudSuccess(operation, typeof(TDbModel), true);
+
+            if (bulkResult.FailedCount > 0)
+                RecordCrudFailure(operation, typeof(TDbModel), true);
+
+            RecordCrudResultCount(operation, typeof(TDbModel), bulkResult.CreatedCount, true);
+            return bulkResult;
+        }
+
+        Logger.LogWarning("Bulk create failed, falling back to partial retry strategy for {Count} requests", requestList.Count);
+        var retryResult = await CreateWithPartialRetry<TRequest, TDbModel, TResult>(requestList, before, after, afterAsync, ct);
+        if (retryResult.CreatedCount > 0)
+            RecordCrudSuccess(operation, typeof(TDbModel), true);
+
+        if (retryResult.FailedCount > 0)
+            RecordCrudFailure(operation, typeof(TDbModel), true);
+
+        RecordCrudResultCount(operation, typeof(TDbModel), retryResult.CreatedCount, true);
+        return retryResult;
+    }
+
+    private static Task InvokeAfterPersistAsync<TRequest, TDbModel, TContextLocal>(
+        CreateContext<TRequest, TDbModel, TContextLocal> ctx,
+        Action<CreateContext<TRequest, TDbModel, TContextLocal>>? after,
+        Func<CreateContext<TRequest, TDbModel, TContextLocal>, Task>? afterAsync)
+        where TDbModel : class where TContextLocal : DbContext
+    {
+        if (afterAsync != null)
+            return afterAsync(ctx);
+
+        after?.Invoke(ctx);
+        return Task.CompletedTask;
+    }
+
+    private async Task<CreateBulkResult<TResult>?> TryBulkCreateAll<TRequest, TDbModel, TResult>(
+        IReadOnlyList<TRequest> requests,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? before,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? after,
+        Func<CreateContext<TRequest, TDbModel, TContext>, Task>? afterAsync,
+        CancellationToken ct = default)
+        where TDbModel : class
+    {
+        try {
+            await using var context = await ContextFactory.CreateDbContextAsync(ct);
+            var entities = new List<TDbModel>(requests.Count);
+            foreach (var req in requests) {
+                var entity = MapOrCast<TRequest, TDbModel>(Mapper, req!);
+                var ctx = new CreateContext<TRequest, TDbModel, TContext>(req!, entity, context, serviceProvider);
+                before?.Invoke(ctx);
+                context.Set<TDbModel>().Add(entity);
+                entities.Add(entity);
+            }
+
+            await context.SaveChangesAsync(ct);
+            var results = new List<CreateResult<TResult>>(requests.Count);
+            foreach (var (req, entity) in requests.Zip(entities)) {
+                var ctx = new CreateContext<TRequest, TDbModel, TContext>(req!, entity, context, serviceProvider);
+                await InvokeAfterPersistAsync(ctx, after, afterAsync).ConfigureAwait(false);
+                var result = MapOrCast<TDbModel, TResult>(Mapper, entity);
+                results.Add(ResultFactory.CreateSuccess(result));
+            }
+
+            var bulkResult = new CreateBulkResult<TResult>(results, results.Count, 0);
+            await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<TDbModel>(cache, ct, Logger).ConfigureAwait(false);
+            await InvalidatePrincipalTypeCachesAsync<TDbModel>(context).ConfigureAwait(false);
+            return bulkResult;
+        }
+        catch (Exception ex) {
+            Logger.LogWarning(ex, "Bulk create failed, will attempt partial retry");
+            return null;
+        }
+    }
+
+    private async Task<CreateBulkResult<TResult>> CreateWithPartialRetry<TRequest, TDbModel, TResult>(
+        IReadOnlyList<TRequest> requests,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? before,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? after,
+        Func<CreateContext<TRequest, TDbModel, TContext>, Task>? afterAsync,
+        CancellationToken ct = default)
+        where TDbModel : class
+    {
+        var results = new List<CreateResult<TResult>>();
+        var failed = new List<(int Index, TRequest Request)>();
+        int successCount = 0, failureCount = 0;
+        var (successResults, failedRequests) = await TryBulkCreateWithTracking<TRequest, TDbModel, TResult>(requests, before, after, afterAsync, ct).ConfigureAwait(false);
+        results.AddRange(successResults);
+        successCount += successResults.Count;
+        failed.AddRange(failedRequests);
+        failureCount += failedRequests.Count;
+        if (failed.Count > 0) {
+            Logger.LogWarning("Retrying {FailedCount} failed items individually", failed.Count);
+            foreach (var (index, request) in failed) {
+                var individualResult = await CreateIndividual<TRequest, TDbModel, TResult>(request, before, after, afterAsync, ct).ConfigureAwait(false);
+                if (index < results.Count)
+                    results.Insert(index, individualResult);
+                else
+                    results.Add(individualResult);
+
+                if (individualResult.IsSuccess)
+                    successCount++;
+                else
+                    failureCount++;
+            }
+        }
+
+        if (successCount > 0) {
+            await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<TDbModel>(cache, ct, Logger).ConfigureAwait(false);
+            await using var context = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+            await InvalidatePrincipalTypeCachesAsync<TDbModel>(context).ConfigureAwait(false);
+        }
+
+        return new(results, successCount, failureCount);
+    }
+
+    /// <summary>
+    /// Invalidates cached graphs of every entity the new row points at through a foreign key. A create emits the new type's own tag, but nothing carries the child's identity into a
+    /// cached parent, so a parent loaded with <c>Include(x =&gt; x.Children)</c> kept serving a graph that was missing the row that had just been inserted.
+    /// </summary>
+    private async Task InvalidatePrincipalTypeCachesAsync<TDbModel>(DbContext context)
+        where TDbModel : class
+    {
+        var entityType = context.Model.FindEntityType(typeof(TDbModel));
+        if (entityType is null)
+            return;
+
+        foreach (var principal in entityType.GetForeignKeys().Select(fk => fk.PrincipalEntityType.ClrType).Distinct().Where(p => p != typeof(TDbModel))) {
+            try {
+                await cache.InvalidateCacheItemByTag(QueryCacheTagBuilder.EntityTypeTag(principal)).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                // The row is already committed. A cache outage must not turn a successful create into a 500.
+                Logger.LogError(ex, "Cache invalidation failed for principal type {PrincipalType} after creating {EntityType}.", principal.FullName, typeof(TDbModel).FullName);
+            }
+        }
+    }
+
+    private async Task<(List<CreateResult<TResult>> Successes, List<(int Index, TRequest Request)> Failures)> TryBulkCreateWithTracking<TRequest, TDbModel, TResult>(
+        IReadOnlyList<TRequest> requests,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? before,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? after,
+        Func<CreateContext<TRequest, TDbModel, TContext>, Task>? afterAsync,
+        CancellationToken ct = default)
+        where TDbModel : class
+    {
+        await using var context = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entityMap = new Dictionary<int, TDbModel>();
+        var successes = new List<CreateResult<TResult>>();
+        var failures = new List<(int Index, TRequest Request)>();
+        try {
+            var index = 0;
+            foreach (var req in requests) {
+                try {
+                    var entity = MapOrCast<TRequest, TDbModel>(Mapper, req!);
+                    var ctx = new CreateContext<TRequest, TDbModel, TContext>(req!, entity, context, serviceProvider);
+                    before?.Invoke(ctx);
+                    context.Set<TDbModel>().Add(entity);
+                    entityMap[index] = entity;
+                }
+                catch (Exception ex) {
+                    Logger.LogWarning(ex, "Failed to map request at index {Index}", index);
+                    failures.Add((index, req));
+                }
+
+                index++;
+            }
+
+            if (entityMap.Count > 0) {
+                await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                foreach (var (mapIndex, entity) in entityMap) {
+                    try {
+                        var req = requests[mapIndex];
+                        var ctx = new CreateContext<TRequest, TDbModel, TContext>(req!, entity, context, serviceProvider);
+                        await InvokeAfterPersistAsync(ctx, after, afterAsync).ConfigureAwait(false);
+                        var result = MapOrCast<TDbModel, TResult>(Mapper, entity);
+                        successes.Add(ResultFactory.CreateSuccess(result));
+                    }
+                    catch (Exception ex) {
+                        Logger.LogWarning(ex, "Failed to process after hook at index {Index}", mapIndex);
+                        failures.Add((mapIndex, requests[mapIndex]));
+                    }
+                }
+            }
+        }
+        catch (Exception ex) {
+            Logger.LogWarning(ex, "Unexpected error during bulk create tracking");
+            return (successes, failures.Count > 0 ? failures : requests.Select((r, i) => (i, r)).ToList());
+        }
+
+        return (successes, failures);
+    }
+
+    private async Task<CreateResult<TResult>> CreateIndividual<TRequest, TDbModel, TResult>(
+        TRequest request,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? before,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? after,
+        Func<CreateContext<TRequest, TDbModel, TContext>, Task>? afterAsync,
+        CancellationToken ct = default)
+        where TDbModel : class
+    {
+        try {
+            await using var context = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+            var entity = MapOrCast<TRequest, TDbModel>(Mapper, request!);
+            var ctx = new CreateContext<TRequest, TDbModel, TContext>(request!, entity, context, serviceProvider);
+            before?.Invoke(ctx);
+            context.Set<TDbModel>().Add(entity);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+            await InvokeAfterPersistAsync(ctx, after, afterAsync).ConfigureAwait(false);
+            var result = MapOrCast<TDbModel, TResult>(Mapper, entity);
+            return ResultFactory.CreateSuccess(result);
+        }
+        catch (Exception ex) {
+            return ResultFactory.CreateFailure<TResult>(LogAndReturnApiError(ex, "Individual Create Error", Constants.ApiErrorCodes.InvalidCreateRequest));
+        }
+    }
+
+    private async Task<CreateResult<TResult>> CreateInternal<TRequest, TDbModel, TResult>(
+        TRequest request,
+        TContext context,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? before,
+        Action<CreateContext<TRequest, TDbModel, TContext>>? after,
+        Func<CreateContext<TRequest, TDbModel, TContext>, Task>? afterAsync,
+        CancellationToken ct = default)
+        where TDbModel : class
+    {
+        try {
+            var entity = MapOrCast<TRequest, TDbModel>(Mapper, request!);
+            var ctx = new CreateContext<TRequest, TDbModel, TContext>(request!, entity, context, serviceProvider);
+            before?.Invoke(ctx);
+            context.Set<TDbModel>().Add(entity);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+            await InvokeAfterPersistAsync(ctx, after, afterAsync).ConfigureAwait(false);
+            var result = MapOrCast<TDbModel, TResult>(Mapper, entity);
+            return ResultFactory.CreateSuccess(result);
+        }
+        catch (Exception ex) {
+            return ResultFactory.CreateFailure<TResult>(LogAndReturnApiError(ex, "Create Error", Constants.ApiErrorCodes.InvalidCreateRequest));
+        }
+    }
+}

@@ -1,0 +1,41 @@
+# Lyo.Reporting.Models
+
+Fluent builders, API contracts, generation hooks, and composition models for Lyo Reporting.
+
+## Features
+
+- **`ReportFormatExtensions`** (`Enums/`). Maps `ReportFormat` onto the shared `FileTypeInfo` catalog and surfaces `FileType`, `Extension`, and `ContentType`. Renderers and `ReportService` read these instead of keeping parallel `FormatExtension` and `GuessContentType` switches.
+
+## Routes and formats
+
+- `ReportFormat` values: `Html`, `Pdf`, `Csv`, `Xlsx`, `Json`.
+- `Constants.Rest.Reporting` route constants cover `GenerationsGenerate` plus the `GenerationsDownloadSuffix` (`Download`) and `GenerationsRerunSuffix` (`Rerun`) segments under `Reporting/Generation/{id}/…`.
+- Retention cleanup is recorded by `Constants.Metrics` as `reporting.generation.cleaned`.
+- `ReportBuilder` controls: card, block, table, and CSS grid (`AddCard` / `AddBlock` / `AddTable` / `AddGrid`). Blocks include heading, callout, image, divider, spacer, page break, progress, key-value, quote, code, chart (`ChartKind` bar/line/doughnut/pie/sparkline/gauge, static series or `AddChartFromParameter`), badge, signature, table of contents, timeline, address, totals, checkbox terms, notes, and `AddComponent` (Blazor FullName), plus `SetLayout` (theme, page size, watermark, logo, padding, margin, optional `RootComponentType`) and `AddParameter` (schema + example values). `ToDefinitionReq` dual-writes composition JSON and parameter specs, copying `ExampleValue` onto `Value` when no default is set.
+- `ReportDesignTemplates` starters: Blank, Controls gallery (TOC, static and FromParameter charts, page break, collapsed appendix), Sales summary, Invoice (FromParameter line items), Operations dashboard (KPI cards + FromParameter chart). `Samples` is the saved-definition catalog (excludes Blank) used by the workbench Templates menu and Test Gateway seed.
+- `ReportCompositionProcessor` interpolates `{Key}` placeholders and honors `VisibleWhen` before generate and file render. The design canvas interpolates example values at paint time on the live composition (no clone, hidden `VisibleWhen` items stay editable and dimmed). Empty TOC blocks and `FromParameter` tables/charts fill from example parameter JSON at paint without mutating the live graph.
+- `SectionBody` enumerates mixed controls and subsections. All-zero `Order` keeps list order then subsections. Designer chrome keys (`ReportDesignTreeExpand.LiveKey`) do not write `Section.Id`. Nested grids are rejected.
+- `KeepTogether` is omit-null. Null means the type default: on for cards, blocks, and layout grids; off for tables so tall tables can split. Page breaks ignore the flag. `ReportViewPainter` emits `break-inside: avoid` when effective.
+- `Table` can load rows from Static cells, `FromParameter` (JSON array on a definition parameter) via `FieldMap`, or Query/Sproc `Options` JSON (the same ParameterOptions document as definition parameters). Chart blocks can fill from a parameter with `ChartLabelField` / `ChartValueField`. Query/Sproc execution stays out of this package.
+
+## Notes
+
+- Column `ValueFormatter` delegates are `[JsonIgnore]` and do not survive JSON persistence into `ReportDataJson`.
+- `Lyo.Reporting.Web` owns HTML/PDF rendering; `Lyo.Reporting.Postgres` owns CSV/XLSX/JSON rendering and orchestration.
+- `Lyo.Reporting.Api` hosts the HTTP endpoints. Persist staged output in consumer `ReportGenerationHooks` (Reporting does not reference FileStorage); drop persisted output in `OnCleanupAsync` when retention, generation delete, or definition delete removes rows.
+- `ReportDefinitionParameterReq.Options`. JSON picker source (static items, root `QueryReq`, or `schema.func` sproc); `Value` is JSON for the declared CLR FullName (`LyoTypeInfo`). Collection/JSON types (and tables with `FromParameter`) materialize row JSON. Tables can also run Query/Sproc `Options` directly. `AllowedValues` remains the validation shorthand.
+- `ReportDefinitionParameterReq.DefaultKind` + `DefaultTemplate`. `Literal` (the default) takes the default from `Value`; `Expression` renders `DefaultTemplate` when the caller supplies no value, so `Type` can still describe the value itself. During merge, `ReportService` resolves it and validates the rendered text against `Type`.
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Common.Json` (direct, lyo)
+- `Lyo.Common.Metadata` (direct, lyo)
+- `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Metrics` (direct, lyo)
+- `Lyo.Parameters` (direct, lyo)
+- `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Lyo.Common.Core` (transitive, lyo)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

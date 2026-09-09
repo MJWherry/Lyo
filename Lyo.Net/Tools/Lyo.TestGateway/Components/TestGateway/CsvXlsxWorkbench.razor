@@ -1,0 +1,362 @@
+@using System.IO.Compression
+@using System.Text
+@using System.Text.Json
+@using System.Text.Json.Nodes
+@using Lyo.Common.Core.Enums;
+@using Lyo.Common.Core.Pathing;
+@using Lyo.Csv.Models
+@using Lyo.DataTable.Models
+@using Lyo.Result
+@using Lyo.Web.Components
+@using Lyo.Web.Components.DataTablePreview
+@using Lyo.Web.Components.FileUpload
+@using Lyo.Web.Components.JsonEditor
+@using Lyo.Web.Components.Models
+@using Lyo.Xlsx.Models
+@inject ICsvService CsvService
+@inject IXlsxService XlsxService
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">CSV &amp; XLSX</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Upload files with <code>LyoFileUpload</code>, parse with <code>Lyo.Csv</code> and <code>Lyo.Xlsx</code>, split or merge files, convert formats, and download
+                results.
+            </MudText>
+        </div>
+
+        <MudTabs @bind-ActivePanelIndex="_tabIndex" Rounded="true" Elevation="0" Outlined="true">
+            <MudTabPanel Text="CSV">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudSwitch @bind-Value="_csvHasHeader"
+                                       @bind-Value:after="OnCsvHasHeaderChangedAsync"
+                                       Color="Color.Primary"
+                                       Label="First row is header"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Upload .csv</MudText>
+                            <LyoFileUpload MaxFiles="1"
+                                           MaxFileSize="@MaxUploadBytes"
+                                           ValidFileTypes="FileTypeFlags.Csv"
+                                           ButtonText="Choose CSV file"
+                                           InlineLayout="true"
+                                           OnClientFileReady="OnCsvUploadReadyAsync"/>
+                            @if (!string.IsNullOrEmpty(_csvUploadName)) {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Loaded: @_csvUploadName
+                                    @if (_csvBytes != null) {
+                                        <text> (@_csvBytes.Length.ToString("N0") bytes)</text>
+                                    }
+                                    @if (_csvTextEditDisabled) {
+                                        <text> — text edit disabled for large uploads; preview uses uploaded bytes</text>
+                                    }
+                                </MudText>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    @if (_csvTextEditDisabled) {
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-0">
+                            CSV is larger than @(MaxCsvTextEditBytes / 1024) KiB, so the paste editor is hidden to avoid Blazor lag.
+                            Toggle “First row is header” and click Re-parse upload to refresh the preview.
+                        </MudAlert>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ParseCsvBytesAsync" Disabled="@(_csvBytes == null)">
+                            Re-parse upload
+                        </MudButton>
+                    }
+                    else {
+                        <MudTextField T="string"
+                                      @bind-Value="_csvText"
+                                      Label="CSV text (paste or edit; Parse applies this)"
+                                      Lines="10"
+                                      FullWidth="true"
+                                      Variant="Variant.Outlined"
+                                      Style="font-family: ui-monospace, monospace;"/>
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ParseCsvTextAsync">Parse text</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvTableAsync" Disabled="@(_csvTable == null)">Download .csv</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table</MudButton>
+                        </MudStack>
+                    }
+
+                    @if (_csvTextEditDisabled) {
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvTableAsync" Disabled="@(_csvTable == null)">Download .csv</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table</MudButton>
+                        </MudStack>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_csvError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_csvError</MudAlert>
+                    }
+
+                    @if (_csvTable != null) {
+                        <MudText Typo="Typo.subtitle2">Preview (@_csvTable.Rows.Count row(s))</MudText>
+
+                        <DataTablePreview Table="@_csvTable"/>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="XLSX">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudSwitch @bind-Value="_xlsxUseHeaderRow" Color="Color.Primary" Label="Use first row as header"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Upload .xlsx</MudText>
+                            <LyoFileUpload MaxFiles="1"
+                                           MaxFileSize="@MaxUploadBytes"
+                                           ValidFileTypes="FileTypeFlags.Xlsx"
+                                           ButtonText="Choose XLSX file"
+                                           InlineLayout="true"
+                                           OnClientFileReady="OnXlsxUploadReadyAsync"/>
+                            @if (!string.IsNullOrEmpty(_xlsxUploadName)) {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Loaded: @_xlsxUploadName (@_xlsxByteLength bytes)</MudText>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxReexportAsync" Disabled="@(_xlsxTable == null)">Download .xlsx
+                            (re-export)
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxAsCsvAsync" Disabled="@(_xlsxBytes == null)">Download as .csv</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxHtmlAsync" Disabled="@(_xlsxBytes == null)">Download HTML table</MudButton>
+                    </MudStack>
+
+                    @if (!string.IsNullOrWhiteSpace(_xlsxError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_xlsxError</MudAlert>
+                    }
+
+                    @if (_xlsxTable != null) {
+                        <MudText Typo="Typo.subtitle2">Preview (@_xlsxTable.Rows.Count row(s))</MudText>
+
+                        <DataTablePreview Table="@_xlsxTable"/>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Split">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Split a <strong>.csv</strong> or <strong>.xlsx</strong> into parts and download a <strong>.zip</strong>. CSV splits by row count; XLSX splits by worksheet
+                        or row count.
+                    </MudText>
+
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <LyoFileUpload MaxFiles="1"
+                                       MaxFileSize="@MaxUploadBytes"
+                                       ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                       ButtonText="Upload file to split"
+                                       InlineLayout="true"
+                                       OnClientFileReady="OnSplitUploadReadyAsync"/>
+                        @if (!string.IsNullOrEmpty(_splitFileName)) {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">@_splitFileName</MudText>
+                        }
+                    </MudPaper>
+
+                    @if (_splitBytes != null) {
+                        @if (_splitIsXlsx) {
+                            <MudSelect T="string" @bind-Value="_splitXlsxMode" Label="XLSX split mode" Variant="Variant.Outlined">
+                                <MudSelectItem Value="@("sheet")">One file per worksheet</MudSelectItem>
+                                <MudSelectItem Value="@("rows")">By row count (first or named sheet)</MudSelectItem>
+                            </MudSelect>
+
+                            @if (_splitXlsxMode == "rows") {
+                                <MudTextField T="string"
+                                              @bind-Value="_splitSheetName"
+                                              Label="Worksheet name (optional; first sheet when empty)"
+                                              Variant="Variant.Outlined"/>
+                            }
+                        }
+
+                        @if (!_splitIsXlsx || _splitXlsxMode == "rows") {
+                            <MudNumericField T="int"
+                                             @bind-Value="_splitRowsPerFile"
+                                             Label="Rows per part"
+                                             Min="1"
+                                             Variant="Variant.Outlined"/>
+                        }
+
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SplitAndDownloadZipAsync">Split &amp; download .zip</MudButton>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_splitError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_splitError</MudAlert>
+                    }
+
+                    @if (_splitPartCount > 0) {
+                        <MudAlert Severity="Severity.Success" Dense="true">Created @_splitPartCount part(s) in the downloaded zip.</MudAlert>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Merge">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Load two <strong>.csv</strong> or <strong>.xlsx</strong> files. Rows from source B are appended under source A (column-aligned by index). Optionally skip
+                        the first row of B when it repeats headers.
+                    </MudText>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="4">
+                            <MudSwitch @bind-Value="_mergeHeaderA" Color="Color.Primary" Label="A: first row is header"/>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSwitch @bind-Value="_mergeHeaderB" Color="Color.Primary" Label="B: first row is header"/>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSwitch @bind-Value="_mergeSkipFirstRowB" Color="Color.Primary" Label="Skip first row of B when merging"/>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="XlsxMergeMode" @bind-Value="_xlsxMergeMode" Label="XLSX merge mode" Variant="Variant.Outlined" Dense="true">
+                                <MudSelectItem Value="XlsxMergeMode.PreserveSheets">Preserve worksheets</MudSelectItem>
+                                <MudSelectItem Value="XlsxMergeMode.ConcatenateRows">Append all rows</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Source A (top)</MudText>
+                                <LyoFileUpload MaxFiles="1"
+                                               MaxFileSize="@MaxUploadBytes"
+                                               ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                               ButtonText="Upload A"
+                                               InlineLayout="true"
+                                               OnClientFileReady="OnMergeAReadyAsync"/>
+                                @if (!string.IsNullOrEmpty(_mergeNameA)) {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_mergeNameA</MudText>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Source B (appended)</MudText>
+                                <LyoFileUpload MaxFiles="1"
+                                               MaxFileSize="@MaxUploadBytes"
+                                               ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                               ButtonText="Upload B"
+                                               InlineLayout="true"
+                                               OnClientFileReady="OnMergeBReadyAsync"/>
+                                @if (!string.IsNullOrEmpty(_mergeNameB)) {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_mergeNameB</MudText>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="MergeAsync" Disabled="@(_mergeBytesA == null || _mergeBytesB == null)">Merge</MudButton>
+
+                    @if (!string.IsNullOrWhiteSpace(_mergeError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_mergeError</MudAlert>
+                    }
+
+                    @if (_mergedTable != null) {
+                        <MudText Typo="Typo.subtitle2">Merged (@_mergedTable.Rows.Count row(s))</MudText>
+
+                        <DataTablePreview Table="@_mergedTable"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadMergedCsvAsync">Download merged .csv</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadMergedXlsxAsync">Download merged .xlsx</MudButton>
+                        </MudStack>
+                    }
+
+                    <MudDivider Class="my-2"/>
+
+                    <MudText Typo="Typo.subtitle2">Combine multiple files (service API)</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Upload two or more files of the same type. Uses <code>CombineCsvBytesAsync</code> or <code>MergeXlsxBytesAsync</code>.
+                    </MudText>
+
+                    <LyoFileUpload MaxFiles="20"
+                                   MaxFileSize="@MaxUploadBytes"
+                                   ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                   ButtonText="Upload files to combine"
+                                   InlineLayout="true"
+                                   OnClientFileReady="OnMultiCombineFileReadyAsync"
+                                   OnClientFileRemoved="OnMultiCombineFileRemovedAsync"/>
+
+                    @if (_multiCombineFiles.Count > 0) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@_multiCombineFiles.Count file(s) selected</MudText>
+                    }
+
+                    @if (_multiCombineAllXlsx) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">XLSX merge mode uses the setting above.</MudText>
+                    }
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               OnClick="CombineMultipleAsync"
+                               Disabled="@(_multiCombineFiles.Count < 2)">
+                        Combine @_multiCombineFiles.Count file(s)
+                    </MudButton>
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="More">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudText Typo="Typo.subtitle2">XLSX → CSV (convert)</MudText>
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <LyoFileUpload MaxFiles="1"
+                                       MaxFileSize="@MaxUploadBytes"
+                                       ValidFileTypes="FileTypeFlags.Xlsx"
+                                       ButtonText="Upload XLSX to convert"
+                                       InlineLayout="true"
+                                       OnClientFileReady="OnConvertXlsxReadyAsync"/>
+                        @if (!string.IsNullOrEmpty(_convertXlsxName)) {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">@_convertXlsxName — ready to download as CSV</MudText>
+                        }
+                    </MudPaper>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="DownloadConvertedCsvAsync" Disabled="@(_convertXlsxBytes == null)">Download .csv</MudButton>
+
+                    <MudDivider/>
+
+                    <MudText Typo="Typo.subtitle2">Grid as JSON (read-only viewer)</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Uses <code>Parse*AsDictionary</code> — row index → column index → cell text. Toolbar: search, expand/collapse, zoom (A-/A+), Raw/Tree view. Read-only (no
+                        editing values).
+                    </MudText>
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <LyoFileUpload MaxFiles="1"
+                                       MaxFileSize="@MaxUploadBytes"
+                                       ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                       ButtonText="Upload for JSON viewer"
+                                       InlineLayout="true"
+                                       OnClientFileReady="OnJsonPreviewUploadAsync"/>
+                    </MudPaper>
+                    @if (!string.IsNullOrWhiteSpace(_dictJsonError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_dictJsonError</MudAlert>
+                    }
+                    else if (_dictJsonRoot != null) {
+                        <MudPaper Class="pa-2" Outlined="true">
+                            <JsonEditor T="JsonNode"
+                                        @key="_dictJsonViewerKey"
+                                        @bind-Value="_dictJsonRoot"
+                                        Editable="false"
+                                        AllowTreeEditing="false"
+                                        DefaultViewMode="JsonEditorViewMode.Tree"/>
+                        </MudPaper>
+
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="DownloadDictJsonAsync" Disabled="@(_dictJsonBytes == null)">Download JSON</MudButton>
+                    }
+                </MudStack>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudPaper>

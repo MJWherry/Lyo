@@ -1,0 +1,34 @@
+@namespace Lyo.Web.Components.ParamTable
+
+@if (Entries.Count > 0) {
+    @if (ShowDivider) {
+        <MudDivider/>
+    }
+    @if (!string.IsNullOrWhiteSpace(Title)) {
+        <MudText Typo="Typo.subtitle1">@Title</MudText>
+    }
+    <MudGrid Spacing="2">
+        @foreach (var entry in Entries) {
+            <MudItem xs="12" md="@(LyoTypeUi.IsWideEditor(entry.Definition.Type) ? 12 : 6)">
+                <LyoParameterValueField TypeName="@entry.Definition.Type"
+                                        Json="@entry.Value"
+                                        JsonChanged="@(v => SetValueAsync(entry, v))"
+                                        OptionsJson="@entry.Definition.Options"
+                                        AllowedValues="@entry.Definition.AllowedValues"
+                                        SiblingValues="@_siblings"
+                                        ApiClient="ApiClient"
+                                        Label="@entry.Label"
+                                        Required="@entry.Definition.Required"
+                                        AllowUnset="@(!entry.Definition.Required)"
+                                        ShowEncrypt="@ShowEncrypt"
+                                        Encrypted="@entry.Encrypted"
+                                        EncryptedChanged="@(v => entry.Encrypted = v)"
+                                        Description="@entry.Definition.Description"
+                                        FormatterContext="@FormatterContext"/>
+                @if (entry.DefaultExpressionHint is { } expressionHint) {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@expressionHint</MudText>
+                }
+            </MudItem>
+        }
+    </MudGrid>
+}

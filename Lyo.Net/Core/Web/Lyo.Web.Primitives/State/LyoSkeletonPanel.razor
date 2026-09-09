@@ -1,0 +1,10 @@
+@namespace Lyo.Web.Primitives
+
+<div class="lyo-skeleton-panel @Class" style="@Style" aria-busy="true" aria-live="polite">
+    @if (ShowHeader) {
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="@HeaderHeight" Animation="@Animation"/>
+    }
+    @for (var row = 0; row < Rows; row++) {
+        <MudSkeleton SkeletonType="@SkeletonType" Width="@RowWidth(row)" Height="@RowHeight" Animation="@Animation"/>
+    }
+</div>

@@ -1,0 +1,26 @@
+using Lyo.EntityReference.Postgres.Database;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Lyo.Audit.Postgres.Database;
+
+public sealed class AuditChangeEntityConfiguration : IEntityTypeConfiguration<AuditChangeEntity>
+{
+    public void Configure(EntityTypeBuilder<AuditChangeEntity> builder)
+    {
+        builder.ToTable("audit_changes");
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.Property(e => e.Timestamp).IsRequired().HasColumnName("timestamp").HasColumnType("timestamp with time zone");
+        builder.MapOptionalActorColumns();
+        builder.Property(e => e.OldValuesJson).IsRequired().HasColumnName("old_values_json").HasColumnType("jsonb").HasMaxLength(32_768);
+        builder.Property(e => e.ChangedPropertiesJson).IsRequired().HasColumnName("changed_properties_json").HasColumnType("jsonb").HasMaxLength(32_768);
+        builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
+        builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
+        builder.HasIndex(e => e.Timestamp).HasDatabaseName("ix_audit_changes_timestamp");
+        builder.HasIndex(e => new { e.SubjectEntityType, e.SubjectEntityId, e.Timestamp }).HasDatabaseName("ix_audit_changes_for_entity_timestamp");
+        builder.HasIndex(e => e.SubjectEntityType).HasDatabaseName("ix_audit_changes_for_entity_type");
+        builder.HasIndex(e => new { e.ActorEntityType, e.ActorEntityId }).HasDatabaseName("ix_audit_changes_from_entity");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_audit_changes_tenant");
+    }
+}

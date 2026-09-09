@@ -1,0 +1,17 @@
+.lyo-param-card-drop-target ::deep .mud-paper {
+    box-shadow: inset 0 3px 0 0 var(--mud-palette-primary);
+}
+
+.lyo-param-card-handle {
+    display: inline-flex;
+    align-items: center;
+    cursor: grab;
+    user-select: none;
+}
+
+/* Grow with the header but never squeeze the chips and buttons off the row. */
+.lyo-param-card-key {
+    flex: 1 1 160px;
+    min-width: 140px;
+    max-width: 320px;
+}

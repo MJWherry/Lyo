@@ -1,0 +1,193 @@
+{
+  "id": "Lyo.Diagnostic.AspNetCore",
+  "name": "Lyo.Diagnostic.AspNetCore",
+  "area": "Core",
+  "tagline": "ASP.NET Core integration for `Lyo.Diagnostic`. Per-request scoped breadcrumb trails and exception recording to the in-memory error inbox plus structured logging, without replacing existing problem-details middleware.",
+  "description": "ASP.NET Core integration for `Lyo.Diagnostic`. Per-request scoped breadcrumb trails and exception recording to the in-memory error inbox plus structured logging, without replacing existing problem-details middleware.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Install",
+      "language": "csharp",
+      "code": "using Lyo.Diagnostic.AspNetCore;\n\nbuilder.Services.AddLyoDiagnosticsWeb(o =>\n{\n    o.MinimumSeverity = Lyo.Diagnostic.Classification.ExceptionSeverity.Low;\n    o.BreadcrumbCapacity = 100;\n    o.InMemoryInboxMaxOccurrences = 5_000;\n    o.CorrelationIdHeaders = [\"X-Correlation-Id\", \"X-Request-Id\"];\n});\n\n// After outer middleware that catches and formats errors (e.g. LoggingMiddleware):\napp.UseDiagnosticExceptionRecording();"
+    },
+    {
+      "title": "Controller breadcrumbs",
+      "language": "csharp",
+      "code": "public sealed class OrdersController(IBreadcrumbTrail breadcrumbs)\n{\n    public async Task<IActionResult> Get(string id)\n    {\n        breadcrumbs.Add(\"orders\", \"Loading order\", new Dictionary<string, string> { [\"id\"] = id });\n        // ...\n    }\n}"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Order in the pipeline",
+      "items": [
+        "Placed nearer the route handlers, this middleware is first in line when an exception unwinds.",
+        "It records the failure, calls `IStructuredLogEnricher`, then rethrows.",
+        "Problem Details / HTTP error bodies can still be built by outer middleware."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Options (`DiagnosticWebOptions`)",
+      "headers": [
+        "Property",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "`MinimumSeverity`",
+          "The inbox only stores occurrences at this severity or higher."
+        ],
+        [
+          "`RecordExpectedControlFlow`",
+          "Expected control-flow classifications are skipped when this is `false`."
+        ],
+        [
+          "`BreadcrumbCapacity`",
+          "Per-request breadcrumb ceiling (`IBreadcrumbTrail`)."
+        ],
+        [
+          "`InMemoryInboxMaxOccurrences`",
+          "Upper bound for the singleton `InMemoryErrorInbox`."
+        ],
+        [
+          "`CorrelationIdHeaders`",
+          "Tried in order for `RequestMetadata.CorrelationId`; `TraceIdentifier` is the fallback."
+        ]
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Controller breadcrumbs",
+      "body": "Resolve scoped `IBreadcrumbTrail` and record entries before risky work:\n\n\n\nKeep secrets and PII out of breadcrumb data. See the `Lyo.Diagnostic` README."
+    },
+    {
+      "type": "paragraph",
+      "title": "Lyo.Api",
+      "text": "`AddLyoApiDiagnosticRecording` on `Lyo.Api` wraps `AddLyoDiagnosticsWeb`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

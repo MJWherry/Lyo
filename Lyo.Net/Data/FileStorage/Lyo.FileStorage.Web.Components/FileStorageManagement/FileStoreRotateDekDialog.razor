@@ -1,0 +1,28 @@
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Decrypts and re-encrypts each selected file with a fresh DEK. Optionally migrate to another key id or version at the same time.
+            </MudText>
+            @if (FileCount > 0) {
+                <MudText Typo="Typo.body2">@FileCount file@(FileCount == 1 ? "" : "s") selected.</MudText>
+            }
+            <FileStoreKeyIdField Label="Target key id"
+                                 HelperText="Leave blank to keep each file on its current key id."
+                                 KeyIds="KeyIds"
+                                 Style="width: 100%;"
+                                 @bind-Value="_targetKeyId"/>
+            <MudTextField T="string"
+                          Label="Target key version"
+                          HelperText="Leave blank to keep each file's current version, or use the current version of the chosen target key."
+                          @bind-Value="_targetKeyVersion"/>
+            <MudNumericField T="int" Label="Batch size" Immediate="true" @bind-Value="_batchSize"/>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Confirm">Rotate DEKs</MudButton>
+    </DialogActions>
+</MudDialog>

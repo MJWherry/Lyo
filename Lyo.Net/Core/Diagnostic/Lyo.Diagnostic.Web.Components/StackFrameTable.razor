@@ -1,0 +1,58 @@
+@if (Frames.Count == 0) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">No frames.</MudText>
+}
+else {
+    <LyoResponsiveTable>
+        <TableContent>
+            <MudTable Items="@Frames" Dense="true" Hover="true" FixedHeader="true" Height="400px">
+                <HeaderContent>
+                    <MudTh>Category</MudTh>
+                    <MudTh>Method</MudTh>
+                    <MudTh>Location</MudTh>
+                    <MudTh>Flags</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Category">
+                        <LyoChip Label="@context.Category.ToString()"/>
+                    </MudTd>
+                    <MudTd DataLabel="Method">
+                        <MudText Typo="Typo.body2" Style="font-family: monospace; font-size: 0.85rem;">@context.ShortMethod</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Location">@(context.LocationSummary ?? "—")</MudTd>
+                    <MudTd DataLabel="Flags">@FrameFlags(context)</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </TableContent>
+        <CardContent>
+            @foreach (var frame in Frames) {
+                <LyoRecordCard Title="@frame.ShortMethod">
+                    <TitleContent>
+                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                            <LyoChip Label="@frame.Category.ToString()"/>
+                            @FrameFlags(frame)
+                        </MudStack>
+                    </TitleContent>
+                    <ChildContent>
+                        <LyoRecordField Label="Location" Value="@(frame.LocationSummary ?? "—")"/>
+                    </ChildContent>
+                </LyoRecordCard>
+            }
+        </CardContent>
+    </LyoResponsiveTable>
+}
+
+@code {
+
+    private RenderFragment<StackFrame> FrameFlags => frame => @<text>
+        @if (frame.IsAsync) {
+            <LyoChip Variant="Variant.Text" Label="async"/>
+        }
+        @if (frame.IsLambda) {
+            <LyoChip Variant="Variant.Text" Label="lambda"/>
+        }
+        @if (!frame.IsAsync && !frame.IsLambda) {
+            <span>—</span>
+        }
+    </text>;
+
+}

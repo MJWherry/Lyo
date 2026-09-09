@@ -1,0 +1,38 @@
+@namespace Lyo.Web.Components.DataGrid
+@typeparam TValue
+<TemplateColumn T="object?"
+                Title="@Title"
+                Sortable="@Sortable"
+                SortBy="@GetSortValue"
+                InitialDirection="@InitialDirection"
+                Hideable="@Hideable"
+                Resizable="@Resizable"
+                Tag="@GetApiSortKey()"
+                HeaderStyle="@EffectiveHeaderStyle"
+                HeaderClass="@EffectiveHeaderClass"
+                CellStyle="@EffectiveCellStyle"
+                CellClass="@EffectiveCellClass"
+                Hidden="@(VisibilityBinder?.IsHidden(Field) ?? false)"
+                HiddenChanged="@OnHiddenChanged">
+    <CellTemplate Context="cell">
+        @Cell(cell.Item)
+    </CellTemplate>
+</TemplateColumn>
+
+@code {
+
+    /// <summary>Cell markup for one row, rendered by the table cell and by the mobile card layout so a value looks the same in both.</summary>
+    internal RenderFragment<object?> Cell => item =>
+        @<text>
+            @{
+                var displayText = DisplayText(item);
+            }
+            @if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
+                <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
+            }
+            else {
+                <text>@displayText</text>
+            }
+        </text>;
+
+}

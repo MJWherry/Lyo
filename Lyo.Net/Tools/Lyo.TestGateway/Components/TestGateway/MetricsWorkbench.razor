@@ -1,0 +1,239 @@
+@using System.Globalization
+@using Lyo.Metrics
+@using Lyo.Metrics.Models
+@inject IMetrics Metrics
+@inherits LyoWorkbenchBase
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Metrics Viewer</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Inspect live in-memory counters, gauges, histograms, and recent metric events recorded by the gateway.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle2">Total Recorded</MudText>
+                    <MudText Typo="Typo.h6">@(_snapshot?.TotalMetricsRecorded.ToString("n0", CultureInfo.InvariantCulture) ?? "0")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle2">Metric Sets</MudText>
+                    <MudText Typo="Typo.h6">@($"{_snapshot?.Counters.Count ?? 0} C / {_snapshot?.Gauges.Count ?? 0} G / {_snapshot?.Histograms.Count ?? 0} H")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle2">Last Refresh</MudText>
+                    <MudText Typo="Typo.h6">@(_lastRefresh == default ? "(not loaded)" : _lastRefresh.ToString("u"))</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudStack Spacing="2">
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudTextField T="string"
+                                  Label="Filter by name or tag"
+                                  Immediate="true"
+                                  Clearable="true"
+                                  @bind-Value="_filterText"/>
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                        <MudButton Variant="Variant.Outlined" OnClick="RefreshAsync" Disabled="@_busy">Refresh</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ClearAsync" Disabled="@(_busy || MetricsStore == null)">Clear Metrics</MudButton>
+                    </MudStack>
+                </MudStack>
+
+                <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
+
+                @if (MetricsStore == null) {
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        The current `IMetrics` implementation is not the in-memory `MetricsService`, so this viewer cannot inspect live metrics.
+                    </MudAlert>
+                }
+                else {
+                    <MudTabs Rounded="true" TabPanelsClass="pa-0">
+                        <MudTabPanel Text="@($"Counters ({FilteredCounters.Count})")">
+                            @if (FilteredCounters.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No counter metrics match the current filter.</MudText>
+                            }
+                            else {
+                                <LyoResponsiveTable>
+                                    <TableContent>
+                                        <MudSimpleTable Dense="true" Hover="true">
+                                            <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Value</th>
+                                                <th>Tags</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach (var entry in FilteredCounters) {
+                                                <tr>
+                                                    <td>@entry.Value.Name</td>
+                                                    <td>@entry.Value.Value.ToString("n0", CultureInfo.InvariantCulture)</td>
+                                                    <td>@FormatTags(entry.Value.Tags)</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </MudSimpleTable>
+                                    </TableContent>
+                                    <CardContent>
+                                        @foreach (var entry in FilteredCounters) {
+                                            <LyoRecordCard Title="@entry.Value.Name">
+                                                <LyoRecordField Label="Value" Value="@entry.Value.Value.ToString("n0", CultureInfo.InvariantCulture)"/>
+                                                <LyoRecordField Label="Tags" Value="@FormatTags(entry.Value.Tags)"/>
+                                            </LyoRecordCard>
+                                        }
+                                    </CardContent>
+                                </LyoResponsiveTable>
+                            }
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="@($"Gauges ({FilteredGauges.Count})")">
+                            @if (FilteredGauges.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No gauge metrics match the current filter.</MudText>
+                            }
+                            else {
+                                <LyoResponsiveTable>
+                                    <TableContent>
+                                        <MudSimpleTable Dense="true" Hover="true">
+                                            <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Value</th>
+                                                <th>Updated</th>
+                                                <th>Tags</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach (var entry in FilteredGauges) {
+                                                <tr>
+                                                    <td>@entry.Value.Name</td>
+                                                    <td>@entry.Value.Value.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                                    <td>@entry.Value.LastUpdated.ToString("u")</td>
+                                                    <td>@FormatTags(entry.Value.Tags)</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </MudSimpleTable>
+                                    </TableContent>
+                                    <CardContent>
+                                        @foreach (var entry in FilteredGauges) {
+                                            <LyoRecordCard Title="@entry.Value.Name">
+                                                <LyoRecordField Label="Value" Value="@entry.Value.Value.ToString("0.###", CultureInfo.InvariantCulture)"/>
+                                                <LyoRecordField Label="Updated" Value="@entry.Value.LastUpdated.ToString("u")"/>
+                                                <LyoRecordField Label="Tags" Value="@FormatTags(entry.Value.Tags)"/>
+                                            </LyoRecordCard>
+                                        }
+                                    </CardContent>
+                                </LyoResponsiveTable>
+                            }
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="@($"Histograms ({FilteredHistograms.Count})")">
+                            @if (FilteredHistograms.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No histogram metrics match the current filter.</MudText>
+                            }
+                            else {
+                                <LyoResponsiveTable>
+                                    <TableContent>
+                                        <MudSimpleTable Dense="true" Hover="true">
+                                            <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Count</th>
+                                                <th>Min</th>
+                                                <th>Avg</th>
+                                                <th>Max</th>
+                                                <th>Tags</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach (var entry in FilteredHistograms) {
+                                                <tr>
+                                                    <td>@entry.Value.Name</td>
+                                                    <td>@entry.Value.Count.ToString("n0", CultureInfo.InvariantCulture)</td>
+                                                    <td>@entry.Value.Min.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                                    <td>@entry.Value.Average.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                                    <td>@entry.Value.Max.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                                    <td>@FormatTags(entry.Value.Tags)</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </MudSimpleTable>
+                                    </TableContent>
+                                    <CardContent>
+                                        @foreach (var entry in FilteredHistograms) {
+                                            <LyoRecordCard Title="@entry.Value.Name">
+                                                <LyoRecordField Label="Count" Value="@entry.Value.Count.ToString("n0", CultureInfo.InvariantCulture)"/>
+                                                <LyoRecordField Label="Min" Value="@entry.Value.Min.ToString("0.###", CultureInfo.InvariantCulture)"/>
+                                                <LyoRecordField Label="Avg" Value="@entry.Value.Average.ToString("0.###", CultureInfo.InvariantCulture)"/>
+                                                <LyoRecordField Label="Max" Value="@entry.Value.Max.ToString("0.###", CultureInfo.InvariantCulture)"/>
+                                                <LyoRecordField Label="Tags" Value="@FormatTags(entry.Value.Tags)"/>
+                                            </LyoRecordCard>
+                                        }
+                                    </CardContent>
+                                </LyoResponsiveTable>
+                            }
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="@($"Events ({FilteredEvents.Count})")">
+                            @if (FilteredEvents.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No metric events match the current filter.</MudText>
+                            }
+                            else {
+                                <LyoResponsiveTable>
+                                    <TableContent>
+                                        <MudSimpleTable Dense="true" Hover="true">
+                                            <thead>
+                                            <tr>
+                                                <th>Timestamp</th>
+                                                <th>Name</th>
+                                                <th>Type</th>
+                                                <th>Value</th>
+                                                <th>Tags</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach (var metric in FilteredEvents) {
+                                                <tr>
+                                                    <td>@metric.Timestamp.ToString("u")</td>
+                                                    <td>@metric.Name</td>
+                                                    <td>@metric.Type</td>
+                                                    <td>@metric.Value.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                                    <td style="white-space: pre-wrap; word-break: break-word;">@FormatEventTags(metric)</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </MudSimpleTable>
+                                    </TableContent>
+                                    <CardContent>
+                                        @foreach (var metric in FilteredEvents) {
+                                            <LyoRecordCard Title="@metric.Name" Subtitle="@metric.Timestamp.ToString("u")">
+                                                <TitleContent>
+                                                    <LyoChip Label="@metric.Type.ToString()"/>
+                                                </TitleContent>
+                                                <ChildContent>
+                                                    <LyoRecordField Label="Value" Value="@metric.Value.ToString("0.###", CultureInfo.InvariantCulture)"/>
+                                                    <LyoRecordField Label="Tags">
+                                                        <div style="white-space: pre-wrap; word-break: break-word;">@FormatEventTags(metric)</div>
+                                                    </LyoRecordField>
+                                                </ChildContent>
+                                            </LyoRecordCard>
+                                        }
+                                    </CardContent>
+                                </LyoResponsiveTable>
+                            }
+                        </MudTabPanel>
+                    </MudTabs>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudStack>
+</MudPaper>

@@ -1,0 +1,79 @@
+@page "/account/tokens"
+@inject IApiClient ApiClient
+@inject ISnackbar Snackbar
+
+<PageTitle>Manage API tokens</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-6">
+    <MudStack Spacing="3">
+        <MudText Typo="Typo.h5">API tokens</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Personal access tokens issued by the Test API. The plaintext is shown once at creation time.</MudText>
+
+        <MudPaper Class="pa-4" Elevation="0" Outlined>
+            <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+                <MudTextField @bind-Value="_newName" Label="Display name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                <MudTextField @bind-Value="_newScopes" Label="Scopes (space-separated)" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="_busy">Issue</MudButton>
+            </MudStack>
+            @if (!string.IsNullOrEmpty(_lastPlaintext)) {
+                <MudAlert Severity="Severity.Warning" Class="mt-3">
+                    Save this token — it will not be shown again:
+                    <MudPaper Class="pa-2 mt-2" Elevation="0" Outlined Style="font-family: monospace; word-break: break-all;">@_lastPlaintext</MudPaper>
+                </MudAlert>
+            }
+        </MudPaper>
+
+        <LyoResponsiveTable>
+            <TableContent>
+                <MudTable Items="_tokens" Hover Dense Loading="_loading">
+                    <HeaderContent>
+                        <MudTh>ID</MudTh>
+                        <MudTh>Name</MudTh>
+                        <MudTh>Scopes</MudTh>
+                        <MudTh>Created</MudTh>
+                        <MudTh>Last used</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Id</MudTd>
+                        <MudTd>@context.DisplayName</MudTd>
+                        <MudTd>@string.Join(' ', context.Scopes ?? Array.Empty<string>())</MudTd>
+                        <MudTd>@context.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudTd>
+                        <MudTd>@(context.LastUsedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "—")</MudTd>
+                        <MudTd>@(context.RevokedAt is null ? "Active" : "Revoked")</MudTd>
+                        <MudTd>@RevokeButton(context)</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </TableContent>
+            <CardContent>
+                @foreach (var token in _tokens) {
+                    <LyoRecordCard Title="@token.DisplayName" Subtitle="@token.Id">
+                        <TitleContent>
+                            <LyoChip Color="@(token.RevokedAt is null ? Color.Success : Color.Error)" Label="@(token.RevokedAt is null ? "Active" : "Revoked")"/>
+                        </TitleContent>
+                        <Actions>
+                            @RevokeButton(token)
+                        </Actions>
+                        <ChildContent>
+                            <LyoRecordField Label="Scopes" Value="@string.Join(' ', token.Scopes ?? Array.Empty<string>())"/>
+                            <LyoRecordField Label="Created" Value="@token.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")"/>
+                            <LyoRecordField Label="Last used" Value="@(token.LastUsedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "—")"/>
+                        </ChildContent>
+                    </LyoRecordCard>
+                }
+            </CardContent>
+        </LyoResponsiveTable>
+    </MudStack>
+</MudContainer>
+
+@code {
+
+    private RenderFragment<TokenDto> RevokeButton => token => @<text>
+        <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined"
+                   OnClick="@(() => RevokeAsync(token.Id))" Disabled="@(token.RevokedAt is not null)">
+            Revoke
+        </MudButton>
+    </text>;
+
+}

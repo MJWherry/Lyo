@@ -1,0 +1,74 @@
+# Multi-stage, target-driven image for running Lyo benchmarks and tests in full isolation.
+#
+# The source is baked in and compiled in the build stage; the final stage copies only the built
+# artifacts (plus the NuGet cache). The host source tree is NEVER mounted for building, so container
+# builds can never touch the host's obj/bin. At runtime docs/benchmarks/data and history are mounted out.
+#
+# A single TARGET arg selects which projects this image compiles and runs (see
+# scripts/docker/resolve_targets.py for the grammar: groups, project names, or a list). The Tesseract
+# OCR native libs are installed automatically only when a selected project needs them.
+#
+# Both stages use the SDK image: BenchmarkDotNet's default toolchain compiles a per-run executable,
+# so the SDK is required at runtime too.
+
+# ---- build stage: compile only the selected projects -----------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+
+ARG TARGET=all
+
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1 \
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+
+WORKDIR /src
+COPY . .
+
+# Resolve the target to a csproj set, install the Tesseract native libs only if the OCR project is in
+# it (its post-build target symlinks libleptonica/libtesseract into the output at build time), then
+# build each selected project. Tools apps and the whole solution are never built.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && set -e; \
+    projects="$(python3 scripts/docker/resolve_targets.py "$TARGET")"; \
+    echo "==> target '$TARGET' resolves to:"; echo "$projects" | sed 's/^/    /'; \
+    if echo "$projects" | grep -q 'Lyo.Images.Ocr.Tesseract'; then \
+      echo "==> installing Tesseract native libs (OCR project selected)"; \
+      apt-get update \
+      && apt-get install -y --no-install-recommends libleptonica-dev libtesseract5 tesseract-ocr-eng \
+      && rm -rf /var/lib/apt/lists/*; \
+    fi; \
+    for p in $projects; do echo "==> building $p"; dotnet build -c Release "$p"; done
+
+# ---- final stage: copy the built artifacts ---------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+ARG TARGET=all
+
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1 \
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+
+# Copy the warmed NuGet cache (BDN's per-run restore and `dotnet test --no-build` resolve offline)
+# and the compiled source tree (source + bin/obj artifacts) from the build stage.
+COPY --from=build /root/.nuget/packages /root/.nuget/packages
+COPY --from=build /src /src
+
+WORKDIR /src
+
+# python3 runs scripts/benchmarks/build_manifests.py (stdlib only) after a bench run. The OCR tests
+# also load the native libs at runtime (the build-stage symlinks in /src point back at these system
+# libs), so install them here too when this image's target selects the OCR project.
+#
+# fontconfig + fonts-dejavu-core: ClosedXML (Lyo.Xlsx) resolves font metrics for column auto-fit via
+# SixLabors.Fonts, which reads the OS font store. The SDK base image ships no fonts, so without these
+# the exporter throws "Unable to find font Calibri or fallback font DejaVu Sans" (the code already sets
+# DejaVuSans as the fallback engine; the font files just have to exist).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 fontconfig fonts-dejavu-core \
+    && if python3 scripts/docker/resolve_targets.py "$TARGET" | grep -q 'Lyo.Images.Ocr.Tesseract'; then \
+         apt-get install -y --no-install-recommends libleptonica-dev libtesseract5 tesseract-ocr-eng; \
+       fi \
+    && rm -rf /var/lib/apt/lists/*
+
+ENTRYPOINT ["python3", "/src/scripts/docker/entrypoint.py"]

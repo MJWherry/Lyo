@@ -1,0 +1,26 @@
+using Lyo.Api;
+using Lyo.Api.Middleware;
+using Lyo.Cache;
+using Lyo.Common.Json;
+using Lyo.Drift.Api;
+using Lyo.Drift.Postgres;
+using Scalar.AspNetCore;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddOpenApi();
+builder.Services.AddLyoApiCompression();
+builder.Services.ConfigureHttpJsonOptions(o => LyoJsonSerializerOptions.ApplyTo(o.SerializerOptions));
+builder.Services.AddLocalCache();
+builder.Services.AddLyoQueryServices();
+builder.Services.AddPostgresDriftManagementFromConfiguration(builder.Configuration);
+builder.Services.AddDriftRetentionService();
+var application = builder.Build();
+application.UseMiddleware<LoggingMiddleware>();
+application.UseLyoApiCompression();
+if (application.Environment.IsDevelopment()) {
+    application.MapOpenApi();
+    application.MapScalarApiReference();
+}
+
+application.BuildDriftGroup();
+application.Run();

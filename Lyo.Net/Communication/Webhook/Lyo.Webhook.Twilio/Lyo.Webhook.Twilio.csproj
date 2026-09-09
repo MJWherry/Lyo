@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Webhook.Twilio</RootNamespace>
+        <AssemblyName>Lyo.Webhook.Twilio</AssemblyName>
+        <NoWarn>$(NoWarn);SYSLIB0021</NoWarn>
+        <!-- SYSLIB0021: HMAC-SHA1 is the Twilio X-Twilio-Signature contract; do not replace with SHA256. -->
+        <Description>Twilio webhook signature validation (X-Twilio-Signature) for use with Lyo.Webhook.</Description>
+        <PackageTags>webhook twilio hmac security</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Webhook\Lyo.Webhook.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

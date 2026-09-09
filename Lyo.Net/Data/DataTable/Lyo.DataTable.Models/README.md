@@ -1,0 +1,46 @@
+# Lyo.DataTable.Models
+
+In-memory mutable table with sparse columns, headers, footer, thin cells, a sparse optional format map, fluent builders, and an HTML renderer. It is the tabular exchange format for [`Lyo.Csv`](../../Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../Xlsx/Lyo.Xlsx/README.md), and [`Lyo.Pdf`](../../Pdf/Lyo.Pdf/README.md), and for building tables in code.
+
+All runtime types live here. The sibling [`Lyo.DataTable`](../Lyo.DataTable/README.md) project is an empty package placeholder.
+
+## Core types
+
+- DataTable. Sparse table with Headers, Rows, and Footer. Indexer this[int row, int col] uses row == -1 for header and row == -2 for footer. Optional formatting lives in a sparse map that is safe for concurrent format reads and writes: GetFormat / SetFormat / ClearFormat / Formats (snapshot). A missing key means no format. Never store null. Helpers: SetHeader / SetFooter / SetCell (optional format overloads clear the map when format is null; value-only SetCell leaves an existing format), ClearCell (clears value and format), AddRow, MaxColumn. On net10.0, EnumerateRowsAsync yields body rows for await foreach. The table stays materialised. Cell structure mutation is not itself synchronized. Only the format map is concurrent-safe. One cell object per populated coordinate remains even when slim. No cell-instance pooling.
+- DataTableRow. Sparse Cells dictionary keyed by column index; SetCell / ClearCell plus an indexer.
+- IDataTableCell. Only DisplayValue, ColSpan, and RowSpan. Formatting does not live on the cell.
+- DataTableCell<T>. Sealed record that implements IDataTableCell. DisplayValue is Value?.ToString() ?? "". DataTableCell<string>.Empty is the shared empty cell.
+- DataTableCell (static). Non-generic helpers Empty, FromValue(string?), and FromValue(string?, colSpan, rowSpan).
+- DataTableCellFormat. Sealed record of optional font/fill/align/border/number-format fields. HasAny() reports meaningful style.
+- DataTablePoolingOptions. PoolValues, PoolFormats, PoolingCellThreshold (default 512; 0 = always when enabled). Section name DataTablePooling. Allocate one DataTableValueInterner per parse.
+- DataTableValueInterner. Interns strings/formats for a single parse on one thread, using ordinary dictionaries gated by pooling options. Not process-wide string.Intern.
+- DataTableToHtml.ToHtmlDocument(DataTable). Emits HTML whose inline styles come from the format map, not the cell type. Honors ColSpan/RowSpan.
+
+## Fluent builders
+
+- DataTableBuilder. Top-level builder. AddColumn(col, configure) defines conditional formatting written to the table format map. AddHeader / AddHeaders, AddFooter / AddFooters / AddSumFooter, plus AddRow overloads including BuildAndAdd. Build() materializes the DataTable and computes sum footers.
+- DataTableRowBuilder. SetCell<T>(col, value) applies column-level FormatWhen rules to the row's pending format map. AddCell accepts strings, cells, or a DataTableCellBuilder.
+- DataTableColumnBuilder. WithSumFooter(); FormatWhen<T>(when, apply).
+- DataTableCellBuilder. Fluent setters for format and spans. Build() yields a thin cell. BuildFormat() / Format yields the optional format for the table map.
+
+## How sum footers work
+
+`AddSumFooter` (or `WithSumFooter` on a column definition) marks a column for auto-summation. At `Build()` the builder reads `DisplayValue` from each row's cell, trims common currency prefixes (`$ £ € ¥`), strips thousands separators, and parses with `InvariantCulture`; unparseable cells contribute `0`.
+
+## Round-trip with I/O packages
+
+`Lyo.Csv` and `Lyo.Xlsx` round-trip `Headers`, `Rows`, and `Footer` (Xlsx also maps footer formats at row `-2`). Export always writes `Footer` when present; import moves the last physical body row into `Footer` only when `hasFooterRow` / `useFooterRow` is true (default false). PDF extract still fills headers and body only.
+
+## TFMs
+
+`netstandard2.0;net10.0`. No NuGet packages; references [`Lyo.Exceptions`](../../../Core/Exceptions/Lyo.Exceptions/README.md) for argument validation.
+
+## What slimming does not remove
+
+Slimming cells drops format fields from each cell, but one cell object per populated coordinate remains. Value pooling helps duplicate strings, not cell instances.
+
+## Dependencies
+
+Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
+
+- `Lyo.Exceptions` (direct, lyo)

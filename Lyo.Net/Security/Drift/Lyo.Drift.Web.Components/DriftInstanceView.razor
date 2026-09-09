@@ -1,0 +1,46 @@
+<LyoDialog DebugData="@Instance">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Instance.InstanceKey) ? "Drift instance" : Instance.InstanceKey)</MudText>
+    </TitleContent>
+    <TitleChips>
+        <LyoChip Spec="@(LyoChips.FromEnum<DriftInstanceState>(Instance.State.ToString(), DriftColorHelper.ForInstanceState, DriftColorHelper.InstanceStateIcon))"/>
+        @if (DriftColorHelper.IsHeartbeatStale(Instance.LastHeartbeatUtc)) {
+            <LyoChip Color="Color.Error" Label="Stale"/>
+        }
+        else {
+            <LyoChip Color="Color.Success" Variant="Variant.Outlined" Label="Heartbeat ok"/>
+        }
+    </TitleChips>
+    <ChildContent>
+        <MudGrid Class="pa-1" Spacing="2">
+            <MudItem xs="12" sm="6" md="4">
+                <LyoIdField Label="ID" Value="@Instance.Id"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudTextField T="string" Label="Key" Value="@Instance.InstanceKey" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudTextField T="string" Label="Machine" Value="@Instance.MachineName" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="PID" Value="@Instance.ProcessId.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Last Heartbeat</MudText>
+                    <LyoTimestamp Value="@Instance.LastHeartbeatUtc" Kind="LyoTimestampKind.Relative"/>
+                </MudStack>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Created</MudText>
+                    <LyoTimestamp Value="@Instance.CreatedTimestamp" Kind="LyoTimestampKind.Absolute"/>
+                </MudStack>
+            </MudItem>
+            <MudItem xs="12">
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DataObject" OnClick="@ShowWatches">Watches JSON</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Class="ml-2" StartIcon="@Icons.Material.Filled.DataObject" OnClick="@ShowMetadata">Metadata JSON</MudButton>
+            </MudItem>
+        </MudGrid>
+    </ChildContent>
+</LyoDialog>

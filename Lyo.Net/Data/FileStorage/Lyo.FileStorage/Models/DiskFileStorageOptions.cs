@@ -1,0 +1,29 @@
+namespace Lyo.FileStorage.Models;
+
+public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
+{
+    public const string SectionName = "DiskFileStorage";
+
+    /// <summary>Older appsettings subsection. Prefer <see cref="SectionName" />.</summary>
+    public const string LegacySectionName = "LocalFileStorageService";
+
+    public string RootDirectoryPath { get; set; } = null!;
+
+    /// <summary>
+    /// If true, <see cref="LocalFileStorageService.GetPreSignedReadUrlAsync(System.Guid, System.TimeSpan?, string?, System.Threading.CancellationToken)" /> returns a file://
+    /// URI for local testing. Do not turn this on in untrusted environments.
+    /// </summary>
+    public bool AllowFileUriPresignedUrls { get; set; }
+
+    /// <summary>
+    /// Absolute base URL of an HTTP host that implements the plaintext direct-upload PUT route (usually <c>Lyo.TestApi</c>). When unset,
+    /// <see cref="LocalFileStorageService.BeginDirectUploadAsync" /> throws <see cref="System.NotSupportedException" /> like other unsupported backends.
+    /// </summary>
+    public string? DirectUploadReceiveBaseUri { get; set; }
+
+    /// <summary>
+    /// Slash-separated route prefix (no leading slash) appended after <see cref="DirectUploadReceiveBaseUri" /> to form <c>PUT …/{{file-id}}/put</c>. Starts as the
+    /// file-storage route group <c>FileStorage/direct-upload</c>.
+    /// </summary>
+    public string DirectUploadPutRouteRelativePath { get; set; } = "FileStorage/direct-upload";
+}

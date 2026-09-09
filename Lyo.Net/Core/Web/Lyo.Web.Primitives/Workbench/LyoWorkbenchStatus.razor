@@ -1,0 +1,5 @@
+@namespace Lyo.Web.Primitives
+
+@if (!string.IsNullOrWhiteSpace(Message)) {
+    <MudAlert Severity="@Severity" Dense="@Dense" Class="@Class">@Message</MudAlert>
+}

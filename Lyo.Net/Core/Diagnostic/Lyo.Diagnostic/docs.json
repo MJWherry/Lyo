@@ -1,0 +1,184 @@
+{
+  "id": "Lyo.Diagnostic",
+  "name": "Lyo.Diagnostic",
+  "area": "Core",
+  "tagline": "Decode stack traces, classify exceptions, keep breadcrumb trails, hold an in-memory error inbox, sanitise output, and write structured logs.",
+  "description": "Decode stack traces, classify exceptions, keep breadcrumb trails, hold an in-memory error inbox, sanitise output, and write structured logs.\n\nSource is grouped by feature folder. Namespaces match, for example `StackTrace/` maps to `Lyo.Diagnostic.StackTrace`. The root `Lyo.Diagnostic` namespace holds `AddDiagnosticsPackage` in\n`Registration/`. Package metadata DTOs and `IPackageMetadataStore` live in [`Lyo.PackageMetadata`](../PackageMetadata/Lyo.PackageMetadata).\n\n| Folder | Namespace |\n|-------------------|---------------------------------|\n| `StackTrace/` | `Lyo.Diagnostic.StackTrace` |\n| `Classification/` | `Lyo.Diagnostic.Classification` |\n| `Context/` | `Lyo.Diagnostic.Context` |\n| `Breadcrumbs/` | `Lyo.Diagnostic.Breadcrumbs` |\n| `Inbox/` | `Lyo.Diagnostic.Inbox` |\n| `Logging/` | `Lyo.Diagnostic.Logging` |\n| `Sanitisation/` | `Lyo.Diagnostic.Sanitisation` |\n| `Registration/` | `Lyo.Diagnostic` |",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register in DI",
+      "language": "csharp",
+      "code": "using Lyo.Diagnostic;\nusing Lyo.Diagnostic.Inbox;\n\nservices.AddDiagnosticsPackage();\nservices.AddInMemoryErrorInbox(o => o.MaxOccurrences = 5_000);"
+    },
+    {
+      "title": "Optional package metadata store (`IPackageMetadataStore`)",
+      "language": "csharp",
+      "code": "using Lyo.Diagnostic;\nusing Lyo.PackageMetadata;\n\nvar store = new InMemoryPackageMetadataStore();\nstore.Register([\"Npgsql.\"], new PackageMetadata(\n    Guid.Parse(\"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11\"),\n    PackageEcosystem.NuGet,\n    \"Npgsql\",\n    Version: \"8.0.0\",\n    ArtifactDigestAlgorithm.Sha512,\n    PackageArtifactDigest.ComputeHexSha512(System.Array.Empty<byte>())));\nservices.AddDiagnosticsPackage(packageMetadataStore: store);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "What ships in the package",
+      "items": [
+        "**Stack trace decoding** (`IStackTraceDecoder`). Frames, crash site, fingerprint (stable hash of user-frame method signatures). Optional `IPackageMetadataStore` from `Lyo.PackageMetadata` enriches frames with `PackageMetadata` (`Id` + `Name`, …). With a configured store, `IDiagnosticContextBuilder.BuildAsync` / `DecodeAsync` perform one bulk metadata resolve for the entire exception/textual inner stack-tree (embedded inner blocks and chained `InnerException`), not once per subtree. Sync `Build` / `Decode` throw when a store is set.",
+        "**Classification** (`IExceptionClassifier`). Severity, kind, labels.",
+        "**Diagnostic context** (`IDiagnosticContextBuilder`). One payload for a single failure.",
+        "**Structured logging** (`IStructuredLogEnricher`). `ILogger` scopes with `diag.*` properties.",
+        "**Trace sanitisation** (`ITraceSanitiser`). Redact PII/paths before API responses or logs.",
+        "**Breadcrumbs** (`RingBufferBreadcrumbTrail`, `IBreadcrumbTrail`). Bounded FIFO trail of short events for triage. Cap per scope, for example an HTTP request.",
+        "**Error inbox** (`IErrorInboxReader`, `IErrorOccurrenceSink`, `InMemoryErrorInbox`). Record and query grouped occurrences by fingerprint + exception kind + service. Single-process. Not shared across instances."
+      ]
+    },
+    {
+      "type": "markdown",
+      "title": "Optional package metadata store (`IPackageMetadataStore`)",
+      "body": "Use `Lyo.PackageMetadata` (`InMemoryPackageMetadataStore`, or `Lyo.PackageMetadata.Postgres`). Pass the store as the last argument to `AddDiagnosticsPackage`, or set\n`StackTraceDecoderOptions.PackageMetadataStore`. `TryGetManyForStrippedMethodPrefixesAsync` resolves many stripped methods at once behind that call. Postgres may cache the\nordered prefix catalog in-process. See `PostgresPackageMetadataOptions.PrefixCatalogCaching` and `ClearPrefixCatalogCache`. When a store is configured, use `BuildAsync`\nand `DecodeAsync`. Sync `Build` / `Decode` throws. Lookup methods expose a `namespacePrefix` parameter that remains reserved (unused for matching). See\n`IPackageMetadataStore` remarks.\n\n\n\nFor ASP.NET Core (scoped breadcrumbs + automatic recording), use `Lyo.Diagnostic.AspNetCore` and `UseDiagnosticExceptionRecording` / `AddLyoDiagnosticsWeb`."
+    },
+    {
+      "type": "paragraph",
+      "title": "PII and breadcrumbs",
+      "text": "Call `IBreadcrumbTrail.Add` at meaningful steps (downstream call started, cache miss, etc.). Keep `Data` and `Message` values small. Avoid tokens, secrets, full query strings, emails, and raw URLs. Prefer coarse categories and opaque IDs. Optional `IBreadcrumbRedactor` can strip known keys on each add."
+    },
+    {
+      "type": "paragraph",
+      "title": "Limits of the in-memory inbox",
+      "text": "When over `MaxOccurrences`, `InMemoryErrorInbox` drops the oldest occurrences. Data is lost on restart and is not visible across multiple server processes. For durable aggregation, implement `IErrorInboxReader` / `IErrorOccurrenceSink` with Postgres or an external product such as Sentry."
+    },
+    {
+      "type": "paragraph",
+      "title": "Fingerprint",
+      "text": "Only user stack-frame method names enter the fingerprint hash — line numbers do not. Minor edits often keep the same key when the defect shape is unchanged. `StackTraceDecoder` has the details."
+    },
+    {
+      "type": "list",
+      "title": "Related / deferred work",
+      "items": [
+        "An inbox on Postgres that implements the same interfaces.",
+        "HTTP export endpoints for support tooling.",
+        "A dedicated Serilog enricher package."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Developing",
+      "text": "Unit tests live in `Lyo.PackageMetadata.Tests` and `Lyo.Diagnostic.Tests`."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Diagnostic/Lyo.Diagnostic/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

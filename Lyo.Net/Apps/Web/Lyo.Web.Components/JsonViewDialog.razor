@@ -1,0 +1,40 @@
+@inject IJsInterop Js
+@using System.Text.Json
+@using System.Text.Json.Nodes
+@using Lyo.Common.Json
+@using Lyo.Web.Components.Dialog
+@using Lyo.Web.Components.JsonEditor
+@typeparam T
+
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-json-view-dialog">
+    <LyoDialog Title="@ResolvedTitle">
+        <TitleChips>
+            @if (!string.IsNullOrWhiteSpace(Path)) {
+                <LyoChip Variant="Variant.Outlined" Icon="@Icons.Material.Filled.AccountTree" Label="@Path"/>
+            }
+            @if (Chips is { Count: > 0 }) {
+                @foreach (var chip in Chips) {
+                    <LyoChip Color="@chip.Color" Icon="@chip.Icon" Label="@chip.Label"/>
+                }
+            }
+        </TitleChips>
+        <ExtraActions>
+            <MudButton OnClick="CopyToClipboard" StartIcon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary">
+                Copy JSON
+            </MudButton>
+        </ExtraActions>
+        <ChildContent>
+            @if (parseError != null) {
+                <MudAlert Severity="Severity.Error">
+                    <MudText Typo="Typo.body2">Invalid JSON: @parseError</MudText>
+                </MudAlert>
+            }
+            else if (rootNode != null) {
+                <JsonTreeView Root="@rootNode"/>
+            }
+            else {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No data to display</MudText>
+            }
+        </ChildContent>
+    </LyoDialog>
+</LyoElementRoot>

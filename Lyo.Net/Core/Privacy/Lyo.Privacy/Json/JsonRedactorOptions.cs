@@ -1,0 +1,44 @@
+using System.Diagnostics;
+using Lyo.Privacy.Abstractions;
+using Lyo.Privacy.Enums;
+
+namespace Lyo.Privacy.Json;
+
+/// <summary>Settings for <see cref="JsonRedactor" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed class JsonRedactorOptions
+{
+    public string Placeholder { get; set; } = "[redacted]";
+
+    /// <summary>Salt used for <see cref="JsonKeyRedactionStrategy.HashStable" />.</summary>
+    public byte[]? StableHashSalt { get; set; }
+
+    /// <summary>Case-insensitive property names mapped onto a strategy.</summary>
+    public IReadOnlyDictionary<string, JsonKeyRedactionStrategy> SensitiveKeys { get; set; } = DefaultSensitiveKeys;
+
+    /// <summary>
+    /// When true, runs <see cref="ITextRedactor" /> on every string value. The <see cref="JsonRedactor" /> constructor must receive an
+    /// <see cref="ITextRedactor" />.
+    /// </summary>
+    public bool ApplyTextRulesToAllStringValues { get; set; }
+
+    /// <summary>Optional stable label for metrics (tag <c>policy</c>) and for <see cref="RedactionResult.PolicyName" />.</summary>
+    public string? PolicyName { get; set; }
+
+    public static IReadOnlyDictionary<string, JsonKeyRedactionStrategy> DefaultSensitiveKeys { get; } =
+        new Dictionary<string, JsonKeyRedactionStrategy>(StringComparer.OrdinalIgnoreCase) {
+            ["password"] = JsonKeyRedactionStrategy.HashStable,
+            ["secret"] = JsonKeyRedactionStrategy.HashStable,
+            ["token"] = JsonKeyRedactionStrategy.HashStable,
+            ["access_token"] = JsonKeyRedactionStrategy.HashStable,
+            ["refresh_token"] = JsonKeyRedactionStrategy.HashStable,
+            ["ssn"] = JsonKeyRedactionStrategy.Placeholder,
+            ["mrn"] = JsonKeyRedactionStrategy.Placeholder,
+            ["dob"] = JsonKeyRedactionStrategy.Placeholder,
+            ["email"] = JsonKeyRedactionStrategy.Placeholder
+        };
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"JsonRedactorOptions {{ PolicyName = {PolicyName ?? "null"}, ApplyTextRulesToAllStringValues = {ApplyTextRulesToAllStringValues}, SensitiveKeys.Count = {SensitiveKeys.Count} }}";
+}

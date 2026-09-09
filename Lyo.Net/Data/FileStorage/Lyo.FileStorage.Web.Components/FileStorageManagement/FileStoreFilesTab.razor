@@ -1,0 +1,235 @@
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
+@using Lyo.Web.Components.FileUpload
+@implements IAsyncDisposable
+
+<MudGrid Class="mt-1">
+    <MudItem xs="12">
+<MudTabs Rounded="true" Elevation="0" Class="mb-2">
+            <MudTabPanel Text="Stream">
+        <MudPaper Class="pa-4 mb-4" Outlined="true">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h6">Upload &amp; save</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Browse streams the file into an IO temp session on the gateway. When you are ready, click Upload to send it to the API and persist to storage.
+                </MudText>
+
+                @* Line 1: browse + original name + path *@
+                <MudGrid Spacing="2" Class="save-file-line1">
+                    <MudItem xs="12" sm="4" Class="save-file-upload-cell d-flex align-end">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                            <LyoFileUpload MaxFiles="1"
+                                           ButtonText="Browse"
+                                           ButtonVariant="Variant.Outlined"
+                                           InlineLayout="true"
+                                           TempSession="_stagingSession"
+                                           OnClientFilePathReady="OnClientFilePathReadyAsync"
+                                           OnClientFilePathRemoved="OnClientFilePathRemovedAsync"
+                                           OnUploadStarted="OnUploadStartedAsync"
+                                           OnUploadProgress="OnUploadProgressAsync"
+                                           OnUploadCompleted="OnUploadCompletedAsync"
+                                           OnUploadCancelled="OnUploadCancelledAsync"
+                                           OnUploadFailed="OnUploadFailedAsync"/>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudTextField T="string"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Label="Original file name"
+                                      @bind-Value="_saveOriginalFileName"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudTextField T="string"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Label="Path prefix"
+                                      Placeholder="Optional"
+                                      @bind-Value="_savePathPrefix"/>
+                    </MudItem>
+                </MudGrid>
+
+                @* Line 2: status + compress / encrypt / key *@
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="save-file-line2">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary flex-grow-1 text-truncate me-1" Style="min-width: 0;">@_uploadStatus</MudText>
+                    <MudSwitch T="bool" @bind-Value="_saveCompress" Color="Color.Primary" Label="Compress"/>
+                    <MudSwitch T="bool" @bind-Value="_saveEncrypt" Color="Color.Primary" Label="Encrypt"/>
+                    @if (_saveEncrypt) {
+                        <FileStoreKeyIdField Label="Key id" AutoSelectSingle="true" @bind-Value="_saveKeyId"/>
+                    }
+                </MudStack>
+
+                @* Line 3: chunk size + save *@
+                <MudGrid Spacing="2" Class="save-file-line3">
+                    <MudItem xs="12" sm="8">
+                        <MudNumericField T="int?"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Label="Chunk size"
+                                         Clearable="true"
+                                         Immediate="true"
+                                         @bind-Value="_saveChunkSize"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="4" Class="d-flex align-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="SaveFileAsync"
+                                   Disabled="@(_fileBusy || _uploadedFile == null)">
+                            @(_fileBusy ? "Uploading..." : "Upload")
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudStack>
+        </MudPaper>
+            </MudTabPanel>
+            <MudTabPanel Text="Direct">
+                <FileStoreProtocolUploads Mode="FileStoreProtocolUploadMode.Direct"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Multipart">
+                <FileStoreProtocolUploads Mode="FileStoreProtocolUploadMode.Multipart"/>
+            </MudTabPanel>
+        </MudTabs>
+
+        <MudTabs @bind-ActivePanelIndex="_cryptoOpsTab" Rounded="true" Elevation="0" Class="crypto-ops-tabs mb-2">
+            <MudTabPanel Text="DEK"/>
+            <MudTabPanel Text="KEK"/>
+        </MudTabs>
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.h6">@CryptoOpsMigrationTitle</MudText>
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <FileStoreKeyIdField Label="Source key id" HelperText="Required." @bind-Value="_migrationSourceKeyId"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Label="Source key version"
+                                              HelperText="Leave blank to migrate all source versions."
+                                              @bind-Value="_migrationSourceKeyVersion"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <FileStoreKeyIdField Label="Target key id" HelperText="Leave blank to keep the source key id." @bind-Value="_migrationTargetKeyId"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Label="Target key version"
+                                              HelperText="Leave blank to use the current version."
+                                              @bind-Value="_migrationTargetKeyVersion"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField T="int" Label="Batch size" Immediate="true" @bind-Value="_migrationBatchSize"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" Class="d-flex align-end">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="MigrateDeksAsync"
+                                           Disabled="@_fileBusy">
+                                    Run Migration
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                        @if (_migrationResult != null) {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Files found</strong></td>
+                                    <td>@_migrationResult.TotalFilesFound</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Migrated</strong></td>
+                                    <td>@_migrationResult.SuccessfullyMigrated</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Failed</strong></td>
+                                    <td>@_migrationResult.Failed</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status</strong></td>
+                                    <td>@(_migrationResult.AllSucceeded ? "All succeeded" : "Completed with failures")</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+
+                            @if (_migrationResult.Errors.Count > 0) {
+                                <MudText Typo="Typo.subtitle2">Errors</MudText>
+
+                                <MudList T="string" Dense="true">
+                                    @foreach (var error in _migrationResult.Errors) {
+                                        <MudListItem T="string">@error</MudListItem>
+                                    }
+                                </MudList>
+                            }
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.h6">@CryptoOpsRotationTitle</MudText>
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
+                                    File ids
+                                </MudText>
+                                <LyoChipInput Values="@_rotationFileIds"
+                                              ValuesChanged="OnRotationFileIdsChanged"
+                                              Placeholder="Paste or type file ids"
+                                              ValidationPattern="@GuidValidationPattern"
+                                              ValidationErrorMessage="Enter a valid file id. Comma-separated and newline-separated paste is supported."/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <FileStoreKeyIdField Label="Target key id" HelperText="Leave blank to keep each file on its current key id." @bind-Value="_rotationTargetKeyId"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Label="Target key version"
+                                              HelperText="Leave blank to keep each file's current version, or use the current version of the chosen target key."
+                                              @bind-Value="_rotationTargetKeyVersion"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField T="int" Label="Batch size" Immediate="true" @bind-Value="_rotationBatchSize"/>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" Class="d-flex align-end">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="RotateDeksAsync"
+                                           Disabled="@_fileBusy">
+                                    Rotate DEKs
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                        @if (_rotationResult != null) {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Files requested</strong></td>
+                                    <td>@_rotationResult.TotalFilesFound</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Rotated</strong></td>
+                                    <td>@_rotationResult.SuccessfullyMigrated</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Failed</strong></td>
+                                    <td>@_rotationResult.Failed</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status</strong></td>
+                                    <td>@(_rotationResult.AllSucceeded ? "All succeeded" : "Completed with failures")</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+
+                            @if (_rotationResult.Errors.Count > 0) {
+                                <MudText Typo="Typo.subtitle2">Errors</MudText>
+
+                                <MudList T="string" Dense="true">
+                                    @foreach (var error in _rotationResult.Errors) {
+                                        <MudListItem T="string">@error</MudListItem>
+                                    }
+                                </MudList>
+                            }
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudItem>
+</MudGrid>

@@ -1,0 +1,31 @@
+---
+description: Adhoc repo tooling scripts must be Python (stdlib / lyo_tooling), not shell
+alwaysApply: true
+---
+
+# Python tooling (not shell)
+
+## Rule
+
+New **adhoc repo tooling** (run benchmarks, build manifests, resolve docker targets, sync portfolio assets, NuGet pack helpers, k6 matrix runners, one-off regen helpers) must be **Python 3** under `scripts/` (or beside the tooling area), not bash/zsh/`*.sh`.
+
+- Prefer `scripts/lyo_tooling/` for shared helpers (`dotnet.py`, `bench.py`, `deps.py`).
+- Entry points: `scripts/<area>/*.py` with `#!/usr/bin/env python3` and `argparse`.
+- Keep Docker `RUN`/`ENTRYPOINT` invocations as `python3 scripts/...` (thin `ENTRYPOINT ["python3", "..."]` is fine).
+- Do **not** add new `*.sh` wrappers for host workflows. Delete or replace existing shell runners when touching that area.
+- Tooling areas carry a `docs.json` (SoT) rendered to README by `python3 scripts/docs/tooling-docs.py render` (also invoked from `project-docs.py render` and NuGet pack).
+
+## Allowed shell exceptions
+
+- Cursor hooks under `.cursor/hooks/` (e.g. `check-cpm.sh`).
+- Deploy/ops scripts under `deploy/**` (host bootstrap, pull-and-restart, etc.).
+- Upstream/vendor scripts you do not own.
+- Dockerfile `RUN` package-manager lines (`apt-get`, etc.) — those stay shell inside the Dockerfile.
+
+## Common entry points
+
+- Run suites: `python3 scripts/benchmarks/run_dotnet.py [categories...]`
+- Export static HTML data + portfolio history: `python3 scripts/benchmarks/build_manifests.py`
+- Docker runner: `python3 scripts/docker/run.py <target...>`
+- NuGet pack: `python3 scripts/nuget/build_nuget.py [patterns...]`
+- k6 matrix: `python3 k6/framework-person/run_all.py [keywords...]`

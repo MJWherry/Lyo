@@ -1,0 +1,94 @@
+@namespace Lyo.Authentication.Web.Components
+@using Lyo.Authentication.Models
+@using Lyo.Query.Models.Common
+@using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="@GridKey"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.RawId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@ApplyQuery"
+                      Features="@(AllowHardDelete ? LyoDataGridFeatureFlags.All : LyoDataGridFeatureFlags.All & ~LyoDataGridFeatureFlags.BulkDelete)">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <BulkMenuItems>
+        @if (AllowRevoke) {
+            <MudMenuItem OnClick="@RevokeSelected">Revoke selected</MudMenuItem>
+        }
+        @if (AllowHardDelete) {
+            <MudMenuItem OnClick="@HardDeleteSelected">Hard-delete selected</MudMenuItem>
+        }
+    </BulkMenuItems>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    @if (AllowRevoke) {
+                        <MudIconButton Icon="@Icons.Material.Filled.Block" Size="Size.Small" Color="Color.Warning" title="Revoke" aria-label="Revoke token"
+                                       OnClick="@(() => RevokeOne(cell.Item))"/>
+                    }
+                    @if (AllowHardDelete) {
+                        <MudIconButton Icon="@Icons.Material.Filled.DeleteForever" Size="Size.Small" Color="Color.Error" title="Hard-delete" aria-label="Hard-delete token"
+                                       OnClick="@(() => HardDeleteOne(cell.Item))"/>
+                    }
+                    @if (OnViewUser.HasDelegate) {
+                        <MudIconButton Icon="@Icons.Material.Filled.Person" Size="Size.Small" title="View user" aria-label="View user"
+                                       OnClick="@(() => ViewUser(cell.Item))"/>
+                    }
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="DisplayName" Title="Name" QuickSearchPropertyName="DisplayName" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="Kind" Title="Kind">
+            <CellContent Context="item">
+                <LyoChip Spec="@AuthChipHelper.TokenKind(item)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Ring" Title="Ring" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="RevokedTimestamp" Title="Status" HeaderStyle="width: 110px;">
+            <CellContent Context="item">
+                @{
+                    var status = AuthTokenStatus.FromProjected(item);
+                }
+                <LyoChip Color="@status.Color" Label="@status.Label"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="ExpiresTimestamp" Title="Expires" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+        <LyoProjectedColumn Field="UserId" Title="User" HiddenByDefault="@(UserId is not null)" HeaderStyle="width: 140px; min-width: 140px;" CellStyle="min-width: 140px;">
+            <CellContent Context="item">
+                <AuthProjectedGuid Item="item" Field="UserId"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" HiddenByDefault="true">
+            <CellContent Context="item">
+                <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, "Id")"/>
+            </CellContent>
+        </LyoProjectedColumn>
+    </Columns>
+    <RowMenuControls Context="item">
+        @if (AllowRevoke) {
+            <MudMenuItem Icon="@Icons.Material.Filled.Block" OnClick="@(() => RevokeOne(item))">Revoke</MudMenuItem>
+        }
+        @if (AllowHardDelete) {
+            <MudMenuItem Icon="@Icons.Material.Filled.DeleteForever" OnClick="@(() => HardDeleteOne(item))">Hard-delete</MudMenuItem>
+        }
+        @if (OnViewUser.HasDelegate) {
+            <MudMenuItem Icon="@Icons.Material.Filled.Person" OnClick="@(() => ViewUser(item))">View user</MudMenuItem>
+        }
+    </RowMenuControls>
+</LyoDataGridProjected>

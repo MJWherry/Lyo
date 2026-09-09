@@ -1,0 +1,33 @@
+using System.ComponentModel.DataAnnotations;
+using Lyo.EntityReference.Postgres.Database;
+
+namespace Lyo.People.Postgres.Database;
+
+/// <summary>PostgreSQL row for a phone number.</summary>
+public sealed class PhoneNumberEntity : EntitySourceEntityBase
+{
+    [Key]
+    public Guid Id { get; set; }
+
+    [Required]
+    [MaxLength(20)]
+    public string Number { get; set; } = string.Empty;
+
+    [MaxLength(3)]
+    public string? CountryCode { get; set; }
+
+    [MaxLength(10)]
+    public string? CountryCodeString { get; set; }
+
+    [MaxLength(20)]
+    public string? TechnologyType { get; set; }
+
+    public DateTime? VerifiedAt { get; set; }
+
+    [MaxLength(100)]
+    public string? Label { get; set; }
+
+    public DateTime CreatedTimestamp { get; set; }
+
+    public DateTime? UpdatedTimestamp { get; set; }
+}

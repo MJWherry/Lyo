@@ -1,0 +1,18 @@
+@namespace Lyo.Web.Primitives
+
+<CascadingValue Value="this" IsFixed="true">
+    <MudTabs ActivePanelIndex="@ActiveIndex"
+             ActivePanelIndexChanged="OnActiveIndexChangedAsync"
+             Elevation="@Elevation"
+             Outlined="@Outlined"
+             Rounded="@Rounded"
+             Border="@Border"
+             Centered="@Centered"
+             ApplyEffectsToContainer="@ApplyEffectsToContainer"
+             KeepPanelsAlive="@KeepPanelsAlive"
+             TabPanelsClass="@PanelClass"
+             Class="@Class"
+             Style="@Style">
+        @ChildContent
+    </MudTabs>
+</CascadingValue>

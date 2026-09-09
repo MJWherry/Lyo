@@ -1,0 +1,502 @@
+<mxfile host="app.diagrams.net" agent="cursor" version="24.7.17" type="device">
+  <diagram id="Structure" name="Overview">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1680" pageHeight="960" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="&lt;b&gt;HTTP · Flared · Playwright&lt;/b&gt; — one transport, two extra paths. Flared is HTTP-only. Playwright is a browser. Cookie + UA handoff is the only bridge." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="40" y="12" width="1600" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hosts" value="&lt;b&gt;Hosts&lt;/b&gt;  TestConsole (Flared + Playwright from config) · vendor typed clients (Endato, Discord, …) · plans / CreateSession" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="48" width="1020" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tests" value="&lt;b&gt;Tests&lt;/b&gt;  Lyo.Http.Client · Flared · Playwright" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#888888;dashed=1;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="48" width="560" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hub" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="104" width="1600" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="hub_t" value="Lyo.Http.Client  ·  ILyoHttpClient / LyoHttpClient  ·  IHttpClientFactory typed client" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontStyle=1;fontColor=#1a4d80;" vertex="1" parent="1">
+          <mxGeometry x="56" y="110" width="900" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="hub_a" value="JSON verbs · GetFile* (StreamBinary) · plans · PinUserAgent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="56" y="138" width="500" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hub_s" value="Session: CookieJar + pinned UA (ambient for handlers)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="572" y="138" width="520" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hub_o" value="Options: ProxyUrl → handler WebProxy (same exit as solver)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1108" y="138" width="516" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_hosts" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#444444;exitX=0.5;exitY=1;entryX=0.2;entryY=0;" edge="1" parent="1" source="hosts" target="hub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- column backgrounds -->
+        <mxCell id="c1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8f0;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="220" width="500" height="630" as="geometry" />
+        </mxCell>
+        <mxCell id="c1h" value="1  Vendor HTTP" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;fontColor=#994c00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="228" width="500" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3faf3;strokeColor=#2d7600;" vertex="1" parent="1">
+          <mxGeometry x="560" y="220" width="560" height="630" as="geometry" />
+        </mxCell>
+        <mxCell id="c2h" value="2  Flared (HTTP plugin)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;fontColor=#1c5c02;" vertex="1" parent="1">
+          <mxGeometry x="560" y="228" width="560" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f6f4fb;strokeColor=#5947a3;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="220" width="500" height="630" as="geometry" />
+        </mxCell>
+        <mxCell id="c3h" value="3  Playwright (browser)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;fontColor=#472c99;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="228" width="500" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_h1" value="typed clients" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#b06500;fontSize=11;exitX=0.16;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="hub" target="v1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_h2" value="named client Lyo.Http.Flared" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#3d8539;fontSize=11;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="hub" target="f1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_h3" value="handoff only" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;fontSize=11;exitX=0.84;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="hub" target="p1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- vendor flow -->
+        <mxCell id="v1" value="Endato · Discord · Typecast · Maps · …" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="70" y="264" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="v2" value="Observe → Metrics → RateLimit → Timing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd9b6;strokeColor=#cc8500;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="70" y="328" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="v3" value="LyoHttpClientHandler  ·  optional WebProxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffc999;strokeColor=#b06500;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="70" y="392" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="v4" value="origin  ·  .NET TLS  ·  real response bytes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="70" y="456" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="v5" value="Cannot: page JS · XHR after HTML · Cloudflare challenge" style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffc0;strokeColor=#ffc400;size=14;align=left;spacingLeft=10;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="520" width="440" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="v6" value="ApiClient is a separate stack (problem-details). Not Flared." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#666666;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="70" y="576" width="440" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ev12" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#b06500;" edge="1" parent="1" source="v1" target="v2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ev23" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#b06500;" edge="1" parent="1" source="v2" target="v3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ev34" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#b06500;" edge="1" parent="1" source="v3" target="v4"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- flared flow -->
+        <mxCell id="f1" value="Lyo.Http.Client.Flared  ·  still a LyoHttpClient" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="590" y="264" width="500" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="f2" value="same pipeline + FlaredHttpMessageHandler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b8dfb8;strokeColor=#5b9f5c;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="590" y="328" width="500" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="f3" value="StreamBinary or Replay?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="715" y="392" width="250" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f_no" value="no · ThroughSolver" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#94d694;strokeColor=#447f44;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="590" y="490" width="230" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="f_yes" value="yes · skip solver" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="860" y="490" width="230" height="36" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f4" value="FlareSolverr /v1&#xa;Chrome + challenge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="590" y="548" width="230" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="f5" value="MergeSolution&#xa;UA + cookies → session" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="590" y="622" width="230" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="f6" value="return HTML body&#xa;(no extra origin fetch)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b8dfb8;strokeColor=#5b9f5c;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="590" y="696" width="230" height="52" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f7" value="LyoHttpClientHandler&#xa;real bytes, same ProxyUrl" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="860" y="548" width="230" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="f8" value="GetFile* must SetStreamBinary&#xa;or you get HTML as a “file”" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="860" y="622" width="230" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="f9" value="Replay mode is rarely viable&#xa;(.NET TLS ≠ solver Chrome)" style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffc0;strokeColor=#ffc400;size=12;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="860" y="696" width="230" height="52" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ef12" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#3d8539;" edge="1" parent="1" source="f1" target="f2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ef23" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#3d8539;" edge="1" parent="1" source="f2" target="f3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ef3n" value="no" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#3d8539;fontSize=11;" edge="1" parent="1" source="f3" target="f_no"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ef3y" value="yes" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#6c8ebf;fontSize=11;" edge="1" parent="1" source="f3" target="f_yes"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="efn4" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#3d8539;" edge="1" parent="1" source="f_no" target="f4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ef45" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#3d8539;" edge="1" parent="1" source="f4" target="f5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ef56" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#3d8539;" edge="1" parent="1" source="f5" target="f6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="efy7" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#6c8ebf;" edge="1" parent="1" source="f_yes" target="f7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ef78" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#6c8ebf;" edge="1" parent="1" source="f7" target="f8"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="f_note" value="Does not embed Playwright. Does not spoof WebGL. Docker solver is often 800×600 SwiftShader." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#444444;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="590" y="764" width="500" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- playwright flow -->
+        <mxCell id="p1" value="CreateSession() clones config, then overlays" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="264" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" value="PinUserAgent  ·  throws unless Chromium" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bfb3eb;strokeColor=#5947a3;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="328" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" value="StartBrowserAsync  ·  UA + ProxyUrl on context" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="392" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p4" value="ApplyCookiesAsync  ·  after start (jar must exist)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bfb3eb;strokeColor=#5947a3;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="456" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p5" value="NavigateToAsync  ·  waitUntil DOMContentLoaded" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="520" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p6" value="page JS / XHR run in Chromium" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eae4ff;strokeColor=#8670c4;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="584" width="440" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p7" value="Firefox / WebKit: no Flared cookies, no Chrome UA. Browser-only." style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffc0;strokeColor=#ffc400;size=14;align=left;spacingLeft=10;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="648" width="440" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="p8" value="new PlaywrightSessionOptions() is a full replace (Chromium default). Overlay Action to pin UA." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#555555;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="704" width="440" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ep12" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;" edge="1" parent="1" source="p1" target="p2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ep23" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;" edge="1" parent="1" source="p2" target="p3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ep34" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;" edge="1" parent="1" source="p3" target="p4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ep45" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;" edge="1" parent="1" source="p4" target="p5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ep56" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;" edge="1" parent="1" source="p5" target="p6"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- handoff bridge — horizontal at a clear gap, not through boxes -->
+        <mxCell id="bridge" value="host copies cookies + Chrome UA  ·  Chromium only (see Lyo.TestConsole)" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#ffffff;strokeColor=#5947a3;fontSize=12;fontStyle=1;fontColor=#472c99;" vertex="1" parent="1">
+          <mxGeometry x="590" y="800" width="1020" height="36" as="geometry" />
+        </mxCell>
+
+        <mxCell id="law" value="&lt;b&gt;Law&lt;/b&gt;  Core never references Apps HTTP, Flared, or Playwright.  &lt;b&gt;Same IP&lt;/b&gt;  ProxyUrl on Flared options → solver + StreamBinary handler + Playwright context.  &lt;b&gt;Do not&lt;/b&gt;  embed FlareSolverr in Playwright · spoof WebGL · --disable-gpu · waitUntil=Load on CF." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=12;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="868" width="1600" height="44" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="Pipeline" name="Request forks">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1680" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="&lt;b&gt;Request forks&lt;/b&gt; — SendAsync stamps the session, then the factory handler chain. Flared splits before the wire." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="40" y="12" width="1600" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="call" value="LyoHttpClient.SendAsync  →  Session = this.Session  →  Cookie + UA on request  →  Hooks.BeforeSend  →  HttpClient.SendAsync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="52" width="1600" height="44" as="geometry" />
+        </mxCell>
+
+        <mxCell id="h1" value="Observe" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="180" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="h2" value="Metrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="120" width="180" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="h3" value="RateLimit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="480" y="120" width="180" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="h4" value="Timing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="700" y="120" width="180" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="h5" value="Flared handler&#xa;(Flared client only)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="920" y="112" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="h6" value="Vendor path skips this&#xa;→ LyoHttpClientHandler" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#fff4e6;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="112" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="h7" value="optional Polly last" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#888888;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="120" width="220" height="44" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e0" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#444444;" edge="1" parent="1" source="call" target="h1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#444444;" edge="1" parent="1" source="h1" target="h2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e23" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#444444;" edge="1" parent="1" source="h2" target="h3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e34" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#444444;" edge="1" parent="1" source="h3" target="h4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e45" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#444444;" edge="1" parent="1" source="h4" target="h5"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="fork" value="StreamBinary&#xa;or Replay?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="910" y="196" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="efork" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#d79b00;" edge="1" parent="1" source="h5" target="fork"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="left" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8f0;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="780" height="560" as="geometry" />
+        </mxCell>
+        <mxCell id="lh" value="No — ThroughSolver (HTML)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;fontColor=#994c00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="308" width="780" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="t1" value="1  EnsureSolverSession  (sessions.create, gated)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="64" y="344" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="2  POST FlareSolverr /v1  request.get | request.post" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd9b6;strokeColor=#cc8500;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="64" y="400" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t3" value="3  Solver Chrome runs the challenge  →  cf_clearance + userAgent + HTML" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="64" y="456" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t4" value="4  MergeSolution  →  session.UserAgent + jar cookies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="64" y="512" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t5" value="5  Return StringContent(HTML)  —  this hop does not fetch origin again" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="64" y="568" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t6" value="6  Caller parses HTML, or hands the session to Playwright for XHR pages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="64" y="624" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t7" value="Library does not forward Lyo Cookie/UA into /v1. Solve ignores CancellationToken." style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffc0;strokeColor=#ffc400;size=14;align=left;spacingLeft=10;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="64" y="684" width="732" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="t8" value="Dispose destroys the solver session (best-effort)." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#666666;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="64" y="736" width="732" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="right" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef5fb;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="860" y="300" width="780" height="560" as="geometry" />
+        </mxCell>
+        <mxCell id="rh" value="Yes — StreamBinary / Replay (primary handler)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;fontColor=#1a4d80;" vertex="1" parent="1">
+          <mxGeometry x="860" y="308" width="780" height="24" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b1" value="1  GetFile* / DownloadUrls already called SetStreamBinary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="884" y="344" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="2  base.SendAsync → LyoHttpClientHandler (or ClearanceHandler wrap)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="884" y="400" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" value="3  Handler: UseCookies=false · decompress · WebProxy if ProxyUrl set" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="884" y="456" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="4  Origin TLS is .NET’s  ·  response is real bytes, not solution.response" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#4386c9;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="884" y="512" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" value="5  Solve first (ThroughSolver) so the jar has cf_clearance, then fetch files" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="884" y="568" width="732" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b6" value="Replay: ClearanceHandler as primary. Cookies often fail under .NET TLS — stay on ThroughSolver." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="884" y="624" width="732" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="b7" value="Same IP: FlaredHttpOptions.ProxyUrl on solver AND handler. Docker FlareSolverr ≠ host VPN exit." style="shape=note;whiteSpace=wrap;html=1;fillColor=#ffffc0;strokeColor=#ffc400;size=14;align=left;spacingLeft=10;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="884" y="692" width="732" height="48" as="geometry" />
+        </mxCell>
+
+        <mxCell id="et12" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#d79b00;" edge="1" parent="1" source="t1" target="t2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="et23" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#d79b00;" edge="1" parent="1" source="t2" target="t3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="et34" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#d79b00;" edge="1" parent="1" source="t3" target="t4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="et45" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#d79b00;" edge="1" parent="1" source="t4" target="t5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="et56" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#d79b00;" edge="1" parent="1" source="t5" target="t6"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="eb12" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#6c8ebf;" edge="1" parent="1" source="b1" target="b2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eb23" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#6c8ebf;" edge="1" parent="1" source="b2" target="b3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eb34" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#6c8ebf;" edge="1" parent="1" source="b3" target="b4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eb45" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#6c8ebf;" edge="1" parent="1" source="b4" target="b5"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="en" value="no" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#d79b00;fontSize=11;" edge="1" parent="1" source="fork" target="t1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="430" y="236" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ey" value="yes" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#6c8ebf;fontSize=11;" edge="1" parent="1" source="fork" target="b1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="Handoff" name="Handoff sequence">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1680" pageHeight="980" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="&lt;b&gt;Handoff sequence&lt;/b&gt; — clearance is bound to IP + User-Agent + Chromium TLS. Pin UA before launch. Cookies after start. Firefox is not this path." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="40" y="12" width="1600" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- actor headers -->
+        <mxCell id="a0" value="Host" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="52" width="200" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" value="Flared" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="52" width="240" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="Session / jar" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="520" y="52" width="240" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" value="FlareSolverr" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="780" y="52" width="240" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" value="Playwright Chromium" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="52" width="280" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" value="CF site" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1340" y="52" width="300" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- lifeline guides -->
+        <mxCell id="l0" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#bbbbbb;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="88" as="sourcePoint" />
+            <mxPoint x="140" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l1" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#d79b00;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="380" y="88" as="sourcePoint" />
+            <mxPoint x="380" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l2" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#82b366;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="640" y="88" as="sourcePoint" />
+            <mxPoint x="640" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l3" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#d6b656;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="900" y="88" as="sourcePoint" />
+            <mxPoint x="900" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l4" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#7a5abf;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1180" y="88" as="sourcePoint" />
+            <mxPoint x="1180" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l5" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#b85450;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1490" y="88" as="sourcePoint" />
+            <mxPoint x="1490" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- step 1 -->
+        <mxCell id="s1n" value="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;fontColor=#ffffff;fontStyle=1;fontSize=12;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="16" y="112" width="24" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="s1a" value="GET url" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="56" y="104" width="168" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s1b" value="ThroughSolver" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="104" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s1c" value="/v1 challenge" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="800" y="104" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s1d" value="cf_clearance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1390" y="104" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="e1ab" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#444444;" edge="1" parent="1" source="s1a" target="s1b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e1bc" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#444444;" edge="1" parent="1" source="s1b" target="s1c"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e1cd" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#444444;" edge="1" parent="1" source="s1c" target="s1d"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- step 2 -->
+        <mxCell id="s2n" value="2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;fontColor=#ffffff;fontStyle=1;fontSize=12;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="16" y="184" width="24" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="s2a" value="MergeSolution" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="176" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s2b" value="UA = solver Chrome&#xa;jar += cf_clearance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="168" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#3d8539;" edge="1" parent="1" source="s2a" target="s2b"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- step 3 -->
+        <mxCell id="s3n" value="3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;fontColor=#ffffff;fontStyle=1;fontSize=12;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="16" y="264" width="24" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="s3a" value="CreateSession overlay&#xa;ApplyProxy + PinUserAgent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="56" y="248" width="168" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="s3b" value="must be Chromium&#xa;else throw" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="248" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="s3c" value="clone config options&#xa;stamp UA[0] + ProxyUrl" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="248" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="e3a" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;" edge="1" parent="1" source="s3a" target="s3c"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- step 4 -->
+        <mxCell id="s4n" value="4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;fontColor=#ffffff;fontStyle=1;fontSize=12;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="16" y="344" width="24" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="s4a" value="StartBrowserAsync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="56" y="336" width="168" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s4b" value="launch Chromium&#xa;context UA + proxy + screen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="328" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;" edge="1" parent="1" source="s4a" target="s4b"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- step 5 -->
+        <mxCell id="s5n" value="5" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;fontColor=#ffffff;fontStyle=1;fontSize=12;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="16" y="424" width="24" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="s5a" value="ApplyCookiesAsync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="56" y="416" width="168" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s5b" value="export jar" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="416" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s5c" value="context.AddCookiesAsync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="416" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="e5ab" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#3d8539;" edge="1" parent="1" source="s5a" target="s5b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5bc" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;" edge="1" parent="1" source="s5b" target="s5c"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- step 6 -->
+        <mxCell id="s6n" value="6" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;fontColor=#ffffff;fontStyle=1;fontSize=12;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="16" y="504" width="24" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="s6a" value="NavigateToAsync" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="56" y="496" width="168" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="s6b" value="GotoAsync&#xa;DOMContentLoaded" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5c9f5;strokeColor=#7a5abf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="488" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="s6c" value="same IP + UA + cookies&#xa;JS / XHR run in page" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1390" y="488" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="e6ab" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#5947a3;" edge="1" parent="1" source="s6a" target="s6b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6bc" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;strokeColor=#b85450;" edge="1" parent="1" source="s6b" target="s6c"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- same IP -->
+        <mxCell id="ip" value="Same IP on all three hops: FlaredHttpOptions.ProxyUrl → solver + LyoHttpClientHandler + Playwright context. Docker FlareSolverr is not the host VPN exit." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="580" width="1600" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- firefox + do not as two short cards, not walls -->
+        <mxCell id="fx" value="&lt;b&gt;Firefox / WebKit&lt;/b&gt; — not handoff. Do not PinUserAgent or copy Flared cookies. Engine UA is used. No --window-size (Playwright treats it as a URL)." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eae4ff;strokeColor=#8670c4;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="640" width="800" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="no" value="&lt;b&gt;Do not&lt;/b&gt; embed FlareSolverr in Playwright · spoof WebGL · --disable-gpu · waitUntil=Load on CF · new PlaywrightSessionOptions() just to pin UA." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=12;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="860" y="640" width="780" height="56" as="geometry" />
+        </mxCell>
+
+        <mxCell id="order" value="Order that matters: solve → pin UA → start browser → cookies → navigate. Reverse any of those and clearance will not stick." style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=12;fontColor=#444444;" vertex="1" parent="1">
+          <mxGeometry x="40" y="712" width="1600" height="28" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

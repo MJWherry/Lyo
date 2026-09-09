@@ -1,0 +1,15 @@
+using Lyo.Common.Core.Enums;
+using Lyo.Tts.Models;
+
+namespace Lyo.Tts.WindowsSpeech;
+
+public class WindowsTtsRequest : TtsRequest
+{
+    public string VoiceId { get; set; } = null!;
+
+    public string Volume { get; set; } = null!;
+
+    public string SpeechRate { get; set; } = null!;
+
+    public AudioFormat? OutputFormat { get; set; }
+}

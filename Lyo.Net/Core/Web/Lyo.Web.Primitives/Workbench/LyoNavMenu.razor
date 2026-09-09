@@ -1,0 +1,14 @@
+@namespace Lyo.Web.Primitives
+@using Microsoft.AspNetCore.Components.Routing
+
+@if (ChildContent is not null) {
+    @ChildContent
+}
+
+@foreach (var group in Groups) {
+    <MudNavGroup Title="@group.Key" Icon="@group.First().Icon" Expanded="@IsExpanded(group)">
+        @foreach (var item in group) {
+            <MudNavLink Href="@item.Route" Icon="@item.Icon" Match="NavLinkMatch.Prefix">@item.Title</MudNavLink>
+        }
+    </MudNavGroup>
+}

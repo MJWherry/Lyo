@@ -1,0 +1,120 @@
+@inherits LyoWorkbenchBase
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h5">RabbitMQ</MudText>
+            <LyoChip Spec="@LyoChips.FromBool(IsBrokerConnected, "Connected", "Disconnected", Color.Success, Color.Default)"/>
+            @if (_lastHealth != null) {
+                <LyoChip Spec="@LyoChips.FromBool(_lastHealth.IsHealthy, "Healthy", "Unhealthy", Color.Success, Color.Warning)"/>
+            }
+            <MudSpacer/>
+            <MudButton Variant="Variant.Text" OnClick="CheckHealthAsync" Disabled="@_busy">Check Health</MudButton>
+        </MudStack>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Select a queue or exchange, then Send or Manage. Flags come from the management API.
+        </MudText>
+
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudTabs Rounded="true" Elevation="0" Outlined="true" ActivePanelIndex="_tabIndex" ActivePanelIndexChanged="OnTabChanged">
+                    <MudTabPanel Text="Queues">
+                        <MudStack Spacing="3" Class="pt-3">
+                            <RabbitMqQueueBrowser Queues="@_queueStats"
+                                                  ExchangeNames="@BindableExchangeNames"
+                                                  SelectedName="@_queueName"
+                                                  SelectedNameChanged="@(v => _queueName = v)"
+                                                  PeekCount="@_peekCount"
+                                                  PeekCountChanged="@(v => _peekCount = v)"
+                                                  RefreshIntervalSeconds="@_statsRefreshIntervalSeconds"
+                                                  RefreshIntervalSecondsChanged="@(v => _statsRefreshIntervalSeconds = v)"
+                                                  AutoRefresh="@_statsAutoRefresh"
+                                                  AutoRefreshChanged="OnStatsAutoRefreshChanged"
+                                                  Busy="@_busy"
+                                                  BindExchangeName="@_exchangeName"
+                                                  BindExchangeNameChanged="@(v => _exchangeName = v)"
+                                                  RoutingKey="@_routingKey"
+                                                  RoutingKeyChanged="@(v => _routingKey = v)"
+                                                  OnRefresh="@(() => RefreshQueueStatsAsync())"
+                                                  OnCreate="OpenCreateQueueDialogAsync"
+                                                  OnPeek="PeekQueueAsync"
+                                                  OnClear="ClearQueueAsync"
+                                                  OnDelete="DeleteQueueAsync"
+                                                  OnBind="BindQueueAsync">
+                                <DetailContent>
+                                    <RabbitMqPublishEditor MessageBody="@_messageBody"
+                                                           MessageBodyChanged="@(v => _messageBody = v)"
+                                                           WrapInEnvelope="@_wrapInEnvelope"
+                                                           WrapInEnvelopeChanged="@(v => _wrapInEnvelope = v)"
+                                                           EnvelopeMessageId="@_envelopeMessageId"
+                                                           EnvelopeMessageIdChanged="@(v => _envelopeMessageId = v)"
+                                                           EnvelopeTraceId="@_envelopeTraceId"
+                                                           EnvelopeTraceIdChanged="@(v => _envelopeTraceId = v)"
+                                                           MessagePriority="@_messagePriority"
+                                                           MessagePriorityChanged="@(v => _messagePriority = v)"
+                                                           SendDelaySeconds="@_sendDelaySeconds"
+                                                           SendDelaySecondsChanged="@(v => _sendDelaySeconds = v)"
+                                                           ShowDelay="true"
+                                                           Busy="@_busy"
+                                                           SendLabel="Send to queue"
+                                                           OnSend="SendToQueueAsync"
+                                                           OnSendDelayed="SendDelayedToQueueAsync"/>
+                                </DetailContent>
+                            </RabbitMqQueueBrowser>
+                        </MudStack>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Exchanges">
+                        <MudStack Spacing="3" Class="pt-3">
+                            <RabbitMqExchangeBrowser Exchanges="@_exchangeStats"
+                                                     QueueNames="@BindableQueueNames"
+                                                     ShowDefaults="@_showDefaultExchanges"
+                                                     ShowDefaultsChanged="@(v => _showDefaultExchanges = v)"
+                                                     SelectedName="@_exchangeName"
+                                                     SelectedNameChanged="@(v => _exchangeName = v)"
+                                                     Busy="@_busy"
+                                                     BindQueueName="@_queueName"
+                                                     BindQueueNameChanged="@(v => _queueName = v)"
+                                                     RoutingKey="@_routingKey"
+                                                     RoutingKeyChanged="@(v => _routingKey = v)"
+                                                     OnRefresh="@(() => RefreshExchangesAsync())"
+                                                     OnCreate="OpenCreateExchangeDialogAsync"
+                                                     OnDelete="DeleteExchangeAsync"
+                                                     OnBind="BindQueueAsync">
+                                <DetailContent>
+                                    <RabbitMqPublishEditor MessageBody="@_messageBody"
+                                                           MessageBodyChanged="@(v => _messageBody = v)"
+                                                           WrapInEnvelope="@_wrapInEnvelope"
+                                                           WrapInEnvelopeChanged="@(v => _wrapInEnvelope = v)"
+                                                           EnvelopeMessageId="@_envelopeMessageId"
+                                                           EnvelopeMessageIdChanged="@(v => _envelopeMessageId = v)"
+                                                           EnvelopeTraceId="@_envelopeTraceId"
+                                                           EnvelopeTraceIdChanged="@(v => _envelopeTraceId = v)"
+                                                           MessagePriority="@_messagePriority"
+                                                           MessagePriorityChanged="@(v => _messagePriority = v)"
+                                                           SendDelaySeconds="@_sendDelaySeconds"
+                                                           SendDelaySecondsChanged="@(v => _sendDelaySeconds = v)"
+                                                           ShowDelay="true"
+                                                           ShowRoutingKey="true"
+                                                           RoutingKey="@_routingKey"
+                                                           RoutingKeyChanged="@(v => _routingKey = v)"
+                                                           Busy="@_busy"
+                                                           SendLabel="Send to exchange"
+                                                           OnSend="SendToExchangeAsync"
+                                                           OnSendDelayed="SendDelayedToExchangeAsync"/>
+                                </DetailContent>
+                            </RabbitMqExchangeBrowser>
+                        </MudStack>
+                    </MudTabPanel>
+                </MudTabs>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MessageQueueResultPanel Connected="@IsBrokerConnected"
+                                         LastHealth="@_lastHealth"
+                                         Details="@_details"
+                                         PeekedMessages="@_peekedMessages"
+                                         StatusMessage="@StatusMessage"
+                                         StatusSeverity="@StatusSeverity"/>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>

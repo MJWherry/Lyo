@@ -1,0 +1,45 @@
+@namespace Lyo.Web.Components.Dialog
+
+<MudDialog Class="lyo-dialog" TitleContent="@GetTitleContent()">
+    <DialogContent>
+        @if (TitleChips != null) {
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="lyo-dialog-title-chips">
+                @TitleChips
+            </MudStack>
+        }
+        <div class="lyo-dialog-content" style="@ContentStyle">
+            @ChildContent
+        </div>
+    </DialogContent>
+    <DialogActions>
+        @if (Busy) {
+            <MudProgressCircular Size="Size.Small" Indeterminate Color="Color.Primary" Class="mr-2"/>
+        }
+        @ExtraActions
+        <MudButton OnClick="Close" Variant="Variant.Text" Disabled="@Busy">@CloseText</MudButton>
+        @if (OnSave.HasDelegate) {
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="OnSave" Disabled="@(Busy || SaveDisabled)">@SaveText</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private RenderFragment GetTitleContent()
+        => @<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="lyo-dialog-title">
+               <div class="lyo-dialog-title-text">
+                   @if (TitleContent != null) {
+                       @TitleContent
+                   }
+                   else {
+                       <MudText Typo="Typo.h6">@(Title ?? MudDialogInstance.Title)</MudText>
+                   }
+               </div>
+               <MudTooltip Text="Raw response JSON">
+                   <MudIconButton Icon="@Icons.Material.Filled.DataObject"
+                                  Size="Size.Small"
+                                  Disabled="@(DebugData == null)"
+                                  OnClick="ShowDebugJson"
+                                  aria-label="Raw response JSON"/>
+               </MudTooltip>
+           </MudStack>;
+}

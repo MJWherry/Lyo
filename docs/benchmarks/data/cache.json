@@ -1,0 +1,745 @@
+{
+  "type": "micro",
+  "groups": [
+    {
+      "name": "CacheComparisonBenchmarks",
+      "description": "Object-cache get/set/try-get on a warm key, comparing local IMemoryCache against in-process FusionCache (no Redis backplane). Values are a nested NestedCachePayload (object graph + collection + dictionary) so the comparison reflects realistic cached entities rather than a trivial scalar.",
+      "parameters": [],
+      "dataset": {
+        "typeName": "NestedCachePayload",
+        "columnCount": 6,
+        "maxNestingDepth": 2,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Address",
+            "type": "CacheAddress",
+            "kind": "object",
+            "children": [
+              {
+                "name": "Street",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "City",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Country",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Geo",
+                "type": "CacheGeo",
+                "kind": "object",
+                "children": [
+                  {
+                    "name": "Latitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  },
+                  {
+                    "name": "Longitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Contacts",
+            "type": "CacheContact[]",
+            "kind": "collection",
+            "children": [
+              {
+                "name": "Kind",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Value",
+                "type": "string",
+                "kind": "scalar"
+              }
+            ]
+          },
+          {
+            "name": "Attributes",
+            "type": "KeyValuePair`2[]",
+            "kind": "collection",
+            "children": [
+              {
+                "name": "Key",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Value",
+                "type": "string",
+                "kind": "scalar"
+              }
+            ]
+          },
+          {
+            "name": "Data",
+            "type": "string",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Nested graph (Address -> Geo object, Contacts collection, Attributes dictionary) cached as the object value across the comparison."
+      },
+      "measurements": [
+        {
+          "method": "Local_GetOrSet_Hit",
+          "parameters": {},
+          "meanNs": 97.25317993334362,
+          "stdDevNs": 1.449225133752095,
+          "allocatedBytes": 192,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 5 \u00b5s",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path."
+        },
+        {
+          "method": "Fusion_GetOrSet_Hit",
+          "parameters": {},
+          "meanNs": 231.65273171833584,
+          "stdDevNs": 7.562138474253356,
+          "allocatedBytes": 592,
+          "ratioToBaseline": 2.381955344566711,
+          "isBaseline": false,
+          "slaTarget": "<= 5 \u00b5s",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path."
+        },
+        {
+          "method": "Local_GetOrSetAsync_Hit",
+          "parameters": {},
+          "meanNs": 120.12695758239083,
+          "stdDevNs": 3.0761879565088033,
+          "allocatedBytes": 192,
+          "ratioToBaseline": 1.2351982491958071,
+          "isBaseline": false,
+          "slaTarget": "<= 5 \u00b5s",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path."
+        },
+        {
+          "method": "Fusion_GetOrSetAsync_Hit",
+          "parameters": {},
+          "meanNs": 316.51174879074097,
+          "stdDevNs": 5.703791916739241,
+          "allocatedBytes": 592,
+          "ratioToBaseline": 3.254513107002517,
+          "isBaseline": false,
+          "slaTarget": "<= 5 \u00b5s",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path."
+        },
+        {
+          "method": "Local_Set",
+          "parameters": {},
+          "meanNs": 1261.5946501159667,
+          "stdDevNs": 48.02541051045437,
+          "allocatedBytes": 1135,
+          "ratioToBaseline": 12.972271456631562,
+          "isBaseline": false,
+          "slaTarget": "<= 5 \u00b5s",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path."
+        },
+        {
+          "method": "Fusion_Set",
+          "parameters": {},
+          "meanNs": 1285.6317708757188,
+          "stdDevNs": 59.12726752555296,
+          "allocatedBytes": 1384,
+          "ratioToBaseline": 13.219431711712442,
+          "isBaseline": false,
+          "slaTarget": "<= 5 \u00b5s",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path."
+        },
+        {
+          "method": "Local_TryGetValue",
+          "parameters": {},
+          "meanNs": 41.62628378391266,
+          "stdDevNs": 1.1115098755106092,
+          "allocatedBytes": 0,
+          "ratioToBaseline": 0.428019770792512,
+          "isBaseline": false,
+          "slaTarget": "<= 5 \u00b5s",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path."
+        },
+        {
+          "method": "Fusion_TryGetValue",
+          "parameters": {},
+          "meanNs": 103.69130617777506,
+          "stdDevNs": 1.587613519821236,
+          "allocatedBytes": 0,
+          "ratioToBaseline": 1.066199647650021,
+          "isBaseline": false,
+          "slaTarget": "<= 5 \u00b5s",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path."
+        }
+      ]
+    },
+    {
+      "name": "FusionRedisBackplaneBenchmarks",
+      "description": "FusionCache get/set/invalidate-by-tag with a StackExchange Redis backplane (throwaway Docker Redis), surfacing backplane overhead vs the in-process FusionCache.",
+      "parameters": [],
+      "dataset": {
+        "typeName": "CachePayload",
+        "columnCount": 3,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Data",
+            "type": "string",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Small POCO cached as the object value."
+      },
+      "measurements": [
+        {
+          "method": "Fusion_Redis_GetOrSet_Hit",
+          "parameters": {},
+          "meanNs": 218.99812349478404,
+          "stdDevNs": 3.3596325283445005,
+          "allocatedBytes": 592,
+          "isBaseline": false
+        },
+        {
+          "method": "Fusion_Redis_Set",
+          "parameters": {},
+          "meanNs": 1184.9365059280397,
+          "stdDevNs": 104.69271767092887,
+          "allocatedBytes": 1384,
+          "isBaseline": false
+        },
+        {
+          "method": "Fusion_Redis_InvalidateByTag",
+          "parameters": {},
+          "meanNs": 53582.63190511068,
+          "stdDevNs": 1300.1113814141995,
+          "allocatedBytes": 4992,
+          "isBaseline": false
+        }
+      ]
+    },
+    {
+      "name": "PayloadCacheBenchmarks",
+      "description": "Serialized byte-payload cache path (JSON +/- compression framing) on a warm key, comparing no-compress vs auto-compress at increasing payload sizes up to 10 MB. The cached value is a nested NestedCachePayload whose Data body carries DataSize compressible bytes, so this exercises caching of large, structured outputs.",
+      "parameters": [
+        {
+          "name": "DataSize",
+          "unit": "bytes",
+          "description": "Length of the compressible string body inside the payload (1 KB, 64 KB, 1 MB, 10 MB) - caching is frequently used for large outputs, so the matrix scales accordingly."
+        }
+      ],
+      "dataset": {
+        "typeName": "NestedCachePayload",
+        "columnCount": 6,
+        "maxNestingDepth": 2,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Address",
+            "type": "CacheAddress",
+            "kind": "object",
+            "children": [
+              {
+                "name": "Street",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "City",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Country",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Geo",
+                "type": "CacheGeo",
+                "kind": "object",
+                "children": [
+                  {
+                    "name": "Latitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  },
+                  {
+                    "name": "Longitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Contacts",
+            "type": "CacheContact[]",
+            "kind": "collection",
+            "children": [
+              {
+                "name": "Kind",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Value",
+                "type": "string",
+                "kind": "scalar"
+              }
+            ]
+          },
+          {
+            "name": "Attributes",
+            "type": "KeyValuePair`2[]",
+            "kind": "collection",
+            "children": [
+              {
+                "name": "Key",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Value",
+                "type": "string",
+                "kind": "scalar"
+              }
+            ]
+          },
+          {
+            "name": "Data",
+            "type": "string",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Nested graph (Address -> Geo object, Contacts collection, Attributes dictionary) plus a DataSize-byte compressible body."
+      },
+      "measurements": [
+        {
+          "method": "Payload_NoCompress_Hit",
+          "description": "Read + decode + deserialize the nested payload from the uncompressed cache entry (baseline).",
+          "parameters": {
+            "DataSize": "1024"
+          },
+          "meanNs": 2459.6539203540697,
+          "stdDevNs": 82.95626300884228,
+          "allocatedBytes": 6224,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_Compress_Hit",
+          "description": "Read + decompress + deserialize the nested payload from the auto-compressed cache entry.",
+          "parameters": {
+            "DataSize": "1024"
+          },
+          "meanNs": 6205.417621067592,
+          "stdDevNs": 54.09494368656079,
+          "allocatedBytes": 9344,
+          "ratioToBaseline": 2.522882414357836,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_NoCompress_Set",
+          "description": "Write the DataSize body bytes to the uncompressed payload cache.",
+          "parameters": {
+            "DataSize": "1024"
+          },
+          "meanNs": 1234.5379341125488,
+          "stdDevNs": 64.21310032845854,
+          "allocatedBytes": 4259,
+          "ratioToBaseline": 0.5019152995047513,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_Compress_Set",
+          "description": "Write the DataSize body bytes to the auto-compressing payload cache (compression overhead on write).",
+          "parameters": {
+            "DataSize": "1024"
+          },
+          "meanNs": 11378.816484723773,
+          "stdDevNs": 60.46123985847717,
+          "allocatedBytes": 5168,
+          "ratioToBaseline": 4.626185981109806,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_NoCompress_Hit",
+          "description": "Read + decode + deserialize the nested payload from the uncompressed cache entry (baseline).",
+          "parameters": {
+            "DataSize": "65536"
+          },
+          "meanNs": 47857.07653808594,
+          "stdDevNs": 305.11855199504913,
+          "allocatedBytes": 199814,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_Compress_Hit",
+          "description": "Read + decompress + deserialize the nested payload from the auto-compressed cache entry.",
+          "parameters": {
+            "DataSize": "65536"
+          },
+          "meanNs": 103380.77511160714,
+          "stdDevNs": 510.8090338254642,
+          "allocatedBytes": 267455,
+          "ratioToBaseline": 2.1601982943804345,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_NoCompress_Set",
+          "description": "Write the DataSize body bytes to the uncompressed payload cache.",
+          "parameters": {
+            "DataSize": "65536"
+          },
+          "meanNs": 17110.24420062566,
+          "stdDevNs": 735.7738452813973,
+          "allocatedBytes": 197792,
+          "ratioToBaseline": 0.3575279862113782,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_Compress_Set",
+          "description": "Write the DataSize body bytes to the auto-compressing payload cache (compression overhead on write).",
+          "parameters": {
+            "DataSize": "65536"
+          },
+          "meanNs": 35164.218041992186,
+          "stdDevNs": 602.8915650048035,
+          "allocatedBytes": 134213,
+          "ratioToBaseline": 0.7347757235861987,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_NoCompress_Hit",
+          "description": "Read + decode + deserialize the nested payload from the uncompressed cache entry (baseline).",
+          "parameters": {
+            "DataSize": "1048576"
+          },
+          "meanNs": 729740.0764941407,
+          "stdDevNs": 138812.62565777558,
+          "allocatedBytes": 3149175,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_Compress_Hit",
+          "description": "Read + decompress + deserialize the nested payload from the auto-compressed cache entry.",
+          "parameters": {
+            "DataSize": "1048576"
+          },
+          "meanNs": 2423681.5563671873,
+          "stdDevNs": 218780.6161404907,
+          "allocatedBytes": 7214575,
+          "ratioToBaseline": 3.3212942997610573,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_NoCompress_Set",
+          "description": "Write the DataSize body bytes to the uncompressed payload cache.",
+          "parameters": {
+            "DataSize": "1048576"
+          },
+          "meanNs": 859369.2125976563,
+          "stdDevNs": 140591.40553306247,
+          "allocatedBytes": 3147573,
+          "ratioToBaseline": 1.1776374085500243,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_Compress_Set",
+          "description": "Write the DataSize body bytes to the auto-compressing payload cache (compression overhead on write).",
+          "parameters": {
+            "DataSize": "1048576"
+          },
+          "meanNs": 1403762.162388393,
+          "stdDevNs": 17524.587466801975,
+          "allocatedBytes": 2100940,
+          "ratioToBaseline": 1.9236467991896897,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_NoCompress_Hit",
+          "description": "Read + decode + deserialize the nested payload from the uncompressed cache entry (baseline).",
+          "parameters": {
+            "DataSize": "10485760"
+          },
+          "meanNs": 10266234.78236607,
+          "stdDevNs": 110435.0281095793,
+          "allocatedBytes": 31460849,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_Compress_Hit",
+          "description": "Read + decompress + deserialize the nested payload from the auto-compressed cache entry.",
+          "parameters": {
+            "DataSize": "10485760"
+          },
+          "meanNs": 22392412.01147959,
+          "stdDevNs": 890764.9591396424,
+          "allocatedBytes": 64886895,
+          "ratioToBaseline": 2.181170846583618,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_NoCompress_Set",
+          "description": "Write the DataSize body bytes to the uncompressed payload cache.",
+          "parameters": {
+            "DataSize": "10485760"
+          },
+          "meanNs": 8820763.2171875,
+          "stdDevNs": 59433.130328626656,
+          "allocatedBytes": 31458761,
+          "ratioToBaseline": 0.8592013921538787,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        },
+        {
+          "method": "Payload_Compress_Set",
+          "description": "Write the DataSize body bytes to the auto-compressing payload cache (compression overhead on write).",
+          "parameters": {
+            "DataSize": "10485760"
+          },
+          "meanNs": 15764388.964583334,
+          "stdDevNs": 172497.98040885758,
+          "allocatedBytes": 20974965,
+          "ratioToBaseline": 1.5355570273593624,
+          "isBaseline": false,
+          "slaTarget": "<= 50 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies."
+        }
+      ]
+    }
+  ],
+  "slo": [
+    {
+      "area": "Fusion_GetOrSetAsync_Hit",
+      "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
+      "latest": "316.51 ns",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Fusion_GetOrSet_Hit",
+      "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
+      "latest": "231.65 ns",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Fusion_Set",
+      "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
+      "latest": "1.29 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Fusion_TryGetValue",
+      "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
+      "latest": "103.69 ns",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Local_GetOrSetAsync_Hit",
+      "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
+      "latest": "120.13 ns",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Local_GetOrSet_Hit",
+      "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
+      "latest": "97.25 ns",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Local_Set",
+      "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
+      "latest": "1.26 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Local_TryGetValue",
+      "target": "<= 5 \u00b5s \u2014 In-process object cache hit/set should stay low-microsecond - no network and no large-graph serialization on the hot path.",
+      "latest": "41.63 ns",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Payload_Compress_Hit",
+      "target": "<= 50 ms \u2014 In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
+      "latest": "6.21 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Payload_Compress_Set",
+      "target": "<= 50 ms \u2014 In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
+      "latest": "11.38 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Payload_NoCompress_Hit",
+      "target": "<= 50 ms \u2014 In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
+      "latest": "2.46 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Payload_NoCompress_Set",
+      "target": "<= 50 ms \u2014 In-process payload cache operations should complete well within a typical web request budget (<= 50 ms), even for multi-MB structured bodies.",
+      "latest": "1.23 \u00b5s",
+      "result": "Exceeds"
+    }
+  ],
+  "grades": [
+    {
+      "category": "CacheComparisonBenchmarks",
+      "grade": "A",
+      "rationale": "8 exceed of 8 SLA targets vs declared standards"
+    },
+    {
+      "category": "PayloadCacheBenchmarks",
+      "grade": "A",
+      "rationale": "16 exceed of 16 SLA targets vs declared standards"
+    }
+  ],
+  "schema": "lyo.bench/v1",
+  "name": "cache",
+  "title": "Caching",
+  "description": "Cache hot-path costs for Lyo.Cache: local IMemoryCache vs FusionCache for object get/set, the serialized byte-payload path (JSON +/- compression framing) across payload sizes, and FusionCache with a Redis backplane (Docker). Object cases use a small CachePayload; payload cases vary DataSize (the length of a compressible string body) to show framing/serialization cost.",
+  "runId": "BenchmarkRun-joined-2026-09-01-01-03-03",
+  "generatedAt": "2026-09-01T01:03:03.5681941+00:00",
+  "runStarted": "2026-09-01T00:49:13.0152067+00:00",
+  "runEnded": "2026-09-01T01:03:03.5681941+00:00",
+  "durationSeconds": 830.5529874,
+  "environment": {
+    "tool": "BenchmarkDotNet",
+    "toolVersion": "0.15.8",
+    "runtime": ".NET 10.0.0",
+    "cpu": "Intel(R) Core(TM) Ultra 7 155U",
+    "os": "Ubuntu 24.04.3 LTS",
+    "architecture": "X64",
+    "logicalCores": 14,
+    "physicalCores": 12,
+    "memoryBytes": 6442450944,
+    "gcMode": "Workstation",
+    "configuration": "Release",
+    "dotnetSdkVersion": "10.0.100",
+    "dependencies": {
+      "BenchmarkDotNet": "0.15.8",
+      "EasyCompressor": "2.1.0",
+      "Konscious.Security.Cryptography.Argon2": "1.3.1",
+      "Microsoft.Extensions.Caching.Memory": "10.0.5",
+      "Microsoft.Extensions.Configuration.Binder": "10.0.5",
+      "Microsoft.Extensions.DependencyInjection": "10.0.5",
+      "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.5",
+      "System.IO.Hashing": "10.0.5",
+      "Testcontainers.Redis": "4.13.0",
+      "ZiggyCreatures.FusionCache": "2.6.0",
+      "ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis": "2.6.0"
+    }
+  },
+  "notes": [],
+  "history": [
+    {
+      "file": "20260901T010303Z_BenchmarkRun-joined-2026-09-01-01-03-03.json",
+      "runId": "BenchmarkRun-joined-2026-09-01-01-03-03",
+      "runStarted": "2026-09-01T00:49:13.0152067+00:00",
+      "runEnded": "2026-09-01T01:03:03.5681941+00:00",
+      "generatedAt": "2026-09-01T01:03:03.5681941+00:00",
+      "isCurrent": true,
+      "measurementCount": 27,
+      "medianMeanNs": 11378.816484723773
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+@using Lyo.Common.Metadata.Records
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudStack Spacing="2" Class="mt-3">
+    @if (string.IsNullOrWhiteSpace(SubjectEntityType)) {
+        <MudAlert Severity="Severity.Info" Dense="true">Apply a subject entity type to list definitions.</MudAlert>
+    }
+    else {
+        <LyoDataGridProjected @ref="_dataGrid"
+                              ApiClient="ApiClient"
+                              GridKey="ConfigDefinitionGrid"
+                              Route="@ConfigQueryRoutes.Definition"
+                              KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                              FilterPropertyDefinitions="@_propertyDefinitions"
+                              BeforeQuery="@ApplyQuery"
+                              Features="@_gridFeatures">
+            <BulkExportControls>
+                <LyoDataGridExportMenu Host="context">
+                    <ExportCsvMenuItem Host="context"/>
+                    <ExportJsonMenuItem Host="context"/>
+                    <ExportXlsxMenuItem Host="context"/>
+                </LyoDataGridExportMenu>
+            </BulkExportControls>
+            <LeftControls>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="OpenCreateAsync">
+                    New definition
+                </MudButton>
+            </LeftControls>
+            <BulkMenuItems>
+                <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="BulkDeleteAsync">Delete selected</MudMenuItem>
+            </BulkMenuItems>
+            <Columns>
+                <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                                HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                                CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+                    <CellTemplate Context="cell">
+                        <MudStack Row Spacing="0">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit definition"
+                                           OnClick="@(() => OpenEditProjectedAsync(cell.Item))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.History" Size="Size.Small" title="Definition history"
+                                           OnClick="@(() => ViewHistoryProjectedAsync(cell.Item))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete definition"
+                                           OnClick="@(() => DeleteProjectedAsync(cell.Item))"/>
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+                <LyoProjectedColumn Field="Key" Title="Key" QuickSearchPropertyName="Key">
+                    <CellContent Context="item">
+                        <MudText Typo="Typo.body2">@ProjectedValueHelper.GetDisplayValue(item, "Key")</MudText>
+                        @{
+                            var description = ProjectedValueHelper.GetDisplayValue(item, "Description");
+                        }
+                        @if (!string.IsNullOrWhiteSpace(description)) {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@description</MudText>
+                        }
+                    </CellContent>
+                </LyoProjectedColumn>
+                <LyoProjectedColumn Field="ForValueType" Title="Value type" QuickSearchPropertyName="ForValueType">
+                    <CellContent Context="item">
+                        <LyoTruncatedText Text="@ProjectedValueHelper.GetDisplayValue(item, "ForValueType")"/>
+                    </CellContent>
+                </LyoProjectedColumn>
+                <LyoProjectedColumn Field="IsRequired" Title="Required" Align="Align.Center" HeaderStyle="width: 110px;">
+                    <CellContent Context="item">
+                        <LyoChip Spec="@LyoChips.FromBool(ProjectedValueHelper.GetBool(item, "IsRequired"), "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+                    </CellContent>
+                </LyoProjectedColumn>
+                <LyoProjectedColumn Field="IsEncrypted" Title="Encrypted" Align="Align.Center" HeaderStyle="width: 120px;">
+                    <CellContent Context="item">
+                        <LyoChip Spec="@LyoChips.FromBool(ProjectedValueHelper.GetBool(item, "IsEncrypted"), "Encrypted", "Plain", Color.Warning, Color.Default)"/>
+                    </CellContent>
+                </LyoProjectedColumn>
+                <LyoProjectedColumn Field="UpdatedTimestamp" Title="Updated" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+            </Columns>
+            <RowMenuControls Context="item">
+                <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenEditProjectedAsync(item))">Edit</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.History" OnClick="@(() => ViewHistoryProjectedAsync(item))">History</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteProjectedAsync(item))">Delete</MudMenuItem>
+            </RowMenuControls>
+        </LyoDataGridProjected>
+    }
+</MudStack>

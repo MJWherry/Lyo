@@ -1,0 +1,1301 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using Lyo.Exceptions;
+using Lyo.Health;
+using Lyo.Metrics;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace Lyo.Cache;
+
+/// <summary>
+/// Local-only <see cref="ICacheService" /> on <see cref="IMemoryCache" />: normalized keys, tag indexes for bulk invalidation, optional payload codec/serializer, and
+/// metrics.
+/// </summary>
+/// <remarks>Keys are stored lower-invariant. Turn caching off via <see cref="CacheOptions.Enabled" />.</remarks>
+public sealed class LocalCacheService : ICacheService
+{
+    private const string TagPrefix = "__tag:";
+
+    private readonly bool _enabled;
+    private readonly ConcurrentDictionary<CacheItem, CacheItem> _items = new();
+
+    /// <summary>Bidirectional tag index: cache key to tag set (inner dict keys are tags, O(1) membership).</summary>
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _keyToTags = new();
+
+    private readonly ILogger<LocalCacheService> _logger;
+    private readonly IMemoryCache _memoryCache;
+    private readonly IMetrics _metrics;
+    private readonly CacheOptions _options;
+    private readonly ICachePayloadCodec? _payloadCodec;
+    private readonly ICachePayloadSerializer? _payloadSerializer;
+
+    /// <summary>Bidirectional tag index: tag to cache-key set (inner dict keys are normalized cache keys).</summary>
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _tagToKeys = new();
+
+    /// <summary>Per-key TTL used to stamp and refresh <see cref="CacheItem.Expires" /> (sliding hits reset from the last access).</summary>
+    private readonly ConcurrentDictionary<string, (TimeSpan Duration, CacheExpirationMode Mode)> _ttls = new(StringComparer.Ordinal);
+
+    /// <summary>Mints a <see cref="LocalCacheService" />.</summary>
+    /// <param name="memoryCache">Backing Microsoft cache instance.</param>
+    /// <param name="logger">Optional logger.</param>
+    /// <param name="options">Behavior and expirations; defaults to a new <see cref="CacheOptions" />.</param>
+    /// <param name="metrics">Optional metrics; used when <paramref name="options" />.<see cref="CacheOptions.EnableMetrics" /> is true.</param>
+    /// <param name="payloadCodec">Required for payload APIs; may be null when only the object cache is used.</param>
+    /// <param name="payloadSerializer">Required for typed payload APIs.</param>
+    public LocalCacheService(
+        IMemoryCache memoryCache,
+        ILogger<LocalCacheService>? logger = null,
+        CacheOptions? options = null,
+        IMetrics? metrics = null,
+        ICachePayloadCodec? payloadCodec = null,
+        ICachePayloadSerializer? payloadSerializer = null)
+    {
+        ArgumentHelpers.ThrowIfNull(memoryCache);
+        _memoryCache = memoryCache;
+        _logger = logger ?? NullLogger<LocalCacheService>.Instance;
+        _options = options ?? new CacheOptions();
+        _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
+        _enabled = _options.Enabled;
+        _payloadCodec = payloadCodec;
+        _payloadSerializer = payloadSerializer;
+    }
+
+    public IReadOnlyCollection<CacheItem> Items => _items.Values.ToList().AsReadOnly();
+
+    /// <inheritdoc />
+    public string HealthCheckName => "cache";
+
+    /// <inheritdoc />
+    public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
+    {
+        var sw = Stopwatch.StartNew();
+        try {
+            var testKey = $"lyo-health-{Guid.NewGuid():N}";
+            var testValue = "ok";
+            Set(testKey, testValue, ["lyo-health-check"]);
+            var fromCache = await GetOrSetAsync(testKey, _ => Task.FromResult<string?>(testValue), TimeSpan.FromSeconds(5), ["lyo-health-check"], ct).ConfigureAwait(false);
+            await InvalidateCacheItem(testKey).ConfigureAwait(false);
+            sw.Stop();
+            var ok = fromCache == testValue;
+            return ok
+                ? HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { ["key"] = testKey })
+                : HealthResult.Unhealthy(sw.Elapsed, "Cache read/write mismatch");
+        }
+        catch (Exception ex) {
+            sw.Stop();
+            return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
+        }
+    }
+
+    public async Task InvalidateCacheItem(string key)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var normalizedKey = key.ToLowerInvariant();
+            TagIndexRemoveKey(normalizedKey);
+            _memoryCache.Remove(normalizedKey);
+            ForgetTtl(normalizedKey);
+            _items.TryRemove(CacheItem.Key(normalizedKey), out var _);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.RemoveDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.RemoveSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error invalidating cache item with key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.RemoveDuration, ex, [(Constants.Metrics.Tags.Operation, "InvalidateCacheItem"), (Constants.Metrics.Tags.Key, key)]);
+            throw;
+        }
+
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+    public async Task InvalidateCacheItemByTag(string tag)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        var normalizedTag = tag.ToLowerInvariant();
+        try {
+            var beforeCount = _items.Count;
+            var keysSnapshot = TagIndexGetKeysByTag(normalizedTag).ToArray();
+            foreach (var key in keysSnapshot) {
+                TagIndexRemoveKey(key);
+                _memoryCache.Remove(key);
+                ForgetTtl(key);
+                _items.TryRemove(CacheItem.Key(key), out var _);
+            }
+
+            _items.TryRemove(CacheItem.Tag(TagPrefix + normalizedTag), out var _);
+            stopwatch.Stop();
+            var itemsRemoved = Math.Max(0, beforeCount - _items.Count);
+            var tags = new[] { (Constants.Metrics.Tags.Tag, tag) };
+            _metrics.RecordTiming(Constants.Metrics.RemoveByTagDuration, stopwatch.Elapsed, tags);
+            _metrics.IncrementCounter(Constants.Metrics.RemoveByTagSuccess, 1, tags);
+            _metrics.RecordGauge(Constants.Metrics.RemoveByTagItemsRemoved, itemsRemoved, tags);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error invalidating cache items by tag {CacheTag}", tag);
+            _metrics.RecordError(Constants.Metrics.RemoveByTagDuration, ex, [(Constants.Metrics.Tags.Operation, "InvalidateCacheItemByTag"), (Constants.Metrics.Tags.Tag, tag)]);
+            throw;
+        }
+
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+    public Task InvalidateQueryCacheAsync<TDb>()
+        where TDb : class
+    {
+        return InvalidateCacheItemByTag(Constants.Tags.EntityType(typeof(TDb)));
+    }
+
+    public Task InvalidateCacheByTypeAsync(string fullTypeName)
+    {
+        if (string.IsNullOrWhiteSpace(fullTypeName)) {
+            _logger.LogWarning("Attempted to invalidate cache for null or empty type name");
+            return Task.CompletedTask;
+        }
+
+        var tag = $"type:{fullTypeName.ToLowerInvariant()}";
+        return InvalidateCacheItemByTag(tag);
+    }
+
+    public Task InvalidateCacheByTypeAsync(Type type) => InvalidateCacheByTypeAsync(type.FullName ?? type.Name);
+
+    public Task InvalidateCacheByTypeAsync<T>() => InvalidateCacheByTypeAsync(typeof(T));
+
+    public async Task InvalidateAllCachedQueriesAsync() => await InvalidateCacheItemByTag("queries").ConfigureAwait(false);
+
+    public async Task ClearAsync()
+    {
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var keys = _items.Keys.Where(static i => i.Type == CacheItemTypeEnum.Key).Select(static i => i.Name).ToArray();
+            foreach (var key in keys)
+                _memoryCache.Remove(key);
+
+            var count = _items.Count;
+            _items.Clear();
+            _keyToTags.Clear();
+            _tagToKeys.Clear();
+            _ttls.Clear();
+            stopwatch.Stop();
+            _metrics.RecordGauge(Constants.Metrics.CacheSize, 0);
+            _metrics.IncrementCounter(Constants.Metrics.ClearSuccess, count);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error clearing cache");
+            _metrics.RecordError(Constants.Metrics.ClearSuccess, ex, [(Constants.Metrics.Tags.Operation, "ClearAsync")]);
+            throw;
+        }
+
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+    public async ValueTask<TValue?> GetOrSetAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        if (!_enabled)
+            return await factory(token).ConfigureAwait(false);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var result = await factory(token).ConfigureAwait(false);
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            SetInternal(normalizedKey, result!, opts.Duration, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await factory(token).ConfigureAwait(false);
+        }
+    }
+
+    public async ValueTask<TValue?> GetOrSetAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        TimeSpan? duration,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        if (!_enabled)
+            return await factory(token).ConfigureAwait(false);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var result = await factory(token).ConfigureAwait(false);
+            var opts = new CacheEntryOptions { Duration = effectiveDuration };
+            SetInternal(normalizedKey, result!, opts.Duration, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await factory(token).ConfigureAwait(false);
+        }
+    }
+
+    public async ValueTask<TValue?> GetOrSetAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<(TValue? value, string[]? tags)>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        if (!_enabled) {
+            var (value, _) = await factory(token).ConfigureAwait(false);
+            return value;
+        }
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var (result, factoryTags) = await factory(token).ConfigureAwait(false);
+            var effectiveTags = MergeTags(factoryTags, extraTags);
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            SetInternal(normalizedKey, result!, opts.Duration, effectiveTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            var (v, _) = await factory(token).ConfigureAwait(false);
+            return v;
+        }
+    }
+
+    public async ValueTask<TValue?> GetOrSetAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        Type type,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        var typeExpiration = _options.GetExpirationForType(type);
+        if (!_enabled)
+            return await factory(token).ConfigureAwait(false);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var result = await factory(token).ConfigureAwait(false);
+            var opts = new CacheEntryOptions { Duration = typeExpiration };
+            SetInternal(normalizedKey, result!, opts.Duration, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await factory(token).ConfigureAwait(false);
+        }
+    }
+
+    public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, IEnumerable<string>? extraTags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        if (!_enabled)
+            return factory(CancellationToken.None);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var result = factory(CancellationToken.None);
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            SetInternal(normalizedKey, result!, opts.Duration, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
+            return factory(CancellationToken.None);
+        }
+    }
+
+    public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        if (!_enabled)
+            return factory(CancellationToken.None);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var result = factory(CancellationToken.None);
+            var opts = new CacheEntryOptions { Duration = effectiveDuration };
+            SetInternal(normalizedKey, result!, opts.Duration, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
+            return factory(CancellationToken.None);
+        }
+    }
+
+    public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, (TValue? value, string[]? tags)> factory, IEnumerable<string>? extraTags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        if (!_enabled) {
+            var (value, _) = factory(CancellationToken.None);
+            return value;
+        }
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var (result, factoryTags) = factory(CancellationToken.None);
+            var effectiveTags = MergeTags(factoryTags, extraTags);
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            SetInternal(normalizedKey, result!, opts.Duration, effectiveTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
+            var (v, _) = factory(CancellationToken.None);
+            return v;
+        }
+    }
+
+    public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, Type type, IEnumerable<string>? extraTags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        var typeExpiration = _options.GetExpirationForType(type);
+        if (!_enabled)
+            return factory(CancellationToken.None);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var result = factory(CancellationToken.None);
+            var opts = new CacheEntryOptions { Duration = typeExpiration };
+            SetInternal(normalizedKey, result!, opts.Duration, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
+            return factory(CancellationToken.None);
+        }
+    }
+
+    public TValue GetOrSet<TValue>(string key, TValue value, Action<ICacheEntryOptions>? setupAction = null, IEnumerable<string>? tags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        if (!_enabled)
+            return value;
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+
+                // A stored null is a hit now that presence decides; callers of the non-nullable overload get it back as-is rather than re-running the factory.
+                return cached!;
+            }
+
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            setupAction?.Invoke(opts);
+            SetInternal(normalizedKey, value!, opts.Duration, opts.ExpirationMode, tags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return value;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
+            return value;
+        }
+    }
+
+    public TValue? GetOrSet<TValue>(
+        string key,
+        Func<CancellationToken, TValue?> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        if (!_enabled)
+            return factory(CancellationToken.None);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var result = factory(CancellationToken.None);
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            setupAction(opts);
+            SetInternal(normalizedKey, result!, opts.Duration, opts.ExpirationMode, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
+            return factory(CancellationToken.None);
+        }
+    }
+
+    public async ValueTask<TValue?> GetOrSetAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        if (!_enabled)
+            return await factory(token).ConfigureAwait(false);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var result = await factory(token).ConfigureAwait(false);
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            setupAction(opts);
+            SetInternal(normalizedKey, result!, opts.Duration, opts.ExpirationMode, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return result;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await factory(token).ConfigureAwait(false);
+        }
+    }
+
+    public async ValueTask<TValue?> GetOrSetAsync<TValue>(
+        string key,
+        TValue value,
+        Action<ICacheEntryOptions>? setupAction = null,
+        IEnumerable<string>? tags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        if (!_enabled)
+            return value;
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out TValue? cached)) {
+                stopwatch.Stop();
+                _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                return cached;
+            }
+
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            setupAction?.Invoke(opts);
+            SetInternal(normalizedKey, value!, opts.Duration, opts.ExpirationMode, tags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return value;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return value;
+        }
+    }
+
+    public void Set<T>(string key, T obj, IEnumerable<string>? tags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var normalizedKey = key.ToLowerInvariant();
+            SetInternal(normalizedKey, obj!, _options.DefaultExpiration, tags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "Set"), (Constants.Metrics.Tags.Key, key)]);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public void Set<T>(string key, T obj, TimeSpan duration, IEnumerable<string>? tags = null)
+        => Set(key, obj, o => o.SetAbsoluteExpiration(duration), tags);
+
+    /// <inheritdoc />
+    public void Set<T>(string key, T obj, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? tags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            setupAction(opts);
+            SetInternal(key.ToLowerInvariant(), obj!, opts.Duration, opts.ExpirationMode, tags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error setting cache value for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "Set"), (Constants.Metrics.Tags.Key, key)]);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool TryGetValue<T>(string key, out T? value)
+    {
+        value = default;
+        if (!_enabled || string.IsNullOrWhiteSpace(key))
+            return false;
+
+        try {
+            var normalizedKey = key.ToLowerInvariant();
+            return TryGetTracked(normalizedKey, out value);
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Error reading cache value for key {CacheKey}", key);
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<byte[]?>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+        => await GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token).ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<byte[]?>> factory,
+        TimeSpan? duration,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        if (!_enabled)
+            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
+                try {
+                    var decoded = _payloadCodec.Decode(cached);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    await InvalidateCacheItem(key).ConfigureAwait(false);
+                }
+            }
+
+            var plain = await factory(token).ConfigureAwait(false);
+            if (plain == null)
+                return null;
+
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
+            var opts = new CacheEntryOptions { Duration = effectiveDuration };
+            SetInternal(normalizedKey, framed, opts.Duration, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return envelope;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+        => await GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token).ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
+        TimeSpan? duration,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        if (!_enabled)
+            return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
+                try {
+                    var decoded = _payloadCodec.Decode(cached);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    await InvalidateCacheItem(key).ConfigureAwait(false);
+                }
+            }
+
+            var (plain, factoryTags) = await factory(token).ConfigureAwait(false);
+            if (plain == null)
+                return null;
+
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
+            var opts = new CacheEntryOptions { Duration = effectiveDuration };
+            var mergedTags = MergeTags(factoryTags, extraTags);
+            SetInternal(normalizedKey, framed, opts.Duration, mergedTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return envelope;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+        => GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token);
+
+    /// <inheritdoc />
+    public ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        TimeSpan? duration,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        async Task<(TValue? value, string[]? tags)> AsTuple(CancellationToken ct) => (await factory(ct).ConfigureAwait(false), null);
+
+        return GetOrSetPayloadAsync(key, AsTuple, duration, extraTags, token);
+    }
+
+    /// <inheritdoc />
+    public ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<(TValue? value, string[]? tags)>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+        => GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token);
+
+    /// <inheritdoc />
+    public async ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<(TValue? value, string[]? tags)>> factory,
+        TimeSpan? duration,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Typed payload cache requires ICachePayloadCodec.");
+        OperationHelpers.ThrowIfNull(_payloadSerializer, "Typed payload cache requires ICachePayloadSerializer.");
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        if (!_enabled)
+            return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
+                CacheEntryEnvelope? decoded = null;
+                try {
+                    decoded = _payloadCodec.Decode(cached);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    await InvalidateCacheItem(key).ConfigureAwait(false);
+                }
+
+                if (decoded != null) {
+                    try {
+                        var deserialized = _payloadSerializer.Deserialize<TValue>(decoded.Payload);
+                        stopwatch.Stop();
+                        _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                        _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                        return deserialized;
+                    }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Failed to deserialize typed payload for key {CacheKey}; removing entry", key);
+                        await InvalidateCacheItem(key).ConfigureAwait(false);
+                    }
+                }
+            }
+
+            var (value, factoryTags) = await factory(token).ConfigureAwait(false);
+            if (value is null)
+                return default;
+
+            var plain = _payloadSerializer.Serialize(value);
+            if (plain == null)
+                return default;
+
+            var framed = _payloadCodec.Encode(plain);
+            var opts = new CacheEntryOptions { Duration = effectiveDuration };
+            var mergedTags = MergeTags(factoryTags, extraTags);
+            SetInternal(normalizedKey, framed, opts.Duration, mergedTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return value;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, IEnumerable<string>? extraTags = null)
+        => GetOrSetPayload(key, factory, (TimeSpan?)null, extraTags);
+
+    /// <inheritdoc />
+    public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        if (!_enabled)
+            return PayloadFactoryOnlySync(factory);
+
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
+                try {
+                    var decoded = _payloadCodec.Decode(cached);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    InvalidateCacheItem(key).GetAwaiter().GetResult();
+                }
+            }
+
+            var plain = factory(CancellationToken.None);
+            if (plain == null)
+                return null;
+
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
+            var opts = new CacheEntryOptions { Duration = effectiveDuration };
+            SetInternal(normalizedKey, framed, opts.Duration, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return envelope;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayload for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayload"), (Constants.Metrics.Tags.Key, key)]);
+            return PayloadFactoryOnlySync(factory);
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<byte[]?>> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
+        if (!_enabled)
+            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+
+        var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+        setupAction(opts);
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
+                try {
+                    var decoded = _payloadCodec.Decode(cached);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    await InvalidateCacheItem(key).ConfigureAwait(false);
+                }
+            }
+
+            var plain = await factory(token).ConfigureAwait(false);
+            if (plain == null)
+                return null;
+
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
+            SetInternal(normalizedKey, framed, opts.Duration, opts.ExpirationMode, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return envelope;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public CacheEntryEnvelope? GetOrSetPayload(
+        string key,
+        Func<CancellationToken, byte[]?> factory,
+        Action<ICacheEntryOptions> setupAction,
+        IEnumerable<string>? extraTags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
+        if (!_enabled)
+            return PayloadFactoryOnlySync(factory);
+
+        var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+        setupAction(opts);
+        var normalizedKey = key.ToLowerInvariant();
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            if (TryGetTracked(normalizedKey, out byte[]? cached) && cached is not null) {
+                try {
+                    var decoded = _payloadCodec.Decode(cached);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    InvalidateCacheItem(key).GetAwaiter().GetResult();
+                }
+            }
+
+            var plain = factory(CancellationToken.None);
+            if (plain == null)
+                return null;
+
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
+            SetInternal(normalizedKey, framed, opts.Duration, opts.ExpirationMode, extraTags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return envelope;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayload for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayload"), (Constants.Metrics.Tags.Key, key)]);
+            return PayloadFactoryOnlySync(factory);
+        }
+    }
+
+    /// <inheritdoc />
+    public void SetPayload(string key, ReadOnlySpan<byte> plaintext, IEnumerable<string>? tags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var framed = _payloadCodec.Encode(plaintext);
+            var normalizedKey = key.ToLowerInvariant();
+            SetInternal(normalizedKey, framed, _options.DefaultExpiration, tags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error setting payload cache for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "SetPayload"), (Constants.Metrics.Tags.Key, key)]);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public void SetPayload(string key, ReadOnlySpan<byte> plaintext, TimeSpan duration, IEnumerable<string>? tags = null)
+        => SetPayload(key, plaintext, o => o.SetAbsoluteExpiration(duration), tags);
+
+    /// <inheritdoc />
+    public void SetPayload(string key, ReadOnlySpan<byte> plaintext, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? tags = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(setupAction);
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
+        if (!_enabled)
+            return;
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
+            setupAction(opts);
+            var framed = _payloadCodec.Encode(plaintext);
+            SetInternal(key.ToLowerInvariant(), framed, opts.Duration, opts.ExpirationMode, tags);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error setting payload cache for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "SetPayload"), (Constants.Metrics.Tags.Key, key)]);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool TryGetPayload(string key, out CacheEntryEnvelope? envelope)
+    {
+        envelope = null;
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
+        if (!_enabled || string.IsNullOrWhiteSpace(key))
+            return false;
+
+        try {
+            var normalizedKey = key.ToLowerInvariant();
+            if (!TryGetTracked(normalizedKey, out byte[]? raw) || raw is null)
+                return false;
+
+            envelope = _payloadCodec.Decode(raw);
+            return true;
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Error decoding payload cache for key {CacheKey}", key);
+            return false;
+        }
+    }
+
+    private static async Task<CacheEntryEnvelope?> PayloadFactoryOnlyAsync(Func<CancellationToken, Task<byte[]?>> factory, CancellationToken token)
+    {
+        var plain = await factory(token).ConfigureAwait(false);
+        if (plain == null)
+            return null;
+
+        return new(plain);
+    }
+
+    private static async Task<CacheEntryEnvelope?> PayloadTupleFactoryOnlyAsync(Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory, CancellationToken token)
+    {
+        var (plain, _) = await factory(token).ConfigureAwait(false);
+        if (plain == null)
+            return null;
+
+        return new(plain);
+    }
+
+    private static CacheEntryEnvelope? PayloadFactoryOnlySync(Func<CancellationToken, byte[]?> factory)
+    {
+        var plain = factory(CancellationToken.None);
+        if (plain == null)
+            return null;
+
+        return new(plain);
+    }
+
+    private static async Task<T?> SerializedPayloadTupleFactoryOnlyAsync<T>(Func<CancellationToken, Task<(T? value, string[]? tags)>> factory, CancellationToken token)
+    {
+        var (value, _) = await factory(token).ConfigureAwait(false);
+        return value;
+    }
+
+    private static string[]? MergeTags(string[]? factoryTags, IEnumerable<string>? extraTags)
+    {
+        var hasFactory = factoryTags is { Length: > 0 };
+        var hasExtra = extraTags != null;
+        if (!hasFactory && !hasExtra)
+            return null;
+
+        if (!hasFactory)
+            return extraTags!.Select(t => t.ToLowerInvariant()).ToArray();
+
+        if (!hasExtra)
+            return factoryTags!.Select(t => t.ToLowerInvariant()).ToArray();
+
+        return factoryTags!.Concat(extraTags!).Select(t => t.ToLowerInvariant()).Distinct().ToArray();
+    }
+
+    private void SetInternal<T>(string normalizedKey, T value, TimeSpan duration, IEnumerable<string>? tags)
+        => SetInternal(normalizedKey, value, duration, CacheExpirationMode.Absolute, tags);
+
+    private void SetInternal<T>(string normalizedKey, T value, TimeSpan duration, CacheExpirationMode mode, IEnumerable<string>? tags)
+    {
+        var tagList = tags?.Select(t => t.ToLowerInvariant()).Distinct().ToArray() ?? [];
+        TagIndexRemoveKey(normalizedKey);
+        var entryOptions = new MemoryCacheEntryOptions();
+
+        // MemoryCache rejects sizeless entries once a SizeLimit is configured, so every entry carries a size whether or not this host set a limit.
+        entryOptions.Size = value is byte[] payload ? Math.Max(1, payload.Length) : _options.NonPayloadEntrySizeBytes;
+        if (mode == CacheExpirationMode.Sliding)
+            entryOptions.SlidingExpiration = duration;
+        else
+            entryOptions.AbsoluteExpirationRelativeToNow = duration;
+
+        entryOptions.RegisterPostEvictionCallback((_, _, _, _) => {
+            TagIndexRemoveKey(normalizedKey);
+            ForgetTtl(normalizedKey);
+            _items.TryRemove(CacheItem.Key(normalizedKey), out var _);
+        });
+
+        _memoryCache.Set(normalizedKey, value, entryOptions);
+        _ttls[normalizedKey] = (duration, mode);
+        var expires = DateTime.UtcNow.Add(duration);
+        IReadOnlyList<string>? trackedTags = tagList.Length == 0 ? null : tagList;
+        UpsertItem(
+            value is byte[] stored
+                ? CacheItem.FromStoredBytes(normalizedKey, stored, expires: expires, tags: trackedTags)
+                : CacheItem.Key(normalizedKey, encrypted: false, compressed: false, expires: expires, tags: trackedTags));
+        TagIndexAdd(normalizedKey, tagList);
+    }
+
+    private void UpsertItem(CacheItem item)
+        => _items.AddOrUpdate(item, item, (_, existing) => item with { Created = existing.Created });
+
+    /// <summary>
+    /// Presence, not value nullness, decides a hit. A factory that legitimately produced <c>null</c> — a lookup of an id that does not exist — stores an entry whose value is
+    /// null; treating that as a miss meant every repeat of the same lookup went back to the database, which defeats caching a negative result.
+    /// </summary>
+    private bool TryGetTracked<T>(string normalizedKey, out T? value)
+    {
+        if (!_memoryCache.TryGetValue(normalizedKey, out value))
+            return false;
+
+        TouchSlidingExpires(normalizedKey);
+        return true;
+    }
+
+    private void TouchSlidingExpires(string normalizedKey)
+    {
+        if (!_ttls.TryGetValue(normalizedKey, out var policy) || policy.Mode != CacheExpirationMode.Sliding)
+            return;
+
+        if (!_items.TryGetValue(CacheItem.Key(normalizedKey), out var existing))
+            return;
+
+        UpsertItem(existing with { Expires = DateTime.UtcNow.Add(policy.Duration) });
+    }
+
+    private void ForgetTtl(string normalizedKey) => _ttls.TryRemove(normalizedKey, out _);
+
+    /// <summary>Associates a cache key with normalized tags in the bidirectional index (O(1) per tag).</summary>
+    private void TagIndexAdd(string normalizedKey, string[] normalizedTags)
+    {
+        if (normalizedTags.Length == 0)
+            return;
+
+        var tagSet = _keyToTags.GetOrAdd(normalizedKey, static _ => new(StringComparer.Ordinal));
+        foreach (var tag in normalizedTags) {
+            tagSet[tag] = 0;
+            _tagToKeys.GetOrAdd(tag, static _ => new(StringComparer.Ordinal))[normalizedKey] = 0;
+            UpsertItem(CacheItem.Tag(TagPrefix + tag));
+        }
+    }
+
+    /// <summary>O(1) lookup of keys currently mapped to the tag (snapshot).</summary>
+    private IEnumerable<string> TagIndexGetKeysByTag(string normalizedTag) => _tagToKeys.TryGetValue(normalizedTag, out var keys) ? keys.Keys : Enumerable.Empty<string>();
+
+    /// <summary>Drops a cache key from the bidirectional tag index and removes tag markers in <see cref="_items" />.</summary>
+    private void TagIndexRemoveKey(string normalizedKey)
+    {
+        if (!_keyToTags.TryRemove(normalizedKey, out var tagSet))
+            return;
+
+        foreach (var tag in tagSet.Keys) {
+            if (_tagToKeys.TryGetValue(tag, out var keys)) {
+                keys.TryRemove(normalizedKey, out var _);
+                if (keys.Count == 0)
+                    _tagToKeys.TryRemove(tag, out var _);
+            }
+
+            _items.TryRemove(CacheItem.Tag(TagPrefix + tag), out var _);
+        }
+    }
+}

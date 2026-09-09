@@ -1,0 +1,33 @@
+.lyo-code-block {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--mud-palette-background-gray);
+}
+
+.lyo-code-block-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.125rem 0.25rem 0.125rem 0.75rem;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.lyo-code-block-lang {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--mud-palette-text-secondary);
+}
+
+.lyo-code-block-pre {
+    margin: 0;
+    padding: 0.75rem;
+    max-height: 24rem;
+    overflow: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    white-space: pre;
+}

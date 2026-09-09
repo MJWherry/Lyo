@@ -1,0 +1,21 @@
+@namespace Lyo.Authentication.Web.Components
+@using Lyo.Authentication.Models.Response
+
+<MudDialog>
+    <TitleContent>Edit user</TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField T="string" @bind-Value="_displayName" Label="Display name" Variant="Variant.Outlined"/>
+            <MudTextField T="string" @bind-Value="_email" Label="Email" Variant="Variant.Outlined"/>
+            <MudTextField T="string" @bind-Value="_language" Label="Preferred language" Variant="Variant.Outlined"/>
+            <MudSwitch T="bool" @bind-Value="_disabled" Color="Color.Error" Label="Disabled"/>
+            @if (_disabled) {
+                <MudTextField T="string" @bind-Value="_disabledReason" Label="Disable reason" Variant="Variant.Outlined"/>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save" Disabled="_busy">Save</MudButton>
+    </DialogActions>
+</MudDialog>

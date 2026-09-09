@@ -1,0 +1,35 @@
+using Lyo.Authentication.Models.Records;
+
+namespace Lyo.Authentication.Services.Opaque;
+
+/// <summary>Persistence boundary for <see cref="ApiTokenRecord" />. In-memory for tests; <c>Lyo.Authentication.Postgres</c> in production.</summary>
+/// <remarks>
+/// Every method takes a <c>Guid? tenantId</c> resolved against the store's <c>TenancyOptions</c>: <c>SystemOnly</c> matches null-tenant rows, <c>SingleTenantDefault</c>
+/// falls back to the configured default, and <c>MultiTenantStrict</c> requires a non-empty value.
+/// </remarks>
+public interface IApiTokenStore
+{
+    /// <summary>Inserts a new record stamped with the resolved tenant. Throws on duplicate <see cref="ApiTokenRecord.Id" /> so the issuer can retry with a fresh id.</summary>
+    Task InsertAsync(ApiTokenRecord record, Guid? tenantId, CancellationToken ct = default);
+
+    /// <summary>Looks up a record by its 11-char id, scoped to the resolved tenant. Returns <c>null</c> when not found.</summary>
+    Task<ApiTokenRecord?> GetByIdAsync(string id, Guid? tenantId, CancellationToken ct = default);
+
+    /// <summary>Best-effort update of <see cref="ApiTokenRecord.LastUsedAt" />, scoped to the resolved tenant. Failures are swallowed (validation hot path).</summary>
+    Task TouchLastUsedAsync(string id, DateTime utcNow, Guid? tenantId, CancellationToken ct = default);
+
+    /// <summary>Sets <see cref="ApiTokenRecord.RevokedAt" /> and <see cref="ApiTokenRecord.RevokedReason" />, scoped to the resolved tenant.</summary>
+    Task RevokeAsync(string id, DateTime revokedAt, string? reason, Guid? tenantId, CancellationToken ct = default);
+
+    /// <summary>Lists tokens owned by <paramref name="userId" />, oldest-first, scoped to the resolved tenant. Pass <c>includeRevoked = false</c> to omit dead tokens.</summary>
+    Task<IReadOnlyList<ApiTokenRecord>> ListForUserAsync(Guid userId, bool includeRevoked, Guid? tenantId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Revokes outstanding Format-B refresh tokens (<c>kind=internal</c>, scope <c>lyo:refresh</c>) for <paramref name="userId" />. When <paramref name="provider" /> is
+    /// set, only tokens whose metadata <c>lyo_provider</c> matches are revoked (one live refresh chain per IdP). Already-revoked rows are left alone.
+    /// </summary>
+    Task RevokeRefreshTokensForUserAsync(Guid userId, string? provider, DateTime revokedAt, string? reason, Guid? tenantId, CancellationToken ct = default);
+
+    /// <summary>Hard-deletes the token row (secret hash included). Missing ids throw <c>NotFoundException</c>.</summary>
+    Task DeleteAsync(string id, Guid? tenantId, CancellationToken ct = default);
+}

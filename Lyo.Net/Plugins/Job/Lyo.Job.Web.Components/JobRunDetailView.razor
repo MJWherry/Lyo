@@ -1,0 +1,242 @@
+@using Lyo.Parameters
+@using Lyo.Web.Components.LyoType
+@using Lyo.Web.Components.ParamTable
+@inject ISnackbar Snackbar
+
+<LyoDialog DebugData="@JobRun">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(JobRun?.JobDefinition?.Name ?? "Job run")</MudText>
+    </TitleContent>
+    <TitleChips>
+        @if (JobRun != null) {
+            <LyoChip Label="@JobRun.State.ToString()" Color="@JobColorHelper.ForState(JobRun.State)" Icon="@JobColorHelper.StateIcon(JobRun.State)"/>
+            @if (JobRun.Result is { } result) {
+                <LyoChip Label="@result.ToString()" Color="@JobColorHelper.ForResult(result)" Icon="@JobColorHelper.ResultIcon(result)"/>
+            }
+            @if (JobRun.StartedTimestamp is not null) {
+                <LyoChip Color="@JobColorHelper.ForDuration(JobRun.StartedTimestamp, JobRun.FinishedTimestamp)"
+                         Icon="@(JobRun.FinishedTimestamp is null ? Icons.Material.Filled.Timer : null)"
+                         Label="@JobColorHelper.FormatDurationFromDates(JobRun.StartedTimestamp, JobRun.FinishedTimestamp)"/>
+            }
+            @if (JobRun.SlaBreached) {
+                <LyoChip Color="Color.Error" Label="SLA breached"/>
+            }
+            @if (JobRun.DryRun) {
+                <LyoChip Variant="Variant.Outlined" Label="Dry run"/>
+            }
+            @if (!string.IsNullOrWhiteSpace(JobRun.WorkerMachineName)) {
+                <LyoChip Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Memory"
+                         Label="@(JobRun.WorkerProcessId is { } pid ? $"{JobRun.WorkerMachineName}:{pid}" : JobRun.WorkerMachineName)"/>
+            }
+        }
+    </TitleChips>
+    <ExtraActions>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Rerun" StartIcon="@Icons.Material.Filled.Refresh">Re-run</MudButton>
+        @if (JobRun?.State == JobState.Running) {
+            <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="Cancel" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+        }
+    </ExtraActions>
+    <ChildContent>
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-3">
+            <MudTabPanel Text="Overview">
+                @if (JobRun?.ProgressPercent is int progress) {
+                    <MudStack Spacing="1" Class="mb-4">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Progress</MudText>
+                            <MudText Typo="Typo.caption">@progress%</MudText>
+                        </MudStack>
+                        <MudProgressLinear Color="Color.Primary" Value="@progress" Size="Size.Small"/>
+                        @if (!string.IsNullOrWhiteSpace(JobRun.ProgressMessage)) {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@JobRun.ProgressMessage</MudText>
+                        }
+                    </MudStack>
+                }
+
+                <MudGrid Spacing="4">
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.overline" Class="mud-text-secondary">Identity</MudText>
+                        <div class="job-run-kv">
+                            <span class="job-run-kv-label">ID</span>
+                            <span class="job-run-kv-value"><LyoIdField Compact="true" Value="@JobRun?.Id"/></span>
+                            <span class="job-run-kv-label">Definition</span>
+                            <span class="job-run-kv-value">
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.body2">@(JobRun?.JobDefinition?.Name ?? "—")</MudText>
+                                    <LyoIdField Compact="true" Value="@JobRun?.JobDefinitionId"/>
+                                </MudStack>
+                            </span>
+                            <span class="job-run-kv-label">Worker</span>
+                            <span class="job-run-kv-value">
+                                @if (JobRun?.WorkerInstanceId is { } workerId) {
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.body2">@(WorkerLabel)</MudText>
+                                        <LyoIdField Compact="true" Value="@workerId"/>
+                                    </MudStack>
+                                }
+                                else {
+                                    <MudText Typo="Typo.body2">—</MudText>
+                                }
+                            </span>
+                            <span class="job-run-kv-label">Trace</span>
+                            <span class="job-run-kv-value"><LyoIdField Compact="true" Text="@JobRun?.TraceId"/></span>
+                            <span class="job-run-kv-label">Schedule</span>
+                            <span class="job-run-kv-value">@ScheduleText</span>
+                            <span class="job-run-kv-label">Idempotency</span>
+                            <span class="job-run-kv-value">@(string.IsNullOrWhiteSpace(JobRun?.IdempotencyKey) ? "—" : JobRun.IdempotencyKey)</span>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.overline" Class="mud-text-secondary">Timing</MudText>
+                        <div class="job-run-kv">
+                            <span class="job-run-kv-label">Created</span>
+                            <span class="job-run-kv-value"><LyoTimestamp Value="@JobRun?.CreatedTimestamp"/></span>
+                            <span class="job-run-kv-label">Started</span>
+                            <span class="job-run-kv-value"><LyoTimestamp Value="@JobRun?.StartedTimestamp"/></span>
+                            <span class="job-run-kv-label">Finished</span>
+                            <span class="job-run-kv-value"><LyoTimestamp Value="@JobRun?.FinishedTimestamp"/></span>
+                            <span class="job-run-kv-label">Heartbeat</span>
+                            <span class="job-run-kv-value"><LyoTimestamp Value="@JobRun?.LastHeartbeatUtc" Kind="LyoTimestampKind.Relative"/></span>
+                            <span class="job-run-kv-label">Retry</span>
+                            <span class="job-run-kv-value">@(JobRun?.RetryAttempt.ToString() ?? "0")</span>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.overline" Class="mud-text-secondary">Context</MudText>
+                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-2">
+                            <LyoChip Variant="Variant.Outlined" Label="@($"Priority {JobRun?.Priority ?? 0}")"/>
+                            <LyoChip Variant="Variant.Outlined" Color="@(JobRun?.SlaBreached == true ? Color.Error : Color.Success)"
+                                     Label="@(JobRun?.SlaBreached == true ? "SLA breached" : "SLA ok")"/>
+                            <LyoChip Variant="Variant.Outlined" Label="@AlertText"/>
+                            @if (JobRun?.AllowTriggers == true) {
+                                <LyoChip Variant="Variant.Outlined" Label="Triggers allowed"/>
+                            }
+                            @if (JobRun?.ParentJobRunId is { } parentId) {
+                                <LyoChip Variant="Variant.Outlined" Label="@($"Batch {(JobRun.BatchIndex is { } i ? $"{i + 1}" : "?")} / {JobRun.BatchTotal?.ToString() ?? "?"}")"/>
+                                <span class="job-run-parent-id"><LyoIdField Compact="true" Value="@parentId"/></span>
+                            }
+                            @if (JobRun?.DefinitionAuditVersion is { } version) {
+                                <LyoChip Variant="Variant.Outlined" Label="@($"Def v{version}")"/>
+                            }
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Parameters ({JobRun?.JobRunParameters?.Count ?? 0})")">
+                <LyoKeyedValueTable Items="@OrderedParameters" Class="job-run-table" KeyClass="job-run-mono"/>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Results ({JobRun?.JobRunResults?.Count ?? 0})")">
+                @if (OrderedResults.Count > 0) {
+                    <LyoResponsiveTable>
+                        <TableContent>
+                            <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="job-run-table">
+                                <thead>
+                                <tr>
+                                    <th>Key</th>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var r in OrderedResults) {
+                                    <tr>
+                                        <td class="job-run-mono">@r.Key</td>
+                                        <td><LyoTypeChip TypeName="@r.Type" Variant="Variant.Outlined"/></td>
+                                        <td><LyoTruncatedText Text="@r.Value"/></td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        </TableContent>
+                        <CardContent>
+                            @foreach (var r in OrderedResults) {
+                                <LyoRecordCard Title="@r.Key" TitleClass="job-run-mono">
+                                    <TitleContent>
+                                        <LyoTypeChip TypeName="@r.Type" Variant="Variant.Outlined"/>
+                                    </TitleContent>
+                                    <ChildContent>
+                                        <LyoRecordField Label="Value">
+                                            <LyoTruncatedText Text="@r.Value"/>
+                                        </LyoRecordField>
+                                    </ChildContent>
+                                </LyoRecordCard>
+                            }
+                        </CardContent>
+                    </LyoResponsiveTable>
+                }
+                else {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">No results</MudText>
+                }
+            </MudTabPanel>
+            <MudTabPanel Text="@LogsTabText">
+                @if (OrderedLogs.Count > 0) {
+                    <div class="job-run-logs">
+                        <LyoResponsiveTable>
+                            <TableContent>
+                                <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="job-run-table">
+                                    <thead>
+                                    <tr>
+                                        <th style="width: 88px;">Time</th>
+                                        <th style="width: 110px;">Level</th>
+                                        <th>Message</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var log in OrderedLogs) {
+                                        <tr>
+                                            <td class="job-run-mono job-run-log-time">
+                                                <LyoTimestamp Value="@log.Timestamp" AbsoluteFormat="HH:mm:ss"/>
+                                            </td>
+                                            <td>
+                                                <LyoChip Color="@JobColorHelper.ForLogLevel(log.Level)" Label="@log.Level.ToString()"/>
+                                            </td>
+                                            <td>
+                                                @LogMessage(log)
+                                            </td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            </TableContent>
+                            <CardContent>
+                                @foreach (var log in OrderedLogs) {
+                                    <LyoRecordCard>
+                                        <TitleContent>
+                                            <MudStack Row Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                                                <LyoChip Color="@JobColorHelper.ForLogLevel(log.Level)" Label="@log.Level.ToString()"/>
+                                                <MudText Typo="Typo.caption" Class="mud-text-secondary job-run-mono">
+                                                    <LyoTimestamp Value="@log.Timestamp" AbsoluteFormat="HH:mm:ss"/>
+                                                </MudText>
+                                            </MudStack>
+                                        </TitleContent>
+                                        <ChildContent>
+                                            <LyoRecordField Label="Message">
+                                                @LogMessage(log)
+                                            </LyoRecordField>
+                                        </ChildContent>
+                                    </LyoRecordCard>
+                                }
+                            </CardContent>
+                        </LyoResponsiveTable>
+                    </div>
+                }
+                else {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">No logs</MudText>
+                }
+            </MudTabPanel>
+        </MudTabs>
+    </ChildContent>
+</LyoDialog>
+
+@code {
+
+    private RenderFragment<JobRunLogRes> LogMessage => log => @<text>
+        <MudText Typo="Typo.body2">@log.Message</MudText>
+        @if (!string.IsNullOrWhiteSpace(log.Context)) {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary job-run-mono">@log.Context</MudText>
+        }
+        @if (!string.IsNullOrWhiteSpace(log.StackTrace)) {
+            <pre class="job-run-log-stack">@log.StackTrace</pre>
+        }
+    </text>;
+
+}

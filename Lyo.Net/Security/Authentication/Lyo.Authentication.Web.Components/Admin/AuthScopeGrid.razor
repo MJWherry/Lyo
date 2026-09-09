@@ -1,0 +1,54 @@
+@namespace Lyo.Authentication.Web.Components
+@using Lyo.Authentication.Models
+@using Lyo.Query.Models.Common
+@using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="AuthScopeGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@ApplyQuery"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <LeftControls>
+        @if (UserId is not null) {
+            <MudButton OnClick="@AddScope" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Outlined">Add scope</MudButton>
+        }
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit scope" OnClick="@(() => EditScope(cell.Item))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete scope" OnClick="@(() => DeleteScope(cell.Item))"/>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name">
+            <CellContent Context="item">
+                <LyoChip Spec="@LyoChips.Of(ProjectedValueHelper.GetDisplayValue(item, "Name"), Color.Primary)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="UserId" Title="User" HiddenByDefault="@(UserId is not null)" HeaderStyle="width: 140px; min-width: 140px;" CellStyle="min-width: 140px;">
+            <CellContent Context="item">
+                <AuthProjectedGuid Item="item" Field="UserId"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+    </Columns>
+</LyoDataGridProjected>

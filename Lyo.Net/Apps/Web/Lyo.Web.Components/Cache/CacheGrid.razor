@@ -1,0 +1,100 @@
+@namespace Lyo.Web.Components.Cache
+@using System.Collections
+@using System.Text.Json
+@using Lyo.Api.Client
+@using Lyo.Api.Models.Common.Request
+@using Lyo.Api.Models.Common.Response
+@using Lyo.Api.Models.Enums
+@using Lyo.Common.Core.Conversion
+@using Lyo.Common.Metadata.Records
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Models
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudAlert Severity="Severity.Info" Dense="true" Class="mb-2" Icon="@Icons.Material.Filled.Memory">
+    L1 only: this API process's in-memory cache. Redis L2 keys written by other services are not listed.
+</MudAlert>
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="@GridKey"
+                      Route="@Route"
+                      Features="@GridFeatures"
+                      KeySelector="GetKey"
+                      KeySelectFields="@KeyFields"
+                      QuickSearchProperties="@QuickSearchFields"
+                      FilterPropertyDefinitions="@_filters"
+                      RowMenuControls="@GetRowMenuControls()">
+    <LeftControls>
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.DeleteSweep"
+                   OnClick="ClearAllAsync">
+            Clear all
+        </MudButton>
+    </LeftControls>
+    <Columns>
+        <LyoProjectedColumn Field="Type" Title="Type">
+            <CellContent Context="item">
+                @{
+                    var typeText = ProjectedValueHelper.GetDisplayValue(item, "Type");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<CacheItemTypeEnum>(typeText, CacheColorHelper.ForType, CacheColorHelper.TypeIcon))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name" MaxDisplayLength="150"/>
+        <LyoProjectedColumn Field="Tags" Title="Tags" Sortable="false">
+            <CellContent Context="item">
+                @{
+                    var tags = GetTags(item);
+                }
+                @if (tags.Count == 0) {
+                    <span>—</span>
+                }
+                else {
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var tag in tags) {
+                            <LyoChip Spec="@LyoChips.Of(tag, Color.Tertiary, Icons.Material.Filled.LocalOffer)"/>
+                        }
+                    </div>
+                }
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Encrypted" Title="Encrypted">
+            <CellContent Context="item">
+                @{
+                    var encrypted = GetNullableBool(item, "Encrypted");
+                }
+                <LyoChip Spec="@(LyoChips.FromBool(encrypted, "Yes", "No", Color.Warning, Color.Default))" Icon="@CacheColorHelper.EncryptedIcon(encrypted)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Compressed" Title="Compressed">
+            <CellContent Context="item">
+                @{
+                    var compressed = GetNullableBool(item, "Compressed");
+                }
+                <LyoChip Spec="@(LyoChips.FromBool(compressed, "Yes", "No", Color.Info, Color.Default))" Icon="@CacheColorHelper.CompressedIcon(compressed)"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="SizeBytes" Title="Size">
+            <CellContent Context="item">
+                @FormatSize(item)
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Created" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+        <LyoProjectedColumn Field="Expires" Title="Expires" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+    </Columns>
+    <NoRecordsContent>
+        <div class="d-flex flex-column align-center pa-4">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="mb-2"/>
+            <MudText Typo="Typo.h6">@(_dataGrid?.QueryError is not null ? "Unable to load cache items" : "No cache items")</MudText>
+        </div>
+    </NoRecordsContent>
+</LyoDataGridProjected>
+
+@code {
+    private RenderFragment<object?> GetRowMenuControls()
+        => row => @<MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteRowAsync(row))">Delete</MudMenuItem>;
+}

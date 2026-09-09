@@ -1,0 +1,124 @@
+using System.ComponentModel.DataAnnotations;
+using Lyo.Job.Models.Enums;
+
+namespace Lyo.Job.Postgres.Database;
+
+public class JobRun
+{
+    public Guid Id { get; set; }
+
+    public Guid JobDefinitionId { get; set; }
+
+    public Guid? JobScheduleId { get; set; }
+
+    public Guid? JobTriggerId { get; set; }
+
+    public Guid? TriggeredByJobRunId { get; set; }
+
+    public Guid? ReRanFromJobRunId { get; set; }
+
+    [Required]
+    [MaxLength(128)]
+    public string CreatedBy { get; set; } = null!;
+
+    public JobState State { get; set; }
+
+    public bool AllowTriggers { get; set; }
+
+    public DateTime CreatedTimestamp { get; set; }
+
+    public DateTime? StartedTimestamp { get; set; }
+
+    public DateTime? FinishedTimestamp { get; set; }
+
+    public DateTime? UpdatedTimestamp { get; set; }
+
+    public Models.Enums.JobRunResult? Result { get; set; }
+
+    /// <summary>
+    /// Scheduled slot that caused this run to be created. Combined with <see cref="JobScheduleId" />, this forms a unique constraint that prevents duplicate runs when
+    /// multiple scheduler instances fire concurrently.
+    /// </summary>
+    public DateTime? ScheduledSlotUtc { get; set; }
+
+    /// <summary>Retry attempt count (0 is the first attempt).</summary>
+    public int RetryAttempt { get; set; }
+
+    /// <summary>
+    /// UTC time of the last heartbeat received from the worker. Updated every ~30 s by the worker SDK. When this falls more than <c>JobDefinition.TimeoutMinutes</c> behind
+    /// <c>UtcNow</c>, the <c>JobMaintenanceService</c> marks the run as failed (dead worker detection).
+    /// </summary>
+    public DateTime? LastHeartbeatUtc { get; set; }
+
+    /// <summary>Message priority (0-9) used when this run was dispatched. Copied from the definition at creation unless explicitly overridden.</summary>
+    public int Priority { get; set; }
+
+    /// <summary>Completion percent (0-100) reported by the worker. Null until the worker reports progress.</summary>
+    public int? ProgressPercent { get; set; }
+
+    /// <summary>Short human-readable progress text reported by the worker.</summary>
+    [MaxLength(2000)]
+    public string? ProgressMessage { get; set; }
+
+    /// <summary>Caller-supplied key for idempotent run creation on a definition.</summary>
+    [MaxLength(128)]
+    public string? IdempotencyKey { get; set; }
+
+    /// <summary>When true, the worker runs validation only and does not commit side effects.</summary>
+    public bool DryRun { get; set; }
+
+    /// <summary>Whether an SLA breach was found for this run.</summary>
+    public bool SlaBreached { get; set; }
+
+    /// <summary>Distributed trace id carried through the run lifecycle.</summary>
+    [MaxLength(64)]
+    public string? TraceId { get; set; }
+
+    /// <summary>Parent run when this run belongs to a batch or fan-out.</summary>
+    public Guid? ParentJobRunId { get; set; }
+
+    /// <summary>Zero-based index inside a parent batch. Null when not part of a batch.</summary>
+    public int? BatchIndex { get; set; }
+
+    /// <summary>Total items in a parent batch. Null when this run is not part of a batch.</summary>
+    public int? BatchTotal { get; set; }
+
+    /// <summary>Snapshot of <see cref="JobDefinition.DefinitionVersion" /> at run creation, for audit correlation.</summary>
+    public int? DefinitionAuditVersion { get; set; }
+
+    /// <summary>Worker instance that started this run. Not a FK. Instances are pruned independently.</summary>
+    public Guid? WorkerInstanceId { get; set; }
+
+    /// <summary>Machine name copied from the worker instance at start.</summary>
+    [MaxLength(200)]
+    public string? WorkerMachineName { get; set; }
+
+    /// <summary>Process id copied from the worker instance at start.</summary>
+    public int? WorkerProcessId { get; set; }
+
+    public virtual ICollection<JobRun> InverseReRanFromJobRun { get; set; } = new List<JobRun>();
+
+    public virtual ICollection<JobRun> InverseTriggeredByJobRun { get; set; } = new List<JobRun>();
+
+    public virtual JobDefinition JobDefinition { get; set; } = null!;
+
+    public virtual ICollection<JobRunLog> JobRunLogs { get; set; } = new List<JobRunLog>();
+
+    public virtual ICollection<JobRunParameter> JobRunParameters { get; set; } = new List<JobRunParameter>();
+
+    public virtual ICollection<JobRunResult> JobRunResults { get; set; } = new List<JobRunResult>();
+
+    public virtual JobSchedule? JobSchedule { get; set; }
+
+    public virtual JobTrigger? JobTrigger { get; set; }
+
+    public virtual JobRun? ReRanFromJobRun { get; set; }
+
+    public virtual JobRun? TriggeredByJobRun { get; set; }
+
+    public virtual JobRun? ParentJobRun { get; set; }
+
+    public virtual ICollection<JobRun> InverseParentJobRun { get; set; } = new List<JobRun>();
+
+    public virtual ICollection<JobWorkflowRunStep> JobWorkflowRunSteps { get; set; } = new List<JobWorkflowRunStep>();
+}
