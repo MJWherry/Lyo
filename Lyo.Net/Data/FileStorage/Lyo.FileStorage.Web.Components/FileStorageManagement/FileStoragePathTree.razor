@@ -1,6 +1,7 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 
-<MudPaper Outlined="true" Class="pa-2 file-storage-tree-panel">
+<MudPaper Outlined="true" Class="pa-2 d-flex flex-column overflow-hidden" Style="height:100%;min-height:0;">
+    <div class="file-storage-tree-panel">
     <div class="file-storage-tree-toolbar">
         <MudStack Spacing="1">
             <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
@@ -62,11 +63,14 @@
                          Comparer="FileStoragePathTreeNodeKeyComparer.Instance"
                          SelectionMode="@(_editMode ? SelectionMode.MultiSelection : SelectionMode.SingleSelection)"
                          AutoSelectParent="false"
-                         SelectedValues="_checked"
+                         SelectedValue="@(_editMode ? null : Selected)"
+                         SelectedValues="@(_editMode ? _checked : null)"
                          SelectedValuesChanged="OnCheckedChanged">
                 <ItemTemplate Context="treeItem">
-                    @if (treeItem.Value != null) {
+                    @{
                         var node = treeItem.Value;
+                    }
+                    @if (node != null) {
                         <MudTreeViewItem @key="@node.Key"
                                          Value="@node"
                                          Text="@node.Name"
@@ -75,13 +79,13 @@
                                          IconColor="@IconColorFor(node)"
                                          CanExpand="@treeItem.Expandable"
                                          Expanded="@treeItem.Expanded"
-                                         ReadOnly="@(_editMode && node.IsDeleted)"
+                                         ReadOnly="@(_editMode && (node.IsDeleted || FileStoragePathTreeBuilder.IsPendingChild(node)))"
                                          Selected="@(_editMode ? _checked.Contains(node) : Selected?.Key == node.Key)"
                                          ExpandedChanged="@(expanded => OnExpandedAsync(node, expanded))"
                                          OnClick="@(() => OnSelectAsync(node))">
                             <BodyContent>
                                 <div class="@ItemClass(node)"
-                                     draggable="@(_editMode && !node.IsDeleted ? "true" : "false")"
+                                     draggable="@(_editMode && !node.IsDeleted && !FileStoragePathTreeBuilder.IsPendingChild(node) ? "true" : "false")"
                                      @ondragstart="@(() => OnDragStart(node))"
                                      @ondragover:preventDefault="@(_editMode && node.IsDirectory)"
                                      @ondragenter="@(() => OnDragEnter(node))"
@@ -103,5 +107,6 @@
                 </ItemTemplate>
             </MudTreeView>
         }
+    </div>
     </div>
 </MudPaper>

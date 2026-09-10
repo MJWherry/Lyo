@@ -23,8 +23,8 @@ public class WhereClauseValidatorTests
             TargetTypeName = nameof(CreateUserRequest),
             Constraints = WhereClauseBuilder.And(b => b
                 .Add(new ConditionClause("Email", ComparisonOperatorEnum.Regex, "^[^@]+@[^@]+$"))
-                .Add(new ConditionClause("Role", ComparisonOperatorEnum.In, new[] { "User", "Admin" }))
-                .Add(new ConditionClause("Status", ComparisonOperatorEnum.NotIn, new[] { "Banned" })))
+                .Add(new ConditionClause("Role", ComparisonOperatorEnum.In, (string[])["User", "Admin"]))
+                .Add(new ConditionClause("Status", ComparisonOperatorEnum.NotIn, (string[])["Banned"])))
         };
         var validator = new WhereClauseValidator<CreateUserRequest>(schema, CreateEvaluator());
         var result = validator.Validate(new() { Email = "not-an-email", Role = "Guest", Status = "Banned" });
@@ -153,9 +153,9 @@ public class WhereClauseValidatorTests
             Key = "signup.v2",
             TargetTypeName = nameof(CreateUserRequest),
             Constraints = WhereClauseBuilder.And(b => b
-                .Add(new ConditionClause("Email", ComparisonOperatorEnum.Regex, "^[^@]+@[^@]+$"))
-                .Add(new ConditionClause("Role", ComparisonOperatorEnum.In, new[] { "User", "Admin" }))
-                .Add(new ConditionClause("Status", ComparisonOperatorEnum.NotIn, new[] { "Banned" })))
+                .AddCondition<string>("Email", ComparisonOperatorEnum.Regex, "^[^@]+@[^@]+$")
+                .AddCondition<string[]>("Role", ComparisonOperatorEnum.In, ["User", "Admin"])
+                .AddCondition<string[]>("Status", ComparisonOperatorEnum.NotIn, ["Banned"]))
         };
 
     private static WhereClauseServiceEvaluator CreateEvaluator()

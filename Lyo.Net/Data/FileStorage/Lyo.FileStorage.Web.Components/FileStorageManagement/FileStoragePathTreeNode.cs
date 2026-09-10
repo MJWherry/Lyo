@@ -69,6 +69,9 @@ public static class FileStoragePathTreeBuilder
     /// <summary>Caption for the virtual root (files with no path prefix).</summary>
     public const string RootDisplayName = "(root)";
 
+    /// <summary>Key suffix for the dummy child used so MudTreeView shows an expand chevron before QueryProject children arrive.</summary>
+    public const string PendingChildKeySuffix = ":pending";
+
     /// <summary>QueryProject page size used when loading a folder.</summary>
     public const int PageSize = 500;
 
@@ -93,6 +96,23 @@ public static class FileStoragePathTreeBuilder
 
     /// <summary>File key for a metadata id.</summary>
     public static string FileKey(Guid fileId) => $"file:{fileId:D}";
+
+    /// <summary>Dummy leaf under an unloaded folder so the tree control treats the folder as expandable.</summary>
+    public static FileStoragePathTreeNode CreatePendingChild(FileStoragePathTreeNode parent)
+    {
+        ArgumentHelpers.ThrowIfNull(parent);
+        return new() {
+            Key = parent.Key + PendingChildKeySuffix,
+            Name = "…",
+            IsDirectory = false,
+            PathPrefix = parent.PathPrefix,
+            ChildrenLoaded = true
+        };
+    }
+
+    /// <summary>True for the dummy expand placeholder, which is not a real file or folder.</summary>
+    public static bool IsPendingChild(FileStoragePathTreeNode? node)
+        => node != null && node.Key.EndsWith(PendingChildKeySuffix, StringComparison.Ordinal);
 
     /// <summary>Trims slashes and maps backslashes to forward slashes. Empty becomes null.</summary>
     public static string? Normalize(string? pathPrefix)
@@ -520,8 +540,5 @@ public sealed class FileStoragePathTreeNodeKeyComparer : IEqualityComparer<FileS
 
     /// <inheritdoc />
     public int GetHashCode(FileStoragePathTreeNode obj)
-    {
-        ArgumentHelpers.ThrowIfNull(obj);
-        return StringComparer.Ordinal.GetHashCode(obj.Key);
-    }
+        => obj is null ? 0 : StringComparer.Ordinal.GetHashCode(obj.Key);
 }

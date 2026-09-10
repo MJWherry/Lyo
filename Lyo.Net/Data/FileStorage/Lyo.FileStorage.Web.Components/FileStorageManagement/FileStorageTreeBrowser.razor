@@ -1,16 +1,17 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 @implements IDisposable
 
-<MudPaper Class="pa-4 mt-1 file-storage-tree-browser" Outlined="true">
-    <MudText Typo="Typo.h6">Path tree</MudText>
+<MudPaper Class="pa-4 mt-1" Outlined="true">
+    <div class="file-storage-tree-browser">
+        <MudText Typo="Typo.h6">Path tree</MudText>
     <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
         Virtual folders from FileMetadata <code>PathPrefix</code> (QueryProject). Files with no prefix sit under
         <strong>@FileStoragePathTreeBuilder.RootDisplayName</strong>. Opening a folder loads that directory only.
         New folders stay in the browser until a file is uploaded there.
         Use the edit button next to search to multi-select and run bulk Move / Rotate DEKs / Delete / Download zip, or drag onto a folder to move.
     </MudText>
-    <MudGrid Class="file-storage-tree-layout" Spacing="2">
-        <MudItem xs="12" md="4" Class="file-storage-tree-col">
+    <div class="file-storage-tree-layout">
+        <div class="file-storage-tree-col">
             <FileStoragePathTree Items="_treeItems"
                                  Selected="_selected"
                                  SelectedChanged="OnSelectedAsync"
@@ -26,8 +27,8 @@
                                  BulkDelete="OnBulkDeleteAsync"
                                  BulkDownload="OnBulkDownloadAsync"
                                  Dropped="OnDroppedAsync"/>
-        </MudItem>
-        <MudItem xs="12" md="8" Class="file-storage-tree-col">
+        </div>
+        <div class="file-storage-tree-col">
             @if (_actions != null) {
                 <FileStoragePathInspector Actions="_actions"
                                           Root="_root"
@@ -35,6 +36,7 @@
                                           SelectedChanged="OnSelectedAsync"
                                           TreeChanged="RebuildTreeItems"/>
             }
-        </MudItem>
-    </MudGrid>
+        </div>
+        </div>
+    </div>
 </MudPaper>

@@ -208,7 +208,7 @@ builder.Services.AddFileOperationContextAccessor();
 builder.Services.AddPostgresFileAuditSink();
 builder.Services.AddScoped<IFileAuditEventHandler, FileMetadataQueryCacheInvalidationHandler>();
 builder.Services.AddLocalKeyStore(ks => {
-    var seed = SHA256.HashData(Encoding.UTF8.GetBytes("lyo-test-api-dev-jwt-signing-key/v1"));
+    var seed = SHA256.HashData("lyo-test-api-dev-jwt-signing-key/v1"u8.ToArray());
     ks.AddKey("lyo-sig", "v1", seed);
     ks.SetCurrentVersion("lyo-sig", "v1");
 });

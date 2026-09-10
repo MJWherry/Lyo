@@ -94,10 +94,13 @@ public partial class FileStoragePathTree
     private static Color IconColorFor(FileStoragePathTreeNode node)
         => node.IsDeleted ? Color.Warning : node.IsDirectory ? Color.Warning : Color.Default;
 
-    private Task OnSelectAsync(FileStoragePathTreeNode node) => SelectedChanged.InvokeAsync(node);
+    private Task OnSelectAsync(FileStoragePathTreeNode node)
+        => FileStoragePathTreeBuilder.IsPendingChild(node) ? Task.CompletedTask : SelectedChanged.InvokeAsync(node);
 
     private Task OnExpandedAsync(FileStoragePathTreeNode node, bool expanded)
-        => expanded ? FolderExpanded.InvokeAsync(node) : FolderCollapsed.InvokeAsync(node);
+        => FileStoragePathTreeBuilder.IsPendingChild(node)
+            ? Task.CompletedTask
+            : expanded ? FolderExpanded.InvokeAsync(node) : FolderCollapsed.InvokeAsync(node);
 
     private async Task ToggleEdit()
     {
@@ -115,7 +118,7 @@ public partial class FileStoragePathTree
     {
         _checked.Clear();
         foreach (var node in values) {
-            if (node is { IsDeleted: false })
+            if (node is { IsDeleted: false } && !FileStoragePathTreeBuilder.IsPendingChild(node))
                 _checked.Add(node);
         }
 

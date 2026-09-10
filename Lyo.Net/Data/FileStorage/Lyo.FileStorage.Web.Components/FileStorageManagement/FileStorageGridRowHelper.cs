@@ -4,7 +4,6 @@ using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
-using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.DataGrid;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
@@ -17,6 +16,21 @@ public static class FileStorageGridRowHelper
         => WhereClauseBuilder.And(static b => b.Equals("DeletedAt", null).NotEquals("Availability", nameof(FileAvailability.Deleted)));
 
     /// <summary>
+    /// Same tombstone filter as the Files grid, optionally AND-ed with <paramref name="extra" /> as a nested child (PathPrefix, subtree, and similar).
+    /// </summary>
+    public static WhereClause CombineWithActive(WhereClause? extra)
+    {
+        if (extra == null)
+            return CreateActiveFilesWhere();
+
+        return WhereClauseBuilder.And(b => {
+            b.Equals("DeletedAt", null);
+            b.NotEquals("Availability", nameof(FileAvailability.Deleted));
+            b.Add(extra);
+        });
+    }
+
+    /// <summary>
     /// AND-combines <see cref="CreateActiveFilesWhere" /> onto <paramref name="query" /> so tombstones stay out of File and Tree listings.
     /// Leaves search and column filters already on the builder.
     /// </summary>
@@ -24,8 +38,7 @@ public static class FileStorageGridRowHelper
     {
         ArgumentHelpers.ThrowIfNull(query);
         var existing = query.Build().WhereClause;
-        var active = CreateActiveFilesWhere();
-        query.AddWhere(existing == null ? active : WhereClauseBuilder.CombineAs(GroupOperatorEnum.And, existing, active));
+        query.AddWhere(CombineWithActive(existing));
     }
 
     /// <summary>True when the projected row is a soft-deleted metadata tombstone.</summary>
@@ -81,7 +94,7 @@ public static class FileStorageGridRowHelper
         if (row == null)
             return false;
 
-        var idVal = ProjectedValueHelper.GetValue(row, "Id");
+        var idVal = ProjectedValueHelper.GetValue(row, "Id") ?? ProjectedValueHelper.GetValue(row, "id");
         if (idVal == null)
             return false;
 
@@ -102,7 +115,7 @@ public static class FileStorageGridRowHelper
             }
         }
 
-        return false;
+        return ProjectedValueHelper.TryGetGuid(idVal, out fileId);
     }
 
     public static object[] GetFileRowKey(object? item) => TryGetFileIdFromRow(item, out var id) ? [id.ToString()] : [];

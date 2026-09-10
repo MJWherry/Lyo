@@ -3,13 +3,12 @@
 @using Lyo.Web.Components.FileUpload
 @implements IAsyncDisposable
 
-<MudPaper Outlined="true" Class="pa-4 file-storage-tree-panel">
+<MudPaper Outlined="true" Class="pa-4 d-flex flex-column overflow-hidden" Style="height:100%;min-height:0;">
+    <div class="file-storage-tree-panel">
     @if (Selected == null) {
         <MudText Typo="Typo.body2" Color="Color.Secondary">Select a folder or file in the tree.</MudText>
-        return;
     }
-
-    @if (Selected.IsDirectory) {
+    else if (Selected.IsDirectory) {
         <div class="file-storage-tree-toolbar">
             <MudStack Spacing="2">
                 <MudStack Spacing="1">
@@ -117,36 +116,37 @@
                 </MudList>
             }
         </div>
-        return;
     }
-
-    <div class="file-storage-tree-toolbar">
-        <MudStack Spacing="2">
-            <MudStack Spacing="1">
-                <MudText Typo="Typo.h6">@Selected.Name</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary">@(Selected.PathPrefix ?? FileStoragePathTreeBuilder.RootDisplayName)</MudText>
+    else {
+        <div class="file-storage-tree-toolbar">
+            <MudStack Spacing="2">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.h6">@Selected.Name</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@(Selected.PathPrefix ?? FileStoragePathTreeBuilder.RootDisplayName)</MudText>
+                </MudStack>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Info" OnClick="ViewMetadataAsync">View metadata</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Link" Disabled="@Selected.IsDeleted" OnClick="AccessLinkAsync">Access link…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" Disabled="@Selected.IsDeleted" OnClick="DownloadAsync">Download</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@Selected.IsDeleted" OnClick="MoveAsync">Move…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@Selected.IsDeleted" OnClick="CopyAsync">Copy…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@Selected.IsDeleted" OnClick="RenameAsync">Rename…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@Selected.IsDeleted" OnClick="RotateDekAsync">Rotate DEK…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@Selected.IsDeleted" OnClick="DeleteAsync">Delete</MudButton>
+                </MudStack>
             </MudStack>
-            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Info" OnClick="ViewMetadataAsync">View metadata</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Link" Disabled="@Selected.IsDeleted" OnClick="AccessLinkAsync">Access link…</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" Disabled="@Selected.IsDeleted" OnClick="DownloadAsync">Download</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@Selected.IsDeleted" OnClick="MoveAsync">Move…</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@Selected.IsDeleted" OnClick="CopyAsync">Copy…</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@Selected.IsDeleted" OnClick="RenameAsync">Rename…</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@Selected.IsDeleted" OnClick="RotateDekAsync">Rotate DEK…</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@Selected.IsDeleted" OnClick="DeleteAsync">Delete</MudButton>
-            </MudStack>
-        </MudStack>
-    </div>
-    <div class="file-storage-tree-scroll">
-        @if (_metadataBusy) {
-            <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
-        }
-        else if (_metadata != null) {
-            <FileStoreMetadataTable Metadata="_metadata"/>
-        }
-        else {
-            <MudText Typo="Typo.caption" Color="Color.Secondary">@_metadataStatus</MudText>
-        }
+        </div>
+        <div class="file-storage-tree-scroll">
+            @if (_metadataBusy) {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+            }
+            else if (_metadata != null) {
+                <FileStoreMetadataTable Metadata="_metadata"/>
+            }
+            else {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@_metadataStatus</MudText>
+            }
+        </div>
+    }
     </div>
 </MudPaper>

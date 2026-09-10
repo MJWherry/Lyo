@@ -41,6 +41,13 @@ public class WhereClauseBuilder
         _children.Add(new ConditionClause(field, op, value, description));
         return this;
     }
+    
+    /// <summary>Adds a <see cref="ConditionClause" /> using the given dotted field path and operator.</summary>
+    public WhereClauseBuilder AddCondition<TProp>(string field, ComparisonOperatorEnum op, TProp? value, string? description = null)
+    {
+        _children.Add(new ConditionClause(field, op, value, description));
+        return this;
+    }
 
     /// <summary>Adds a condition with a SubQuery for two-phase execution (root in DB, subquery in memory).</summary>
     public WhereClauseBuilder AddConditionWithSubClause(

@@ -262,6 +262,7 @@
         <Project Path="Data/FileStorage/Lyo.FileStorage.Sftp.Tests/Lyo.FileStorage.Sftp.Tests.csproj" />
         <Project Path="Data/FileStorage/Lyo.FileStorage.Tests/Lyo.FileStorage.Tests.csproj" />
         <Project Path="Data/FileStorage/Lyo.FileStorage.Web.Components/Lyo.FileStorage.Web.Components.csproj" />
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Web.Components.Tests/Lyo.FileStorage.Web.Components.Tests.csproj" />
         <Project Path="Data/FileStorage/Lyo.FileStorage/Lyo.FileStorage.csproj" />
     </Folder>
     <Folder Name="/Data/Postgres/">

@@ -13,7 +13,6 @@ namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 {
     private static readonly string[] SelectFields = ["Id", "PathPrefix", "OriginalFileName", "OriginalFileSize", "DeletedAt", "Availability"];
-    private static readonly string[] PrefixSelectFields = ["PathPrefix"];
     private static readonly string[] IdSelectFields = ["Id", "PathPrefix", "DeletedAt", "Availability"];
 
     private readonly HashSet<string> _expandedKeys = new(StringComparer.Ordinal) { FileStoragePathTreeBuilder.DirectoryKey(null) };
@@ -66,10 +65,12 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
     {
         _busy = true;
         try {
+            var selectedKey = _selected?.Key;
             _root = FileStoragePathTreeBuilder.CreateRoot();
             await LoadFolderAsync(_root).ConfigureAwait(true);
-            if (_selected == null || FileStoragePathTreeBuilder.Find(_root, _selected.Key) == null)
-                _selected = _root;
+            _selected = selectedKey == null
+                ? _root
+                : FileStoragePathTreeBuilder.Find(_root, selectedKey) ?? _root;
 
             RebuildTreeItems();
         }
@@ -86,11 +87,14 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
         if (!dir.IsDirectory || dir.ChildrenLoaded)
             return;
 
-        var (files, filesTruncated) = await QueryRowsAsync(FileStoragePathTreeBuilder.CreateImmediateFilesWhere(dir.PathPrefix), SelectFields)
-            .ConfigureAwait(true);
-        var (prefixes, prefixesTruncated) = await QueryPathPrefixesAsync(FileStoragePathTreeBuilder.CreateDescendantPrefixWhere(dir.PathPrefix))
-            .ConfigureAwait(true);
-        FileStoragePathTreeBuilder.MergeImmediateChildren(dir, files, prefixes, filesTruncated || prefixesTruncated);
+        // Root uses the same DeletedAt/Availability filter as the Files grid (no PathPrefix SQL). Nested folders add StartsWith and split files vs child
+        // folders in memory so PathPrefix null/empty OR-groups cannot hide rows the grid already shows.
+        var extra = dir.PathPrefix == null
+            ? null
+            : WhereClauseBuilder.Condition("PathPrefix", ComparisonOperatorEnum.StartsWith, FileStoragePathTreeBuilder.Normalize(dir.PathPrefix)!);
+        var (rows, truncated) = await QueryRowsAsync(extra, SelectFields).ConfigureAwait(true);
+        var prefixes = rows.ConvertAll(static r => r.PathPrefix);
+        FileStoragePathTreeBuilder.MergeImmediateChildren(dir, rows, prefixes, truncated);
         _truncated = _root.Truncated || (_selected?.IsDirectory == true && _selected.Truncated);
     }
 
@@ -103,8 +107,7 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
                 .SetPagination(page * FileStoragePathTreeBuilder.PageSize, FileStoragePathTreeBuilder.PageSize)
                 .AddSelects(select.ToArray())
                 .AddSort("OriginalFileName", SortDirection.Asc);
-            var active = FileStorageGridRowHelper.CreateActiveFilesWhere();
-            builder.AddWhere(where == null ? active : WhereClauseBuilder.CombineAs(GroupOperatorEnum.And, active, where));
+            builder.AddWhere(FileStorageGridRowHelper.CombineWithActive(where));
 
             var result = await Host.ApiClient
                 .PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(route, builder.Build())
@@ -132,41 +135,6 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
         return (rows, false);
     }
 
-    private async Task<(List<string?> Prefixes, bool Truncated)> QueryPathPrefixesAsync(WhereClause where)
-    {
-        var prefixes = new List<string?>();
-        var route = Host.FileMetadataQueryRoute.Trim().Trim('/') + "/QueryProject";
-        for (var page = 0; page < FileStoragePathTreeBuilder.MaxPages; page++) {
-            var builder = ProjectionQueryReqBuilder.New()
-                .SetPagination(page * FileStoragePathTreeBuilder.PageSize, FileStoragePathTreeBuilder.PageSize)
-                .AddSelects(PrefixSelectFields)
-                .AddSort("PathPrefix", SortDirection.Asc);
-            builder.AddWhere(WhereClauseBuilder.CombineAs(GroupOperatorEnum.And, FileStorageGridRowHelper.CreateActiveFilesWhere(), where));
-
-            var result = await Host.ApiClient
-                .PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(route, builder.Build())
-                .ConfigureAwait(true);
-            if (result is not { IsSuccess: true }) {
-                throw new InvalidOperationException(result?.Error?.GetFullMessage() ?? "QueryProject failed.");
-            }
-
-            if (result.Items is not { Count: > 0 } items)
-                return (prefixes, false);
-
-            foreach (var item in items)
-                prefixes.Add(FileStorageGridRowHelper.GetPathPrefixFromRow(item));
-
-            var pageFull = items.Count >= FileStoragePathTreeBuilder.PageSize;
-            if (result.HasMore == false || !pageFull)
-                return (prefixes, false);
-
-            if (page == FileStoragePathTreeBuilder.MaxPages - 1)
-                return (prefixes, true);
-        }
-
-        return (prefixes, false);
-    }
-
     private async Task<IReadOnlyList<Guid>> ResolveActiveFileIdsAsync(IReadOnlyList<FileStoragePathTreeNode> nodes)
     {
         var ids = new HashSet<Guid>();
@@ -190,18 +158,19 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 
     private async Task OnSelectedAsync(FileStoragePathTreeNode node)
     {
-        _selected = node;
-        ExpandTo(node);
+        var live = FileStoragePathTreeBuilder.Find(_root, node.Key) ?? node;
+        _selected = live;
+        ExpandTo(live);
         RebuildTreeItems();
         await InvokeAsync(StateHasChanged);
-        if (!node.IsDirectory || node.ChildrenLoaded) {
+        if (!live.IsDirectory || live.ChildrenLoaded) {
             _truncated = _root.Truncated || (_selected.IsDirectory && _selected.Truncated);
             return;
         }
 
         _busy = true;
         try {
-            await LoadFolderAsync(node).ConfigureAwait(true);
+            await LoadFolderAsync(live).ConfigureAwait(true);
         }
         catch (Exception ex) {
             Host.SetStatus(ex.Message, Severity.Error);
@@ -217,13 +186,14 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 
     private async Task OnFolderExpandedAsync(FileStoragePathTreeNode node)
     {
-        if (!node.IsDirectory)
+        var live = FileStoragePathTreeBuilder.Find(_root, node.Key) ?? node;
+        if (!live.IsDirectory)
             return;
 
-        _expandedKeys.Add(node.Key);
+        _expandedKeys.Add(live.Key);
         _busy = true;
         try {
-            await LoadFolderAsync(node).ConfigureAwait(true);
+            await LoadFolderAsync(live).ConfigureAwait(true);
         }
         catch (Exception ex) {
             Host.SetStatus(ex.Message, Severity.Error);
@@ -358,6 +328,7 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
         if (node.IsDirectory && !node.ChildrenLoaded) {
             children = [
                 new TreeItemData<FileStoragePathTreeNode> {
+                    Value = FileStoragePathTreeBuilder.CreatePendingChild(node),
                     Text = "…",
                     Expandable = false
                 }
