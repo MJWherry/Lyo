@@ -62,20 +62,7 @@ public partial class FileStorageBrowser : ComponentBase, IDisposable
     }
 
     private bool KeyExists(string? expected)
-    {
-        if (string.IsNullOrWhiteSpace(expected) || _existingKeys.Count == 0)
-            return false;
-
-        if (_existingKeys.Contains(expected))
-            return true;
-
-        foreach (var key in _existingKeys) {
-            if (key.Length > expected.Length && key.EndsWith(expected, StringComparison.Ordinal) && key[key.Length - expected.Length - 1] == '/')
-                return true;
-        }
-
-        return false;
-    }
+        => FileStorageStorageKeyJoin.KeyExists(_existingKeys, expected);
 
     private IReadOnlyList<object?> SelectedRows(LyoDataGridProjected? grid)
         => ProjectedGridKeys.RowsFromKeys(grid?.SelectedKeys);

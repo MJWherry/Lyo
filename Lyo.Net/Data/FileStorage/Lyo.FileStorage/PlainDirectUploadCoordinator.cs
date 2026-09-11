@@ -100,7 +100,7 @@ internal sealed class PlainDirectUploadCoordinator
         var ts = DateTime.UtcNow;
         var meta = new FileStoreResult(
             fileId, request.OriginalFileName ?? fileId.ToString(), 0, [], fileId.ToString(), 0, [], false, null, null, null, false, null, null, null, null, null, null, null, null,
-            ts, normalizedPathPrefix, _options.HashAlgorithm, ctResolved, charset, resolvedTenant, FileAvailability.PendingDirectUpload);
+            ts, normalizedPathPrefix, _options.HashAlgorithm, ctResolved, charset, resolvedTenant, FileAvailability.PendingDirectUpload, Metadata: request.Metadata);
 
         await _metadataService.SaveMetadataAsync(fileId, meta, ct).ConfigureAwait(false);
         await _auditPublisher.PublishAuditAsync(

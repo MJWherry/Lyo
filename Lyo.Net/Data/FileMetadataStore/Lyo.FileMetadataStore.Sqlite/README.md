@@ -64,7 +64,7 @@ Tables: `file_metadata`, `file_data`, `file_audit_events`, `multipart_upload_ses
 
 ## How migrations run
 
-Migrations ship in this package. Turn on EnableAutoMigrations (via [`Lyo.Sqlite`](../../Sqlite/Lyo.Sqlite/README.md)) or run `dotnet ef database update` using SqliteFileMetadataStoreDbContextFactory. Design-time connection string: FILEMETADATASTORE_CONNECTION_STRING or FILESTORE_CONNECTION_STRING (defaults to `Data Source=./filestore-design.db`). `DropStagedFileUpload` removes the former `staged_file_upload` table.
+Migrations ship in this package. Turn on EnableAutoMigrations (via [`Lyo.Sqlite`](../../Sqlite/Lyo.Sqlite/README.md)) or run `dotnet ef database update` using SqliteFileMetadataStoreDbContextFactory. Design-time connection string: FILEMETADATASTORE_CONNECTION_STRING or FILESTORE_CONNECTION_STRING (defaults to `Data Source=./filestore-design.db`). `DropStagedFileUpload` removes the former `staged_file_upload` table. `AddFileMetadataJson` adds opaque `metadata_json` on `file_metadata` and `multipart_upload_session`.
 
 ## Writer limits
 

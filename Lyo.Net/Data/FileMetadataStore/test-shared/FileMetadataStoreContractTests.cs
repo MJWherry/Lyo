@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Lyo.Encryption;
 using Lyo.FileMetadataStore.Models;
 using Microsoft.EntityFrameworkCore;
@@ -321,5 +322,35 @@ public abstract class FileMetadataStoreContractTests
         var list = (await store.FindByKeyIdAndVersionAsync(keyId, version, TestContext.Current.CancellationToken)).ToList();
         Assert.Single(list);
         Assert.Equal(active.Id, list[0].Id);
+    }
+
+    [Fact]
+    public async Task SaveMetadataAsync_PersistsOpaqueMetadataJson()
+    {
+        Assert.NotNull(Services);
+        using var scope = Services.CreateScope();
+        var store = CreateStore(scope);
+        var fileId = Guid.NewGuid();
+        using var doc = JsonDocument.Parse("""{"source":"scan","n":1}""");
+        var metadata = CreateMetadata(fileId, [9, 8, 7]) with { Metadata = doc.RootElement.Clone() };
+        await store.SaveMetadataAsync(fileId, metadata, TestContext.Current.CancellationToken);
+        var retrieved = await store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken);
+        Assert.NotNull(retrieved.Metadata);
+        Assert.Equal(JsonValueKind.Object, retrieved.Metadata.Value.ValueKind);
+        Assert.Equal("scan", retrieved.Metadata.Value.GetProperty("source").GetString());
+        Assert.Equal(1, retrieved.Metadata.Value.GetProperty("n").GetInt32());
+    }
+
+    [Fact]
+    public async Task SaveMetadataAsync_NullMetadata_StaysNull()
+    {
+        Assert.NotNull(Services);
+        using var scope = Services.CreateScope();
+        var store = CreateStore(scope);
+        var fileId = Guid.NewGuid();
+        var metadata = CreateMetadata(fileId, [1, 2, 3]);
+        await store.SaveMetadataAsync(fileId, metadata, TestContext.Current.CancellationToken);
+        var retrieved = await store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken);
+        Assert.Null(retrieved.Metadata);
     }
 }

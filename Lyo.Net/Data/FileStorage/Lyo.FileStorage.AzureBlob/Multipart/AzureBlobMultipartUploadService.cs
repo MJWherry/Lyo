@@ -86,7 +86,9 @@ public sealed class AzureBlobMultipartUploadService : IMultipartUploadService
             var state = JsonSerializer.Serialize(new AzureBlobProviderState { StagingBlobName = blobName });
             var record = new MultipartUploadSessionRecord(
                 sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
-                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.AzureBlob, state, request.DeclaredContentLength, request.PartSizeBytes);
+                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.AzureBlob, state, request.DeclaredContentLength, request.PartSizeBytes) {
+                MetadataJson = FileStoreResult.SerializeMetadata(request.Metadata)
+            };
 
             await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
             await FileAuditPublication.PublishAsync(
@@ -147,7 +149,8 @@ public sealed class AzureBlobMultipartUploadService : IMultipartUploadService
             FileStoreResult result;
             if (!session.Compress && !session.Encrypt) {
                 result = await _storage.FinalizeMultipartFromStagingAsync(
-                        state.StagingBlobName, session.TargetFileId, session.OriginalFileName, session.ContentType, session.Charset, session.PathPrefix, session.TenantId, null, ct)
+                        state.StagingBlobName, session.TargetFileId, session.OriginalFileName, session.ContentType, session.Charset, session.PathPrefix, session.TenantId, null,
+                        FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
                     .ConfigureAwait(false);
             }
             else {
@@ -156,7 +159,7 @@ public sealed class AzureBlobMultipartUploadService : IMultipartUploadService
                 result = await _storage.SaveFromStreamAsync(
                         readStream, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix,
                         null,
-                        session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, ct)
+                        session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
                     .ConfigureAwait(false);
             }
 

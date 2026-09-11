@@ -45,4 +45,7 @@ public sealed class MultipartUploadSessionEntity
     public long? DeclaredContentLength { get; set; }
 
     public int PartSizeBytes { get; set; }
+
+    /// <summary>Opaque caller JSON bag copied onto <c>file_metadata</c> at complete. Null when omitted.</summary>
+    public string? MetadataJson { get; set; }
 }

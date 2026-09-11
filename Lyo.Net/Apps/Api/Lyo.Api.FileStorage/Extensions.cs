@@ -92,7 +92,7 @@ public static class Extensions
                 var fileStorage = GetFileStorage(services, serviceKey);
                 var result = await fileStorage.SaveFileAsync(
                     request.Data, request.OriginalFileName, request.Compress, request.Encrypt, request.KeyId, request.PathPrefix, request.ChunkSize, request.ContentType,
-                    request.Charset, request.TenantId, ct);
+                    request.Charset, request.TenantId, request.Metadata, ct);
 
                 await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
                 return Results.Ok(result);
@@ -219,7 +219,8 @@ public static class Extensions
                     Charset = request.Charset,
                     OriginalFileName = request.OriginalFileName,
                     TenantId = request.TenantId,
-                    SessionTtl = request.SessionTtlHours.HasValue ? TimeSpan.FromHours(request.SessionTtlHours.Value) : null
+                    SessionTtl = request.SessionTtlHours.HasValue ? TimeSpan.FromHours(request.SessionTtlHours.Value) : null,
+                    Metadata = request.Metadata
                 };
 
                 var result = await multipart.BeginAsync(begin, ct);
@@ -460,7 +461,8 @@ public static class Extensions
             ContentType = request.ContentType,
             Charset = request.Charset,
             TenantId = request.TenantId,
-            UrlExpiration = Hours(request.UrlExpirationHours)
+            UrlExpiration = Hours(request.UrlExpirationHours),
+            Metadata = request.Metadata
         };
 
     private static Domain.DirectUploadCompleteRequest? ToDomain(DirectUploadCompleteRequest? request)

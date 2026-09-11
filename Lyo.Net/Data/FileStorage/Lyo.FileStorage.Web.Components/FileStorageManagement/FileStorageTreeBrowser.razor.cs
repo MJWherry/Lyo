@@ -12,7 +12,7 @@ namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 /// <summary>Tree tab: PathPrefix folder tree on the left, inspector on the right. Each folder is queried when opened, not on first render.</summary>
 public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 {
-    private static readonly string[] SelectFields = ["Id", "PathPrefix", "OriginalFileName", "OriginalFileSize", "DeletedAt", "Availability"];
+    private static readonly string[] SelectFields = ["Id", "PathPrefix", "OriginalFileName", "OriginalFileSize", "SourceFileName", "DeletedAt", "Availability"];
     private static readonly string[] IdSelectFields = ["Id", "PathPrefix", "DeletedAt", "Availability"];
 
     private readonly HashSet<string> _expandedKeys = new(StringComparer.Ordinal) { FileStoragePathTreeBuilder.DirectoryKey(null) };
@@ -92,13 +92,32 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
         var extra = dir.PathPrefix == null
             ? null
             : WhereClauseBuilder.Condition("PathPrefix", ComparisonOperatorEnum.StartsWith, FileStoragePathTreeBuilder.Normalize(dir.PathPrefix)!);
-        var (rows, truncated) = await QueryRowsAsync(extra, SelectFields).ConfigureAwait(true);
+        var (rows, truncated) = await QueryRowsAsync(extra, SelectFields, includeDeleted: true).ConfigureAwait(true);
+        var listed = await ListStorageKeysAsync(dir.PathPrefix).ConfigureAwait(true);
+        rows = FileStorageStorageKeyJoin.ApplyPresence(rows, listed);
         var prefixes = rows.ConvertAll(static r => r.PathPrefix);
         FileStoragePathTreeBuilder.MergeImmediateChildren(dir, rows, prefixes, truncated);
+        if (listed != null)
+            FileStoragePathTreeBuilder.AddCloudOnlyOrphans(dir, FileStorageStorageKeyJoin.UnmatchedKeys(listed, rows));
         _truncated = _root.Truncated || (_selected?.IsDirectory == true && _selected.Truncated);
     }
 
-    private async Task<(List<FileStoragePathTreeRow> Rows, bool Truncated)> QueryRowsAsync(WhereClause? where, IReadOnlyList<string> select)
+    private async Task<HashSet<string>?> ListStorageKeysAsync(string? prefix)
+    {
+        try {
+            var path = "diagnostics/storage-keys?maxKeys=10000";
+            if (!string.IsNullOrWhiteSpace(prefix))
+                path += "&prefix=" + Uri.EscapeDataString(prefix);
+
+            var keys = await Host.ApiClient.GetAsAsync<List<string>>(Host.FilesApi(path)).ConfigureAwait(true);
+            return (keys ?? []).ToHashSet(StringComparer.Ordinal);
+        }
+        catch {
+            return null;
+        }
+    }
+
+    private async Task<(List<FileStoragePathTreeRow> Rows, bool Truncated)> QueryRowsAsync(WhereClause? where, IReadOnlyList<string> select, bool includeDeleted = false)
     {
         var rows = new List<FileStoragePathTreeRow>();
         var route = Host.FileMetadataQueryRoute.Trim().Trim('/') + "/QueryProject";
@@ -107,7 +126,13 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
                 .SetPagination(page * FileStoragePathTreeBuilder.PageSize, FileStoragePathTreeBuilder.PageSize)
                 .AddSelects(select.ToArray())
                 .AddSort("OriginalFileName", SortDirection.Asc);
-            builder.AddWhere(FileStorageGridRowHelper.CombineWithActive(where));
+            if (includeDeleted) {
+                if (where != null)
+                    builder.AddWhere(where);
+            }
+            else {
+                builder.AddWhere(FileStorageGridRowHelper.CombineWithActive(where));
+            }
 
             var result = await Host.ApiClient
                 .PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(route, builder.Build())
@@ -120,7 +145,7 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
                 return (rows, false);
 
             foreach (var item in items) {
-                if (FileStoragePathTreeBuilder.TryReadRow(item, out var parsed) && !parsed.IsDeleted)
+                if (FileStoragePathTreeBuilder.TryReadRow(item, out var parsed) && (includeDeleted || !parsed.IsDeleted))
                     rows.Add(parsed);
             }
 

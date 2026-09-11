@@ -81,11 +81,14 @@ public sealed class SqliteMultipartUploadSessionStore : IMultipartUploadSessionS
             ProviderKind = (int)s.ProviderKind,
             ProviderState = s.ProviderStateJson,
             DeclaredContentLength = s.DeclaredContentLength,
-            PartSizeBytes = s.PartSizeBytes
+            PartSizeBytes = s.PartSizeBytes,
+            MetadataJson = s.MetadataJson
         };
 
     private static MultipartUploadSessionRecord FromEntity(MultipartUploadSessionEntity e)
         => new(
             e.SessionId, e.TenantId, e.CreatedUtc, e.ExpiresUtc, e.TargetFileId, e.PathPrefix, e.Compress, e.Encrypt, e.KeyId, e.OriginalFileName, e.ContentType, e.Charset,
-            (MultipartSessionStatus)e.Status, (MultipartUploadProviderKind)e.ProviderKind, e.ProviderState, e.DeclaredContentLength, e.PartSizeBytes);
+            (MultipartSessionStatus)e.Status, (MultipartUploadProviderKind)e.ProviderKind, e.ProviderState, e.DeclaredContentLength, e.PartSizeBytes) {
+            MetadataJson = e.MetadataJson
+        };
 }

@@ -3,6 +3,7 @@ using System;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Lyo.FileMetadataStore.Sqlite.Migrations
 {
     [DbContext(typeof(SqliteFileMetadataStoreDbContext))]
-    partial class SqliteFileMetadataStoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260910232608_AddFileMetadataJson")]
+    partial class AddFileMetadataJson
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");

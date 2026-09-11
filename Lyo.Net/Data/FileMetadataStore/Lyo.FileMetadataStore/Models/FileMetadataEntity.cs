@@ -74,6 +74,9 @@ public sealed class FileMetadataEntity
     /// </summary>
     public Guid? OwnerId { get; set; }
 
+    /// <summary>Opaque caller JSON bag. Null when omitted. Lyo does not interpret keys.</summary>
+    public string? MetadataJson { get; set; }
+
     public FileStoreResult ToFileStoreResult()
     {
         var compressionAlgorithm = Compression.Models.CompressionAlgorithm.TryFromName(CompressionAlgorithm);
@@ -99,7 +102,7 @@ public sealed class FileMetadataEntity
             Guid.Parse(Id), OriginalFileName, OriginalFileSize, OriginalFileHash, SourceFileName, SourceFileSize, SourceFileHash, IsCompressed, compressionAlgorithm,
             CompressedFileSize, CompressedFileHash, IsEncrypted, dekAlgorithm, kekAlgorithm, EncryptedFileSize, EncryptedFileHash, EncryptedDataEncryptionKey, DataEncryptionKeyId,
             DataEncryptionKeyVersion, KeyEncryptionKeySalt, Timestamp, PathPrefix, hashAlgorithm, ContentType, Charset, TenantId, availability, DekKeyMaterialBytes, DeletedAt,
-            OwnerId);
+            OwnerId, FileStoreResult.DeserializeMetadata(MetadataJson));
     }
 
     public static FileMetadataEntity FromFileStoreResult(FileStoreResult result)
@@ -133,7 +136,8 @@ public sealed class FileMetadataEntity
             TenantId = result.TenantId,
             Availability = result.DeletedAt.HasValue ? nameof(FileAvailability.Deleted) : result.Availability.ToString(),
             DeletedAt = result.DeletedAt.HasValue ? DateTime.SpecifyKind(result.DeletedAt.Value, DateTimeKind.Utc) : null,
-            OwnerId = result.OwnerId
+            OwnerId = result.OwnerId,
+            MetadataJson = FileStoreResult.SerializeMetadata(result.Metadata)
         };
 
     /// <summary>Marks a logical delete: writes <see cref="DeletedAt" /> (UTC) and sets <see cref="Availability" /> to <see cref="FileAvailability.Deleted" />.</summary>

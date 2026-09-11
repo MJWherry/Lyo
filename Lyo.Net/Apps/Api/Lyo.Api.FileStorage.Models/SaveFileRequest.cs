@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Lyo.Api.FileStorage.Models;
 
@@ -19,4 +20,7 @@ public sealed record SaveFileRequest(
     /// <inheritdoc />
     public override string ToString()
         => $"SaveFileRequest: OriginalFileName={OriginalFileName ?? "(none)"}, Bytes={Data.Length}, compress={Compress}, encrypt={Encrypt}";
+
+    /// <summary>Opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</summary>
+    public JsonElement? Metadata { get; init; }
 }

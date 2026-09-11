@@ -22,6 +22,9 @@ public sealed record MultipartUploadSessionRecord(
     long? DeclaredContentLength,
     int PartSizeBytes)
 {
+    /// <summary>Opaque caller JSON bag copied onto file metadata at complete. Null when omitted.</summary>
+    public string? MetadataJson { get; init; }
+
     /// <inheritdoc />
     public override string ToString()
         => $"MultipartUploadSessionRecord: SessionId={SessionId}, TargetFileId={TargetFileId}, Status={Status}, ProviderKind={ProviderKind}";

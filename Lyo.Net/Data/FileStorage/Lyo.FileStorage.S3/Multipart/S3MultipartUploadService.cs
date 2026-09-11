@@ -104,7 +104,9 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
             var state = JsonSerializer.Serialize(new S3ProviderState { StagingKey = stagingKey, UploadId = uploadId });
             var record = new MultipartUploadSessionRecord(
                 sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
-                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.AwsS3, state, request.DeclaredContentLength, request.PartSizeBytes);
+                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.AwsS3, state, request.DeclaredContentLength, request.PartSizeBytes) {
+                MetadataJson = FileStoreResult.SerializeMetadata(request.Metadata)
+            };
 
             try {
                 await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
@@ -180,7 +182,8 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
             FileStoreResult result;
             if (!session.Compress && !session.Encrypt) {
                 result = await _storage.FinalizeMultipartFromStagingAsync(
-                        state.StagingKey, session.TargetFileId, session.OriginalFileName, session.ContentType, session.Charset, session.PathPrefix, session.TenantId, null, ct)
+                        state.StagingKey, session.TargetFileId, session.OriginalFileName, session.ContentType, session.Charset, session.PathPrefix, session.TenantId, null,
+                        FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
                     .ConfigureAwait(false);
             }
             else {
@@ -188,7 +191,8 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
                 var len = getResponse.ContentLength;
                 result = await _storage.SaveFromStreamAsync(
                         getResponse.ResponseStream, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId,
-                        session.PathPrefix, null, session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, ct)
+                        session.PathPrefix, null, session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId,
+                        FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
                     .ConfigureAwait(false);
             }
 

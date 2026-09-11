@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Lyo.Compression.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Audit;
@@ -41,6 +42,7 @@ public interface IFileStorageService : IHealth
     /// <param name="contentType">Optional MIME type used for policy and metadata.</param>
     /// <param name="charset">Optional client-declared character encoding of the plaintext (IANA/web name). Stored as given after trim. Not converted.</param>
     /// <param name="tenantId">Optional tenant. When null, the ambient operation-context accessor is used if one is registered.</param>
+    /// <param name="metadata">Optional opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Metadata for the stored file, including id and storage path.</returns>
     Task<FileStoreResult> SaveFileAsync(
@@ -54,6 +56,7 @@ public interface IFileStorageService : IHealth
         string? contentType = null,
         string? charset = null,
         string? tenantId = null,
+        JsonElement? metadata = null,
         CancellationToken ct = default);
 
     /// <summary>Streams a file from disk into storage. Prefer this overload for large files.</summary>
@@ -67,6 +70,7 @@ public interface IFileStorageService : IHealth
     /// <param name="contentType">Optional MIME type used for policy and metadata.</param>
     /// <param name="charset">Optional client-declared character encoding of the plaintext (IANA/web name). Stored as given after trim. Not converted.</param>
     /// <param name="tenantId">Optional tenant. When null, the operation-context accessor is used if one is registered.</param>
+    /// <param name="metadata">Optional opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Metadata for the stored file</returns>
     Task<FileStoreResult> SaveFileAsync(
@@ -80,12 +84,15 @@ public interface IFileStorageService : IHealth
         string? contentType = null,
         string? charset = null,
         string? tenantId = null,
+        JsonElement? metadata = null,
         CancellationToken ct = default);
 
     /// <summary>
     /// Writes <paramref name="input" /> through the same compress/encrypt pipeline as the other save methods. The caller keeps the stream open; this method does not dispose
-    /// <paramref name="input" />. Optional <paramref name="charset"/> is stored as given after trim and is not converted.
+    /// <paramref name="input" />. Optional <paramref name="charset"/> is stored as given after trim and is not converted. Optional <paramref name="metadata"/> is an opaque
+    /// caller JSON bag.
     /// </summary>
+    /// <param name="metadata">Optional opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</param>
     Task<FileStoreResult> SaveFromStreamAsync(
         Stream input,
         long declaredLength,
@@ -100,6 +107,7 @@ public interface IFileStorageService : IHealth
         string? tenantId = null,
         FileAvailability? availabilityOverride = null,
         Guid? fileId = null,
+        JsonElement? metadata = null,
         CancellationToken ct = default);
 
     /// <summary>

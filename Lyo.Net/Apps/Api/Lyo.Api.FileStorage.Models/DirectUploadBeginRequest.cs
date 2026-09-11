@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Lyo.Api.FileStorage.Models;
 
@@ -23,6 +24,9 @@ public sealed record DirectUploadBeginRequest
 
     /// <summary>Optional tenant id.</summary>
     public string? TenantId { get; init; }
+
+    /// <summary>Opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</summary>
+    public JsonElement? Metadata { get; init; }
 
     /// <summary>How long the presigned PUT URL lives, in hours. Leave unset for the API default.</summary>
     public double? UrlExpirationHours { get; init; }

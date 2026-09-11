@@ -26,6 +26,7 @@ public sealed class MultipartUploadSessionEntityConfiguration : IEntityTypeConfi
         builder.Property(e => e.ProviderState).IsRequired().HasColumnType("text").HasMaxLength(8192).HasColumnName("provider_state");
         builder.Property(e => e.DeclaredContentLength).HasColumnName("declared_content_length");
         builder.Property(e => e.PartSizeBytes).IsRequired().HasColumnName("part_size_bytes");
+        builder.Property(e => e.MetadataJson).HasColumnType("jsonb").HasColumnName("metadata_json");
         builder.HasIndex(e => e.ExpiresUtc).HasDatabaseName("ix_multipart_upload_session_expires_utc");
         builder.HasIndex(e => e.TargetFileId).HasDatabaseName("ix_multipart_upload_session_target_file_id");
     }

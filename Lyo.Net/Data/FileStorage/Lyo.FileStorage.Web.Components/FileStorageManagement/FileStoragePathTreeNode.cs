@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using Lyo.Exceptions;
+using Lyo.FileMetadataStore.Models;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.DataGrid;
+using MudBlazor;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
@@ -32,6 +34,15 @@ public sealed class FileStoragePathTreeNode
     /// <summary>True when the metadata row is a tombstone delete.</summary>
     public bool IsDeleted { get; init; }
 
+    /// <summary>Stored object name from metadata, used to derive the expected storage key.</summary>
+    public string? SourceFileName { get; init; }
+
+    /// <summary>Join of metadata vs one storage-key LIST. <see cref="FileStoragePresence.Unknown" /> when LIST was unavailable.</summary>
+    public FileStoragePresence Presence { get; init; }
+
+    /// <summary>Host availability when the QueryProject row included it.</summary>
+    public FileAvailability? Availability { get; init; }
+
     /// <summary>Original size from the projected row, if present.</summary>
     public long? OriginalFileSize { get; init; }
 
@@ -56,11 +67,35 @@ public sealed class FileStoragePathTreeNode
 
 /// <summary>Projected FileMetadata fields used to build tree children.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct FileStoragePathTreeRow(Guid FileId, string? PathPrefix, string? OriginalFileName, long OriginalFileSize, bool IsDeleted)
+public readonly record struct FileStoragePathTreeRow(
+    Guid FileId,
+    string? PathPrefix,
+    string? OriginalFileName,
+    long OriginalFileSize,
+    bool IsDeleted,
+    string? SourceFileName = null,
+    FileStoragePresence Presence = FileStoragePresence.Unknown,
+    FileAvailability? Availability = null)
 {
     /// <inheritdoc />
     public override string ToString()
         => $"FileStoragePathTreeRow: FileId={FileId}, OriginalFileName={OriginalFileName ?? "(none)"}, PathPrefix={PathPrefix ?? "(none)"}{(IsDeleted ? " deleted" : "")}";
+}
+
+/// <summary>One visible row in the flattened, virtualized path tree. Collapsed descendants are omitted.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public readonly record struct FileStoragePathTreeVisibleRow(
+    FileStoragePathTreeNode Node,
+    int Depth,
+    bool Expandable,
+    bool Expanded)
+{
+    /// <summary>Row height in pixels; must match the virtualize <c>ItemSize</c> and CSS.</summary>
+    public const float ItemSize = 40f;
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"FileStoragePathTreeVisibleRow: depth={Depth} {Node}";
 }
 
 /// <summary>Builds and updates <see cref="FileStoragePathTreeNode" /> graphs from PathPrefix rows. Does not call the API.</summary>
@@ -96,6 +131,32 @@ public static class FileStoragePathTreeBuilder
 
     /// <summary>File key for a metadata id.</summary>
     public static string FileKey(Guid fileId) => $"file:{fileId:D}";
+
+    /// <summary>
+    /// Walks expanded <see cref="ITreeItemData{FileStoragePathTreeNode}"/> nodes into a flat list for <c>Virtualize</c>. Collapsed children stay out of the list
+    /// (and the DOM).
+    /// </summary>
+    /// <param name="items">Root tree items bound to the path pane.</param>
+    public static List<FileStoragePathTreeVisibleRow> FlattenVisible(IEnumerable<ITreeItemData<FileStoragePathTreeNode>> items)
+    {
+        ArgumentHelpers.ThrowIfNull(items);
+        var rows = new List<FileStoragePathTreeVisibleRow>();
+        AppendVisible(items, 0, rows);
+        return rows;
+    }
+
+    private static void AppendVisible(
+        IEnumerable<ITreeItemData<FileStoragePathTreeNode>> items, int depth, List<FileStoragePathTreeVisibleRow> rows)
+    {
+        foreach (var item in items) {
+            if (item.Value is not { } node)
+                continue;
+
+            rows.Add(new(node, depth, item.Expandable, item.Expanded));
+            if (item.Expanded && item.Children is { Count: > 0 })
+                AppendVisible(item.Children, depth + 1, rows);
+        }
+    }
 
     /// <summary>Dummy leaf under an unloaded folder so the tree control treats the folder as expandable.</summary>
     public static FileStoragePathTreeNode CreatePendingChild(FileStoragePathTreeNode parent)
@@ -270,6 +331,48 @@ public static class FileStoragePathTreeBuilder
         parent.Truncated = truncated;
     }
 
+    /// <summary>
+    /// Adds listed object keys that have no metadata row: immediate files as cloud-only leaves, nested keys as unloaded child folders.
+    /// </summary>
+    /// <param name="parent">Folder whose immediate children are being filled.</param>
+    /// <param name="unmatchedKeys">LIST keys that did not match a QueryProject row.</param>
+    public static void AddCloudOnlyOrphans(FileStoragePathTreeNode parent, IReadOnlyList<string> unmatchedKeys)
+    {
+        ArgumentHelpers.ThrowIfNull(parent);
+        ArgumentHelpers.ThrowIfNull(unmatchedKeys);
+        var existingFileIds = parent.Children.Where(static c => c.FileId != null).Select(static c => c.FileId!.Value).ToHashSet();
+        var existingFolders = parent.Children.Where(static c => c.IsDirectory && c.PathPrefix != null)
+            .Select(static c => Normalize(c.PathPrefix)!)
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var key in unmatchedKeys) {
+            if (!FileStorageStorageKeyJoin.TryParseStorageKey(key, out var fileId, out var prefix, out var sourceName))
+                continue;
+
+            if (IsImmediateFile(parent.PathPrefix, prefix)) {
+                if (!existingFileIds.Add(fileId))
+                    continue;
+
+                parent.Children.Add(
+                    CreateFileNode(new(fileId, prefix, sourceName, 0, false, sourceName, FileStoragePresence.CloudOnly)));
+                continue;
+            }
+
+            var childPrefix = ImmediateChildFolderPrefix(parent.PathPrefix, prefix);
+            if (childPrefix == null || !existingFolders.Add(childPrefix))
+                continue;
+
+            parent.Children.Add(CreateDirectoryNode(childPrefix));
+        }
+
+        parent.Children.Sort(static (a, b) => {
+            if (a.IsDirectory != b.IsDirectory)
+                return a.IsDirectory ? -1 : 1;
+
+            return string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
+        });
+    }
+
     private static void SortChildrenRecursive(FileStoragePathTreeNode node)
     {
         if (node.Children.Count == 0)
@@ -391,8 +494,14 @@ public static class FileStoragePathTreeBuilder
         ProjectedValueHelper.TryGetInt64(sizeRaw, out var size);
         parsed = new(
             fileId, FileStorageGridRowHelper.GetPathPrefixFromRow(row), FileStorageGridRowHelper.GetOriginalFileNameFromRow(row), size,
-            FileStorageGridRowHelper.IsRowDeleted(row));
+            FileStorageGridRowHelper.IsRowDeleted(row), FileStorageGridRowHelper.GetSourceFileNameFromRow(row), FileStoragePresence.Unknown, ReadAvailability(row));
         return true;
+    }
+
+    private static FileAvailability? ReadAvailability(object? row)
+    {
+        var raw = ProjectedValueHelper.GetDisplayValue(row, "Availability");
+        return Enum.TryParse<FileAvailability>(raw, ignoreCase: true, out var parsed) ? parsed : null;
     }
 
     internal static bool IsImmediateFile(string? parentPrefix, string? filePrefix)
@@ -514,6 +623,9 @@ public static class FileStoragePathTreeBuilder
             PathPrefix = Normalize(row.PathPrefix),
             FileId = row.FileId,
             IsDeleted = row.IsDeleted,
+            SourceFileName = row.SourceFileName,
+            Presence = row.Presence,
+            Availability = row.Availability,
             OriginalFileSize = row.OriginalFileSize,
             ChildrenLoaded = true
         };

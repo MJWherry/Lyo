@@ -1,6 +1,7 @@
 using Lyo.Common.Core.Pathing;
 using System.Diagnostics;
 using System.IO.Pipelines;
+using System.Text.Json;
 using Lyo.Common.Core.Extensions;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
@@ -119,7 +120,7 @@ public abstract class FileStorageServiceBase
     /// (<see cref="CreateOutputStreamAsync" /> / <see cref="ReadFromStorageAsync" /> / <see cref="DeleteFromStorageAsync" />) under the <c>.lyo-health</c> prefix.
     /// </summary>
     /// <remarks>
-    /// The probe skips <see cref="SaveFileAsync(byte[], string?, bool, bool, string?, string?, int?, string?, string?, string?, CancellationToken)" /> and the other public save APIs on
+    /// The probe skips <see cref="SaveFileAsync(byte[], string?, bool, bool, string?, string?, int?, string?, string?, string?, JsonElement?, CancellationToken)" /> and the other public save APIs on
     /// purpose. Sending it through those methods wrote a metadata row, ran content policy (a configured <c>AllowedContentTypes</c> that omitted the probe type would mark the
     /// service permanently unhealthy), joined duplicate detection, and emitted three audit events.
     /// </remarks>
@@ -468,11 +469,13 @@ public abstract class FileStorageServiceBase
         string? contentType = null,
         string? charset = null,
         string? tenantId = null,
+        JsonElement? metadata = null,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(data);
         using var ms = new MemoryStream(data, false);
-        return await SaveFromStreamAsync(ms, data.LongLength, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, null, null, ct)
+        return await SaveFromStreamAsync(
+                ms, data.LongLength, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, null, null, metadata, ct)
             .ConfigureAwait(false);
     }
 
@@ -488,6 +491,7 @@ public abstract class FileStorageServiceBase
         string? contentType = null,
         string? charset = null,
         string? tenantId = null,
+        JsonElement? metadata = null,
         CancellationToken ct = default)
     {
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.SaveDuration)]);
@@ -530,7 +534,7 @@ public abstract class FileStorageServiceBase
             // Run the streaming save pipeline
             var result = await ProcessAndSaveStreamAsync(
                     inputStream, fileId, actualOriginalFileName, originalSize, compress, encrypt, keyId, normalizedPathPrefix, timestamp, effectiveChunkSize, contentType,
-                    resolvedCharset, resolvedTenant, availability, ct)
+                    resolvedCharset, resolvedTenant, availability, metadata, ct)
                 .ConfigureAwait(false);
 
             sw.Stop();
@@ -575,6 +579,7 @@ public abstract class FileStorageServiceBase
         string? tenantId = null,
         FileAvailability? availabilityOverride = null,
         Guid? fileId = null,
+        JsonElement? metadata = null,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
@@ -604,7 +609,7 @@ public abstract class FileStorageServiceBase
             var availability = availabilityOverride ?? Options.DefaultAvailability;
             var result = await ProcessAndSaveStreamAsync(
                     input, id, originalFileName ?? id.ToString(), declaredLength, compress, encrypt, keyId, normalizedPathPrefix, timestamp, effectiveChunkSize, contentType,
-                    resolvedCharset, resolvedTenant, availability, ct)
+                    resolvedCharset, resolvedTenant, availability, metadata, ct)
                 .ConfigureAwait(false);
 
             sw.Stop();
@@ -646,12 +651,13 @@ public abstract class FileStorageServiceBase
         string? charset,
         string? tenantId,
         FileAvailability availability,
+        JsonElement? metadata,
         CancellationToken ct)
     {
         try {
             return await ProcessAndSaveStreamCoreAsync(
                     inputStream, fileId, originalFileName, originalSize, compress, encrypt, keyId, normalizedPathPrefix, timestamp, chunkSize, contentType, charset, tenantId,
-                    availability, ct)
+                    availability, metadata, ct)
                 .ConfigureAwait(false);
         }
         catch {
@@ -675,6 +681,7 @@ public abstract class FileStorageServiceBase
         string? charset,
         string? tenantId,
         FileAvailability availability,
+        JsonElement? metadata,
         CancellationToken ct)
     {
         contentType = ResolveStoredContentType(contentType, originalFileName);
@@ -742,15 +749,15 @@ public abstract class FileStorageServiceBase
                 sourceFileHash = encryptedHash;
                 finalSize = await GetStorageSizeAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
                 var actualSize = ResolveActualOriginalSize(fileId, originalSize, boundedInput.BytesRead);
-                var metadata = new FileStoreResult(
+                var stored = new FileStoreResult(
                     fileId, originalFileName, actualSize, originalHash!, sourceFileName, finalSize, sourceFileHash!, compress, compressionAlgorithm, compressedSize,
                     compressedHash, encrypt, dataEncryptionKeyAlgorithm, keyEncryptionKeyAlgorithm, encryptedSize, encryptedHash, encryptedDataEncryptionKey, dataEncryptionKeyId,
                     dataEncryptionKeyVersion, keyEncryptionKeySalt, timestamp, normalizedPathPrefix, Options.HashAlgorithm, contentType, charset, tenantId, availability,
-                    dekKeyMaterialBytes);
+                    dekKeyMaterialBytes, Metadata: metadata);
 
-                await MetadataService.SaveMetadataAsync(fileId, metadata, ct).ConfigureAwait(false);
-                FileSaved?.Invoke(this, new(fileId, FileStoreSnapshot.From(metadata), actualSize, finalSize, compress, encrypt));
-                return metadata;
+                await MetadataService.SaveMetadataAsync(fileId, stored, ct).ConfigureAwait(false);
+                FileSaved?.Invoke(this, new(fileId, FileStoreSnapshot.From(stored), actualSize, finalSize, compress, encrypt));
+                return stored;
             }
             finally {
                 if (pipelineOutputStream != null)
@@ -866,16 +873,16 @@ public abstract class FileStorageServiceBase
             // originalHash was captured during the compression / pass-through stage above. Do not rewind inputStream:
             // it may not be seekable (S3 GetObject / Blob OpenRead streams used by multipart complete, for example).
             var actualOriginalSize = ResolveActualOriginalSize(fileId, originalSize, boundedInput.BytesRead);
-            var metadata = new FileStoreResult(
+            var stored = new FileStoreResult(
                 fileId, originalFileName, actualOriginalSize, originalHash, sourceFileName, finalSize, sourceFileHash ?? originalHash, compress, compressionAlgorithm,
                 compressedSize, compressedHash, encrypt, dataEncryptionKeyAlgorithm, keyEncryptionKeyAlgorithm, encryptedSize, encryptedHash, encryptedDataEncryptionKey,
                 dataEncryptionKeyId, dataEncryptionKeyVersion, keyEncryptionKeySalt, timestamp, normalizedPathPrefix, hashAlg, contentType, charset, tenantId, availability,
-                dekKeyMaterialBytes);
+                dekKeyMaterialBytes, Metadata: metadata);
 
             // Persist metadata through the metadata service
-            await MetadataService.SaveMetadataAsync(fileId, metadata, ct).ConfigureAwait(false);
-            FileSaved?.Invoke(this, new(fileId, FileStoreSnapshot.From(metadata), actualOriginalSize, finalSize, compress, encrypt));
-            return metadata;
+            await MetadataService.SaveMetadataAsync(fileId, stored, ct).ConfigureAwait(false);
+            FileSaved?.Invoke(this, new(fileId, FileStoreSnapshot.From(stored), actualOriginalSize, finalSize, compress, encrypt));
+            return stored;
         }
         finally {
             if (outputStream != null)

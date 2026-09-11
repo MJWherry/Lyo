@@ -19,19 +19,47 @@
     overscroll-behavior: contain;
 }
 
-.file-storage-tree-scroll ::deep .mud-treeview {
-    min-height: 0;
+.file-storage-tree-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-sizing: border-box;
+    height: 40px;
+    min-height: 40px;
+    padding-right: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.file-storage-tree-row:hover,
+.file-storage-tree-row-selected {
+    background: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent);
+}
+
+.file-storage-tree-indent {
+    flex: 0 0 auto;
+}
+
+.file-storage-tree-toggle {
+    flex: 0 0 auto;
+}
+
+.file-storage-tree-toggle-placeholder {
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+}
+
+.file-storage-tree-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .file-storage-tree-item-drag {
     cursor: grab;
-    flex: 1;
-    min-width: 0;
-}
-
-.file-storage-tree-item {
-    flex: 1;
-    min-width: 0;
 }
 
 .file-storage-tree-drop-target {

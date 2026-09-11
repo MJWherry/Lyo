@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Text.Json;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -501,6 +502,7 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
         string? pathPrefix,
         string? tenantId,
         FileAvailability? availabilityOverride,
+        JsonElement? metadata,
         CancellationToken ct)
     {
         var normalizedPathPrefix = NormalizePathPrefix(pathPrefix);
@@ -539,14 +541,14 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
             try {
                 var sourceFileName = originalFileName ?? targetFileId.ToString();
                 var resolvedContentType = string.IsNullOrWhiteSpace(contentType) ? FileTypeInfo.Unknown.MimeType : contentType;
-                var metadata = new FileStoreResult(
+                var stored = new FileStoreResult(
                     targetFileId, originalFileName ?? sourceFileName, observedLength, computedHash, sourceFileName, observedLength, computedHash, false, null, null, null, false,
                     null, null, null, null, null, null, null, null, DateTime.UtcNow, normalizedPathPrefix, hashAlg, resolvedContentType, charset, tenantId,
-                    availabilityOverride ?? Options.DefaultAvailability);
+                    availabilityOverride ?? Options.DefaultAvailability, Metadata: metadata);
 
-                await MetadataService.SaveMetadataAsync(targetFileId, metadata, ct).ConfigureAwait(false);
-                RaiseFileSaved(targetFileId, FileStoreSnapshot.From(metadata), observedLength, observedLength, false, false);
-                return metadata;
+                await MetadataService.SaveMetadataAsync(targetFileId, stored, ct).ConfigureAwait(false);
+                RaiseFileSaved(targetFileId, FileStoreSnapshot.From(stored), observedLength, observedLength, false, false);
+                return stored;
             }
             catch {
                 // Metadata write failed — drop the destination so the caller's staging delete is the only leftover.

@@ -118,6 +118,10 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnType("bytea")
                         .HasColumnName("key_encryption_key_salt");
 
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata_json");
+
                     b.Property<byte[]>("OriginalFileHash")
                         .IsRequired()
                         .HasColumnType("bytea")
@@ -409,6 +413,10 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("key_id");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata_json");
 
                     b.Property<string>("OriginalFileName")
                         .HasMaxLength(500)

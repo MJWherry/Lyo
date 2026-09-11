@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Lyo.FileStorage.Multipart;
 
 public sealed class MultipartBeginRequest
@@ -26,6 +28,9 @@ public sealed class MultipartBeginRequest
     public string? OriginalFileName { get; init; }
 
     public string? TenantId { get; init; }
+
+    /// <summary>Opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</summary>
+    public JsonElement? Metadata { get; init; }
 
     public TimeSpan? SessionTtl { get; init; }
 }

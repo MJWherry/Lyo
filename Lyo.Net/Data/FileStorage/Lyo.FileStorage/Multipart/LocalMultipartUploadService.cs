@@ -76,7 +76,9 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
             var record = new MultipartUploadSessionRecord(
                 sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
                 request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.Local,
-                JsonSerializer.Serialize(new LocalProviderState { StagingDirectory = stagingDir }), request.DeclaredContentLength, request.PartSizeBytes);
+                JsonSerializer.Serialize(new LocalProviderState { StagingDirectory = stagingDir }), request.DeclaredContentLength, request.PartSizeBytes) {
+                MetadataJson = FileStoreResult.SerializeMetadata(request.Metadata)
+            };
 
             // Persist the session before creating the staging directory so a session-store failure does not leave an orphan dir.
             await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
@@ -147,7 +149,7 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
             using var input = File.OpenRead(mergedPath);
             var result = await _storage.SaveFromStreamAsync(
                     input, mergedInfo.Length, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix,
-                    null, session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, ct)
+                    null, session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
                 .ConfigureAwait(false);
 
             await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Completed, ct).ConfigureAwait(false);

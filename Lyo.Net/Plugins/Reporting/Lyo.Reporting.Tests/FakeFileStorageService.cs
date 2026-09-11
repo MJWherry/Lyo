@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Lyo.Compression.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
@@ -27,11 +28,12 @@ public sealed class FakeFileStorageService : IFileStorageService
         string? contentType = null,
         string? charset = null,
         string? tenantId = null,
+        JsonElement? metadata = null,
         CancellationToken ct = default)
     {
         var id = Guid.NewGuid();
         Files[id] = data;
-        return Task.FromResult(CreateResult(id, originalFileName, data.LongLength, contentType, charset, pathPrefix));
+        return Task.FromResult(CreateResult(id, originalFileName, data.LongLength, contentType, charset, pathPrefix, metadata));
     }
 
     public Task<FileStoreResult> SaveFileAsync(
@@ -45,8 +47,9 @@ public sealed class FakeFileStorageService : IFileStorageService
         string? contentType = null,
         string? charset = null,
         string? tenantId = null,
+        JsonElement? metadata = null,
         CancellationToken ct = default)
-        => SaveFileAsync(File.ReadAllBytes(filePath), originalFileName ?? Path.GetFileName(filePath), compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, ct);
+        => SaveFileAsync(File.ReadAllBytes(filePath), originalFileName ?? Path.GetFileName(filePath), compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, metadata, ct);
 
     public Task<FileStoreResult> SaveFromStreamAsync(
         Stream input,
@@ -62,11 +65,12 @@ public sealed class FakeFileStorageService : IFileStorageService
         string? tenantId = null,
         FileAvailability? availabilityOverride = null,
         Guid? fileId = null,
+        JsonElement? metadata = null,
         CancellationToken ct = default)
     {
         using var ms = new MemoryStream();
         input.CopyTo(ms);
-        return SaveFileAsync(ms.ToArray(), originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, ct);
+        return SaveFileAsync(ms.ToArray(), originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, metadata, ct);
     }
 
     public Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default)
@@ -123,10 +127,10 @@ public sealed class FakeFileStorageService : IFileStorageService
         CancellationToken ct = default)
         => throw new NotSupportedException();
 
-    private static FileStoreResult CreateResult(Guid id, string? name, long size, string? contentType, string? charset, string? pathPrefix)
+    private static FileStoreResult CreateResult(Guid id, string? name, long size, string? contentType, string? charset, string? pathPrefix, JsonElement? metadata = null)
         => new(
             id, name, size, [], name ?? "x.bin", size, [], false, null, null, null, false, null, null, null, null, null, null, null, null, DateTime.UtcNow, pathPrefix, null,
-            contentType, charset);
+            contentType, charset, Metadata: metadata);
 
 #pragma warning disable CS0067 // Events required by IFileStorageService
     public event EventHandler<FileSavedResult>? FileSaved;

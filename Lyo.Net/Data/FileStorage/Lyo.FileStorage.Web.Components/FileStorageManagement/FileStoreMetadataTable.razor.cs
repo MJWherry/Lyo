@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Lyo.Common.Metadata.Records;
 using Lyo.FileMetadataStore.Models;
 using Microsoft.AspNetCore.Components;
@@ -10,6 +11,8 @@ public partial class FileStoreMetadataTable
     /// <summary>Metadata row to show. Ignored when null.</summary>
     [Parameter]
     public FileStoreResult? Metadata { get; set; }
+
+    private static readonly JsonSerializerOptions PrettyJson = new() { WriteIndented = true };
 
     /// <summary>Label/value pairs shared by the table and the narrow-viewport card so both stay aligned.</summary>
     private IReadOnlyList<(string Label, string Value)> Rows
@@ -35,7 +38,8 @@ public partial class FileStoreMetadataTable
                 ("Key encryption algorithm", m.KeyEncryptionKeyAlgorithm?.ToString() ?? "-"),
                 ("Encrypted size", FormatBytes(m.EncryptedFileSize)),
                 ("Encrypted hash", FormatHash(m.EncryptedFileHash)),
-                ("KEK salt", FormatHash(m.KeyEncryptionKeySalt))
+                ("KEK salt", FormatHash(m.KeyEncryptionKeySalt)),
+                ("Metadata", FormatMetadata(m.Metadata))
             ];
 
     private static string FormatBytes(long size) => FileSizeUnitInfo.FormatBestFit(size);
@@ -48,5 +52,13 @@ public partial class FileStoreMetadataTable
             return "-";
 
         return Convert.ToHexString(bytes);
+    }
+
+    private static string FormatMetadata(JsonElement? metadata)
+    {
+        if (metadata is not { } el || el.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return "-";
+
+        return JsonSerializer.Serialize(el, PrettyJson);
     }
 }

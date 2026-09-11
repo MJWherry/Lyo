@@ -143,7 +143,10 @@ public static class FileStorageGridRowHelper
     }
 
     /// <summary>Same layout as the storage engine: <c>[pathPrefix or shard]/{fileId:N}{suffix}</c>, without a global storage prefix.</summary>
-    private static string BuildExpectedStorageKey(Guid fileId, string? sourceFileName, string? pathPrefix)
+    /// <param name="fileId">Canonical file id.</param>
+    /// <param name="sourceFileName">Stored object name; used to recover the suffix after the id.</param>
+    /// <param name="pathPrefix">Logical prefix, or null for shard layout.</param>
+    public static string BuildExpectedStorageKey(Guid fileId, string? sourceFileName, string? pathPrefix)
     {
         var idString = fileId.ToString("N");
         var suffix = InferTrailingSuffixAfterFileId(fileId, sourceFileName);

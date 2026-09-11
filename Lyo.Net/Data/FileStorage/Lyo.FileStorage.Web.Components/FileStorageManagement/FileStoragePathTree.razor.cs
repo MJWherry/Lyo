@@ -1,3 +1,4 @@
+using Lyo.FileMetadataStore.Models;
 using Lyo.Web.Components;
 using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
@@ -94,6 +95,36 @@ public partial class FileStoragePathTree
     private static Color IconColorFor(FileStoragePathTreeNode node)
         => node.IsDeleted ? Color.Warning : node.IsDirectory ? Color.Warning : Color.Default;
 
+    private static IEnumerable<(string Label, Color Color)> BadgesFor(FileStoragePathTreeNode node)
+    {
+        if (node.IsDirectory || FileStoragePathTreeBuilder.IsPendingChild(node))
+            yield break;
+
+        if (node.IsDeleted)
+            yield return ("Deleted", Color.Warning);
+
+        if (node.Availability is { } availability && availability is not FileAvailability.Available and not FileAvailability.Deleted)
+            yield return (availability.ToString(), Color.Info);
+
+        yield return node.Presence switch {
+            FileStoragePresence.Both => ("Both", Color.Success),
+            FileStoragePresence.MissingBlob => ("Missing", Color.Error),
+            FileStoragePresence.CloudOnly => ("Cloud", Color.Info),
+            var _ => ("DB", Color.Default)
+        };
+    }
+
+    private bool IsRowSelected(FileStoragePathTreeNode node)
+        => _editMode ? _checked.Contains(node) : Selected?.Key == node.Key;
+
+    private string RowClass(FileStoragePathTreeVisibleRow row)
+    {
+        var css = ItemClass(row.Node);
+        if (IsRowSelected(row.Node))
+            css += " file-storage-tree-row-selected";
+        return css;
+    }
+
     private Task OnSelectAsync(FileStoragePathTreeNode node)
         => FileStoragePathTreeBuilder.IsPendingChild(node) ? Task.CompletedTask : SelectedChanged.InvokeAsync(node);
 
@@ -114,13 +145,15 @@ public partial class FileStoragePathTree
         await CheckedChanged.InvokeAsync([]);
     }
 
-    private Task OnCheckedChanged(IReadOnlyCollection<FileStoragePathTreeNode?> values)
+    private Task OnRowCheckedChangedAsync(FileStoragePathTreeNode node, bool isChecked)
     {
-        _checked.Clear();
-        foreach (var node in values) {
-            if (node is { IsDeleted: false } && !FileStoragePathTreeBuilder.IsPendingChild(node))
-                _checked.Add(node);
-        }
+        if (node.IsDeleted || FileStoragePathTreeBuilder.IsPendingChild(node))
+            return Task.CompletedTask;
+
+        if (isChecked)
+            _checked.Add(node);
+        else
+            _checked.Remove(node);
 
         return CheckedChanged.InvokeAsync(CheckedSnapshot());
     }
@@ -167,7 +200,9 @@ public partial class FileStoragePathTree
 
     private string ItemClass(FileStoragePathTreeNode node)
     {
-        var css = _editMode && !node.IsDeleted ? "file-storage-tree-item-drag" : "file-storage-tree-item";
+        var css = "file-storage-tree-row";
+        if (_editMode && !node.IsDeleted)
+            css += " file-storage-tree-item-drag";
         if (_editMode && node.IsDirectory && _dropKey == node.Key)
             css += " file-storage-tree-drop-target";
         return css;

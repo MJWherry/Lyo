@@ -34,7 +34,7 @@ Maps Postgres unique violations (`23505`) into predictable outcomes where possib
 
 ### Migrations / schema coupling
 
-Changing column layout needs coordinated releases with Lyo.FileStorage expectations. Serialized JSON blobs should grow additively.
+Changing column layout needs coordinated releases with Lyo.FileStorage expectations. Serialized JSON blobs should grow additively. `file_metadata.metadata_json` (and the matching multipart session column) is an opaque caller jsonb bag; Lyo does not interpret keys. Null when omitted.
 
 ## See also
 
