@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Lyo.Api.Client;
-using Lyo.Configuration;
 using Lyo.Common.Core.Extensions;
 using Lyo.Common.Core.Net;
 using Lyo.Config.Api.Models;
@@ -105,7 +104,9 @@ public static class ConfigApiHttpClientRegistration
             IConfiguration configuration,
             string configSectionName = ConfigApiClientOptions.SectionName)
         {
-            var options = LyoOptions.Bind<ConfigApiClientOptions>(configuration, configSectionName);
+            var options = new ConfigApiClientOptions();
+            configuration.GetSection(configSectionName).Bind(options);
+            options.Validate();
 
             services.TryAddSingleton(Options.Create(options));
             services.TryAddSingleton(options);

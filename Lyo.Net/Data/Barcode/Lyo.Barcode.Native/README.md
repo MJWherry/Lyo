@@ -63,9 +63,9 @@ var read = await barcodes.ReadFromImageAsync(File.ReadAllBytes("photo.png"));
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Barcode` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `SixLabors.Fonts` `2.1.3` (direct, third-party)
@@ -74,4 +74,3 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `ZXing.Net` `0.16.11` (direct, third-party)
 - `ZXing.Net.Bindings.ImageSharp.V3` `0.16.18` (direct, third-party)
 - `Lyo.Metrics` (transitive, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)

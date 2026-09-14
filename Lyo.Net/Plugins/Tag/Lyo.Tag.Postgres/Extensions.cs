@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -30,7 +29,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresTagOptions>(configuration, configSectionName);
+            var options = new PostgresTagOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddTagDbContextFactory(options);
         }
@@ -62,7 +62,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresTagOptions>(configuration, configSectionName);
+            var options = new PostgresTagOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPostgresTagStore(options);
         }

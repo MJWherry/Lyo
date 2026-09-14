@@ -19,6 +19,7 @@ using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
 using Lyo.Hashing;
 using Lyo.Health;
+using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -26,7 +27,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.FileStorage.S3;
 
 /// <summary>S3-backed <see cref="IFileStorageService" /> with presigned URLs, multipart, server-side copy, and optional customer / KMS SSE.</summary>
-public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService, IAsyncDisposable
+public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService, IFileStoragePhysical, IAsyncDisposable
 {
     private readonly S3FileStorageOptions _options;
     private readonly bool _ownsS3Client;
@@ -64,6 +65,11 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
         MetricNames[nameof(FileStorage.Constants.Metrics.FileStoragePreSignedUrlGenerated)] = Constants.Metrics.FileStoragePreSignedUrlGenerated;
         MetricNames[nameof(FileStorage.Constants.Metrics.FileStoragePreSignedUrlGenerationFailed)] = Constants.Metrics.FileStoragePreSignedUrlGenerationFailed;
     }
+
+    /// <inheritdoc />
+    public IFileSystem Physical => _physicalFs ??= new S3FileSystem(_s3Client, _options.BucketName, _options.KeyPrefix);
+
+    private IFileSystem? _physicalFs;
 
     /// <summary>Releases the S3 client only when this service created it; otherwise same as <see cref="Dispose()" />.</summary>
     public ValueTask DisposeAsync()

@@ -2,6 +2,8 @@
 
 Save, stream-save, read, delete, and file metadata. Optional compression ([Lyo.Compression](../../Compression/Lyo.Compression/README.md)), two-key encryption ([Lyo.Encryption](../../../Security/Encryption/Lyo.Encryption/README.md)), duplicate hashing, access policies, audit hooks, multipart uploads (via [IMultipartUploadService](Multipart/IMultipartUploadService.cs)), and presigned/direct-upload/copy on cloud-capable backends.
 
+Catalog listing is `IFileMetadataStore`. Bytes go through `IFileStorageService`. Backends that can list keys expose `IFileStoragePhysical.Physical` (`IFileSystem`). `FileStorageReconcile` joins them on file id with flags `Store` / `Physical` / `Both`.
+
 With GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.
 
 ## Examples
@@ -257,16 +259,17 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Compression` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.FileMetadataStore` (direct, lyo)
 - `Lyo.Hashing` (direct, lyo)
 - `Lyo.Health` (direct, lyo)
+- `Lyo.IO.FileSystem` (direct, lyo)
 - `Lyo.IO.Temp` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Streams` (direct, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (direct, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
 - `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
 - `Lyo.Common.Core` (transitive, lyo)
@@ -275,7 +278,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
 - `EasyCompressor` `2.1.0` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)

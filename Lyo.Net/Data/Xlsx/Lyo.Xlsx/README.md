@@ -193,7 +193,6 @@ Copyright © Lyo
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Common.Core` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
 - `Lyo.Xlsx.Models` (direct, lyo)

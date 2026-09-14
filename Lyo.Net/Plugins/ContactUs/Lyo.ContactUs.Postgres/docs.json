@@ -68,14 +68,6 @@
   "readmePath": "Lyo.Net/Plugins/ContactUs/Lyo.ContactUs.Postgres/README.md",
   "dependencies": [
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.ContactUs",
       "kind": "lyo",
       "tags": [

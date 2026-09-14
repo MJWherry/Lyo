@@ -942,14 +942,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Csv.Models",
       "kind": "lyo",
       "tags": [
@@ -1039,6 +1031,14 @@
     },
     {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",

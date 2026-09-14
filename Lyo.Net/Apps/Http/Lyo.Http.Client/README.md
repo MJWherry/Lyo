@@ -56,18 +56,17 @@ On HTTP 429 the rate-limit handler honors `Retry-After` (capped, jittered) then 
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
 - `AngleSharp` `1.5.0` (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `System.Threading.RateLimiting` `10.0.5` (direct, microsoft)
+- `Lyo.Common.Core` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

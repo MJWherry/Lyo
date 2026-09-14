@@ -79,14 +79,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
@@ -164,15 +156,6 @@
     },
     {
       "name": "Microsoft.EntityFrameworkCore.Relational",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

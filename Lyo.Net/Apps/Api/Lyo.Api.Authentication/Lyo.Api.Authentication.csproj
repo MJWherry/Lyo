@@ -20,7 +20,6 @@
         <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Models\Lyo.Authentication.Models.csproj"/>
         <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication\Lyo.Authentication.csproj"/>
         <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Postgres\Lyo.Authentication.Postgres.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
     </ItemGroup>
 

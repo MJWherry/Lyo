@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-05T17:49:52.031379+00:00",
-  "packageCount": 261,
+  "generatedAt": "2026-09-11T02:46:25.659473+00:00",
+  "packageCount": 259,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -279,6 +279,26 @@
       ]
     },
     {
+      "id": "Lyo.Webhook",
+      "area": "Communication",
+      "topic": "Lyo.Webhook",
+      "name": "Lyo.Webhook",
+      "tagline": "ASP.NET Core inbound webhook verification: headers and raw body, HMAC helpers, `MapWebhook().Verify().Handle()`, and `Lyo.Metrics` timings.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Webhook.Twilio",
+      "area": "Communication",
+      "topic": "Lyo.Webhook",
+      "name": "Lyo.Webhook.Twilio",
+      "tagline": "Twilio webhook signature checks for `Lyo.Webhook`. Compares `X-Twilio-Signature` to an HMAC-SHA1 (Base64) of the public request URL plus sorted key+value form parameters.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Audit",
       "area": "Core",
       "topic": "Lyo.Audit",
@@ -391,28 +411,6 @@
       "topic": "Lyo.Common",
       "name": "Lyo.Common.Metadata",
       "tagline": "Lyo registry records — file type, MIME, language, port, HTTP status, HTTP header, geography, and CLR type catalogs — plus the extensions that bridge enums to those records.",
-      "targetFrameworks": [
-        "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Configuration",
-      "area": "Core",
-      "topic": "Lyo.Configuration",
-      "name": "Lyo.Configuration",
-      "tagline": "Configuration-binding helper used by every Lyo package's `Add{Feature}FromConfiguration` registration.",
-      "targetFrameworks": [
-        "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Configuration.Validation",
-      "area": "Core",
-      "topic": "Lyo.Configuration",
-      "name": "Lyo.Configuration.Validation",
-      "tagline": "Checks `IConfiguration` against data-driven `ValidationSchema` rules, either on raw configuration keys or on a bound options type.",
       "targetFrameworks": [
         "netstandard2.0",
         "net10.0"
@@ -890,26 +888,6 @@
       ]
     },
     {
-      "id": "Lyo.Webhook",
-      "area": "Communication",
-      "topic": "Lyo.Webhook",
-      "name": "Lyo.Webhook",
-      "tagline": "ASP.NET Core inbound webhook verification: headers and raw body, HMAC helpers, `MapWebhook().Verify().Handle()`, and `Lyo.Metrics` timings.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Webhook.Twilio",
-      "area": "Communication",
-      "topic": "Lyo.Webhook",
-      "name": "Lyo.Webhook.Twilio",
-      "tagline": "Twilio webhook signature checks for `Lyo.Webhook`. Compares `X-Twilio-Signature` to an HMAC-SHA1 (Base64) of the public request URL plus sorted key+value form parameters.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
       "id": "Lyo.Barcode",
       "area": "Data",
       "topic": "Lyo.Barcode",
@@ -1247,33 +1225,22 @@
       ]
     },
     {
+      "id": "Lyo.IO.FileSystem",
+      "area": "Data",
+      "topic": "Lyo.IO",
+      "name": "Lyo.IO.FileSystem",
+      "tagline": "Path-rooted virtual file system: one contract for local disk, memory, SFTP, FTP, S3, and Azure Blob.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.IO.Temp",
       "area": "Data",
       "topic": "Lyo.IO",
       "name": "Lyo.IO.Temp",
       "tagline": "Session-scoped temp files and directories, with naming strategies and overflow policies.",
-      "targetFrameworks": [
-        "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.IO.Temp.Ftp",
-      "area": "Data",
-      "topic": "Lyo.IO",
-      "name": "Lyo.IO.Temp.Ftp",
-      "tagline": "`IIOTempStorageProvider` for Lyo.IO.Temp that keeps temp data on FTP.",
-      "targetFrameworks": [
-        "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.IO.Temp.Sftp",
-      "area": "Data",
-      "topic": "Lyo.IO",
-      "name": "Lyo.IO.Temp.Sftp",
-      "tagline": "`IIOTempStorageProvider` for Lyo.IO.Temp that keeps temp data on SFTP.",
       "targetFrameworks": [
         "netstandard2.0",
         "net10.0"
@@ -1914,6 +1881,16 @@
       ]
     },
     {
+      "id": "Lyo.Endato.Web.Components",
+      "area": "Integration",
+      "topic": "Lyo.Endato",
+      "name": "Lyo.Endato.Web.Components",
+      "tagline": "Blazor workbench UI for Endato person search and enrichment.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Espn.Fantasy.Football.Client",
       "area": "Integration",
       "topic": "Lyo.Espn",
@@ -1983,6 +1960,26 @@
       "topic": "Lyo.Api",
       "name": "Lyo.Api.Export",
       "tagline": "Optional export add-on for Lyo.Api. Registers the Export CRUD endpoint and `IExportService<TContext>`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Export.Csv",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Export.Csv",
+      "tagline": "CSV format handler for Lyo.Api export.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Export.Xlsx",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Export.Xlsx",
+      "tagline": "XLSX format handler for Lyo.Api export.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -2331,6 +2328,26 @@
       ]
     },
     {
+      "id": "Lyo.Web.Components.Export.Csv",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Export.Csv",
+      "tagline": "CSV export menu item for Lyo data grids.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Export.Xlsx",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Export.Xlsx",
+      "tagline": "XLSX export menu item for Lyo data grids.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Web.Host",
       "area": "Apps",
       "topic": "Lyo.Web",
@@ -2602,6 +2619,46 @@
       ]
     },
     {
+      "id": "Lyo.Drift.Agent.Example",
+      "area": "Examples",
+      "topic": "Lyo.Drift",
+      "name": "Lyo.Drift.Agent.Example",
+      "tagline": "Sample Drift agent host.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Scheduler.Example",
+      "area": "Examples",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Scheduler.Example",
+      "tagline": "Sample job scheduler host.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Worker.Example",
+      "area": "Examples",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Worker.Example",
+      "tagline": "Sample job worker that subscribes to job.run.example.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Reporting.Business.Example",
+      "area": "Examples",
+      "topic": "Lyo.Reporting",
+      "name": "Lyo.Reporting.Business.Example",
+      "tagline": "Sample reporting host that wires Lyo.Reporting into a small Blazor app.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Cli",
       "area": "Tools",
       "topic": "Lyo.Cli",
@@ -2652,91 +2709,11 @@
       ]
     },
     {
-      "id": "Lyo.Endato.Web.Components",
-      "area": "Integration",
-      "topic": "Lyo.Endato",
-      "name": "Lyo.Endato.Web.Components",
-      "tagline": "Blazor workbench UI for Endato person search and enrichment.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Api.Export.Csv",
-      "area": "Apps",
-      "topic": "Lyo.Api",
-      "name": "Lyo.Api.Export.Csv",
-      "tagline": "CSV format handler for Lyo.Api export.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Api.Export.Xlsx",
-      "area": "Apps",
-      "topic": "Lyo.Api",
-      "name": "Lyo.Api.Export.Xlsx",
-      "tagline": "XLSX format handler for Lyo.Api export.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Web.Components.Export.Csv",
-      "area": "Apps",
-      "topic": "Lyo.Web",
-      "name": "Lyo.Web.Components.Export.Csv",
-      "tagline": "CSV export menu item for Lyo data grids.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Web.Components.Export.Xlsx",
-      "area": "Apps",
-      "topic": "Lyo.Web",
-      "name": "Lyo.Web.Components.Export.Xlsx",
-      "tagline": "XLSX export menu item for Lyo data grids.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Drift.Agent.Example",
-      "area": "Examples",
-      "topic": "Lyo.Drift",
-      "name": "Lyo.Drift.Agent.Example",
-      "tagline": "Sample Drift agent host.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Job.Scheduler.Example",
-      "area": "Examples",
-      "topic": "Lyo.Job",
-      "name": "Lyo.Job.Scheduler.Example",
-      "tagline": "Sample job scheduler host.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Job.Worker.Example",
-      "area": "Examples",
-      "topic": "Lyo.Job",
-      "name": "Lyo.Job.Worker.Example",
-      "tagline": "Sample job worker that subscribes to job.run.example.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Reporting.Business.Example",
-      "area": "Examples",
-      "topic": "Lyo.Reporting",
-      "name": "Lyo.Reporting.Business.Example",
-      "tagline": "Sample reporting host that wires Lyo.Reporting into a small Blazor app.",
+      "id": "Lyo.IO.FileSystem.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.IO",
+      "name": "Lyo.IO.FileSystem.Web.Components",
+      "tagline": "Blazor folder tree over `IFileTreeSource` (local `IFileSystem` or HTTP).",
       "targetFrameworks": [
         "net10.0"
       ]

@@ -17,7 +17,7 @@ app.BuildFileStorageApi(new FileStorageApiOptions {
 
 ## Routes this maps
 
-At `FileStorageApiOptions.Route` the group exposes: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`.
+At `FileStorageApiOptions.Route` the group exposes: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `GET files/folder` (store PathPrefix plus reconcile, flags `Store` / `Physical` / `Both`), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`.
 
 ## Dependencies
 
@@ -35,7 +35,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Diagnostic.AspNetCore` (transitive, lyo)
@@ -45,6 +44,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Formatter` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
 - `Lyo.Lock` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)

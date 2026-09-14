@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -167,12 +166,11 @@ public static class S3FileStorageS3CompatibleExtensions
         ArgumentHelpers.ThrowIfNull(configure);
         ArgumentHelpers.ThrowIfNull(applyDefaults);
         if (!services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
-            services.AddSingleton<S3FileStorageOptions>(_ => {
-                var options = new S3FileStorageOptions();
-                configure(options);
-                applyDefaults(options);
-                return options;
-            });
+            var options = new S3FileStorageOptions();
+            configure(options);
+            applyDefaults(options);
+            options.Validate();
+            services.AddSingleton(options);
         }
 
         return services.AddS3FileStorageServiceKeyed(keyName);
@@ -187,12 +185,11 @@ public static class S3FileStorageS3CompatibleExtensions
         if (services.Any(s => s.ServiceType == typeof(S3FileStorageOptions)))
             return;
 
-        services.AddSingleton<S3FileStorageOptions>(_ => {
-            var options = LyoOptions.Bind<S3FileStorageOptions>(configuration, configSectionName);
-
-            applyDefaults(options);
-            return options;
-        });
+        var options = new S3FileStorageOptions();
+        configuration.GetSection(configSectionName).Bind(options);
+        applyDefaults(options);
+        options.Validate();
+        services.AddSingleton(options);
     }
 
     extension(IServiceCollection services)

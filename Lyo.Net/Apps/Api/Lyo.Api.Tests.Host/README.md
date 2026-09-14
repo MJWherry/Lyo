@@ -67,7 +67,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.Csv.Models` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)

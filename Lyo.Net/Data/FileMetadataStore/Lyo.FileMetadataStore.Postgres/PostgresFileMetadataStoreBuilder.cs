@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage.Multipart;
@@ -54,21 +53,19 @@ public sealed class PostgresFileMetadataStoreBuilder
         // Bind or apply PostgreSQL file store options
         var configSectionName = _postgresFileStoreConfigSection ?? PostgresFileMetadataStoreOptions.SectionName;
         if (!_services.Any(s => s.ServiceType == typeof(PostgresFileMetadataStoreOptions))) {
+            PostgresFileMetadataStoreOptions options;
             if (_postgresFileStoreConfigure != null) {
-                _services.AddSingleton<PostgresFileMetadataStoreOptions>(_ => {
-                    var options = new PostgresFileMetadataStoreOptions();
-                    _postgresFileStoreConfigure(options);
-                    return options;
-                });
+                options = new();
+                _postgresFileStoreConfigure(options);
             }
             else {
-                _services.AddSingleton<PostgresFileMetadataStoreOptions>(provider => {
-                    var configuration = provider.GetRequiredService<IConfiguration>();
-                    var options = LyoOptions.Bind<PostgresFileMetadataStoreOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                using var tempProvider = _services.BuildServiceProvider();
+                options = new PostgresFileMetadataStoreOptions();
+                tempProvider.GetRequiredService<IConfiguration>().GetSection(configSectionName).Bind(options);
             }
+
+            options.Validate();
+            _services.AddSingleton(options);
         }
 
         // Register FileMetadataStoreDbContextFactory when missing and options are available
@@ -86,7 +83,8 @@ public sealed class PostgresFileMetadataStoreBuilder
                 else {
                     // The builder has no service provider of its own, so it stands one up to reach IConfiguration.
                     using var tempProvider = _services.BuildServiceProvider();
-                    options = LyoOptions.Bind<PostgresFileMetadataStoreOptions>(tempProvider.GetRequiredService<IConfiguration>(), configSectionName);
+                    options = new PostgresFileMetadataStoreOptions();
+                    tempProvider.GetRequiredService<IConfiguration>().GetSection(configSectionName).Bind(options);
                 }
 
                 _services.AddFileMetadataStoreDbContextFactory(options);

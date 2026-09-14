@@ -209,10 +209,10 @@ Type checking accepts both storage conventions in the tree: Reporting persists J
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Parameters` (direct, lyo)
+- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

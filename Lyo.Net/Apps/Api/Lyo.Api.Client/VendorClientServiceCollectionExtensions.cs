@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Http.Client;
 using Microsoft.Extensions.Configuration;

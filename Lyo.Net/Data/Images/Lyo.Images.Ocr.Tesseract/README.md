@@ -172,7 +172,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Tesseract` `5.2.0` (direct, third-party)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

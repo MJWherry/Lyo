@@ -27,4 +27,33 @@ public sealed class FileStorageApiModelsTests
         Assert.Equal(Guid.Parse("11111111-1111-1111-1111-111111111111"), restored.SessionId);
         Assert.Equal("awsS3", restored.ProviderKind);
     }
+
+    [Fact]
+    public void FileStoragePresence_IntegersMatchLibraryContract()
+    {
+        Assert.Equal(0, (int)FileStoragePresence.None);
+        Assert.Equal(1, (int)FileStoragePresence.Store);
+        Assert.Equal(2, (int)FileStoragePresence.Physical);
+        Assert.Equal(3, (int)FileStoragePresence.Both);
+        var names = Enum.GetNames<FileStoragePresence>();
+        Assert.DoesNotContain(names, n => n.Contains("Blob", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(names, n => n.Contains("Cloud", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void FolderListResponse_RoundTrip_KeepsPresence()
+    {
+        var fileId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        var original = new FileStorageFolderListResponse(
+            [new("keep.txt", false, "reports", fileId, FileStoragePresence.Both, "keep.txt", 4, "reports/" + fileId.ToString("N"))], false);
+        var json = JsonSerializer.Serialize(original);
+        var restored = JsonSerializer.Deserialize<FileStorageFolderListResponse>(json);
+        Assert.NotNull(restored);
+        Assert.False(restored.Truncated);
+        var row = Assert.Single(restored.Entries);
+        Assert.Equal(FileStoragePresence.Both, row.Presence);
+        Assert.Equal(fileId, row.FileId);
+        Assert.DoesNotContain("CloudOnly", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("MissingBlob", json, StringComparison.Ordinal);
+    }
 }

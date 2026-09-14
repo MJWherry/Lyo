@@ -12,6 +12,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -23,7 +24,6 @@
         <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
         <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

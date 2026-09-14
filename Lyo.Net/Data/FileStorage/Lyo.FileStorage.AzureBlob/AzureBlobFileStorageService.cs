@@ -21,6 +21,7 @@ using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
 using Lyo.Hashing;
 using Lyo.Health;
+using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -28,7 +29,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.FileStorage.AzureBlob;
 
 /// <summary><see cref="IFileStorageService" /> over Azure Blob Storage (package-level abstraction uses <c>Blob</c> naming).</summary>
-public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService
+public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService, IFileStoragePhysical
 {
     private readonly AzureBlobFileStorageOptions _blobOptions;
     private readonly BlobContainerClient _containerClient;
@@ -55,6 +56,11 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
         MetricNames[nameof(FileStorage.Constants.Metrics.FileStoragePreSignedUrlGenerated)] = Constants.Metrics.FileStoragePreSignedUrlGenerated;
         MetricNames[nameof(FileStorage.Constants.Metrics.FileStoragePreSignedUrlGenerationFailed)] = Constants.Metrics.FileStoragePreSignedUrlGenerationFailed;
     }
+
+    /// <inheritdoc />
+    public IFileSystem Physical => _physicalFs ??= new AzureBlobFileSystem(_containerClient, _blobOptions.BlobPrefix);
+
+    private IFileSystem? _physicalFs;
 
     /// <inheritdoc />
     async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct)

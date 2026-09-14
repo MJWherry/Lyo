@@ -257,7 +257,7 @@ When hosting packages register `IMetrics`, these are recorded:
 
 ## Constants
 
-**`Constants.Mq`.** Topology including `JobAlertRoutingKey` (`job.notifications.alert`) and `WaitQueueSuffix` / `QueueGetJobRunCreatedWait`. `Constants.Rest.Job`. CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunChildren`, `DefinitionsLatestRuns`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …).
+**`Constants.Mq`.** Topology including `JobEventExchange` (`job.events`, declared at API and worker startup), `JobAlertRoutingKey` (`job.notifications.alert`) and `WaitQueueSuffix` / `QueueGetJobRunCreatedWait`. `Constants.Rest.Job`. CRUD routes plus lifecycle endpoints (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunChildren`, `DefinitionsLatestRuns`, `WorkerInstances`, `BlackoutCalendars`, `Workflows`, …).
 
 ## Parameter encryption (`Security/IJobParameterEncryptionService`)
 

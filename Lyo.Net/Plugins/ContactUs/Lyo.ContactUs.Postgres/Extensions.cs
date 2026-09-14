@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.ContactUs.Models;
 using Lyo.ContactUs.Postgres.Database;
 using Lyo.Exceptions;
@@ -46,7 +45,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresContactUsOptions>(configuration, configSectionName);
+            var options = new PostgresContactUsOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddContactUsDbContextFactory(options);
         }
@@ -84,7 +84,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresContactUsOptions>(configuration, configSectionName);
+            var options = new PostgresContactUsOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddContactUsPostgres(options);
         }

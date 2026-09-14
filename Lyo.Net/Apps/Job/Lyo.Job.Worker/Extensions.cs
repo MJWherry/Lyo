@@ -1,5 +1,4 @@
 using Lyo.Api.Client;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Formatter;
 using Lyo.Job.Client;
@@ -98,11 +97,10 @@ public static class Extensions
         where TWorker : JobWorkerBase
     {
         if (!services.Any(s => s.ServiceType == typeof(QueueWorkerOptions))) {
-            services.AddSingleton<QueueWorkerOptions>(_ => {
-                var options = LyoOptions.Bind<QueueWorkerOptions>(configuration, configSectionName);
-                options.Validate();
-                return options;
-            });
+            var options = new QueueWorkerOptions();
+            configuration.GetSection(configSectionName).Bind(options);
+            options.Validate();
+            services.AddSingleton(options);
         }
 
         return services.AddJobWorker<TWorker>(workerType, apiBaseUrl, maxRequeueCount, dlqName);

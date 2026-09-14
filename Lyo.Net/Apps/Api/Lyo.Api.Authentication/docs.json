@@ -108,14 +108,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Api.Models",
       "kind": "lyo",
       "tags": [

@@ -101,7 +101,6 @@ using (metrics.StartTimer("operation.duration"))
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
@@ -110,4 +109,3 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `OpenTelemetry.Exporter.Console` `1.16.0` (direct, third-party)
 - `OpenTelemetry.Exporter.OpenTelemetryProtocol` `1.16.0` (direct, third-party)
 - `OpenTelemetry.Extensions.Hosting` `1.16.0` (direct, third-party)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)

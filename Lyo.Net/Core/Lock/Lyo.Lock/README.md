@@ -150,9 +150,7 @@ The `key` tag is the logical key string the caller passed (XML docs on `Constant
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)

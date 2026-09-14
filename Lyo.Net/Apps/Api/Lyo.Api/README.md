@@ -1141,7 +1141,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Api.Models` (direct, lyo)
 - `Lyo.Cache` (direct, lyo)
-- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Diagnostic.AspNetCore` (direct, lyo)
@@ -1154,8 +1153,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.AspNetCore.OpenApi` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (direct, microsoft)
+- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)

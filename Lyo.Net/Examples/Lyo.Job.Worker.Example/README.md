@@ -27,7 +27,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Json` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)

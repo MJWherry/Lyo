@@ -27,7 +27,7 @@
     },
     {
       "type": "markdown",
-      "title": "`SetupEndpoints` (root extension)",
+      "title": "`SetupCourtEndpoints` (root extension)",
       "body": "`SetupEndpoints.cs` hangs one extension method off `WebApplication` that chains every endpoint group:\n\n```text\nBuildJobGroup ← from Lyo.Job.Api (full job/job-run CRUD)\nBuildDriftGroup ← from Lyo.Drift.Api (instance upsert, snapshot/diff/change ingest, DiffAgainst)\nBuildReportingGroup ← from Lyo.Reporting.Api (definitions CRUD, generations query/get/delete, Generate/Rerun/Download; anonymous in this host)\nBuildComicGroup ← from Lyo.Comic.Api (series/volumes/chapters/pages/characters CRUD)\nBuildHomeInventoryGroup ← from Lyo.HomeInventory.Api (categories/locations/items/movements CRUD)\nBuildPersonGroup ← Person CRUD (Lyo.Api builder) + info/{schema}/{table}/{column}/GetUniqueCounts\nBuildDiscordGroup ← Discord dynamic CRUD\nBuildTwilioGroup ← Twilio dynamic CRUD (route prefix \"Twilio\")\nBuildFileStorageApi ← from Lyo.Api.FileStorage (Workbench/FileStorage group, POST upload/file, FileMetadata QueryProject)\nMapConfigApiEndpoints(requireAuthentication: false) ← Config.Api manage + resolve + query grids; this host encrypts config values\n```\n\nReporting uses `AddPostgresReportingManagement` + `AddLyoApiReporting` + `AddIOTempService`. Generate hooks save staged output via the keyed File Storage workbench service (\n`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup, generation delete, or definition delete).\n`ReportingApiOptions.DownloadStreamFactory` streams persisted outputs back from the same keyed `IFileStorageService`, which maps `GET Reporting/Generation/{id}/Download`.\nCSV/XLSX/JSON renderers are wired by default; this host also calls `AddWebRendererServiceFromConfiguration` + `AddReportingWebRenderer` so HTML/PDF generate works for the report design workbench. `AllowAdHocGeneration` is true so the workbench can POST composition JSON. Retention cleanup (`ReportRetentionService.CleanupAsync`) is\nwired but not scheduled, set `PostgresReportingOptions.GenerationRetention` and trigger it from a job/scheduler to enable it.\n\nCustom Job endpoints exist because the dynamic CRUD route for `JobRun` does not expose Create/Cancel; those need to go through MQ via `JobService`.\n\nThe Person group uses `Lyo.Api` `CreateBuilder<…>` with `WithFlags(All | UpsertInheritCreate | UpsertInheritUpdate | PatchInheritsUpdate)`, a `BeforeCreate` that assigns\n`LyoGuid.CreateCombPostgres()`, plus `WithMetadata` / `WithProjectionComputedFields`. It also adds a `GET info/{schema}/{table}/{column}/GetUniqueCounts` route that invokes\n`StoredProcedures.Info.UniqueValuesWithCount` via `ISprocService`."
     },
     {
@@ -789,14 +789,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.ContactUs",
       "kind": "lyo",
       "tags": [
@@ -966,6 +958,14 @@
     },
     {
       "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",

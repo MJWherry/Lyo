@@ -12,7 +12,8 @@
       "title": "`IMqService`",
       "items": [
         "`ConnectAsync` / `DisconnectAsync` open and close a session.",
-        "`IsConnected` is a synchronous snapshot used as a guard."
+        "`IsConnected` is a synchronous snapshot used as a guard.",
+        "`CreateQueue` / `CreateExchange` declare topology. Brokers treat matching re-declares as no-ops."
       ]
     },
     {

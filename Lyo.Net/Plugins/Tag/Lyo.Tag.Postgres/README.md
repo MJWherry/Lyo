@@ -110,7 +110,6 @@ Every read and write on `PostgresTagStore` takes an optional `Guid? tenantId` (s
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.EntityReference.Models` (direct, lyo)
 - `Lyo.EntityReference.Postgres` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
@@ -122,7 +121,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Core` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)

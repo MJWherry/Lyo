@@ -127,7 +127,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Config` (transitive, lyo)
 - `Lyo.Config.Api.Models` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)

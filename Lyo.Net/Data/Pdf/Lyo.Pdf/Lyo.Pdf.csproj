@@ -10,6 +10,7 @@
         <PackageReference Include="Microsoft.Extensions.Http"/>
         <PackageReference Include="PdfPig"/>
         <PackageReference Include="PDFsharp"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -18,7 +19,6 @@
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
     </ItemGroup>
 
 </Project>

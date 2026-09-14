@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.DownloadAccess;
 using Lyo.FileMetadataStore.Sqlite.Database;
@@ -65,7 +64,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<SqliteFileMetadataStoreOptions>(configuration, configSectionName);
+            var options = new SqliteFileMetadataStoreOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddSqliteFileMetadataStoreDbContextFactory(options);
         }
@@ -77,7 +77,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            options.Validate();
             services.AddSingleton(Options.Create(options));
             services.TryAddSingleton(options);
             services.AddSqliteMigrations<SqliteFileMetadataStoreDbContext, SqliteFileMetadataStoreOptions>();

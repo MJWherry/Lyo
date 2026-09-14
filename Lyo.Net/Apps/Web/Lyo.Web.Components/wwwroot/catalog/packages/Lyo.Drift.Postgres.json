@@ -31,23 +31,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Configuration",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -130,6 +114,14 @@
     },
     {
       "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "transitive",

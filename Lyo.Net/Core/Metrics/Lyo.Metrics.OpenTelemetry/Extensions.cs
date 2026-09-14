@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +40,8 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<OpenTelemetryOptions>(configuration, configSectionName);
+            var options = new OpenTelemetryOptions();
+            configuration.GetSection(configSectionName).Bind(options);
             return services.AddLyoMetricsWithOpenTelemetry(options, configureMeterProvider);
         }
 

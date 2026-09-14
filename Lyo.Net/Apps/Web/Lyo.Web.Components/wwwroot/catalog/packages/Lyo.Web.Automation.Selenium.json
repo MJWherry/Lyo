@@ -288,14 +288,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
@@ -305,6 +297,14 @@
     },
     {
       "name": "Lyo.Formatter",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",

@@ -48,6 +48,10 @@ public class FakeAmazonS3 : DispatchProxy
 
     public Func<GetObjectRequest, GetObjectResponse>? OnGetObject { get; set; }
 
+    public Func<ListObjectsV2Request, ListObjectsV2Response>? OnListObjectsV2 { get; set; }
+
+    public Func<CopyObjectRequest, CopyObjectResponse>? OnCopyObject { get; set; }
+
     /// <summary>When set, the next call to the matching <c>On*</c> handler throws this exception (and is then cleared).</summary>
     public Exception? ThrowOnNextUploadPart { get; set; }
 
@@ -128,6 +132,33 @@ public class FakeAmazonS3 : DispatchProxy
                     return Task.FromResult(obj);
 
                 return Task.FromResult(new GetObjectResponse { ResponseStream = new MemoryStream(new byte[64]) });
+            }
+            case "GetObjectAsync" when args is { Length: 2 } && args[0] is GetObjectRequest getReq2: {
+                GetObjectRequests.Add(getReq2);
+                if (OnGetObject?.Invoke(getReq2) is { } obj2)
+                    return Task.FromResult(obj2);
+
+                return Task.FromResult(new GetObjectResponse { ResponseStream = new MemoryStream(new byte[64]) });
+            }
+            case "GetObjectMetadataAsync" when args is { Length: 2 } && args[0] is GetObjectMetadataRequest metaReq2: {
+                GetObjectMetadataRequests.Add(metaReq2);
+                if (OnGetObjectMetadata?.Invoke(metaReq2) is { } meta2)
+                    return Task.FromResult(meta2);
+
+                return Task.FromException<GetObjectMetadataResponse>(new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound });
+            }
+            case "DeleteObjectAsync" when args is { Length: 2 } && args[0] is DeleteObjectRequest delReq2: {
+                DeleteObjectRequests.Add(delReq2);
+                var delResp = OnDeleteObject?.Invoke(delReq2) ?? new DeleteObjectResponse();
+                return Task.FromResult(delResp);
+            }
+            case "ListObjectsV2Async" when args is { Length: 2 } && args[0] is ListObjectsV2Request listReq: {
+                var listResp = OnListObjectsV2?.Invoke(listReq) ?? new ListObjectsV2Response { S3Objects = [], CommonPrefixes = [] };
+                return Task.FromResult(listResp);
+            }
+            case "CopyObjectAsync" when args is { Length: 2 } && args[0] is CopyObjectRequest copyReq: {
+                var copyResp = OnCopyObject?.Invoke(copyReq) ?? new CopyObjectResponse();
+                return Task.FromResult(copyResp);
             }
         }
 

@@ -18,7 +18,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diff\Lyo.Diff\Lyo.Diff.csproj"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Core\SystemInformation\Lyo.SystemInformation\Lyo.SystemInformation.csproj"/>

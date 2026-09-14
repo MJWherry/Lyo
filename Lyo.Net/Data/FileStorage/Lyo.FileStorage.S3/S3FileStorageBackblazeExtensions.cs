@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,12 +36,11 @@ public static class S3FileStorageBackblazeExtensions
         if (services.Any(s => s.ServiceType == typeof(S3FileStorageOptions)))
             return;
 
-        services.AddSingleton<S3FileStorageOptions>(_ => {
-            var options = LyoOptions.Bind<S3FileStorageOptions>(configuration, configSectionName);
-
-            options.ApplyBackblazeB2Defaults();
-            return options;
-        });
+        var options = new S3FileStorageOptions();
+        configuration.GetSection(configSectionName).Bind(options);
+        options.ApplyBackblazeB2Defaults();
+        options.Validate();
+        services.AddSingleton(options);
     }
 
     extension(IServiceCollection services)
@@ -71,12 +69,11 @@ public static class S3FileStorageBackblazeExtensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
             ArgumentHelpers.ThrowIfNull(configure);
             if (!services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
-                services.AddSingleton<S3FileStorageOptions>(_ => {
-                    var options = new S3FileStorageOptions();
-                    configure(options);
-                    options.ApplyBackblazeB2Defaults();
-                    return options;
-                });
+                var options = new S3FileStorageOptions();
+                configure(options);
+                options.ApplyBackblazeB2Defaults();
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             return services.AddS3FileStorageServiceKeyed(keyName);

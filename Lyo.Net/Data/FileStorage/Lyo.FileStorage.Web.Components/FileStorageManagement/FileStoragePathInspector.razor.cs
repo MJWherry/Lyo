@@ -1,4 +1,6 @@
+using Lyo.Api.FileStorage.Models;
 using Lyo.FileMetadataStore.Models;
+using Lyo.IO.FileSystem;
 using Lyo.IO.Temp.Models;
 using Lyo.Web.Components.FileUpload;
 using Lyo.Web.Components.Models;
@@ -17,6 +19,10 @@ public partial class FileStoragePathInspector : IAsyncDisposable
     private bool _metadataBusy;
     private string _metadataStatus = string.Empty;
     private string _newFolderName = string.Empty;
+    private IReadOnlyList<FileSystemEntry> _contents = [];
+    private bool _contentsBusy;
+    private string? _contentsPath;
+    private int _loadedListingRevision = -1;
     private StagedUpload? _selectedStaged;
     private readonly List<StagedUpload> _staged = [];
     private IIOTempSession? _stagingSession;
@@ -31,10 +37,14 @@ public partial class FileStoragePathInspector : IAsyncDisposable
     [EditorRequired]
     public FileStorageBrowserActions Actions { get; set; } = default!;
 
-    /// <summary>Tree root, used to resolve breadcrumb prefixes.</summary>
+    /// <summary>Folder-list source. Contents and breadcrumbs do not walk a detached tree <c>Root</c>.</summary>
     [Parameter]
     [EditorRequired]
-    public FileStoragePathTreeNode Root { get; set; } = default!;
+    public IFileTreeSource FolderSource { get; set; } = default!;
+
+    /// <summary>Increment to reload directory contents after the left-hand tree refreshes.</summary>
+    [Parameter]
+    public int ListingRevision { get; set; }
 
     /// <summary>Currently selected path.</summary>
     [Parameter]
@@ -80,7 +90,33 @@ public partial class FileStoragePathInspector : IAsyncDisposable
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
     {
-        if (Selected is not { IsDirectory: false, FileId: { } fileId }) {
+        if (Selected is { IsDirectory: true }) {
+            _loadedFileId = null;
+            _metadata = null;
+            _metadataStatus = string.Empty;
+            await LoadContentsAsync(FileStorageHttpTreeSource.DirectoryVfsPath(Selected.PathPrefix)).ConfigureAwait(true);
+            return;
+        }
+
+        _contents = [];
+        _contentsPath = null;
+        _loadedListingRevision = -1;
+
+        if (Selected is not { IsDirectory: false } file) {
+            _loadedFileId = null;
+            _metadata = null;
+            _metadataStatus = string.Empty;
+            return;
+        }
+
+        if (file.Presence == FileStoragePresence.Physical) {
+            _loadedFileId = null;
+            _metadata = null;
+            _metadataStatus = "This object is on disk only (not in the catalog). Download is the raw physical file — it is not decrypted or decompressed.";
+            return;
+        }
+
+        if (file.FileId is not { } fileId) {
             _loadedFileId = null;
             _metadata = null;
             _metadataStatus = string.Empty;
@@ -92,6 +128,26 @@ public partial class FileStoragePathInspector : IAsyncDisposable
 
         _loadedFileId = fileId;
         await LoadMetadataAsync(fileId).ConfigureAwait(true);
+    }
+
+    private async Task LoadContentsAsync(string path)
+    {
+        if (_contentsPath == path && _loadedListingRevision == ListingRevision)
+            return;
+
+        _contentsBusy = true;
+        _contentsPath = path;
+        _loadedListingRevision = ListingRevision;
+        try {
+            _contents = await FolderSource.ListChildrenAsync(path).ConfigureAwait(true);
+        }
+        catch (Exception ex) {
+            _contents = [];
+            Host.SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _contentsBusy = false;
+        }
     }
 
     private void EnsureStagingSession()
@@ -121,13 +177,11 @@ public partial class FileStoragePathInspector : IAsyncDisposable
         }
     }
 
-    private Task SelectNodeAsync(FileStoragePathTreeNode node) => SelectedChanged.InvokeAsync(node);
+    private Task SelectEntryAsync(FileSystemEntry entry)
+        => SelectedChanged.InvokeAsync(FileStorageHttpTreeSource.ToPathNode(entry));
 
     private Task SelectPrefixAsync(string? prefix)
-    {
-        var node = FileStoragePathTreeBuilder.FindDirectory(Root, prefix);
-        return node == null ? Task.CompletedTask : SelectedChanged.InvokeAsync(node);
-    }
+        => SelectedChanged.InvokeAsync(FileStorageHttpTreeSource.DirectoryNode(prefix));
 
     private async Task AddFolderAsync()
     {
@@ -261,29 +315,47 @@ public partial class FileStoragePathInspector : IAsyncDisposable
         }
     }
 
+    private bool InCatalog
+        => Selected is { FileId: not null } && Selected.Presence != FileStoragePresence.Physical;
+
+    private bool CanDownload
+        => Selected is { IsDeleted: false } && (InCatalog || !string.IsNullOrEmpty(Selected.PhysicalKey));
+
+    private bool CatalogActionsEnabled => InCatalog && Selected is { IsDeleted: false };
+
     private Task ViewMetadataAsync()
-        => Selected?.FileId is { } id ? Actions.ViewAsync(id) : Task.CompletedTask;
+        => InCatalog && Selected?.FileId is { } id ? Actions.ViewAsync(id) : Task.CompletedTask;
 
     private Task AccessLinkAsync()
-        => Selected?.FileId is { } id && !Selected.IsDeleted ? Actions.AccessLinkAsync(id, Selected.Name) : Task.CompletedTask;
+        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.AccessLinkAsync(id, Selected.Name) : Task.CompletedTask;
 
     private Task DownloadAsync()
-        => Selected?.FileId is { } id && !Selected.IsDeleted ? Actions.DownloadAsync(id) : Task.CompletedTask;
+    {
+        if (Selected is { IsDeleted: true })
+            return Task.CompletedTask;
+
+        if (InCatalog && Selected?.FileId is { } id)
+            return Actions.DownloadAsync(id);
+
+        return !string.IsNullOrEmpty(Selected?.PhysicalKey)
+            ? Actions.DownloadPhysicalAsync(Selected.PhysicalKey)
+            : Task.CompletedTask;
+    }
 
     private Task MoveAsync()
-        => Selected?.FileId is { } id && !Selected.IsDeleted ? Actions.MoveAsync(id, Selected.PathPrefix) : Task.CompletedTask;
+        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.MoveAsync(id, Selected.PathPrefix) : Task.CompletedTask;
 
     private Task CopyAsync()
-        => Selected?.FileId is { } id && !Selected.IsDeleted ? Actions.CopyAsync(id, Selected.PathPrefix) : Task.CompletedTask;
+        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.CopyAsync(id, Selected.PathPrefix) : Task.CompletedTask;
 
     private Task RenameAsync()
-        => Selected?.FileId is { } id && !Selected.IsDeleted ? Actions.RenameAsync(id, Selected.Name) : Task.CompletedTask;
+        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.RenameAsync(id, Selected.Name) : Task.CompletedTask;
 
     private Task RotateDekAsync()
-        => Selected?.FileId is { } id && !Selected.IsDeleted ? Actions.RotateDekAsync(id) : Task.CompletedTask;
+        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.RotateDekAsync(id) : Task.CompletedTask;
 
     private Task DeleteAsync()
-        => Selected?.FileId is { } id && !Selected.IsDeleted ? Actions.DeleteAsync(id) : Task.CompletedTask;
+        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.DeleteAsync(id) : Task.CompletedTask;
 
     private static string? NullIfWhiteSpace(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

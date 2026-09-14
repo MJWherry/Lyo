@@ -89,6 +89,16 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     }
 
     [Fact]
+    public async Task GetPreSignedReadUrlAsync_NullPathPrefix_UsesMetadataPrefix()
+    {
+        using var service = CreateService(o => o.AllowFileUriPresignedUrls = true);
+        var saved = await service.SaveFileAsync("x"u8.ToArray(), "a.bin", pathPrefix: "reports", ct: TestContext.Current.CancellationToken);
+        var url = await service.GetPreSignedReadUrlAsync(saved.Id, TimeSpan.FromMinutes(5), pathPrefix: null, TestContext.Current.CancellationToken);
+        Assert.StartsWith("file://", url, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("reports", url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task CopyFileAsync_PendingDirectUpload_ThrowsFileNotAvailable()
     {
         using var service = CreateService(o => {

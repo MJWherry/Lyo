@@ -307,6 +307,28 @@ public abstract class FileMetadataStoreContractTests
     }
 
     [Fact]
+    public async Task ListByPathPrefixAsync_ImmediateAndDescendants()
+    {
+        Assert.NotNull(Services);
+        using var scope = Services.CreateScope();
+        var store = CreateStore(scope);
+        var root = CreateMetadata(Guid.NewGuid(), [1]) with { OriginalFileName = "root.txt" };
+        var reports = CreateMetadata(Guid.NewGuid(), [2]) with { PathPrefix = "reports", OriginalFileName = "a.pdf" };
+        var nested = CreateMetadata(Guid.NewGuid(), [3]) with { PathPrefix = "reports/2024", OriginalFileName = "b.pdf" };
+        await store.SaveMetadataAsync(root.Id, root, TestContext.Current.CancellationToken);
+        await store.SaveMetadataAsync(reports.Id, reports, TestContext.Current.CancellationToken);
+        await store.SaveMetadataAsync(nested.Id, nested, TestContext.Current.CancellationToken);
+        var immediate = await store.ListByPathPrefixAsync("reports", false, 50, TestContext.Current.CancellationToken);
+        Assert.Single(immediate);
+        Assert.Equal(reports.Id, immediate[0].Id);
+        var descendants = await store.ListByPathPrefixAsync("reports", true, 50, TestContext.Current.CancellationToken);
+        Assert.Equal(2, descendants.Count);
+        var atRoot = await store.ListByPathPrefixAsync(null, false, 50, TestContext.Current.CancellationToken);
+        Assert.Contains(atRoot, r => r.Id == root.Id);
+        Assert.DoesNotContain(atRoot, r => r.Id == reports.Id);
+    }
+
+    [Fact]
     public async Task FindByKeyIdAndVersionAsync_ExcludesSoftDeleted()
     {
         Assert.NotNull(Services);

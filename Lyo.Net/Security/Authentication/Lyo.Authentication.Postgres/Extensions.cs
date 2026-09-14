@@ -3,7 +3,6 @@ using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Postgres.Stores;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
-using Lyo.Configuration;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -36,7 +35,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresUserOptions>(configuration, configSectionName);
+            var options = new PostgresUserOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddUserDbContextFactory(options);
         }

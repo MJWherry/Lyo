@@ -1,7 +1,6 @@
 using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Config;
-using Lyo.Configuration;
 using Lyo.Config;
 using Lyo.Discord.Models;
 using Lyo.Discord.Models.Request;
@@ -209,7 +208,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresDiscordOptions>(configuration, configSectionName);
+            var options = new PostgresDiscordOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddDiscordDbContextFactory(options);
         }
@@ -241,7 +241,8 @@ public static class Extensions
         public IServiceCollection AddPostgresDiscordFromConfiguration(IConfiguration configuration, string configSectionName = PostgresDiscordOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<PostgresDiscordOptions>(configuration, configSectionName);
+            var options = new PostgresDiscordOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPostgresDiscord(options);
         }

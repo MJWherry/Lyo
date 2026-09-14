@@ -1,10 +1,11 @@
 # Lyo.FileStorage.S3
 
-Lyo.FileStorage on S3-compatible endpoints (AWS S3, Backblaze B2, MinIO, and others) through AWSSDK.S3.
+Lyo.FileStorage on S3-compatible endpoints (AWS S3, Backblaze B2, MinIO, and others) through AWSSDK.S3. Also exposes `S3FileSystem` (`IFileSystem`) for the raw object-key tree (prefix + `Delimiter=/`). That is not the FileStorage metadata tree.
 
 ## Features
 
 - **S3 API.** One client for AWS and S3-compatible endpoints.
+- **Raw key VFS.** `S3FileSystem` lists immediate children with prefix + delimiter, creates empty-folder markers, and copies/moves objects. `OpenAppend` is not supported.
 - **Multipart uploads.** Keyed S3MultipartUploadService is registered with the same key when you call S3FileStorageServiceBuilder.Build (unless already registered). If no IMultipartUploadSessionStore is registered yet, an in-memory store is added (use AddPostgresFileMetadataStoreKeyed(...).Build() before S3 when using PostgreSQL so sessions use the DB). Part size is clamped to the S3 minimum (5 MiB) with an 8 MiB default. Total upload limit aligns with MaxUploadSizeBytes. Server-side copy is used for the final commit (no download+re-upload round trip).
 - **Streamed PUT spilling.** S3UploadStream keeps small payloads in memory and spills to a deletable temp file once it crosses 4 MiB, then uploads via a single PUT under 64 MiB or multipart above that, aborting cleanly on any per-part failure.
 - **Region.** AWS regions are configurable.
@@ -186,17 +187,18 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Compression` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.FileMetadataStore` (direct, lyo)
 - `Lyo.FileStorage` (direct, lyo)
 - `AWSSDK.Core` `4.0.100.4` (direct, third-party)
 - `AWSSDK.S3` `4.0.101` (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
@@ -206,7 +208,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `EasyCompressor` `2.1.0` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)

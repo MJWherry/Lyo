@@ -1,6 +1,5 @@
 using Lyo.Api;
 using Lyo.Api.Mapping;
-using Lyo.Configuration;
 using Lyo.Encryption;
 using Lyo.Exceptions;
 using Lyo.Health;
@@ -59,7 +58,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresJobOptions>(configuration, configSectionName);
+            var options = new PostgresJobOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddJobDbContextFactory(options);
         }
@@ -94,7 +94,8 @@ public static class Extensions
         public IServiceCollection AddPostgresJobManagementFromConfiguration(IConfiguration configuration, string configSectionName = PostgresJobOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<PostgresJobOptions>(configuration, configSectionName);
+            var options = new PostgresJobOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPostgresJobManagement(options);
         }

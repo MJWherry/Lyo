@@ -132,11 +132,6 @@
     <Folder Name="/Core/SystemInformation/">
         <Project Path="Core/SystemInformation/Lyo.SystemInformation/Lyo.SystemInformation.csproj" />
     </Folder>
-    <Folder Name="/Core/Configuration/">
-        <Project Path="Core/Configuration/Lyo.Configuration/Lyo.Configuration.csproj" />
-        <Project Path="Core/Configuration/Lyo.Configuration.Validation/Lyo.Configuration.Validation.csproj" />
-        <Project Path="Core/Configuration/Lyo.Configuration.Validation.Tests/Lyo.Configuration.Validation.Tests.csproj" />
-    </Folder>
     <Folder Name="/Core/Parameters/">
         <Project Path="Core/Parameters/Lyo.Parameters/Lyo.Parameters.csproj" />
     </Folder>
@@ -194,13 +189,15 @@
         <Project Path="Data/Images/Lyo.Images.Web.Components/Lyo.Images.Web.Components.csproj" />
         <Project Path="Data/Images/Lyo.Images/Lyo.Images.csproj" />
     </Folder>
-    <Folder Name="/Data/IOTemp/">
-        <Project Path="Data/IOTemp/Lyo.IO.Temp/Lyo.IO.Temp.csproj" />
-        <Project Path="Data/IOTemp/Lyo.IO.Temp.Tests/Lyo.IO.Temp.Tests.csproj" />
-        <Project Path="Data/IOTemp/Lyo.IO.Temp.Ftp/Lyo.IO.Temp.Ftp.csproj" />
-        <Project Path="Data/IOTemp/Lyo.IO.Temp.Ftp.Tests/Lyo.IO.Temp.Ftp.Tests.csproj" />
-        <Project Path="Data/IOTemp/Lyo.IO.Temp.Sftp/Lyo.IO.Temp.Sftp.csproj" />
-        <Project Path="Data/IOTemp/Lyo.IO.Temp.Sftp.Tests/Lyo.IO.Temp.Sftp.Tests.csproj" />
+    <Folder Name="/Data/IO/">
+        <Project Path="Data/IO/Lyo.IO.FileSystem/Lyo.IO.FileSystem.csproj" />
+        <Project Path="Data/IO/Lyo.IO.FileSystem.Tests/Lyo.IO.FileSystem.Tests.csproj" />
+        <Project Path="Data/IO/Lyo.IO.FileSystem.Web.Components/Lyo.IO.FileSystem.Web.Components.csproj" />
+        <Project Path="Data/IO/Lyo.IO.FileSystem.Web.Components.Tests/Lyo.IO.FileSystem.Web.Components.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Data/IO/Temp/">
+        <Project Path="Data/IO/Temp/Lyo.IO.Temp/Lyo.IO.Temp.csproj" />
+        <Project Path="Data/IO/Temp/Lyo.IO.Temp.Tests/Lyo.IO.Temp.Tests.csproj" />
     </Folder>
     <Folder Name="/Data/Ftp/">
         <Project Path="Data/Ftp/Lyo.Ftp.Client/Lyo.Ftp.Client.csproj" />

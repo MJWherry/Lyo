@@ -16,7 +16,7 @@
     {
       "type": "paragraph",
       "title": "Routes this maps",
-      "text": "At `FileStorageApiOptions.Route` the group exposes: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`."
+      "text": "At `FileStorageApiOptions.Route` the group exposes: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `GET files/folder` (store PathPrefix plus reconcile, flags `Store` / `Physical` / `Both`), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`."
     }
   ],
   "links": [],
@@ -119,14 +119,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.DateAndTime",
       "kind": "lyo",
       "tags": [
@@ -192,6 +184,14 @@
     },
     {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",

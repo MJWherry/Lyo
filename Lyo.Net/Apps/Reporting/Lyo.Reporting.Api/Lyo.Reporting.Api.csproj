@@ -21,7 +21,6 @@
         <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
         <ProjectReference Include="..\..\..\Plugins\Reporting\Lyo.Reporting.Models\Lyo.Reporting.Models.csproj"/>
         <ProjectReference Include="..\..\..\Plugins\Reporting\Lyo.Reporting.Postgres\Lyo.Reporting.Postgres.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
     </ItemGroup>
 
 </Project>

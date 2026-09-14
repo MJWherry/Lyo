@@ -123,7 +123,7 @@ sequenceDiagram
 4. `ExecuteAsync(ctx)`. Subclass work; use `ctx.CreateChildRunsAsync`, `ctx.ReportProgressAsync`, `ctx.CancellationToken`.
 5. **Finish**. `JobWorkerResultBuilder` results go to `POST Job/Run/{id}/Finished`.
 
-`StartAsync` also registers the worker instance and subscribes to cancellation messages for this `WorkerType`. Registry registration is best-effort: a failed
+`StartAsync` also declares `job.events` and `job.run.{workerType}` (and the worker DLQ when configured) when they are missing, registers the worker instance, and subscribes to cancellation messages for this `WorkerType`. Registry registration is best-effort: a failed
 `POST Job/WorkerInstance` (for example when the Job API is unreachable) does not stop the worker from consuming jobs. Unregistered workers retry registration on every
 `HeartbeatInterval` until the Job API accepts the request; a later heartbeat `404` also triggers re-registration.
 
@@ -171,7 +171,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Client` (direct, lyo)
 - `Lyo.Api.Models` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Formatter` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
 - `Lyo.Job.Client` (direct, lyo)

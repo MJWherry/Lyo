@@ -8,7 +8,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Benchmark.Models\Lyo.Benchmark.Models.csproj"/>
         <ProjectReference Include="..\..\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
-        <ProjectReference Include="..\..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\..\Data\IO\Temp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
         <ProjectReference Include="..\..\Streams\Lyo.Streams\Lyo.Streams.csproj"/>
     </ItemGroup>
 

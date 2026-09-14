@@ -20,9 +20,7 @@ services.AddPostgresFileSystemWatcherStoreFromConfiguration(configuration);
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Json` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.FileSystemWatcher` (direct, lyo)
 - `Lyo.FileSystemWatcher.Models` (direct, lyo)
@@ -31,8 +29,10 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
+- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)

@@ -30,6 +30,14 @@
       ]
     },
     {
+      "name": "Lyo.Common.Json",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Drift.Models",
       "kind": "lyo",
       "tags": [
@@ -79,23 +87,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Metadata",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Configuration",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -152,6 +144,14 @@
     },
     {
       "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",

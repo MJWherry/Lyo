@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Compression;
 using Lyo.Encryption;
 using Lyo.Exceptions;
@@ -50,6 +49,7 @@ public static class CacheServiceExtensions
             ArgumentHelpers.ThrowIfNull(services);
             var cacheOptions = new CacheOptions();
             configureOptions?.Invoke(cacheOptions);
+            cacheOptions.Validate();
             services.AddSingleton(cacheOptions);
             RegisterMemoryCache(services, cacheOptions);
             EnsureCompressionRegistered(services);
@@ -76,7 +76,10 @@ public static class CacheServiceExtensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var cacheOptions = LyoOptions.Bind<CacheOptions>(configuration, CacheOptions.SectionName, configureOptions);
+            var cacheOptions = new CacheOptions();
+            configuration.GetSection(CacheOptions.SectionName).Bind(cacheOptions);
+            configureOptions?.Invoke(cacheOptions);
+            cacheOptions.Validate();
             services.AddSingleton(cacheOptions);
             RegisterMemoryCache(services, cacheOptions);
             EnsureCompressionRegistered(services);

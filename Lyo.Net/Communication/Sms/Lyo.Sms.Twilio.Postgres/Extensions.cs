@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Lyo.Sms.Twilio.Postgres.Database;
@@ -39,7 +38,8 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<PostgresTwilioSmsOptions>(configuration, configSectionName);
+            var options = new PostgresTwilioSmsOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddTwilioSmsDbContextFactory(options);
         }

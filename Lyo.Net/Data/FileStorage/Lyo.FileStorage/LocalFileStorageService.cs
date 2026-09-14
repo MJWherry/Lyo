@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
 using Lyo.Encryption;
@@ -15,6 +16,7 @@ using Lyo.FileStorage.Models;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
 using Lyo.Health;
+using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -23,7 +25,7 @@ using DiskFileStorageOptions = Lyo.FileStorage.Models.DiskFileStorageOptions;
 namespace Lyo.FileStorage;
 
 /// <summary>Filesystem-backed <see cref="IFileStorageService" /> rooted at <see cref="DiskFileStorageOptions.RootDirectoryPath" />.</summary>
-public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService
+public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService, IFileStoragePhysical
 {
     private readonly DiskFileStorageOptions _options;
     private readonly bool _ownsMetadataService;
@@ -54,6 +56,11 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         Directory.CreateDirectory(_options.RootDirectoryPath);
         Logger.LogInformation("Created root directory: {RootPath}", _options.RootDirectoryPath);
     }
+
+    /// <inheritdoc />
+    public IFileSystem Physical => _physicalFs ??= new LocalFileSystem(_options.RootDirectoryPath);
+
+    private IFileSystem? _physicalFs;
 
     /// <inheritdoc />
     Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct)
@@ -177,7 +184,7 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         if (srcPath == null || !File.Exists(srcPath))
             throw new FileNotFoundException($"Source file path not found for id {sourceFileId}");
 
-        var destId = Guid.NewGuid();
+        var destId = LyoGuid.CreateV7();
         var destPrefix = NormalizePathPrefix(request?.PathPrefix ?? meta.PathPrefix);
         var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
         try {
@@ -432,7 +439,8 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
 
         var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
         EnsureReadableAvailability(meta);
-        var filePath = FindFilePath(fileId, pathPrefix);
+        var resolvedPrefix = pathPrefix ?? meta.PathPrefix;
+        var filePath = FindFilePath(fileId, resolvedPrefix);
         if (filePath == null || !File.Exists(filePath))
             throw new FileNotFoundException($"File with ID {fileId} was not found in storage.");
 
@@ -504,7 +512,7 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         }
 
         internal static AtomicReplaceFileStream Create(string targetPath, ILogger logger)
-            => new(targetPath + ".partial-" + Guid.NewGuid().ToString("N") + ".tmp", targetPath, logger);
+            => new(targetPath + ".partial-" + LyoGuid.CreateV7().ToString("N") + ".tmp", targetPath, logger);
 
         public override void Flush()
         {

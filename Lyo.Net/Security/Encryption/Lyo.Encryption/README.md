@@ -1,5 +1,4 @@
 # Lyo.Encryption
-[![NuGet version](https://shields.io[Lyo.Encryption].svg)](https://www.nuget.org/packages/Lyo.Encryption/)
 
 Authenticated encryption for .NET: symmetric AEAD (AES-GCM, ChaCha20-Poly1305, XChaCha20-Poly1305, AES-CCM, AES-SIV), RSA and AES-GCM + RSA hybrids, plus envelope / two-key flows via `ITwoKeyEncryptionService`.
 

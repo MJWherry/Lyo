@@ -78,7 +78,6 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
         var now = DateTime.UtcNow;
         var stagingKey = BuildStagingKey(request.PathPrefix, sessionId);
         var tenant = request.TenantId ?? _operationContextAccessor.Current?.TenantId;
-        string uploadId;
         try {
             await _contentPolicy.ValidateAsync(
                     new() {
@@ -89,6 +88,7 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
                     }, ct)
                 .ConfigureAwait(false);
 
+            string uploadId;
             try {
                 var initiate = new InitiateMultipartUploadRequest { BucketName = _options.BucketName, Key = stagingKey, ContentType = FileTypeInfo.Unknown.MimeType };
                 S3UploadServerSideEncryption.ApplyToInitiateMultipart(initiate, _options);

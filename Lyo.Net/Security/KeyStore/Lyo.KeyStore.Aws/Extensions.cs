@@ -1,6 +1,5 @@
 using Amazon;
 using Amazon.SecretsManager;
-using Lyo.Configuration;
 using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.TwoKey;
@@ -14,8 +13,9 @@ public static class Extensions
 {
     private static AwsKeyStoreOptions BindOptions(IConfiguration configuration, string configSectionName)
     {
-        var options = LyoOptions.Bind<AwsKeyStoreOptions>(configuration, configSectionName);
-
+        var options = new AwsKeyStoreOptions();
+        configuration.GetSection(configSectionName).Bind(options);
+        options.Validate();
         return options;
     }
 
@@ -78,7 +78,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
-            services.AddSingleton<AwsKeyStoreOptions>(_ => BindOptions(configuration, configSectionName));
+            services.AddSingleton(BindOptions(configuration, configSectionName));
 
             // add IAmazonSecretsManager when it is not already registered
             if (!services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager)))
@@ -136,7 +136,7 @@ public static class Extensions
                 services.AddAmazonSecretsManagerFromConfiguration(configuration, configSectionName);
 
             if (!services.Any(s => s.ServiceType == typeof(AwsKeyStoreOptions)))
-                services.AddSingleton<AwsKeyStoreOptions>(_ => BindOptions(configuration, configSectionName));
+                services.AddSingleton(BindOptions(configuration, configSectionName));
 
             // keyed AwsKeyStore; SecretNamePrefix is read from options when the store is resolved
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyedServiceName) && s.ServiceType == typeof(AwsKeyStore))) {

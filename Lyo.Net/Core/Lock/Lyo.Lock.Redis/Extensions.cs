@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Lock.Abstractions;
@@ -27,6 +26,7 @@ public static class RedisLockServiceExtensions
             ArgumentHelpers.ThrowIfNull(services);
             var options = new RedisLockOptions();
             configureOptions?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<ILockService>(sp => {
                 var redis = sp.GetRequiredService<IConnectionMultiplexer>();
@@ -73,7 +73,10 @@ public static class RedisLockServiceExtensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<RedisLockOptions>(configuration, LockOptions.SectionName, configureOptions);
+            var options = new RedisLockOptions();
+            configuration.GetSection(LockOptions.SectionName).Bind(options);
+            configureOptions?.Invoke(options);
+            options.Validate();
             var redisSection = configuration.GetSection(redisSectionName);
             var connectionString = redisSection["ConnectionString"] ?? redisSection.Value ?? "";
             if (!string.IsNullOrWhiteSpace(connectionString)) {

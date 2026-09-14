@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.FileStorage.Models;
 using Lyo.Sftp.Client;
 
@@ -11,4 +12,11 @@ public sealed class SftpFileStorageOptions : FileStorageServiceBaseOptions
 
     /// <summary>SFTP connection settings: host, auth, remote root jail, and metrics.</summary>
     public SftpClientOptions Sftp { get; set; } = new();
+
+    /// <summary>Throws when nested SFTP options are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNull(Sftp);
+        Sftp.Validate();
+    }
 }

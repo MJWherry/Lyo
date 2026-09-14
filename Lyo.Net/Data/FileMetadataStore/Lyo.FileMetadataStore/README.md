@@ -4,7 +4,7 @@ File identity without the bytes. Large systems split:
 
 1. **Blob storage** (Lyo.FileStorage). Throughput, multipart uploads, CDN URLs. 2. **Metadata OLTP** (this abstraction). Dedupe fingerprints, encryption key ids, multipart session pointers, archival flags.
 
-Depend on IFileMetadataStore only where you manipulate canonical Guid file identifiers.
+Depend on IFileMetadataStore only where you manipulate canonical Guid file identifiers. `ListByPathPrefixAsync` lists non-deleted rows for a PathPrefix (immediate children or descendants) without a schema change.
 
 ## Methods
 
@@ -82,9 +82,9 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Compression` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Hashing` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` (direct, microsoft)
@@ -99,7 +99,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `EasyCompressor` `2.1.0` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
 - `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)

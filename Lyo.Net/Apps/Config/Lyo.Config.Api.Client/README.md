@@ -142,7 +142,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Config` (direct, lyo)
 - `Lyo.Config.Api.Models` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)

@@ -41,11 +41,15 @@
         ],
         [
           "FileStorageTreeBrowser (.razor, .razor.cs, .razor.css)",
-          "Tree tab: MudGrid split with a PathPrefix folder tree on the left and a path inspector on the right. Builds the full folder/file tree from FileMetadata QueryProject rows. Subscribes to FilesChanged."
+          "Tree tab: LyoFileTree over GET files/folder (store PathPrefix plus reconcile). Inspector on the right. Subscribes to FilesChanged. QueryProject stays on the Files/Browser grids."
+        ],
+        [
+          "FileStorageHttpTreeSource",
+          "IFileTreeSource that calls GET {prefix}/files/folder and maps FileStoragePresence onto FileSystemEntry.Properties."
         ],
         [
           "FileStoragePathTree",
-          "MudTreeView of virtual folders and file leaves. Quick search, edit-mode multi-select with bulk Move / Rotate DEKs / Delete / Download zip (folders include descendant files), drag-and-drop onto a folder to move. Soft-deleted files are omitted."
+          "Optional MudTreeView of virtual folders and file leaves (Store / Physical / Both badges). The Tree tab hosts LyoFileTree instead."
         ],
         [
           "FileStoragePathInspector",
@@ -213,6 +217,22 @@
       ]
     },
     {
+      "name": "Lyo.IO.FileSystem",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -311,14 +331,6 @@
     },
     {
       "name": "Lyo.Compression",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Configuration",
       "kind": "lyo",
       "tags": [
         "transitive",

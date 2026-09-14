@@ -87,14 +87,12 @@ Every extension hangs off `IServiceCollection`. Hosts map and insert; this packa
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Postgres` (direct, lyo)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
 - `Lyo.Health` (transitive, lyo)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
 - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)

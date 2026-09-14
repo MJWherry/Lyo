@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Typecast.Client;
@@ -26,11 +25,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             // Bind TypecastOptions unless already registered
             if (!services.Any(s => s.ServiceType == typeof(TypecastOptions))) {
-                services.AddSingleton<TypecastOptions>(_ => {
-                    var options = new TypecastOptions();
-                    configure?.Invoke(options);
-                    return options;
-                });
+                var options = new TypecastOptions();
+                configure?.Invoke(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             // Add the TTS service (TypecastClient must already be registered)
@@ -78,11 +76,10 @@ public static class Extensions
 
             // Bind TypecastOptions from configuration unless already registered
             if (!services.Any(s => s.ServiceType == typeof(TypecastOptions))) {
-                services.AddSingleton<TypecastOptions>(_ => {
-                    var options = LyoOptions.Bind<TypecastOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new TypecastOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             // Add the TTS implementation (TypecastClient must already be registered)

@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,16 +55,14 @@ public static class Extensions
 
             // Register options when missing
             if (!services.Any(s => s.ServiceType == typeof(LocalFileMetadataStoreOptions))) {
-                services.AddSingleton<LocalFileMetadataStoreOptions>(_ => {
-                    var options = LyoOptions.Bind<LocalFileMetadataStoreOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new LocalFileMetadataStoreOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             services.AddSingleton<LocalFileMetadataStore>(provider => {
                 var options = provider.GetRequiredService<LocalFileMetadataStoreOptions>();
-                ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.RootDirectoryPath, nameof(options.RootDirectoryPath));
                 var loggerFactory = provider.GetService<ILoggerFactory>();
                 return new(options.RootDirectoryPath, loggerFactory);
             });

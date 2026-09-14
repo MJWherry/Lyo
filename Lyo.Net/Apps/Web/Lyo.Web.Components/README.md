@@ -213,10 +213,8 @@ Shared visual helpers sit on internal `Extensions`: `GetStatusColor(string)`, `G
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Api.Client` (direct, lyo)
-- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.DataTable.Models` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
@@ -229,10 +227,12 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Blazored.LocalStorage` `4.5.0` (direct, third-party)
 - `MudBlazor` `9.3` (direct, third-party)
 - `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)

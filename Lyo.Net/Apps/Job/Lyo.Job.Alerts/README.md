@@ -84,6 +84,7 @@ A transient dispatch failure requeues the message (`HandleMessageAsync` returns 
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Job.Models` (direct, lyo)
 - `Lyo.MessageQueue` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
@@ -92,7 +93,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)
 - `Lyo.Api.Models` (transitive, lyo)
-- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)

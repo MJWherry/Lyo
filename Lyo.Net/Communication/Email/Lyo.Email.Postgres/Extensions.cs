@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Email.Postgres.Database;
 using Lyo.Exceptions;
 using Lyo.Postgres;
@@ -45,7 +44,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresEmailOptions>(configuration, configSectionName);
+            var options = new PostgresEmailOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddEmailDbContextFactory(options);
         }

@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Lock;
 
 /// <summary>Settings for <see cref="LocalLockService" /> and shared defaults used by Redis-backed locks.</summary>
@@ -20,4 +22,12 @@ public class LockOptions
 
     /// <summary>True to emit metrics for lock acquire, release, and execute.</summary>
     public bool EnableMetrics { get; set; } = false;
+
+    /// <summary>Throws when timeouts or <see cref="KeyPrefix" /> are invalid.</summary>
+    public virtual void Validate()
+    {
+        ArgumentHelpers.ThrowIf(DefaultAcquireTimeout <= TimeSpan.Zero, "DefaultAcquireTimeout must be greater than zero.");
+        ArgumentHelpers.ThrowIf(DefaultLockDuration <= TimeSpan.Zero, "DefaultLockDuration must be greater than zero.");
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(KeyPrefix);
+    }
 }

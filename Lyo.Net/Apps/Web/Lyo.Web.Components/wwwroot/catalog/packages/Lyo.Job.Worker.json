@@ -152,7 +152,7 @@
     {
       "type": "markdown",
       "title": "Lifecycle of a worker",
-      "body": "```mermaid\nsequenceDiagram\n    participant Q as job.run.workerType\n    participant W as JobWorkerBase\n    participant API as Job API\n    Q->>W: runId message\n    W->>API: GET run\n    W->>API: POST Started\n    W->>API: PATCH heartbeat / progress\n    W->>W: ExecuteAsync(ctx)\n    W->>API: POST Finished\n    Note over W,API: Registry PATCH in parallel\n```\n\n1. **Fetch**. Full includes on `GET Job/Run/{id}`.\n2. **Start**. Decrypt parameters; `POST Job/Run/{id}/Started`.\n3. **Heartbeat loop**. Every `HeartbeatInterval` (default 30 s), PATCH `LastHeartbeatUtc` plus progress fields.\n4. `ExecuteAsync(ctx)`. Subclass work; use `ctx.CreateChildRunsAsync`, `ctx.ReportProgressAsync`, `ctx.CancellationToken`.\n5. **Finish**. `JobWorkerResultBuilder` results go to `POST Job/Run/{id}/Finished`.\n\n`StartAsync` also registers the worker instance and subscribes to cancellation messages for this `WorkerType`. Registry registration is best-effort: a failed\n`POST Job/WorkerInstance` (for example when the Job API is unreachable) does not stop the worker from consuming jobs. Unregistered workers retry registration on every\n`HeartbeatInterval` until the Job API accepts the request; a later heartbeat `404` also triggers re-registration."
+      "body": "```mermaid\nsequenceDiagram\n    participant Q as job.run.workerType\n    participant W as JobWorkerBase\n    participant API as Job API\n    Q->>W: runId message\n    W->>API: GET run\n    W->>API: POST Started\n    W->>API: PATCH heartbeat / progress\n    W->>W: ExecuteAsync(ctx)\n    W->>API: POST Finished\n    Note over W,API: Registry PATCH in parallel\n```\n\n1. **Fetch**. Full includes on `GET Job/Run/{id}`.\n2. **Start**. Decrypt parameters; `POST Job/Run/{id}/Started`.\n3. **Heartbeat loop**. Every `HeartbeatInterval` (default 30 s), PATCH `LastHeartbeatUtc` plus progress fields.\n4. `ExecuteAsync(ctx)`. Subclass work; use `ctx.CreateChildRunsAsync`, `ctx.ReportProgressAsync`, `ctx.CancellationToken`.\n5. **Finish**. `JobWorkerResultBuilder` results go to `POST Job/Run/{id}/Finished`.\n\n`StartAsync` also declares `job.events` and `job.run.{workerType}` (and the worker DLQ when configured) when they are missing, registers the worker instance, and subscribes to cancellation messages for this `WorkerType`. Registry registration is best-effort: a failed\n`POST Job/WorkerInstance` (for example when the Job API is unreachable) does not stop the worker from consuming jobs. Unregistered workers retry registration on every\n`HeartbeatInterval` until the Job API accepts the request; a later heartbeat `404` also triggers re-registration."
     },
     {
       "type": "table",
@@ -228,14 +228,6 @@
     },
     {
       "name": "Lyo.Common.Metadata",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Configuration",
       "kind": "lyo",
       "tags": [
         "direct",

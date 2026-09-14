@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.DownloadAccess;
 using Lyo.FileMetadataStore.Postgres.Database;
@@ -51,7 +50,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresFileMetadataStoreOptions>(configuration, configSectionName);
+            var options = new PostgresFileMetadataStoreOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddFileMetadataStoreDbContextFactory(options);
         }

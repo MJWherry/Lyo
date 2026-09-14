@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.QRCode.Models;
@@ -24,6 +23,7 @@ public static class QRCoderQrCodeServiceExtensions
             ArgumentHelpers.ThrowIfNull(services);
             var options = new QRCodeServiceOptions();
             configure?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             RegisterQRCoderQrCodeService(services);
             return services;
@@ -34,6 +34,7 @@ public static class QRCoderQrCodeServiceExtensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
             services.AddSingleton(options);
             RegisterQRCoderQrCodeService(services);
             return services;
@@ -61,11 +62,10 @@ public static class QRCoderQrCodeServiceExtensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(QRCodeServiceOptions))) {
-                services.AddSingleton<QRCodeServiceOptions>(_ => {
-                    var options = LyoOptions.Bind<QRCodeServiceOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new QRCodeServiceOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             RegisterQRCoderQrCodeService(services);

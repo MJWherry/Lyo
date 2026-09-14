@@ -24,6 +24,7 @@
         <PackageReference Include="SixLabors.ImageSharp"/>
         <PackageReference Include="ZXing.Net"/>
         <PackageReference Include="ZXing.Net.Bindings.ImageSharp.V3"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -31,7 +32,6 @@
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
     </ItemGroup>
 
 </Project>

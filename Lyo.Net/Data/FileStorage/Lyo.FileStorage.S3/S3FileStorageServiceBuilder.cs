@@ -1,5 +1,4 @@
 using Amazon.S3;
-using Lyo.Configuration;
 using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
@@ -155,18 +154,16 @@ public sealed class S3FileStorageServiceBuilder
         var configSectionName = _s3FileStorageConfigSection ?? S3FileStorageOptions.SectionName;
         if (!_services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
             if (_s3FileStorageConfigure != null) {
-                _services.AddSingleton<S3FileStorageOptions>(_ => {
-                    var options = new S3FileStorageOptions();
-                    _s3FileStorageConfigure(options);
-                    return options;
-                });
+                var options = new S3FileStorageOptions();
+                _s3FileStorageConfigure(options);
+                options.Validate();
+                _services.AddSingleton(options);
             }
             else {
-                _services.AddSingleton<S3FileStorageOptions>(_ => {
-                    var options = LyoOptions.Bind<S3FileStorageOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new S3FileStorageOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                _services.AddSingleton(options);
             }
         }
 

@@ -1,7 +1,6 @@
 using Amazon;
 using Amazon.Runtime;
 using Amazon.Translate;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
@@ -26,11 +25,17 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
+            if (!services.Any(s => s.ServiceType == typeof(AwsTranslationOptions))) {
+                var options = new AwsTranslationOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
+            }
+
             // Bind IAmazonTranslate from configuration unless one is already present
             if (!services.Any(s => s.ServiceType == typeof(IAmazonTranslate))) {
-                services.AddSingleton<IAmazonTranslate>(_ => {
-                    var options = LyoOptions.Bind<AwsTranslationOptions>(configuration, configSectionName);
-                    options.Validate();
+                services.AddSingleton<IAmazonTranslate>(provider => {
+                    var options = provider.GetRequiredService<AwsTranslationOptions>();
 
                     var config = new AmazonTranslateConfig();
                     if (!string.IsNullOrWhiteSpace(options.Region)) {
@@ -47,15 +52,6 @@ public static class Extensions
                     }
 
                     return new AmazonTranslateClient(config);
-                });
-            }
-
-            // Bind AwsTranslationOptions from configuration unless already registered
-            if (!services.Any(s => s.ServiceType == typeof(AwsTranslationOptions))) {
-                services.AddSingleton<AwsTranslationOptions>(_ => {
-                    var options = LyoOptions.Bind<AwsTranslationOptions>(configuration, configSectionName);
-                    options.Validate();
-                    return options;
                 });
             }
 
@@ -79,12 +75,10 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configure);
-            services.AddSingleton<AwsTranslationOptions>(_ => {
-                var options = new AwsTranslationOptions();
-                configure(options);
-                options.Validate();
-                return options;
-            });
+            var options = new AwsTranslationOptions();
+            configure(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             services.AddSingleton<AwsTranslationService>(provider => {
                 var options = provider.GetRequiredService<AwsTranslationOptions>();

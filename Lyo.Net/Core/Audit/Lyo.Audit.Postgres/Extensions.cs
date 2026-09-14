@@ -1,5 +1,4 @@
 using Lyo.Audit.Postgres.Database;
-using Lyo.Configuration;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -47,7 +46,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresAuditOptions>(configuration, configSectionName);
+            var options = new PostgresAuditOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddAuditDbContextFactory(options);
         }
@@ -85,7 +85,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresAuditOptions>(configuration, configSectionName);
+            var options = new PostgresAuditOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPostgresAuditRecorder(options);
         }

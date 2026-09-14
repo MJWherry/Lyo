@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.ShortUrl.Models;
 
@@ -29,6 +30,15 @@ public class ShortUrlServiceOptions
 
     /// <summary>Flag for whether to enforce HTTPS for URLs. When enabled, HTTP URLs will be automatically converted to HTTPS. Default: false.</summary>
     public bool EnforceHttps { get; set; } = false;
+
+    /// <summary>Throws when alias length or expiration defaults are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNegativeOrZero(MinAliasLength);
+        ArgumentHelpers.ThrowIfLessThan(MaxAliasLength, MinAliasLength);
+        if (DefaultExpirationDays is { } days)
+            ArgumentHelpers.ThrowIfNegativeOrZero(days);
+    }
 
     public override string ToString()
         => $"BaseUrl: {BaseUrl}, DefaultExpirationDays: {DefaultExpirationDays}, MaxAliasLength: {MaxAliasLength}, MinAliasLength: {MinAliasLength}, AllowCustomAliases: {AllowCustomAliases}, EnableMetrics: {EnableMetrics}, EnforceHttps: {EnforceHttps}";

@@ -14,8 +14,9 @@ Files, Tree, and Browser talk only to a backend host (typically Lyo.Gateway.Api,
 | FileStoreFilesTab (.razor, .razor.cs, .razor.css) | Stream, direct PUT, and multipart upload plus DEK/KEK migrate and rotate via IApiClient. File listing lives on the Tree and Browser tabs. Key id fields load identifiers from GET {prefix}/key-ids. |
 | FileStoreKeyIdField | MudSelect over GET key-ids (text field fallback when the list is empty). Used by upload, migrate, rotate, and protocol flows. |
 | FileStoreProtocolUploads | Direct and multipart kitchen-sink flows: begin, PUT to the returned URL, then complete. |
-| FileStorageTreeBrowser (.razor, .razor.cs, .razor.css) | Tree tab: MudGrid split with a PathPrefix folder tree on the left and a path inspector on the right. Builds the full folder/file tree from FileMetadata QueryProject rows. Subscribes to FilesChanged. |
-| FileStoragePathTree | MudTreeView of virtual folders and file leaves. Quick search, edit-mode multi-select with bulk Move / Rotate DEKs / Delete / Download zip (folders include descendant files), drag-and-drop onto a folder to move. Soft-deleted files are omitted. |
+| FileStorageTreeBrowser (.razor, .razor.cs, .razor.css) | Tree tab: LyoFileTree over GET files/folder (store PathPrefix plus reconcile). Inspector on the right. Subscribes to FilesChanged. QueryProject stays on the Files/Browser grids. |
+| FileStorageHttpTreeSource | IFileTreeSource that calls GET {prefix}/files/folder and maps FileStoragePresence onto FileSystemEntry.Properties. |
+| FileStoragePathTree | Optional MudTreeView of virtual folders and file leaves (Store / Physical / Both badges). The Tree tab hosts LyoFileTree instead. |
 | FileStoragePathInspector | Directory: breadcrumb, new folder, multi-file browse with selectable chips, per-file original name / compress / encrypt / upload, contents list. File: metadata table plus view / access link / download / move / copy / rename / rotate DEK / delete. |
 | FileStoragePathTreeNode / FileStoragePathTreeBuilder | Non-UI tree model: split PathPrefix segments, build the full folder/file tree, collect descendant file ids / drag-and-drop destinations, and keep pending folders until a file is uploaded. |
 | FileStorageBrowser (.razor, .razor.cs, .razor.css) | Two LyoDataGridProjected views over QueryProject file metadata (active files only): operator columns (type / encryption / compression as color-coded chips), and expected storage keys from metadata (same shard layout as the storage engine). Row and bulk actions (view, access link, download, move, copy, rename, rotate DEK, delete). Optional Exists chip from GET diagnostics/storage-keys. |
@@ -66,6 +67,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.DataTable.Models` (direct, lyo)
 - `Lyo.FileMetadataStore` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
+- `Lyo.IO.FileSystem` (direct, lyo)
+- `Lyo.IO.FileSystem.Web.Components` (direct, lyo)
 - `Lyo.IO.Temp` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `Lyo.Web.Components` (direct, lyo)
@@ -79,7 +82,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)

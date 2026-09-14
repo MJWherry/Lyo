@@ -81,7 +81,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Api` (direct, lyo)
 - `Lyo.Config` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Discord.Models` (direct, lyo)
 - `Lyo.EntityReference.Models` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)

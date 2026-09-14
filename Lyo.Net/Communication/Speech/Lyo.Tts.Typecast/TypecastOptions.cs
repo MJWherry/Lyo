@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 using Lyo.Tts.Models;
 using Lyo.Typecast.Client.Enums;
 
@@ -17,6 +18,13 @@ public sealed class TypecastOptions : TtsServiceOptions
 
     /// <summary>Default synthesis model. Defaults to SsfmV30.</summary>
     public string DefaultModel { get; set; } = TypecastModel.SsfmV30;
+
+    /// <inheritdoc />
+    public override void Validate()
+    {
+        base.Validate();
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(DefaultModel);
+    }
 
     /// <summary>String form of the options.</summary>
     /// <returns>A string that includes DefaultModel.</returns>

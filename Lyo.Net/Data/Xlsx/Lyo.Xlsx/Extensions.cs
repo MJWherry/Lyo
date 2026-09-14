@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
 using Lyo.Xlsx.Models;
@@ -31,7 +30,8 @@ public static class Extensions
     {
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);
-        var options = LyoOptions.Bind<XlsxOptions>(configuration, sectionName);
+        var options = new XlsxOptions();
+        configuration.GetSection(sectionName).Bind(options);
 
         var poolingSection = configuration.GetSection(DataTablePoolingOptions.SectionName);
         if (poolingSection.Exists())

@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Common.Core.Extensions;
 using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
@@ -174,11 +173,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName);
             ArgumentHelpers.ThrowIfNull(config);
             ArgumentHelpers.ThrowIfNull(configureMetadataStore);
-            services.AddSingleton<DiskFileStorageOptions>(_ => {
-                var options = new DiskFileStorageOptions();
-                config(options);
-                return options;
-            });
+            var options = new DiskFileStorageOptions();
+            config(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             // Register file storage under keyName
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(LocalFileStorageService))) {
@@ -222,11 +220,10 @@ public static class Extensions
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(ITwoKeyEncryptionService)))
                 services.AddKeyedSingleton<ITwoKeyEncryptionService>(keyName, (provider, _) => configEncryptionService(provider));
 
-            services.AddSingleton<DiskFileStorageOptions>(_ => {
-                var options = new DiskFileStorageOptions();
-                config(options);
-                return options;
-            });
+            var options = new DiskFileStorageOptions();
+            config(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             // Register file storage under keyName
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(LocalFileStorageService))) {
@@ -369,7 +366,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<FileStorageArchiveOptions>(configuration, configSectionName);
+            var options = new FileStorageArchiveOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddFileStorageArchiveService(options);
         }
@@ -417,6 +415,7 @@ public static class Extensions
                     continue;
 
                 section.Bind(options);
+                options.Validate();
                 if (string.Equals(name, DiskFileStorageOptions.LegacySectionName, StringComparison.Ordinal)) {
                     (lf ?? NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.Disk")
                         .LogWarning(
@@ -427,6 +426,7 @@ public static class Extensions
                 return options;
             }
 
+            options.Validate();
             return options;
         }
 

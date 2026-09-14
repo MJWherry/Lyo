@@ -1,3 +1,4 @@
+using Lyo.Api.FileStorage.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.Web.Components;
 using Lyo.Web.Primitives;
@@ -108,9 +109,9 @@ public partial class FileStoragePathTree
 
         yield return node.Presence switch {
             FileStoragePresence.Both => ("Both", Color.Success),
-            FileStoragePresence.MissingBlob => ("Missing", Color.Error),
-            FileStoragePresence.CloudOnly => ("Cloud", Color.Info),
-            var _ => ("DB", Color.Default)
+            FileStoragePresence.Store => ("Store", Color.Error),
+            FileStoragePresence.Physical => ("Physical", Color.Info),
+            var _ => ("None", Color.Default)
         };
     }
 

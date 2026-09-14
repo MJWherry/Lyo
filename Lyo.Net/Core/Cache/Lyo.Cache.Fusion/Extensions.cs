@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,7 +70,10 @@ public static class FusionCacheServiceExtensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var cacheOptions = LyoOptions.Bind<CacheOptions>(configuration, CacheOptions.SectionName, configureOptions);
+            var cacheOptions = new CacheOptions();
+            configuration.GetSection(CacheOptions.SectionName).Bind(cacheOptions);
+            configureOptions?.Invoke(cacheOptions);
+            cacheOptions.Validate();
             var redisSection = configuration.GetSection(redisSectionName);
             var connectionString = redisSection["ConnectionString"] ?? redisSection.Value;
             if (!string.IsNullOrWhiteSpace(connectionString)) {

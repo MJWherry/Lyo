@@ -15,6 +15,7 @@
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
         <ProjectReference Include="..\Lyo.FileSystemWatcher.Models\Lyo.FileSystemWatcher.Models.csproj"/>
+        <ProjectReference Include="..\..\IO\Lyo.IO.FileSystem\Lyo.IO.FileSystem.csproj"/>
     </ItemGroup>
 
 </Project>

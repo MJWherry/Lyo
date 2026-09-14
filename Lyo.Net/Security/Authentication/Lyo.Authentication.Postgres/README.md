@@ -70,7 +70,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Authentication` (direct, lyo)
 - `Lyo.Common.Core` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.EntityReference.Models` (direct, lyo)
 - `Lyo.EntityReference.Postgres` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)

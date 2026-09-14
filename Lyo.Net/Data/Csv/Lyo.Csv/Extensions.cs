@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Csv.Models;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
@@ -31,7 +30,8 @@ public static class Extensions
     {
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);
-        var options = LyoOptions.Bind<CsvOptions>(configuration, sectionName);
+        var options = new CsvOptions();
+        configuration.GetSection(sectionName).Bind(options);
 
         var poolingSection = configuration.GetSection(DataTablePoolingOptions.SectionName);
         if (poolingSection.Exists())

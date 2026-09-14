@@ -202,8 +202,8 @@
           "Non-destructive read through the Management API (`POST /api/queues/{vhost}/{name}/get` with `ackmode=ack_requeue_true`)."
         ],
         [
-          "`CreateExchange` / `DeleteExchange` (RabbitMQ only, on `IRabbitMqService`)",
-          "Direct exchange declare / delete."
+          "`CreateExchange` / `DeleteExchange`",
+          "`CreateExchange` is on `IMqService` (every broker). `DeleteExchange` stays RabbitMQ-only on `IRabbitMqService`."
         ],
         [
           "`SendToQueueDelayed` (RabbitMQ only)",

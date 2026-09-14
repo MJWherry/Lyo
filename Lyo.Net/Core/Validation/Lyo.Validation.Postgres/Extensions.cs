@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Lyo.Validation.Models;
@@ -30,7 +29,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresValidationOptions>(configuration, configSectionName);
+            var options = new PostgresValidationOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddValidationDbContextFactory(options);
         }
@@ -60,7 +60,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresValidationOptions>(configuration, configSectionName);
+            var options = new PostgresValidationOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPostgresValidationStore(options);
         }

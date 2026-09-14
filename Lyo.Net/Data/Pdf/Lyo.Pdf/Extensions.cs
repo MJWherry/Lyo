@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Pdf.Models;
@@ -19,7 +18,9 @@ public static class Extensions
         public IServiceCollection AddPdfService()
         {
             ArgumentHelpers.ThrowIfNull(services);
-            services.AddSingleton<PdfServiceOptions>(_ => new());
+            var options = new PdfServiceOptions();
+            options.Validate();
+            services.AddSingleton(options);
             services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
@@ -39,11 +40,10 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configure);
-            services.AddSingleton<PdfServiceOptions>(_ => {
-                var options = new PdfServiceOptions();
-                configure(options);
-                return options;
-            });
+            var options = new PdfServiceOptions();
+            configure(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
@@ -66,11 +66,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            services.AddSingleton<PdfServiceOptions>(_ => {
-                var options = LyoOptions.Bind<PdfServiceOptions>(configuration, configSectionName);
-
-                return options;
-            });
+            var options = new PdfServiceOptions();
+            configuration.GetSection(configSectionName).Bind(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
@@ -91,7 +90,9 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(httpClientFactory);
-            services.AddSingleton<PdfServiceOptions>(_ => new());
+            var options = new PdfServiceOptions();
+            options.Validate();
+            services.AddSingleton(options);
             services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
@@ -111,7 +112,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(httpClientName);
             services.AddHttpClient(httpClientName);
-            services.AddSingleton<PdfServiceOptions>(_ => new());
+            var options = new PdfServiceOptions();
+            options.Validate();
+            services.AddSingleton(options);
             services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
@@ -136,12 +139,10 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyedServiceName);
-            services.AddKeyedSingleton<PdfServiceOptions>(
-                keyedServiceName, (_, _) => {
-                    var options = new PdfServiceOptions();
-                    configure?.Invoke(options);
-                    return options;
-                });
+            var options = new PdfServiceOptions();
+            configure?.Invoke(options);
+            options.Validate();
+            services.AddKeyedSingleton(keyedServiceName, options);
 
             services.AddKeyedSingleton<PdfService>(
                 keyedServiceName, (provider, _) => {

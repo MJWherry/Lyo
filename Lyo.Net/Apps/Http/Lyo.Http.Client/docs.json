@@ -43,14 +43,6 @@
   "readmePath": "Lyo.Net/Apps/Http/Lyo.Http.Client/README.md",
   "dependencies": [
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
@@ -60,14 +52,6 @@
     },
     {
       "name": "Lyo.Common.Metadata",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Configuration",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -108,6 +92,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Http",
       "kind": "package",
       "version": "10.0.5",
@@ -135,6 +128,14 @@
       ]
     },
     {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
@@ -142,15 +143,6 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
       ]
     },
     {

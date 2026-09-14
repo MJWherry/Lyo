@@ -1,5 +1,4 @@
 using Lyo.Common.Core.Enums;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Models;
 using Lyo.FileSystemWatcher.Postgres.Database;
@@ -35,7 +34,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresFileSystemWatcherOptions>(configuration, configSectionName);
+            var options = new PostgresFileSystemWatcherOptions();
+            configuration.GetSection(configSectionName).Bind(options);
             return services.AddFileSystemWatcherDbContextFactory(options);
         }
 
@@ -63,7 +63,8 @@ public static class Extensions
             string configSectionName = PostgresFileSystemWatcherOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<PostgresFileSystemWatcherOptions>(configuration, configSectionName);
+            var options = new PostgresFileSystemWatcherOptions();
+            configuration.GetSection(configSectionName).Bind(options);
             return services.AddPostgresFileSystemWatcherStore(options);
         }
 

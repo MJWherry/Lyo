@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Images.Models;
 
@@ -32,6 +33,16 @@ public class ImageServiceOptions
 
     /// <summary>If true, QR frame compositing and center-overlay PNG use faster PNG compression (larger files, less CPU). Starts as false.</summary>
     public bool UseFastPngForQrComposites { get; set; }
+
+    /// <summary>Throws when quality, pixel, or file-size limits are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNotInRange(DefaultQuality, 1, 100);
+        ArgumentHelpers.ThrowIfNegativeOrZero(MaxWidth);
+        ArgumentHelpers.ThrowIfNegativeOrZero(MaxHeight);
+        ArgumentHelpers.ThrowIfNegativeOrZero(MaxFileSizeBytes);
+        ArgumentHelpers.ThrowIfNotInRange(PaletteAlphaCutoff, 0, 255);
+    }
 
     public override string ToString()
         => $"DefaultQuality: {DefaultQuality}, MaxWidth: {MaxWidth}, MaxHeight: {MaxHeight}, MaxFileSizeBytes: {MaxFileSizeBytes}, EnableMetrics: {EnableMetrics}, IgnoreTransparentPixelsInPalette: {IgnoreTransparentPixelsInPalette}, PaletteAlphaCutoff: {PaletteAlphaCutoff}, UseFastPngForQrComposites: {UseFastPngForQrComposites}";

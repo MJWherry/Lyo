@@ -1,5 +1,6 @@
 using System.Text;
 using Lyo.Common.Metadata.Records;
+using Lyo.Exceptions;
 
 namespace Lyo.Profanity.Models;
 
@@ -51,5 +52,12 @@ public class FileProfanityFilterOptions : ProfanityFilterOptions
             return (config.WordsFilePath, config.WordsUrl);
 
         return (WordsFilePath, WordsUrl);
+    }
+
+    /// <inheritdoc />
+    public override void Validate()
+    {
+        base.Validate();
+        ArgumentHelpers.ThrowIfNull(Encoding);
     }
 }

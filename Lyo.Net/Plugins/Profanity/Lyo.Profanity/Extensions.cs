@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Profanity.Models;
@@ -32,7 +31,9 @@ public static class Extensions
         public IServiceCollection AddProfanityFilterService()
         {
             ArgumentHelpers.ThrowIfNull(services);
-            services.AddSingleton<FileProfanityFilterOptions>(_ => new());
+            var options = new FileProfanityFilterOptions();
+            options.Validate();
+            services.AddSingleton(options);
             AddFileProfanityFilterService(services);
             return services;
         }
@@ -44,11 +45,10 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configure);
-            services.AddSingleton<FileProfanityFilterOptions>(_ => {
-                var options = new FileProfanityFilterOptions();
-                configure(options);
-                return options;
-            });
+            var options = new FileProfanityFilterOptions();
+            configure(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             AddFileProfanityFilterService(services);
             return services;
@@ -63,11 +63,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            services.AddSingleton<FileProfanityFilterOptions>(_ => {
-                var options = LyoOptions.Bind<FileProfanityFilterOptions>(configuration, configSectionName);
-
-                return options;
-            });
+            var options = new FileProfanityFilterOptions();
+            configuration.GetSection(configSectionName).Bind(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             AddFileProfanityFilterService(services);
             return services;

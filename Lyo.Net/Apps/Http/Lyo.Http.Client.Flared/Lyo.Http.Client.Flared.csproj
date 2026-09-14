@@ -9,7 +9,6 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
@@ -17,6 +16,7 @@
         <PackageReference Include="FlareSolverrSharp"/>
         <PackageReference Include="Microsoft.Extensions.Http"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -2,7 +2,6 @@ using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
 using Lyo.Api.Mapping;
-using Lyo.Configuration;
 using Lyo.Config;
 using Lyo.Config.Postgres.Database;
 using Lyo.Encryption;
@@ -59,7 +58,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresConfigOptions>(configuration, configSectionName);
+            var options = new PostgresConfigOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddConfigDbContextFactory(options);
         }
@@ -91,7 +91,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresConfigOptions>(configuration, configSectionName);
+            var options = new PostgresConfigOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPostgresConfigStore(options);
         }

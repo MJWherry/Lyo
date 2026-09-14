@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Pdf.Models;
 
@@ -48,6 +49,23 @@ public class PdfServiceOptions
 
     /// <summary>When true, PDF operations emit metrics. Starts as false.</summary>
     public bool EnableMetrics { get; set; } = false;
+
+    /// <summary>Throws when layout thresholds or size caps are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfLessThan(DefaultYTolerance, 0);
+        ArgumentHelpers.ThrowIfLessThan(DefaultKeyValueGap, 0);
+        ArgumentHelpers.ThrowIfLessThan(TableHeaderMergeThreshold, 0);
+        ArgumentHelpers.ThrowIfNotInRange(TableHeaderMatchThreshold, 0, 1);
+        ArgumentHelpers.ThrowIfLessThan(TableColumnXTolerance, 0);
+        ArgumentHelpers.ThrowIfNotInRange(BoundingBoxOverlapThreshold, 0, 1);
+        ArgumentHelpers.ThrowIfLessThan(MaxContinuationYGap, 0);
+        ArgumentHelpers.ThrowIfLessThan(MaxContinuationXDistance, 0);
+        ArgumentHelpers.ThrowIfLessThan(ValueColumnXTolerance, 0);
+        ArgumentHelpers.ThrowIfLessThan(KeyValueStackedMaxFirstGap, 0);
+        if (MaxPdfSizeBytes is { } maxBytes)
+            ArgumentHelpers.ThrowIfNegativeOrZero(maxBytes);
+    }
 
     public override string ToString()
         => $"PdfServiceOptions: DefaultYTolerance={DefaultYTolerance}, DefaultKeyValueGap={DefaultKeyValueGap}, BoundingBoxOverlapThreshold={BoundingBoxOverlapThreshold}, TableHeaderMergeThreshold={TableHeaderMergeThreshold}, TableHeaderMatchThreshold={TableHeaderMatchThreshold}, TableColumnXTolerance={TableColumnXTolerance}, MaxContinuationYGap={MaxContinuationYGap}, MaxContinuationXDistance={MaxContinuationXDistance}, ValueColumnXTolerance={ValueColumnXTolerance}, KeyValueStackedMaxFirstGap={KeyValueStackedMaxFirstGap}, MaxPdfSizeBytes={MaxPdfSizeBytes}, EnableMetrics={EnableMetrics}";

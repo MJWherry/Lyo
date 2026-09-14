@@ -120,7 +120,7 @@ when its `RequeueDelay` is set (see the [Lyo.MessageQueue README](../Lyo.Message
 ## Capabilities
 
 | Abstract call | RabbitMQ behavior |
-| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `CreateQueue` | Declares queues with durability / exclusivity / auto-delete flags and a broker `arguments` dictionary. |
 | `DeleteQueue` | Deletes a queue, optionally gated by `ifUnused` / `ifEmpty`. |
 | `ClearQueue` | Purges first via the Management API (`DELETE /api/queues/{vhost}/{name}/contents`), then falls back to `QueuePurgeAsync` on the publish channel. |
@@ -128,7 +128,7 @@ when its `RequeueDelay` is set (see the [Lyo.MessageQueue README](../Lyo.Message
 | `SendToQueue` / `SendToExchange` | Publish on the shared publish channel with `BasicProperties` (persistence per `PersistentMessages`, generated `MessageId`, UTC timestamp); waits for broker confirmation when `PublisherConfirms` is on. |
 | `SubscribeToQueue` | Opens one dedicated channel per subscriber (prefetch + dispatch concurrency from the per-queue limit), declares the queue, creates an `AsyncEventingBasicConsumer`, and bridges `ack/nack/requeue` onto the `Func<byte[], Task<bool>>` contract (`true` → requeue, `false` → ack). |
 | `PeekQueueMessages` | Non-destructive read through the Management API (`POST /api/queues/{vhost}/{name}/get` with `ackmode=ack_requeue_true`). |
-| `CreateExchange` / `DeleteExchange` (RabbitMQ only, on `IRabbitMqService`) | Direct exchange declare / delete. |
+| `CreateExchange` / `DeleteExchange` | `CreateExchange` is on `IMqService` (every broker). `DeleteExchange` stays RabbitMQ-only on `IRabbitMqService`. |
 | `SendToQueueDelayed` (RabbitMQ only) | Deferred delivery through TTL + dead-letter wait queues (see below). |
 | `CreateQueueWithDlq` (RabbitMQ only) | Declares `{queue}.dlq` and attaches the main queue's dead-letter arguments (see below). |
 | `GetQueueInfoAsync` / `GetAllQueuesInfoAsync` (RabbitMQ only) | Live queue statistics through the Management API. AMQP flags and `x-*` arguments land in `AdditionalProperties` (see below). |

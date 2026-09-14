@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lyo.Exceptions;
+using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.Health;
@@ -133,6 +134,27 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
         var results = entities.Select(e => e.ToFileStoreResult()).ToList();
         _logger.LogDebug("Found {Count} files matching keyId '{KeyId}' and version {KeyVersion}", results.Count, keyId, keyVersion ?? "any");
         return results;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> ListByPathPrefixAsync(string? pathPrefix, bool includeDescendants, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var normalized = FileMetadataPathPrefix.Normalize(pathPrefix);
+        var query = _dbContext.FileMetadata.Where(e => e.DeletedAt == null);
+        if (!includeDescendants) {
+            if (normalized == null)
+                query = query.Where(e => e.PathPrefix == null || e.PathPrefix == "");
+            else
+                query = query.Where(e => e.PathPrefix == normalized);
+        }
+        else if (normalized != null) {
+            var nested = normalized + "/";
+            query = query.Where(e => e.PathPrefix == normalized || e.PathPrefix != null && e.PathPrefix.StartsWith(nested));
+        }
+
+        var entities = await query.OrderBy(e => e.PathPrefix).ThenBy(e => e.Id).Take(maxKeys).ToListAsync(ct).ConfigureAwait(false);
+        return entities.Select(e => e.ToFileStoreResult()).ToList();
     }
 
     /// <inheritdoc />

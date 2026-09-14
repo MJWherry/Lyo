@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.ContactUs.Models;
 
@@ -17,6 +18,13 @@ public class ContactUsServiceOptions
 
     /// <summary>Contact form operations. Default: false enable metrics collection.</summary>
     public bool EnableMetrics { get; set; } = false;
+
+    /// <summary>Throws when message length bounds are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNegativeOrZero(MinMessageLength);
+        ArgumentHelpers.ThrowIfLessThan(MaxMessageLength, MinMessageLength);
+    }
 
     public override string ToString() => $"MaxMessageLength: {MaxMessageLength}, MinMessageLength: {MinMessageLength}, EnableMetrics: {EnableMetrics}";
 }

@@ -85,6 +85,8 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Tts.Typecast](Lyo.Net/Communication/Speech/Lyo.Tts.Typecast/README.md): Typecast TTS through `Lyo.Typecast.Client`. `TypecastTtsService` synthesizes audio through `TypecastClient`, can load the voice catalog for validation (`LoadVoicesAsync`), and uses the bulk pipeline plus Typecast-namespaced metrics from `Lyo.Tts`.
 - [Lyo.Tts.Typecast.Web.Components](Lyo.Net/Communication/Speech/Lyo.Tts.Typecast.Web.Components/README.md): MudBlazor workbench for exercising `Lyo.Tts.Typecast` inside a host app.
 - [Lyo.Tts.WindowsSpeech](Lyo.Net/Communication/Speech/Lyo.Tts.WindowsSpeech/README.md): Text-to-speech through Windows SAPI. `WindowsSpeechTtsService` uses the built-in Speech API.
+- [Lyo.Webhook](Lyo.Net/Communication/Webhook/Lyo.Webhook/README.md): ASP.NET Core inbound webhook verification: headers and raw body, HMAC helpers, `MapWebhook().Verify().Handle()`, and `Lyo.Metrics` timings.
+- [Lyo.Webhook.Twilio](Lyo.Net/Communication/Webhook/Lyo.Webhook.Twilio/README.md): Twilio webhook signature checks for `Lyo.Webhook`. Compares `X-Twilio-Signature` to an HMAC-SHA1 (Base64) of the public request URL plus sorted key+value form parameters.
 
 ### Core
 
@@ -99,8 +101,6 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Common.Core](Lyo.Net/Core/Common/Lyo.Common.Core/README.md): Bottom of the Lyo stack: enums, identifier generators, scalar and string extensions, type conversion, path helpers, secure randomness, and HTTP constants, with no Lyo dependency beyond `Lyo.Exceptions`.
 - [Lyo.Common.Json](Lyo.Net/Core/Common/Lyo.Common.Json/README.md): `LyoJsonSerializerOptions` — the HTTP JSON contract every Lyo API and first-party client shares — plus opt-in converters for upstreams that quote their scalars.
 - [Lyo.Common.Metadata](Lyo.Net/Core/Common/Lyo.Common.Metadata/README.md): Lyo registry records — file type, MIME, language, port, HTTP status, HTTP header, geography, and CLR type catalogs — plus the extensions that bridge enums to those records.
-- [Lyo.Configuration](Lyo.Net/Core/Configuration/Lyo.Configuration/README.md): Configuration-binding helper used by every Lyo package's `Add{Feature}FromConfiguration` registration.
-- [Lyo.Configuration.Validation](Lyo.Net/Core/Configuration/Lyo.Configuration.Validation/README.md): Checks `IConfiguration` against data-driven `ValidationSchema` rules, either on raw configuration keys or on a bound options type.
 - [Lyo.DateAndTime](Lyo.Net/Core/DateAndTime/Lyo.DateAndTime/README.md): Dates, times, US timezone conversion, day-of-week scheduling, and US holiday metadata. Static and thread-safe. No mutable shared state.
 - [Lyo.Diagnostic](Lyo.Net/Core/Diagnostic/Lyo.Diagnostic/README.md): Decode stack traces, classify exceptions, keep breadcrumb trails, hold an in-memory error inbox, sanitise output, and write structured logs.
 - [Lyo.Diagnostic.AspNetCore](Lyo.Net/Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md): ASP.NET Core integration for `Lyo.Diagnostic`. Per-request scoped breadcrumb trails and exception recording to the in-memory error inbox plus structured logging, without replacing existing problem-details middleware.
@@ -145,8 +145,6 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Validation.Models](Lyo.Net/Core/Validation/Lyo.Validation.Models/README.md): Contracts for validation plus the data-driven rule model: schemas, rules, messages, and projecting a where-clause into `Error`.
 - [Lyo.Validation.Postgres](Lyo.Net/Core/Validation/Lyo.Validation.Postgres/README.md): PostgreSQL store for `ValidationSchema` documents (WhereClause JSONB) behind `IValidationSchemaStore`.
 - [Lyo.Web.Primitives](Lyo.Net/Core/Web/Lyo.Web.Primitives/README.md): Shared MudBlazor UI primitives for every Lyo component package, with no query, data-grid, or API dependencies.
-- [Lyo.Webhook](Lyo.Net/Communication/Webhook/Lyo.Webhook/README.md): ASP.NET Core inbound webhook verification: headers and raw body, HMAC helpers, `MapWebhook().Verify().Handle()`, and `Lyo.Metrics` timings.
-- [Lyo.Webhook.Twilio](Lyo.Net/Communication/Webhook/Lyo.Webhook.Twilio/README.md): Twilio webhook signature checks for `Lyo.Webhook`. Compares `X-Twilio-Signature` to an HMAC-SHA1 (Base64) of the public request URL plus sorted key+value form parameters.
 
 ### Data
 
@@ -170,7 +168,7 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.FileMetadataStore](Lyo.Net/Data/FileMetadataStore/Lyo.FileMetadataStore/README.md): File identity without the bytes. Canonical Guid identifiers and metadata, not blob I/O.
 - [Lyo.FileMetadataStore.Postgres](Lyo.Net/Data/FileMetadataStore/Lyo.FileMetadataStore.Postgres/README.md): Postgres IFileMetadataStore plus the adjunct stores richer file pipelines use.
 - [Lyo.FileMetadataStore.Sqlite](Lyo.Net/Data/FileMetadataStore/Lyo.FileMetadataStore.Sqlite/README.md): EF Core SQLite IFileMetadataStore. Same store and adjunct services as Lyo.FileMetadataStore.Postgres, for embedded, offline-first, and local-dev hosts.
-- [Lyo.FileStorage](Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md): Save, stream-save, read, delete, and file metadata. Optional compression (Lyo.Compression), two-key encryption (Lyo.Encryption), duplicate hashing, access policies, malware scans, audit hooks, multipart (IMultipartUploadService), and presigned/direct-upload/copy on cloud backends.
+- [Lyo.FileStorage](Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md): Save, stream-save, read, delete, and file metadata. Optional compression (Lyo.Compression), two-key encryption (Lyo.Encryption), duplicate hashing, access policies, audit hooks, multipart (IMultipartUploadService), and presigned/direct-upload/copy on cloud backends.
 - [Lyo.FileStorage.AzureBlob](Lyo.Net/Data/FileStorage/Lyo.FileStorage.AzureBlob/README.md): Azure.Storage.Blobs IFileStorageService for Azure Blob Storage.
 - [Lyo.FileStorage.Ftp](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Ftp/README.md): `IFileStorageService` on FTP through Lyo.Ftp.Client.
 - [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): Lyo.FileStorage on S3-compatible endpoints (AWS S3, Backblaze B2, MinIO, and others) through AWSSDK.S3.
@@ -182,9 +180,8 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Formatter](Lyo.Net/Data/Formatter/Lyo.Formatter/README.md): SmartFormat.NET templates plus C#-like `{...}` expressions (DateTime, ternary, in-memory LINQ) for user-defined strings.
 - [Lyo.Formatter.Web.Components](Lyo.Net/Data/Formatter/Lyo.Formatter.Web.Components/README.md): Blazor pair for live SmartFormat editing: a debounced template box and an annotated preview that color-links `{keys}` to replacements. Runs on WASM.
 - [Lyo.Ftp.Client](Lyo.Net/Data/Ftp/Lyo.Ftp.Client/README.md): FluentFTP client with a connection pool, PathHelpers jail, logging, and Lyo.Metrics. Prefer `*Async`.
-- [Lyo.IO.Temp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp/README.md): Session-scoped temp files and directories, with naming strategies and overflow policies.
-- [Lyo.IO.Temp.Ftp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp.Ftp/README.md): `IIOTempStorageProvider` for Lyo.IO.Temp that keeps temp data on FTP.
-- [Lyo.IO.Temp.Sftp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp.Sftp/README.md): `IIOTempStorageProvider` for Lyo.IO.Temp that keeps temp data on SFTP.
+- [Lyo.IO.FileSystem](Lyo.Net/Data/IO/Lyo.IO.FileSystem/README.md): Path-rooted virtual file system: one contract for local disk, memory, SFTP, FTP, S3, and Azure Blob.
+- [Lyo.IO.Temp](Lyo.Net/Data/IO/Temp/Lyo.IO.Temp/README.md): Session-scoped temp files and directories, with naming strategies and overflow policies.
 - [Lyo.Images](Lyo.Net/Data/Images/Lyo.Images/README.md): SixLabors.ImageSharp raster processing for .NET.
 - [Lyo.Images.Ocr](Lyo.Net/Data/Images/Lyo.Images.Ocr/README.md): Lyo OCR contracts: `IOcrEngine`, request/response models, Y-up pixel boxes (same as `BoundingBox2D`), coordinate helpers, and shared options.
 - [Lyo.Images.Ocr.Tesseract](Lyo.Net/Data/Images/Lyo.Images.Ocr.Tesseract/README.md): Tesseract `IOcrEngine` for `Lyo.Images.Ocr`. An internal lock serializes calls because native Tesseract instances are not safely concurrent.
@@ -252,6 +249,7 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Discord.Postgres](Lyo.Net/Integration/Discord/Lyo.Discord.Postgres/README.md): PostgreSQL persistence plus `Lyo.Api` endpoint mappings for Discord entities. Schema name is locked to `discord` (`PostgresDiscordOptions.Schema`).
 - [Lyo.Endato.Client](Lyo.Net/Integration/Endato/Lyo.Endato.Client/README.md): Typed HTTP client for Endato's data-enrichment REST API.
 - [Lyo.Endato.Postgres](Lyo.Net/Integration/Endato/Lyo.Endato.Postgres/README.md): EF Core context and PostgreSQL schema that cache Endato Person Search (PS) and Contact Enrichment (CE) responses. Schema name is `endato`.
+- [Lyo.Endato.Web.Components](Lyo.Net/Integration/Endato/Lyo.Endato.Web.Components/README.md): Blazor workbench UI for Endato person search and enrichment.
 - [Lyo.Espn.Fantasy.Football.Client](Lyo.Net/Integration/Espn/Lyo.Espn.Fantasy.Football.Client/README.md): Read-only typed client for ESPN's fantasy football v3 API (`lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/`).
 - [Lyo.Google.Geolocation.Client](Lyo.Net/Integration/Google/Lyo.Google.Geolocation.Client/README.md): REST client for Google Maps plus an `IGeolocationService` implementation.
 - [Lyo.Typecast.Client](Lyo.Net/Integration/Typecast/Lyo.Typecast.Client/README.md): HTTP client for Typecast TTS and voice catalog work. `TypecastClient` subclasses `Lyo.Api.Client.ApiClient`, sets `X-API-KEY` from `TypecastClientOptions`, and surfaces two…
@@ -262,6 +260,8 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Api.Authentication](Lyo.Net/Apps/Api/Lyo.Api.Authentication/README.md): Administrative HTTP endpoints for Lyo Authentication. Postgres stores stay in `Lyo.Authentication.Postgres`. `BuildAuthenticationApi` lives here.
 - [Lyo.Api.Client](Lyo.Net/Apps/Api/Lyo.Api.Client/README.md): Lyo API HTTP client: problem-details (`ApiException`), `ApiRouteBuilder`, Query/QueryProject, correlation. Generic JSON verbs live on `Lyo.Http.Client`.
 - [Lyo.Api.Export](Lyo.Net/Apps/Api/Lyo.Api.Export/README.md): Optional export add-on for Lyo.Api. Registers the Export CRUD endpoint and `IExportService<TContext>`.
+- [Lyo.Api.Export.Csv](Lyo.Net/Apps/Api/Lyo.Api.Export.Csv/README.md): CSV format handler for Lyo.Api export.
+- [Lyo.Api.Export.Xlsx](Lyo.Net/Apps/Api/Lyo.Api.Export.Xlsx/README.md): XLSX format handler for Lyo.Api export.
 - [Lyo.Api.FileStorage](Lyo.Net/Apps/Api/Lyo.Api.FileStorage/README.md): HTTP endpoints for Lyo file storage. Hosts map BuildFileStorageApi after a keyed IFileStorageService stack is registered.
 - [Lyo.Api.FileStorage.Models](Lyo.Net/Apps/Api/Lyo.Api.FileStorage.Models/README.md): Request and response DTOs for the file-storage HTTP API. This package does not depend on Lyo.FileStorage.
 - [Lyo.Api.Models](Lyo.Net/Apps/Api/Lyo.Api.Models/README.md): HTTP contract models shared by Lyo minimal APIs and their clients. Distinct from `Lyo.Query.Models` (projection DTOs + filter trees).
@@ -295,6 +295,8 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Web.Automation.Selenium](Lyo.Net/Apps/Web/Automation/Lyo.Web.Automation.Selenium/README.md): Selenium WebDriver backend for the `Lyo.Web.Automation` abstractions: launch Chrome / Edge / Firefox / Safari (plus Selenium Grid), isolate sessions, and cover polling, tabs, frames, and plans.
 - [Lyo.Web.Components](Lyo.Net/Apps/Web/Lyo.Web.Components/README.md): MudBlazor / Blazor pieces for Lyo web UI: data grid, query builder, change-tracking form, file upload, rich-text editor, JSON editor, text-diff viewer, and identifier workbench.
 - [Lyo.Web.Components.Export](Lyo.Net/Apps/Web/Lyo.Web.Components.Export/README.md): Menu items that export from Lyo data grids. Reference this package (and any optional format packages) and drop items into `BulkExportControls`.
+- [Lyo.Web.Components.Export.Csv](Lyo.Net/Apps/Web/Lyo.Web.Components.Export.Csv/README.md): CSV export menu item for Lyo data grids.
+- [Lyo.Web.Components.Export.Xlsx](Lyo.Net/Apps/Web/Lyo.Web.Components.Export.Xlsx/README.md): XLSX export menu item for Lyo data grids.
 - [Lyo.Web.Host](Lyo.Net/Apps/Web/Lyo.Web.Host/README.md): Shared Blazor host shell so a second app does not have to copy TestGateway's layout, theme, and client DI.
 - [Lyo.Web.WebRenderer](Lyo.Net/Apps/Web/Renderer/Lyo.Web.WebRenderer/README.md): Server-side Razor rendering and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by **PuppeteerSharp** against a…
 
@@ -324,6 +326,13 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.KeyStore](Lyo.Net/Security/KeyStore/Lyo.KeyStore/README.md): Key encryption key (KEK) storage and rotation contracts for `Lyo.Encryption`.
 - [Lyo.KeyStore.Aws](Lyo.Net/Security/KeyStore/Lyo.KeyStore.Aws/README.md): `AwsKeyStore` takes an `IAmazonSecretsManager` client and a secret-name prefix. It implements `Lyo.KeyStore.IKeyStore` and `Lyo.KeyStore.IKeyInventoryStore`, so admin UIs and key-rotation jobs can encrypt against it and list `keyId`s and versions.
 - [Lyo.KeyStore.Web.Components](Lyo.Net/Security/KeyStore/Lyo.KeyStore.Web.Components/README.md): In-process Blazor workbench for IKeyStore. Lists key ids and versions, adds from a string, rotates, and sets current. No HTTP, no raw key bytes.
+
+### Examples
+
+- [Lyo.Drift.Agent.Example](Lyo.Net/Examples/Lyo.Drift.Agent.Example/README.md): Sample Drift agent host.
+- [Lyo.Job.Scheduler.Example](Lyo.Net/Examples/Lyo.Job.Scheduler.Example/README.md): Sample job scheduler host.
+- [Lyo.Job.Worker.Example](Lyo.Net/Examples/Lyo.Job.Worker.Example/README.md): Sample job worker that subscribes to job.run.example.
+- [Lyo.Reporting.Business.Example](Lyo.Net/Examples/Lyo.Reporting.Business.Example/README.md): Sample reporting host that wires Lyo.Reporting into a small Blazor app.
 
 ### Tools
 

@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.FileStorage.Models;
 using Lyo.Ftp.Client;
 
@@ -11,4 +12,11 @@ public sealed class FtpFileStorageOptions : FileStorageServiceBaseOptions
 
     /// <summary>FTP connection settings: host, auth, remote root jail, and metrics.</summary>
     public FtpClientOptions Ftp { get; set; } = new();
+
+    /// <summary>Throws when nested FTP options are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNull(Ftp);
+        Ftp.Validate();
+    }
 }

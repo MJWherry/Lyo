@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.QRCode.Models;
 
@@ -29,6 +30,16 @@ public class QRCodeServiceOptions
 
     /// <summary>If true, collect metrics for QR operations. Starts as false.</summary>
     public bool EnableMetrics { get; set; } = false;
+
+    /// <summary>Throws when size bounds or default format/level are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNotDefined(DefaultErrorCorrectionLevel);
+        ArgumentHelpers.ThrowIfNotDefined(DefaultFormat);
+        ArgumentHelpers.ThrowIfNegativeOrZero(MinSize);
+        ArgumentHelpers.ThrowIfLessThan(MaxSize, MinSize);
+        ArgumentHelpers.ThrowIfNotInRange(DefaultSize, MinSize, MaxSize);
+    }
 
     public override string ToString()
         => $"DefaultSize: {DefaultSize}, DefaultErrorCorrectionLevel: {DefaultErrorCorrectionLevel}, DefaultFormat: {DefaultFormat}, MinSize: {MinSize}, MaxSize: {MaxSize}, EnableMetrics: {EnableMetrics}";

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lyo.Common.Core.Enums;
+using Lyo.Exceptions;
 
 namespace Lyo.Tts.Models;
 
@@ -24,6 +25,16 @@ public class TtsServiceOptions
 
     /// <summary>Upper bound on requests in one bulk call.</summary>
     public int MaxBulkTtsLimit { get; set; } = 100;
+
+    /// <summary>Throws when text/bulk limits or default format are invalid.</summary>
+    public virtual void Validate()
+    {
+        ArgumentHelpers.ThrowIfNegativeOrZero(MaxTextLength);
+        ArgumentHelpers.ThrowIfNegativeOrZero(BulkTtsConcurrencyLimit);
+        ArgumentHelpers.ThrowIfNegativeOrZero(MaxBulkTtsLimit);
+        if (DefaultOutputFormat is { } format)
+            ArgumentHelpers.ThrowIfNotDefined(format);
+    }
 
     /// <inheritdoc />
     public override string ToString()

@@ -26,19 +26,18 @@ Composition types come from `Lyo.Reporting.Models`. The package does not referen
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Reporting.Models` (direct, lyo)
 - `Lyo.Web.WebRenderer` (direct, lyo)
 - `Microsoft.AspNetCore.Components.Web` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
-- `Lyo.Configuration` (transitive, lyo)
+- `Lyo.Common.Core` (transitive, lyo)
+- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration` `10.0.5` (transitive, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `PuppeteerSharp` `24.0.0` (transitive, third-party)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

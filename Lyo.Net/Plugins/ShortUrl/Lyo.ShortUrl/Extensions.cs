@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.ShortUrl.Models;
 using Microsoft.Extensions.Configuration;
@@ -34,6 +33,8 @@ public static class Extensions
         public IServiceCollection AddShortUrlService<TService>(ShortUrlServiceOptions options)
             where TService : class, IShortUrlService
         {
+            ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<IShortUrlService, TService>();
             return services;
@@ -54,6 +55,7 @@ public static class Extensions
         {
             var options = new ShortUrlServiceOptions();
             configure?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddShortUrlGenerator();
             services.AddSingleton<IShortUrlService, ShortUrlService>();
@@ -65,6 +67,8 @@ public static class Extensions
         /// <returns>Same collection so registration can be chained.</returns>
         public IServiceCollection AddShortUrl(ShortUrlServiceOptions options)
         {
+            ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddShortUrlGenerator();
             services.AddSingleton<IShortUrlService, ShortUrlService>();
@@ -98,11 +102,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(ShortUrlServiceOptions))) {
-                services.AddSingleton<ShortUrlServiceOptions>(_ => {
-                    var options = LyoOptions.Bind<ShortUrlServiceOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new ShortUrlServiceOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             services.AddShortUrlGenerator();

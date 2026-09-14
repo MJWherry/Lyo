@@ -3,11 +3,12 @@
   "name": "Lyo.FileSystemWatcher",
   "area": "Data",
   "tagline": "Snapshot-based .NET file watcher. Finds creates, deletes, changes, moves, and renames with debounce and SHA256 hashing.",
-  "description": "Snapshot-based .NET file watcher. Finds creates, deletes, changes, moves, and renames with debounce and SHA256 hashing.",
+  "description": "Snapshot-based .NET file watcher. Finds creates, deletes, changes, moves, and renames with debounce and SHA256 hashing. `WatchableLocalFileSystem` lists through `LocalFileSystem` and maps watcher events onto `IFileSystemWatch`.",
   "features": [
     "**Snapshot-based change detection.** Compares directory snapshots rather than relying only on FileSystemWatcher events.",
     "**Debouncing.** Batches rapid changes so an event storm does not fire.",
     "**Hash-based move detection.** Finds file moves and renames even when the file system does not report them.",
+    "**IFileSystem.** `WatchableLocalFileSystem` is the live-tree adapter (`Watch` capability).",
     "**Batch scan.** `ScanCompleted` fires once per debounce with the previous tree, current tree, and every detected change. `CurrentSnapshot` exposes the last completed tree.",
     "**Thread-safe.** Safe to call from multiple threads.",
     "**Metrics.** Optional `IMetrics` hook (`Lyo.Metrics`).",
@@ -421,6 +422,14 @@
       ]
     },
     {
+      "name": "Lyo.IO.FileSystem",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Metrics",
       "kind": "lyo",
       "tags": [
@@ -461,6 +470,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

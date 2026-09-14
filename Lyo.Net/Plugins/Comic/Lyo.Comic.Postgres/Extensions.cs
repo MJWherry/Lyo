@@ -1,5 +1,4 @@
 using Lyo.Comic.Postgres.Database;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +27,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresComicOptions>(configuration, configSectionName);
+            var options = new PostgresComicOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddComicDbContextFactory(options);
         }
@@ -59,7 +59,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresComicOptions>(configuration, configSectionName);
+            var options = new PostgresComicOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPostgresComicStore(options);
         }

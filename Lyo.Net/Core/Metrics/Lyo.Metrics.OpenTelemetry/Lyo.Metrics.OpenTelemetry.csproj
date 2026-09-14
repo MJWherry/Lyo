@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Metrics\Lyo.Metrics.csproj"/>
-        <ProjectReference Include="..\..\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
         <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
@@ -17,6 +16,7 @@
              transitively through Lyo.Metrics, which no longer carries any packages. -->
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
         <PackageReference Include="Microsoft.Extensions.Options"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
         <PackageReference Include="OpenTelemetry"/>
         <PackageReference Include="OpenTelemetry.Extensions.Hosting"/>
         <PackageReference Include="OpenTelemetry.Exporter.Console"/>

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Lyo.Exceptions;
 
 namespace Lyo.Cache;
 
@@ -112,6 +113,26 @@ public class CacheOptions
     /// <param name="type">CLR type whose full name is resolved.</param>
     /// <returns>Configured TTL, or <see cref="DefaultExpiration" /> when none matches.</returns>
     public TimeSpan GetExpirationForType(Type type) => GetExpirationForType(type.FullName ?? type.Name);
+
+    /// <summary>Throws when expirations, size limits, or tag granularity are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIf(PropertyInfoExpiration <= TimeSpan.Zero, "PropertyInfoExpiration must be greater than zero.");
+        ArgumentHelpers.ThrowIf(TypeMetadataExpiration <= TimeSpan.Zero, "TypeMetadataExpiration must be greater than zero.");
+        ArgumentHelpers.ThrowIf(PropertyGetterExpiration <= TimeSpan.Zero, "PropertyGetterExpiration must be greater than zero.");
+        ArgumentHelpers.ThrowIf(ComparisonInfoExpiration <= TimeSpan.Zero, "ComparisonInfoExpiration must be greater than zero.");
+        ArgumentHelpers.ThrowIf(DefaultExpiration <= TimeSpan.Zero, "DefaultExpiration must be greater than zero.");
+        ArgumentHelpers.ThrowIf(FailSafeMaxDuration <= TimeSpan.Zero, "FailSafeMaxDuration must be greater than zero.");
+        ArgumentHelpers.ThrowIf(FailSafeThrottleDuration <= TimeSpan.Zero, "FailSafeThrottleDuration must be greater than zero.");
+        ArgumentHelpers.ThrowIfNegativeOrZero(NonPayloadEntrySizeBytes);
+        ArgumentHelpers.ThrowIfNegativeOrZero(MaxBulkQueryInvalidationByIdCount);
+        ArgumentHelpers.ThrowIfNotDefined(QueryCacheTagGranularity);
+        if (MaxSizeBytes is { } limit)
+            ArgumentHelpers.ThrowIfLessThan(limit, 1);
+        ArgumentHelpers.ThrowIfNull(TypeExpirations);
+        foreach (var minutes in TypeExpirations.Values)
+            ArgumentHelpers.ThrowIfNegativeOrZero(minutes);
+    }
 
     public override string ToString()
         => Enabled

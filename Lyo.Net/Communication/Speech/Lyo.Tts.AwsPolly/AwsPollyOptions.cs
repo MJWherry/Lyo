@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Lyo.Common.Metadata.JsonConverters;
 using Lyo.Common.Metadata.Records;
+using Lyo.Exceptions;
 using Lyo.Tts.Models;
 
 namespace Lyo.Tts.AwsPolly;
@@ -37,6 +38,13 @@ public sealed class AwsPollyOptions : TtsServiceOptions
     /// <summary>Default language (for example "en-US").</summary>
     [JsonConverter(typeof(NullableLanguageCodeInfoJsonConverter))]
     public LanguageCodeInfo? DefaultLanguageCode { get; set; }
+
+    /// <inheritdoc />
+    public override void Validate()
+    {
+        base.Validate();
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(Region);
+    }
 
     /// <summary>Privacy-safe string form of the options (credentials omitted).</summary>
     /// <returns>A string that includes the Region.</returns>

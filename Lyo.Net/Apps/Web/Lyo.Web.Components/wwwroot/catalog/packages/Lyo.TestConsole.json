@@ -32,7 +32,7 @@
         "**Speech.** Typecast (`AddTypecastClientFromConfiguration`, `AddTypecastTtsServiceFromConfiguration`) and AWS Polly (`AddAwsPollyTtsServiceFromConfiguration`). A non-generic `ITtsService` is wired to `TypecastTtsAppService` for the Discord bot; swap in `AwsPollyTtsAppService` when you want Polly there.",
         "**Communication.** `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `AddShortUrlFromConfiguration`, `AddQRCodeServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddFFmpegServicesFromConfiguration`.",
         "**Integrations.** `AddFantasyFootballClientFromConfiguration` (ESPN), `AddLyoDiscordBot<LyoDiscordBot>(…)`.",
-        "**AWS file storage (S3 plus two-key).** `AddAwsKeyStoreFromConfiguration` + `AddTwoKeyEncryptionServiceKeyed(\"two-key-aws\", \"dev//FileStore\")`, then `AddPostgresFileMetadataStoreKeyed(\"postgres-filemetadatastore\")` and `AddS3FileStorageServiceKeyed(\"client-files\")` chained to `UseFileMetadataStore` + `UseEncryptionService` + `ConfigureS3FileStorage().Build(configuration)`.",
+        "**AWS file storage (S3 plus two-key).** `AddAwsKeyStoreFromConfiguration` + `AddTwoKeyEncryptionServiceKeyed(\"two-key-aws\", \"dev/FileStore\")`, then `AddPostgresFileMetadataStoreKeyed(\"postgres-filemetadatastore\")` and `AddS3FileStorageServiceKeyed(\"client-files\")` chained to `UseFileMetadataStore` + `UseEncryptionService` + `ConfigureS3FileStorage().Build(configuration)`.",
         "**Local file storage (alternate key).** `AddFileStorageServiceKeyed(\"two-key-local-filestore\", …, \"two-key-aws\")` rooted at `~/My Documents/local-filestorage` with `EnableDuplicateDetection = true` and `DuplicateStrategy = ReturnExisting`, backed by `LocalFileMetadataStore` at `~/My Documents/local-filestore`. Both file storage services share the same `two-key-aws` encryption key store.",
         "**Database stores.** `ConnectionString` (root config key, default `null`) is passed to `AddReportingDbContextFactory`, `AddEndatoDbContextFactory`, `AddShortUrlDbContextFactory`, `AddTwilioSmsDbContextFactory`, `AddPostgresAuditRecorder`, `AddPeopleDbContextFactory`, `AddPostgresCommentStore`, `AddPostgresHomeInventoryStore`, `AddEmailDbContextFactory`, `AddFileMetadataStoreDbContextFactory`, `AddPostgresJobManagement`, `AddComicDbContextFactory`, `AddPostgresTagStore`. All use `EnableAutoMigrations = true`.",
         "**CRUD/QueryConcrete.** `AddLyoCrudServices<TwilioSmsDbContext>()`, `AddLyoCrudServices<AuditDbContext>()`, `AddLyoCrudServices<JobContext>()`, `AddLyoQueryServices()`, `AddScoped<JobService>`.",
@@ -616,22 +616,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.ContentThreatScan",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Csv.Models",
       "kind": "lyo",
       "tags": [
@@ -777,6 +761,14 @@
     },
     {
       "name": "Lyo.HomeInventory",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",

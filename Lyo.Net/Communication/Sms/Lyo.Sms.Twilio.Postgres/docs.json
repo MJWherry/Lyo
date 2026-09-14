@@ -45,14 +45,6 @@
   "readmePath": "Lyo.Net/Communication/Sms/Lyo.Sms.Twilio.Postgres/README.md",
   "dependencies": [
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
@@ -74,6 +66,15 @@
       "tags": [
         "direct",
         "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
       ]
     },
     {
@@ -154,15 +155,6 @@
     },
     {
       "name": "Microsoft.EntityFrameworkCore.Relational",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

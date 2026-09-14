@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.FileStorage.Multipart;
@@ -49,21 +48,19 @@ public sealed class SqliteFileMetadataStoreBuilder
     {
         var configSectionName = _sqliteFileStoreConfigSection ?? SqliteFileMetadataStoreOptions.SectionName;
         if (!_services.Any(s => s.ServiceType == typeof(SqliteFileMetadataStoreOptions))) {
+            SqliteFileMetadataStoreOptions options;
             if (_sqliteFileStoreConfigure != null) {
-                _services.AddSingleton<SqliteFileMetadataStoreOptions>(_ => {
-                    var options = new SqliteFileMetadataStoreOptions();
-                    _sqliteFileStoreConfigure(options);
-                    return options;
-                });
+                options = new();
+                _sqliteFileStoreConfigure(options);
             }
             else {
-                _services.AddSingleton<SqliteFileMetadataStoreOptions>(provider => {
-                    var configuration = provider.GetRequiredService<IConfiguration>();
-                    var options = LyoOptions.Bind<SqliteFileMetadataStoreOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                using var tempProvider = _services.BuildServiceProvider();
+                options = new SqliteFileMetadataStoreOptions();
+                tempProvider.GetRequiredService<IConfiguration>().GetSection(configSectionName).Bind(options);
             }
+
+            options.Validate();
+            _services.AddSingleton(options);
         }
 
         if (!_services.Any(s => s.ServiceType == typeof(IDbContextFactory<SqliteFileMetadataStoreDbContext>))) {
@@ -76,7 +73,8 @@ public sealed class SqliteFileMetadataStoreBuilder
                 else {
                     // The builder has no service provider of its own, so it stands one up to reach IConfiguration.
                     using var tempProvider = _services.BuildServiceProvider();
-                    options = LyoOptions.Bind<SqliteFileMetadataStoreOptions>(tempProvider.GetRequiredService<IConfiguration>(), configSectionName);
+                    options = new SqliteFileMetadataStoreOptions();
+                    tempProvider.GetRequiredService<IConfiguration>().GetSection(configSectionName).Bind(options);
                 }
 
                 _services.AddSqliteFileMetadataStoreDbContextFactory(options);

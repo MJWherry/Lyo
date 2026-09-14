@@ -26,6 +26,7 @@ internal static class FusionCacheRegistration
         ArgumentHelpers.ThrowIfNull(svc);
         var cacheOptions = new CacheOptions();
         configureOptions?.Invoke(cacheOptions);
+        cacheOptions.Validate();
         svc.AddSingleton(cacheOptions);
         svc.AddMemoryCache();
         if (!svc.Any(static d => d.ServiceType == typeof(CompressionService)))

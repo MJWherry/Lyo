@@ -90,6 +90,14 @@
   "readmePath": "Lyo.Net/Apps/Job/Lyo.Job.Alerts/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Job.Models",
       "kind": "lyo",
       "tags": [
@@ -150,14 +158,6 @@
     },
     {
       "name": "Lyo.Api.Models",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "transitive",

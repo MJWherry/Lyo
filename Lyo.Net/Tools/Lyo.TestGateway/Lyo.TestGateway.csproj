@@ -71,7 +71,7 @@
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption.XChaCha20Poly1305\Lyo.Encryption.XChaCha20Poly1305.csproj"/>
         <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
         <ProjectReference Include="..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
-        <ProjectReference Include="..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\Data\IO\Temp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
         <ProjectReference Include="..\..\Data\Images\Lyo.Images\Lyo.Images.csproj"/>
         <ProjectReference Include="..\..\Security\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
         <ProjectReference Include="..\..\Core\Lock\Lyo.Lock\Lyo.Lock.csproj"/>

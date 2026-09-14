@@ -96,7 +96,6 @@ The host `JsonOptions` (or shared defaults when those are missing) become `ICach
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Compression` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Health` (direct, lyo)

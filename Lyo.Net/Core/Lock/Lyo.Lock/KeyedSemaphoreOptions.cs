@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Lock;
 
 /// <summary>Settings for <see cref="LocalKeyedSemaphoreService" />.</summary>
@@ -14,4 +16,7 @@ public class KeyedSemaphoreOptions
 
     /// <summary>True to emit metrics for semaphore acquire, release, and execute.</summary>
     public bool EnableMetrics { get; set; }
+
+    /// <summary>Throws when <see cref="DefaultAcquireTimeout" /> is not positive.</summary>
+    public void Validate() => ArgumentHelpers.ThrowIf(DefaultAcquireTimeout <= TimeSpan.Zero, "DefaultAcquireTimeout must be greater than zero.");
 }

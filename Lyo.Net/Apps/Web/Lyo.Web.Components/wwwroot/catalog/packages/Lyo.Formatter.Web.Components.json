@@ -67,6 +67,14 @@
   "readmePath": "Lyo.Net/Data/Formatter/Lyo.Formatter.Web.Components/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Formatter",
       "kind": "lyo",
       "tags": [
@@ -108,14 +116,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
@@ -125,14 +125,6 @@
     },
     {
       "name": "Lyo.Common.Metadata",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Configuration",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -189,6 +181,14 @@
     },
     {
       "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",

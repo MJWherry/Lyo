@@ -61,9 +61,9 @@ services.AddQRCoderQrCodeServiceFromConfiguration(builder.Configuration);
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.QRCode` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `QRCoder` `1.8.0` (direct, third-party)
@@ -71,7 +71,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `SixLabors.ImageSharp` `3.1.12` (transitive, third-party)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

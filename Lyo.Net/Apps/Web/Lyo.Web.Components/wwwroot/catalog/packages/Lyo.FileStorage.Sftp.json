@@ -30,14 +30,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Encryption",
       "kind": "lyo",
       "tags": [
@@ -78,6 +70,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
       "kind": "package",
       "version": "10.0.5",
@@ -112,6 +113,14 @@
     },
     {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -194,15 +203,6 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
       ]
     },
     {

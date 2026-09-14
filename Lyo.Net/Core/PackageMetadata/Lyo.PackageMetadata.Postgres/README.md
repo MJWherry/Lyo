@@ -47,7 +47,6 @@ Migrations live under `Migrations/`. Table names and schema follow `PostgresPack
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.PackageMetadata` (direct, lyo)
 - `Lyo.Postgres` (direct, lyo)
@@ -60,7 +59,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Health` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)

@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
@@ -57,7 +56,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(sectionName);
-            var options = LyoOptions.Bind<AzureBlobFileStorageOptions>(configuration, sectionName);
+            var options = new AzureBlobFileStorageOptions();
+            configuration.GetSection(sectionName).Bind(options);
             return services.AddAzureBlobFileStorageService(options);
         }
 

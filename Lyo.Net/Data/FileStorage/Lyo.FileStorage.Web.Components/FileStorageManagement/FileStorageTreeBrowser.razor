@@ -1,42 +1,59 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageManagement
+@using Lyo.IO.FileSystem.Web.Components
 @implements IDisposable
 
 <MudPaper Class="pa-4 mt-1" Outlined="true">
     <div class="file-storage-tree-browser">
         <MudText Typo="Typo.h6">Path tree</MudText>
-    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
-        Virtual folders from FileMetadata <code>PathPrefix</code> (QueryProject). Files with no prefix sit under
-        <strong>@FileStoragePathTreeBuilder.RootDisplayName</strong>. Opening a folder loads that directory only.
-        New folders stay in the browser until a file is uploaded there.
-        Use the edit button next to search to multi-select and run bulk Move / Rotate DEKs / Delete / Download zip, or drag onto a folder to move.
-    </MudText>
-    <div class="file-storage-tree-layout">
-        <div class="file-storage-tree-col">
-            <FileStoragePathTree Items="_treeItems"
-                                 Selected="_selected"
-                                 SelectedChanged="OnSelectedAsync"
-                                 FolderExpanded="OnFolderExpandedAsync"
-                                 FolderCollapsed="OnFolderCollapsed"
-                                 Refresh="RefreshAsync"
-                                 Busy="_busy"
-                                 Truncated="_truncated"
-                                 BulkFileCount="_bulkFileCount"
-                                 CheckedChanged="OnCheckedAsync"
-                                 BulkMove="OnBulkMoveAsync"
-                                 BulkRotateDeks="OnBulkRotateAsync"
-                                 BulkDelete="OnBulkDeleteAsync"
-                                 BulkDownload="OnBulkDownloadAsync"
-                                 Dropped="OnDroppedAsync"/>
-        </div>
-        <div class="file-storage-tree-col">
-            @if (_actions != null) {
-                <FileStoragePathInspector Actions="_actions"
-                                          Root="_root"
-                                          Selected="_selected"
-                                          SelectedChanged="OnSelectedAsync"
-                                          TreeChanged="RebuildTreeItems"/>
-            }
-        </div>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+            Folders from FileMetadata <code>PathPrefix</code> joined to physical keys on the server
+            (<code>Store</code> / <code>Physical</code> / <code>Both</code>). Files with no prefix sit under
+            <strong>@FileStoragePathTreeBuilder.RootDisplayName</strong>. Opening a folder loads that directory only.
+            New folders stay in the browser until a file is uploaded there. The Files grid stays QueryProject.
+        </MudText>
+        <div class="file-storage-tree-layout">
+            <div class="file-storage-tree-col">
+                <LyoFileTree @ref="_tree"
+                             Source="FolderSource"
+                             RootPath="/"
+                             RootName="@FileStoragePathTreeBuilder.RootDisplayName"
+                             Title="Paths"
+                             Truncated="_truncated"
+                             EnableFilter="true"
+                             EnableSelection="true"
+                             SelectedChanged="OnTreeSelectedAsync"
+                             CheckedChanged="OnCheckedChanged">
+                    <SelectionToolbar>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Check files or folders, then Move / Rotate DEKs / Delete / Download zip. A folder includes every loaded descendant; expand it first, or the action will load children.
+                        </MudText>
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@_bulkCatalogCount catalog file(s)</MudText>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!BulkActionsEnabled)" OnClick="OnBulkMoveAsync">Move…</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!BulkActionsEnabled)" OnClick="OnBulkRotateAsync">Rotate DEKs…</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(!BulkActionsEnabled)" OnClick="OnBulkDownloadAsync">Download zip</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!BulkActionsEnabled)" OnClick="OnBulkDeleteAsync">Delete</MudButton>
+                        </MudStack>
+                    </SelectionToolbar>
+                    <ItemTrailing>
+                        @if (FileStoragePresenceUi.TryChip(context.Entry, out var label, out var hint, out var color, out var icon)) {
+                            <MudTooltip Text="@hint">
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@color" Icon="@icon">@label</MudChip>
+                            </MudTooltip>
+                        }
+                    </ItemTrailing>
+                </LyoFileTree>
+            </div>
+            <div class="file-storage-tree-col">
+                @if (_actions != null) {
+                    <FileStoragePathInspector Actions="_actions"
+                                            FolderSource="FolderSource"
+                                            ListingRevision="_listingRevision"
+                                            Selected="_selected"
+                                            SelectedChanged="OnInspectorSelectedAsync"
+                                            TreeChanged="OnTreeChangedAsync"/>
+                }
+            </div>
         </div>
     </div>
 </MudPaper>

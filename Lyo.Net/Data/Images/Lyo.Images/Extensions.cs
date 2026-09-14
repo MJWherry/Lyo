@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Images.Models;
 using Lyo.Images.Sprite;
@@ -38,6 +37,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             var options = new ImageServiceOptions();
             configure?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<IImageService, ImageSharpImageService>();
             TryAddImageDecorationService(services);
@@ -51,6 +51,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<IImageService, ImageSharpImageService>();
             TryAddImageDecorationService(services);
@@ -82,11 +83,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(ImageServiceOptions))) {
-                services.AddSingleton<ImageServiceOptions>(_ => {
-                    var options = LyoOptions.Bind<ImageServiceOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new ImageServiceOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             services.AddSingleton<IImageService, ImageSharpImageService>();

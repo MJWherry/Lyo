@@ -1,5 +1,4 @@
 using Lyo.Api.Client;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,7 +45,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            return services.AddReportingClient<TApiClient>(LyoOptions.Bind<ReportingClientOptions>(configuration, configSectionName));
+            var options = new ReportingClientOptions();
+            configuration.GetSection(configSectionName).Bind(options);
+            return services.AddReportingClient<TApiClient>(options);
         }
 
         /// <summary>Adds <see cref="IReportingClient" /> on an API client resolved by <paramref name="apiClientFactory" />.</summary>
@@ -85,7 +86,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            return services.AddReportingClient(apiClientFactory, LyoOptions.Bind<ReportingClientOptions>(configuration, configSectionName));
+            var options = new ReportingClientOptions();
+            configuration.GetSection(configSectionName).Bind(options);
+            return services.AddReportingClient(apiClientFactory, options);
         }
     }
 }

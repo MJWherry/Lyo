@@ -23,7 +23,9 @@
         <ProjectReference Include="..\..\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
         <ProjectReference Include="..\..\Xlsx\Lyo.Xlsx.Models\Lyo.Xlsx.Models.csproj"/>
         <ProjectReference Include="..\..\DataTable\Lyo.DataTable.Models\Lyo.DataTable.Models.csproj"/>
-        <ProjectReference Include="..\..\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\IO\Temp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\IO\Lyo.IO.FileSystem\Lyo.IO.FileSystem.csproj"/>
+        <ProjectReference Include="..\..\IO\Lyo.IO.FileSystem.Web.Components\Lyo.IO.FileSystem.Web.Components.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

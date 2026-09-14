@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.FileStorage.Models;
 
 public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
@@ -26,4 +28,7 @@ public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
     /// file-storage route group <c>FileStorage/direct-upload</c>.
     /// </summary>
     public string DirectUploadPutRouteRelativePath { get; set; } = "FileStorage/direct-upload";
+
+    /// <summary>Throws when <see cref="RootDirectoryPath" /> is missing.</summary>
+    public void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(RootDirectoryPath);
 }

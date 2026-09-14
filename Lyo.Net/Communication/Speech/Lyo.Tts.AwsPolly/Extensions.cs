@@ -1,7 +1,6 @@
 using Amazon;
 using Amazon.Polly;
 using Amazon.Runtime;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
@@ -26,11 +25,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(AwsPollyOptions))) {
-                services.AddSingleton<AwsPollyOptions>(_ => {
-                    var options = LyoOptions.Bind<AwsPollyOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new AwsPollyOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             // Bind IAmazonPolly unless one is already present
@@ -93,11 +91,10 @@ public static class Extensions
 
             // Bind AwsPollyOptions from configuration unless already registered
             if (!services.Any(s => s.ServiceType == typeof(AwsPollyOptions))) {
-                services.AddSingleton<AwsPollyOptions>(_ => {
-                    var options = LyoOptions.Bind<AwsPollyOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new AwsPollyOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             // Add the TTS service implementation
@@ -123,11 +120,10 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configure);
-            services.AddSingleton<AwsPollyOptions>(_ => {
-                var options = new AwsPollyOptions();
-                configure(options);
-                return options;
-            });
+            var options = new AwsPollyOptions();
+            configure(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             services.AddSingleton<AwsPollyTtsService>(provider => {
                 var options = provider.GetRequiredService<AwsPollyOptions>();

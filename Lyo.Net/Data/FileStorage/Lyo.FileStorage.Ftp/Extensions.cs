@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
@@ -42,7 +41,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
-            options.Ftp.Validate();
+            options.Validate();
             services.AddSingleton(options);
             services.AddFtpClient(options.Ftp);
             RegisterService(services);
@@ -64,7 +63,8 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<FtpFileStorageOptions>(configuration, sectionName);
+            var options = new FtpFileStorageOptions();
+            configuration.GetSection(sectionName).Bind(options);
 
             return services.AddFtpFileStorageService(options);
         }

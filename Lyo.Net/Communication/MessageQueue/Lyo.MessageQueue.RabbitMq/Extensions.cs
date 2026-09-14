@@ -68,12 +68,9 @@ public static class Extensions
 
             // Bind options from configuration unless they are already present
             if (!services.Any(s => s.ServiceType == typeof(RabbitMqOptions))) {
-                services.AddSingleton<RabbitMqOptions>(_ => {
-                    var section = configuration.GetSection(configSectionName);
-                    var options = new RabbitMqOptions();
-                    section.Bind(options);
-                    return options;
-                });
+                var options = new RabbitMqOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                services.AddSingleton(options);
             }
 
             return SetupRabbitMqServiceCore(services, connectionProperties);

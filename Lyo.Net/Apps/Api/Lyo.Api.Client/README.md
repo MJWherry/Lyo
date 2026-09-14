@@ -114,9 +114,7 @@ Stand the API up under `WebApplicationFactory`, talk to it through `IApiClient`,
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Api.Models` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Diagnostic` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
@@ -125,6 +123,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
+- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)

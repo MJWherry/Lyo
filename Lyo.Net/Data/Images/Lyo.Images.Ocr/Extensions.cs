@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Images.Ocr.Models;
 using Microsoft.Extensions.Configuration;
@@ -18,11 +17,10 @@ public static class OcrServiceCollectionExtensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(sectionName);
-            services.AddSingleton(_ => {
-                var options = LyoOptions.Bind<OcrEngineOptions>(configuration, sectionName);
-
-                return options;
-            });
+            var options = new OcrEngineOptions();
+            configuration.GetSection(sectionName).Bind(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             return services;
         }
@@ -33,6 +31,7 @@ public static class OcrServiceCollectionExtensions
             ArgumentHelpers.ThrowIfNull(services);
             var options = new OcrEngineOptions();
             configure?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             return services;
         }

@@ -2,11 +2,14 @@
 
 Azure.Storage.Blobs [`IFileStorageService`](../Lyo.FileStorage/README.md) for Azure Blob Storage. The package id and namespace Lyo.FileStorage.AzureBlob match the blob abstraction. Configuration and types use Blob* naming, with a legacy AzureFileStorageOptions appsettings subsection for migration.
 
+Also exposes `AzureBlobFileSystem` (`IFileSystem`) for the raw blob-name tree (`GetBlobsByHierarchy`). That is not the FileStorage metadata tree.
+
 Architecture, duplicate handling, and threat-model context for storage live in Lyo.FileStorage. This README is the assembly plus Azure-specific options.
 
 ## Features
 
 - **Same contract as Local / S3.** Save, stream save, multipart, presigned reads (SAS GET), direct PUT begin/complete, server-side copy, DEK migrate/rotate, health, IFileStorageDiagnosticsService listing keys under the container prefix (normalized and traversal-guarded by Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix).
+- **Raw blob VFS.** `AzureBlobFileSystem` lists immediate children via `GetBlobsByHierarchy`. Empty folders are zero-byte `{path}/` markers. `OpenAppend` is not supported.
 - **Optional compression and two-key encryption.** Same pipeline as Lyo.FileStorage when ICompressionService / ICompressionResolver / ITwoKeyEncryptionService are registered. Reads use metadata CompressionAlgorithm via the resolver.
 - **SSE.** Optional encryption scope and customer-provided key (SSE-C via a base64 key on options). Applied to single-blob writes, multipart staging, header range updates, and DEK migrations. See XML docs on AzureBlobFileStorageOptions for presigned/SSE limits.
 - **Multipart.** Register AddAzureBlobMultipartUploadService() after AddAzureBlobFileStorageService. Final commit uses SyncCopyFromUriAsync rather than download+re-upload.
@@ -128,10 +131,11 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.FileMetadataStore` (direct, lyo)
 - `Lyo.FileStorage` (direct, lyo)
 - `Azure.Storage.Blobs` `12.29.1` (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
@@ -141,7 +145,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `EasyCompressor` `2.1.0` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)

@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
@@ -22,6 +21,7 @@ public static class LockServiceExtensions
             ArgumentHelpers.ThrowIfNull(services);
             var options = new LockOptions();
             configureOptions?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<ILockService>(sp => {
                 var logger = sp.GetService<ILogger<LocalLockService>>();
@@ -42,7 +42,10 @@ public static class LockServiceExtensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<LockOptions>(configuration, LockOptions.SectionName, configureOptions);
+            var options = new LockOptions();
+            configuration.GetSection(LockOptions.SectionName).Bind(options);
+            configureOptions?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<ILockService>(sp => {
                 var logger = sp.GetService<ILogger<LocalLockService>>();
@@ -61,6 +64,7 @@ public static class LockServiceExtensions
             ArgumentHelpers.ThrowIfNull(services);
             var options = new KeyedSemaphoreOptions();
             configureOptions?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<IKeyedSemaphoreService>(sp => {
                 var logger = sp.GetService<ILogger<LocalKeyedSemaphoreService>>();
@@ -81,7 +85,10 @@ public static class LockServiceExtensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<KeyedSemaphoreOptions>(configuration, KeyedSemaphoreOptions.SectionName, configureOptions);
+            var options = new KeyedSemaphoreOptions();
+            configuration.GetSection(KeyedSemaphoreOptions.SectionName).Bind(options);
+            configureOptions?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<IKeyedSemaphoreService>(sp => {
                 var logger = sp.GetService<ILogger<LocalKeyedSemaphoreService>>();

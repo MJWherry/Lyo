@@ -5,6 +5,7 @@ using Lyo.Cache;
 using Lyo.Common.Core.Net;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
+using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.DownloadAccess;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres;
@@ -186,6 +187,37 @@ public static class Extensions
                 var result = await fileStorage.RenameFileAsync(request.FileId, new Domain.RenameFileRequest { OriginalFileName = request.OriginalFileName }, ct);
                 await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
                 return Results.Ok(result);
+            });
+
+        group.MapGet(
+            "files/physical/download", async (string physicalKey, IServiceProvider services, CancellationToken ct) => {
+                var fileStorage = GetFileStorage(services, serviceKey);
+                try {
+                    var (stream, fileName) = await FileStoragePhysicalRead.OpenAsync(fileStorage, physicalKey, ct).ConfigureAwait(false);
+                    return Results.Stream(stream, FileTypeInfo.Unknown.MimeType, fileName, enableRangeProcessing: true);
+                }
+                catch (ArgumentException ex) {
+                    throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, ex.Message));
+                }
+                catch (FileNotFoundException ex) {
+                    throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, ex.Message));
+                }
+                catch (InvalidOperationException ex) {
+                    throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, ex.Message));
+                }
+            });
+
+        group.MapGet(
+            "files/folder", async (string? pathPrefix, int? maxKeys, IServiceProvider services, CancellationToken ct) => {
+                var fileStorage = GetFileStorage(services, serviceKey);
+                var store = GetMetadataStore(fileStorage, services, serviceKey);
+                var cap = Math.Clamp(maxKeys ?? 10_000, 1, 10_000);
+                var (entries, truncated) = await FileStorageFolderList.ListAsync(store, fileStorage, pathPrefix, cap, ct).ConfigureAwait(false);
+                var dtos = entries.Select(
+                    static e => new FileStorageFolderEntryDto(
+                        e.Name, e.IsDirectory, e.PathPrefix, e.FileId, (Lyo.Api.FileStorage.Models.FileStoragePresence)(int)e.Presence, e.OriginalFileName,
+                        e.OriginalFileSize, e.PhysicalKey)).ToList();
+                return Results.Ok(new FileStorageFolderListResponse(dtos, truncated));
             });
 
         group.MapGet(
@@ -378,6 +410,15 @@ public static class Extensions
 
     private static IFileStorageService GetFileStorage(IServiceProvider services, string serviceKey)
         => services.GetRequiredKeyedService<IFileStorageService>(serviceKey);
+
+    private static IFileMetadataStore GetMetadataStore(IFileStorageService fileStorage, IServiceProvider services, string serviceKey)
+    {
+        if (fileStorage is FileStorageServiceBase storage)
+            return storage.MetadataStore;
+
+        var keyed = services.GetKeyedService<IFileMetadataStore>(serviceKey);
+        return keyed ?? services.GetRequiredService<IFileMetadataStore>();
+    }
 
     private static IMultipartUploadService GetMultipart(IServiceProvider services, string serviceKey)
         => services.GetRequiredKeyedService<IMultipartUploadService>(serviceKey);

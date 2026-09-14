@@ -16,7 +16,7 @@
         <ProjectReference Include="..\Lyo.Reporting.Postgres\Lyo.Reporting.Postgres.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Reporting\Lyo.Reporting.Api\Lyo.Reporting.Api.csproj"/>
         <ProjectReference Include="..\..\..\Data\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
-        <ProjectReference Include="..\..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\..\Data\IO\Temp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
         <ProjectReference Include="..\..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
     </ItemGroup>
 

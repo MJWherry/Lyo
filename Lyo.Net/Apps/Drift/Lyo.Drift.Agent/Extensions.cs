@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Diff;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
@@ -27,7 +26,8 @@ public static class Extensions
         public IServiceCollection AddDriftAgentFromConfiguration(IConfiguration configuration, string configSectionName = DriftAgentOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<DriftAgentOptions>(configuration, configSectionName);
+            var options = new DriftAgentOptions();
+            configuration.GetSection(configSectionName).Bind(options);
             return services.AddDriftAgent(options);
         }
 

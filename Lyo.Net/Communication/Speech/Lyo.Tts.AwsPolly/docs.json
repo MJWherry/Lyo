@@ -72,14 +72,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
@@ -102,6 +94,15 @@
       "tags": [
         "direct",
         "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
       ]
     },
     {
@@ -162,15 +163,6 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
       ]
     },
     {

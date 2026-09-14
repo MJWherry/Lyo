@@ -1,5 +1,7 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageManagement
+@using Lyo.Api.FileStorage.Models
 @using Lyo.Common.Metadata.Records;
+@using Lyo.IO.FileSystem
 @using Lyo.Web.Components.FileUpload
 @implements IAsyncDisposable
 
@@ -94,22 +96,23 @@
         </div>
         <div class="file-storage-tree-scroll">
             <MudText Typo="Typo.subtitle2">Contents</MudText>
-            @if (!Selected.ChildrenLoaded) {
+            @if (_contentsBusy) {
                 <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
             }
-            else if (Selected.Children.Count == 0) {
+            else if (_contents.Count == 0) {
                 <MudText Typo="Typo.caption" Color="Color.Secondary">Empty.</MudText>
             }
             else {
-                <MudList T="FileStoragePathTreeNode" Dense="true">
-                    @foreach (var child in Selected.Children) {
-                        <MudListItem T="FileStoragePathTreeNode"
-                                     Value="@child"
-                                     Icon="@(child.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.InsertDriveFile)"
-                                     OnClick="@(() => SelectNodeAsync(child))">
-                            @child.Name
-                            @if (!child.IsDirectory && child.OriginalFileSize is { } size) {
-                                <span class="mud-text-secondary"> (@FileSizeUnitInfo.FormatBestFitAbbreviation(size))</span>
+                <MudList T="FileSystemEntry" Dense="true">
+                    @foreach (var child in _contents) {
+                        var entry = child;
+                        <MudListItem T="FileSystemEntry"
+                                     Value="@entry"
+                                     Icon="@(entry.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.InsertDriveFile)"
+                                     OnClick="@(() => SelectEntryAsync(entry))">
+                            @entry.Name
+                            @if (!entry.IsDirectory && entry.Length > 0) {
+                                <span class="mud-text-secondary"> (@FileSizeUnitInfo.FormatBestFitAbbreviation(entry.Length))</span>
                             }
                         </MudListItem>
                     }
@@ -124,15 +127,20 @@
                     <MudText Typo="Typo.h6">@Selected.Name</MudText>
                     <MudText Typo="Typo.caption" Color="Color.Secondary">@(Selected.PathPrefix ?? FileStoragePathTreeBuilder.RootDisplayName)</MudText>
                 </MudStack>
+                @if (Selected.Presence == FileStoragePresence.Physical) {
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        On disk only — not in the catalog. Download streams the raw object (not decrypted).
+                    </MudAlert>
+                }
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Info" OnClick="ViewMetadataAsync">View metadata</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Link" Disabled="@Selected.IsDeleted" OnClick="AccessLinkAsync">Access link…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" Disabled="@Selected.IsDeleted" OnClick="DownloadAsync">Download</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@Selected.IsDeleted" OnClick="MoveAsync">Move…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@Selected.IsDeleted" OnClick="CopyAsync">Copy…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@Selected.IsDeleted" OnClick="RenameAsync">Rename…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@Selected.IsDeleted" OnClick="RotateDekAsync">Rotate DEK…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@Selected.IsDeleted" OnClick="DeleteAsync">Delete</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Info" Disabled="@(!InCatalog)" OnClick="ViewMetadataAsync">View metadata</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Link" Disabled="@(!CatalogActionsEnabled)" OnClick="AccessLinkAsync">Access link…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" Disabled="@(!CanDownload)" OnClick="DownloadAsync">Download</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!CatalogActionsEnabled)" OnClick="MoveAsync">Move…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!CatalogActionsEnabled)" OnClick="CopyAsync">Copy…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@(!CatalogActionsEnabled)" OnClick="RenameAsync">Rename…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!CatalogActionsEnabled)" OnClick="RotateDekAsync">Rotate DEK…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!CatalogActionsEnabled)" OnClick="DeleteAsync">Delete</MudButton>
                 </MudStack>
             </MudStack>
         </div>

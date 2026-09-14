@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.ContactUs.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
@@ -34,6 +33,8 @@ public static class Extensions
         public IServiceCollection AddContactUsService<TService>(ContactUsServiceOptions options)
             where TService : class, IContactUsService
         {
+            ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<IContactUsService, TService>();
             return services;
@@ -63,11 +64,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(ContactUsServiceOptions))) {
-                services.AddSingleton<ContactUsServiceOptions>(_ => {
-                    var options = LyoOptions.Bind<ContactUsServiceOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new ContactUsServiceOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             return services;

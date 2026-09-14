@@ -42,7 +42,6 @@ The backing secret is stored as JSON (`{ "<keyId>": "plaintext-or-derived-materi
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.KeyStore` (direct, lyo)
 - `AWSSDK.SecretsManager` `4.0.100.3` (direct, third-party)
@@ -56,7 +55,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

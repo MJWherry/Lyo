@@ -1,5 +1,4 @@
 using Lyo.Barcode.Models;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +15,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             var options = new BarcodeServiceOptions();
             configure?.Invoke(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<IBarcodeService, NativeBarcodeService>();
             return services;
@@ -25,6 +25,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddSingleton<IBarcodeService, NativeBarcodeService>();
             return services;
@@ -38,11 +39,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(BarcodeServiceOptions))) {
-                services.AddSingleton<BarcodeServiceOptions>(_ => {
-                    var options = LyoOptions.Bind<BarcodeServiceOptions>(configuration, configSectionName);
-
-                    return options;
-                });
+                var options = new BarcodeServiceOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             services.AddSingleton<IBarcodeService, NativeBarcodeService>();

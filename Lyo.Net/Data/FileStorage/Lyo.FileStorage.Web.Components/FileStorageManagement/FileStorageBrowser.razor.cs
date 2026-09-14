@@ -62,7 +62,7 @@ public partial class FileStorageBrowser : ComponentBase, IDisposable
     }
 
     private bool KeyExists(string? expected)
-        => FileStorageStorageKeyJoin.KeyExists(_existingKeys, expected);
+        => FileStorageGridRowHelper.StorageKeyExists(_existingKeys, expected);
 
     private IReadOnlyList<object?> SelectedRows(LyoDataGridProjected? grid)
         => ProjectedGridKeys.RowsFromKeys(grid?.SelectedKeys);

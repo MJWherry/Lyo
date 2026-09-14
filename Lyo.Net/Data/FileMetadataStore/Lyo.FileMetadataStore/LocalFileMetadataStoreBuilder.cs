@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,17 +50,17 @@ public sealed class LocalFileMetadataStoreBuilder
         var configSectionName = _localFileMetadataStoreConfigSection ?? LocalFileMetadataStoreOptions.SectionName;
         if (!_services.Any(s => s.ServiceType == typeof(LocalFileMetadataStoreOptions))) {
             if (_localFileMetadataStoreConfigure != null) {
-                _services.AddSingleton<LocalFileMetadataStoreOptions>(_ => {
-                    var options = new LocalFileMetadataStoreOptions();
-                    _localFileMetadataStoreConfigure(options);
-                    return options;
-                });
+                var options = new LocalFileMetadataStoreOptions();
+                _localFileMetadataStoreConfigure(options);
+                options.Validate();
+                _services.AddSingleton(options);
             }
             else {
                 _services.AddSingleton<LocalFileMetadataStoreOptions>(provider => {
                     var configuration = provider.GetRequiredService<IConfiguration>();
-                    var options = LyoOptions.Bind<LocalFileMetadataStoreOptions>(configuration, configSectionName);
-
+                    var options = new LocalFileMetadataStoreOptions();
+                    configuration.GetSection(configSectionName).Bind(options);
+                    options.Validate();
                     return options;
                 });
             }
@@ -72,7 +71,6 @@ public sealed class LocalFileMetadataStoreBuilder
             _services.AddKeyedSingleton<LocalFileMetadataStore>(
                 _keyName, (provider, _) => {
                     var options = provider.GetRequiredService<LocalFileMetadataStoreOptions>();
-                    ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.RootDirectoryPath, nameof(options.RootDirectoryPath));
                     var loggerFactory = provider.GetService<ILoggerFactory>();
                     return new(options.RootDirectoryPath, loggerFactory);
                 });

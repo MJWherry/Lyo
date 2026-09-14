@@ -25,7 +25,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Api.Client` (direct, lyo)
 - `Lyo.Common.Json` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Diff` (direct, lyo)
 - `Lyo.Drift.Client` (direct, lyo)
 - `Lyo.Drift.Models` (direct, lyo)
@@ -43,6 +42,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.FileSystemWatcher.Models` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)

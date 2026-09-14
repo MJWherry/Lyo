@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Web.Components.LyoType;
 using Lyo.Web.Components.ParamTable;
@@ -30,7 +29,9 @@ public static class ServiceCollectionExtensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            return services.AddLyoParameterEditor(LyoOptions.Bind<LyoParameterEditorOptions>(configuration, sectionName));
+            var options = new LyoParameterEditorOptions();
+            configuration.GetSection(sectionName).Bind(options);
+            return services.AddLyoParameterEditor(options);
         }
 
         /// <summary>
@@ -62,7 +63,9 @@ public static class ServiceCollectionExtensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            return services.AddLyoDataGrid(LyoOptions.Bind<LyoDataGridOptions>(configuration, sectionName));
+            var options = new LyoDataGridOptions();
+            configuration.GetSection(sectionName).Bind(options);
+            return services.AddLyoDataGrid(options);
         }
 
         /// <summary>

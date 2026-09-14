@@ -33,7 +33,6 @@
         <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
         <ProjectReference Include="..\..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
         <ProjectReference Include="..\..\..\Core\Parameters\Lyo.Parameters\Lyo.Parameters.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
     </ItemGroup>
 
 </Project>

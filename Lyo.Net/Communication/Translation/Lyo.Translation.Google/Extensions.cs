@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
@@ -23,11 +22,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(GoogleTranslationOptions))) {
-                services.AddSingleton(_ => {
-                    var options = LyoOptions.Bind<GoogleTranslationOptions>(configuration, configSectionName);
-                    options.Validate();
-                    return options;
-                });
+                var options = new GoogleTranslationOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             return services.RegisterGoogleTranslationService();
@@ -40,12 +38,10 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configure);
-            services.AddSingleton(_ => {
-                var options = new GoogleTranslationOptions();
-                configure(options);
-                options.Validate();
-                return options;
-            });
+            var options = new GoogleTranslationOptions();
+            configure(options);
+            options.Validate();
+            services.AddSingleton(options);
 
             return services.RegisterGoogleTranslationService();
         }

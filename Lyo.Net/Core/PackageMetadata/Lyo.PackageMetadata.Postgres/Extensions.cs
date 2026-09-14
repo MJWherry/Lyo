@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.PackageMetadata.Postgres.Database;
 using Lyo.Postgres;
@@ -32,7 +31,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresPackageMetadataOptions>(configuration, configSectionName);
+            var options = new PostgresPackageMetadataOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPackageMetadataDbContextFactory(options);
         }
@@ -65,7 +65,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresPackageMetadataOptions>(configuration, configSectionName);
+            var options = new PostgresPackageMetadataOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPostgresPackageMetadataStore(options);
         }

@@ -100,6 +100,25 @@ public sealed class FileStorageBrowserActions
         }
     }
 
+    /// <summary>Opens the raw physical download for an object that exists on disk but is not in the catalog.</summary>
+    public async Task DownloadPhysicalAsync(string physicalKey)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(physicalKey);
+        var url = _host.GetApiAbsoluteUrl(_host.FilesApi("files/physical/download?physicalKey=" + Uri.EscapeDataString(physicalKey)));
+        if (url == null) {
+            _host.SetStatus("ApiClient:BaseUrl is not configured; cannot download.", Severity.Warning);
+            return;
+        }
+
+        try {
+            await _host.JsRuntime.InvokeVoidAsync("open", url, "_blank");
+            _host.SetStatus($"Started physical download for {physicalKey}.", Severity.Success);
+        }
+        catch (Exception ex) {
+            _host.SetStatus(ex.Message, Severity.Error);
+        }
+    }
+
     /// <summary>Zips active files from <c>GET files/archive</c>.</summary>
     public async Task DownloadArchiveAsync(IReadOnlyList<Guid> fileIds)
     {

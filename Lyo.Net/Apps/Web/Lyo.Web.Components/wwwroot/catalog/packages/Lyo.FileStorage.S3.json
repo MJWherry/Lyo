@@ -3,9 +3,10 @@
   "name": "Lyo.FileStorage.S3",
   "area": "Data",
   "tagline": "Lyo.FileStorage on S3-compatible endpoints (AWS S3, Backblaze B2, MinIO, and others) through AWSSDK.S3.",
-  "description": "Lyo.FileStorage on S3-compatible endpoints (AWS S3, Backblaze B2, MinIO, and others) through AWSSDK.S3.",
+  "description": "Lyo.FileStorage on S3-compatible endpoints (AWS S3, Backblaze B2, MinIO, and others) through AWSSDK.S3. Also exposes `S3FileSystem` (`IFileSystem`) for the raw object-key tree (prefix + `Delimiter=/`). That is not the FileStorage metadata tree.",
   "features": [
     "**S3 API.** One client for AWS and S3-compatible endpoints.",
+    "**Raw key VFS.** `S3FileSystem` lists immediate children with prefix + delimiter, creates empty-folder markers, and copies/moves objects. `OpenAppend` is not supported.",
     "**Multipart uploads.** Keyed S3MultipartUploadService is registered with the same key when you call S3FileStorageServiceBuilder.Build (unless already registered). If no IMultipartUploadSessionStore is registered yet, an in-memory store is added (use AddPostgresFileMetadataStoreKeyed(...).Build() before S3 when using PostgreSQL so sessions use the DB). Part size is clamped to the S3 minimum (5 MiB) with an 8 MiB default. Total upload limit aligns with MaxUploadSizeBytes. Server-side copy is used for the final commit (no download+re-upload round trip).",
     "**Streamed PUT spilling.** S3UploadStream keeps small payloads in memory and spills to a deletable temp file once it crosses 4 MiB, then uploads via a single PUT under 64 MiB or multipart above that, aborting cleanly on any per-part failure.",
     "**Region.** AWS regions are configurable.",
@@ -319,14 +320,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Encryption",
       "kind": "lyo",
       "tags": [
@@ -377,6 +370,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
       "kind": "package",
       "version": "10.0.5",
@@ -403,6 +405,14 @@
     },
     {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -485,15 +495,6 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
       ]
     },
     {

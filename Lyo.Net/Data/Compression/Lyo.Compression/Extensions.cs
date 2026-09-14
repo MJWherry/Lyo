@@ -72,11 +72,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             services.AddBuiltInCompressors();
-            services.AddSingleton(_ => {
-                var options = new CompressionServiceOptions();
-                configuration.GetSection(configSectionName).Bind(options);
-                return options;
-            });
+            var options = new CompressionServiceOptions();
+            configuration.GetSection(configSectionName).Bind(options);
+            services.AddSingleton(options);
 
             services.AddCompressionResolver();
             services.AddSingleton(sp => CreateCompressionService(sp, sp.GetRequiredService<CompressionServiceOptions>()));

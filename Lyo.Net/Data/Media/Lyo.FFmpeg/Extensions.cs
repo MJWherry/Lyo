@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.FFmpeg.Models;
 using Lyo.Media.Models;
@@ -36,7 +35,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<FFmpegOptions>(configuration, configSectionName);
+            var options = new FFmpegOptions();
+            configuration.GetSection(configSectionName).Bind(options);
             return services.AddFFmpegServices(options);
         }
 

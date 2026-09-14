@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.AspNetCore.Components.Web;
@@ -25,11 +24,10 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(configuration);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         if (!services.Any(s => s.ServiceType == typeof(WebRenderOptions))) {
-            services.AddSingleton<WebRenderOptions>(_ => {
-                var options = LyoOptions.Bind<WebRenderOptions>(configuration, configSectionName);
-
-                return options;
-            });
+            var options = new WebRenderOptions();
+            configuration.GetSection(configSectionName).Bind(options);
+            options.Validate();
+            services.AddSingleton(options);
         }
 
         services.AddScoped<HtmlRenderer>(provider => new(provider, provider.GetRequiredService<ILoggerFactory>()));

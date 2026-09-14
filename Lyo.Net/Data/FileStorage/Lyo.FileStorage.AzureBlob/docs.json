@@ -3,9 +3,10 @@
   "name": "Lyo.FileStorage.AzureBlob",
   "area": "Data",
   "tagline": "Azure.Storage.Blobs IFileStorageService for Azure Blob Storage.",
-  "description": "Azure.Storage.Blobs [`IFileStorageService`](../Lyo.FileStorage/README.md) for Azure Blob Storage. The package id and namespace Lyo.FileStorage.AzureBlob match the blob abstraction. Configuration and types use Blob* naming, with a legacy AzureFileStorageOptions appsettings subsection for migration.\n\nArchitecture, duplicate handling, and threat-model context for storage live in Lyo.FileStorage. This README is the assembly plus Azure-specific options.",
+  "description": "Azure.Storage.Blobs [`IFileStorageService`](../Lyo.FileStorage/README.md) for Azure Blob Storage. The package id and namespace Lyo.FileStorage.AzureBlob match the blob abstraction. Configuration and types use Blob* naming, with a legacy AzureFileStorageOptions appsettings subsection for migration.\n\nAlso exposes `AzureBlobFileSystem` (`IFileSystem`) for the raw blob-name tree (`GetBlobsByHierarchy`). That is not the FileStorage metadata tree.\n\nArchitecture, duplicate handling, and threat-model context for storage live in Lyo.FileStorage. This README is the assembly plus Azure-specific options.",
   "features": [
     "**Same contract as Local / S3.** Save, stream save, multipart, presigned reads (SAS GET), direct PUT begin/complete, server-side copy, DEK migrate/rotate, health, IFileStorageDiagnosticsService listing keys under the container prefix (normalized and traversal-guarded by Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix).",
+    "**Raw blob VFS.** `AzureBlobFileSystem` lists immediate children via `GetBlobsByHierarchy`. Empty folders are zero-byte `{path}/` markers. `OpenAppend` is not supported.",
     "**Optional compression and two-key encryption.** Same pipeline as Lyo.FileStorage when ICompressionService / ICompressionResolver / ITwoKeyEncryptionService are registered. Reads use metadata CompressionAlgorithm via the resolver.",
     "**SSE.** Optional encryption scope and customer-provided key (SSE-C via a base64 key on options). Applied to single-blob writes, multipart staging, header range updates, and DEK migrations. See XML docs on AzureBlobFileStorageOptions for presigned/SSE limits.",
     "**Multipart.** Register AddAzureBlobMultipartUploadService() after AddAzureBlobFileStorageService. Final commit uses SyncCopyFromUriAsync rather than download+re-upload.",
@@ -195,15 +196,16 @@
       ]
     },
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
       "tags": [
-        "transitive",
-        "lyo"
+        "direct",
+        "microsoft"
       ]
     },
     {
-      "name": "Lyo.Configuration",
+      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -220,6 +222,14 @@
     },
     {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -302,15 +312,6 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
       ]
     },
     {

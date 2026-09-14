@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -31,7 +30,8 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = LyoOptions.Bind<PostgresFavoriteOptions>(configuration, configSectionName);
+        var options = new PostgresFavoriteOptions();
+        configuration.GetSection(configSectionName).Bind(options);
 
         return services.AddFavoriteDbContextFactory(options);
     }
@@ -66,7 +66,8 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = LyoOptions.Bind<PostgresFavoriteOptions>(configuration, configSectionName);
+        var options = new PostgresFavoriteOptions();
+        configuration.GetSection(configSectionName).Bind(options);
 
         return services.AddPostgresFavoriteStore(options);
     }

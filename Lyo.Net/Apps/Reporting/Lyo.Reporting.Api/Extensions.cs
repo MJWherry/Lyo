@@ -1,7 +1,6 @@
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
 using Lyo.Api.Models.Error;
-using Lyo.Configuration;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
@@ -78,7 +77,8 @@ public static class Extensions
     {
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);
-        var options = LyoOptions.Bind<PostgresReportingOptions>(configuration, configSectionName);
+        var options = new PostgresReportingOptions();
+        configuration.GetSection(configSectionName).Bind(options);
 
         return services.AddReportingApi(options);
     }

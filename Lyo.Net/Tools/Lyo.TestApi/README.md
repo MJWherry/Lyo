@@ -17,7 +17,7 @@ Minimal-API host backing `Lyo.TestGateway` and `Lyo.TestConsole`. It wires the L
 - **Audit.** `AddPostgresFileAuditSink()` writes into the file metadata DB; `AddScoped<IFileAuditEventHandler, FileMetadataQueryCacheInvalidationHandler>` invalidates the `Lyo.Cache` QueryProject cache for `FileMetadataEntity` on successful `Save`/`Delete`/`MultipartComplete` and on any `MigrateDeks` / `RotateDeks` so workbench grids see fresh rows.
 - **Scheduler.** `AddJobScheduler()` is commented out; MQ queues jobs, but this host does not poll them. Run `Lyo.Job.Worker.Example` to consume `job.run.example`.
 
-## `SetupEndpoints` (root extension)
+## `SetupCourtEndpoints` (root extension)
 
 `SetupEndpoints.cs` hangs one extension method off `WebApplication` that chains every endpoint group:
 
@@ -180,7 +180,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Config` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.ContactUs` (transitive, lyo)
 - `Lyo.Csv` (transitive, lyo)
 - `Lyo.Csv.Models` (transitive, lyo)
@@ -203,6 +202,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.HomeInventory` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.Job.Models` (transitive, lyo)
 - `Lyo.MessageQueue` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)

@@ -3,7 +3,7 @@
   "name": "Lyo.FileStorage",
   "area": "Data",
   "tagline": "Save, stream-save, read, delete, and file metadata. Optional compression (Lyo.Compression), two-key encryption (Lyo.Encryption), duplicate hashing, access policies, audit hooks, multipart (IMultipartUploadService), and presigned/direct-upload/copy on cloud backends.",
-  "description": "Save, stream-save, read, delete, and file metadata. Optional compression ([Lyo.Compression](../../Compression/Lyo.Compression/README.md)), two-key encryption ([Lyo.Encryption](../../../Security/Encryption/Lyo.Encryption/README.md)), duplicate hashing, access policies, audit hooks, multipart uploads (via [IMultipartUploadService](Multipart/IMultipartUploadService.cs)), and presigned/direct-upload/copy on cloud-capable backends.\n\nWith GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.",
+  "description": "Save, stream-save, read, delete, and file metadata. Optional compression ([Lyo.Compression](../../Compression/Lyo.Compression/README.md)), two-key encryption ([Lyo.Encryption](../../../Security/Encryption/Lyo.Encryption/README.md)), duplicate hashing, access policies, audit hooks, multipart uploads (via [IMultipartUploadService](Multipart/IMultipartUploadService.cs)), and presigned/direct-upload/copy on cloud-capable backends.\n\nCatalog listing is `IFileMetadataStore`. Bytes go through `IFileStorageService`. Backends that can list keys expose `IFileStoragePhysical.Physical` (`IFileSystem`). `FileStorageReconcile` joins them on file id with flags `Store` / `Physical` / `Both`.\n\nWith GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.",
   "features": [],
   "examples": [
     {
@@ -473,14 +473,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Encryption",
       "kind": "lyo",
       "tags": [
@@ -521,6 +513,14 @@
       ]
     },
     {
+      "name": "Lyo.IO.FileSystem",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.Temp",
       "kind": "lyo",
       "tags": [
@@ -552,6 +552,15 @@
         "direct",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
       ]
     },
     {
@@ -623,15 +632,6 @@
       "tags": [
         "transitive",
         "third-party"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
       ]
     },
     {

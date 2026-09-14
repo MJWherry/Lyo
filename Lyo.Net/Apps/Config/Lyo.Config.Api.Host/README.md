@@ -40,7 +40,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.Config` (transitive, lyo)
 - `Lyo.Config.Postgres` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Diagnostic.AspNetCore` (transitive, lyo)

@@ -3,11 +3,12 @@
   "name": "Lyo.Sftp.Client",
   "area": "Data",
   "tagline": "SSH.NET SFTP client with a connection pool, PathHelpers jail, logging, and Lyo.Metrics. Prefer `*Async`.",
-  "description": "SSH.NET wrapper for SFTP used by Lyo hosts and storage adapters (`Lyo.IO.Temp.Sftp`, `Lyo.FileStorage.Sftp`). Call `*Async` from hosts (`Task` + `CancellationToken`). Those methods hit SSH.NET's async API and the await-safe pool/per-client gates. Sync methods wait on that async path. Pooled connections are leased, POSIX paths stay under `RootRemoteDirectory` through `Lyo.Common.Core.Pathing.PathHelpers`, host-key allow lists are checked, and auth is password or private key. `ILogger` and `sftp.*` metrics are recorded. Callers may run concurrently up to `MaxPooledClients`. Do not share one leased `Stream` across threads.",
+  "description": "SSH.NET wrapper for SFTP used by Lyo hosts and storage adapters (`Lyo.FileStorage.Sftp`). Call `*Async` from hosts (`Task` + `CancellationToken`). Those methods hit SSH.NET's async API and the await-safe pool/per-client gates. Sync methods wait on that async path. Pooled connections are leased, POSIX paths stay under `RootRemoteDirectory` through `Lyo.Common.Core.Pathing.PathHelpers`, host-key allow lists are checked, and auth is password or private key. `ILogger` and `sftp.*` metrics are recorded. Callers may run concurrently up to `MaxPooledClients`. Do not share one leased `Stream` across threads. `SftpFileSystem` adapts `ISftpClient` onto `Lyo.IO.FileSystem.IFileSystem` (`AddSftpFileSystem`).",
   "features": [
     "**Async.** Hosts and adapters should call `*Async`. Sync wrappers wait on the async implementation. No `Task.Run`.",
     "**Pooled leases.** Up to `MaxPooledClients` SSH.NET clients at once. Each client serializes work across awaits with a `SemaphoreSlim`.",
     "**Concurrent callers.** Parallelism stops at the pool size. A single leased stream is not thread-safe.",
+    "**IFileSystem.** `SftpFileSystem` wraps `ISftpClient`. Register with `AddSftpFileSystem`.",
     "**Path jail.** Paths stay under `RootRemoteDirectory` with `PathStyle.Posix`.",
     "**Auth.** Password and/or a PEM or key-file private key. Host-key fingerprint allow list, or `AcceptAny` in tests.",
     "**Logging and metrics.** `ILogger` and `IMetrics` (`sftp.connect`, `sftp.operation`, `sftp.bytes`, `sftp.pool`, `sftp.errors`). Turning `EnableMetrics` off uses `NullMetrics`.",
@@ -38,7 +39,7 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
+      "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -46,7 +47,7 @@
       ]
     },
     {
-      "name": "Lyo.Exceptions",
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -59,6 +60,15 @@
       "tags": [
         "direct",
         "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
       ]
     },
     {
@@ -104,15 +114,6 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
       ]
     },
     {

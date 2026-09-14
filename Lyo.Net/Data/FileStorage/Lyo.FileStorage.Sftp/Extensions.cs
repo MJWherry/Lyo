@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
@@ -42,7 +41,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
-            options.Sftp.Validate();
+            options.Validate();
             services.AddSingleton(options);
             services.AddSftpClient(options.Sftp);
             RegisterService(services);
@@ -64,7 +63,8 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<SftpFileStorageOptions>(configuration, sectionName);
+            var options = new SftpFileStorageOptions();
+            configuration.GetSection(sectionName).Bind(options);
 
             return services.AddSftpFileStorageService(options);
         }

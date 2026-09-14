@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Api.FileStorage.Models;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.Query.Models.Builders;
@@ -37,8 +38,11 @@ public sealed class FileStoragePathTreeNode
     /// <summary>Stored object name from metadata, used to derive the expected storage key.</summary>
     public string? SourceFileName { get; init; }
 
-    /// <summary>Join of metadata vs one storage-key LIST. <see cref="FileStoragePresence.Unknown" /> when LIST was unavailable.</summary>
+    /// <summary>Join of metadata vs physical keys. <see cref="FileStoragePresence.None" /> when listing was skipped.</summary>
     public FileStoragePresence Presence { get; init; }
+
+    /// <summary>Object key relative to the physical root, when the folder list supplied one.</summary>
+    public string? PhysicalKey { get; init; }
 
     /// <summary>Host availability when the QueryProject row included it.</summary>
     public FileAvailability? Availability { get; init; }
@@ -74,7 +78,7 @@ public readonly record struct FileStoragePathTreeRow(
     long OriginalFileSize,
     bool IsDeleted,
     string? SourceFileName = null,
-    FileStoragePresence Presence = FileStoragePresence.Unknown,
+    FileStoragePresence Presence = FileStoragePresence.None,
     FileAvailability? Availability = null)
 {
     /// <inheritdoc />
@@ -331,48 +335,6 @@ public static class FileStoragePathTreeBuilder
         parent.Truncated = truncated;
     }
 
-    /// <summary>
-    /// Adds listed object keys that have no metadata row: immediate files as cloud-only leaves, nested keys as unloaded child folders.
-    /// </summary>
-    /// <param name="parent">Folder whose immediate children are being filled.</param>
-    /// <param name="unmatchedKeys">LIST keys that did not match a QueryProject row.</param>
-    public static void AddCloudOnlyOrphans(FileStoragePathTreeNode parent, IReadOnlyList<string> unmatchedKeys)
-    {
-        ArgumentHelpers.ThrowIfNull(parent);
-        ArgumentHelpers.ThrowIfNull(unmatchedKeys);
-        var existingFileIds = parent.Children.Where(static c => c.FileId != null).Select(static c => c.FileId!.Value).ToHashSet();
-        var existingFolders = parent.Children.Where(static c => c.IsDirectory && c.PathPrefix != null)
-            .Select(static c => Normalize(c.PathPrefix)!)
-            .ToHashSet(StringComparer.Ordinal);
-
-        foreach (var key in unmatchedKeys) {
-            if (!FileStorageStorageKeyJoin.TryParseStorageKey(key, out var fileId, out var prefix, out var sourceName))
-                continue;
-
-            if (IsImmediateFile(parent.PathPrefix, prefix)) {
-                if (!existingFileIds.Add(fileId))
-                    continue;
-
-                parent.Children.Add(
-                    CreateFileNode(new(fileId, prefix, sourceName, 0, false, sourceName, FileStoragePresence.CloudOnly)));
-                continue;
-            }
-
-            var childPrefix = ImmediateChildFolderPrefix(parent.PathPrefix, prefix);
-            if (childPrefix == null || !existingFolders.Add(childPrefix))
-                continue;
-
-            parent.Children.Add(CreateDirectoryNode(childPrefix));
-        }
-
-        parent.Children.Sort(static (a, b) => {
-            if (a.IsDirectory != b.IsDirectory)
-                return a.IsDirectory ? -1 : 1;
-
-            return string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
-        });
-    }
-
     private static void SortChildrenRecursive(FileStoragePathTreeNode node)
     {
         if (node.Children.Count == 0)
@@ -494,7 +456,7 @@ public static class FileStoragePathTreeBuilder
         ProjectedValueHelper.TryGetInt64(sizeRaw, out var size);
         parsed = new(
             fileId, FileStorageGridRowHelper.GetPathPrefixFromRow(row), FileStorageGridRowHelper.GetOriginalFileNameFromRow(row), size,
-            FileStorageGridRowHelper.IsRowDeleted(row), FileStorageGridRowHelper.GetSourceFileNameFromRow(row), FileStoragePresence.Unknown, ReadAvailability(row));
+            FileStorageGridRowHelper.IsRowDeleted(row), FileStorageGridRowHelper.GetSourceFileNameFromRow(row), FileStoragePresence.None, ReadAvailability(row));
         return true;
     }
 

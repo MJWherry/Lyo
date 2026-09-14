@@ -33,14 +33,6 @@
   "readmePath": "Lyo.Net/Plugins/Reporting/Lyo.Reporting.Web/README.md",
   "dependencies": [
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
@@ -91,7 +83,15 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -126,15 +126,6 @@
     },
     {
       "name": "Microsoft.Extensions.Configuration",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

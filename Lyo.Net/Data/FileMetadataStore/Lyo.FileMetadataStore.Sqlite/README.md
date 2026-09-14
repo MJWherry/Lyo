@@ -74,7 +74,6 @@ SQLite is single-writer. Fine for embedded clients, local tools, and low-concurr
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.FileMetadataStore` (direct, lyo)
 - `Lyo.FileStorage` (direct, lyo)
@@ -88,6 +87,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)

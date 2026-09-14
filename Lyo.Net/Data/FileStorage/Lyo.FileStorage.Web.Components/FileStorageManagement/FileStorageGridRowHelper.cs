@@ -162,6 +162,24 @@ public static class FileStorageGridRowHelper
         return string.Join("/", parts);
     }
 
+    /// <summary>True when <paramref name="expected" /> is in <paramref name="listedKeys" /> exactly or as a <c>.../{expected}</c> suffix.</summary>
+    public static bool StorageKeyExists(IReadOnlyCollection<string> listedKeys, string? expected)
+    {
+        ArgumentHelpers.ThrowIfNull(listedKeys);
+        if (string.IsNullOrWhiteSpace(expected) || listedKeys.Count == 0)
+            return false;
+
+        if (listedKeys.Contains(expected))
+            return true;
+
+        foreach (var key in listedKeys) {
+            if (key.Length > expected.Length && key.EndsWith(expected, StringComparison.Ordinal) && key[key.Length - expected.Length - 1] == '/')
+                return true;
+        }
+
+        return false;
+    }
+
     private static string InferTrailingSuffixAfterFileId(Guid fileId, string? sourceFileName)
     {
         if (string.IsNullOrEmpty(sourceFileName))

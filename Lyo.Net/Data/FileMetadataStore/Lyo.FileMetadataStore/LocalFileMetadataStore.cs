@@ -228,6 +228,44 @@ public class LocalFileMetadataStore : IFileMetadataStore
         return results;
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> ListByPathPrefixAsync(string? pathPrefix, bool includeDescendants, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var results = new List<FileStoreResult>();
+        if (!Directory.Exists(_rootDirectoryPath))
+            return results;
+
+        var metadataFiles = Directory.GetFiles(_rootDirectoryPath, $"*{MetadataExtension}", SearchOption.AllDirectories);
+        foreach (var metadataPath in metadataFiles) {
+            ct.ThrowIfCancellationRequested();
+            try {
+#if NETSTANDARD2_0
+                var json = File.ReadAllText(metadataPath);
+#else
+                var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
+#endif
+                var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
+                if (metadata == null || metadata.DeletedAt != null)
+                    continue;
+
+                if (!FileMetadataPathPrefix.IsUnder(pathPrefix, metadata.PathPrefix, includeDescendants))
+                    continue;
+
+                results.Add(metadata);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to read metadata file {MetadataPath}", metadataPath);
+            }
+        }
+
+        return results
+            .OrderBy(static r => r.PathPrefix, StringComparer.Ordinal)
+            .ThenBy(static r => r.Id)
+            .Take(maxKeys)
+            .ToList();
+    }
+
     private string GetMetadataPath(Guid fileId)
     {
         var idString = fileId.ToString("N");

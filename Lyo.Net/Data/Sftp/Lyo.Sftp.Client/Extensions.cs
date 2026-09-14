@@ -1,8 +1,9 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
+using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Sftp.Client;
@@ -40,9 +41,18 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(sectionName);
-            var options = LyoOptions.Bind<SftpClientOptions>(configuration, sectionName);
+            var options = new SftpClientOptions();
+            configuration.GetSection(sectionName).Bind(options);
 
             return services.AddSftpClient(options);
+        }
+
+        /// <summary>Registers <see cref="SftpFileSystem" /> as <see cref="IFileSystem" /> wrapping the <see cref="ISftpClient" /> already in DI.</summary>
+        public IServiceCollection AddSftpFileSystem()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.TryAddSingleton<IFileSystem>(sp => new SftpFileSystem(sp.GetRequiredService<ISftpClient>()));
+            return services;
         }
     }
 

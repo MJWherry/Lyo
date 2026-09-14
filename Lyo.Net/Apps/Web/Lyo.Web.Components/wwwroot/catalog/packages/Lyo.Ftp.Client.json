@@ -3,11 +3,12 @@
   "name": "Lyo.Ftp.Client",
   "area": "Data",
   "tagline": "FluentFTP client with a connection pool, PathHelpers jail, logging, and Lyo.Metrics. Prefer `*Async`.",
-  "description": "FluentFTP wrapper for FTP/FTPS used by Lyo hosts and storage adapters (`Lyo.IO.Temp.Ftp`, `Lyo.FileStorage.Ftp`). Call `*Async` from hosts (`Task` + `CancellationToken`). Those methods hit FluentFTP's async API and the await-safe pool/per-client gates. Sync methods wait on that async path. Pooled connections are leased, POSIX paths stay under `RootRemoteDirectory` through `Lyo.Common.Core.Pathing.PathHelpers`, and FTPS can encrypt the session. `ILogger` and `ftp.*` metrics are recorded. Callers may run concurrently up to `MaxPooledClients`. Do not share one leased `Stream` across threads.",
+  "description": "FluentFTP wrapper for FTP/FTPS used by Lyo hosts and storage adapters (`Lyo.FileStorage.Ftp`). Call `*Async` from hosts (`Task` + `CancellationToken`). Those methods hit FluentFTP's async API and the await-safe pool/per-client gates. Sync methods wait on that async path. Pooled connections are leased, POSIX paths stay under `RootRemoteDirectory` through `Lyo.Common.Core.Pathing.PathHelpers`, and FTPS can encrypt the session. `ILogger` and `ftp.*` metrics are recorded. Callers may run concurrently up to `MaxPooledClients`. Do not share one leased `Stream` across threads. `FtpFileSystem` adapts `IFtpClient` onto `Lyo.IO.FileSystem.IFileSystem` (`AddFtpFileSystem`).",
   "features": [
     "**Async.** Hosts and adapters should call `*Async`. Sync wrappers wait on the async implementation. No `Task.Run`.",
     "**Pooled leases.** Up to `MaxPooledClients` FluentFTP clients at once. Each client serializes work across awaits with a `SemaphoreSlim`.",
     "**Concurrent callers.** Parallelism stops at the pool size. A single leased stream is not thread-safe.",
+    "**IFileSystem.** `FtpFileSystem` wraps `IFtpClient`. Register with `AddFtpFileSystem`.",
     "**Path jail.** Paths stay under `RootRemoteDirectory` with `PathStyle.Posix`.",
     "**FTPS.** `FtpEncryptionMode` (`None` / `Explicit` / `Implicit`) plus `FtpTlsPolicy` (`ValidateCertificate` / `AcceptAny`).",
     "**Logging and metrics.** `ILogger` and `IMetrics` (`ftp.connect`, `ftp.operation`, `ftp.bytes`, `ftp.pool`, `ftp.errors`). Turning `EnableMetrics` off uses `NullMetrics`.",
@@ -38,7 +39,7 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
+      "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -46,7 +47,7 @@
       ]
     },
     {
-      "name": "Lyo.Exceptions",
+      "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -68,6 +69,15 @@
       "tags": [
         "direct",
         "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
       ]
     },
     {
@@ -104,15 +114,6 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
       ]
     },
     {

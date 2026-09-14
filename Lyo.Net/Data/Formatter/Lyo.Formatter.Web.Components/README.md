@@ -74,15 +74,14 @@ No `IHttpContextAccessor`, no server-only framework reference, and no formatting
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Formatter` (direct, lyo)
 - `Lyo.Web.Components` (direct, lyo)
 - `MudBlazor` `9.3` (direct, third-party)
 - `Lyo.Api.Client` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
-- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
-- `Lyo.Configuration` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
@@ -90,6 +89,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)

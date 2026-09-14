@@ -106,12 +106,10 @@ From `LockOptions`: `DefaultLockDuration`, `DefaultAcquireTimeout`, `KeyPrefix`,
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Lock` (direct, lyo)
 - `Microsoft.Extensions.DependencyInjection` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `StackExchange.Redis` `2.12.0` (direct, third-party)
 - `Lyo.Metrics` (transitive, lyo)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)

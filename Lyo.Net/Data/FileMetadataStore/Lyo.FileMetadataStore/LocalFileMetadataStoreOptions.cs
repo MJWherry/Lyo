@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.FileMetadataStore;
 
 /// <summary>Options for the local-disk file metadata store.</summary>
@@ -10,4 +12,7 @@ public sealed class LocalFileMetadataStoreOptions
 
     /// <summary>When true, the root directory is created if it is missing. Starts as true.</summary>
     public bool CreateDirectoryIfNotExists { get; set; } = true;
+
+    /// <summary>Throws when <see cref="RootDirectoryPath" /> is missing.</summary>
+    public void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(RootDirectoryPath);
 }

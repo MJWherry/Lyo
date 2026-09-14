@@ -187,7 +187,7 @@ flowchart LR
 ## Event publishers (`Events/`)
 
 - **`NullJobEventPublisher`.** default; `IsConnected() == false`.
-- **`MqJobEventPublisher`.** creates queues/exchange bindings; publishes run events with optional priority; routes alerts to `job.notifications.alert`. Resolves worker types from EF when `JobContext` is registered. For scheduler/worker hosts use `Lyo.Job.Client.MqJobEventPublisher` instead.
+- **`MqJobEventPublisher`.** declares `job.events` plus shared queues when missing; publishes run events with optional priority; routes alerts to `job.notifications.alert`. Resolves worker types from EF when `JobContext` is registered. For scheduler/worker hosts use `Lyo.Job.Client.MqJobEventPublisher` instead.
 
 ## Design-time migrations
 
@@ -214,7 +214,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Export` (direct, lyo)
 - `Lyo.Audit` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Job.Models` (direct, lyo)

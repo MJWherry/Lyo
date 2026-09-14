@@ -364,7 +364,7 @@
       "title": "Event publishers (`Events/`)",
       "items": [
         "**`NullJobEventPublisher`.** default; `IsConnected() == false`.",
-        "**`MqJobEventPublisher`.** creates queues/exchange bindings; publishes run events with optional priority; routes alerts to `job.notifications.alert`. Resolves worker types from EF when `JobContext` is registered. For scheduler/worker hosts use `Lyo.Job.Client.MqJobEventPublisher` instead."
+        "**`MqJobEventPublisher`.** declares `job.events` plus shared queues when missing; publishes run events with optional priority; routes alerts to `job.notifications.alert`. Resolves worker types from EF when `JobContext` is registered. For scheduler/worker hosts use `Lyo.Job.Client.MqJobEventPublisher` instead."
       ]
     },
     {
@@ -402,14 +402,6 @@
     },
     {
       "name": "Lyo.Common.Metadata",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Configuration",
       "kind": "lyo",
       "tags": [
         "direct",

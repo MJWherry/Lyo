@@ -44,7 +44,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Authentication.Models` (direct, lyo)
 - `Lyo.Authentication.Postgres` (direct, lyo)
 - `Lyo.Common.Core` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Cache` (transitive, lyo)
 - `Lyo.Common.Json` (transitive, lyo)

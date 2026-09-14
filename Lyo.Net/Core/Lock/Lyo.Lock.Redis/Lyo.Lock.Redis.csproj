@@ -9,13 +9,13 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
         <PackageReference Include="StackExchange.Redis"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Lock\Lyo.Lock.csproj"/>
         <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
-        <ProjectReference Include="..\..\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
     </ItemGroup>
 
 </Project>

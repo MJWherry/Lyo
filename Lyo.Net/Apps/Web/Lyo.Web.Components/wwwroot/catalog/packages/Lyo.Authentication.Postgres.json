@@ -54,14 +54,6 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [

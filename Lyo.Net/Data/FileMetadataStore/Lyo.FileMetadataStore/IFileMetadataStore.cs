@@ -41,6 +41,20 @@ public interface IFileMetadataStore
     /// <returns>Matching metadata, or null when none.</returns>
     Task<FileStoreResult?> FindByHashAsync(byte[] hash, CancellationToken ct = default);
 
+    /// <summary>
+    /// Lists non-deleted files whose <see cref="FileStoreResult.PathPrefix" /> matches <paramref name="pathPrefix" />. Immediate files only when
+    /// <paramref name="includeDescendants" /> is false; nested prefixes when true. No schema change; used by the FileStorage virtual file system.
+    /// </summary>
+    /// <param name="pathPrefix">Logical prefix. Null or empty is the tree root.</param>
+    /// <param name="includeDescendants">When true, also return files under nested prefixes.</param>
+    /// <param name="maxKeys">Maximum rows to return. Must be at least 1.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task<IReadOnlyList<FileStoreResult>> ListByPathPrefixAsync(
+        string? pathPrefix,
+        bool includeDescendants,
+        int maxKeys,
+        CancellationToken ct = default);
+
     /// <summary>Lists files encrypted with a given keyId and optional version (key rotation/migration).</summary>
     /// <param name="keyId">Key identifier to match.</param>
     /// <param name="keyVersion">Optional key version. Null matches every version for this keyId.</param>

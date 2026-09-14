@@ -12,7 +12,6 @@
         <ProjectReference Include="..\..\..\Plugins\Config\Lyo.Config\Lyo.Config.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

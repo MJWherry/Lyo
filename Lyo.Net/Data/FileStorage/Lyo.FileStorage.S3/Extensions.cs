@@ -1,6 +1,5 @@
 using Amazon;
 using Amazon.S3;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Multipart;
@@ -77,12 +76,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
-                services.AddSingleton<S3FileStorageOptions>(_ => {
-                    var options = LyoOptions.Bind<S3FileStorageOptions>(configuration, configSectionName);
-                    options.Validate();
-
-                    return options;
-                });
+                var options = new S3FileStorageOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                options.Validate();
+                services.AddSingleton(options);
             }
 
             // Register IAmazonS3 if not already registered

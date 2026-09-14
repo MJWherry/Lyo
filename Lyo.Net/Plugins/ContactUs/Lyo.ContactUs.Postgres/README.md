@@ -33,7 +33,6 @@ Migrations history is tracked in `__EFMigrationsHistory` under the `contact` sch
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.ContactUs` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Postgres` (direct, lyo)

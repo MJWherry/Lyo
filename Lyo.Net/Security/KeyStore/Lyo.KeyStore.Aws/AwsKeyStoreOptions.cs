@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.KeyStore.Aws;
 
 /// <summary>AWS credentials and related settings.</summary>
@@ -22,4 +24,12 @@ public class AwsKeyStoreOptions
 
     /// <summary>AWS Secrets Manager secret name prefix (e.g., "dev/FileStore").</summary>
     public string? SecretNamePrefix { get; set; }
+
+    /// <summary>Throws when access-key and secret are only half-specified.</summary>
+    public void Validate()
+    {
+        var hasAccess = !string.IsNullOrWhiteSpace(AccessKeyId);
+        var hasSecret = !string.IsNullOrWhiteSpace(SecretAccessKey);
+        ArgumentHelpers.ThrowIf(hasAccess != hasSecret, $"{nameof(AccessKeyId)} and {nameof(SecretAccessKey)} must both be set or both be omitted.");
+    }
 }

@@ -1,4 +1,5 @@
 using Lyo.Common.Metadata.Records;
+using Lyo.Exceptions;
 
 namespace Lyo.Profanity.Models;
 
@@ -37,6 +38,16 @@ public class ProfanityFilterOptions
 
     /// <summary>Flag: to enable metrics collection. Default is false. When enabled, requires IMetrics to be provided via constructor.</summary>
     public bool EnableMetrics { get; set; }
+
+    /// <summary>Throws when language or replacement settings are invalid.</summary>
+    public virtual void Validate()
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(Language);
+        ArgumentHelpers.ThrowIfNotDefined(ReplacementStrategy);
+        ArgumentHelpers.ThrowIfNull(ReplacementWord);
+        ArgumentHelpers.ThrowIfNull(AdditionalWords);
+        ArgumentHelpers.ThrowIfNull(ExcludedWords);
+    }
 
     /// <summary>Matching. Derived from CaseSensitive string comparison used.</summary>
     public StringComparison StringComparison => CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;

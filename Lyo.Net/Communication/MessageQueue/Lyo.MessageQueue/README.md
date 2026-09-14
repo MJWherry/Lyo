@@ -8,6 +8,7 @@ Implements `Lyo.Health.IHealth` so dashboards can ping broker connectivity along
 
 - `ConnectAsync` / `DisconnectAsync` open and close a session.
 - `IsConnected` is a synchronous snapshot used as a guard.
+- `CreateQueue` / `CreateExchange` declare topology. Brokers treat matching re-declares as no-ops.
 
 ## Message envelopes (`QueueMessageEnvelope<T>`)
 

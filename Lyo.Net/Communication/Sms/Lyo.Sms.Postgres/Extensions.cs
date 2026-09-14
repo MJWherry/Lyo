@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Lyo.Sms.Postgres.Database;
@@ -45,7 +44,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresSmsOptions>(configuration, configSectionName);
+            var options = new PostgresSmsOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddSmsDbContextFactory(options);
         }

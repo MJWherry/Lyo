@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Barcode.Models;
 
@@ -47,6 +48,23 @@ public class BarcodeServiceOptions
 
     /// <summary>If true, implementations may record timing histograms.</summary>
     public bool EnableMetrics { get; set; }
+
+    /// <summary>Throws when format or pixel/module bounds are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNotDefined(DefaultFormat);
+        ArgumentHelpers.ThrowIfNegativeOrZero(MinModuleWidthPixels);
+        ArgumentHelpers.ThrowIfLessThan(MaxModuleWidthPixels, MinModuleWidthPixels);
+        ArgumentHelpers.ThrowIfNotInRange(DefaultModuleWidthPixels, MinModuleWidthPixels, MaxModuleWidthPixels);
+        ArgumentHelpers.ThrowIfNegativeOrZero(MinBarHeightPixels);
+        ArgumentHelpers.ThrowIfLessThan(MaxBarHeightPixels, MinBarHeightPixels);
+        ArgumentHelpers.ThrowIfNotInRange(DefaultBarHeightPixels, MinBarHeightPixels, MaxBarHeightPixels);
+        ArgumentHelpers.ThrowIfNegative(MinQuietZoneModules);
+        ArgumentHelpers.ThrowIfLessThan(MaxQuietZoneModules, MinQuietZoneModules);
+        ArgumentHelpers.ThrowIfNotInRange(DefaultQuietZoneModules, MinQuietZoneModules, MaxQuietZoneModules);
+        ArgumentHelpers.ThrowIfNegativeOrZero(MinBorderWidthPixels);
+        ArgumentHelpers.ThrowIfLessThan(MaxBorderWidthPixels, MinBorderWidthPixels);
+    }
 
     public override string ToString()
         => $"DefaultFormat: {DefaultFormat}, DefaultModuleWidthPixels: {DefaultModuleWidthPixels}, DefaultBarHeightPixels: {DefaultBarHeightPixels}, BorderClamp: {MinBorderWidthPixels}-{MaxBorderWidthPixels}px, EnableMetrics: {EnableMetrics}";

@@ -1,12 +1,13 @@
 # Lyo.FileSystemWatcher
 
-Snapshot-based .NET file watcher. Finds creates, deletes, changes, moves, and renames with debounce and SHA256 hashing.
+Snapshot-based .NET file watcher. Finds creates, deletes, changes, moves, and renames with debounce and SHA256 hashing. `WatchableLocalFileSystem` lists through `LocalFileSystem` and maps watcher events onto `IFileSystemWatch`.
 
 ## Features
 
 - **Snapshot-based change detection.** Compares directory snapshots rather than relying only on FileSystemWatcher events.
 - **Debouncing.** Batches rapid changes so an event storm does not fire.
 - **Hash-based move detection.** Finds file moves and renames even when the file system does not report them.
+- **IFileSystem.** `WatchableLocalFileSystem` is the live-tree adapter (`Watch` capability).
 - **Batch scan.** `ScanCompleted` fires once per debounce with the previous tree, current tree, and every detected change. `CurrentSnapshot` exposes the last completed tree.
 - **Thread-safe.** Safe to call from multiple threads.
 - **Metrics.** Optional `IMetrics` hook (`Lyo.Metrics`).
@@ -476,11 +477,13 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Core` (direct, lyo)
 - `Lyo.FileSystemWatcher.Models` (direct, lyo)
 - `Lyo.Hashing` (direct, lyo)
+- `Lyo.IO.FileSystem` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

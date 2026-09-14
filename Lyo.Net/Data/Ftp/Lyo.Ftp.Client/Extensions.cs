@@ -1,8 +1,9 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
+using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Ftp.Client;
@@ -40,9 +41,18 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(sectionName);
-            var options = LyoOptions.Bind<FtpClientOptions>(configuration, sectionName);
+            var options = new FtpClientOptions();
+            configuration.GetSection(sectionName).Bind(options);
 
             return services.AddFtpClient(options);
+        }
+
+        /// <summary>Registers <see cref="FtpFileSystem" /> as <see cref="IFileSystem" /> wrapping the <see cref="IFtpClient" /> already in DI.</summary>
+        public IServiceCollection AddFtpFileSystem()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.TryAddSingleton<IFileSystem>(sp => new FtpFileSystem(sp.GetRequiredService<IFtpClient>()));
+            return services;
         }
     }
 

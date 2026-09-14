@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Sqlite;
 
 namespace Lyo.FileMetadataStore.Sqlite;
@@ -12,4 +13,7 @@ public sealed class SqliteFileMetadataStoreOptions : ISqliteMigrationConfig
 
     /// <summary>When true, applies database migrations on startup. Starts as false.</summary>
     public bool EnableAutoMigrations { get; set; } = false;
+
+    /// <summary>Throws when <see cref="ConnectionString" /> is missing.</summary>
+    public void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(ConnectionString);
 }

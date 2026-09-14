@@ -24,9 +24,7 @@ services.AddPostgresDriftManagementFromConfiguration(configuration);
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Api` (direct, lyo)
-- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Json` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Diff` (direct, lyo)
 - `Lyo.Drift.Models` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
@@ -37,6 +35,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Cache` (transitive, lyo)
+- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)

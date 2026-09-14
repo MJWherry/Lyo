@@ -1,5 +1,4 @@
 using FlareSolverrSharp;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Http.Client;
 using Lyo.Http.Client.Session;
@@ -66,7 +65,8 @@ public static class Extensions
         public IHttpClientBuilder AddFlaredHttpClientFromConfiguration(IConfiguration configuration, string sectionName = FlaredHttpOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<FlaredHttpOptions>(configuration, sectionName);
+            var options = new FlaredHttpOptions();
+            configuration.GetSection(sectionName).Bind(options);
             return services.AddFlaredHttpClient(options);
         }
     }

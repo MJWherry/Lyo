@@ -55,6 +55,9 @@ public abstract class FileStorageServiceBase
     protected readonly IFileContentPolicy ContentPolicy;
     protected readonly ILogger Logger;
     protected readonly IFileMetadataStore MetadataService;
+
+    /// <summary>Catalog used by save, get, delete, and folder listing. Same instance the service was constructed with.</summary>
+    public IFileMetadataStore MetadataStore => MetadataService;
     protected readonly IMetrics Metrics;
     protected readonly IFileOperationContextAccessor OperationContextAccessor;
     protected readonly FileStorageServiceBaseOptions Options;

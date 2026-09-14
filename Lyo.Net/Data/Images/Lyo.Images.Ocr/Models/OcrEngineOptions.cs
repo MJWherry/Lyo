@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Images.Ocr.Models;
 
 /// <summary>Cross-provider OCR options bound from configuration or set in DI.</summary>
@@ -14,4 +16,11 @@ public sealed class OcrEngineOptions
 
     /// <summary>Starting page-segmentation mode when a request does not override it.</summary>
     public OcrPageSegmentationMode DefaultPageSegmentationMode { get; set; } = OcrPageSegmentationMode.SparseTextOsd;
+
+    /// <summary>Throws when language or page-segmentation defaults are invalid.</summary>
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(DefaultLanguages);
+        ArgumentHelpers.ThrowIfNotDefined(DefaultPageSegmentationMode);
+    }
 }

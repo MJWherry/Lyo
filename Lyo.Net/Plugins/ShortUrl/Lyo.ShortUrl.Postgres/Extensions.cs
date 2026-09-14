@@ -1,4 +1,3 @@
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Lyo.ShortUrl.Postgres.Database;
@@ -45,7 +44,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = LyoOptions.Bind<PostgresShortUrlOptions>(configuration, configSectionName);
+            var options = new PostgresShortUrlOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddShortUrlDbContextFactory(options);
         }

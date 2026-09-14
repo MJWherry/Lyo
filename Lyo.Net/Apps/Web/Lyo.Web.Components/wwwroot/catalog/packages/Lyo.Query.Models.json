@@ -120,14 +120,6 @@
   },
   "dependencies": [
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
@@ -148,6 +140,14 @@
       "kind": "lyo",
       "tags": [
         "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
         "lyo"
       ]
     },

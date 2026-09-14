@@ -1,6 +1,5 @@
 using System.Reflection;
 using Lyo.Common.Metadata.Records;
-using Lyo.Configuration;
 using Lyo.Exceptions;
 using Lyo.Http.Client.Pipeline;
 using Lyo.Http.Client.Session;
@@ -65,7 +64,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             sectionName ??= ResolveSectionName<TOptions>();
-            var options = LyoOptions.Bind<TOptions>(configuration, sectionName);
+            var options = new TOptions();
+            configuration.GetSection(sectionName).Bind(options);
             return services.AddLyoHttpClientCore(options, factory, clientName);
         }
 

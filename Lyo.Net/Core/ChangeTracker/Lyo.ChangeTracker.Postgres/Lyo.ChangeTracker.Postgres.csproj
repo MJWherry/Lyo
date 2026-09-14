@@ -14,7 +14,6 @@
         <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
         <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
-        <ProjectReference Include="..\..\Configuration\Lyo.Configuration\Lyo.Configuration.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,5 @@
 using Lyo.Api;
 using Lyo.Api.Mapping;
-using Lyo.Configuration;
 using Lyo.Csv;
 using Lyo.Exceptions;
 using Lyo.Postgres;
@@ -36,7 +35,8 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<PostgresReportingOptions>(configuration, configSectionName);
+            var options = new PostgresReportingOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddReportingDbContextFactory(options);
         }
@@ -62,7 +62,8 @@ public static class Extensions
         public IServiceCollection AddPostgresReportingManagementFromConfiguration(IConfiguration configuration, string configSectionName = PostgresReportingOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<PostgresReportingOptions>(configuration, configSectionName);
+            var options = new PostgresReportingOptions();
+            configuration.GetSection(configSectionName).Bind(options);
 
             return services.AddPostgresReportingManagement(options);
         }

@@ -441,14 +441,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
@@ -548,7 +540,7 @@
       ]
     },
     {
-      "name": "Lyo.Compression",
+      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -556,7 +548,7 @@
       ]
     },
     {
-      "name": "Lyo.Configuration",
+      "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
         "transitive",

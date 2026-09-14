@@ -81,17 +81,16 @@ The caller owns the instance and must dispose it (`using` /
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Common.Metadata` (direct, lyo)
-- `Lyo.Configuration` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Pdf.Models` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
 - `PDFsharp` `6.2.4` (direct, third-party)
 - `PdfPig` `0.1.15` (direct, third-party)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

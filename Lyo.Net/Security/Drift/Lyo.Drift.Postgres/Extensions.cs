@@ -1,7 +1,6 @@
 using Lyo.Api;
 using Lyo.Api.Mapping;
 using Lyo.Common.Core.Enums;
-using Lyo.Configuration;
 using Lyo.Diff;
 using Lyo.Drift.Postgres.Database;
 using Lyo.Drift.Postgres.Mapping;
@@ -35,7 +34,8 @@ public static class Extensions
         public IServiceCollection AddPostgresDriftManagementFromConfiguration(IConfiguration configuration, string configSectionName = PostgresDriftOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
-            var options = LyoOptions.Bind<PostgresDriftOptions>(configuration, configSectionName);
+            var options = new PostgresDriftOptions();
+            configuration.GetSection(configSectionName).Bind(options);
             return services.AddPostgresDriftManagement(options);
         }
 
