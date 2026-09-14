@@ -5,9 +5,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
         <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
-        <ProjectReference Include="..\Lyo.IO.Temp.Ftp\Lyo.IO.Temp.Ftp.csproj"/>
+        <ProjectReference Include="..\Lyo.IO.FileSystem\Lyo.IO.FileSystem.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.IO.FileSystem.Web.Components</RootNamespace>
+        <Description>Blazor tree that lists folders through IFileTreeSource (IFileSystem or HTTP).</Description>
+        <PackageTags>blazor components filesystem tree mudblazor</PackageTags>
+        <NoWarn>$(NoWarn);CS8669</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.IO.FileSystem\Lyo.IO.FileSystem.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.IO.FileSystem.Web.Components.Tests"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,87 @@
+@namespace Lyo.IO.FileSystem.Web.Components
+
+<MudPaper Outlined="true" Class="pa-2 lyo-file-tree">
+    <div class="lyo-file-tree-panel">
+        <div class="lyo-file-tree-toolbar">
+            <MudStack Spacing="1">
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.subtitle2" Class="flex-grow-1">@Title</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Disabled="@Busy" OnClick="RefreshAsync" aria-label="Refresh tree"/>
+                </MudStack>
+                @if (EnableFilter || EnableSelection) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                        @if (EnableFilter) {
+                            <MudTextField T="string"
+                                          Class="flex-grow-1"
+                                          @bind-Value="_filter"
+                                          Immediate="true"
+                                          DebounceInterval="200"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Placeholder="Search"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          Clearable="true"
+                                          Disabled="@Busy"
+                                          aria-label="Search tree"/>
+                        }
+                        @if (EnableSelection) {
+                            <MudTooltip Text="@(_editMode ? "Done selecting" : "Select multiple for bulk actions")">
+                                <MudIconButton Icon="@(_editMode ? Icons.Material.Filled.Close : Icons.Material.Filled.Edit)"
+                                               Color="@(_editMode ? Color.Primary : Color.Default)"
+                                               Size="Size.Small"
+                                               Disabled="@Busy"
+                                               OnClick="ToggleEditAsync"
+                                               aria-label="Toggle bulk selection"/>
+                            </MudTooltip>
+                        }
+                    </MudStack>
+                }
+                @if (_editMode && SelectionToolbar != null) {
+                    @SelectionToolbar
+                }
+                @if (Truncated) {
+                    <MudAlert Severity="Severity.Info" Dense="true">Listing was truncated.</MudAlert>
+                }
+                @if (Busy) {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+                }
+            </MudStack>
+        </div>
+        <div class="lyo-file-tree-scroll" role="tree" aria-label="@Title">
+            <MudTreeView T="FileTreeNode"
+                         Items="DisplayItems"
+                         Hover="true"
+                         Dense="true"
+                         SelectedValue="_selected"
+                         SelectedValueChanged="OnSelectedAsync">
+                <ItemTemplate>
+                    <MudTreeViewItem Value="@context.Value"
+                                     Text="@context.Text"
+                                     Icon="@context.Icon"
+                                     Expanded="@context.Expanded"
+                                     ExpandedChanged="@(expanded => OnExpandedAsync(context.Value, expanded))"
+                                     Items="@context.Children">
+                        <BodyContent Context="body">
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                @if (_editMode && context.Value != null) {
+                                    <span @onclick:stopPropagation="true">
+                                        <MudCheckBox T="bool"
+                                                     Value="@_checked.Contains(context.Value)"
+                                                     ValueChanged="@(value => OnRowCheckedChangedAsync(context.Value, value))"
+                                                     Dense="true"
+                                                     Size="Size.Small"/>
+                                    </span>
+                                }
+                                <MudText Typo="Typo.body2">@context.Text</MudText>
+                                @if (ItemTrailing != null && context.Value != null) {
+                                    @ItemTrailing(context.Value)
+                                }
+                            </MudStack>
+                        </BodyContent>
+                    </MudTreeViewItem>
+                </ItemTemplate>
+            </MudTreeView>
+        </div>
+    </div>
+</MudPaper>

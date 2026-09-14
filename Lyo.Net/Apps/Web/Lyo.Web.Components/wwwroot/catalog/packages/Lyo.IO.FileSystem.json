@@ -1,0 +1,100 @@
+{
+  "id": "Lyo.IO.FileSystem",
+  "name": "Lyo.IO.FileSystem",
+  "area": "Data",
+  "tagline": "Path-rooted virtual file system: one contract for local disk, memory, SFTP, FTP, S3, and Azure Blob.",
+  "description": "Path-rooted virtual file system. Callers use `IFileSystem`. `LocalFileSystem` and `MemoryFileSystem` ship in this package. SFTP, FTP, S3, Azure Blob, and FileSystemWatcher implement the same contract in their existing packages. FileStorage uses `IFileSystem` only for physical keys (`IFileStoragePhysical`), not as a catalog. Paths stay under `RootPath` through `Lyo.Common.Core.Pathing.PathHelpers`.",
+  "features": [
+    "**Contract.** `IFileSystem` lists, reads, writes, copies, and moves files. Async is canonical; sync methods park (same pattern as Lyo SFTP/FTP clients).",
+    "**Capabilities.** `FileSystemCapabilities` flags (`Read`, `Write`, `CreateDirectory`, `Delete`, `Move`, `Copy`, `Watch`). `Watch` returns null when watching is not supported.",
+    "**Local disk.** `LocalFileSystem` (`PathStyle.Host`) jailed to a root directory.",
+    "**Memory.** `MemoryFileSystem` (`PathStyle.Posix`) on a `ConcurrentDictionary`. Fits WASM and tests.",
+    "**Helpers.** `FileSystemExtensions` for `TouchFile`, `WriteAllBytes` / `WriteAllText` / `AppendAllText`, `CopyStreamToFileAsync`, and `EnsureDirectoryAccessible`. `IFileTreeSource` is a list-only seam for tree UIs (including HTTP).",
+    "**DI.** `AddLocalFileSystem` / `AddMemoryFileSystem` / `AddLocalFileSystemFromConfiguration`."
+  ],
+  "examples": [
+    {
+      "title": "Local disk",
+      "language": "csharp",
+      "code": "services.AddLocalFileSystem(o => o.RootPath = \"/var/lyo-data\");\n\nvar fs = new LocalFileSystem(\"/tmp/lyo\");\nfs.CreateDirectory(Path.Combine(fs.RootPath, \"reports\"));\nfs.WriteAllBytes(Path.Combine(fs.RootPath, \"a.bin\"), payload);"
+    },
+    {
+      "title": "In-memory",
+      "language": "csharp",
+      "code": "services.AddMemoryFileSystem();\n\nvar fs = new MemoryFileSystem();\nfs.WriteAllText(fs.RootPath + \"/note.txt\", \"hello\", Encoding.UTF8);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/IO/Lyo.IO.FileSystem/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}
