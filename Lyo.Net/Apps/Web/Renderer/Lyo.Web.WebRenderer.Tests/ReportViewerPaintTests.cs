@@ -27,7 +27,7 @@ public sealed class ReportViewerPaintTests
             Title = "Quarterly",
             Sections = [new() { Title = "Body", Controls = [new Block { Content = "Hello block" }] }]
         };
-        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestContext.Current.CancellationToken);
+        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("Hello block", html, StringComparison.Ordinal);
         Assert.DoesNotContain("cursor: grab", html, StringComparison.Ordinal);
         Assert.DoesNotContain("draggable", html, StringComparison.OrdinalIgnoreCase);
@@ -108,7 +108,7 @@ public sealed class ReportViewerPaintTests
                 ["OnHit"] = EventCallback.Factory.Create<ReportDesignHit>(sink, sink.OnHit),
                 ["OnCardDrop"] = EventCallback.Factory.Create<ReportDesignCardDrop>(sink, sink.OnCardDrop)
             },
-            TestContext.Current.CancellationToken);
+            TestCt);
         Assert.Contains("display:grid", html.Replace(" ", string.Empty), StringComparison.Ordinal);
         Assert.Contains("repeat(2, 1fr)", html, StringComparison.Ordinal);
         Assert.DoesNotContain("grid-column: 1 / -1", html, StringComparison.Ordinal);
@@ -132,14 +132,14 @@ public sealed class ReportViewerPaintTests
                 }
             ]
         };
-        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestContext.Current.CancellationToken);
+        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("break-inside: avoid", html, StringComparison.Ordinal);
         Assert.Contains("<table", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("lyo-design", html, StringComparison.Ordinal);
         var tableOn = new Report<object> {
             Sections = [new() { Controls = [new Table { Title = "Together", KeepTogether = true, Columns = [new() { Header = "H" }], Rows = [new() { Cells = ["v"] }] }] }]
         };
-        var together = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = tableOn }, TestContext.Current.CancellationToken);
+        var together = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = tableOn }, TestCt);
         Assert.Contains("break-inside: avoid", together, StringComparison.Ordinal);
     }
 
@@ -159,7 +159,7 @@ public sealed class ReportViewerPaintTests
                 }
             ]
         };
-        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestContext.Current.CancellationToken);
+        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("Bill to", html, StringComparison.Ordinal);
         Assert.Contains("Acme", html, StringComparison.Ordinal);
         Assert.Contains("Subtotal", html, StringComparison.Ordinal);
@@ -236,7 +236,7 @@ public sealed class ReportViewerPaintTests
             Layout = new Layout { PageSize = "Letter", Margin = "1in" },
             Sections = [new() { Title = "Body", Styles = { ["background"] = "url(javascript:alert(1))" }, Controls = [new Block { Content = "Hello" }] }]
         };
-        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestContext.Current.CancellationToken);
+        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("@page", html, StringComparison.Ordinal);
         Assert.DoesNotContain("javascript", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("lyo-design", html, StringComparison.Ordinal);
@@ -259,7 +259,7 @@ public sealed class ReportViewerPaintTests
                 }
             ]
         };
-        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestContext.Current.CancellationToken);
+        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("display:grid", html.Replace(" ", string.Empty), StringComparison.Ordinal);
         Assert.Contains("Revenue", html, StringComparison.Ordinal);
         Assert.DoesNotContain("<table", html, StringComparison.OrdinalIgnoreCase);
@@ -269,12 +269,12 @@ public sealed class ReportViewerPaintTests
     public async Task RenderToHtmlAsync_InvoiceAndGallery_PaintTablesAndKpiCards()
     {
         var renderer = WebRendererTestHost.CreateService();
-        var invoiceHtml = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = ReportDesignTemplates.Invoice() }, TestContext.Current.CancellationToken);
+        var invoiceHtml = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = ReportDesignTemplates.Invoice() }, TestCt);
         Assert.Contains("<table", invoiceHtml, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Invoice", invoiceHtml, StringComparison.Ordinal);
         Assert.Contains("display:grid", invoiceHtml.Replace(" ", string.Empty), StringComparison.Ordinal);
 
-        var galleryHtml = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = ReportDesignTemplates.ControlsGallery() }, TestContext.Current.CancellationToken);
+        var galleryHtml = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = ReportDesignTemplates.ControlsGallery() }, TestCt);
         Assert.Contains("<table", galleryHtml, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Period", galleryHtml, StringComparison.Ordinal);
         Assert.Contains("display:grid", galleryHtml.Replace(" ", string.Empty), StringComparison.Ordinal);
@@ -282,7 +282,7 @@ public sealed class ReportViewerPaintTests
 
     private static Task<string> RenderPaintAsync(ReportViewPainter paint, Action<RenderTreeBuilder, ReportViewPainter> draw)
         => WebRendererTestHost.CreateService()
-            .RenderToHtmlAsync<ReportPaintProbe>(new() { ["Paint"] = paint, ["Draw"] = draw }, TestContext.Current.CancellationToken);
+            .RenderToHtmlAsync<ReportPaintProbe>(new() { ["Paint"] = paint, ["Draw"] = draw }, TestCt);
 
     private sealed class GridDropSink
     {

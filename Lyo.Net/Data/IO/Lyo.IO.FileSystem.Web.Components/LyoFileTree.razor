@@ -13,7 +13,8 @@
                         @if (EnableFilter) {
                             <MudTextField T="string"
                                           Class="flex-grow-1"
-                                          @bind-Value="_filter"
+                                          Value="_filter"
+                                          ValueChanged="OnFilterChangedAsync"
                                           Immediate="true"
                                           DebounceInterval="200"
                                           Variant="Variant.Outlined"
@@ -42,6 +43,9 @@
                 }
                 @if (Truncated) {
                     <MudAlert Severity="Severity.Info" Dense="true">Listing was truncated.</MudAlert>
+                }
+                @if (_searchListingTruncated) {
+                    <MudAlert Severity="Severity.Info" Dense="true">Search listing was truncated before every folder was loaded.</MudAlert>
                 }
                 @if (Busy) {
                     <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>

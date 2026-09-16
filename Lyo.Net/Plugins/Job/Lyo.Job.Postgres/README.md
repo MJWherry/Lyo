@@ -1,6 +1,6 @@
 # Lyo.Job.Postgres
 
-PostgreSQL persistence for Lyo job management. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, hand-rolled `JobLyoMapper` (`ILyoMapper`), optional parameter encryption, audit recording, and `IJobEventPublisher` so a host can run a job service: definitions, parameters, schedules, triggers, calendars, workflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats. HTTP mapping (`BuildJobGroup`) lives in `Lyo.Job.Api`.
+PostgreSQL persistence for Lyo job management. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, hand-rolled `JobLyoMapper` (`ILyoMapper`), optional parameter encryption, audit recording, and `IJobEventPublisher` so a host can run a job service: definitions, parameters, schedules, calendars, workflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats. HTTP mapping (`BuildJobGroup`) lives in `Lyo.Job.Api`.
 
 ## Examples
 
@@ -87,11 +87,15 @@ the API, and maintenance resolve deterministically. Future endpoints that mutate
 | `Running` → `Cancelling` | `CancelJobRun` (user cancels an active run) | Patch; the worker confirms via `FinishedJobRun`. |
 | `Running` → `Queued` | `RequeueJobRun` (worker host shutdown hand-back) | CAS on `State == Running`; `Cancelling` is intentionally rejected so a pending user cancel is not forgotten by a restart. Clears `StartedTimestamp`/`LastHeartbeatUtc`. |
 | `Running`/`Cancelling` → `Finished` | `FinishedJobRun` (worker reports outcome) | State check; stamps result, duration SLA. |
-| `Running`/`Cancelling` → `Finished`/`Timeout` | `JobMaintenanceService` dead-job scan | Heartbeat older than `TimeoutMinutes`; publishes `RunFinished` so retries/triggers/circuit breaker still fire. |
+| `Running`/`Cancelling` → `Finished`/`Timeout` | `JobMaintenanceService` dead-job scan | Heartbeat older than `TimeoutMinutes`; publishes `RunFinished` so retries and the circuit breaker still fire. |
 
 ## Dispatch suppression
 
 Immediate `RunCreated` publish is skipped by `CreateJobRun` when `JobRunReq.SuppressDispatch` is set **or** `ScheduledSlotUtc` is in the future (metric `job.service.run.dispatch.deferred`). Dispatch then belongs to the caller: the scheduler's delayed-MQ envelope delivers backoff retries, and the workflow engine publishes step runs only after linking them to their run step. If the owner crashes before publishing, the maintenance service's stuck-queued recovery (below) is the safety net. With suppression requested, creation succeeds even while MQ is disconnected.
+
+## Workflow run inputs
+
+`JobWorkflowService.StartWorkflowAsync` resolves the run's inputs once and freezes them onto `job_workflow_run.inputs_json`: the schedule's **enabled** parameters first, then `JobWorkflowStartReq.Inputs` over the top. Steps read them as `Input.{key}` — both in condition gates and in parameter templates — so a schedule edited mid-run cannot flip a gate that has already gone the other way, and schedule parameters have exactly one spelling.
 
 ## Encryption flow
 
@@ -159,13 +163,12 @@ For scheduled runs, a second create for the same `(JobScheduleId, ScheduledSlotU
 `BackgroundService` (`IHealth`: `job-maintenance`) ticking every `CheckIntervalSeconds`:
 
 1. **Dead jobs**. `Cancelling`/`Running` runs past `TimeoutMinutes` → `Timeout`/`Finished` + optional `DeadJob` alert. After commit, publishes `RunFinished` for each timed-out run
- so the scheduler's retry/trigger/circuit-breaker accounting fires (a late worker finish for the same run is rejected by the state check and dropped by the worker as terminal).
+ so the scheduler's retry and circuit-breaker accounting fires (a late worker finish for the same run is rejected by the state check and dropped by the worker as terminal).
 2. **Circuit breaker reset**. Re-enables definitions after `CircuitBreakerResetMinutes`; publishes `DefinitionUpdated` so scheduler caches refresh promptly.
 3. **Stuck queued redispatch**. Re-publishes `RunCreated` for due `Queued` runs untouched for `QueuedRunRedispatchMinutes` (lost publishes, delayed retries whose slot came due,
  crashed suppressed-dispatch owners). Bumps `UpdatedTimestamp` so a stuck run retries once per threshold window; duplicate deliveries are harmless because `StartedJobRun` only
  transitions `Queued -> Running` once.
-4. **Retention purge**. Deletes finished runs older than effective retention in `PurgeBatchSize` batches. Detaches FK references from surviving rows first: `ReRanFromJobRunId`/
- `TriggeredByJobRunId`/`ParentJobRunId` on related runs and `JobWorkflowRunStep.JobRunId` (workflow history is preserved with the run reference nulled), so purging
+4. **Retention purge**. Deletes finished runs older than effective retention in `PurgeBatchSize` batches. Detaches FK references from surviving rows first: `ReRanFromJobRunId`/`ParentJobRunId` on related runs and `JobWorkflowRunStep.JobRunId` (workflow history is preserved with the run reference nulled), so purging
  workflow-created runs or parents with surviving children cannot violate FKs and wedge the purge.
 5. **Worker pruning**. Removes stale `JobWorkerInstance` rows.
 6. **SLA breach scan**. Marks `SlaBreached` and increments `job.sla.breach` for overdue queued/running jobs. Alerts for SLA breaches are published by `JobService` on start/finish
@@ -205,6 +208,7 @@ Recent migrations of note:
  characters were previously truncated/rejected on the definition side only).
 - **`AddParameterDefaultExpression`.** Adds `job_parameter.default_kind` (`Literal` | `Expression`, defaulting to `Literal`) and `job_parameter.default_template`. Existing rows read as `Literal`, so the change is backward compatible.
 - **`AddJobBlackoutHolidayAndCalendarDays`.** Adds `holiday_slug`, `include_observed_date`, `month_flags`, and `days_of_month` on `job_blackout_window` so holiday and calendar-day windows are stored as rules instead of one dated row per year.
+- **`AddWorkflowsAndDropTriggers`.** Adds workflow schedules, step conditions, run inputs, and the workflow-run idempotency key, and drops `job_trigger`, `job_trigger_parameter`, and `job_run.job_trigger_id`. Triggers are no longer part of the model.
 
 ## Dependencies
 
@@ -227,7 +231,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Cache` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
@@ -237,12 +240,14 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Formatter` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
@@ -270,5 +275,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Diagnostics.DiagnosticSource` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

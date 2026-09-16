@@ -17,6 +17,12 @@ public sealed class JobMaintenanceOptions
     /// </summary>
     public int DefaultRetentionDays { get; set; }
 
+    /// <summary>
+    /// Retention, in days, for finished and failed workflow runs (and their run steps). Workflow runs are not covered by <see cref="DefaultRetentionDays" />: a workflow run
+    /// outlives the job runs it orchestrated, and purging it on the job-run schedule would erase the only record of what the workflow did. 0 disables purging (the default).
+    /// </summary>
+    public int WorkflowRetentionDays { get; set; }
+
     /// <summary>Most job runs deleted per maintenance tick, so purge transactions stay small. Default 500.</summary>
     public int PurgeBatchSize { get; set; } = 500;
 
@@ -51,6 +57,9 @@ public sealed class JobMaintenanceOptions
 
         if (DefaultRetentionDays < 0)
             errors.Add($"{nameof(DefaultRetentionDays)} must be 0 or greater.");
+
+        if (WorkflowRetentionDays < 0)
+            errors.Add($"{nameof(WorkflowRetentionDays)} must be 0 or greater.");
 
         if (PurgeBatchSize <= 0)
             errors.Add($"{nameof(PurgeBatchSize)} must be greater than 0.");

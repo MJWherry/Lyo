@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Net;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Playwright.Configuration;
 using Microsoft.Playwright;
@@ -57,7 +58,7 @@ public sealed class PlaywrightBrowserOptionsTests
     [Fact]
     public void ResolveLaunchArguments_Firefox_OmitsWindowSizeAndChromiumDefaults()
     {
-        var options = new PlaywrightBrowserOptions { BrowserKind = PlaywrightBrowserKind.Firefox, ScreenWidth = 1920, ScreenHeight = 1080 };
+        var options = new PlaywrightBrowserOptions { BrowserKind = AutomationBrowserKind.Firefox, ScreenWidth = 1920, ScreenHeight = 1080 };
         var args = options.ResolveLaunchArguments();
         Assert.DoesNotContain(args, a => a.Contains("window-size", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(args, a => a.Contains("no-sandbox", StringComparison.OrdinalIgnoreCase));
@@ -68,7 +69,7 @@ public sealed class PlaywrightBrowserOptionsTests
     public void ResolveLaunchArguments_Firefox_KeepsCallerArgsThatAreNotChromiumDefaults()
     {
         var options = new PlaywrightBrowserOptions {
-            BrowserKind = PlaywrightBrowserKind.Firefox,
+            BrowserKind = AutomationBrowserKind.Firefox,
             LaunchArguments = ["--width=1280"]
         };
         Assert.Equal(["--width=1280"], options.ResolveLaunchArguments());
@@ -82,17 +83,19 @@ public sealed class PlaywrightBrowserOptionsTests
     }
 
     [Fact]
-    public void ResolveContextUserAgent_Firefox_DefaultPool_IsNull()
+    public void ResolveContextUserAgent_Firefox_DefaultPool_IsGenerated()
     {
-        var options = new PlaywrightBrowserOptions { BrowserKind = PlaywrightBrowserKind.Firefox };
-        Assert.Null(options.ResolveContextUserAgent());
+        var options = new PlaywrightBrowserOptions { BrowserKind = AutomationBrowserKind.Firefox };
+        var ua = options.ResolveContextUserAgent();
+        Assert.Contains($"Firefox/{UserAgentGenerator.FirefoxVersion}", ua, StringComparison.Ordinal);
+        Assert.DoesNotContain("Chrome/", ua, StringComparison.Ordinal);
     }
 
     [Fact]
     public void ResolveContextUserAgent_Firefox_Custom_UsesFirst()
     {
         var options = new PlaywrightBrowserOptions {
-            BrowserKind = PlaywrightBrowserKind.Firefox,
+            BrowserKind = AutomationBrowserKind.Firefox,
             UserAgents = ["Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"]
         };
         Assert.Equal("Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0", options.ResolveContextUserAgent());

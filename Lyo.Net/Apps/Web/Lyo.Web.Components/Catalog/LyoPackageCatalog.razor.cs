@@ -18,6 +18,9 @@ public partial class LyoPackageCatalog
     private HttpClient Http { get; set; } = null!;
 
     [Inject]
+    private NavigationManager Navigation { get; set; } = null!;
+
+    [Inject]
     private ILogger<LyoPackageCatalog> Logger { get; set; } = null!;
 
     private CatalogIndex? _index;
@@ -38,7 +41,8 @@ public partial class LyoPackageCatalog
     protected override async Task OnInitializedAsync()
     {
         try {
-            _index = await Http.GetFromJsonAsync<CatalogIndex>($"{CatalogBasePath.TrimEnd('/')}/index.json", CatalogJson.Options);
+            var indexUri = CatalogAssetUri.Resolve(Navigation, $"{CatalogBasePath.TrimEnd('/')}/index.json");
+            _index = await Http.GetFromJsonAsync<CatalogIndex>(indexUri, CatalogJson.Options);
             ApplyFilter();
         }
         catch (Exception ex) {

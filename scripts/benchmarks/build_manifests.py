@@ -13,8 +13,8 @@ For every report it writes ``<name>.json`` (portable) and ``<name>.js``
 (``window.LyoBench.reports["<name>"] = …`` for file:// viewing), archives a timestamped
 snapshot under ``docs/benchmarks/history/<name>/``, attaches Δ-vs-prior-run fields and a
 run-history summary, then a ``registry.js`` listing all reports for the static
-``docs/benchmarks/index.html`` hub. By default it also copies history into
-``apps/gateway/public/benchmarks/history`` when that tree exists (``--sync-portfolio-only`` is a local-dev alias; no-op after the marketing site moved to Lyo-Public).
+``docs/benchmarks/index.html`` hub. By default it also copies ``data/`` + ``history/``
+into the Gateway Next.js tree (``LYO_PUBLIC_ROOT`` or sibling ``../Lyo-Public/apps/gateway/public/benchmarks``).
 """
 
 from __future__ import annotations
@@ -212,9 +212,14 @@ BDN_CATEGORIES: list[dict[str, Any]] = [
     {"name": "cache", "dir": _artifacts("Core", "Cache", "Lyo.Cache.Benchmarks")},
     {"name": "query", "dir": _artifacts("Data", "Query", "Lyo.Query.Benchmarks")},
     {"name": "csv", "dir": _artifacts("Data", "Csv", "Lyo.Csv.Benchmarks")},
+    {"name": "json", "dir": _artifacts("Data", "Json", "Lyo.Json.Benchmarks")},
+    {"name": "yaml", "dir": _artifacts("Data", "Yaml", "Lyo.Yaml.Benchmarks")},
+    {"name": "xml", "dir": _artifacts("Data", "Xml", "Lyo.Xml.Benchmarks")},
+    {"name": "toml", "dir": _artifacts("Data", "Toml", "Lyo.Toml.Benchmarks")},
     {"name": "xlsx", "dir": _artifacts("Data", "Xlsx", "Lyo.Xlsx.Benchmarks")},
     {"name": "lock", "dir": _artifacts("Core", "Lock", "Lyo.Lock.Benchmarks")},
     {"name": "filestorage", "dir": _artifacts("Data", "FileStorage", "Lyo.FileStorage.Benchmarks")},
+    {"name": "filesystemwatcher", "dir": _artifacts("Data", "FileSystemWatcher", "Lyo.FileSystemWatcher.Benchmarks")},
 ]
 
 
@@ -1412,7 +1417,7 @@ def main() -> None:
     parser.add_argument(
         "--sync-portfolio-only",
         action="store_true",
-        help="Only copy docs/benchmarks/history → apps/gateway/public/benchmarks/history when that tree exists.",
+        help="Only copy docs/benchmarks/{data,history} into Lyo-Public apps/gateway/public/benchmarks.",
     )
     parser.add_argument(
         "--no-sync-portfolio",

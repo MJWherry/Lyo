@@ -1,0 +1,90 @@
+@namespace Lyo.Billing.Web.Components.Components.Forms
+@inject ISnackbar Snackbar
+
+<LyoDialog Busy="@_saving" OnSave="SaveAsync" SaveDisabled="@(!_canSave)" SaveText="@(_isNew ? "Create" : "Save")">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isNew ? "New client" : "Edit client")</MudText>
+    </TitleContent>
+    <ChildContent>
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Terms">
+                <LyoForm TModel="ClientEditModel" Model="_edit" ShowActions="false" HasChangesChanged="@(v => _formHasChanges = v)">
+                    <MudGrid Spacing="2" Class="pa-1">
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.DisplayName)" Label="Display name" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.LegalName)" Label="Legal name" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="BillingClientStatus" Value="_edit.Status" ValueChanged="OnStatusChanged" Label="Status">
+                                @foreach (var status in Enum.GetValues<BillingClientStatus>()) {
+                                    <MudSelectItem Value="@status">@status</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.TaxId)" Label="Tax id" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.DefaultCurrency)" Label="Currency" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="int" Model="_edit" PropertyExpression="@(m => m.PaymentTermsDays)" Label="Payment terms (days)" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="bool" Model="_edit" PropertyExpression="@(m => m.TaxExempt)" Label="Tax exempt" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.InvoicePrefix)" Label="Invoice prefix" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.DefaultInvoiceNotes)" Label="Default invoice notes" AllowEditing="true" AllowMultiline="true" Lines="2"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.ContactName)" Label="Bill-to contact" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Line1)" Label="Line 1" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Line2)" Label="Line 2" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.City)" Label="City" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Region)" Label="Region" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.PostalCode)" Label="Postal" AllowEditing="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <LyoFormInput TModel="ClientEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Country)" Label="Country" AllowEditing="true"/>
+                        </MudItem>
+                    </MudGrid>
+                </LyoForm>
+            </MudTabPanel>
+            <MudTabPanel Text="Contacts" Disabled="@_isNew">
+                <div class="pa-2">
+                    <ClientContactGrid ApiClient="ApiClient" ClientId="_savedId" GridKey="BillingClientContactGridEditor"/>
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="Addresses" Disabled="@_isNew">
+                <div class="pa-2">
+                    <ClientAddressGrid ApiClient="ApiClient" ClientId="_savedId" GridKey="BillingClientAddressGridEditor"/>
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="Phones" Disabled="@_isNew">
+                <div class="pa-2">
+                    <ClientPhoneGrid ApiClient="ApiClient" ClientId="_savedId" GridKey="BillingClientPhoneGridEditor"/>
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="Emails" Disabled="@_isNew">
+                <div class="pa-2">
+                    <ClientEmailGrid ApiClient="ApiClient" ClientId="_savedId" GridKey="BillingClientEmailGridEditor"/>
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </ChildContent>
+</LyoDialog>

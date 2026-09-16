@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>XML format choice for the import workbench.</Description>
+        <PackageTags>blazor components import xml</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Web.Components.Import\Lyo.Web.Components.Import.csproj"/>
+        <ProjectReference Include="..\..\..\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+</Project>

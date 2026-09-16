@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Drift.Models;
 using Lyo.Drift.Models.Request;
 using Lyo.Drift.Models.Response;
@@ -24,7 +24,7 @@ public sealed class DriftApiIngestTests
     [Fact]
     public async Task Upsert_Snapshot_DiffAgainst_AndQuery_Work()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var upsert = await _fixture.Client.PostAsJsonAsync(
             "/Drift/Instance/Upsert", new DriftInstanceReq { InstanceKey = "api-ingest", MachineName = "test", ProcessId = 1 }, Json, ct);
         upsert.EnsureSuccessStatusCode();
@@ -103,7 +103,7 @@ public sealed class DriftApiIngestTests
     [Fact]
     public async Task Snapshot_OverMaxBytes_IsRejected()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var upsert = await _fixture.Client.PostAsJsonAsync(
             "/Drift/Instance/Upsert", new DriftInstanceReq { InstanceKey = "oversize", MachineName = "test", ProcessId = 1 }, Json, ct);
         var instance = (await upsert.Content.ReadFromJsonAsync<CreateResult<DriftInstanceRes>>(Json, ct))!.Data!;

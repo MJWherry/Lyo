@@ -31,6 +31,6 @@ public sealed class TextDiffService(ITextTokenizer tokenizer) : ITextDiffService
             $"Token count exceeds {nameof(TextDiffOptions.MaxTokensPerSide)} ({options.MaxTokensPerSide}).");
 
         var chunks = MyersDiffCalculator.Compute(oldText, oldTokens, newText, newTokens);
-        return new(oldText, newText, chunks.ToArray());
+        return new(oldText, newText, [.. chunks]);
     }
 }

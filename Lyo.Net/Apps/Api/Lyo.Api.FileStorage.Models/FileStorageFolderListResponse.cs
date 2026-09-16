@@ -19,6 +19,25 @@ public enum FileStoragePresence
     Both = Store | Physical
 }
 
+/// <summary>Which object-store implementation backs physical listing. Integers match <c>Lyo.FileStorage.FileStorageBackendKind</c>.</summary>
+public enum FileStorageBackendKind
+{
+    /// <summary>No physical backend.</summary>
+    None = 0,
+
+    /// <summary>Local disk jail.</summary>
+    Local = 1,
+
+    /// <summary>Amazon S3 (or S3-compatible) object store.</summary>
+    AwsS3 = 2,
+
+    /// <summary>Azure Blob container.</summary>
+    AzureBlob = 3,
+
+    /// <summary>Another file-system implementation.</summary>
+    Other = 4
+}
+
 /// <summary>One immediate child of a folder-list response.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStorageFolderEntryDto(
@@ -29,7 +48,11 @@ public sealed record FileStorageFolderEntryDto(
     FileStoragePresence Presence,
     string? OriginalFileName,
     long OriginalFileSize,
-    string? PhysicalKey)
+    string? PhysicalKey,
+    bool IsCompressed = false,
+    string? Compression = null,
+    bool IsEncrypted = false,
+    string? Encryption = null)
 {
     /// <inheritdoc />
     public override string ToString()
@@ -38,8 +61,12 @@ public sealed record FileStorageFolderEntryDto(
 
 /// <summary>Immediate children of one PathPrefix.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record FileStorageFolderListResponse(IReadOnlyList<FileStorageFolderEntryDto> Entries, bool Truncated)
+public sealed record FileStorageFolderListResponse(
+    IReadOnlyList<FileStorageFolderEntryDto> Entries,
+    bool Truncated,
+    FileStorageBackendKind BackendKind = FileStorageBackendKind.None)
 {
     /// <inheritdoc />
-    public override string ToString() => $"FileStorageFolderListResponse: {Entries.Count} entries truncated={Truncated}";
+    public override string ToString()
+        => $"FileStorageFolderListResponse: {Entries.Count} entries truncated={Truncated} backend={BackendKind}";
 }

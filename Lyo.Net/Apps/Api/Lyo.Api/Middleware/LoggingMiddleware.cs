@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
 using Lyo.Common.Core;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Exceptions.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;

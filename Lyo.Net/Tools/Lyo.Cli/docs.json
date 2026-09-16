@@ -3,8 +3,8 @@
   "id": "Lyo.Cli",
   "name": "Lyo.Cli",
   "area": "Tools",
-  "tagline": "Installable `lyo` CLI that covers encryption, encoding, compression, hashing, IDs, query build/exec, and CSV/XLSX.",
-  "description": "A `PackAsTool` dotnet tool (command name `lyo`) over Lyo libraries. **crypt** handles encryption (Lyo.Encryption); **enc** handles binary/charset encoding (Lyo.TextEncoding). The remaining verbs are **compress**/**decompress**, **hash**/**checksum**, **id**, **query build|exec**, and **csv**/**xlsx**. No dedicated CLI test project exists. System.CommandLine parses arguments; package tests cover library behavior.",
+  "tagline": "Installable `lyo` CLI that covers encryption, encoding, compression, hashing, IDs, query build/exec, CSV/XLSX, JSON/YAML/XML/TOML, NFC, and RFID.",
+  "description": "A `PackAsTool` dotnet tool (command name `lyo`) over Lyo libraries. **crypt** handles encryption (Lyo.Encryption); **enc** handles binary/charset encoding (Lyo.TextEncoding). The remaining verbs are **compress**/**decompress**, **hash**/**checksum**, **id**, **query build|exec**, **csv**/**xlsx**, **json**/**yaml**/**xml**/**toml**, **nfc**, and **rfid**. No dedicated CLI test project exists. System.CommandLine parses arguments; package tests cover library behavior.",
   "features": [
     "**crypt.** Single-key encrypt/decrypt (aesgcm default; file or pipe)",
     "**enc.** Base64 / base64url / hex encode and decode; charset convert/detect",
@@ -12,13 +12,21 @@
     "**hash** / **checksum.** SHA-2/MD5, HMAC-SHA256, CRC/Adler, sparse fingerprint; `-o`, `-c/--copy`, `-q/--quiet`",
     "**id.** ULID, KSUID, NanoID, GUID variants, Snowflake; `-n/--count` for a batch; `-c/--copy` clipboard",
     "**query build|exec.** Lyo.Query.Models builders plus a Lyo.Api.Client POST",
-    "**csv** / **xlsx.** Merge, split, convert, stats (xlsx→csv is native; csv→xlsx goes through DataTable glue)"
+    "**csv** / **xlsx.** Merge, split, convert, stats (xlsx→csv is native; csv→xlsx goes through DataTable glue)",
+    "**json** / **yaml** / **xml** / **toml.** Convert between the four document formats. Omit the input path or pass `-` for stdin, and omit `--output` or pass `-` for stdout.",
+    "**nfc.** Type 2 NDEF read/write over PC/SC (`readers`, `read`, `write text|uri`).",
+    "**rfid.** `rfid tonie path` maps a SLIX-L UID to the box content path. `rfid tonie read` and `prepare` need an ISO 15693 reader, which is not registered yet."
   ],
   "examples": [
     {
       "title": "Install on this machine",
       "language": "bash",
       "code": "python3 scripts/cli/pack_install.py pack-install\nlyo --help"
+    },
+    {
+      "title": "Tonie content path from a UID",
+      "language": "bash",
+      "code": "lyo rfid tonie path E004035012345678"
     },
     {
       "title": "Hash from stdin",
@@ -83,7 +91,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -163,6 +171,14 @@
       ]
     },
     {
+      "name": "Lyo.Desktop",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Encryption",
       "kind": "lyo",
       "tags": [
@@ -219,7 +235,31 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Nfc",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Nfc.Pcsc",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -235,7 +275,31 @@
       ]
     },
     {
+      "name": "Lyo.Rfid",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Rfid.Tonie",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.TextEncoding",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Toml",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -252,6 +316,22 @@
     },
     {
       "name": "Lyo.Xlsx.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Xml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Yaml",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -283,14 +363,6 @@
       "tags": [
         "direct",
         "microsoft"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
       ]
     },
     {
@@ -559,6 +631,24 @@
       ]
     },
     {
+      "name": "PCSC",
+      "kind": "package",
+      "version": "7.0.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "PCSC.Iso7816",
+      "kind": "package",
+      "version": "7.0.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "SharpZipLib",
       "kind": "package",
       "version": "1.4.2",
@@ -633,6 +723,24 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Tomlyn",
+      "kind": "package",
+      "version": "2.10.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "YamlDotNet",
+      "kind": "package",
+      "version": "18.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
       ]
     }
   ],

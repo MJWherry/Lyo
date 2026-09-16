@@ -153,6 +153,37 @@ public interface ITwoKeyEncryptionService
     /// <exception cref="OperationCanceledException">Thrown when <paramref name="ct" /> cancels the call</exception>
     Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? kek = null, CancellationToken ct = default);
 
+    /// <summary>
+    /// Reads the stream header and the first chunk's length prefix from <paramref name="prefix"/>, which must start at byte 0 of the ciphertext. The returned layout
+    /// holds the header, the unwrapped DEK, and the frame size used to jump to a later chunk. The caller disposes the layout.
+    /// </summary>
+    /// <param name="prefix">Ciphertext positioned at the start of the object. Must include the header and the first chunk's 4-byte length.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Layout for a later <see cref="DecryptFromChunkAsync" /> call.</returns>
+    Task<EncryptedStreamLayout> ReadEncryptedStreamLayoutAsync(Stream prefix, CancellationToken ct = default);
+
+    /// <summary>
+    /// Decrypts ciphertext already positioned at the length prefix of <paramref name="chunkIndex"/>. Discards <paramref name="skipPlaintextBytes"/> of that chunk, then
+    /// writes at most <paramref name="maxPlaintextBytes"/>. The chunk counter starts at <paramref name="chunkIndex"/> so the derived nonce matches the original stream.
+    /// </summary>
+    /// <param name="header">Header bytes from <see cref="EncryptedStreamLayout.Header"/>, including the nonce prefix.</param>
+    /// <param name="ciphertextAtChunk">Stream positioned at the target chunk's length prefix.</param>
+    /// <param name="output">Stream that receives plaintext.</param>
+    /// <param name="chunkIndex">Zero-based chunk index. This is the nonce counter, not a byte offset.</param>
+    /// <param name="skipPlaintextBytes">Plaintext bytes to drop from the start of this chunk.</param>
+    /// <param name="maxPlaintextBytes">Most plaintext bytes to write after the skip.</param>
+    /// <param name="unwrappedDek">DEK from <see cref="EncryptedStreamLayout.Dek"/>.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task DecryptFromChunkAsync(
+        ReadOnlyMemory<byte> header,
+        Stream ciphertextAtChunk,
+        Stream output,
+        long chunkIndex,
+        int skipPlaintextBytes,
+        long maxPlaintextBytes,
+        byte[] unwrappedDek,
+        CancellationToken ct = default);
+
     /// <summary>Encrypts data and writes the ciphertext to a file.</summary>
     /// <param name="data">Plaintext</param>
     /// <param name="outputPath">Destination path for the ciphertext file</param>

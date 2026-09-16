@@ -44,16 +44,16 @@ The API or worker registers provider(s) and the store, and maps vendor DTOs onto
 
 ## Related reading
 
-Internal people rows with their own `*_source` tables: [`Lyo.People.Models`](../People/Lyo.People.Models/README.md). At import time, link across stores with `EntityRef`.
+Internal people rows with their own `*_source` tables: [`Lyo.People.Models`](../../../Plugins/People/Lyo.People.Models/README.md). At import time, link across stores with `EntityRef`.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.EntityReference.Models` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Geolocation.Models` (direct, lyo)
-- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)

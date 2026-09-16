@@ -4,6 +4,7 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -33,8 +34,8 @@ public class JobWorkerContextTests
 
     private static JobRunRes CreateRun()
         => new() {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             CreatedTimestamp = DateTime.UtcNow,
             State = JobState.Running
         };

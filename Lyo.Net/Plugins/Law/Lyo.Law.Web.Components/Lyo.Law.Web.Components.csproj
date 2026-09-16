@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Blazor components for browsing and editing state statute nodes.</Description>
+        <PackageTags>blazor components law statutes mudblazor</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Law.Models\Lyo.Law.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Law\Lyo.Law.Client\Lyo.Law.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+</Project>

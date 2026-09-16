@@ -1,6 +1,7 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Csv.Benchmarks;
 
@@ -23,7 +24,7 @@ public class CsvReadBenchmarks
     public void Setup()
     {
         _bytes = _csv.ExportToCsvBytes(SampleRecord.Generate(RowCount));
-        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-csv-read-{Guid.NewGuid():N}.csv");
+        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-csv-read-{LyoGuid.CreateV7():N}.csv");
         File.WriteAllBytes(_filePath, _bytes);
     }
 

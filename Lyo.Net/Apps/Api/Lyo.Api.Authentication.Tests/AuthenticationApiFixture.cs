@@ -5,7 +5,7 @@ using Lyo.Api.Middleware;
 using Lyo.Authentication.Postgres;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Cache;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Testing.Containers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

@@ -12,6 +12,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Apps\Http\Lyo.Http.Client.Flared\Lyo.Http.Client.Flared.csproj" />
+        <ProjectReference Include="..\..\Core\RateLimit\Lyo.RateLimit\Lyo.RateLimit.csproj"/>
         <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Postgres\Lyo.Email.Postgres.csproj"/>
         <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Postgres\Lyo.Sms.Twilio.Postgres.csproj"/>
         <ProjectReference Include="..\..\Communication\Speech\Lyo.Tts.AwsPolly\Lyo.Tts.AwsPolly.csproj"/>
@@ -22,7 +23,8 @@
         <ProjectReference Include="..\..\Core\Metrics\Lyo.Metrics.DependencyInjection\Lyo.Metrics.DependencyInjection.csproj"/>
         <ProjectReference Include="..\..\Plugins\Comment\Lyo.Comment.Postgres\Lyo.Comment.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\HomeInventory\Lyo.HomeInventory.Postgres\Lyo.HomeInventory.Postgres.csproj"/>
-        <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Recipe\Lyo.Recipe.Postgres\Lyo.Recipe.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Profanity\Lyo.Profanity\Lyo.Profanity.csproj"/>
         <ProjectReference Include="..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
         <ProjectReference Include="..\..\Data\Media\Lyo.FFmpeg\Lyo.FFmpeg.csproj"/>
@@ -57,7 +59,7 @@
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
         <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
         <ProjectReference Include="..\..\Data\FileSystemWatcher\Lyo.FileSystemWatcher\Lyo.FileSystemWatcher.csproj"/>
-        <ProjectReference Include="..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue.RabbitMq\Lyo.MessageQueue.RabbitMq.csproj"/>
         <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
         <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio\Lyo.Sms.Twilio.csproj"/>
@@ -66,7 +68,9 @@
         <ProjectReference Include="..\..\Security\KeyStore\Lyo.KeyStore.Aws\Lyo.KeyStore.Aws.csproj"/>
         <ProjectReference Include="..\..\Data\Images\Lyo.Images.Skia\Lyo.Images.Skia.csproj"/>
         <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf.Web.Components\Lyo.Pdf.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Book\Lyo.Book.Postgres\Lyo.Book.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Story\Lyo.Story.Postgres\Lyo.Story.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>
     </ItemGroup>
 
@@ -78,10 +82,14 @@
         <None Update="appsettings.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="appsettings.Development.json">
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="appsettings.Development.json" />
+      <Content Include="appsettings.Development.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <DependentUpon>appsettings.json</DependentUpon>
-        </None>
+      </Content>
     </ItemGroup>
 
 </Project>

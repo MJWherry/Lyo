@@ -3,6 +3,7 @@ using Lyo.Cache.Fusion;
 using Lyo.Compression;
 using Lyo.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Cache.Tests;
 
@@ -31,9 +32,9 @@ public class CachePayloadTests
                 o.Payload.AutoCompress = false;
             });
 
-        var key = $"payload-plain-{mode}-{Guid.NewGuid():N}";
+        var key = $"payload-plain-{mode}-{LyoGuid.CreateV7():N}";
         var expected = new byte[] { 1, 2, 3, 4, 5 };
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var env1 = await cache.GetOrSetPayloadAsync(key, _ => Task.FromResult<byte[]?>(expected), token: ct);
         env1.ShouldNotBeNull();
         env1.Compression.ShouldBeNull();
@@ -61,10 +62,10 @@ public class CachePayloadTests
                 o.Payload.AutoCompressMinSizeBytes = 64;
             });
 
-        var key = $"payload-comp-{mode}-{Guid.NewGuid():N}";
+        var key = $"payload-comp-{mode}-{LyoGuid.CreateV7():N}";
         // Highly compressible so the codec picks the compressed form (smaller than raw).
         var data = new byte[200];
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var env = await cache.GetOrSetPayloadAsync(key, _ => Task.FromResult<byte[]?>(data), token: ct);
         env.ShouldNotBeNull();
         env.Compression.ShouldNotBeNull();
@@ -99,10 +100,10 @@ public class CachePayloadTests
                 o.Payload.AutoCompressMinSizeBytes = 10_000;
             });
 
-        var key = $"payload-nocomp-{mode}-{Guid.NewGuid():N}";
+        var key = $"payload-nocomp-{mode}-{LyoGuid.CreateV7():N}";
         var data = new byte[50];
         Random.Shared.NextBytes(data);
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var env = await cache.GetOrSetPayloadAsync(key, _ => Task.FromResult<byte[]?>(data), token: ct);
         env.ShouldNotBeNull();
         env.Compression.ShouldBeNull();
@@ -114,7 +115,7 @@ public class CachePayloadTests
     public void TryGetPayload_Returns_False_For_Corrupt_Frame(string mode)
     {
         var cache = CreateCache(mode, o => o.Enabled = true);
-        var key = $"payload-bad-{mode}-{Guid.NewGuid():N}";
+        var key = $"payload-bad-{mode}-{LyoGuid.CreateV7():N}";
         cache.Set(key, new byte[] { 0xFF, 0xFF });
         cache.TryGetPayload(key, out var env).ShouldBeFalse();
         env.ShouldBeNull();
@@ -130,7 +131,7 @@ public class CachePayloadTests
                 o.Payload.AutoCompress = false;
             });
 
-        var key = $"payload-sliding-{mode}-{Guid.NewGuid():N}";
+        var key = $"payload-sliding-{mode}-{LyoGuid.CreateV7():N}";
         var bytes = new byte[] { 9, 8, 7 };
         cache.SetPayload(key, bytes, o => o.SetSlidingExpiration(TimeSpan.FromMilliseconds(500)));
         Thread.Sleep(150);
@@ -152,7 +153,7 @@ public class CachePayloadTests
                 o.Payload.AutoCompress = false;
             });
 
-        var key = $"payload-set-{Guid.NewGuid():N}";
+        var key = $"payload-set-{LyoGuid.CreateV7():N}";
         var bytes = "hello-bytes"u8.ToArray();
         cache.SetPayload(key, bytes);
         cache.TryGetPayload(key, out var env).ShouldBeTrue();
@@ -172,7 +173,7 @@ public class CachePayloadTests
                 o.Payload.AutoEncrypt = false;
             });
 
-        var key = $"payload-meta-{mode}-{Guid.NewGuid():N}";
+        var key = $"payload-meta-{mode}-{LyoGuid.CreateV7():N}";
         var data = new byte[200];
         cache.SetPayload(key, data);
         var item = cache.Items.Single(i => i.Type == CacheItemTypeEnum.Key && string.Equals(i.Name, key, StringComparison.OrdinalIgnoreCase));
@@ -188,8 +189,8 @@ public class CachePayloadTests
     public void Set_ObjectValue_TracksUnframedKey(string mode)
     {
         var cache = CreateCache(mode, o => o.Enabled = true);
-        var key = $"obj-meta-{mode}-{Guid.NewGuid():N}";
-        var tag = $"obj-meta-tag-{mode}-{Guid.NewGuid():N}";
+        var key = $"obj-meta-{mode}-{LyoGuid.CreateV7():N}";
+        var tag = $"obj-meta-tag-{mode}-{LyoGuid.CreateV7():N}";
         cache.Set(key, "value", [tag]);
         var keyItem = cache.Items.Single(i => i.Type == CacheItemTypeEnum.Key && string.Equals(i.Name, key, StringComparison.OrdinalIgnoreCase));
         keyItem.Encrypted.ShouldBe(false);
@@ -212,7 +213,7 @@ public class CachePayloadTests
     public void Set_TracksExpiresFromDuration(string mode)
     {
         var cache = CreateCache(mode, o => o.Enabled = true);
-        var key = $"expires-{mode}-{Guid.NewGuid():N}";
+        var key = $"expires-{mode}-{LyoGuid.CreateV7():N}";
         var ttl = TimeSpan.FromMinutes(5);
         var before = DateTime.UtcNow;
         cache.Set(key, "value", ttl);
@@ -228,7 +229,7 @@ public class CachePayloadTests
     public void Set_WithSlidingExpiration_HitExtendsTrackedExpires(string mode)
     {
         var cache = CreateCache(mode, o => o.Enabled = true);
-        var key = $"expires-sliding-{mode}-{Guid.NewGuid():N}";
+        var key = $"expires-sliding-{mode}-{LyoGuid.CreateV7():N}";
         var ttl = TimeSpan.FromMinutes(5);
         cache.Set(key, "value", o => o.SetSlidingExpiration(ttl));
         var first = cache.Items.Single(i => i.Type == CacheItemTypeEnum.Key && string.Equals(i.Name, key, StringComparison.OrdinalIgnoreCase)).Expires;

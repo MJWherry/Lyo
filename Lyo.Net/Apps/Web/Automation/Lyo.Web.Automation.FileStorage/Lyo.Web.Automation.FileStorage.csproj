@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Stores automation step screenshots through a host-configured IFileStorageService.</Description>
+        <PackageTags>web-automation file-storage screenshots</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\Data\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+        <ProjectReference Include="..\Lyo.Web.Automation\Lyo.Web.Automation.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Blazor grant list, editor, and check form. Talks to IGrantStore in-process.</Description>
+        <PackageTags>blazor components authorization grants mudblazor</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Authorization\Lyo.Authorization.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+</Project>

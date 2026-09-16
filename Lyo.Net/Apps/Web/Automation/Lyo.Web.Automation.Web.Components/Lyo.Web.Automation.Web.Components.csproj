@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Blazor workbench for editing an automation plan and running it through the automation HTTP API.</Description>
+        <PackageTags>blazor components web-automation mudblazor</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Web.Automation\Lyo.Web.Automation.csproj"/>
+        <ProjectReference Include="..\Lyo.Web.Automation.Client\Lyo.Web.Automation.Client.csproj"/>
+        <ProjectReference Include="..\..\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+</Project>

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildGridWhere, mergeWhere } from "./grid.js";
+import { fuzzy, notFuzzy } from "./helpers.js";
+import { operatorsFor } from "../models/filterProperty.js";
 import type { ConditionClause } from "../models/whereClause.js";
 
 describe("mergeWhere", () => {
@@ -59,5 +61,31 @@ describe("buildGridWhere", () => {
             { $type: "condition", Field: "Status", Comparison: "Equals", Value: "Open" },
         ];
         expect(buildGridWhere({ filters, searchText: "  " })).toEqual(filters[0]);
+    });
+});
+
+describe("fuzzy helpers", () => {
+    it("omits Threshold when not provided", () => {
+        expect(fuzzy("Name", "jon")).toEqual({
+            $type: "condition",
+            Field: "Name",
+            Comparison: "Fuzzy",
+            Value: "jon",
+        });
+    });
+
+    it("includes Threshold when provided", () => {
+        expect(fuzzy("Name", "jon", 0.4).Threshold).toBe(0.4);
+        expect(notFuzzy("Name", "jon", 0.5)).toEqual({
+            $type: "condition",
+            Field: "Name",
+            Comparison: "NotFuzzy",
+            Value: "jon",
+            Threshold: 0.5,
+        });
+    });
+
+    it("lists Fuzzy operators for strings", () => {
+        expect(operatorsFor("String")).toEqual(expect.arrayContaining(["Fuzzy", "NotFuzzy"]));
     });
 });

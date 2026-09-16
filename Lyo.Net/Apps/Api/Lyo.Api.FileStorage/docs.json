@@ -3,7 +3,7 @@
   "name": "Lyo.Api.FileStorage",
   "area": "Apps",
   "tagline": "HTTP endpoints for Lyo file storage. Hosts map BuildFileStorageApi after a keyed IFileStorageService stack is registered.",
-  "description": "HTTP endpoints for Lyo file storage. After a keyed `IFileStorageService` (plus multipart and archive) is registered, hosts map `BuildFileStorageApi`. FileMetadata Query/QueryProject is included. `GET key-ids` lists encryption key identifiers; keystore CRUD is not part of this API.",
+  "description": "HTTP endpoints for Lyo file storage. After a keyed `IFileStorageService` (plus multipart and archive) is registered, hosts map `BuildFileStorageApi`. FileMetadata Query/QueryProject is included. `GET capabilities` lists feature flags for presigned read, direct upload, multipart, copy, move, physical listing, encryption, archive, and access links. It does not include bucket, disk root, or keystore location. `GET key-ids` lists encryption key identifiers; keystore CRUD is not part of this API.",
   "features": [],
   "examples": [
     {
@@ -16,7 +16,7 @@
     {
       "type": "paragraph",
       "title": "Routes this maps",
-      "text": "At `FileStorageApiOptions.Route` the group exposes: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `GET files/folder` (store PathPrefix plus reconcile, flags `Store` / `Physical` / `Both`), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`."
+      "text": "At `FileStorageApiOptions.Route` the group exposes: health, `GET capabilities` (feature flags only; no bucket, disk root, or keystore location), save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API; a full response sets `Content-Digest` for the plaintext hash). A single `Range` on any uncompressed object, including an encrypted one, returns `206` with `Accept-Ranges: bytes` when the backend can slice. An encrypted object is decrypted from the chunk that holds the requested plaintext offset. The initial `200` for that file also sends `Accept-Ranges`. Compressed objects ignore `Range` and stay a full `200` without `Accept-Ranges`. A well-formed range that starts at or past the end returns `416`. The same group also maps `GET files/{id}/integrity` (plaintext hash, algorithm, and size), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `GET files/folder` (store PathPrefix plus reconcile, flags `Store` / `Physical` / `Both`), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`."
     }
   ],
   "links": [],
@@ -40,6 +40,14 @@
     },
     {
       "name": "Lyo.Cache",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -95,23 +103,15 @@
       ]
     },
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -207,6 +207,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Lock",
       "kind": "lyo",
       "tags": [
@@ -264,6 +272,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -532,6 +548,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

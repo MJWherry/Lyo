@@ -1,0 +1,34 @@
+@using Lyo.Web.Primitives
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4" Outlined="true">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.subtitle1">Redeem invite</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Paste the plaintext token. On the TestApi workbench, redeem as guest so the owner membership is not overwritten.
+        </MudText>
+        <MudTextField T="string"
+                      Label="Token"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Immediate="true"
+                      @bind-Value="_token"/>
+        <MudSwitch T="bool" Color="Color.Primary" Label="Redeem as guest (workbench)" @bind-Value="_asGuest"/>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Login"
+                   Disabled="@(_busy || string.IsNullOrWhiteSpace(_token))"
+                   OnClick="RedeemAsync">
+            Redeem
+        </MudButton>
+        @if (_member != null) {
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                <LyoChip Spec="@(LeaderboardColorHelper.ForRole(_member.Role) is { } roleHue
+                    ? LyoChips.Of(_member.Role.ToString(), roleHue)
+                    : LyoChips.Of(_member.Role.ToString()))"/>
+                <LyoChip Spec="@LyoChips.Of(_member.Status.ToString(), LeaderboardColorHelper.ForMemberStatus(_member.Status))"/>
+                <MudText Typo="Typo.body2">@_member.DisplayName</MudText>
+            </MudStack>
+        }
+    </MudStack>
+</MudPaper>

@@ -194,18 +194,6 @@ await _ioTempService.CleanupAsync(ct);
 await _ioTempService.CleanupAsync(TimeSpan.FromHours(1), ct);
 ```
 
-### Sessions in unit tests
-
-```csharp
-public sealed class MyServiceTests : IDisposable
-{
-    private readonly IIOTempSession _tempSession =
-        IOTempSession.CreateForTests(nameof(MyServiceTests));
-
-    public void Dispose() => _tempSession.Dispose();
-}
-```
-
 ## Generator
 
 Use `session.Generator`:
@@ -229,7 +217,7 @@ services.AddIOTempService();
 
 ## MemoryFileSystem
 
-`ConcurrentDictionary` store with `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; fits Blazor WASM and unit tests.
+Flat path map with a child index and a `ReaderWriterLockSlim`, using `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; fits Blazor WASM and unit tests.
 Data lasts for the lifetime of the `IFileSystem` instance.
 
 ```csharp
@@ -255,7 +243,7 @@ services.AddSingleton<IFileSystem>(new FtpFileSystem(ftpClient));
 services.AddIOTempService();
 ```
 
-`FileSystemExtensions` covers `TouchFile`, `WriteAllBytes` / `WriteAllText` / `AppendAllText`, `CopyStreamToFileAsync`, and `EnsureDirectoryAccessible` (used for R/W probing; may be a no-op for in-memory backends).
+`FileSystemExtensions` covers `ReadAllBytes` / `ReadAllText`, `TouchFile`, `WriteAllBytes` / `WriteAllText` / `AppendAllText`, `CopyStreamToFileAsync`, and `EnsureDirectoryAccessible` (used for R/W probing; may be a no-op for in-memory backends).
 
 ## IOTempServiceOptions
 
@@ -282,10 +270,6 @@ services.AddIOTempService();
 | `MaxFileSizeBytes` | 1 GB | Hard cap per file. |
 | `MaxTotalSizeBytes` | `null` | Total cap for one session. |
 | `OverflowStrategy` | `ThrowException` | What happens when the total cap is crossed. |
-
-## Sessions in unit tests
-
-`IOTempSession.CreateForTests` is a one-liner for unit tests. The root is created for you and named after the test so leftover folders from a failed CI run are easy to find. Sessions sit under `{TempPath}/lyo-io-temp-tests/{subdirectoryName}/{Guid}/`, away from production temp dirs.
 
 ## IOTempCleanupOptions
 

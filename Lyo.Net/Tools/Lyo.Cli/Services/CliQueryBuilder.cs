@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;

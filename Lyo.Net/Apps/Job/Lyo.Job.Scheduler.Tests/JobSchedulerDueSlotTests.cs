@@ -3,6 +3,7 @@ using Lyo.Formatter;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
 using Lyo.Schedule.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -15,7 +16,7 @@ public class JobSchedulerDueSlotTests
     [Fact]
     public async Task CheckSchedules_WhenLastRunAlreadyOwnsTheDueSlot_DoesNotCreateAgain()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = HourlyCron(definitionId);
         var definition = Definition(definitionId, schedule);
         var currentHour = CurrentHourUtc();
@@ -25,14 +26,14 @@ public class JobSchedulerDueSlotTests
         };
 
         var scheduler = await StartAsync(api);
-        await scheduler.CheckSchedulesAsync(TestContext.Current.CancellationToken);
+        await scheduler.CheckSchedulesAsync(TestCt);
         Assert.Empty(api.CreatedRunRequests);
     }
 
     [Fact]
     public async Task CheckSchedules_WhenLastSuccessIsThePreviousSlot_CreatesTheCurrentHour()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = HourlyCron(definitionId);
         var definition = Definition(definitionId, schedule);
         var currentHour = CurrentHourUtc();
@@ -42,7 +43,7 @@ public class JobSchedulerDueSlotTests
         };
 
         var scheduler = await StartAsync(api);
-        await scheduler.CheckSchedulesAsync(TestContext.Current.CancellationToken);
+        await scheduler.CheckSchedulesAsync(TestCt);
         var created = Assert.Single(api.CreatedRunRequests);
         Assert.Equal(schedule.Id, created.JobScheduleId);
         Assert.Equal(currentHour, created.ScheduledSlotUtc);
@@ -51,7 +52,7 @@ public class JobSchedulerDueSlotTests
     [Fact]
     public async Task CheckSchedules_AfterRefreshReplacesLastRunWithARetry_DoesNotRePostTheKnownSlot()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = HourlyCron(definitionId);
         var definition = Definition(definitionId, schedule);
         var currentHour = CurrentHourUtc();
@@ -61,12 +62,12 @@ public class JobSchedulerDueSlotTests
         };
 
         var scheduler = await StartAsync(api);
-        await scheduler.CheckSchedulesAsync(TestContext.Current.CancellationToken);
+        await scheduler.CheckSchedulesAsync(TestCt);
         Assert.Empty(api.CreatedRunRequests);
 
         // Refresh reloads LastRun as a newer failed retry (no schedule id). The process must still remember the cron slot.
         var retry = new JobRunRes {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             JobDefinitionId = definitionId,
             State = JobState.Finished,
             Result = JobRunResult.Failure,
@@ -76,8 +77,8 @@ public class JobSchedulerDueSlotTests
         api.LastRun = retry;
         api.LastFailedRun = retry;
         api.LastSuccessfulRun = Run(definitionId, schedule.Id, currentHour.AddHours(-1), JobRunResult.Success);
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
-        await scheduler.CheckSchedulesAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
+        await scheduler.CheckSchedulesAsync(TestCt);
         Assert.Empty(api.CreatedRunRequests);
     }
 
@@ -91,7 +92,7 @@ public class JobSchedulerDueSlotTests
                 EnableMisfireCatchUp = false
             }, api, new FormatterService(), new FakeEventPublisher());
 
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
         return scheduler;
     }
 
@@ -102,14 +103,14 @@ public class JobSchedulerDueSlotTests
     }
 
     private static JobDefinitionRes Definition(Guid definitionId, JobScheduleRes schedule)
-        => new(definitionId, "DueSlotDef", null, "Test", "cs", true, [], [schedule], [], null);
+        => new(definitionId, "DueSlotDef", null, "Test", "cs", true, [], [schedule], null);
 
     private static JobScheduleRes HourlyCron(Guid definitionId)
-        => new(Guid.NewGuid(), definitionId, MonthFlags.EveryMonth, DayFlags.EveryDay, ScheduleType.Cron, null, null, null, null, "hourly", true, null, "0 * * * *");
+        => new(LyoGuid.CreateV7(), definitionId, MonthFlags.EveryMonth, DayFlags.EveryDay, ScheduleType.Cron, null, null, null, null, "hourly", true, null, "0 * * * *");
 
     private static JobRunRes Run(Guid definitionId, Guid scheduleId, DateTime slot, JobRunResult result)
         => new() {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             JobDefinitionId = definitionId,
             JobScheduleId = scheduleId,
             State = JobState.Finished,

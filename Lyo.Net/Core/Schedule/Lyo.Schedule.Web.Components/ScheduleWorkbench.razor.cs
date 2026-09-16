@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Lyo.Common.Core.Enums;
+using Lyo.DateAndTime;
 using Lyo.Schedule.Models;
 using Lyo.Scheduler;
 using Lyo.Scheduler.Models;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using MudBlazor;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Schedule.Web.Components;
 
@@ -61,6 +63,50 @@ public partial class ScheduleWorkbench
     private List<ScheduleRun> _previewRuns = [];
 
     private List<ScheduleWithNextRun> _liveSchedules = [];
+    private DateOnlyModel _visibleMonth = new(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+    private TimeZoneInfo _calendarZone = TimeZoneInfo.Utc;
+    private bool _use24Hour = true;
+
+    private static readonly Dictionary<string, int> CalendarHues = new(StringComparer.Ordinal) {
+        ["SetTimes"] = 228,
+        ["Interval"] = 174,
+        ["IntervalWindow"] = 174,
+        ["OneShot"] = 252,
+        ["Cron"] = 292
+    };
+
+    private Calendar? BuildPreviewCalendar()
+    {
+        var definition = TryBuildDefinition(out _);
+        if (definition is null)
+            return null;
+
+        try {
+            definition.Validate();
+            return ScheduleCalendar.From(definition, _visibleMonth.Year, _visibleMonth.Month, _calendarZone);
+        }
+        catch (Exception) {
+            return null;
+        }
+    }
+
+    private Task OnVisibleMonthChanged(DateOnlyModel month)
+    {
+        _visibleMonth = new(month.Year, month.Month, 1);
+        return Task.CompletedTask;
+    }
+
+    private Task OnCalendarZoneChanged(TimeZoneInfo zone)
+    {
+        _calendarZone = zone;
+        return Task.CompletedTask;
+    }
+
+    private Task OnHourCycleChanged(bool use24Hour)
+    {
+        _use24Hour = use24Hour;
+        return Task.CompletedTask;
+    }
     private List<ScheduleRun> _upcomingRuns = [];
     private readonly List<string> _addedIds = [];
 
@@ -164,7 +210,7 @@ public partial class ScheduleWorkbench
                 return;
             }
 
-            var previewId = $"workbench-preview-{Guid.NewGuid():N}";
+            var previewId = $"workbench-preview-{LyoGuid.CreateV7():N}";
             SchedulerService.AddSchedule(previewId, "Preview", def, _ => Task.CompletedTask);
             try {
                 _previewRuns = SchedulerService.GetUpcomingRuns(maxRuns: 200).Where(r => r.Schedule.Id == previewId).Take(15).ToList();
@@ -203,7 +249,7 @@ public partial class ScheduleWorkbench
                 return;
             }
 
-            var rawId = Guid.NewGuid().ToString("N");
+            var rawId = LyoGuid.CreateV7().ToString("N");
             var id = $"workbench-test-{rawId[..8]}";
             var name = string.IsNullOrWhiteSpace(_description) ? $"Test – {_type}" : _description;
             SchedulerService.AddSchedule(id, name, def, _ => Task.CompletedTask);

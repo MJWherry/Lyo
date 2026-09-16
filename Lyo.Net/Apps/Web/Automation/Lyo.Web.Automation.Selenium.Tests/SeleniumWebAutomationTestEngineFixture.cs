@@ -1,7 +1,7 @@
 using Lyo.Testing;
 using Lyo.Web.Automation.Abstractions;
+using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Selenium.Service;
-using Lyo.Web.Automation.Selenium.WebDriver;
 using Lyo.Web.Automation.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,6 +29,9 @@ public sealed class SeleniumWebAutomationTestEngineFixture : IWebAutomationTestE
     }
 
     public string EngineName => "Selenium";
+
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
+    public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public Task<IWebAutomationSession> CreateSessionAsync(CancellationToken ct = default)
     {
@@ -62,7 +65,7 @@ public sealed class SeleniumWebAutomationTestEngineFixture : IWebAutomationTestE
             options.PageLoadTimeoutSeconds = 20;
             options.BrowserWindowWidth = 1280;
             options.BrowserWindowHeight = 900;
-            options.BrowserKind = SeleniumBrowserKind.Chrome;
+            options.BrowserKind = AutomationBrowserKind.Chrome;
         });
 
         return services.BuildServiceProvider();

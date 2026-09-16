@@ -20,7 +20,7 @@ public sealed class ResilienceTests
             _ => {
                 executed = true;
                 return Task.CompletedTask;
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         Assert.True(executed);
     }
@@ -38,7 +38,7 @@ public sealed class ResilienceTests
                     throw new ServiceUnavailableException();
 
                 return ValueTask.CompletedTask;
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         Assert.Equal(3, attempts);
     }
@@ -53,7 +53,7 @@ public sealed class ResilienceTests
             ValueTask (_) => {
                 attempts++;
                 throw new NotFoundException("Widget");
-            }, TestContext.Current.CancellationToken));
+            }, TestCt));
 
         Assert.Equal(1, attempts);
     }

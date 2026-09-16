@@ -1,0 +1,71 @@
+{
+  "id": "Lyo.FeatureFlags.AspNetCore",
+  "name": "Lyo.FeatureFlags.AspNetCore",
+  "area": "Core",
+  "tagline": "RequireFeature returns 404 when a flag is off.",
+  "description": "UseFeatureFlags runs after routing and authentication, and before authorization, so a disabled flag is 404 instead of 401. It does not register IFeatureFlagService. The host still calls AddFeatureFlags or AddFeatureFlagsFromConfiguration. An open route does not resolve the service. A gated route with no service returns an empty 500. A flag that is off returns an empty 404 and does not run the handler.",
+  "features": [
+    "**[RequireFeature]** on an MVC controller or action. Several attributes must all be enabled.",
+    "**Minimal APIs.** A method-group attribute is metadata. A lambda or a route group uses RequireFeature.",
+    "**Caller mapping.** User id is lyo:user, then sub, then NameIdentifier, then Identity.Name. There is no tenant claim unless TenantClaimType is set. A space-delimited scope claim is split. Attributes stay empty unless ContextFactory sets them.",
+    "**ContextFactory.** Replaces that mapping. A null return is an anonymous caller."
+  ],
+  "examples": [
+    {
+      "title": "Gate a route",
+      "language": "csharp",
+      "code": "builder.Services.AddFeatureFlags(o => o.Add(\"checkout\").On());\n\napp.UseRouting();\napp.UseAuthentication();\napp.UseFeatureFlags();\napp.UseAuthorization();\n\napp.MapGet(\"/checkout\", Checkout).RequireFeature(\"checkout\");"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/FeatureFlags/Lyo.FeatureFlags.AspNetCore/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FeatureFlags",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "id": "Lyo.RequestSigning",
+  "name": "Lyo.RequestSigning",
+  "area": "Security",
+  "tagline": "Timestamped HMAC request signatures. The HMAC key comes from configuration.",
+  "description": "Header Lyo-Signature is t=<unix seconds>,v1=<lowercase hex HMAC-SHA256>. v1 is the canonicalization scheme. Sign with Key. Verify accepts Key and, when set, PreviousKey. The default max age is 5 minutes. A timestamp exactly on the boundary is still valid.",
+  "features": [
+    "**Canonical lines are v1, the unix time, the method, the scheme, the host, the path and query, and the body hash.** The host is the host the request reports. No port is added or stripped.",
+    "**A DelegatingHandler adds the header on outbound HttpRequestMessage.** The HMAC key is the UTF-8 bytes of Key."
+  ],
+  "examples": [
+    {
+      "title": "Register",
+      "language": "csharp",
+      "code": "services.AddRequestSigning(o => o.Key = configuration[\"RequestSigning:Key\"]!);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Security/RequestSigning/Lyo.RequestSigning/README.md",
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ],
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ]
+}

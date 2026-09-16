@@ -27,7 +27,7 @@ public class JobRunResyncTests
         var runId = await SeedRunAsync(JobState.Queued);
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
 
-        var (result, error) = await _fixture.JobService.ResyncQueuedRunsAsync(ct: TestContext.Current.CancellationToken);
+        var (result, error) = await _fixture.JobService.ResyncQueuedRunsAsync(ct: TestCt);
 
         Assert.Null(error);
         Assert.NotNull(result);
@@ -48,7 +48,7 @@ public class JobRunResyncTests
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
 
-        var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestContext.Current.CancellationToken);
+        var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestCt);
 
         Assert.Null(error);
         Assert.NotNull(result);
@@ -68,7 +68,7 @@ public class JobRunResyncTests
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
 
-        var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestContext.Current.CancellationToken);
+        var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestCt);
 
         Assert.Null(error);
         Assert.DoesNotContain(publisher.Published, e => e.Event == "RunCreated" && e.RunId == delayedId);
@@ -85,7 +85,7 @@ public class JobRunResyncTests
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
 
-        var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestContext.Current.CancellationToken);
+        var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestCt);
 
         Assert.Null(error);
         Assert.DoesNotContain(publisher.Published, e => e.Event == "RunCreated" && e.RunId == futureId);
@@ -102,7 +102,7 @@ public class JobRunResyncTests
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
 
-        var (result, error) = await jobService.ResyncQueuedRunsAsync(ct: TestContext.Current.CancellationToken);
+        var (result, error) = await jobService.ResyncQueuedRunsAsync(ct: TestCt);
 
         Assert.Null(result);
         Assert.NotNull(error);
@@ -119,7 +119,7 @@ public class JobRunResyncTests
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
 
-        var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestContext.Current.CancellationToken);
+        var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestCt);
 
         Assert.Null(error);
         Assert.Contains(publisher.Published, e => e.Event == "RunCreated" && e.RunId == scopedId);
@@ -150,13 +150,12 @@ public class JobRunResyncTests
             State = state,
             CreatedBy = "test",
             CreatedTimestamp = DateTime.UtcNow,
-            AllowTriggers = false
         };
 
         configure?.Invoke(run);
         await using var db = await CreateDbContextAsync();
         db.JobRuns.Add(run);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return run.Id;
     }
 
@@ -174,7 +173,7 @@ public class JobRunResyncTests
                 CreatedTimestamp = DateTime.UtcNow
             });
 
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return id;
     }
 
@@ -182,6 +181,6 @@ public class JobRunResyncTests
     {
         using var scope = _fixture.ServiceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        return await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        return await factory.CreateDbContextAsync(TestCt);
     }
 }

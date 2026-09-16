@@ -47,6 +47,15 @@ public interface IAudioConverter
     /// <summary>Starts a convert with stdin from <paramref name="input" /> and stdout on a readable session stream.</summary>
     Task<Result<IMediaProcessSession>> StartConvertAsync(Stream input, AudioConversionOptions options, CancellationToken ct = default);
 
-    /// <summary>Starts a raw PCM s16le session. Equivalent to <see cref="StartConvertAsync(string, AudioConversionOptions, CancellationToken)" /> with <see cref="AudioConversionOptions.ForRawPcm" />.</summary>
+    /// <summary>Starts a raw PCM s16le session. Equivalent to <see cref="StartConvertAsync(string, AudioConversionOptions, CancellationToken)" /> with <see cref="AudioConversionOptions.ForRawPcm(int, int)" />.</summary>
     Task<Result<IMediaProcessSession>> StartRawPcmAsync(string inputPathOrUrl, int sampleRate = 48000, int channels = 2, CancellationToken ct = default);
+
+    /// <summary>Extracts the audio stream. Null <paramref name="options" /> uses <see cref="AudioConversionOptions.ForExtract" />.</summary>
+    Task<Result<bool>> ExtractAsync(string inputPath, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Concatenates files with the concat demuxer. Null <paramref name="options" /> copies streams.
+    /// Inputs must share a stream layout. A set encoder re-encodes through the same demuxer.
+    /// </summary>
+    Task<Result<bool>> ConcatAsync(IReadOnlyList<string> inputPaths, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default);
 }

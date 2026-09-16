@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>ASP.NET Core middleware that checks a timestamped HMAC request signature.</Description>
+        <PackageTags>signing hmac aspnetcore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.RequestSigning\Lyo.RequestSigning.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

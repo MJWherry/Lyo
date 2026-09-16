@@ -1,0 +1,24 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Story.Client",
+  "name": "Lyo.Story.Client",
+  "area": "Apps",
+  "tagline": "Typed HTTP client for story graph save/load and play.",
+  "description": "Calls graph save, graph load by id or slug, story delete, and playthrough start/choose/advance/events/causes. Row list and filter stay on `IApiClient.QueryConcreteAsync` against `Story/Stories`. Sit it on an `IApiClient`.",
+  "features": [
+    "`IStoryClient` matches the graph and play routes on `BuildStoryGroup`.",
+    "`AddStoryClient`, the options instance, and `AddStoryClientFromConfiguration` (section `StoryClientOptions`).",
+    "`ListGraphsAsync(StoryListReq)` posts to `Story/graph/list` and returns the graph headers for one tenant and game.",
+    "`StoryClientStore` implements `IStoryStore` over `IStoryClient`, so game code can use a remote Story API through the same interface as `Lyo.Story.Sqlite` (this is what `Lyo.Game.Runtime` does in Remote and Hybrid). Remote failures surface as the client's HTTP exceptions, not as `GameApiUnavailableException`."
+  ],
+  "examples": [
+    {
+      "title": "Register the client",
+      "language": "csharp",
+      "code": "services.AddLyoApiClient();\nservices.AddStoryClient<ApiClient>();"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Story/Lyo.Story.Client/README.md"
+}

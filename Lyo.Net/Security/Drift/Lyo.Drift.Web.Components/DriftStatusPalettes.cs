@@ -28,7 +28,7 @@ public sealed class DriftSnapshotKindPalette : ILyoStatusPalette
     /// <inheritdoc />
     public LyoChipSpec? Resolve(string? status)
         => TypeConversion.EnumOrNull<DriftSnapshotKind>(status) is { } kind
-            ? new LyoChipSpec(LyoStatusText.Humanize(status), DriftColorHelper.ForSnapshotKind(kind))
+            ? DriftHueChips.Of(LyoStatusText.Humanize(status), DriftColorHelper.ForSnapshotKind(kind))
             : null;
 }
 
@@ -44,7 +44,7 @@ public sealed class DriftDiffSourcePalette : ILyoStatusPalette
     /// <inheritdoc />
     public LyoChipSpec? Resolve(string? status)
         => TypeConversion.EnumOrNull<DriftDiffSource>(status) is { } source
-            ? new LyoChipSpec(LyoStatusText.Humanize(status), DriftColorHelper.ForDiffSource(source))
+            ? DriftHueChips.Of(LyoStatusText.Humanize(status), DriftColorHelper.ForDiffSource(source))
             : null;
 }
 
@@ -62,4 +62,10 @@ public sealed class DriftChangeKindPalette : ILyoStatusPalette
         => TypeConversion.EnumOrNull<FileSystemChangeKind>(status) is { } kind
             ? new LyoChipSpec(LyoStatusText.Humanize(status), DriftColorHelper.ForChangeKind(kind))
             : null;
+}
+
+file static class DriftHueChips
+{
+    /// <summary>Chip for a snapshot kind or diff source. A null hue stays the default color.</summary>
+    public static LyoChipSpec Of(string label, LyoChipHue? hue) => hue is null ? LyoChips.Of(label) : LyoChips.Of(label, hue);
 }

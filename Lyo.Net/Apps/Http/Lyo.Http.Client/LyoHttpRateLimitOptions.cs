@@ -35,6 +35,12 @@ public sealed class LyoHttpRateLimitOptions
     /// <summary>Optional concurrency cap across in-flight requests (including downloads). 0 means unlimited.</summary>
     public int MaxConcurrent { get; set; }
 
+    /// <summary>
+    /// Paths that skip this quota. An entry is <c>METHOD /path</c> (<c>GET /health</c>, <c>POST /person/{id}</c>, or a <c>/*</c> prefix). Empty means every request
+    /// counts.
+    /// </summary>
+    public List<string> Whitelist { get; set; } = [];
+
     /// <summary>Throws when limits are not positive while enabled.</summary>
     public void Validate()
     {

@@ -15,6 +15,7 @@
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
         <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.FFmpeg\Lyo.FFmpeg.csproj"/>
+        <ProjectReference Include="..\..\FileTags\Lyo.FileTags\Lyo.FileTags.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -94,7 +94,7 @@
   "readmePath": "Lyo.Net/Integration/Espn/Lyo.Espn.Fantasy.Football.Client/README.md",
   "dependencies": [
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Http.Client",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -102,7 +102,7 @@
       ]
     },
     {
-      "name": "Lyo.Http.Client",
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -212,6 +212,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

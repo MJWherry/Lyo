@@ -104,6 +104,20 @@
                         }
                     </MudSelect>
 
+                    @if (conditionNode.Comparison.IsFuzzyComparisonOperator()) {
+                        <MudNumericField T="double?"
+                                         Value="@conditionNode.Threshold"
+                                         ValueChanged="@OnThresholdChanged"
+                                         Label="Threshold"
+                                         HelperText="0–1, default 0.3"
+                                         Min="0"
+                                         Max="1"
+                                         Step="0.05"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Style="min-width: 120px;"/>
+                    }
+
                     @* Value Input *@
                     <div style="min-width: 150px;">
                         @if (_selectedProperty != null) {

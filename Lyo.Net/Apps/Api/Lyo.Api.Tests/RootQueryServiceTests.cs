@@ -20,7 +20,7 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
     private readonly IRootQueryService<RootQueryTestDbContext> _service;
     private readonly ServiceProvider _services;
 
-    private CancellationToken Ct => TestContext.Current.CancellationToken;
+    private CancellationToken Ct => TestCt;
 
     public RootQueryServiceTests()
     {

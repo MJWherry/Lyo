@@ -25,14 +25,14 @@ public sealed class ApiClientTransportCompressionTests
         app.UseLyoApiCompression();
         app.MapGet("/file", () => Results.Text(Payload, FileTypeInfo.Csv.MimeType));
         app.MapPost("/file", () => Results.Text(Payload, FileTypeInfo.Csv.MimeType));
-        await app.StartAsync(TestContext.Current.CancellationToken);
+        await app.StartAsync(TestCt);
         var baseUrl = app.Urls.Single();
 
         using var client = new ApiClient(options: new() { BaseUrl = baseUrl });
-        var getBytes = await client.GetFileAsync("file", ct: TestContext.Current.CancellationToken);
+        var getBytes = await client.GetFileAsync("file", ct: TestCt);
         Assert.Equal(Payload, Encoding.UTF8.GetString(getBytes));
 
-        var postBytes = await client.PostAsBinaryAsync<object?>("file", null, ct: TestContext.Current.CancellationToken);
+        var postBytes = await client.PostAsBinaryAsync<object?>("file", null, ct: TestCt);
         Assert.Equal(Payload, Encoding.UTF8.GetString(postBytes));
     }
 }

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Blazor / MudBlazor dashboard for Lyo.Leaderboard. Add LeaderboardManagement to a host page for boards, standings, entries, verification, and invites against ILeaderboardApiClient.</Description>
+        <PackageTags>blazor components leaderboard standings mudblazor</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Leaderboard\Lyo.Leaderboard.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Leaderboard\Lyo.Leaderboard.Api.Models\Lyo.Leaderboard.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Leaderboard\Lyo.Leaderboard.Api.Client\Lyo.Leaderboard.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export.Xlsx\Lyo.Web.Components.Export.Xlsx.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+</Project>

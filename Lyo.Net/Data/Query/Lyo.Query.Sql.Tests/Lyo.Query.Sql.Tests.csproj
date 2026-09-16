@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\Lyo.Query.Sql\Lyo.Query.Sql.csproj"/>
+        <ProjectReference Include="..\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -11,6 +11,7 @@ from .client import (
     with_includes,
 )
 from .errors import ApiClientError, to_api_client_error
+from .multipart import multipart_form
 from .models import (
     ApiRequest,
     ApiResponse,
@@ -38,6 +39,7 @@ __all__ = [
     "entity_metadata_path",
     "file_name_from_disposition",
     "metadata_path",
+    "multipart_form",
     "normalize_route_prefix",
     "to_api_client_error",
     "with_bearer_token",

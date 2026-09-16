@@ -4,7 +4,9 @@ using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Note.Postgres.Database;
 using Lyo.Postgres;
+using Lyo.Search.Postgres;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Note.Postgres;
 
@@ -57,7 +59,7 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         }
 
         var entity = new NoteEntity {
-            Id = note.Id == default ? Guid.NewGuid() : note.Id,
+            Id = note.Id == default ? LyoGuid.CreateV7() : note.Id,
             SubjectEntityType = note.SubjectEntityType,
             SubjectEntityId = forId,
             ActorEntityType = note.ActorEntityType,
@@ -79,7 +81,7 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     {
         var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Notes.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(n => n.Id == id, ct).ConfigureAwait(false);
+        var entity = await context.Notes.AsNoTracking().WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(n => n.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToRecord(entity);
     }
 
@@ -90,7 +92,7 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         var tenant = ResolveTenant(tenantId);
         var forId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Notes.WhereActive()
+        var entities = await context.Notes.AsNoTracking().WhereActive()
             .WhereTenant(tenant)
             .Where(n => n.SubjectEntityType == forEntity.EntityType && n.SubjectEntityId == forId)
             .OrderBy(n => n.CreatedAt)
@@ -107,7 +109,7 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         var tenant = ResolveTenant(tenantId);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Notes.WhereActive()
+        var entities = await context.Notes.AsNoTracking().WhereActive()
             .WhereTenant(tenant)
             .Where(n => n.ActorEntityType == fromEntity.EntityType && n.ActorEntityId == fromId)
             .OrderBy(n => n.CreatedAt)
@@ -123,7 +125,7 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Notes.WhereActive().WhereTenant(tenant).Where(n => n.SubjectEntityType == forEntityType);
+        var query = context.Notes.AsNoTracking().WhereActive().WhereTenant(tenant).Where(n => n.SubjectEntityType == forEntityType);
         if (forEntityId.HasValue)
             query = query.Where(n => n.SubjectEntityId == forEntityId.Value.ToString());
 
@@ -168,6 +170,16 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         foreach (var e in entities)
             await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<NoteRecord>> SearchAsync(string term, Guid? tenantId = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(term);
+        var tenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entities = await context.Notes.AsNoTracking().WhereActive().WhereTenant(tenant).WhereMatches(term).OrderBy(n => n.CreatedAt).ToListAsync(ct).ConfigureAwait(false);
+        return entities.Select(ToRecord).ToList();
     }
 
     private static NoteRecord ToRecord(NoteEntity e)

@@ -3,6 +3,7 @@ using System.Text;
 using Lyo.IO.Temp.Models;
 using Lyo.IO.FileSystem;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.IO.Temp.Tests;
 
@@ -19,7 +20,7 @@ public sealed class InMemoryStorageProviderTests
 
     private static IOTempService NewService(MemoryFileSystem storage)
     {
-        var options = new IOTempServiceOptions { TempRoot = "/mem-svc", DirectoryName = Guid.NewGuid().ToString("N") };
+        var options = new IOTempServiceOptions { TempRoot = "/mem-svc", DirectoryName = LyoGuid.CreateV7().ToString("N") };
         return new(options, storageProvider: storage);
     }
 
@@ -322,7 +323,7 @@ public sealed class InMemoryStorageProviderTests
         var storage = NewProvider();
         var path = storage.RootPath + "/async-bytes.bin";
         var data = new byte[] { 7, 8, 9 };
-        await storage.WriteAllBytesAsync(path, data, TestContext.Current.CancellationToken);
+        await storage.WriteAllBytesAsync(path, data, TestCt);
         Assert.Equal(data, ReadAllBytes(storage, path));
     }
 
@@ -331,7 +332,7 @@ public sealed class InMemoryStorageProviderTests
     {
         var storage = NewProvider();
         var path = storage.RootPath + "/async-text.txt";
-        await storage.WriteAllTextAsync(path, "async", Encoding.UTF8, TestContext.Current.CancellationToken);
+        await storage.WriteAllTextAsync(path, "async", Encoding.UTF8, TestCt);
         Assert.Equal("async", ReadAllText(storage, path));
     }
 
@@ -341,7 +342,7 @@ public sealed class InMemoryStorageProviderTests
         var storage = NewProvider();
         var path = storage.RootPath + "/async-append.txt";
         storage.WriteAllText(path, "A", Encoding.UTF8);
-        await storage.AppendAllTextAsync(path, "B", Encoding.UTF8, TestContext.Current.CancellationToken);
+        await storage.AppendAllTextAsync(path, "B", Encoding.UTF8, TestCt);
         Assert.Equal("AB", ReadAllText(storage, path));
     }
 
@@ -351,7 +352,7 @@ public sealed class InMemoryStorageProviderTests
         var storage = NewProvider();
         var path = storage.RootPath + "/from-stream.bin";
         var source = new MemoryStream(new byte[] { 1, 2, 3 });
-        await storage.CopyStreamToFileAsync(source, path, TestContext.Current.CancellationToken);
+        await storage.CopyStreamToFileAsync(source, path, TestCt);
         Assert.Equal(new byte[] { 1, 2, 3 }, ReadAllBytes(storage, path));
     }
 
@@ -362,7 +363,7 @@ public sealed class InMemoryStorageProviderTests
         var src = storage.RootPath + "/src-async.txt";
         var dst = storage.RootPath + "/dst-async.txt";
         storage.WriteAllText(src, "hello", Encoding.UTF8);
-        await storage.CopyFileAsync(src, dst, TestContext.Current.CancellationToken);
+        await storage.CopyFileAsync(src, dst, ct: TestCt);
         Assert.Equal("hello", ReadAllText(storage, dst));
     }
 
@@ -741,7 +742,7 @@ public sealed class InMemoryStorageProviderTests
         var services = new ServiceCollection();
         services.AddIOTempService(o => {
             o.TempRoot = Path.Combine(Path.GetTempPath(), "lyo-di-fs-test");
-            o.DirectoryName = Guid.NewGuid().ToString("N");
+            o.DirectoryName = LyoGuid.CreateV7().ToString("N");
         });
 
         using var sp = services.BuildServiceProvider();

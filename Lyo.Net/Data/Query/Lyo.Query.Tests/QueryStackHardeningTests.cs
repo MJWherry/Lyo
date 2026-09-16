@@ -10,6 +10,7 @@ using Lyo.Query.Services.WhereClause;
 using Lyo.Query.Tests.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Query.Tests;
 
@@ -73,7 +74,7 @@ public class QueryStackHardeningTests
     {
         var (service, cache) = CreateCountingService();
         // The compiled-predicate cache is process-wide, so the clause must be unique here or another test's identical clause pre-warms it and the count starts at zero.
-        var name = $"Alice-{Guid.NewGuid():N}";
+        var name = $"Alice-{LyoGuid.CreateV7():N}";
         var people = new List<Person> { new PersonBuilder().WithName(name).Build() }.AsQueryable();
         var node = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name);
 

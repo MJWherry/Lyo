@@ -73,6 +73,20 @@ public sealed class FailingEncryptToStreamTwoKeyEncryptionService(ITwoKeyEncrypt
     public Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? kek = null, CancellationToken ct = default)
         => inner.DecryptToStreamAsync(input, output, keyId, kek, ct);
 
+    public Task<EncryptedStreamLayout> ReadEncryptedStreamLayoutAsync(Stream prefix, CancellationToken ct = default)
+        => inner.ReadEncryptedStreamLayoutAsync(prefix, ct);
+
+    public Task DecryptFromChunkAsync(
+        ReadOnlyMemory<byte> header,
+        Stream ciphertextAtChunk,
+        Stream output,
+        long chunkIndex,
+        int skipPlaintextBytes,
+        long maxPlaintextBytes,
+        byte[] unwrappedDek,
+        CancellationToken ct = default)
+        => inner.DecryptFromChunkAsync(header, ciphertextAtChunk, output, chunkIndex, skipPlaintextBytes, maxPlaintextBytes, unwrappedDek, ct);
+
     public Task EncryptToFileAsync(byte[] data, string outputPath, string? keyId = null, byte[]? kek = null, CancellationToken ct = default)
         => inner.EncryptToFileAsync(data, outputPath, keyId, kek, ct);
 

@@ -4,6 +4,7 @@ using Lyo.Exceptions.Models;
 using Lyo.Http.Client;
 using Lyo.Http.Client.Pipeline;
 using Lyo.Http.Client.Plan;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Http.Client.Tests;
 
@@ -15,10 +16,10 @@ public sealed class LyoHttpDownloadTests
         var payload = "hello-file"u8.ToArray();
         var inner = new StubBytesHandler(payload, "gallery.bin");
         using var client = new LyoHttpClient(new HttpClient(inner) { BaseAddress = new("https://example.test/") });
-        var (stream, fileName, length) = await client.GetFileStreamAsync("/dl/gallery.bin", ct: TestContext.Current.CancellationToken);
+        var (stream, fileName, length) = await client.GetFileStreamAsync("/dl/gallery.bin", ct: TestCt);
         await using (stream) {
             using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms, TestContext.Current.CancellationToken);
+            await stream.CopyToAsync(ms, TestCt);
             Assert.Equal(payload, ms.ToArray());
         }
 
@@ -31,7 +32,7 @@ public sealed class LyoHttpDownloadTests
     {
         var inner = new MarkerHandler();
         using var client = new LyoHttpClient(new HttpClient(inner) { BaseAddress = new("https://example.test/") });
-        await client.GetFileAsync("/dl/a.bin", ct: TestContext.Current.CancellationToken);
+        await client.GetFileAsync("/dl/a.bin", ct: TestCt);
         Assert.True(inner.StreamBinary);
     }
 
@@ -40,7 +41,7 @@ public sealed class LyoHttpDownloadTests
     {
         var inner = new MarkerHandler();
         using var client = new LyoHttpClient(new HttpClient(inner) { BaseAddress = new("https://example.test/") });
-        await client.GetFileWithTypeAsync("/dl/a.bin", ct: TestContext.Current.CancellationToken);
+        await client.GetFileWithTypeAsync("/dl/a.bin", ct: TestCt);
         Assert.True(inner.StreamBinary);
     }
 
@@ -52,11 +53,11 @@ public sealed class LyoHttpDownloadTests
         var inner = new StubBytesHandler(payload, "out.bin");
         using var client = new LyoHttpClient(new(inner) { BaseAddress = new("https://example.test/") });
         var reports = new List<LyoHttpDownloadProgress>();
-        var dest = Path.Combine(Path.GetTempPath(), "lyo-http-dl-" + Guid.NewGuid().ToString("N"), "out.bin");
+        var dest = Path.Combine(Path.GetTempPath(), "lyo-http-dl-" + LyoGuid.CreateV7().ToString("N"), "out.bin");
         try {
-            var saved = await client.DownloadToFileAsync("/dl/out.bin", dest, new Progress<LyoHttpDownloadProgress>(reports.Add), ct: TestContext.Current.CancellationToken);
+            var saved = await client.DownloadToFileAsync("/dl/out.bin", dest, new Progress<LyoHttpDownloadProgress>(reports.Add), ct: TestCt);
             Assert.Equal(dest, saved);
-            Assert.Equal(payload, await File.ReadAllBytesAsync(dest, TestContext.Current.CancellationToken));
+            Assert.Equal(payload, await File.ReadAllBytesAsync(dest, TestCt));
             Assert.NotEmpty(reports);
             Assert.Equal(payload.Length, reports[^1].BytesReceived);
         }

@@ -13,7 +13,7 @@
     {
       "title": "Record cards and status chips",
       "language": "razor",
-      "code": "<LyoChip Label=\"Succeeded\" Color=\"Color.Success\" Icon=\"@Icons.Material.Filled.Check\"/>\n\n<LyoResponsiveTable>\n    <TableContent>\n        <MudSimpleTable>...</MudSimpleTable>\n    </TableContent>\n    <CardContent>\n        @foreach (var row in rows) {\n            <LyoRecordCard Title=\"@row.Name\" Subtitle=\"@row.Kind\">\n                <LyoRecordField Label=\"Created\" Value=\"@row.CreatedAt.ToString()\"/>\n                <LyoRecordField Label=\"Notes\" Value=\"@row.Notes\" HideWhenEmpty=\"true\"/>\n            </LyoRecordCard>\n        }\n    </CardContent>\n</LyoResponsiveTable>"
+      "code": "<LyoChip Label=\"Succeeded\" Color=\"Color.Success\" Icon=\"@Icons.Material.Filled.Check\"/>\n<LyoChip Label=\"Pdf\" Hue=\"LyoChipHue.Rose\"/>\n\n<LyoResponsiveTable>\n    <TableContent>\n        <MudSimpleTable>...</MudSimpleTable>\n    </TableContent>\n    <CardContent>\n        @foreach (var row in rows) {\n            <LyoRecordCard Title=\"@row.Name\" Subtitle=\"@row.Kind\">\n                <LyoRecordField Label=\"Created\" Value=\"@row.CreatedAt.ToString()\"/>\n                <LyoRecordField Label=\"Notes\" Value=\"@row.Notes\" HideWhenEmpty=\"true\"/>\n            </LyoRecordCard>\n        }\n    </CardContent>\n</LyoResponsiveTable>"
     },
     {
       "title": "Status banner for a workbench",
@@ -37,7 +37,7 @@
       "rows": [
         [
           "`LyoChip` / `LyoChips` / `LyoChipSpec` / `LyoChipHue`",
-          "MudChip wrapper taking either a spec or individual color, label, variant, and icon. Named `LyoChipHue` values (Blue, Teal, Rose, …) set `--lyo-chip-hue`; the chip mixes that into `--mud-palette-surface` so identity colors stay readable in light and dark themes."
+          "MudChip wrapper taking either a spec or individual color, label, variant, and icon. Twelve named `LyoChipHue` values (Rose, Coral, Amber, Lime, Green, Teal, Cyan, Blue, Indigo, Violet, Purple, Magenta) set `--lyo-chip-hue`. The chip mixes that hue into `--mud-palette-surface` on the chip style, so the fill follows light and dark themes."
         ],
         [
           "`LyoChipInput`",
@@ -86,6 +86,10 @@
         [
           "`LyoWorkbenchHost` / `LyoNavMenu`",
           "Registry-driven workbench page and drawer links. Packages call `AddLyoWorkbench`."
+        ],
+        [
+          "`LyoCalendar`",
+          "Month, week, and day grid bound to `Lyo.Schedule.Models.Calendar`. The toolbar shows the zone id and UTC offset, a zone picker, and a 12/24-hour switch. Changing the zone rebuckets via `Calendar.WithTimeZone` and raises `TimeZoneChanged`. A month cell groups fires that share a local hour, shows at most three rows, and opens that day's hourly column from a magnifying glass. Clicking a day opens that day. Week and day use the hourly grid, with a list switch. Clicking an entry opens a dialog; `DetailContent` supplies the body. A muted entry is drawn gray. Overlapping entries sit side by side on the hourly grid. Each `EntityRef` is a chip of type plus a short id unless the host supplies `RefContent`."
         ]
       ]
     },
@@ -141,6 +145,14 @@
       ]
     },
     {
+      "name": "Lyo.Schedule.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Validation",
       "kind": "lyo",
       "tags": [
@@ -166,7 +178,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -174,7 +186,23 @@
       ]
     },
     {
-      "name": "Lyo.Common.Metadata",
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -257,6 +285,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

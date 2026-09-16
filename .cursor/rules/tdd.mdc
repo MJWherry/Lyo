@@ -1,0 +1,42 @@
+---
+description: Test-driven development — plans and implementation start with failing tests
+alwaysApply: true
+---
+
+# Test-driven development
+
+New behavior is specified by a failing test before production code exists. Follow the xUnit shape in the testing rule.
+
+## Plans
+
+A plan lists the tests first. Each test names the condition it locks (inputs, result, error). Implementation todos come after those tests and exist to make them pass.
+
+```text
+# ❌ BAD — build the feature, then "add tests"
+1. Add WeightedSum to the scorer
+2. Cover it with tests
+
+# ✅ GOOD — tests are the spec
+1. ExecuteAsync_WeightedSum_ScalesChildren — bass 10 at weight 2 plus band 5 at weight 0.5 returns 22.5; breakdown keeps raw child points
+2. Implement only what that test requires
+```
+
+Do not start writing either the tests or the production code until the user confirms the plan.
+
+## Implementation
+
+1. Write the tests from the plan. Run them and confirm they fail because the behavior is missing.
+2. Write the production code that makes those tests pass. Do not add behavior the tests do not ask for.
+3. Re-run the tests. Keep going until they pass.
+
+A test that passes before the production change is not a spec for new behavior. Tighten it or drop it.
+
+## When a test is worth writing
+
+Add a test when it locks a caller-visible outcome: a result, an error, a stored row, a side effect. Bug fixes still start from a test that reproduces the bug.
+
+Do not add a test for a change that keeps the same behavior:
+
+- Mechanical substitution (`Guid.NewGuid()` to `LyoGuid.CreateV7()`, or any helper swap whose own tests already exist)
+- Passthrough wiring (forwarding `TestCt` into an existing `CancellationToken` parameter)
+- Wording, a plan, a question, or a rename

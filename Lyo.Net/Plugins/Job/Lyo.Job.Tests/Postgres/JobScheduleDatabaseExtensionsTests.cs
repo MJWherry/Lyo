@@ -2,6 +2,7 @@ using Lyo.Common.Core.Enums;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Schedule.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -11,8 +12,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithValidSchedule_ReturnsCorrectScheduleDefinition()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.SetTimes),
             DayFlags = nameof(DayFlags.Weekdays),
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -38,8 +39,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithIntervalSchedule_ReturnsCorrectStartAndEndTime()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.Interval),
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -68,8 +69,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithInvalidTypeString_FallsBackToSetTimes()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = "InvalidType",
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -84,8 +85,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithInvalidDayFlagsString_FallsBackToNone()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.SetTimes),
             DayFlags = "InvalidDayFlags",
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -101,8 +102,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithInvalidMonthFlagsString_FallsBackToNone()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.SetTimes),
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = "InvalidMonthFlags",
@@ -118,8 +119,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithNullTimes_ReturnsNullTimes()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.SetTimes),
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -135,8 +136,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithEmptyTimes_ReturnsNullTimes()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.SetTimes),
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -152,8 +153,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithEmptyStartTime_ReturnsNullStartTime()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.Interval),
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -171,8 +172,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithNullStartTime_ReturnsNullStartTime()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.Interval),
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -190,8 +191,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithEmptyEndTime_ReturnsNullEndTime()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.Interval),
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -209,8 +210,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithCombinedDayFlags_ParsesCorrectly()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.SetTimes),
             DayFlags = "Mon, Tue, Wed",
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -226,8 +227,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithOneShotType_ParsesCorrectly()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.OneShot),
             DayFlags = nameof(DayFlags.None),
             MonthFlags = nameof(MonthFlags.None),
@@ -244,8 +245,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithMidnightTime_ParsesCorrectly()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.SetTimes),
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = nameof(MonthFlags.EveryMonth),
@@ -263,8 +264,8 @@ public class JobScheduleDatabaseExtensionsTests
     public void ToScheduleDefinition_WithEndOfDayTime_ParsesCorrectly()
     {
         var jobSchedule = new JobSchedule {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             Type = nameof(ScheduleType.SetTimes),
             DayFlags = nameof(DayFlags.EveryDay),
             MonthFlags = nameof(MonthFlags.EveryMonth),

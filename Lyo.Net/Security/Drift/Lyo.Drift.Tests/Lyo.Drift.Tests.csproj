@@ -14,7 +14,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
         <ProjectReference Include="..\..\..\Core\SystemInformation\Lyo.SystemInformation\Lyo.SystemInformation.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diff\Lyo.Diff\Lyo.Diff.csproj"/>

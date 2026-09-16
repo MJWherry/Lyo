@@ -7,6 +7,7 @@ using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Variant = MudBlazor.Variant;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Web.Components.FileUpload;
 
@@ -177,7 +178,7 @@ public partial class LyoFileUpload : IDisposable
             }
 
             var fileState = new LyoFileUploadState {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 FileName = file.Name,
                 FileSize = file.Size,
                 Status = LyoFileUploadStatus.Pending,

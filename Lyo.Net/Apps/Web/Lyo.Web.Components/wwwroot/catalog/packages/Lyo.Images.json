@@ -7,7 +7,7 @@
   "features": [
     "**Resize.** Max, Crop, Pad, BoxPad, Stretch (`ResizeMode`).",
     "**Crop, rotate, watermark, convert, thumbnail, compress.**",
-    "**Metadata.** Dimensions, format, optional EXIF (device, GPS, date taken) through ImageSharp.",
+    "**Metadata.** Dimensions, format, optional EXIF (device, GPS, date taken) through ImageSharp. Picture tags (artist, date, description, copyright) are read and written by [`Lyo.FileTags.Images`](../../FileTags/Lyo.FileTags.Images/README.md) through `IFileTagService`. Width, height, and format stay on `GetMetadataAsync`.",
     "**Palette.** Dominant colors via `GetPaletteAsync`. Optionally ignore transparent pixels (`ImageServiceOptions`).",
     "**Batch.** `ProcessBatchAsync` takes `ImageProcessRequest` / `ImageOperation` subclasses.",
     "**Decoration primitives.** `OverlayAsync` (raster center/positioned pad + stroke; SVG documents get a base64 PNG `<image>` spliced before `</svg>`), `AddFrameAsync` (stroked outline with optional rounded corners + fill), `AddCaptionAsync` (header/footer band, optional notch + rounded outside corners), `AddOuterPaddingAsync` (rounded card + canvas margin + optional drop shadow). Each accepts a `Stream` in/out and an `ImageFormat?`. The pipeline (`IImageDecorationPipeline`) chains them without intermediate streams.",

@@ -1,0 +1,66 @@
+@namespace Lyo.Music.Web.Components
+
+@if (Release is null) {
+    <MudText Typo="Typo.body2">No release selected.</MudText>
+} else {
+    <MudStack Spacing="3">
+        <MudStack Row="true" Spacing="3">
+            @if (!string.IsNullOrWhiteSpace(CoverImageUrl)) {
+                <MudImage Src="@CoverImageUrl" Alt="@Release.Title" Width="160" ObjectFit="ObjectFit.Contain"/>
+            }
+            <div>
+                <MudText Typo="Typo.h5">@Release.Title</MudText>
+                <MudText Typo="Typo.body1">@Release.PrimaryArtist</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@Release.Kind @Release.Status</MudText>
+            </div>
+        </MudStack>
+
+        <MudText Typo="Typo.subtitle1">Credits</MudText>
+        @if (Release.Credits.Count == 0) {
+            <MudText Typo="Typo.body2">None</MudText>
+        } else {
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var credit in Release.Credits) {
+                    <tr>
+                        <td>@credit.DisplayName</td>
+                        <td>@credit.Role</td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+        <MudText Typo="Typo.subtitle1">Tracks</MudText>
+        @if (Release.Tracks.Count == 0) {
+            <MudText Typo="Typo.body2">None</MudText>
+        } else {
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead>
+                <tr>
+                    <th>Disc</th>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Duration</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var track in Release.Tracks) {
+                    <tr>
+                        <td>@track.DiscNumber</td>
+                        <td>@track.TrackNumber</td>
+                        <td>@track.Title</td>
+                        <td>@FormatDuration(track.DurationSeconds)</td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </MudStack>
+}

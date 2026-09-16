@@ -35,6 +35,35 @@
                 </MudPaper>
 
                 break;
+            case "table":
+                @if (!string.IsNullOrWhiteSpace(sec.Lead)) {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2" Style="white-space: pre-wrap;">@sec.Lead</MudText>
+                }
+
+                <MudSimpleTable Dense="true" Bordered="true" Striped="true" Class="mb-2">
+                    <thead>
+                    <tr>
+                        @foreach (var header in sec.Headers ?? []) {
+                            <th>@header</th>
+                        }
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var row in sec.Rows ?? []) {
+                        <tr>
+                            @foreach (var cell in row) {
+                                <td style="white-space: pre-wrap;">@cell</td>
+                            }
+                        </tr>
+                    }
+                    </tbody>
+                </MudSimpleTable>
+
+                @if (!string.IsNullOrWhiteSpace(sec.Trail)) {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary" Style="white-space: pre-wrap;">@sec.Trail</MudText>
+                }
+
+                break;
             case "markdown":
                 <MudText Typo="Typo.body2" Class="mud-text-secondary" Style="white-space: pre-wrap;">@sec.Body</MudText>
 

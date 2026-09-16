@@ -6,6 +6,7 @@ Registration methods live on `ServiceCollectionExtensions` (`AddLyoQueryServices
 
 ## Features
 
+- **QuerySql.** `POST {entity}/QuerySql` previews concrete and projection SQL. `POST {prefix}QuerySql` previews a root query. Neither route executes the query.
 - **WhereClause.** Filter tree for `QueryConcreteReq` / `ProjectionQueryReq`, serialized as `whereClause`. JSON discriminators are `condition` (leaf: field, comparison, value) and `group` (AND/OR children).
 - **SubQuery / two-phase.** Optional `subClause` on a node, or `WhereClauseBuilder.AddSubClause`, runs the root filter in the database and the nested filter in memory.
 - **16 comparators.** Equals, NotEquals, Contains, NotContains, StartsWith, EndsWith, NotStartsWith, NotEndsWith, GreaterThan, GreaterThanOrEqual, LessThan, LessThanOrEqual, In, and the remaining operators on `ComparisonOperatorEnum`.
@@ -372,6 +373,11 @@ Almost every response is compressed by `services.AddLyoApiCompression()` plus `a
 - **Empty-body fallback (Warn):** bare `Results.NotFound()` / empty 4xx/5xx get a synthesized Lyo problem.
 - Endpoints should **throw** `ApiErrorException.From(...)` / `ApiErrorResponseFactory.ThrowForError(...)` instead of returning problem JSON.
 - Use `Constants.ApiErrorCodes` for `errors[].code`; put field/path names in `errors[].description`.
+- A 429 from `RequireRateLimit` must use `RateLimitExceededException(retryAfter, limit, window)`. The string constructors leave `RetryAfter` null, so this middleware omits the header. It writes `Retry-After` as ceiling seconds.
+
+## Opt-in route quota ([`RateLimit/RateLimitEndpointExtensions.cs`](RateLimit/RateLimitEndpointExtensions.cs))
+
+`RequireRateLimit(policy, permitLimit, window, pattern)` is an endpoint filter. It runs after authentication and calls `IRateLimitService.TryAcquireAsync` unless the endpoint is on that policy's whitelist (an endpoint name such as `GetPerson`, or `METHOD /route` such as `POST /person/{id}`). An empty whitelist exempts nothing. Routes that do not call it are not limited, and no production route calls it. The host registers `AddLocalRateLimit` for one process or `AddRedisRateLimit` when several hosts share the quota. The default partition is `lyo:user`, else `lyo:token_id`, else `sub`, else the name identifier, else the identity name, else the remote IP, else `anonymous`.
 
 ## Cross-cutting helpers in [`Extensions.cs`](Extensions.cs)
 
@@ -1132,7 +1138,7 @@ More detail: [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
 
 ### Optional / related packages
 
-- [`Lyo.Api.Export`](../Lyo.Api.Export/README.md). Export endpoints; format handlers ship in `Lyo.Api.Export.Csv` and `Lyo.Api.Export.Xlsx` (no separate README)
+- [`Lyo.Api.Export`](../Export/Lyo.Api.Export/README.md). Export endpoints; format handlers ship in `Lyo.Api.Export.Csv` and `Lyo.Api.Export.Xlsx` (no separate README)
 - [`Lyo.Csv`](../../../Data/Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../../Data/Xlsx/Lyo.Xlsx/README.md). Export add-ons consume these
 
 ## Dependencies
@@ -1141,20 +1147,23 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Api.Models` (direct, lyo)
 - `Lyo.Cache` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Diagnostic.AspNetCore` (direct, lyo)
 - `Lyo.Diff` (direct, lyo)
 - `Lyo.Formatter` (direct, lyo)
 - `Lyo.Hashing` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Query` (direct, lyo)
+- `Lyo.Query.Sql` (direct, lyo)
+- `Lyo.RateLimit` (direct, lyo)
 - `Lyo.Validation` (direct, lyo)
 - `Microsoft.AspNetCore.OpenApi` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
@@ -1173,6 +1182,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `EasyCompressor` `2.1.0` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Caching.Memory` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection` `10.0.5` (transitive, microsoft)
@@ -1184,5 +1194,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

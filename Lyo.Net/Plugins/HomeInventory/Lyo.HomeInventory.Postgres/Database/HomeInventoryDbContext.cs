@@ -14,6 +14,8 @@ public class HomeInventoryDbContext : DbContext
 
     public DbSet<HomeItemMovementEntity> Movements { get; set; } = null!;
 
+    public DbSet<HomeAttachmentEntity> Attachments { get; set; } = null!;
+
     public HomeInventoryDbContext(DbContextOptions<HomeInventoryDbContext> options)
         : base(options) { }
 
@@ -25,6 +27,7 @@ public class HomeInventoryDbContext : DbContext
         modelBuilder.ApplyConfiguration(new HomeItemEntityConfiguration());
         modelBuilder.ApplyConfiguration(new HomeItemStockEntityConfiguration());
         modelBuilder.ApplyConfiguration(new HomeItemMovementEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new HomeAttachmentEntityConfiguration());
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -58,6 +61,9 @@ public class HomeInventoryDbContext : DbContext
                         case HomeItemMovementEntity m when m.CreatedTimestamp == default:
                             m.CreatedTimestamp = now;
                             break;
+                        case HomeAttachmentEntity a when a.CreatedTimestamp == default:
+                            a.CreatedTimestamp = now;
+                            break;
                         case HomeItemStockEntity s:
                             s.UpdatedTimestamp = now;
                             break;
@@ -74,6 +80,9 @@ public class HomeInventoryDbContext : DbContext
                             break;
                         case HomeItemEntity i:
                             i.UpdatedTimestamp = now;
+                            break;
+                        case HomeAttachmentEntity a:
+                            a.UpdatedTimestamp = now;
                             break;
                         case HomeItemStockEntity s:
                             s.UpdatedTimestamp = now;

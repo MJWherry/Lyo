@@ -1,4 +1,5 @@
 using Lyo.Exceptions.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Exceptions.Tests;
 
@@ -286,7 +287,7 @@ public class ArgumentHelpersTests
     [Fact]
     public void ThrowIfFileNotFound_Path_Missing_Throws()
     {
-        var path = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.txt");
+        var path = Path.Combine(Path.GetTempPath(), $"missing-{LyoGuid.CreateV7():N}.txt");
         var ex = Assert.Throws<FileNotFoundException>(() => ArgumentHelpers.ThrowIfFileNotFound(path));
         Assert.Equal(path, ex.FileName);
     }
@@ -301,7 +302,7 @@ public class ArgumentHelpersTests
     [Fact]
     public void ThrowIfFileNotFound_FileInfo_Missing_Throws()
     {
-        var fileInfo = new FileInfo(Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.txt"));
+        var fileInfo = new FileInfo(Path.Combine(Path.GetTempPath(), $"missing-{LyoGuid.CreateV7():N}.txt"));
         Assert.Throws<FileNotFoundException>(() => ArgumentHelpers.ThrowIfFileNotFound(fileInfo));
     }
 }

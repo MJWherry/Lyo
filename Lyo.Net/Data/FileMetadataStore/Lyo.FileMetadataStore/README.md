@@ -80,6 +80,7 @@ Concrete implementations:
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Compression` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
@@ -89,7 +90,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` (direct, microsoft)
 - `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
-- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)

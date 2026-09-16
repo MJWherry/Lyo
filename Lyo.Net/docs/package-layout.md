@@ -6,7 +6,7 @@ This document is the standard for where new Lyo packages live and how they are n
 
 Answer in order:
 
-1. **Lyo canonical model in Core?** Then **Archetype A.** `Core/{Domain}/`, e.g. `Lyo.People.Models`, `Lyo.Geolocation.Postgres`.
+1. **Lyo canonical model in Core?** Then **Archetype A.** `Core/{Domain}/`, e.g. `Lyo.Geolocation.Models`, `Lyo.Geolocation.Postgres`.
 2. Else **pluggable Lyo interface under Communication or Security?** Then **Archetype B.** `Communication|Security/{Capability}/`, e.g. `Lyo.Translation.Google`.
 3. Else **thin HTTP/SDK client** (host maps into Core or feeds an Archetype B adapter)? Then **Archetype C.** `Integration/{Vendor}/`, e.g. `Lyo.Endato.Client`.
 4. Else **vendor-owned product** (own models/schema, not a Core projection)? Then **Archetype D.** `Integration/{Vendor}/` full stack, e.g. `Lyo.Discord.Postgres`.
@@ -18,7 +18,7 @@ Answer in order:
 
 | | |
 |---|---|
-| **When** | Shared business model and persistence owned by Lyo (People, Geolocation, EntityReference). |
+| **When** | Shared business model and persistence owned by Lyo (Geolocation, EntityReference). People is a plugin. |
 | **Path** | `Core/{Domain}/` |
 | **Packages** | `Lyo.{Domain}.Models`, `Lyo.{Domain}` (contracts), `Lyo.{Domain}.Postgres`, tests |
 | **Must not** | Reference vendor SDKs, vendor HTTP clients, or vendor DTO packages |
@@ -75,7 +75,7 @@ Geolocation is **not** Communication. Google Maps lives here (Archetype C), not 
 
 **Host**
 
-- Wire vendor client → mapper → Core store (`IPeopleStore`, `IGeolocationStore`, etc.).
+- Wire vendor client → mapper → store (`IGeolocationStore` in Core, `IPeopleStore` in the People plugin).
 - Define external source type strings (e.g. `EndatoPsPerson`, `GoogleMapsPlace`) in the vendor/mapper package, not in Core. Persist on `*_source` rows as **`source_entity_type`** / **`source_entity_id`** with a module owner column (e.g. `person_id`). EntityReference does not add PostgreSQL FK constraints on source links.
 - Tenant-scoped **relations** (favorite, note, …) use **`for_entity_*`** / **`from_entity_*`** for subject/actor endpoints via `EntityRelationEntityBase`.
 
@@ -83,7 +83,7 @@ Geolocation is **not** Communication. Google Maps lives here (Archetype C), not 
 
 | Archetype | Assembly | Folder |
 |-----------|----------|--------|
-| A | `Lyo.People.Models`, `Lyo.Geolocation.Postgres` | `Core/People/Lyo.People.Models` |
+| A | `Lyo.Geolocation.Models`, `Lyo.Geolocation.Postgres` | `Core/Geolocation/Lyo.Geolocation.Models` |
 | B | `Lyo.Translation.Google` | `Communication/Translation/Lyo.Translation.Google` |
 | C | `Lyo.{Vendor}.{Domain}.Client` | `Integration/{Vendor}/Lyo.{Vendor}.{Domain}.Client` |
 | D | `Lyo.{Vendor}.*` | `Integration/{Vendor}/Lyo.{Vendor}.*` |
@@ -92,11 +92,11 @@ Geolocation is **not** Communication. Google Maps lives here (Archetype C), not 
 
 ## Worked examples
 
-### People + Endato (A + C + D)
+### People + Endato (E + C + D)
 
 | Package | Archetype | Role |
 |---------|-----------|------|
-| `Lyo.People.Models`, `Lyo.People.Postgres` | A | Canonical `people.*` + `*_source` |
+| `Lyo.People.Models`, `Lyo.People.Postgres` | E | Plugin `people.*` + `*_source` under `Plugins/People/` |
 | `Lyo.Endato.Client` | C | Endato REST API |
 | `Lyo.Endato.Postgres` | D | Vendor-side persistence (not `people` schema) |
 
@@ -146,15 +146,35 @@ Stays under `Communication/Translation/`.
 | `Lyo.Media.Models` | E | Sibling `IAudio*` / `IVideo*` contracts, encoder catalogs, probe/play/convert records. Images stay `IImageService` in `Data/Images/`. |
 | `Lyo.FFmpeg`, `Lyo.FFmpeg.Models`, `Lyo.FFmpeg.Tests` | E | One ffmpeg CLI implementation of both families. Lives under `Data/Media/`, not `Data/FFmpeg/`. |
 
+### File tags (E, Data)
+
+| Package | Archetype | Role |
+|---------|-----------|------|
+| `Lyo.FileTags` | E | Shared `FileTagKey` catalog and `IFileTagService` dispatcher. No ffmpeg and no ImageSharp. |
+| `Lyo.FileTags.FFmpeg` | E | Audio and video tag read (ffprobe) and stream-copy write. Does not claim images. |
+| `Lyo.FileTags.Images` | E | Picture EXIF tags. Width, height, and format stay on `IImageService`. |
+
+### Query (E, Data)
+
+| Package | Archetype | Role |
+|---------|-----------|------|
+| `Lyo.Query.Models` | E | WhereClause AST, request DTOs, builders |
+| `Lyo.Query.Evaluation` | E | EF-agnostic expression trees + `FuzzyMatch` |
+| `Lyo.Query` | E | Cached `IWhereClauseService` |
+| `Lyo.Query.Postgres` | E | Rewrite Fuzzy / NotFuzzy to `pg_trgm` `similarity()` |
+| `Lyo.Query.Sql` | E | Concrete, projection, and root requests printed as parameterized Postgres SQL |
+
 ---
 
 ## Inventory: Integration (vendor / product)
 
 | Project | Archetype | Path | Target | Phase | Notes |
 |---------|-----------|------|--------|-------|-------|
-| `Lyo.Endato.Client` | C | `Integration/Endato/` | - | - | Ingest → Core/People in host |
+| `Lyo.Endato.Client` | C | `Integration/Endato/` | - | - | Ingest → `Plugins/People` in the host |
 | `Lyo.Endato.Postgres` | D | `Integration/Endato/` | - | - | Vendor DB, not `people` |
 | `Lyo.Google.Geolocation.Client` | C | `Integration/Google/` | - | 1 | Also implements `IGeolocationService`; split deferred |
+| `Lyo.Google.Youtube.Models` | C | `Integration/Google/` | - | - | DTOs only. `Lyo.Video` references this, not the client |
+| `Lyo.Google.Youtube.Client` | C | `Integration/Google/` | - | - | Data API. Hosts pass models into `IVideoStore` |
 | `Lyo.Typecast.Client` | C | `Integration/Typecast/` | - | - | Used by `Lyo.Tts.Typecast` |
 | `Lyo.Espn.Fantasy.Football.Client` | C | `Integration/Espn/` | - | 2 | Name lacks `.Client` suffix; acceptable |
 | `Lyo.Discord.Models` | D | `Integration/Discord/` | - | - | |
@@ -164,7 +184,7 @@ Stays under `Communication/Translation/`.
 
 ## Inventory: Apps (HTTP and processes)
 
-**Plugins** = models / Postgres / `.Web.Components`. **Apps** = HTTP and processes: `.Api` / `.Api.Host` / `.Client`, Worker / Scheduler / Agent, plus the platform toolkit (`Apps/Api`, `Apps/Web`, `Apps/Http`). Plugins Postgres may still reference `Lyo.Api` for QueryProject/CRUD helpers; route mapping (`Build*Group`) lives in Apps.
+**Plugins** = models / Postgres / `.Web.Components`. **Apps** = HTTP and processes: `.Api` / `.Client`, Worker / Scheduler / Agent, plus the platform toolkit (`Apps/Api`, `Apps/Web`, `Apps/Http`). Plugins Postgres may still reference `Lyo.Api` for QueryProject/CRUD helpers; route mapping (`Build*Group`) lives in Apps. Example API hosts (`Lyo.{X}.Api.Example`) live under `Examples/`.
 
 | Project | Archetype | Path | Target | Phase | Notes |
 |---------|-----------|------|--------|-------|-------|
@@ -176,26 +196,69 @@ Stays under `Communication/Translation/`.
 | `Lyo.Api.FileStorage.Models` | E | `Apps/Api/` | - | - | HTTP DTOs for file-storage API; referenced by API + clients |
 | `Lyo.Api.FileStorage` | E | `Apps/Api/` | - | - | File-storage HTTP + FileMetadata QueryProject (platform wrapper over Data) |
 | `Lyo.Api.Export*` | E | `Apps/Api/` | - | - | |
+| `Lyo.Api.Import*` | E | `Apps/Api/` | - | - | JSON is built into `Lyo.Api.Import`. CSV, XLSX, YAML, XML, and TOML are addon handlers. |
 | `Lyo.Api.Authentication` | E | `Apps/Api/` | - | - | Auth admin QueryProject; host-supplied EndpointAuth (platform wrapper over Security). Do not rename to `Lyo.Authentication.Api`. |
+| `Lyo.Avalonia.Components` | E | `Apps/Avalonia/` | - | - | Shared Avalonia controls. Tool panes dock inside a window. A window can dock to a screen edge. Desktop apps reference this the way Blazor hosts reference `Lyo.Web.Components`. |
 | `Lyo.Web.*` | E | `Apps/Web/` | - | - | |
+| `Lyo.Web.WebRenderer.Models` | E | `Apps/Web/Renderer/` | - | - | Serializable `WebRenderReq` / `WebRenderRes`. No Blazor, no Puppeteer. Implemented by `Lyo.Web.WebRenderer`. |
+| `Lyo.Web.Automation.PuppeteerSharp` | E | `Apps/Web/Automation/` | - | - | PuppeteerSharp engine for `Lyo.Web.Automation`. Chrome, Chromium, Edge, and Firefox. No browser download. |
+| `Lyo.Web.Automation.Api` | E | `Apps/Web/Automation/` | - | - | HTTP run API (`BuildAutomationGroup`). No Playwright, Selenium, or PuppeteerSharp reference. |
+| `Lyo.Web.Automation.Client` | E | `Apps/Web/Automation/` | - | - | Typed HTTP client for plan runs, logs, and snapshots. |
+| `Lyo.Web.Automation.Web.Components` | E | `Apps/Web/Automation/` | - | - | MudBlazor plan workbench. Takes `IAutomationPlanClient` as a parameter. |
 | `Lyo.Job.Api` | E | `Apps/Job/` | - | - | HTTP mapping (`BuildJobGroup`) |
-| `Lyo.Job.Api.Host` | E | `Apps/Job/` | - | - | Standalone host; embed in another API when composing |
 | `Lyo.Job.Client` | E | `Apps/Job/` | - | - | Typed HTTP client for workers/schedulers |
 | `Lyo.Job.Worker` | E | `Apps/Job/` | - | - | |
 | `Lyo.Job.Scheduler` | E | `Apps/Job/` | - | - | |
 | `Lyo.Job.Alerts` | E | `Apps/Job/` | - | - | |
+| `Lyo.Job.Workers.Notification` | E | `Apps/Job/` | - | - | Webhook/email/SMS workers; notifying is a workflow step |
 | `Lyo.Reporting.Api` | E | `Apps/Reporting/` | - | - | HTTP (`BuildReportingGroup`); Postgres stays service-only |
-| `Lyo.Reporting.Api.Host` | E | `Apps/Reporting/` | - | - | Standalone host |
 | `Lyo.Reporting.Client` | E | `Apps/Reporting/` | - | - | Typed HTTP client |
 | `Lyo.Drift.Api` | E | `Apps/Drift/` | - | - | HTTP ingest (`BuildDriftGroup`) |
-| `Lyo.Drift.Api.Host` | E | `Apps/Drift/` | - | - | Standalone host |
 | `Lyo.Drift.Client` | E | `Apps/Drift/` | - | - | |
 | `Lyo.Drift.Agent` | E | `Apps/Drift/` | - | - | Collector process |
 | `Lyo.Comic.Api` | E | `Apps/Comic/` | - | - | HTTP over `Plugins/Comic` |
-| `Lyo.Comic.Api.Host` | E | `Apps/Comic/` | - | - | Standalone host (`http://localhost:5101`) |
+| `Lyo.Algorithms.Api` | E | `Apps/Algorithms/` | - | - | Catalog HTTP (`BuildAlgorithmsGroup`). No remote Execute |
+| `Lyo.Algorithms.Client` | E | `Apps/Algorithms/` | - | - | Typed HTTP client over the catalog |
+| `Lyo.Story.Api` | E | `Apps/Story/` | - | - | HTTP over `Plugins/Story`. Req/Res CRUD plus graph and play |
+| `Lyo.Story.Client` | E | `Apps/Story/` | - | - | Typed HTTP client for graph and play. Query stays on `IApiClient` |
+| `Lyo.Leaderboard.Api` | E | `Apps/Leaderboard/` | - | - | HTTP over `Plugins/Leaderboard` |
+| `Lyo.Leaderboard.Api.Models` | E | `Apps/Leaderboard/` | - | - | Wire DTOs |
+| `Lyo.Leaderboard.Api.Client` | E | `Apps/Leaderboard/` | - | - | Typed HTTP client |
 | `Lyo.HomeInventory.Api` | E | `Apps/HomeInventory/` | - | - | HTTP over `Plugins/HomeInventory` |
-| `Lyo.HomeInventory.Api.Host` | E | `Apps/HomeInventory/` | - | - | Standalone host (`http://localhost:5102`) |
-| `Lyo.Config.Api*` | E | `Apps/Config/` | - | - | Product HTTP surface over `Plugins/Config` |
+| `Lyo.Recipe.Api` | E | `Apps/Recipe/` | - | - | HTTP over `Plugins/Recipe` |
+| `Lyo.Recipe.Client` | E | `Apps/Recipe/` | - | - | Typed HTTP client for extra Recipe routes |
+| `Lyo.Ledger.Api` | E | `Apps/Ledger/` | - | - | HTTP over `Plugins/Ledger` |
+| `Lyo.Law.Api` | E | `Apps/Law/` | - | - | HTTP over `Plugins/Law`. Node body changes go through upsert |
+| `Lyo.Law.Client` | E | `Apps/Law/` | - | - | Typed HTTP client for node upsert and lookup. Query stays on `IApiClient` |
+| `Lyo.Billing.Api` | E | `Apps/Billing/` | - | - | HTTP over `Plugins/Billing`. No PDF |
+| `Lyo.Billing.Client` | E | `Apps/Billing/` | - | - | Typed HTTP client over `Lyo.Billing.Api` |
+| `Lyo.Billing.Web.Components` | E | `Apps/Billing/` | - | - | Gateway dashboard. Talks HTTP to TestApi |
+| `Lyo.Payments` | E | `Apps/Payments/` | - | - | `IPaymentCollector` + internal workbench impl. No Stripe |
+| `Lyo.FileManager`, `.App`, `.Tests` | E | `Apps/FileManager/` | - | - | Desktop file manager (`lyo-files`) over `Lyo.Api.FileStorage` or a local folder. The store stays in `Data/FileStorage`. |
+| `Lyo.Desktop`, `.Tests` | E | `Apps/Desktop/` | - | - | Shared desktop helpers. Global hotkeys, clipboard, window list and activate, and mouse and key input. X11 on Linux, Win32 on Windows. `lyo-shot`, the automation studio, and the CLI use it. |
+| `Lyo.Screenshot`, `.App`, `.Tests` | E | `Apps/Screenshot/` | - | - | Desktop capture (`lyo-shot`): still PNG, GIF, and scrolling receipt. |
+| `Lyo.Config.Api*` | E | `Apps/Config/` | - | - | Product HTTP surface over `Plugins/Config`. `Lyo.Config.Api.Hosting` is the packable polling library. Example host is `Lyo.Config.Api.Example`. |
+
+## Inventory: Examples
+
+Runnable sample hosts. `IsPackable=false`. Prefer embedding `.Api` in a real host; these show demo wiring (OpenAPI/Scalar, local cache, anonymous auth, hardcoded keys).
+
+| Project | Archetype | Path | Target | Phase | Notes |
+|---------|-----------|------|--------|-------|-------|
+| `Lyo.Job.Api.Example` | E | `Examples/` | - | - | Example Job API (`http://localhost:5096`) |
+| `Lyo.Reporting.Api.Example` | E | `Examples/` | - | - | Example Reporting API; anonymous auth (`http://localhost:5098`) |
+| `Lyo.Drift.Api.Example` | E | `Examples/` | - | - | Example Drift API (`http://localhost:5099`) |
+| `Lyo.Comic.Api.Example` | E | `Examples/` | - | - | Example Comic API (`http://localhost:5101`) |
+| `Lyo.HomeInventory.Api.Example` | E | `Examples/` | - | - | Example HomeInventory API (`http://localhost:5102`) |
+| `Lyo.Recipe.Api.Example` | E | `Examples/` | - | - | Example Recipe API (`http://localhost:5106`) |
+| `Lyo.Ledger.Api.Example` | E | `Examples/` | - | - | Example Ledger API (`http://localhost:5104`) |
+| `Lyo.Billing.Api.Example` | E | `Examples/` | - | - | Example Billing API (`http://localhost:5105`); wires Ledger |
+| `Lyo.Leaderboard.Api.Host` | E | `Examples/` | - | - | Standalone Leaderboard API host. Assembly name stays `.Api.Host` |
+| `Lyo.Config.Api.Example` | E | `Examples/` | - | - | Example Config API (`http://localhost:5088`) |
+| `Lyo.Job.Worker.Example` | E | `Examples/` | - | - | Sample worker (`job.run.example`) |
+| `Lyo.Job.Scheduler.Example` | E | `Examples/` | - | - | Sample scheduler host |
+| `Lyo.Drift.Agent.Example` | E | `Examples/` | - | - | Sample Drift agent host |
+| `Lyo.Reporting.Business.Example` | E | `Examples/` | - | - | Sample Blazor reporting host |
 
 ## Inventory: Plugins
 
@@ -203,19 +266,29 @@ Drop-in modules. No `Build*Group` route mapping.
 
 | Project | Archetype | Path | Target | Phase | Notes |
 |---------|-----------|------|--------|-------|-------|
-| `Lyo.Comment*` | E | `Plugins/Comment/` | - | - | |
-| `Lyo.Note*` | E | `Plugins/Note/` | - | - | |
-| `Lyo.Favorite*` | E | `Plugins/Favorite/` | - | - | |
-| `Lyo.Tag*` | E | `Plugins/Tag/` | - | - | |
-| `Lyo.Rating*` | E | `Plugins/Rating/` | - | - | |
-| `Lyo.ContactUs*` | E | `Plugins/ContactUs/` | - | - | |
+| `Lyo.Comment*` | E | `Plugins/Comment/` | - | - | `.Seed` EF comments |
+| `Lyo.Note*` | E | `Plugins/Note/` | - | - | `.Seed` EF notes |
+| `Lyo.Favorite*` | E | `Plugins/Favorite/` | - | - | `.Seed` EF favorites |
+| `Lyo.Tag*` | E | `Plugins/Tag/` | - | - | `.Seed` EF tags |
+| `Lyo.Rating*` | E | `Plugins/Rating/` | - | - | `.Seed` EF ratings |
+| `Lyo.ContactUs*` | E | `Plugins/ContactUs/` | - | - | `.Seed` EF submissions; `.Postgres.Tests` reads |
 | `Lyo.Profanity` | E | `Plugins/Profanity/` | - | - | |
-| `Lyo.ShortUrl*` | E | `Plugins/ShortUrl/` | - | - | |
-| `Lyo.Config`, `.Postgres`, `.Web.Components` | E | `Plugins/Config/` | - | - | HTTP is `Apps/Config` |
+| `Lyo.ShortUrl*` | E | `Plugins/ShortUrl/` | - | - | `.Seed` EF short URLs |
+| `Lyo.Config`, `.Postgres`, `.Web.Components`, `.Seed` | E | `Plugins/Config/` | - | - | HTTP is `Apps/Config`. `.Seed` writes plaintext definitions |
+| `Lyo.Book`, `.Postgres`, `.Postgres.Tests` | E | `Plugins/Book/` | - | - | Library catalog. TestApi CRUD/search this slice |
+| `Lyo.People.Models`, `.Postgres`, `.Postgres.Tests` | E | `Plugins/People/` | - | - | Person graph. Schema `people`. References Geolocation and EntityReference. Endato maps in at the host |
+| `Lyo.Music`, `.Postgres`, `.Postgres.Tests`, `.Web.Components` | E | `Plugins/Music/` | - | - | Music catalog. Schema `music`. TestApi CRUD/search this slice |
+| `Lyo.Video`, `.Postgres`, `.Postgres.Tests`, `.Web.Components` | E | `Plugins/Video/` | - | - | Movie and television catalog. Schema `video`. References `Lyo.Google.Youtube.Models` |
+| `Lyo.Story`, `.Postgres`, `.Tests`, `.Postgres.Tests`, `.Web.Components`, `.Web.Components.Tests` | E | `Plugins/Story/` | - | - | Play graph. HTTP is `Apps/Story`. Blazor builder is `.Web.Components` |
 | `Lyo.Comic`, `.Postgres`, `.Web.Components` | E | `Plugins/Comic/` | - | - | HTTP is `Apps/Comic` |
-| `Lyo.HomeInventory`, `.Postgres` | E | `Plugins/HomeInventory/` | - | - | HTTP is `Apps/HomeInventory` |
-| `Lyo.Job.Models`, `.Postgres`, `.Web.Components`, `.Tests` | E | `Plugins/Job/` | - | - | Store/domain. HTTP/process stay in `Apps/Job` |
-| `Lyo.Reporting.Models`, `.Postgres`, `.Web`, `.Web.Components`, `.Tests` | E | `Plugins/Reporting/` | - | - | Store/UI. `AddReportingMaintenanceWorker` stays on Postgres. HTTP is `Apps/Reporting` |
+| `Lyo.HomeInventory`, `.Models`, `.Postgres`, `.FileStorage`, `.Web.Components`, `.Seed`, `.Tests` | E | `Plugins/HomeInventory/` | - | - | HTTP is `Apps/HomeInventory`. `.Seed` writes items, stock, and movements |
+| `Lyo.Recipe`, `.Models`, `.Postgres`, `.FileStorage`, `.Web.Components`, `.Seed`, `.Tests` | E | `Plugins/Recipe/` | - | - | HTTP is `Apps/Recipe`. `.Seed` writes a category, ingredients, recipes, lines, and steps |
+| `Lyo.Ledger`, `.Postgres`, `.Seed` | E | `Plugins/Ledger/` | - | - | Double-entry CoA/journals. HTTP is `Apps/Ledger`. `.Seed` writes balanced journals |
+| `Lyo.Law`, `.Models`, `.Postgres`, `.Postgres.Tests`, `.Web.Components` | E | `Plugins/Law/` | - | - | State statutes, any US state. Schema `law`. Jurisdiction `US` is rejected. HTTP is `Apps/Law` |
+| `Lyo.Leaderboard`, `.Postgres`, `.Postgres.Tests`, `.Tests`, `.Web.Components` | E | `Plugins/Leaderboard/` | - | - | Boards, membership, invites, entries. Schema `leaderboard`. Entry points come from `Lyo.Algorithms`. HTTP is `Apps/Leaderboard` |
+| `Lyo.Billing`, `.Postgres`, `.Seed` | E | `Plugins/Billing/` | - | - | Invoices post journals. HTTP is `Apps/Billing`. No PDF. `.Seed` writes draft invoices |
+| `Lyo.Job.Models`, `.Postgres`, `.Web.Components`, `.Seed`, `.Tests` | E | `Plugins/Job/` | - | - | Store/domain. HTTP/process stay in `Apps/Job`. `.Seed` writes disabled definitions |
+| `Lyo.Reporting.Models`, `.Postgres`, `.Web`, `.Web.Components`, `.Seed`, `.Tests` | E | `Plugins/Reporting/` | - | - | Store/UI. `AddReportingMaintenanceWorker` stays on Postgres. HTTP is `Apps/Reporting`. `.Seed` writes design samples |
 
 ## Inventory: Communication (capabilities)
 
@@ -239,12 +312,19 @@ Drop-in modules. No `Build*Group` route mapping.
 | `Lyo.Email.Postgres` | A-like | `Communication/Email/` | - | - | |
 | `Lyo.MessageQueue` | B | `Communication/MessageQueue/` | - | - | |
 | `Lyo.MessageQueue.RabbitMq` | B | `Communication/MessageQueue/` | - | - | |
+| `Lyo.Outbox.Dispatcher` | B | `Communication/MessageQueue/` | - | - | Publishes idempotency outbox rows through `IMqService`. At-least-once. No RabbitMQ reference. |
 
 ## Inventory: Security (capabilities)
 
 | Project | Archetype | Path | Target | Phase | Notes |
 |---------|-----------|------|--------|-------|-------|
 | `Lyo.Authentication` | B | `Security/Authentication/` | - | - | |
+| `Lyo.Authorization` | B | `Security/Authorization/` | - | - | Resource grants beside scope checks. Does not parse tokens. |
+| `Lyo.Authorization.AspNetCore` | B | `Security/Authorization/` | - | - | `[RequireGrant]` and `.RequireGrant()`. No reference to `Lyo.Authentication`. |
+| `Lyo.Authorization.Postgres` | B | `Security/Authorization/` | - | - | Schema `authorization`, table `grant`. |
+| `Lyo.Authorization.Web.Components` | B | `Security/Authorization/` | - | - | In-process grant list, editor, and check form. |
+| `Lyo.RequestSigning` | B | `Security/RequestSigning/` | - | - | Timestamped HMAC header. The key comes from configuration. |
+| `Lyo.RequestSigning.AspNetCore` | B | `Security/RequestSigning/` | - | - | Middleware returns 401 when the signature fails. |
 | `Lyo.Authentication.Google` | B | `Security/Authentication/` | - | - | Stays |
 | `Lyo.Authentication.Keycloak` | B | `Security/Authentication/` | - | - | Stays |
 | `Lyo.Authentication.OpenIdConnect` | B | `Security/Authentication/` | - | - | |
@@ -264,9 +344,14 @@ Drop-in modules. No `Build*Group` route mapping.
 
 | Project | Archetype | Path |
 |---------|-----------|------|
-| `Lyo.People.Models` | A | `Core/People/` |
-| `Lyo.People.Postgres` | A | `Core/People/` |
 | `Lyo.Geolocation.Models` | A | `Core/Geolocation/` |
+| `Lyo.Idempotency` | A | `Core/Idempotency/` |
+| `Lyo.Idempotency.Postgres` | A | `Core/Idempotency/` |
+| `Lyo.Idempotency.AspNetCore` | A | `Core/Idempotency/` |
+| `Lyo.FeatureFlags` | A | `Core/FeatureFlags/` |
+| `Lyo.FeatureFlags.AspNetCore` | A | `Core/FeatureFlags/` |
+| `Lyo.Outbox` | A | `Core/Outbox/` |
+| `Lyo.Outbox.Postgres` | A | `Core/Outbox/` |
 | `Lyo.Geolocation` | A | `Core/Geolocation/` |
 | `Lyo.Geolocation.Postgres` | A | `Core/Geolocation/` |
 | `Lyo.EntityReference.Models` | A | `Core/EntityReference/` |
@@ -291,7 +376,7 @@ Shared `EntityRef` value type and PostgreSQL persistence helpers. Two row famili
 | `Lyo.EntityReference.Models` | `EntityRef`, relation domain (`EntityRelationRow`, `EntityRelationEndpoints`, `EntityRelationValidation`), source provenance (`EntitySourceRecord`, `IEntitySourceDerived`, `EntitySourceValidation`), JSON/composite/interceptors |
 | `Lyo.EntityReference.Postgres` | EF bases: `EntityRelationEntityBase` (subject/actor → `for_entity_*` / `from_entity_*`), `EntitySourceLinkEntityBase` (`source_entity_*` + `imported_at`), `EntitySourceDerivedEntityBase` (`LocallyModifiedAt`); shared indexes; no PG FK on source links |
 
-Domain modules (People, Geolocation, Favorite, …) subclass these bases and own module-specific owner columns and store logic.
+Domain modules (the People plugin, Geolocation, Favorite, …) subclass these bases and own module-specific owner columns and store logic.
 
 ---
 

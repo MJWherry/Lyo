@@ -7,6 +7,7 @@ using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.MessageQueue;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -57,7 +58,7 @@ internal sealed class FakeSchedulerApiClient(JobDefinitionRes definition) : Stub
             var runReq = (JobRunReq)(object)request!;
             CreatedRunRequests.Add(runReq);
             var created = new JobRunRes {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 JobDefinitionId = runReq.JobDefinitionId,
                 JobScheduleId = runReq.JobScheduleId,
                 State = JobState.Queued,
@@ -125,6 +126,8 @@ internal sealed class FakeEventPublisher : IJobEventPublisher
     public Task PublishRunFinishedAsync(Guid runId, CancellationToken ct = default) => Task.CompletedTask;
 
     public Task PublishRunCancelledAsync(Guid runId, CancellationToken ct = default) => Task.CompletedTask;
+
+    public Task PublishWorkflowRunCreatedAsync(Guid workflowRunId, CancellationToken ct = default) => Task.CompletedTask;
 
     public Task PublishDefinitionUpdatedAsync(Guid definitionId, CancellationToken ct = default) => Task.CompletedTask;
 

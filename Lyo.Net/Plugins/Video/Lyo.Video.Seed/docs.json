@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Video.Seed",
+  "name": "Lyo.Video.Seed",
+  "area": "Plugins",
+  "tagline": "EF seed of video genres, a collection, and series titles with seasons and episodes.",
+  "description": "EF seed of a few genres, one collection, and Count series titles. Each title has an alternate title, a genre link, a credit, an identifier, a YouTube link, a primary cut, one season, and two episodes. Schema video.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Video/Lyo.Video.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

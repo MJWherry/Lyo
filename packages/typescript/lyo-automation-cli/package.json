@@ -1,0 +1,38 @@
+{
+  "name": "lyo-automation-cli",
+  "version": "0.1.0",
+  "description": "Local automation plans and a client that posts a plan file to the run API.",
+  "type": "module",
+  "bin": {
+    "lyo-automation": "./dist/main.js"
+  },
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && vite build",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "lyo-api-client": "file:../lyo-api-client",
+    "lyo-automation-api-client": "file:../lyo-automation-api-client",
+    "lyo-automation-components": "file:../lyo-automation-components"
+  },
+  "devDependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^7.3.5",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "lyo-web-components": "file:../lyo-web-components",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "vitest": "^3.2.0"
+  }
+}

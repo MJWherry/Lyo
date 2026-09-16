@@ -18,7 +18,7 @@ public sealed class S3UploadStreamTests
         var client = FakeAmazonS3.Create(out var fake);
         var stream = new S3UploadStream(client, "test-bucket", "k.bin", Options(), CancellationToken.None);
         stream.SetContentType("application/octet-stream");
-        await stream.WriteAsync(new byte[1024], 0, 1024, TestContext.Current.CancellationToken);
+        await stream.WriteAsync(new byte[1024], 0, 1024, TestCt);
         await stream.DisposeAsync();
         Assert.Single(fake.PutObjectRequests);
         var put = fake.PutObjectRequests[0];
@@ -35,7 +35,7 @@ public sealed class S3UploadStreamTests
         var client = FakeAmazonS3.Create(out var fake);
         var stream = new S3UploadStream(client, "test-bucket", "big.bin", Options(), CancellationToken.None);
         var payload = new byte[80 * 1024 * 1024]; // 80 MiB exceeds 64 MiB multipart threshold
-        await stream.WriteAsync(payload, 0, payload.Length, TestContext.Current.CancellationToken);
+        await stream.WriteAsync(payload, 0, payload.Length, TestCt);
         await stream.DisposeAsync();
         Assert.Empty(fake.PutObjectRequests);
         Assert.Single(fake.InitiateRequests);
@@ -54,7 +54,7 @@ public sealed class S3UploadStreamTests
         fake.ThrowOnNextUploadPart = new InvalidOperationException("boom");
         var stream = new S3UploadStream(client, "test-bucket", "big.bin", Options(), CancellationToken.None);
         var payload = new byte[80 * 1024 * 1024];
-        await stream.WriteAsync(payload, 0, payload.Length, TestContext.Current.CancellationToken);
+        await stream.WriteAsync(payload, 0, payload.Length, TestCt);
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(stream.DisposeAsync().AsTask);
         Assert.Equal("boom", ex.Message);
         Assert.Single(fake.AbortRequests);
@@ -66,7 +66,7 @@ public sealed class S3UploadStreamTests
     {
         var client = FakeAmazonS3.Create(out var fake);
         var stream = new S3UploadStream(client, "test-bucket", "k.bin", Options("AES256"), CancellationToken.None);
-        await stream.WriteAsync(new byte[16], 0, 16, TestContext.Current.CancellationToken);
+        await stream.WriteAsync(new byte[16], 0, 16, TestCt);
         await stream.DisposeAsync();
         Assert.Single(fake.PutObjectRequests);
         Assert.Equal(ServerSideEncryptionMethod.AES256, fake.PutObjectRequests[0].ServerSideEncryptionMethod);
@@ -78,7 +78,7 @@ public sealed class S3UploadStreamTests
         var client = FakeAmazonS3.Create(out var fake);
         var stream = new S3UploadStream(client, "test-bucket", "big.bin", Options("aws:kms", "alias/test"), CancellationToken.None);
         var payload = new byte[80 * 1024 * 1024];
-        await stream.WriteAsync(payload, 0, payload.Length, TestContext.Current.CancellationToken);
+        await stream.WriteAsync(payload, 0, payload.Length, TestCt);
         await stream.DisposeAsync();
         Assert.Single(fake.InitiateRequests);
         var init = fake.InitiateRequests[0];
@@ -100,7 +100,7 @@ public sealed class S3UploadStreamTests
     {
         var client = FakeAmazonS3.Create(out var fake);
         var stream = new S3UploadStream(client, "test-bucket", "empty.bin", Options(), CancellationToken.None);
-        await stream.FlushAsync(TestContext.Current.CancellationToken);
+        await stream.FlushAsync(TestCt);
         await stream.DisposeAsync();
 
         // Skipping the PUT here would commit metadata for a key that is not in the bucket.

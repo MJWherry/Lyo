@@ -1,0 +1,22 @@
+<MudStack Spacing="2">
+    <MudTextField T="string" Label="Node key" Value="@Node.Key" ValueChanged="OnKey" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+    <MudTextField T="string" Label="Title" Value="@Node.Title" ValueChanged="OnTitle" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+    <MudSelect T="string" Value="@Node.SceneKey" ValueChanged="OnScene" Label="Scene" Margin="Margin.Dense" Variant="Variant.Outlined" Clearable="true">
+        @foreach (var scene in Scenes) {
+            <MudSelectItem T="string" Value="@scene.Key">@(string.IsNullOrWhiteSpace(scene.Title) ? scene.Key : scene.Title)</MudSelectItem>
+        }
+    </MudSelect>
+    <MudSelect T="StoryPresentationKind" Value="Node.PresentationKind" ValueChanged="OnPresentation" Label="Presentation" Margin="Margin.Dense" Variant="Variant.Outlined">
+        @foreach (var kind in Enum.GetValues<StoryPresentationKind>()) {
+            <MudSelectItem Value="kind">@kind</MudSelectItem>
+        }
+    </MudSelect>
+    @if (Node.PresentationKind == StoryPresentationKind.Text) {
+        <MudTextField T="string" Label="Body" Value="@Node.Body" ValueChanged="OnBody" Lines="4" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Content type" Value="@Node.ContentType" ValueChanged="OnContentType" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+    }
+    @if (Node.PresentationKind == StoryPresentationKind.Cutscene) {
+        <MudTextField T="string" Label="Media reference" Value="@Node.MediaRef" ValueChanged="OnMedia" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+    }
+    <MudSwitch T="bool" Value="Node.IsEnding" ValueChanged="OnEnding" Label="Ending" Color="Color.Primary"/>
+</MudStack>

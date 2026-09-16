@@ -55,7 +55,7 @@
         ],
         [
           "`JobDefinitionView`",
-          "Editor: basic info with last/next/running activity, parameters, schedules, triggers."
+          "Editor: basic info with last/next/running activity, parameters, schedules."
         ],
         [
           "`JobDefinitionActivity`",
@@ -78,10 +78,6 @@
           "Create/unlink a schedule blackout calendar and CRUD its windows (weekdays, calendar month/day-of-month with optional year bounds, dated range, or calculated holiday; Skip/Defer)."
         ],
         [
-          "`JobTriggerView`",
-          "Trigger relationships between definitions."
-        ],
-        [
           "`JobRunGrid`",
           "Runs with state pills, **worker** column (machine:pid + instance id), drill-down, **Resync RabbitMQ** (republish queued runs missing from the broker)."
         ],
@@ -99,19 +95,43 @@
         ],
         [
           "`JobWorkflowView`",
-          "Workflow picker + ordered step diagram."
+          "Workflow picker + ordered step diagram. **Run now** starts an ad-hoc run of the selected workflow."
+        ],
+        [
+          "`JobWorkflowBuilderWorkbench`",
+          "Authoring surface for a workflow: the DAG on top and the selected step's editor below it. Drag the diagram background to move it and scroll or use the zoom controls to scale it; click a node to change selection. Each arrow is labeled with the condition that lets its target run, or \"always\" when that step is ungated. The other tabs are the request JSON it produces and a run panel. **Add step** appends a step that depends on the selected one, so repeated clicks build a chain; **Add parallel step** copies the selected step's dependencies instead, giving it a sibling that runs alongside. Dependencies are draft ids, so renaming a step does not break the steps that wait on it; `Step.{name}.*` paths in conditions and parameter templates are rewritten in the same edit. The draft is persisted through `ClientStore` (debounced, flushed on dispose) so a reload does not discard an unsaved graph. The request is assembled by `JobWorkflowBuilder`, so duplicate names, unknown dependencies, cycles, and a gate reading a step it does not depend on are rejected by the same code the API and engine use."
+        ],
+        [
+          "`JobWorkflowStepEditor`",
+          "One step, in a single aligned field grid: step picker, name, job definition, enabled, depends-on multi-select of draft ids (labeled with the current step name), and failure policy. Parameter overrides (`LyoParameterEditor`, keys and types inherited from the definition's `JobParameters`) and the condition tree (`QueryNodeEditorPanel`) sit in collapsed panels. Both the parameter templates and the condition fields draw their paths from one `JobWorkflowFormatterContext` bag, so the two pickers offer the same vocabulary."
+        ],
+        [
+          "`JobWorkflowGraphView`",
+          "Draws the workflow as a `DiagramDocument` from `JobWorkflowDiagram`: one rounded shape per step and an orthogonal connector per dependency. The SVG includes the arrowhead, so the picture does not depend on a marker URL. Each arrow is labeled with the condition that lets its target run, or \"always\" when that step is ungated. The picture sits in a viewport at a readable size: drag the background to move it, scroll or the zoom controls to scale it. Hovering a node shows the job it runs, the steps it waits on, and its gate; clicking one raises `OnStepSelected` with the step id. Supply `StepStates`, keyed by step id, to color a run's per-step outcome on the same picture."
+        ],
+        [
+          "`JobWorkflowRunGrid`",
+          "Workflow run history, optionally scoped to one workflow, with a drill-down into `JobWorkflowRunDetailView`."
+        ],
+        [
+          "`JobWorkflowRunDetailView`",
+          "One run: the authored graph with each step's outcome overlaid, plus a per-step drill-down into `JobRunDetailView`."
         ],
         [
           "`RunJobDialog`",
           "Ad-hoc run with parameter overrides via `LyoParameterValueField` (Options / AllowedValues select or typed JSON, optional encrypt)."
+        ],
+        [
+          "`JobWorkflowGraphLayout`",
+          "Pure layout for the graph: Kahn layering into columns, fixed box and gap sizes, canvas extents, and an orthogonal polyline per edge. `JobWorkflowDiagram` copies that geometry onto a diagram. Reports the steps in a cycle rather than throwing, so a half-authored graph still renders."
         ]
       ],
       "trail": "Host a grid or view on its own: each one takes `IApiClient` plus route parameters and does not require the full shell."
     },
     {
       "type": "markdown",
-      "title": "`JobFormatterContext`",
-      "body": "A formatter-typed job parameter is a template, so authors need the keys that will actually resolve. `JobFormatterContext.Build(definition, latestRuns, schedule)` builds that key list and matches both runtime stages:\n\n- **Scheduler** (`JobScheduler.BuildTemplateData`): `Definition`, `LastRun`, `LastSuccessfulRun`, `LastFailedRun`, `Trigger`, `TriggeredByRun`, `Schedule`, plus flattened `{prefix}_Result_{key}` / `{prefix}_Parameter_{key}`, `Schedule_Parameter_{key}`, and `Trigger_Parameter_{key}` entries.\n- **Worker** (`JobWorkerParameterFormatter.SeedJobRun`): the `jobrun` bag (run properties and a `Parameters` map). `{jobrun.parameters.emailTo}` reads from that map.\n\nViews receive the list as `FormatterContext`. Host-supplied `AddContext` keys arrive on a separate path through `AddLyoFormatterValueEditor`. Definitions that have never run still autocomplete on the run paths because `LyoSampleShape` substitutes for the missing `JobRunRes`. `JobFormatterContextTests` checks the key list against the scheduler so the editor cannot drift from runtime resolution.\n"
+      "title": "Formatter and condition context",
+      "body": "A formatter-typed job parameter is a template, so authors need the keys that will actually resolve.\n\n**Definition editor** — `JobFormatterContext.Build(definition, latestRuns, schedule)` builds that key list and matches both runtime stages:\n\n- **Scheduler** (`JobScheduler.BuildTemplateData`): `Definition`, `LastRun`, `LastSuccessfulRun`, `LastFailedRun`, `Schedule`, plus flattened `{prefix}_Result_{key}` / `{prefix}_Parameter_{key}` and `Schedule_Parameter_{key}` entries.\n- **Worker** (`JobWorkerParameterFormatter.SeedJobRun`): the `jobrun` bag (run properties and a `Parameters` map). `{jobrun.parameters.emailTo}` reads from that map.\n\n**Workflow step editor** — `JobWorkflowFormatterContext.Build(step, definition, workflow, inputKeys, dependencies)` builds the bag for one step of a workflow, which is a different shape: it offers `Workflow.*`, `Input.{key}`, `CurrentStep.*`, `Definition.*`, and `Step.{name}.*` for each dependency. It goes through the same `JobContextBag.WithWorkflowStep` seeder the engine uses at run time, and `JobWorkflowFormatterContextTests` asserts the editor offers every key the engine seeds, so the two cannot drift. `JobWorkflowFormatterContext.Paths` walks that bag into the condition editor's field list, sizing the catalog budget to the dependency count so a step with several upstreams is not truncated.\n\nViews receive the bag as `FormatterContext`. Host-supplied `AddContext` keys arrive on a separate path through `AddLyoFormatterValueEditor`. Steps and definitions that have never run still autocomplete on the run paths because `LyoSampleShape` substitutes for the missing `JobRunRes`.\n"
     },
     {
       "type": "table",
@@ -152,6 +172,10 @@
         [
           "Dry run",
           "`RunJobDialog` can pass `DryRun` for validate-only runs (no worker dispatch)"
+        ],
+        [
+          "Workflow authoring",
+          "**Workflows** tab. Chained **Add step** / fan-out **Add parallel step**, clickable graph nodes with run-condition tooltips, declared run inputs surfaced as `Input.{key}` paths and sent with **Run now**"
         ]
       ]
     },
@@ -215,7 +239,23 @@
       ]
     },
     {
+      "name": "Lyo.Diagram",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Formatter",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Formatter.Web.Components",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -279,7 +319,31 @@
       ]
     },
     {
+      "name": "Lyo.Web.Components.Export.Toml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Web.Components.Export.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Xml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Yaml",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -312,14 +376,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
@@ -344,7 +400,23 @@
       ]
     },
     {
+      "name": "Lyo.Diagram.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -377,6 +449,14 @@
     },
     {
       "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -630,6 +710,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

@@ -6,7 +6,13 @@
   "description": "ASP.NET Core integration for `Lyo.Authentication`. Three schemes coexist behind a single dispatcher:\n\n- `LyoApiToken.` Validates Format-B opaque tokens (`lyo_pat_live_...`) - `LyoJwt.` Validates Lyo-signed Ed25519 JWTs (`ey...`) - `LyoBearer` (the default). Sniffs the `Authorization`/`X-Api-Key` header and forwards to one of the above\n\n```csharp services.AddLyoAuthentication(configuration); services.AddInMemoryAuthenticationStores(); services.AddLyoApiTokenAuthentication();\n\napp.UseAuthentication(); app.UseAuthorization(); app.MapLyoJwks(); ```\n\nPer-endpoint scope-based authorization uses the `scope:<name>` policy convention. `ScopeAuthorizationPolicyProvider` creates these policies on demand, so endpoints can do:\n\n```csharp endpoints.MapGet(\"/people\", ...).RequireAuthorization(\"scope:people.read\"); ```\n\nor, when working with `EndpointAuth` from `Lyo.Api`:\n\n```csharp GetAuth = EndpointAuth.RequireAuthorization(\"scope:people.read\") ```",
   "features": [],
   "examples": [],
-  "sections": [],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "Role attribute",
+      "body": "`[RequireRole(\"editor\")]` sets `AuthorizeAttribute.Roles`. `.RequireRole(\"editor\")` is the minimal-API form. The framework role requirement is the handler. There is no Lyo role store. `[Authorize(Roles = \"editor\")]` is the same check."
+    }
+  ],
   "links": [],
   "readmePath": "Lyo.Net/Security/Authentication/Lyo.Authentication.AspNetCore/README.md",
   "dependencies": [
@@ -59,7 +65,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -67,7 +73,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Metadata",
+      "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -84,6 +90,14 @@
     },
     {
       "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -116,6 +130,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -215,6 +237,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

@@ -29,6 +29,11 @@ internal sealed class PlainDirectUploadCoordinator
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly FileStorageServiceBaseOptions _options;
     private readonly IFileStoragePhysicalIO _physicalIO;
+    private readonly IFileTypeSniffer _fileTypeSniffer;
+    private readonly IDirectUploadVerification? _verification;
+
+    /// <summary>URL lifetime every backend applies when <see cref="DirectUploadBeginRequest.UrlExpiration" /> is unset.</summary>
+    private static readonly TimeSpan DefaultUrlExpiration = TimeSpan.FromHours(1);
 
     /// <summary>
     /// Builds a coordinator with shared policy, metadata store, blob I/O, auditing, and field normalization supplied by the concrete storage backend.
@@ -43,8 +48,11 @@ internal sealed class PlainDirectUploadCoordinator
         IFileAuditPublisher auditPublisher,
         IFileStorageMetadataNormalization metadataNormalization,
         IFileStorageMetadataLookup metadataLookup,
-        int copyToBufferSizeBytes)
+        IFileTypeSniffer fileTypeSniffer,
+        int copyToBufferSizeBytes,
+        IDirectUploadVerification? verification)
     {
+        _verification = verification;
         _contentPolicy = contentPolicy;
         _metadataService = metadataService;
         _metadataLookup = metadataLookup;
@@ -52,6 +60,7 @@ internal sealed class PlainDirectUploadCoordinator
         _options = options;
         _logger = logger;
         _physicalIO = physicalIO;
+        _fileTypeSniffer = fileTypeSniffer;
         _auditPublisher = auditPublisher;
         _metadataNormalization = metadataNormalization;
         _copyToBufferSizeBytes = copyToBufferSizeBytes;
@@ -72,12 +81,17 @@ internal sealed class PlainDirectUploadCoordinator
     /// <param name="request">Client-supplied bounds and filenames.</param>
     /// <param name="normalizedPathPrefix">Canonical prefix that matches downstream object keys.</param>
     /// <param name="ct">Cancellation token passed into policy and persistence.</param>
+    /// <param name="verifiedChecksumAlgorithm">
+    /// Algorithm the backend verifies on write (SHA-256 for S3, MD5 for Azure). Picks which client-declared digest is recorded on the pending row for finalize to
+    /// compare against. Null means the service's configured <see cref="FileStorageServiceBaseOptions.HashAlgorithm" />, which is what the download-and-hash path uses.
+    /// </param>
     /// <returns>The newly persisted metadata snapshot.</returns>
     internal async Task<FileStoreResult> PersistPendingPlainDirectUploadMetadataAsync(
         Guid fileId,
         DirectUploadBeginRequest request,
         string normalizedPathPrefix,
-        CancellationToken ct)
+        CancellationToken ct,
+        HashAlgorithm? verifiedChecksumAlgorithm = null)
     {
         ArgumentHelpers.ThrowIfNull(request);
         OperationHelpers.ThrowIfLessThanOrEqual(request.DeclaredMaxSizeBytes, 0, message: "DeclaredMaxSizeBytes must be positive.");
@@ -88,6 +102,10 @@ internal sealed class PlainDirectUploadCoordinator
         if (_options.MaxUploadSizeBytes.HasValue && request.DeclaredMaxSizeBytes > _options.MaxUploadSizeBytes.Value)
             throw new FilePolicyRejectedException($"DeclaredMaxSizeBytes {request.DeclaredMaxSizeBytes} exceeds configured MaxUploadSizeBytes.");
 
+        ArgumentHelpers.ThrowIf(
+            (request.UrlExpiration ?? DefaultUrlExpiration) > _options.PendingDirectUploadTtl,
+            "UrlExpiration must not exceed PendingDirectUploadTtl, or the sweeper could discard the row while the URL still accepts a PUT.", nameof(request.UrlExpiration));
+
         await _contentPolicy.ValidateAsync(
                 new() {
                     ByteLength = request.DeclaredMaxSizeBytes,
@@ -97,10 +115,12 @@ internal sealed class PlainDirectUploadCoordinator
                 }, ct)
             .ConfigureAwait(false);
 
+        var checksumAlgorithm = verifiedChecksumAlgorithm ?? _options.HashAlgorithm;
+        var declaredChecksum = ResolveDeclaredChecksum(request, checksumAlgorithm);
         var ts = DateTime.UtcNow;
         var meta = new FileStoreResult(
-            fileId, request.OriginalFileName ?? fileId.ToString(), 0, [], fileId.ToString(), 0, [], false, null, null, null, false, null, null, null, null, null, null, null, null,
-            ts, normalizedPathPrefix, _options.HashAlgorithm, ctResolved, charset, resolvedTenant, FileAvailability.PendingDirectUpload, Metadata: request.Metadata);
+            fileId, request.OriginalFileName ?? fileId.ToString(), 0, declaredChecksum, fileId.ToString(), 0, [], false, null, null, null, false, null, null, null, null, null,
+            null, null, null, ts, normalizedPathPrefix, checksumAlgorithm, ctResolved, charset, resolvedTenant, FileAvailability.PendingDirectUpload, Metadata: request.Metadata);
 
         await _metadataService.SaveMetadataAsync(fileId, meta, ct).ConfigureAwait(false);
         await _auditPublisher.PublishAuditAsync(
@@ -113,8 +133,20 @@ internal sealed class PlainDirectUploadCoordinator
         return meta;
     }
 
+    private static byte[] ResolveDeclaredChecksum(DirectUploadBeginRequest request, HashAlgorithm algorithm)
+    {
+        ArgumentHelpers.ThrowIf(request.ExpectedSha256 is { Length: not 32 }, "ExpectedSha256 must be exactly 32 bytes.", nameof(request.ExpectedSha256));
+        ArgumentHelpers.ThrowIf(request.ExpectedContentMd5 is { Length: not 16 }, "ExpectedContentMd5 must be exactly 16 bytes.", nameof(request.ExpectedContentMd5));
+        return algorithm switch {
+            HashAlgorithm.Sha256 => request.ExpectedSha256 ?? [],
+            HashAlgorithm.Md5 => request.ExpectedContentMd5 ?? [],
+            _ => []
+        };
+    }
+
     /// <summary>
-    /// Loads the provisional object bytes, checks optional expected lengths, hashes integrity, and sets availability.
+    /// Takes size and checksum from the backend when it reports them (reading at most the header prefix), otherwise downloads and hashes the object. Checks the
+    /// client-declared digest and optional expected length, then sets availability.
     /// </summary>
     /// <param name="fileId">Pending upload id.</param>
     /// <param name="completeRequest">Optional client overrides for filenames and asserted byte counts.</param>
@@ -135,75 +167,42 @@ internal sealed class PlainDirectUploadCoordinator
                 meta.Availability != FileAvailability.PendingDirectUpload, $"File {fileId} is not pending direct upload finalize (availability={meta.Availability}).");
 
             OperationHelpers.ThrowIf(meta.IsEncrypted || meta.IsCompressed, "Direct finalize only supports uncompressed, unencrypted placeholder metadata.");
-            var raw = await _physicalIO.ReadFromStorageAsync(fileId, meta.PathPrefix, ct).ConfigureAwait(false);
-            if (raw == null)
-                throw new FileNotFoundException($"No backing object exists for pending direct upload {fileId}");
-
-            // Spool to a temp file so we can stream-hash and stay in bounded RAM no matter the payload size.
-            var spoolPath = TempSpool.CreatePath("fs-direct", fileId);
-            try {
-                using (raw)
-#if NETSTANDARD2_0
-                {
-                    using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
-                        await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
-                }
-#else
-                {
-                    await using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
-                        await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
-                }
-#endif
-                var observedLength = new FileInfo(spoolPath).Length;
-                OperationHelpers.ThrowIfLessThan(observedLength, 1, "Direct uploaded object was empty.");
-                OperationHelpers.ThrowIf(
-                    _options.MaxUploadSizeBytes.HasValue && observedLength > _options.MaxUploadSizeBytes.Value,
-                    $"Uploaded payload length {observedLength} exceeds MaxUploadSizeBytes.");
-
-                OperationHelpers.ThrowIf(
-                    completeRequest?.ExpectedByteLength.HasValue == true && completeRequest.ExpectedByteLength!.Value != observedLength,
-                    $"Expected byte length {completeRequest?.ExpectedByteLength} but read observed {observedLength}.");
-
-                // Hash from disk in a stream.
-                byte[] plainHash;
-                using (var ha = _options.HashAlgorithm.Create())
-#if NETSTANDARD2_0
-                {
-                    using (var hashStream = File.OpenRead(spoolPath))
-                        plainHash = ha.ComputeHash(hashStream);
-                }
-#else
-                {
-                    await using (var hashStream = File.OpenRead(spoolPath))
-                        plainHash = await ha.ComputeHashAsync(hashStream, ct).ConfigureAwait(false);
-                }
-#endif
-                FileAvailability availability = _options.DefaultAvailability;
-
-                var finalized = meta with {
-                    OriginalFileSize = observedLength,
-                    OriginalFileHash = plainHash,
-                    SourceFileSize = observedLength,
-                    SourceFileHash = plainHash,
-                    Timestamp = DateTime.UtcNow,
-                    Availability = availability,
-                    OriginalFileName = completeRequest?.OriginalFileName ?? meta.OriginalFileName,
-                    ContentType = meta.ContentType
-                };
-
-                await _metadataService.SaveMetadataAsync(fileId, finalized, ct).ConfigureAwait(false);
-                await _auditPublisher.PublishAuditAsync(
-                        new(
-                            FileAuditEventType.DirectUploadComplete, DateTime.UtcNow, fileId, finalized.TenantId, _operationContextAccessor.Current?.ActorId, null, null,
-                            FileAuditOutcome.Success), ct)
+            var finalName = completeRequest?.OriginalFileName ?? meta.OriginalFileName;
+            var reported = _verification == null ? null : await _verification.GetDirectUploadAttributesAsync(fileId, meta.PathPrefix, ct).ConfigureAwait(false);
+            DirectUploadObjectAttributes observed;
+            if (reported != null) {
+                await ValidateUploadedObjectAsync(
+                        meta, finalName, reported.Length, completeRequest,
+                        () => _verification!.ReadDirectUploadPrefixAsync(fileId, meta.PathPrefix, FileHeaderInspection.PrefixLength, ct), ct)
                     .ConfigureAwait(false);
 
-                return finalized;
+                observed = reported;
             }
-            finally {
-                if (!TempSpool.TryDelete(spoolPath))
-                    _logger.LogDebug("Best-effort spool cleanup failed for {Path}", spoolPath);
-            }
+            else
+                observed = await SpoolAndHashAsync(meta, finalName, completeRequest, ct).ConfigureAwait(false);
+
+            if (meta.OriginalFileHash is { Length: > 0 } declared && meta.HashAlgorithm == observed.Algorithm && !declared.AsSpan().SequenceEqual(observed.Hash))
+                throw new InvalidDataException($"Uploaded object {fileId} does not match the {observed.Algorithm} checksum declared at begin.");
+
+            var finalized = meta with {
+                OriginalFileSize = observed.Length,
+                OriginalFileHash = observed.Hash,
+                SourceFileSize = observed.Length,
+                SourceFileHash = observed.Hash,
+                HashAlgorithm = observed.Algorithm,
+                Timestamp = DateTime.UtcNow,
+                Availability = _options.DefaultAvailability,
+                OriginalFileName = finalName
+            };
+
+            await _metadataService.SaveMetadataAsync(fileId, finalized, ct).ConfigureAwait(false);
+            await _auditPublisher.PublishAuditAsync(
+                    new(
+                        FileAuditEventType.DirectUploadComplete, DateTime.UtcNow, fileId, finalized.TenantId, _operationContextAccessor.Current?.ActorId, null, null,
+                        FileAuditOutcome.Success), ct)
+                .ConfigureAwait(false);
+
+            return finalized;
         }
         catch (Exception ex) {
             await _auditPublisher.PublishAuditAsync(
@@ -214,6 +213,120 @@ internal sealed class PlainDirectUploadCoordinator
 
             throw;
         }
+    }
+
+    /// <inheritdoc cref="Abstractions.IFileStorageService.SweepExpiredDirectUploadsAsync" />
+    internal async Task<int> SweepExpiredDirectUploadsAsync(int maxUploads, CancellationToken ct)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxUploads, 1);
+        var expired = await _metadataService.ListPendingDirectUploadsAsync(DateTime.UtcNow - _options.PendingDirectUploadTtl, maxUploads, ct).ConfigureAwait(false);
+        var swept = 0;
+        foreach (var meta in expired) {
+            try {
+                await _physicalIO.DeleteFromStorageAsync(meta.Id, meta.PathPrefix, ct).ConfigureAwait(false);
+                if (!await _metadataService.DeleteMetadataAsync(meta.Id, ct).ConfigureAwait(false))
+                    continue;
+
+                swept++;
+                await _auditPublisher.PublishAuditAsync(
+                        new(
+                            FileAuditEventType.DirectUploadFailed, DateTime.UtcNow, meta.Id, meta.TenantId, _operationContextAccessor.Current?.ActorId, null, null,
+                            FileAuditOutcome.Failure, "Direct upload expired before finalize."), ct)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException) {
+                _logger.LogWarning(ex, "Failed to sweep expired direct upload {FileId}", meta.Id);
+            }
+        }
+
+        return swept;
+    }
+
+    /// <summary>
+    /// Fallback for backends that cannot report a checksum: spools the object to a temp file so hashing stays in bounded RAM, then hashes with the declared-checksum
+    /// algorithm when one was recorded at begin, otherwise the configured one.
+    /// </summary>
+    private async Task<DirectUploadObjectAttributes> SpoolAndHashAsync(FileStoreResult meta, string finalName, DirectUploadCompleteRequest? completeRequest, CancellationToken ct)
+    {
+        var raw = await _physicalIO.ReadFromStorageAsync(meta.Id, meta.PathPrefix, ct).ConfigureAwait(false);
+        if (raw == null)
+            throw new FileNotFoundException($"No backing object exists for pending direct upload {meta.Id}");
+
+        var spoolPath = TempSpool.CreatePath("fs-direct", meta.Id);
+        try {
+            using (raw)
+#if NETSTANDARD2_0
+            {
+                using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
+                    await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
+            }
+#else
+            {
+                await using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
+                    await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
+            }
+#endif
+            var observedLength = new FileInfo(spoolPath).Length;
+            await ValidateUploadedObjectAsync(
+                    meta, finalName, observedLength, completeRequest, async () => {
+                        using var head = File.OpenRead(spoolPath);
+                        return await FileHeaderInspection.ReadPrefixAsync(head, ct).ConfigureAwait(false);
+                    }, ct)
+                .ConfigureAwait(false);
+
+            var algorithm = meta.OriginalFileHash.Length > 0 ? meta.HashAlgorithm ?? _options.HashAlgorithm : _options.HashAlgorithm;
+            using var ha = algorithm.Create();
+#if NETSTANDARD2_0
+            using (var hashStream = File.OpenRead(spoolPath))
+                return new(observedLength, ha.ComputeHash(hashStream), algorithm);
+#else
+            await using (var hashStream = File.OpenRead(spoolPath))
+                return new(observedLength, await ha.ComputeHashAsync(hashStream, ct).ConfigureAwait(false), algorithm);
+#endif
+        }
+        finally {
+            if (!TempSpool.TryDelete(spoolPath))
+                _logger.LogDebug("Best-effort spool cleanup failed for {Path}", spoolPath);
+        }
+    }
+
+    /// <summary>
+    /// Applies the name and header guards (deleting the object when policy rejects it), then the size limits. <paramref name="readPrefix" /> runs only when header
+    /// inspection is configured.
+    /// </summary>
+    private async Task ValidateUploadedObjectAsync(
+        FileStoreResult meta,
+        string finalName,
+        long observedLength,
+        DirectUploadCompleteRequest? completeRequest,
+        Func<Task<byte[]>> readPrefix,
+        CancellationToken ct)
+    {
+        OperationHelpers.ThrowIfLessThan(observedLength, 1, "Direct uploaded object was empty.");
+        try {
+            FileNamePatternFilter.ThrowIfRejected(_options, finalName);
+            if (FileUploadGuards.RequiresHeaderInspection(_options)) {
+                var header = await readPrefix().ConfigureAwait(false);
+                FileUploadGuards.EnforceHeader(_options, _fileTypeSniffer, header, finalName, meta.ContentType);
+            }
+        }
+        catch (FilePolicyRejectedException) {
+            try {
+                await _physicalIO.DeleteFromStorageAsync(meta.Id, meta.PathPrefix, ct).ConfigureAwait(false);
+            }
+            catch (Exception deleteEx) {
+                _logger.LogDebug(deleteEx, "Failed to delete rejected direct upload {FileId}", meta.Id);
+            }
+
+            throw;
+        }
+
+        OperationHelpers.ThrowIf(
+            _options.MaxUploadSizeBytes.HasValue && observedLength > _options.MaxUploadSizeBytes.Value, $"Uploaded payload length {observedLength} exceeds MaxUploadSizeBytes.");
+
+        OperationHelpers.ThrowIf(
+            completeRequest?.ExpectedByteLength.HasValue == true && completeRequest.ExpectedByteLength!.Value != observedLength,
+            $"Expected byte length {completeRequest?.ExpectedByteLength} but read observed {observedLength}.");
     }
 
     private static string SanitizeAuditError(string? message)

@@ -6,7 +6,7 @@ public class SftpClientLeaseTests
     [Trait("Category", "Integration")]
     public async Task CancelWhileWaitingForLease_ThrowsAndDoesNotLeakPermit()
     {
-        var host = await SftpTestHost.TryStartAsync(TestContext.Current.CancellationToken, 1);
+        var host = await SftpTestHost.TryStartAsync(TestCt, 1);
         if (host is null) {
             Assert.Skip("Docker/Testcontainers unavailable");
             return;
@@ -14,13 +14,13 @@ public class SftpClientLeaseTests
 
         await using var container = host.Value.Container;
         using var client = new SftpClient(host.Value.Options);
-        await client.HealthPingAsync(TestContext.Current.CancellationToken);
-        await client.UploadAsync("held.txt", "x"u8.ToArray(), TestContext.Current.CancellationToken);
-        var held = await client.OpenReadAsync("held.txt", TestContext.Current.CancellationToken);
+        await client.HealthPingAsync(TestCt);
+        await client.UploadAsync("held.txt", "x"u8.ToArray(), TestCt);
+        var held = await client.OpenReadAsync("held.txt", TestCt);
         try {
             using var cts = new CancellationTokenSource();
             var blocked = client.ExistsAsync("held.txt", cts.Token);
-            await Task.Delay(400, TestContext.Current.CancellationToken);
+            await Task.Delay(400, TestCt);
             Assert.False(blocked.IsCompleted);
             cts.Cancel();
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => blocked);
@@ -29,14 +29,14 @@ public class SftpClientLeaseTests
             await held.DisposeAsync();
         }
 
-        Assert.True(await client.ExistsAsync("held.txt", TestContext.Current.CancellationToken));
+        Assert.True(await client.ExistsAsync("held.txt", TestCt));
     }
 
     [Fact]
     [Trait("Category", "Integration")]
     public async Task ConcurrentAsyncOps_RespectMaxPooledClients()
     {
-        var host = await SftpTestHost.TryStartAsync(TestContext.Current.CancellationToken, 2);
+        var host = await SftpTestHost.TryStartAsync(TestCt, 2);
         if (host is null) {
             Assert.Skip("Docker/Testcontainers unavailable");
             return;
@@ -44,13 +44,13 @@ public class SftpClientLeaseTests
 
         await using var container = host.Value.Container;
         using var client = new SftpClient(host.Value.Options);
-        await client.HealthPingAsync(TestContext.Current.CancellationToken);
-        await client.UploadAsync("a.txt", "a"u8.ToArray(), TestContext.Current.CancellationToken);
-        await client.UploadAsync("b.txt", "b"u8.ToArray(), TestContext.Current.CancellationToken);
-        await using var s1 = await client.OpenReadAsync("a.txt", TestContext.Current.CancellationToken);
-        await using var s2 = await client.OpenReadAsync("b.txt", TestContext.Current.CancellationToken);
-        var third = client.ExistsAsync("a.txt", TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await client.HealthPingAsync(TestCt);
+        await client.UploadAsync("a.txt", "a"u8.ToArray(), TestCt);
+        await client.UploadAsync("b.txt", "b"u8.ToArray(), TestCt);
+        await using var s1 = await client.OpenReadAsync("a.txt", TestCt);
+        await using var s2 = await client.OpenReadAsync("b.txt", TestCt);
+        var third = client.ExistsAsync("a.txt", TestCt);
+        await Task.Delay(500, TestCt);
         Assert.False(third.IsCompleted);
         await s1.DisposeAsync();
         Assert.True(await third);

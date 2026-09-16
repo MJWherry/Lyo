@@ -1,5 +1,6 @@
 using System.Text.Json;
-using Lyo.Common.Json;
+using Lyo.Json;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.MessageQueue;
 
@@ -29,7 +30,7 @@ public static class QueueMessageExtensions
         string? traceId = null,
         byte priority = 0)
     {
-        var envelope = new QueueMessageEnvelope<T>(payload, 0, messageId ?? Guid.NewGuid().ToString("D"), enqueuedAt ?? DateTime.UtcNow, traceId);
+        var envelope = new QueueMessageEnvelope<T>(payload, 0, messageId ?? LyoGuid.CreateV7().ToString("D"), enqueuedAt ?? DateTime.UtcNow, traceId);
         var options = serializerOptions ?? LyoJsonSerializerOptions.Create();
         var bytes = JsonSerializer.SerializeToUtf8Bytes(envelope, options);
         return priority > 0 && mqService is IPriorityMqService priorityMqService

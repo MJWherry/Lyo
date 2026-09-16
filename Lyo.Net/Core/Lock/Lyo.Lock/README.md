@@ -152,5 +152,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)

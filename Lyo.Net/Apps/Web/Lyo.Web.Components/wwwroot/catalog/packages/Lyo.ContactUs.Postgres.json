@@ -12,7 +12,7 @@
       "title": "Package contents",
       "items": [
         "`ContactUsDbContext` + `ContactUsDbContextFactory` under `Database/`, with a single `DbSet<ContactSubmissionEntity>` (name / email / subject / message / phone / company / created timestamp; lengths match `ContactUsRequest`).",
-        "`PostgresContactUsService`. A `ContactUsServiceBase` subclass that persists each submission through the registered `IDbContextFactory<ContactUsDbContext>`, logs the new id, and implements `TestConnectionAsync` by issuing `Database.CanConnectAsync(...)`.",
+        "`PostgresContactUsService`. A `ContactUsServiceBase` subclass that persists each submission through the registered `IDbContextFactory<ContactUsDbContext>`, logs the new id, loads rows with `AsNoTracking()` (`GetByIdCoreAsync` / `ListCoreAsync`, newest `CreatedTimestamp` first, mapped by `ContactSubmissionEntity.ToSubmission()`), and implements `TestConnectionAsync` by issuing `Database.CanConnectAsync(...)`.",
         "`PostgresContactUsOptions` (`SectionName = \"PostgresContactUs\"`, `Schema = \"contact\"`, `ConnectionString`, `EnableAutoMigrations`).",
         "`InitialCreate` migration under `Migrations/`."
       ]
@@ -68,6 +68,14 @@
   "readmePath": "Lyo.Net/Plugins/ContactUs/Lyo.ContactUs.Postgres/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.ContactUs",
       "kind": "lyo",
       "tags": [
@@ -110,6 +118,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Options",
       "kind": "package",
       "version": "10.0.5",
@@ -135,16 +152,17 @@
       ]
     },
     {
-      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
       "tags": [
         "transitive",
-        "microsoft"
+        "microsoft",
+        "netstandard2.0"
       ]
     },
     {
-      "name": "Microsoft.Extensions.Configuration.Binder",
+      "name": "Microsoft.EntityFrameworkCore.Relational",
       "kind": "package",
       "version": "10.0.5",
       "tags": [
@@ -195,6 +213,26 @@
       "tags": [
         "transitive",
         "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
       ]
     }
   ],

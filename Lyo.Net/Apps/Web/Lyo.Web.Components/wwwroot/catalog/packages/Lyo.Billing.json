@@ -1,0 +1,100 @@
+{
+  "id": "Lyo.Billing",
+  "name": "Lyo.Billing",
+  "area": "Plugins",
+  "tagline": "Professional-services invoicing: charges, draft→issued invoices, and payments that post double-entry journals.",
+  "description": "Billing documents in schema `billing`, including bill-to clients (`billing.client`). `IBillingStore.IssueInvoiceAsync` snapshots bill-to strings (encrypted tax id) and posts Dr AR / Cr Revenue / Cr Tax. `RecordPaymentAsync` posts Dr Cash / Cr AR. Void writes a reversing journal. This plugin does not render PDFs.",
+  "features": [
+    "`SaveClientAsync` / `GetClientByIdAsync` own bill-to clients in schema `billing`.",
+    "`CreateInvoiceFromChargesAsync` builds a draft from unbilled charges.",
+    "Issue assigns `{prefix}-{yyyy}-{seq}` and posts to `ILedgerStore`.",
+    "Copied tax ids and biller bank/remittance use `encrypted_*` bytea columns."
+  ],
+  "examples": [
+    {
+      "title": "Invoice a client and record payment",
+      "language": "csharp",
+      "code": "var invoice = await billing.CreateInvoiceFromChargesAsync(clientId, chargeIds, taxRate: 0.08m, tenantId, ct);\nawait billing.IssueInvoiceAsync(invoice.Id, tenantId, ct);\nawait billing.RecordPaymentAsync(invoice.Id, 1620m, \"USD\", PaymentMethod.Wire, \"WIRE-4411\", tenantId, ct);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "See also",
+      "items": [
+        "[`Lyo.Billing.Postgres`](../Lyo.Billing.Postgres/README.md). EF Core schema (`billing`).",
+        "[`Lyo.Ledger`](../../Ledger/Lyo.Ledger/README.md). Journals posted at issue and pay."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Billing/Lyo.Billing/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ledger",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

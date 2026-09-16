@@ -32,6 +32,19 @@ public class MediaContainerTests
         => Assert.Same(MediaContainer.Wav, MediaContainer.TryFromAudioFormat(AudioFormat.Wav));
 
     [Fact]
+    public void TryFromExtension_MkvM4aGifHls()
+    {
+        Assert.Same(MediaContainer.Mkv, MediaContainer.TryFromExtension(".mkv"));
+        Assert.Same(MediaContainer.M4a, MediaContainer.TryFromExtension(".m4a"));
+        Assert.Same(MediaContainer.Gif, MediaContainer.TryFromExtension(".gif"));
+        Assert.Same(MediaContainer.Hls, MediaContainer.TryFromExtension(".m3u8"));
+        Assert.Same(MediaContainer.Mp4, MediaContainer.TryFromFormat("mp4"));
+        Assert.Same(MediaContainer.M4a, MediaContainer.TryFromAudioFormat(AudioFormat.M4a));
+        Assert.Equal(AudioFormat.M4a, MediaContainer.M4a.ToAudioFormat());
+        Assert.False(MediaContainer.M4a.IsMp4);
+    }
+
+    [Fact]
     public void ToAudioFormat_Mp3_Maps()
         => Assert.Equal(AudioFormat.Mp3, MediaContainer.Mp3.ToAudioFormat());
 

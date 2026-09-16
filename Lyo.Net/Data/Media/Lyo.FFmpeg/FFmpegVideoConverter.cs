@@ -90,6 +90,14 @@ public sealed class FFmpegVideoConverter : IVideoConverter
     }
 
     /// <inheritdoc />
+    public Task<Result<bool>> ConcatAsync(IReadOnlyList<string> inputPaths, string outputPath, VideoConversionOptions? options = null, CancellationToken ct = default)
+    {
+        var request = new VideoConcatRequest { Inputs = inputPaths, OutputPath = outputPath, Options = options ?? new() { CopyCodecs = true } };
+        request.Validate();
+        return _engine.ConcatAsync(request.Inputs, request.OutputPath, ConvertKnobs.FromVideo(request.Options), ct);
+    }
+
+    /// <inheritdoc />
     public Task<Result<bool>> ExtractFrameAsync(string inputPath, string outputPath, TimeSpan? at = null, VideoConversionOptions? options = null, CancellationToken ct = default)
     {
         var opts = options ?? new VideoConversionOptions();

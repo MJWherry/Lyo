@@ -50,6 +50,7 @@ public sealed class FileStorageApiModelsTests
         var restored = JsonSerializer.Deserialize<FileStorageFolderListResponse>(json);
         Assert.NotNull(restored);
         Assert.False(restored.Truncated);
+        Assert.Equal(FileStorageBackendKind.None, restored.BackendKind);
         var row = Assert.Single(restored.Entries);
         Assert.Equal(FileStoragePresence.Both, row.Presence);
         Assert.Equal(fileId, row.FileId);

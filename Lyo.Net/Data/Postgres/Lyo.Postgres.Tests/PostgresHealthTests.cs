@@ -14,7 +14,7 @@ public class PostgresHealthTests
     public async Task CheckAsync_ReportsUnhealthyWhenTheDatabaseIsUnreachable()
     {
         await using var context = PostgresSchema.CreateContext<TestDbContext>(UnreachableConnectionString, TestPostgresOptions.Schema);
-        var result = await PostgresHealth.CheckAsync(context, TestPostgresOptions.Schema, TestContext.Current.CancellationToken);
+        var result = await PostgresHealth.CheckAsync(context, TestPostgresOptions.Schema, TestCt);
         Assert.False(result.IsHealthy);
     }
 
@@ -22,14 +22,14 @@ public class PostgresHealthTests
     public async Task CheckAsync_ReportsUnhealthyWhenTheFactoryCannotConnect()
     {
         var factory = new TestDbContextFactory(UnreachableConnectionString);
-        var result = await PostgresHealth.CheckAsync(factory, TestPostgresOptions.Schema, TestContext.Current.CancellationToken);
+        var result = await PostgresHealth.CheckAsync(factory, TestPostgresOptions.Schema, TestCt);
         Assert.False(result.IsHealthy);
     }
 
     [Fact]
     public async Task CheckAsync_SurfacesAFactoryFailureAsTheUnhealthyReason()
     {
-        var result = await PostgresHealth.CheckAsync(new ThrowingDbContextFactory(), TestPostgresOptions.Schema, TestContext.Current.CancellationToken);
+        var result = await PostgresHealth.CheckAsync(new ThrowingDbContextFactory(), TestPostgresOptions.Schema, TestCt);
         Assert.False(result.IsHealthy);
         Assert.Equal("No database configured for this store.", result.Message);
         Assert.IsType<InvalidOperationException>(result.Exception);
@@ -38,7 +38,7 @@ public class PostgresHealthTests
     [Fact]
     public async Task CheckAsync_ThrowsWhenTheFactoryIsNull()
         => await Assert.ThrowsAsync<ArgumentNullException>(
-            () => PostgresHealth.CheckAsync<TestDbContext>(null!, TestPostgresOptions.Schema, TestContext.Current.CancellationToken));
+            () => PostgresHealth.CheckAsync<TestDbContext>(null!, TestPostgresOptions.Schema, TestCt));
 
     private sealed class TestDbContextFactory(string connectionString) : IDbContextFactory<TestDbContext>
     {

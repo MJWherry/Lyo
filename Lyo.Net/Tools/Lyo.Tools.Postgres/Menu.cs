@@ -1,6 +1,8 @@
 using Lyo.Audit.Postgres.Database;
 using Lyo.ChangeTracker.Postgres.Database;
+using Lyo.Book.Postgres.Database;
 using Lyo.Comic.Postgres.Database;
+using Lyo.Story.Postgres.Database;
 using Lyo.Comment.Postgres.Database;
 using Lyo.Config.Postgres.Database;
 using Lyo.ContactUs.Postgres.Database;
@@ -11,6 +13,7 @@ using Lyo.Favorite.Postgres.Database;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.Geolocation.Postgres.Database;
 using Lyo.HomeInventory.Postgres.Database;
+using Lyo.Recipe.Postgres.Database;
 using Lyo.Job.Postgres.Database;
 using Lyo.Note.Postgres.Database;
 using Lyo.People.Postgres.Database;
@@ -131,15 +134,23 @@ internal static class Menu
         else
             transportKind = via.HasFlag(SeedTransportKind.Api) ? SeedTransportKind.Api : SeedTransportKind.Ef;
 
-        var defaultCount = contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase) ? 20 : 50;
+        var defaultCount = contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase)
+            ? 20
+            : contributor.Name.Equals("Story", StringComparison.OrdinalIgnoreCase)
+                ? 1
+                : 50;
         var count = AnsiConsole.Prompt(new TextPrompt<int>("Number of root rows to generate:").DefaultValue(defaultCount));
         var seedInput = AnsiConsole.Prompt(new TextPrompt<string>("[grey](Optional)[/] Random seed [grey](blank = random)[/]:").AllowEmpty());
         int? seed = int.TryParse(seedInput, out var s) ? s : null;
         var conflict = AnsiConsole.Confirm("Skip if destination already has rows?", false)
             ? SeedConflictMode.SkipIfNotEmpty
             : SeedConflictMode.Append;
-        if (transportKind == SeedTransportKind.Ef && contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase)
-            && AnsiConsole.Confirm("Replace existing comic rows if the database already has series?", false))
+        var canReplace = transportKind == SeedTransportKind.Ef
+            && (contributor is IEfSeedSource
+                || contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase)
+                || contributor.Name.Equals("Book", StringComparison.OrdinalIgnoreCase)
+                || contributor.Name.Equals("Story", StringComparison.OrdinalIgnoreCase));
+        if (canReplace && AnsiConsole.Confirm($"Replace existing {contributor.Name.ToLowerInvariant()} rows if the database already has data?", false))
             conflict = SeedConflictMode.Replace;
 
         string? apiBaseUrl = null;
@@ -183,8 +194,8 @@ internal static class Menu
                 new SelectionPrompt<string>().Title("Select a context:")
                     .PageSize(20)
                     .AddChoices(
-                        "Run All (Latest)", "Audit", "ChangeTracker", "Comic", "Comment", "Config", "ContactUs", "Discord", "Email", "Endato", "Favorite", "FileMetadataStore",
-                        "Geolocation", "HomeInventory", "Job", "Note", "People", "Rating", "Reporting", "ShortUrl", "Sms", "SmsTwilio", "Tag", BackLabel));
+                        "Run All (Latest)", "Audit", "Book", "ChangeTracker", "Comic", "Comment", "Config", "ContactUs", "Discord", "Email", "Endato", "Favorite", "FileMetadataStore",
+                        "Geolocation", "HomeInventory", "Job", "Note", "People", "Rating", "Recipe", "Reporting", "ShortUrl", "Sms", "SmsTwilio", "Story", "Tag", BackLabel));
 
             if (choice == BackLabel)
                 break;
@@ -215,6 +226,7 @@ internal static class Menu
     private static Task DispatchContextMenuAsync(string label, MigrationRunner runner, CancellationToken ct)
         => label switch {
             "Audit" => ContextMenuAsync<AuditDbContext>(runner, "audit", label, ct),
+            "Book" => ContextMenuAsync<BookDbContext>(runner, "book", label, ct),
             "ChangeTracker" => ContextMenuAsync<ChangeTrackerDbContext>(runner, "change_tracker", label, ct),
             "Comic" => ContextMenuAsync<ComicDbContext>(runner, "comic", label, ct),
             "Comment" => ContextMenuAsync<CommentDbContext>(runner, "comment", label, ct),
@@ -227,6 +239,7 @@ internal static class Menu
             "FileMetadataStore" => ContextMenuAsync<FileMetadataStoreDbContext>(runner, "filestore", label, ct),
             "Geolocation" => ContextMenuAsync<GeolocationDbContext>(runner, "geolocation", label, ct),
             "HomeInventory" => ContextMenuAsync<HomeInventoryDbContext>(runner, "home_inventory", label, ct),
+            "Recipe" => ContextMenuAsync<RecipeDbContext>(runner, "recipe", label, ct),
             "Job" => ContextMenuAsync<JobContext>(runner, "job", label, ct),
             "Note" => ContextMenuAsync<NoteDbContext>(runner, "note", label, ct),
             "People" => ContextMenuAsync<PeopleDbContext>(runner, "people", label, ct),
@@ -235,6 +248,7 @@ internal static class Menu
             "ShortUrl" => ContextMenuAsync<ShortUrlDbContext>(runner, "url", label, ct),
             "Sms" => ContextMenuAsync<SmsDbContext>(runner, "sms", label, ct),
             "SmsTwilio" => ContextMenuAsync<TwilioSmsDbContext>(runner, "sms", label, ct),
+            "Story" => ContextMenuAsync<StoryDbContext>(runner, "story", label, ct),
             "Tag" => ContextMenuAsync<TagDbContext>(runner, "tag", label, ct),
             var _ => Task.CompletedTask
         };
@@ -378,7 +392,7 @@ internal static class Menu
         AnsiConsole.WriteLine();
     }
 
-    private static void WriteError(Exception ex) => AnsiConsole.MarkupLine($"[red]Error:[/] {Markup.Escape(ex.Message)}");
+    private static void WriteError(Exception ex) => AnsiConsole.MarkupLine($"[red]Error:[/] {Markup.Escape(SeedFailureText.Format(ex))}");
 
     private static void Pause()
     {

@@ -51,6 +51,12 @@ public static class Constants
 
         public const string Jobs = "jobs";
 
+        public const string WorkflowBuilder = "workflow-builder";
+
+        public const string HomeInventory = "home-inventory";
+
+        public const string Recipe = "recipe";
+
         public const string Drift = "drift";
 
         public const string Reports = "reports";
@@ -58,6 +64,8 @@ public static class Constants
         public const string ReportDesign = "report-design";
 
         public const string Schedule = "schedule";
+
+        public const string Automation = "automation";
 
         public const string Diagnostics = "diagnostics";
 
@@ -71,6 +79,12 @@ public static class Constants
 
         public const string Seed = "seed";
 
+        public const string Story = "story";
+
         public const string Catalog = "catalog";
+
+        public const string Billing = "billing";
+
+        public const string Leaderboard = "leaderboard";
     }
 }

@@ -32,6 +32,10 @@ Builds for `net10.0;netstandard2.0`. Async, streaming, and option-based overload
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.DataTable.Models` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

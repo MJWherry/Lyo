@@ -22,4 +22,6 @@ public class JobWorkflow
     public virtual ICollection<JobWorkflowStep> JobWorkflowSteps { get; set; } = new List<JobWorkflowStep>();
 
     public virtual ICollection<JobWorkflowRun> JobWorkflowRuns { get; set; } = new List<JobWorkflowRun>();
+
+    public virtual ICollection<JobSchedule> JobSchedules { get; set; } = new List<JobSchedule>();
 }

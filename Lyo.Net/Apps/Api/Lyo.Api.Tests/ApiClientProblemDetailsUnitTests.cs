@@ -4,7 +4,7 @@ using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Error;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Api.Tests;
@@ -20,7 +20,7 @@ public sealed class ApiClientProblemDetailsUnitTests
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         });
         using var client = new ApiClient(httpClient: new HttpClient(inner) { BaseAddress = new("https://example.test/") });
-        var ex = await Assert.ThrowsAsync<ApiException>(() => client.GetAsAsync<object>("/missing", ct: TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<ApiException>(() => client.GetAsAsync<object>("/missing", ct: TestCt));
         Assert.Equal(404, ex.StatusCode);
         Assert.Equal(Constants.ApiErrorCodes.NotFound, ex.ErrorCode);
         Assert.NotNull(ex.ProblemDetails);

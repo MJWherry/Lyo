@@ -3,6 +3,7 @@ using Lyo.Api.Mapping;
 using Lyo.Benchmark;
 using Mapster;
 using MapsterMapper;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Query.Benchmarks;
 
@@ -37,10 +38,10 @@ public class MappingBenchmarks
 
     private MapEntity CreateEntity(int seed)
         => new() {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             Name = $"Entity {seed}",
             Age = 20 + seed % 50,
-            Children = Enumerable.Range(0, ChildCount).Select(c => new MapChild { Id = Guid.NewGuid(), Label = $"child-{c}", Value = c }).ToList()
+            Children = Enumerable.Range(0, ChildCount).Select(c => new MapChild { Id = LyoGuid.CreateV7(), Label = $"child-{c}", Value = c }).ToList()
         };
 
     [Benchmark(Baseline = true)]

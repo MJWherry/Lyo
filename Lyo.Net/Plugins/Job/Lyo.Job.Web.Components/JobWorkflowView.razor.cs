@@ -13,6 +13,7 @@ public partial class JobWorkflowView
     private string _workflowRoute => $"{BaseRoute.TrimEnd('/')}/Workflow";
 
     private bool _loading;
+    private bool _starting;
     private Guid? _selectedWorkflowId;
     private JobWorkflowRes? _selectedWorkflow;
     private IReadOnlyList<JobWorkflowRes> _workflows = [];
@@ -68,5 +69,49 @@ public partial class JobWorkflowView
         }
     }
 
-    private static Color GetStepColor(JobWorkflowStepRes step) => step.Enabled ? Color.Primary : Color.Default;
+    /// <summary>
+    /// Starts an ad-hoc run of the selected workflow. No idempotency key is sent: an operator pressing the button twice means two runs, unlike the scheduler, whose retries
+    /// must collapse onto one.
+    /// </summary>
+    private async Task StartWorkflowAsync()
+    {
+        if (_selectedWorkflowId is not { } workflowId)
+            return;
+
+        _starting = true;
+        try {
+            await ApiClient.PostAsAsync<JobWorkflowStartReq, JobWorkflowRunRes>($"{_workflowRoute}/{workflowId}/Start", new());
+            Snackbar.Add("Workflow run started.", Severity.Success);
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Failed to start workflow: {ex.Message}", Severity.Error);
+        }
+        finally {
+            _starting = false;
+        }
+    }
+
+    private IReadOnlyList<JobWorkflowStepDraft> GraphSteps
+        => (_selectedWorkflow?.Steps ?? []).Select(ToDraft).ToArray();
+
+    private IReadOnlyList<JobDefinitionRes> GraphDefinitions
+        => (_selectedWorkflow?.Steps ?? [])
+            .Select(step => step.JobDefinition)
+            .OfType<JobDefinitionRes>()
+            .GroupBy(definition => definition.Id)
+            .Select(group => group.First())
+            .ToArray();
+
+    private static JobWorkflowStepDraft ToDraft(JobWorkflowStepRes step)
+    {
+        JobWorkflowGraph.TryParseDependencies(step.DependsOnStepIds, out var dependencies);
+        return new JobWorkflowStepDraft {
+            Id = step.Id,
+            StepName = step.StepName,
+            JobDefinitionId = step.JobDefinitionId,
+            DependsOn = [.. dependencies],
+            FailurePolicy = step.FailurePolicy,
+            Enabled = step.Enabled
+        };
+    }
 }

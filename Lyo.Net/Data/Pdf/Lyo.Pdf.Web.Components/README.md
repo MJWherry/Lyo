@@ -15,7 +15,7 @@ services.AddPdfAnnotatorInterop(); // LyoPdfAnnotatorController (scoped)
 
 ## Components
 
-- `HtmlToPdfWorkbench.razor`. Paste HTML or upload an `.html` / `.htm` / `.txt` file, then turn it into a PDF through `IWebRendererService`.
+- `HtmlToPdfWorkbench.razor`. Paste HTML or upload an `.html` / `.htm` / `.txt` file, pick PDF, PNG, JPEG, or WebP, and for PDF pick paper and orientation. The result previews in the page and can be downloaded.
 - `PdfAnnotationWorkbench.razor`. Hosts `LyoPdfAnnotator` and shows a live table of saved annotations and their extracted payloads.
 - `PdfAnnotator/LyoPdfAnnotator.razor` (+ `LyoPdfAnnotator.razor.cs`, `LyoPdfAnnotatorResultsView.razor`). Drawing canvas and result list. Fires `AnnotationsChanged` and `AnnotationsSaved`.
 
@@ -42,20 +42,22 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Pdf.Models` (direct, lyo)
 - `Lyo.Web.Components` (direct, lyo)
 - `Lyo.Web.WebRenderer` (direct, lyo)
+- `Lyo.Web.WebRenderer.Models` (direct, lyo)
 - `MudBlazor` `9.3` (direct, third-party)
 - `Lyo.Api.Client` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
@@ -63,6 +65,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
@@ -86,6 +89,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

@@ -1,13 +1,13 @@
 # Lyo.Api.Client
 
-Lyo-specific HTTP client on top of `LyoHttpClient`. Non-success responses throw `ApiException` with RFC 7807 problem-details when the body parses. `QueryProjectAsync` / `QueryConcreteAsync` POST to `{route}/QueryProject` and `{route}/QueryConcrete` using `Lyo.Query.Models` only here.
+Lyo-specific HTTP client on top of `LyoHttpClient`. Non-success responses throw `ApiException` with RFC 7807 problem-details when the body parses. `QueryProjectAsync` / `QueryConcreteAsync` / `QuerySqlAsync` POST to `{route}/QueryProject`, `{route}/QueryConcrete`, and `{route}/QuerySql`.
 
 Vendor clients (Endato, Typecast, ESPN, Discord, Google Maps) now inherit `LyoHttpClient` in `Lyo.Http.Client`. Config.Api.Client stays on `ApiClient`. Resolve via `IHttpClientFactory`.
 
 ## Features
 
 - **`IApiClient` / `ApiClient`.** Subclass of `LyoHttpClient`. JSON verbs inherited; `EnsureSuccessAsync` maps problem-details to `ApiException`. User-Agent is `Lyo/{version}` (no UA rotation).
-- **`QueryProjectAsync` / `QueryConcreteAsync`.** `POST {route}/QueryProject` and `POST {route}/QueryConcrete`.
+- **`QueryProjectAsync` / `QueryConcreteAsync` / `QuerySqlAsync`.** `POST {route}/QueryProject`, `POST {route}/QueryConcrete`, and `POST {route}/QuerySql`. QuerySql returns the SQL preview and does not run the query.
 - **`ApiRouteBuilder`.** `Build(routePrefix, relativePath)` applies the host's configured mount point, and `WithIncludes(route, includes)` appends one `include` query parameter per navigation to expand.
 - **`AddLyoApiClient`.** Factory registration for `IApiClient` plus optional correlation handler. Vendor `AddLyoApiClient<T,T>` is obsolete — use `AddLyoHttpClient`.
 
@@ -123,9 +123,9 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
@@ -135,6 +135,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

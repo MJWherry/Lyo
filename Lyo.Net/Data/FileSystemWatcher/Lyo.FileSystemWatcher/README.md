@@ -7,7 +7,8 @@ Snapshot-based .NET file watcher. Finds creates, deletes, changes, moves, and re
 - **Snapshot-based change detection.** Compares directory snapshots rather than relying only on FileSystemWatcher events.
 - **Debouncing.** Batches rapid changes so an event storm does not fire.
 - **Hash-based move detection.** Finds file moves and renames even when the file system does not report them.
-- **IFileSystem.** `WatchableLocalFileSystem` is the live-tree adapter (`Watch` capability).
+- **IFileSystem.** `WatchableLocalFileSystem` is the live-tree adapter (`Watch` capability) and is held to the shared `IFileSystemContractTests` suite from `Lyo.IO.FileSystem.Tests`.
+- **Cheap polling.** Each `SnapshotDirectoryNode` caches its own snapshot entry, and hash and fingerprint indexes are built once per tree rather than per comparison, so a poll over 2000 files allocates less than the snapshot it diffs.
 - **Batch scan.** `ScanCompleted` fires once per debounce with the previous tree, current tree, and every detected change. `CurrentSnapshot` exposes the last completed tree.
 - **Thread-safe.** Safe to call from multiple threads.
 - **Metrics.** Optional `IMetrics` hook (`Lyo.Metrics`).

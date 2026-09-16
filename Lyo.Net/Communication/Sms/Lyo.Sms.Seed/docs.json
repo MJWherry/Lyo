@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Sms.Seed",
+  "name": "Lyo.Sms.Seed",
+  "area": "Communication",
+  "tagline": "EF seed of SMS logs.",
+  "description": "EF seed of Count outbound SMS logs on SmsDbContext. Schema sms.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Sms/Lyo.Sms.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

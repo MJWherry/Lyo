@@ -14,6 +14,14 @@ function selectFields<T>(
   return select;
 }
 
+/** Sorts arrive keyed by column field; the server sorts by the column's `sortKey` when it declares one. */
+function mapSortKeys<T>(sorts: readonly SortBy[], columns: readonly LyoColumn<T>[] | undefined): SortBy[] {
+  return sorts.map((s) => {
+    const sortKey = columns?.find((c) => c.field === s.PropertyName)?.sortKey;
+    return sortKey ? { ...s, PropertyName: sortKey } : { ...s };
+  });
+}
+
 function prefixSelect(fields: readonly string[], alias: string): string[] {
   return fields
     .filter((f) => isRootSafeSelect(f, alias))
@@ -26,7 +34,7 @@ function isRootSafeSelect(field: string, alias: string): boolean {
   return Boolean(rest) && !rest.includes(".");
 }
 
-export function buildConcreteQuery(options: {
+export function buildConcreteQuery<T>(options: {
   start: number;
   amount: number;
   filters: readonly ConditionClause[];
@@ -34,6 +42,7 @@ export function buildConcreteQuery(options: {
   quickSearchProperties: readonly string[];
   sorts: readonly SortBy[];
   include?: readonly string[];
+  columns?: readonly LyoColumn<T>[];
 }): QueryConcreteReq {
   return {
     Options: defaultQueryOptions({ TotalCountMode: "Exact" }),
@@ -44,7 +53,7 @@ export function buildConcreteQuery(options: {
       searchText: options.searchText,
       quickSearchProperties: options.quickSearchProperties,
     }),
-    SortBy: [...options.sorts],
+    SortBy: mapSortKeys(options.sorts, options.columns),
     Include: options.include ? [...options.include] : [],
   };
 }
@@ -75,7 +84,7 @@ export function buildProjectedQuery<T>(options: {
       searchText: options.searchText,
       quickSearchProperties: options.quickSearchProperties,
     }),
-    SortBy: [...options.sorts],
+    SortBy: mapSortKeys(options.sorts, options.columns),
   };
 }
 
@@ -112,6 +121,6 @@ export function buildRootQuery<T>(options: {
       searchText: options.searchText,
       quickSearchProperties: options.quickSearchProperties,
     }),
-    SortBy: options.sorts.filter((s) => isRootSafeSelect(s.PropertyName, alias)),
+    SortBy: mapSortKeys(options.sorts, options.columns).filter((s) => isRootSafeSelect(s.PropertyName, alias)),
   };
 }

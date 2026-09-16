@@ -54,4 +54,17 @@ public sealed class ContactSubmissionEntity
             Company = request.Company,
             CreatedTimestamp = DateTime.UtcNow
         };
+
+    /// <summary>Maps this row to the public submission model.</summary>
+    public ContactSubmission ToSubmission()
+        => new() {
+            Id = Id,
+            Name = Name,
+            Email = Email,
+            Subject = Subject,
+            Message = Message,
+            Phone = Phone,
+            Company = Company,
+            CreatedTimestamp = CreatedTimestamp
+        };
 }

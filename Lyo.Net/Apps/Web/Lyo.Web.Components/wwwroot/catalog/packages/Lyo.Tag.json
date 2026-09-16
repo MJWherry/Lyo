@@ -16,7 +16,25 @@
         "`GetTagsForEntityAsync(EntityRef forEntity, string? tagType = null, CancellationToken ct = default)` lists every `TagRecord` on that entity. Pass `tagType` to narrow the result.",
         "`GetEntitiesWithTagAsync(string tag, string? forEntityType = null, string? tagType = null, CancellationToken ct = default)` lists every entity that carries that tag value. Entity type and tag type filters are optional.",
         "`GetAllTagsForEntityTypeAsync(string forEntityType, string? tagType = null, CancellationToken ct = default)` lists the distinct tag values used on any entity of that type.",
+        "`GetTopTagsAsync(int take, TagSort sortBy = TagSort.Count, SortDirection direction = SortDirection.Desc, string? forEntityType = null, string? tagType = null, string? name = null, string? text = null, int skip = 0, CancellationToken ct = default)` returns each tag name and tag type with how many active assignments use that pair. `take` must be at least 1. `skip` defaults to 0 and must not be negative, so `GetTopTagsAsync(10, skip: 10)` is the next page of 10. Sort by count or name, ascending or descending. Defaults are count, descending, so `GetTopTagsAsync(10)` is the top 10 by usage. Name ascending is `GetTopTagsAsync(10, TagSort.Name, SortDirection.Asc)`. Count sorts break ties by name, then tag type. Name sorts break ties by tag type. The tie-break does not follow the requested direction. Pass `forEntityType`, `tagType`, or `name` to count only that slice. Pass `text` to keep rows whose name or tag type contains that text, ignoring case, so `GetTopTagsAsync(10, text: \"alp\")` can return both `alpha` and `alpine`. A null or whitespace `tagType`, `name`, or `text` applies no filter. Soft-deleted rows are excluded.",
         "`RemoveAllTagsForEntityAsync(EntityRef forEntity, CancellationToken ct = default)` soft-deletes every tag assignment on that entity."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "`TagCount`",
+      "items": [
+        "`Name`. Display text for the tag, such as `\"urgent\"`.",
+        "`TagType`. Namespace discriminator grouped with `Name`. Default assignments use `\"tag\"`.",
+        "`Count`. Active assignment rows for that name and tag type. Soft-deleted rows are not included."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "`TagSort`",
+      "items": [
+        "`Count`. Order by how many active assignments use the tag.",
+        "`Name`. Order by the tag name."
       ]
     },
     {
@@ -34,7 +52,7 @@
   "readmePath": "Lyo.Net/Plugins/Tag/Lyo.Tag/README.md",
   "dependencies": [
     {
-      "name": "Lyo.EntityReference.Models",
+      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -42,10 +60,10 @@
       ]
     },
     {
-      "name": "Lyo.Common.Core",
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
-        "transitive",
+        "direct",
         "lyo"
       ]
     },

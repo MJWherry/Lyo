@@ -6,6 +6,7 @@ using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Providers;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 namespace Lyo.Reporting.Tests;
 
 public sealed class ReportServiceUnitTests
@@ -97,7 +98,7 @@ public sealed class ReportServiceUnitTests
     [Fact]
     public void ResolveConfinedPreRenderedPath_InsideTemp_IsAllowed()
     {
-        var path = Path.Combine(Path.GetTempPath(), $"lyo-pre-{Guid.NewGuid():N}.pdf");
+        var path = Path.Combine(Path.GetTempPath(), $"lyo-pre-{LyoGuid.CreateV7():N}.pdf");
         var resolved = ReportService.ResolveConfinedPreRenderedPath(path, new() { ConnectionString = "x" });
         Assert.Equal(Path.GetFullPath(path), resolved);
     }
@@ -111,7 +112,7 @@ public sealed class ReportServiceUnitTests
     [Fact]
     public void ResolveConfinedPreRenderedPath_ConfiguredRoot_IsHonored()
     {
-        var root = Path.Combine(Path.GetTempPath(), $"lyo-root-{Guid.NewGuid():N}");
+        var root = Path.Combine(Path.GetTempPath(), $"lyo-root-{LyoGuid.CreateV7():N}");
         var options = new PostgresReportingOptions { ConnectionString = "x", PreRenderedFileRoots = [root] };
         Assert.Throws<ReportValidationException>(() => ReportService.ResolveConfinedPreRenderedPath(Path.Combine(Path.GetTempPath(), "elsewhere.pdf"), options));
         var inside = Path.Combine(root, "nested", "out.pdf");

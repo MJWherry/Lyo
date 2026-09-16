@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Security.Claims;
 using Lyo.Api.Client;
+using Lyo.Authorization;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Authentication.Models;
@@ -32,6 +33,8 @@ public partial class ProfilePage
     public string? ElementId { get; set; }
 
     private IApiClient? ApiClient => Services.GetService<IApiClient>();
+
+    private IGrantStore? GrantStore => Services.GetService<IGrantStore>();
 
     private AuthMeSnapshot? _snapshot;
 

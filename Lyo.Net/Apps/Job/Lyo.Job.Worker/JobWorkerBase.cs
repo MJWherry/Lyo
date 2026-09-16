@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Formatter;
 using Lyo.Job.Client;
 using Lyo.Job.Models;
@@ -34,7 +35,7 @@ namespace Lyo.Job.Worker;
 /// </summary>
 public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHostedService
 {
-    private static readonly string[] RunIncludes = ["JobRunParameters", "JobRunResults", "JobSchedule", "JobTrigger", "JobDefinition", "JobDefinition.JobParameters"];
+    private static readonly string[] RunIncludes = ["JobRunParameters", "JobRunResults", "JobSchedule", "JobDefinition", "JobDefinition.JobParameters"];
 
     /// <summary>Result metadata that tells <see cref="QueueWorkerBase{TRequest,TResult}" /> not to requeue the message even when the result is a failure.</summary>
     private static readonly IReadOnlyDictionary<string, object> NoRequeueMetadata = new Dictionary<string, object> { ["requeue"] = false };
@@ -106,7 +107,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         await EnsureJobTopologyAsync(ct).ConfigureAwait(false);
 
         // Register before we consume the dispatch queue so the first in-flight start already has an instance id.
-        var cancelSuffix = Guid.NewGuid().ToString("N");
+        var cancelSuffix = LyoGuid.CreateV7().ToString("N");
         _cancelQueueName = Constants.Mq.QueueGetJobRunCancelInstance(WorkerType, cancelSuffix);
         await RegisterWorkerInstanceAsync(ct).ConfigureAwait(false);
         await _eventPublisher.SubscribeToRunCancellationsAsync(WorkerType, OnCancelAsync, ct, cancelSuffix).ConfigureAwait(false);

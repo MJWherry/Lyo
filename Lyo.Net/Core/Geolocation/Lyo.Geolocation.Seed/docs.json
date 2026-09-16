@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Geolocation.Seed",
+  "name": "Lyo.Geolocation.Seed",
+  "area": "Core",
+  "tagline": "EF seed of geolocation addresses.",
+  "description": "EF seed of Count street addresses. Schema geolocation.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Geolocation/Lyo.Geolocation.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -85,11 +85,6 @@
       "title": "Cleanup",
       "language": "csharp",
       "code": "_ioTempService.Cleanup();\nawait _ioTempService.CleanupAsync(ct);\nawait _ioTempService.CleanupAsync(TimeSpan.FromHours(1), ct);"
-    },
-    {
-      "title": "Sessions in unit tests",
-      "language": "csharp",
-      "code": "public sealed class MyServiceTests : IDisposable\n{\n    private readonly IIOTempSession _tempSession =\n        IOTempSession.CreateForTests(nameof(MyServiceTests));\n\n    public void Dispose() => _tempSession.Dispose();\n}"
     }
   ],
   "sections": [
@@ -116,12 +111,12 @@
     {
       "type": "markdown",
       "title": "MemoryFileSystem",
-      "body": "`ConcurrentDictionary` store with `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; fits Blazor WASM and unit tests.\nData lasts for the lifetime of the `IFileSystem` instance.\n\n```csharp\n// Blazor WASM (Program.cs)\nbuilder.Services.AddMemoryFileSystem();\nbuilder.Services.AddIOTempService();\n\n// Or via options when nothing is registered\nservices.AddIOTempService(o => o.StorageKind = IOTempStorageKind.Memory);\n\n// xUnit / NUnit — direct construction\nvar storage = new MemoryFileSystem();\nvar options = new IOTempSessionOptions { RootDirectory = storage.RootPath };\nusing var session = new IOTempSession(options, storageProvider: storage);\n```"
+      "body": "Flat path map with a child index and a `ReaderWriterLockSlim`, using `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; fits Blazor WASM and unit tests.\nData lasts for the lifetime of the `IFileSystem` instance.\n\n```csharp\n// Blazor WASM (Program.cs)\nbuilder.Services.AddMemoryFileSystem();\nbuilder.Services.AddIOTempService();\n\n// Or via options when nothing is registered\nservices.AddIOTempService(o => o.StorageKind = IOTempStorageKind.Memory);\n\n// xUnit / NUnit — direct construction\nvar storage = new MemoryFileSystem();\nvar options = new IOTempSessionOptions { RootDirectory = storage.RootPath };\nusing var session = new IOTempSession(options, storageProvider: storage);\n```"
     },
     {
       "type": "markdown",
       "title": "Write a custom backend",
-      "body": "Implement `IFileSystem` in the package that owns the backend (see `SftpFileSystem` / `FtpFileSystem` / `S3FileSystem`). Register it before `AddIOTempService`:\n\n```csharp\nservices.AddSingleton<IFileSystem>(new FtpFileSystem(ftpClient));\nservices.AddIOTempService();\n```\n\n`FileSystemExtensions` covers `TouchFile`, `WriteAllBytes` / `WriteAllText` / `AppendAllText`, `CopyStreamToFileAsync`, and `EnsureDirectoryAccessible` (used for R/W probing; may be a no-op for in-memory backends)."
+      "body": "Implement `IFileSystem` in the package that owns the backend (see `SftpFileSystem` / `FtpFileSystem` / `S3FileSystem`). Register it before `AddIOTempService`:\n\n```csharp\nservices.AddSingleton<IFileSystem>(new FtpFileSystem(ftpClient));\nservices.AddIOTempService();\n```\n\n`FileSystemExtensions` covers `ReadAllBytes` / `ReadAllText`, `TouchFile`, `WriteAllBytes` / `WriteAllText` / `AppendAllText`, `CopyStreamToFileAsync`, and `EnsureDirectoryAccessible` (used for R/W probing; may be a no-op for in-memory backends)."
     },
     {
       "type": "table",
@@ -224,11 +219,6 @@
           "What happens when the total cap is crossed."
         ]
       ]
-    },
-    {
-      "type": "paragraph",
-      "title": "Sessions in unit tests",
-      "text": "`IOTempSession.CreateForTests` is a one-liner for unit tests. The root is created for you and named after the test so leftover folders from a failed CI run are easy to find. Sessions sit under `{TempPath}/lyo-io-temp-tests/{subdirectoryName}/{Guid}/`, away from production temp dirs."
     },
     {
       "type": "table",

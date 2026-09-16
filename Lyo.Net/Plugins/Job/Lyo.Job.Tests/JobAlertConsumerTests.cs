@@ -7,6 +7,7 @@ using Lyo.Job.Models.Enums;
 using Lyo.MessageQueue;
 using Lyo.Notification;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 namespace Lyo.Job.Tests;
 
 /// <summary>
@@ -30,7 +31,7 @@ public class JobAlertConsumerTests
     public async Task RepeatAlert_ForADifferentAlertType_IsNotSuppressed()
     {
         var (handler, publisher, _) = await StartConsumerAsync(new() { DedupWindow = TimeSpan.FromMinutes(5) });
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
 
         await handler(Serialize(Alert(JobAlertType.Failure, definitionId)));
         await handler(Serialize(Alert(JobAlertType.SlaBreach, definitionId)));
@@ -44,7 +45,7 @@ public class JobAlertConsumerTests
         var alert = Alert(JobAlertType.Failure);
 
         await handler(Serialize(alert));
-        await Task.Delay(TimeSpan.FromMilliseconds(120), TestContext.Current.CancellationToken);
+        await Task.Delay(TimeSpan.FromMilliseconds(120), TestCt);
         await handler(Serialize(alert));
         Assert.Equal(2, publisher.Published.Count);
     }
@@ -133,7 +134,7 @@ public class JobAlertConsumerTests
     private static byte[] Serialize(JobAlertEvent alert) => JsonSerializer.SerializeToUtf8Bytes(alert);
 
     private static JobAlertEvent Alert(JobAlertType type, Guid? definitionId = null)
-        => new(definitionId ?? Guid.NewGuid(), Guid.NewGuid(), type, $"{type} alert", DateTime.UtcNow);
+        => new(definitionId ?? LyoGuid.CreateV7(), LyoGuid.CreateV7(), type, $"{type} alert", DateTime.UtcNow);
 
     /// <summary>
     /// Starts the consumer and captures the queue handler it subscribes with, which is the only way in to its private message pipeline. The consumer is left running: its

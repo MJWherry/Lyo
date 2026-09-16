@@ -17,7 +17,7 @@
       "rows": [
         [
           "`ScheduleWorkbench`",
-          "Interactive editor for `ScheduleDefinition`. Chooses the `ScheduleType` (`SetTimes` / `Interval` / `OneShot` / `Cron`), shows the matching inputs for that type (day/month flags, time pickers, interval bounds, one-shot timestamp, cron string with a `CronFormat` toggle), validates with `ScheduleDefinition.Validate()`, and previews the next N occurrences in the host's `TimeZoneInfo`."
+          "Interactive editor for `ScheduleDefinition`. Chooses the `ScheduleType` (`SetTimes` / `Interval` / `OneShot` / `Cron`), shows the matching inputs for that type (day/month flags, time pickers, interval bounds, one-shot timestamp, cron string), validates with `ScheduleDefinition.Validate()`, and previews the visible month on `LyoCalendar` plus the next occurrences."
         ]
       ]
     },
@@ -64,14 +64,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
@@ -88,7 +80,23 @@
       ]
     },
     {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -204,6 +212,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

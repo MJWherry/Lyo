@@ -2,6 +2,10 @@
 
 SmartFormat.NET templates for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting, plus a C# subset for DateTime math, ternary, and in-memory LINQ. Built for validate-then-format pipelines. `IFormatterService` is what `Lyo.Api` computed fields, `Lyo.Job.Worker` string parameters, and `Lyo.Web.Automation` step templates call.
 
+## Features
+
+- **Lazy context.** `IContextBuilder.Add(key, factory)` stores a factory that runs when the placeholder is read. `Format` copies a `ContextBag` first, so the caller's factory stays pending and runs again on the next format. DTO properties resolve through `BindableBag`.
+
 ## Examples
 
 ### Add FormatterService
@@ -39,7 +43,7 @@ var text = t.Format();
 
 ## How to register
 
-Register `FormatterService` as a singleton and expose `IFormatterService`. Use the factory overload when you need extra SmartFormat extensions or custom `SmartSettings`. `AddFormatterService` also registers `FormatterLyoType.Template` (`Lyo.Formatter.Template`, `IsClr` false) on the `LyoTypeInfo` catalog so job/report pickers can select formatter templates, and the `LyoTemplateResolver` that job and report services use to resolve expression parameter defaults. Call `AddParameterTemplateResolver` directly only when wiring `IFormatterService` by hand.
+Register `FormatterService` as a singleton and expose `IFormatterService`. Use the factory overload when you need extra SmartFormat extensions or custom `SmartSettings`. `AddFormatterService` also registers `FormatterLyoType.Template` (`Lyo.Formatter.Template`, `IsClr` false) on the `LyoTypeInfo` catalog so job/report pickers can select formatter templates, and the `LyoTemplateResolver` that job and report services use to resolve expression parameter defaults. Call `AddParameterTemplateResolver` directly only when wiring `IFormatterService` by hand. `{...}` uses `IFormatterExpressionEvaluator` when the host registered one; otherwise `FormatterExpressionEvaluator` runs. `AddFormatterService` does not reference Algorithms. `Lyo.Formatter.Algorithms` is the opt-in `Algo("key")` addon.
 
 ## Default expression parameters
 
@@ -118,13 +122,13 @@ Default Blazor WASM (IL interpreted, no AOT) can run expressions: DynamicExpress
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Parameters` (direct, lyo)
 - `DynamicExpresso.Core` `2.19.3` (direct, third-party)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `SmartFormat.NET` `3.6.1` (direct, third-party)
-- `Lyo.Common.Core` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

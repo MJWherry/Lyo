@@ -5,6 +5,7 @@
   "tagline": "Minimal-API library that maps EF Core entities onto REST CRUD. `ApiEndpointBuilder` emits Query, Get, Create, Update, Patch, Delete, Upsert, bulk variants, and optional export.",
   "description": "Minimal-API library that maps EF Core entities onto REST CRUD with caching, `ILyoMapper` DTO mapping, validation, and per-endpoint authorization.\n\nRegistration methods live on `ServiceCollectionExtensions` (`AddLyoQueryServices`, `AddLyoCrudServices`, optional export/sproc/diff). Map routes with `ApiEndpointBuilder` and `ApiEndpointBuilderExtensions` (`CreateBuilder`, `CreateReadOnlyBuilder`), or `DynamicCrudEndpointBuilder.MapDynamicCrudEndpoints` for one `{entityType}` route tree per context. DTOs and HTTP contracts live in `Lyo.Api.Models`. When `GenerateDocumentationFile` is on in `Directory.Build.props`, IntelliSense uses the same XML summaries as this package doc. CRUD services use `<inheritdoc />` against the `I*Service` interfaces.",
   "features": [
+    "**QuerySql.** `POST {entity}/QuerySql` previews concrete and projection SQL. `POST {prefix}QuerySql` previews a root query. Neither route executes the query.",
     "**WhereClause.** Filter tree for `QueryConcreteReq` / `ProjectionQueryReq`, serialized as `whereClause`. JSON discriminators are `condition` (leaf: field, comparison, value) and `group` (AND/OR children).",
     "**SubQuery / two-phase.** Optional `subClause` on a node, or `WhereClauseBuilder.AddSubClause`, runs the root filter in the database and the nested filter in memory.",
     "**16 comparators.** Equals, NotEquals, Contains, NotContains, StartsWith, EndsWith, NotStartsWith, NotEndsWith, GreaterThan, GreaterThanOrEqual, LessThan, LessThanOrEqual, In, and the remaining operators on `ComparisonOperatorEnum`.",
@@ -197,8 +198,14 @@
         "**Uncaught (Error):** any other exception → 500 problem + **Error** log with the exception. Client disconnect / abort (`OperationCanceledException` when `RequestAborted` is set) is **Debug** and is not turned into a 500. Query cache misses on abort rethrow instead of returning `Cancelled` problem JSON.",
         "**Empty-body fallback (Warn):** bare `Results.NotFound()` / empty 4xx/5xx get a synthesized Lyo problem.",
         "Endpoints should **throw** `ApiErrorException.From(...)` / `ApiErrorResponseFactory.ThrowForError(...)` instead of returning problem JSON.",
-        "Use `Constants.ApiErrorCodes` for `errors[].code`; put field/path names in `errors[].description`."
+        "Use `Constants.ApiErrorCodes` for `errors[].code`; put field/path names in `errors[].description`.",
+        "A 429 from `RequireRateLimit` must use `RateLimitExceededException(retryAfter, limit, window)`. The string constructors leave `RetryAfter` null, so this middleware omits the header. It writes `Retry-After` as ceiling seconds."
       ]
+    },
+    {
+      "type": "paragraph",
+      "title": "Opt-in route quota ([`RateLimit/RateLimitEndpointExtensions.cs`](RateLimit/RateLimitEndpointExtensions.cs))",
+      "text": "`RequireRateLimit(policy, permitLimit, window, pattern)` is an endpoint filter. It runs after authentication and calls `IRateLimitService.TryAcquireAsync` unless the endpoint is on that policy's whitelist (an endpoint name such as `GetPerson`, or `METHOD /route` such as `POST /person/{id}`). An empty whitelist exempts nothing. Routes that do not call it are not limited, and no production route calls it. The host registers `AddLocalRateLimit` for one process or `AddRedisRateLimit` when several hosts share the quota. The default partition is `lyo:user`, else `lyo:token_id`, else `sub`, else the name identifier, else the identity name, else the remote IP, else `anonymous`."
     },
     {
       "type": "list",
@@ -384,7 +391,7 @@
     {
       "type": "markdown",
       "title": "Options",
-      "body": "### QueryOptions (singleton)\n\n| Property | Default | What it does |\n|-------------------------------------|----------|------------------------------------------------------------------------------------------------------------|\n| DefaultPageSize | 100 | Page size when none is sent |\n| MaxPageSize | 2000 | Upper bound on page size |\n| MinPagingStart | 0 | Lowest allowed `Start` (inclusive) |\n| MaxPagingStart | 10000000 | Highest allowed `Start` (inclusive) |\n| MinPagingAmount | 1 | Lowest `Amount` when it is set |\n| MaxExportSize | 5000 | Upper bound on export rows |\n| EnableSplitQueries | true | Split include queries |\n| UseNoTrackingWithIdentityResolution | true | Reads use NoTracking |\n| AllowSelectWildcards | true | Permit a trailing `*` on QueryProject `Select` paths |\n| CacheQueryResultsAsUtf8Payload | false | Store Query and QueryProject via typed payload cache (`GetOrSetPayloadAsync`) instead of CLR `GetOrSetAsync` |\n\n### BulkOperationOptions (singleton)\n\n| Property | Default | What it does |\n|------------------------|---------|-------------------------|\n| MaxAmount | 2000 | Upper bound on items per bulk |\n| MaxDegreeOfParallelism | 10 | How many in parallel |\n| UseParallelProcessing | true | Process in parallel |\n| Timeout | 5 min | Timeout for bulk work |\n\n## What it depends on\n\n*(Kept in sync with `Lyo.Api.csproj`.)*\n\n**Framework target:** `net10.0`\n\n### NuGet packages\n\n| Package | Version |\n|---------------------------------------------|---------|\n| `Microsoft.AspNetCore.Authorization` | `[10,)` |\n| `Microsoft.AspNetCore.Http.Abstractions` | `2.*` |\n| `Microsoft.AspNetCore.OpenApi` | `[10,)` |\n| `Microsoft.EntityFrameworkCore.Analyzers` | `[10,)` |\n| `Microsoft.EntityFrameworkCore.Relational` | `[10,)` |\n| `Microsoft.Extensions.Hosting.Abstractions` | `[10,)` |\n\n### Project references\n\n- [`Lyo.Api.Models`](../Lyo.Api.Models/README.md)\n- [`Lyo.Cache`](../../../Core/Cache/Lyo.Cache/README.md)\n- [`Lyo.Diff`](../../../Core/Diff/Lyo.Diff/README.md)\n- [`Lyo.Diagnostic.AspNetCore`](../../../Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md)\n- [`Lyo.Formatter`](../../../Data/Formatter/Lyo.Formatter/README.md)\n- [`Lyo.Hashing`](../../../Security/Hashing/Lyo.Hashing/README.md)\n- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)\n- [`Lyo.Query`](../../../Data/Query/Lyo.Query/README.md)\n- [`Lyo.Validation`](../../../Core/Validation/Lyo.Validation/README.md)\n\n### Optional / related packages\n\n- [`Lyo.Api.Export`](../Lyo.Api.Export/README.md). Export endpoints; format handlers ship in `Lyo.Api.Export.Csv` and `Lyo.Api.Export.Xlsx` (no separate README)\n- [`Lyo.Csv`](../../../Data/Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../../Data/Xlsx/Lyo.Xlsx/README.md). Export add-ons consume these"
+      "body": "### QueryOptions (singleton)\n\n| Property | Default | What it does |\n|-------------------------------------|----------|------------------------------------------------------------------------------------------------------------|\n| DefaultPageSize | 100 | Page size when none is sent |\n| MaxPageSize | 2000 | Upper bound on page size |\n| MinPagingStart | 0 | Lowest allowed `Start` (inclusive) |\n| MaxPagingStart | 10000000 | Highest allowed `Start` (inclusive) |\n| MinPagingAmount | 1 | Lowest `Amount` when it is set |\n| MaxExportSize | 5000 | Upper bound on export rows |\n| EnableSplitQueries | true | Split include queries |\n| UseNoTrackingWithIdentityResolution | true | Reads use NoTracking |\n| AllowSelectWildcards | true | Permit a trailing `*` on QueryProject `Select` paths |\n| CacheQueryResultsAsUtf8Payload | false | Store Query and QueryProject via typed payload cache (`GetOrSetPayloadAsync`) instead of CLR `GetOrSetAsync` |\n\n### BulkOperationOptions (singleton)\n\n| Property | Default | What it does |\n|------------------------|---------|-------------------------|\n| MaxAmount | 2000 | Upper bound on items per bulk |\n| MaxDegreeOfParallelism | 10 | How many in parallel |\n| UseParallelProcessing | true | Process in parallel |\n| Timeout | 5 min | Timeout for bulk work |\n\n## What it depends on\n\n*(Kept in sync with `Lyo.Api.csproj`.)*\n\n**Framework target:** `net10.0`\n\n### NuGet packages\n\n| Package | Version |\n|---------------------------------------------|---------|\n| `Microsoft.AspNetCore.Authorization` | `[10,)` |\n| `Microsoft.AspNetCore.Http.Abstractions` | `2.*` |\n| `Microsoft.AspNetCore.OpenApi` | `[10,)` |\n| `Microsoft.EntityFrameworkCore.Analyzers` | `[10,)` |\n| `Microsoft.EntityFrameworkCore.Relational` | `[10,)` |\n| `Microsoft.Extensions.Hosting.Abstractions` | `[10,)` |\n\n### Project references\n\n- [`Lyo.Api.Models`](../Lyo.Api.Models/README.md)\n- [`Lyo.Cache`](../../../Core/Cache/Lyo.Cache/README.md)\n- [`Lyo.Diff`](../../../Core/Diff/Lyo.Diff/README.md)\n- [`Lyo.Diagnostic.AspNetCore`](../../../Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md)\n- [`Lyo.Formatter`](../../../Data/Formatter/Lyo.Formatter/README.md)\n- [`Lyo.Hashing`](../../../Security/Hashing/Lyo.Hashing/README.md)\n- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)\n- [`Lyo.Query`](../../../Data/Query/Lyo.Query/README.md)\n- [`Lyo.Validation`](../../../Core/Validation/Lyo.Validation/README.md)\n\n### Optional / related packages\n\n- [`Lyo.Api.Export`](../Export/Lyo.Api.Export/README.md). Export endpoints; format handlers ship in `Lyo.Api.Export.Csv` and `Lyo.Api.Export.Xlsx` (no separate README)\n- [`Lyo.Csv`](../../../Data/Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../../Data/Xlsx/Lyo.Xlsx/README.md). Export add-ons consume these"
     }
   ],
   "links": [],
@@ -441,14 +448,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
@@ -489,6 +488,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Metrics",
       "kind": "lyo",
       "tags": [
@@ -498,6 +505,22 @@
     },
     {
       "name": "Lyo.Query",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.RateLimit",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -549,6 +572,14 @@
     },
     {
       "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -707,6 +738,16 @@
       ]
     },
     {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Caching.Memory",
       "kind": "package",
       "version": "10.0.5",
@@ -808,6 +849,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

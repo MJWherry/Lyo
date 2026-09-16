@@ -1,0 +1,38 @@
+@namespace Lyo.Billing.Web.Components.Components.Grids
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="BillingJournalGrid"
+                      Route="Ledger/Journals"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, "Id")" Abbreviation="LyoIdAbbreviation.Prefix" AbbreviationLength="8"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Status" Title="Status" Align="Align.Center">
+            <CellContent Context="item">
+                @{
+                    var statusText = ProjectedValueHelper.GetDisplayValue(item, "Status");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<LedgerJournalStatus>(statusText, BillingColorHelper.ForJournalStatus))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Memo" Title="Memo" QuickSearchPropertyName="Memo"/>
+        <LyoProjectedColumn Field="PostedAt" Title="Posted" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="CreatedAt" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+    </Columns>
+</LyoDataGridProjected>

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net10.0</TargetFrameworks>
+        <Description>PostgreSQL translation for Lyo.Query Fuzzy operators via pg_trgm similarity().</Description>
+        <PackageTags>query postgres npgsql pg_trgm fuzzy</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Query\Lyo.Query.csproj"/>
+        <ProjectReference Include="..\Lyo.Query.Evaluation\Lyo.Query.Evaluation.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Query.Postgres.Tests"/>
+    </ItemGroup>
+
+</Project>

@@ -1,6 +1,7 @@
 using Lyo.Api.Client;
 using Lyo.Exceptions;
 using Lyo.Formatter;
+using Lyo.Health;
 using Lyo.Job.Models.Events;
 using Lyo.MessageQueue;
 using Lyo.Metrics;
@@ -58,6 +59,7 @@ public static class Extensions
         /// <summary>
         /// Adds <see cref="JobWorkflowEngine" /> as a hosted service that advances workflow runs when jobs complete. When an <c>IJobEventPublisher</c> is registered, the engine
         /// creates step runs with dispatch suppressed and publishes only after linking the run to its workflow step (closes the fast-worker completion race).
+        /// Needs <c>IApiClient</c>, <c>IMqService</c>, and <c>IFormatterService</c> (the engine templates each step's parameters against its upstream runs).
         /// </summary>
         public IServiceCollection AddJobWorkflowEngine(JobWorkflowEngineOptions options)
         {
@@ -65,11 +67,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             options.Validate();
             services.AddSingleton(options);
-            services.AddHostedService<JobWorkflowEngine>();
-            return services;
+            return services.AddJobWorkflowEngineCore();
         }
 
-        /// <summary>Adds <see cref="JobWorkflowEngine" /> and binds options from configuration.</summary>
+        /// <summary>Adds <see cref="JobWorkflowEngine" /> and binds options from configuration. Same service prerequisites as the options-instance overload.</summary>
         public IServiceCollection AddJobWorkflowEngine(string configSectionName = JobWorkflowEngineOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -80,7 +81,48 @@ public static class Extensions
                 .ValidateOnStart();
 
             services.AddSingleton(p => p.GetRequiredService<IOptions<JobWorkflowEngineOptions>>().Value);
+            return services.AddJobWorkflowEngineCore();
+        }
+
+        private IServiceCollection AddJobWorkflowEngineCore()
+        {
+            FormatterLyoType.EnsureRegistered();
             services.AddHostedService<JobWorkflowEngine>();
+            return services;
+        }
+
+        /// <summary>
+        /// Adds <see cref="JobWorkflowScheduler" /> as a hosted service, starting workflow runs for workflow-owned <c>JobSchedule</c> rows. Needs <c>IApiClient</c>. Independent
+        /// of <c>AddJobScheduler</c>: that one walks definition-owned schedules, which never overlap with these.
+        /// </summary>
+        public IServiceCollection AddJobWorkflowScheduler(JobWorkflowSchedulerOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
+            services.AddSingleton(options);
+            return services.AddJobWorkflowSchedulerCore();
+        }
+
+        /// <summary>Adds <see cref="JobWorkflowScheduler" /> and binds options from configuration. Same service prerequisites as the options-instance overload.</summary>
+        public IServiceCollection AddJobWorkflowScheduler(string configSectionName = JobWorkflowSchedulerOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            services.AddOptions<JobWorkflowSchedulerOptions>()
+                .BindConfiguration(configSectionName)
+                .Validate(o => o.GetValidationErrors().Count == 0, $"Invalid {nameof(JobWorkflowSchedulerOptions)}.")
+                .ValidateOnStart();
+
+            services.AddSingleton(p => p.GetRequiredService<IOptions<JobWorkflowSchedulerOptions>>().Value);
+            return services.AddJobWorkflowSchedulerCore();
+        }
+
+        private IServiceCollection AddJobWorkflowSchedulerCore()
+        {
+            services.AddSingleton<JobWorkflowScheduler>();
+            services.AddSingleton<IHealth>(p => p.GetRequiredService<JobWorkflowScheduler>());
+            services.AddHostedService(p => p.GetRequiredService<JobWorkflowScheduler>());
             return services;
         }
     }

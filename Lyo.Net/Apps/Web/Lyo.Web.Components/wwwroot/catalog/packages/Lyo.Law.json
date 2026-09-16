@@ -1,0 +1,44 @@
+{
+  "id": "Lyo.Law",
+  "name": "Lyo.Law",
+  "area": "Plugins",
+  "tagline": "Store contract for US state statutes.",
+  "description": "`ILawStore` saves jurisdictions and codes and upserts statute nodes by an opaque source key. An unchanged content hash leaves the row alone. A changed hash keeps the previous text. `LawJurisdictionKey.ThrowIfFederal` rejects `US`. Listing belongs in Lyo Query. Persistence is `Lyo.Law.Postgres`.",
+  "features": [
+    "`SaveJurisdictionAsync` rejects the federal key `US`.",
+    "`UpsertNodeBySourceKeyAsync` matches jurisdiction, code, and source key.",
+    "Citation lookup is scoped to one code."
+  ],
+  "examples": [
+    {
+      "title": "Reject federal",
+      "language": "csharp",
+      "code": "LawJurisdictionKey.ThrowIfFederal(key);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Law/Lyo.Law/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Law.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -24,6 +24,7 @@ The builders are fluent, so tests and gateways do not need object initializers.
 | ----------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `QueryRes<T>` | `POST {route}/QueryConcrete` | `IsSuccess`, `Items`, `Start`, `Amount`, `Total`, `HasMore`, `QueryScore`, `Error` (echoes `QueryRequest`). |
 | `ProjectedQueryRes<T>` | `POST {route}/QueryProject` | Adds `EntityTypes` (root + navigation/template CLR class names on success) and echoes the executed `Select`. |
+| `QuerySqlRes` | `POST {route}/QuerySql` | `Sql` and `Parameters` (`Name`, `Value`). The statement was not executed. |
 | `CreateResult<T>` / `CreateBulkResult<T>` | Create + Bulk create | `IsSuccess` / `Data` / `Error` per row; bulk wraps `CreatedCount` / `FailedCount`. |
 | `UpdateResult<T>` / `UpdateBulkResult<T>` | Update + Bulk update | `Result` enum (`Updated`/`NoChange`/`Failed`), `Keys`, `OldData`/`NewData`; bulk adds `NoChangeCount`. |
 | `PatchResult<T>` / `PatchBulkResult<T>` | Patch + Bulk patch | `Result` enum, `OldData`/`NewData`, `UpdatedProperties`; `IsSuccess` derived from `Updated`/`NoChange`. |
@@ -76,8 +77,9 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

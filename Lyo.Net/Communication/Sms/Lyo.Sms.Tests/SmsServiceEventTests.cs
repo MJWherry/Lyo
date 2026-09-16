@@ -36,7 +36,7 @@ public class SmsServiceEventTests
         var builder = SmsMessageBuilder.New().SetTo("+15551234567").SetBody("Test message");
 
         // Start a send (it fails; the event should still fire)
-        await service.SendAsync(builder, ct: TestContext.Current.CancellationToken);
+        await service.SendAsync(builder, ct: TestCt);
 
         // The event should have been raised
         Assert.NotNull(eventArgs);
@@ -57,7 +57,7 @@ public class SmsServiceEventTests
         var builder = SmsMessageBuilder.New().SetTo("+15551234567").SetBody("Test message");
 
         // Start a send (it fails; the event should still fire)
-        _ = await service.SendAsync(builder, ct: TestContext.Current.CancellationToken);
+        _ = await service.SendAsync(builder, ct: TestCt);
 
         // The event should have been raised (even on failure)
         Assert.NotNull(eventArgs);
@@ -81,7 +81,7 @@ public class SmsServiceEventTests
         };
 
         var builder = SmsMessageBuilder.New().SetTo("+15551234567").SetBody("Test message");
-        _ = await service.SendAsync(builder, ct: TestContext.Current.CancellationToken);
+        _ = await service.SendAsync(builder, ct: TestCt);
 
         // Sending must fire before Sent
         Assert.Equal(2, eventOrder.Count);
@@ -101,7 +101,7 @@ public class SmsServiceEventTests
         SmsMessageBuilder[] builders = [SmsMessageBuilder.New().SetTo("+15551111111").SetBody("Message 1"), SmsMessageBuilder.New().SetTo("+15552222222").SetBody("Message 2")];
 
         // Start a bulk send (it fails; the event should still fire)
-        _ = await service.SendBulkAsync(builders, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkAsync(builders, TestCt);
 
         // The event should have been raised
         Assert.NotNull(eventArgs);
@@ -121,7 +121,7 @@ public class SmsServiceEventTests
         SmsMessageBuilder[] builders = [SmsMessageBuilder.New().SetTo("+15551111111").SetBody("Message 1"), SmsMessageBuilder.New().SetTo("+15552222222").SetBody("Message 2")];
 
         // Start a bulk send (it fails; the event should still fire)
-        _ = await service.SendBulkAsync(builders, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkAsync(builders, TestCt);
 
         // The event should have been raised
         Assert.NotNull(eventArgs);
@@ -144,7 +144,7 @@ public class SmsServiceEventTests
         };
 
         SmsMessageBuilder[] builders = [SmsMessageBuilder.New().SetTo("+15551111111").SetBody("Message 1"), SmsMessageBuilder.New().SetTo("+15552222222").SetBody("Message 2")];
-        _ = await service.SendBulkAsync(builders, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkAsync(builders, TestCt);
 
         // BulkSending must fire before BulkSent
         Assert.Equal(2, eventOrder.Count);
@@ -166,7 +166,7 @@ public class SmsServiceEventTests
             SmsMessageBuilder.New().SetTo("+15553333333").SetBody("Message 3")
         ];
 
-        _ = await service.SendBulkAsync(builders, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkAsync(builders, TestCt);
         Assert.NotNull(eventArgs);
         Assert.NotNull(eventArgs.BulkSmsResult);
         Assert.Equal(3, eventArgs.BulkSmsResult.Results.Count);
@@ -187,7 +187,7 @@ public class SmsServiceEventTests
         };
 
         SmsMessageBuilder[] builders = [SmsMessageBuilder.New().SetTo("+15551111111").SetBody("Message 1"), SmsMessageBuilder.New().SetTo("+15552222222").SetBody("Message 2")];
-        _ = await service.SendBulkAsync(builders, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkAsync(builders, TestCt);
         Assert.NotNull(eventArgs);
         Assert.NotNull(eventArgs.BulkSmsResult);
     }
@@ -202,7 +202,7 @@ public class SmsServiceEventTests
         };
 
         var bulkBuilder = BulkSmsBuilder.New().SetDefaultFrom("+1987654321").Add("+15551111111", "Message 1").Add("+15552222222", "Message 2");
-        _ = await service.SendBulkAsync(bulkBuilder, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkAsync(bulkBuilder, TestCt);
         Assert.NotNull(eventArgs);
         Assert.NotNull(eventArgs.BulkSmsResult);
         Assert.Equal(2, eventArgs.BulkSmsResult.Results.Count);
@@ -219,7 +219,7 @@ public class SmsServiceEventTests
         };
 
         SmsRequest[] messages = [new() { To = "+15551111111", Body = "Message 1", From = "+1987654321" }, new() { To = "+15552222222", Body = "Message 2", From = "+1987654321" }];
-        _ = await service.SendBulkSmsAsync(messages, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkSmsAsync(messages, TestCt);
         Assert.NotNull(eventArgs);
         Assert.NotNull(eventArgs.BulkSmsResult);
         Assert.Equal(2, eventArgs.BulkSmsResult.Results.Count);
@@ -240,7 +240,7 @@ public class SmsServiceEventTests
             SmsMessageBuilder.New().SetTo("+15553333333").SetBody("Message 3")
         ];
 
-        _ = await service.SendBulkAsync(builders, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkAsync(builders, TestCt);
 
         // MessageSent should fire once per message
         Assert.Equal(3, messageSentCount);
@@ -260,7 +260,7 @@ public class SmsServiceEventTests
             SmsMessageBuilder.New().SetTo("+15553333333").SetBody("Message 3")
         ];
 
-        _ = await service.SendBulkAsync(builders, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkAsync(builders, TestCt);
 
         // MessageSending should fire once per message
         Assert.Equal(3, messageSendingCount);
@@ -282,7 +282,7 @@ public class SmsServiceEventTests
 
         // Use a message that fails at send time (invalid phone format)
         var message = new SmsRequest("invalid-phone-format", "Test", "+1987654321");
-        var result = await service.SendAsync(message, TestContext.Current.CancellationToken);
+        var result = await service.SendAsync(message, TestCt);
 
         // Events should fire even when the send fails
         Assert.NotNull(sendingEventArgs);
@@ -308,7 +308,7 @@ public class SmsServiceEventTests
             new("+15552222222", "Message 2", "+1987654321") // Valid
         ];
 
-        _ = await service.SendBulkSmsAsync(messages, TestContext.Current.CancellationToken);
+        _ = await service.SendBulkSmsAsync(messages, TestCt);
 
         // The event should fire even when some sends fail
         Assert.NotNull(eventArgs);

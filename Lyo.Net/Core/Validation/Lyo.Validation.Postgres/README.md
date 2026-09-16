@@ -30,12 +30,13 @@ At design time set `VALIDATION_CONNECTION_STRING` and run `dotnet ef migrations 
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Postgres` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `Lyo.Validation` (direct, lyo)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
@@ -53,4 +54,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

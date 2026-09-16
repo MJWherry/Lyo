@@ -16,26 +16,36 @@ public static class LyoTypeUi
     /// </summary>
     public static string? TemplateTypeName => LyoTypeInfo.All.FirstOrDefault(t => t.EditorKind == LyoTypeEditorKind.Formatter)?.FullName;
 
-    /// <summary>Chip color for a stored type name (Regex/Xml stay warning; Formatter is secondary; otherwise <see cref="ForCategory" />).</summary>
-    public static Color ForType(string? typeName)
+    /// <summary>
+    /// Chip spec for a stored type name. Regex and Xml stay <see cref="Color.Warning" />. Formatter uses <see cref="LyoChipHue.Rose" />.
+    /// Other categories use <see cref="ForCategory" />.
+    /// </summary>
+    public static LyoChipSpec ForType(string? typeName)
     {
         var info = LyoTypeInfo.FromName(typeName);
+        var label = DisplayName(typeName);
         if (info.EditorKind == LyoTypeEditorKind.Formatter)
-            return Color.Secondary;
-        return info.EditorKind is LyoTypeEditorKind.Regex or LyoTypeEditorKind.Xml ? Color.Warning : ForCategory(info.Category);
+            return LyoChips.Of(label, LyoChipHue.Rose);
+        if (info.EditorKind is LyoTypeEditorKind.Regex or LyoTypeEditorKind.Xml)
+            return LyoChips.Of(label, Color.Warning);
+        var hue = ForCategory(info.Category);
+        return hue is null ? LyoChips.Of(label) : LyoChips.Of(label, hue);
     }
 
-    /// <summary>Chip color for a catalog category.</summary>
-    public static Color ForCategory(LyoTypeCategory category)
+    /// <summary>Identity hue for a catalog category. Unknown stays uncolored.</summary>
+    public static LyoChipHue? ForCategory(LyoTypeCategory category)
         => category switch {
-            LyoTypeCategory.Boolean => Color.Success,
-            LyoTypeCategory.Integer or LyoTypeCategory.Number => Color.Info,
-            LyoTypeCategory.Temporal => Color.Tertiary,
-            LyoTypeCategory.Identifier => Color.Secondary,
-            LyoTypeCategory.Enum => Color.Primary,
-            LyoTypeCategory.Json or LyoTypeCategory.Binary => Color.Warning,
-            LyoTypeCategory.Collection => Color.Info,
-            var _ => Color.Default
+            LyoTypeCategory.Text => LyoChipHue.Blue,
+            LyoTypeCategory.Boolean => LyoChipHue.Lime,
+            LyoTypeCategory.Integer => LyoChipHue.Teal,
+            LyoTypeCategory.Number => LyoChipHue.Cyan,
+            LyoTypeCategory.Temporal => LyoChipHue.Amber,
+            LyoTypeCategory.Identifier => LyoChipHue.Indigo,
+            LyoTypeCategory.Enum => LyoChipHue.Violet,
+            LyoTypeCategory.Json => LyoChipHue.Magenta,
+            LyoTypeCategory.Collection => LyoChipHue.Coral,
+            LyoTypeCategory.Binary => LyoChipHue.Purple,
+            var _ => null
         };
 
     /// <summary>Capitalized picker/chip label. Collections draw as <c>List&lt;Int&gt;</c> or <c>Int[]</c>.</summary>

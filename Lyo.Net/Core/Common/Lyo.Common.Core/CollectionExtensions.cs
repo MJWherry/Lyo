@@ -40,7 +40,7 @@ public static class CollectionExtensions
     private static T[] ExistingArrayOrToArray<T>(IEnumerable<T>? source)
     {
         ArgumentHelpers.ThrowIfNull(source);
-        return source as T[] ?? source.ToArray();
+        return source as T[] ?? [.. source];
     }
     // Do not add IsNullOrEmpty on IEnumerable<T> — string implements IEnumerable<char>, so it would
     // win or be ambiguous vs extension(string?).IsNullOrEmpty (empty string vs no chars).
@@ -90,7 +90,7 @@ public static class CollectionExtensions
         public List<T> AsListOrToList()
         {
             ArgumentHelpers.ThrowIfNull(array);
-            return array.ToList();
+            return [.. array];
         }
 
         /// <summary>Returns the array as <see cref="ICollection{T}" /> (same instance, no copy).</summary>

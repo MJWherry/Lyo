@@ -1,0 +1,30 @@
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2" Class="mt-2">
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+        <MudTextField @bind-Value="_name" Label="Name" Margin="Margin.Dense" Style="min-width: 12rem;"/>
+        <MudTextField @bind-Value="_abbreviation" Label="Abbreviation" Margin="Margin.Dense" Style="max-width: 8rem;"/>
+        <MudButton OnClick="Save"
+                   StartIcon="@(_editingId is null ? Icons.Material.Filled.Add : Icons.Material.Filled.Save)"
+                   Size="Size.Small"
+                   Variant="Variant.Outlined"
+                   Disabled="@(string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_abbreviation))">
+            @(_editingId is null ? "Add" : "Update")
+        </MudButton>
+        @if (_editingId is not null) {
+            <MudButton OnClick="Cancel" Size="Size.Small" Variant="Variant.Text">Cancel</MudButton>
+        }
+    </MudStack>
+    @if (_units.Count == 0) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">No units yet. Add teaspoon, cup, or whatever you cook with.</MudText>
+    }
+    @foreach (var unit in _units) {
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+            <MudText Style="min-width: 8rem;">@unit.Abbreviation</MudText>
+            <MudText Class="mud-text-secondary">@unit.Name</MudText>
+            <MudSpacer/>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit unit" OnClick="@(() => BeginEdit(unit))"/>
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" title="Delete unit" OnClick="@(() => Delete(unit))"/>
+        </MudStack>
+    }
+</MudStack>

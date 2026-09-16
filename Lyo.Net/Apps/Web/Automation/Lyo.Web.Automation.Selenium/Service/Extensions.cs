@@ -17,6 +17,7 @@ public static class Extensions
         services.AddSingleton(_ => {
             var options = new SeleniumBrowserOptions();
             configure?.Invoke(options);
+            options.Validate();
             return options;
         });
 
@@ -31,7 +32,9 @@ public static class Extensions
     {
         var b = SeleniumBrowserOptionsBuilder.New();
         configure(b);
-        return b.Build();
+        var options = b.Build();
+        options.Validate();
+        return options;
     }
 
     private static SeleniumBrowser RegisterSeleniumBrowser(IServiceProvider sp)
@@ -97,6 +100,7 @@ public static class Extensions
             services.AddSingleton(_ => {
                 var o = new SeleniumBrowserOptions();
                 configuration.GetSection(sectionName).Bind(o);
+                o.Validate();
                 return o;
             });
 
@@ -110,6 +114,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddScoped(RegisterSeleniumBrowser);
             return services;
@@ -120,6 +125,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
+            options.Validate();
             services.AddSingleton(options);
             services.AddScoped(RegisterSeleniumBrowser);
             RegisterSeleniumBrowserServiceSingleton(services);

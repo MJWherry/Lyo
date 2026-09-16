@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Lyo.Exceptions;
 using Lyo.Reporting.Models.Controls;
 using Lyo.Reporting.Models.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Models.Composition;
 
@@ -135,7 +136,7 @@ public static class ReportDesignDropMapper
     {
         ArgumentHelpers.ThrowIfNull(section);
         if (string.IsNullOrWhiteSpace(section.Id))
-            section.Id = Guid.NewGuid().ToString("N")[..8];
+            section.Id = LyoGuid.CreateV7().ToString("N")[..8];
 
         return section.Id!;
     }
@@ -175,7 +176,7 @@ public static class ReportDesignTreeExpand
     public static string LiveKey(object node)
     {
         ArgumentHelpers.ThrowIfNull(node);
-        return LiveKeys.GetValue(node, static _ => new StrongBox<string>(Guid.NewGuid().ToString("N")[..8])).Value!;
+        return LiveKeys.GetValue(node, static _ => new StrongBox<string>(LyoGuid.CreateV7().ToString("N")[..8])).Value!;
     }
 
     public static string SectionKey(Section section) => "s:" + LiveKey(section);

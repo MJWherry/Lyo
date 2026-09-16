@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { Children, useMemo, useRef, useState, type ReactNode } from "react";
 import type { FilterPropertyDefinition } from "lyo-query";
 import {
   flexRender,
@@ -12,13 +12,17 @@ import {
 } from "@tanstack/react-table";
 import ArrowDownward from "@mui/icons-material/ArrowDownward";
 import ArrowUpward from "@mui/icons-material/ArrowUpward";
+import Autorenew from "@mui/icons-material/Autorenew";
 import DeveloperMode from "@mui/icons-material/DeveloperMode";
 import FilterList from "@mui/icons-material/FilterList";
+import MoreVert from "@mui/icons-material/MoreVert";
 import Refresh from "@mui/icons-material/Refresh";
+import SortIcon from "@mui/icons-material/Sort";
 import ViewColumn from "@mui/icons-material/ViewColumn";
+import ViewList from "@mui/icons-material/ViewList";
+import ViewModule from "@mui/icons-material/ViewModule";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
@@ -38,9 +42,15 @@ import type { ExportFormat } from "lyo-api-client";
 import { useLyoSnackbar } from "../provider/LyoSnackbar.js";
 import { dataGridElementId, dataGridProjectedElementId, resolveElementId } from "../provider/elementId.js";
 import { useJsonViewDialog } from "../overlay/LyoJsonViewDialog.js";
-import { FilterChipLabel, formatFilterChip } from "../query/FilterChipLabel.js";
+import { FilterChipLabel } from "../query/FilterChipLabel.js";
+import { filterChipText } from "../query/filterChipText.js";
 import { QueryFilterComponent, type QueryFilterHandle } from "../query/QueryFilterComponent.js";
+import { LyoBulkPatchDialog } from "../overlay/LyoBulkPatchDialog.js";
+import { LyoToolbar, LyoToolbarButton, LyoToolbarField, LyoToolbarIconButton, LyoToolbarMenu, LyoToolbarRow } from "../shell/LyoToolbar.js";
+import { LyoDataGridCards } from "./LyoDataGridCards.js";
+import { renderLyoCell } from "./LyoDataGridCell.js";
 import { LyoDataGridExportDialog, LyoDataGridExportMenu } from "./LyoDataGridExportMenu.js";
+import { responseDevChips } from "./devChips.js";
 import {
   hasFeature,
   LyoDataGridFeatureFlags,
@@ -54,10 +64,18 @@ export type LyoDataGridProps<T> = UseLyoDataGridOptions<T> & {
   elementId?: string;
   leftControls?: ReactNode;
   rowMenu?: (row: T) => ReactNode;
+  /** Icon buttons drawn over the row on hover. The kebab menu stays visible. */
+  rowQuickActions?: (row: T) => ReactNode;
   /** Pixel width of the trailing row-actions column. Default 56. */
   rowMenuWidth?: number;
   bulkMenuItems?: ReactNode;
   noRecordsContent?: ReactNode;
+  /** Shown instead of the empty table while the first page loads. */
+  loadingContent?: ReactNode;
+  /** Fired when the row body is clicked. Row menus and selection checkboxes do not trigger it. */
+  onRowClick?: (row: T) => void;
+  /** Extra selected styling, independent of the bulk checkbox. */
+  isRowSelected?: (row: T) => boolean;
 };
 
 function GridInner<T>({
@@ -65,17 +83,25 @@ function GridInner<T>({
   elementId,
   leftControls,
   rowMenu,
+  rowQuickActions,
   rowMenuWidth = 56,
   bulkMenuItems,
   noRecordsContent,
+  loadingContent,
+  onRowClick,
+  isRowSelected,
 }: {
   grid: LyoDataGridController<T>;
   elementId?: string;
   leftControls?: ReactNode;
   rowMenu?: (row: T) => ReactNode;
+  rowQuickActions?: (row: T) => ReactNode;
   rowMenuWidth?: number;
   bulkMenuItems?: ReactNode;
   noRecordsContent?: ReactNode;
+  loadingContent?: ReactNode;
+  onRowClick?: (row: T) => void;
+  isRowSelected?: (row: T) => boolean;
 }) {
   const id =
     grid.mode === "project"
@@ -83,146 +109,249 @@ function GridInner<T>({
       : resolveElementId(elementId, dataGridElementId(grid.route));
   const json = useJsonViewDialog();
   const snackbar = useLyoSnackbar();
-  const [colAnchor, setColAnchor] = useState<null | HTMLElement>(null);
-  const [devAnchor, setDevAnchor] = useState<null | HTMLElement>(null);
-  const [bulkAnchor, setBulkAnchor] = useState<null | HTMLElement>(null);
   const [filterAnchor, setFilterAnchor] = useState<null | HTMLElement>(null);
   const filterRef = useRef<QueryFilterHandle>(null);
   const [exportFormat, setExportFormat] = useState<ExportFormat | null>(null);
+  const [patchOpen, setPatchOpen] = useState(false);
 
   const selectable = hasFeature(grid.features, LyoDataGridFeatureFlags.BulkMenu) && Boolean(grid.keySelector);
+  const selectedCount = grid.selectedKeys.length;
+  const sortableCardColumns = grid.cardColumns.map((c) => c.column).filter((c) => c.sortable !== false);
+
+  const deleteSelected = async () => {
+    const count = selectedCount;
+    try {
+      await grid.apiClient.bulkDelete?.(grid.route, grid.selectedKeys);
+      snackbar.show(`Deleted ${count.toLocaleString("en-US")} item${count === 1 ? "" : "s"}.`, "success");
+      grid.clearSelection();
+    } catch (err) {
+      snackbar.show(err instanceof Error ? err.message : "Delete failed.", "error");
+    }
+    await grid.reload();
+  };
+
+  const rowActions = (row: T) => (
+    <>
+      {rowMenu ? <RowKebab>{rowMenu(row)}</RowKebab> : null}
+      <RowDevMenu onViewJson={() => json.show(row, "Row", { path: grid.route })} />
+    </>
+  );
 
   return (
-    <Box id={id} data-lyo-id={id} sx={{ width: "100%", minWidth: 0 }}>
-      <Stack spacing={1} sx={{ px: 2, py: 1 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          {selectable ? (
+    <Box id={id} data-lyo-id={id} sx={{ width: "100%", minWidth: 0, overflow: "hidden" }}>
+      <Box sx={{ px: 2, py: 1 }}>
+        <LyoToolbar
+          rows={
             <>
-              <Button size="small" variant="outlined" onClick={(e) => setBulkAnchor(e.currentTarget)}>
-                Bulk ({grid.selectedKeys.length})
-              </Button>
-              <Menu open={Boolean(bulkAnchor)} anchorEl={bulkAnchor} onClose={() => setBulkAnchor(null)}>
-                <MenuItem
-                  onClick={() => {
-                    grid.clearSelection();
-                    setBulkAnchor(null);
-                  }}
-                >
-                  Deselect
-                </MenuItem>
-                {hasFeature(grid.features, LyoDataGridFeatureFlags.BulkExport) && grid.apiClient.export ? (
-                  <LyoDataGridExportMenu
-                    onPickFormat={(format) => {
-                      setBulkAnchor(null);
-                      setExportFormat(format);
-                    }}
+              <LyoToolbarRow>
+                {selectable ? (
+                  <LyoToolbarMenu label={`Bulk ${grid.bulkLabel}`.trim()}>
+                    {(close) => [
+                      <MenuItem
+                        key="deselect"
+                        disabled={selectedCount === 0}
+                        onClick={() => {
+                          grid.clearSelection();
+                          close();
+                        }}
+                      >
+                        Deselect ({selectedCount.toLocaleString("en-US")})
+                      </MenuItem>,
+                      hasFeature(grid.features, LyoDataGridFeatureFlags.BulkExport) && grid.apiClient.export ? (
+                        <LyoDataGridExportMenu
+                          key="export"
+                          disabled={!grid.canExport}
+                          onPickFormat={(format) => {
+                            close();
+                            setExportFormat(format);
+                          }}
+                        />
+                      ) : null,
+                      hasFeature(grid.features, LyoDataGridFeatureFlags.BulkPatch) && grid.apiClient.bulkPatch ? (
+                        <MenuItem
+                          key="patch"
+                          disabled={!grid.canBulkEdit}
+                          onClick={() => {
+                            close();
+                            setPatchOpen(true);
+                          }}
+                        >
+                          Patch
+                        </MenuItem>
+                      ) : null,
+                      hasFeature(grid.features, LyoDataGridFeatureFlags.BulkDelete) && grid.apiClient.bulkDelete ? (
+                        <MenuItem
+                          key="delete"
+                          disabled={!grid.canBulkEdit}
+                          onClick={() => {
+                            close();
+                            void deleteSelected();
+                          }}
+                        >
+                          Delete
+                        </MenuItem>
+                      ) : null,
+                      ...Children.toArray(bulkMenuItems),
+                    ]}
+                  </LyoToolbarMenu>
+                ) : null}
+                {leftControls}
+                <Box sx={{ flex: 1 }} />
+                <LyoToolbarMenu label="Dev" icon={<DeveloperMode />}>
+                  {(close) => [
+                    <MenuItem
+                      key="req"
+                      onClick={() => {
+                        json.show(grid.currentQuery, "Request", { path: grid.queryPath });
+                        close();
+                      }}
+                    >
+                      View Request
+                    </MenuItem>,
+                    <MenuItem
+                      key="res"
+                      onClick={() => {
+                        json.show(grid.currentResults, "Response", { path: grid.queryPath, chips: responseDevChips(grid.queryMetrics) });
+                        close();
+                      }}
+                    >
+                      View Response
+                    </MenuItem>,
+                  ]}
+                </LyoToolbarMenu>
+                <LyoToolbarButton icon={<Refresh />} onClick={() => void grid.reload()} disabled={grid.loading}>
+                  Refresh
+                </LyoToolbarButton>
+                {grid.autoRefreshEnabled ? (
+                  <LyoToolbarMenu label={grid.autoRefresh ? `Auto (${grid.refreshSeconds}s)` : "Auto Refresh"} icon={<Autorenew color={grid.autoRefresh ? "success" : "inherit"} />}>
+                    {(close) => [
+                      <MenuItem
+                        key="toggle"
+                        onClick={() => {
+                          grid.setAutoRefresh(!grid.autoRefresh);
+                          close();
+                        }}
+                      >
+                        {grid.autoRefresh ? "Stop" : "Start"}
+                      </MenuItem>,
+                      ...grid.autoRefreshIntervalsSeconds.map((seconds) => (
+                        <MenuItem
+                          key={seconds}
+                          selected={seconds === grid.refreshSeconds}
+                          onClick={() => {
+                            grid.setRefreshSeconds(seconds);
+                            grid.setAutoRefresh(true);
+                            close();
+                          }}
+                        >
+                          Every {seconds}s
+                        </MenuItem>
+                      )),
+                    ]}
+                  </LyoToolbarMenu>
+                ) : null}
+                {grid.cardMode && sortableCardColumns.length > 0 ? (
+                  <LyoToolbarMenu label="Sort" icon={<SortIcon />}>
+                    {sortableCardColumns.map((c) => {
+                      const sort = grid.sorts.find((s) => s.PropertyName === c.field);
+                      return (
+                        <MenuItem key={c.field} selected={Boolean(sort)} onClick={() => grid.toggleSort(c.field)}>
+                          {c.header}
+                          {sort ? (sort.Direction === "Asc" ? <ArrowUpward sx={{ fontSize: 14, ml: 1 }} /> : <ArrowDownward sx={{ fontSize: 14, ml: 1 }} />) : null}
+                        </MenuItem>
+                      );
+                    })}
+                  </LyoToolbarMenu>
+                ) : null}
+                {grid.allowLayoutToggle ? (
+                  <LyoToolbarIconButton
+                    tooltip={grid.cardMode ? "Show as table" : "Show as cards"}
+                    icon={grid.cardMode ? <ViewList /> : <ViewModule />}
+                    onClick={() => grid.setLayout(grid.cardMode ? "Table" : "Cards")}
                   />
                 ) : null}
-                {bulkMenuItems}
-                {hasFeature(grid.features, LyoDataGridFeatureFlags.BulkDelete) && grid.apiClient.bulkDelete ? (
-                  <MenuItem
-                    onClick={async () => {
-                      setBulkAnchor(null);
-                      await grid.apiClient.bulkDelete?.(grid.route, grid.selectedKeys);
-                      await grid.reload();
-                    }}
-                  >
-                    Delete
-                  </MenuItem>
+                <LyoToolbarMenu tooltip="Columns" icon={<ViewColumn />}>
+                  {grid.columns
+                    .filter((c) => c.hideable !== false)
+                    .map((c) => (
+                      <MenuItem key={c.field} onClick={() => grid.toggleHidden(c.field)}>
+                        <Checkbox checked={!grid.hidden.has(c.field)} size="small" />
+                        {c.header}
+                      </MenuItem>
+                    ))}
+                </LyoToolbarMenu>
+              </LyoToolbarRow>
+              <LyoToolbarRow>
+                {hasFeature(grid.features, LyoDataGridFeatureFlags.Searchable) ? (
+                  <LyoToolbarField width={260}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      placeholder={grid.searchPlaceholder}
+                      value={grid.searchText}
+                      onChange={(e) => grid.setSearchText(e.target.value)}
+                    />
+                  </LyoToolbarField>
                 ) : null}
-              </Menu>
+                {hasFeature(grid.features, LyoDataGridFeatureFlags.Filterable) ? (
+                  <>
+                    <LyoToolbarButton variant="text" icon={<FilterList />} onClick={(e) => setFilterAnchor(e.currentTarget)}>
+                      Filters
+                    </LyoToolbarButton>
+                    {grid.filterStates.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        None
+                      </Typography>
+                    ) : null}
+                  </>
+                ) : null}
+                {grid.filterStates.map((f, i) => (
+                  <FilterChipLabel
+                    key={i}
+                    text={filterChipText(f.condition, grid.filterPropertyDefinitions)}
+                    detailText={filterChipText(f.condition, grid.filterPropertyDefinitions, false)}
+                    disabled={!f.isEnabled}
+                    onClick={() => grid.toggleFilter(i)}
+                    onDelete={() => grid.removeFilter(i)}
+                  />
+                ))}
+                {grid.loading ? <CircularProgress size={18} /> : null}
+              </LyoToolbarRow>
             </>
-          ) : null}
-          {leftControls}
-          <Box sx={{ flex: 1 }} />
-          <Button size="small" startIcon={<DeveloperMode />} variant="outlined" onClick={(e) => setDevAnchor(e.currentTarget)}>
-            Dev
-          </Button>
-          <Menu open={Boolean(devAnchor)} anchorEl={devAnchor} onClose={() => setDevAnchor(null)}>
-            <MenuItem
-              onClick={() => {
-                json.show(grid.currentQuery, "Request");
-                setDevAnchor(null);
-              }}
-            >
-              View Request
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                json.show(grid.currentResults, "Result");
-                setDevAnchor(null);
-              }}
-            >
-              Show Result
-            </MenuItem>
-          </Menu>
-          <Button size="small" startIcon={<Refresh />} variant="outlined" onClick={() => void grid.reload()} disabled={grid.loading}>
-            Refresh
-          </Button>
-          {hasFeature(grid.features, LyoDataGridFeatureFlags.AutoRefresh) ? (
-            <Button
-              size="small"
-              variant="outlined"
-              color={grid.autoRefresh ? "success" : "inherit"}
-              onClick={() => grid.setAutoRefresh(!grid.autoRefresh)}
-            >
-              {grid.autoRefresh ? `Auto (${grid.refreshSeconds}s)` : "Auto Refresh"}
-            </Button>
-          ) : null}
-          <IconButton size="small" onClick={(e) => setColAnchor(e.currentTarget)} aria-label="Columns">
-            <ViewColumn />
-          </IconButton>
-          <Menu open={Boolean(colAnchor)} anchorEl={colAnchor} onClose={() => setColAnchor(null)}>
-            {grid.columns
-              .filter((c) => c.hideable !== false)
-              .map((c) => (
-                <MenuItem key={c.field} onClick={() => grid.toggleHidden(c.field)}>
-                  <Checkbox checked={!grid.hidden.has(c.field)} size="small" />
-                  {c.header}
-                </MenuItem>
-              ))}
-          </Menu>
-        </Stack>
-        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-          {hasFeature(grid.features, LyoDataGridFeatureFlags.Searchable) ? (
-            <TextField
-              size="small"
-              label="Search"
-              value={grid.searchText}
-              onChange={(e) => grid.setSearchText(e.target.value)}
-              sx={{ minWidth: 200 }}
-            />
-          ) : null}
-          {hasFeature(grid.features, LyoDataGridFeatureFlags.Filterable) ? (
-            <Button
-              size="small"
-              startIcon={<FilterList />}
-              onClick={(e) => setFilterAnchor(e.currentTarget)}
-            >
-              Filters
-            </Button>
-          ) : null}
-          {grid.filterStates.map((f, i) => (
-            <FilterChipLabel
-              key={i}
-              text={formatFilterChip(f.condition.Field, f.condition.Comparison, f.condition.Value)}
-              disabled={!f.isEnabled}
-              onClick={() => grid.toggleFilter(i)}
-              onDelete={() => grid.removeFilter(i)}
-            />
-          ))}
-          {grid.loading ? <CircularProgress size={18} /> : null}
-        </Stack>
+          }
+          showRowToggle={false}
+        />
         {grid.error ? <Alert severity="error">{grid.error}</Alert> : null}
-      </Stack>
+      </Box>
 
-      <GridTable
-        grid={grid}
-        selectable={selectable}
-        rowMenu={rowMenu}
-        rowMenuWidth={rowMenuWidth}
-        noRecordsContent={noRecordsContent}
-      />
+      {grid.cardMode ? (
+        <LyoDataGridCards
+          grid={grid}
+          selectable={selectable}
+          actions={(row) => (
+            <>
+              {rowQuickActions?.(row)}
+              {rowActions(row)}
+            </>
+          )}
+          onRowClick={onRowClick}
+          isRowSelected={isRowSelected}
+          noRecordsContent={noRecordsContent}
+          loadingContent={loadingContent}
+        />
+      ) : (
+        <GridTable
+          grid={grid}
+          selectable={selectable}
+          rowActions={rowActions}
+          rowQuickActions={rowQuickActions}
+          rowMenuWidth={rowMenu || rowQuickActions ? rowMenuWidth + ROW_DEV_MENU_SIZE : ROW_DEV_MENU_SIZE}
+          onRowClick={onRowClick}
+          isRowSelected={isRowSelected}
+          noRecordsContent={noRecordsContent}
+          loadingContent={loadingContent}
+        />
+      )}
       <TablePagination
         component="div"
         count={grid.total}
@@ -236,6 +365,18 @@ function GridInner<T>({
         rowsPerPageOptions={grid.pageSizes}
       />
       {json.dialog}
+      {patchOpen ? (
+        <LyoBulkPatchDialog
+          open
+          onClose={() => setPatchOpen(false)}
+          keys={grid.selectedKeys}
+          properties={grid.filterPropertyDefinitions}
+          route={grid.route}
+          patchRoute={grid.patchRoute}
+          client={grid.apiClient}
+          onPatched={() => void grid.reload()}
+        />
+      ) : null}
       <LyoDataGridExportDialog
         grid={grid}
         format={exportFormat}
@@ -271,20 +412,84 @@ function GridInner<T>({
 }
 
 const SELECT_COL_SIZE = 36;
+const ROW_DEV_MENU_SIZE = 36;
+
+function RowKebab({ children }: { children: ReactNode }) {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  return (
+    <>
+      <IconButton
+        size="small"
+        aria-label="Row actions"
+        onClick={(e) => {
+          e.stopPropagation();
+          setAnchor(e.currentTarget);
+        }}
+      >
+        <MoreVert sx={{ fontSize: 18 }} />
+      </IconButton>
+      <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)} onClick={() => setAnchor(null)}>
+        {Children.toArray(children)}
+      </Menu>
+    </>
+  );
+}
+
+function RowDevMenu({ onViewJson }: { onViewJson: () => void }) {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  return (
+    <>
+      <IconButton size="small" onClick={(e) => setAnchor(e.currentTarget)} aria-label="Row dev menu">
+        <DeveloperMode sx={{ fontSize: 16 }} />
+      </IconButton>
+      <Menu open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}>
+        <MenuItem
+          onClick={() => {
+            setAnchor(null);
+            onViewJson();
+          }}
+        >
+          View Json
+        </MenuItem>
+      </Menu>
+    </>
+  );
+}
 const checkboxSx = { p: 0, m: 0, "& .MuiSvgIcon-root": { fontSize: 18 } };
+
+const stickyCell = (side: "left" | "right", head: boolean) => ({
+  position: "sticky" as const,
+  [side]: 0,
+  zIndex: head ? 3 : 2,
+  bgcolor: "background.paper",
+  ...(head
+    ? {}
+    : {
+        ".MuiTableRow-root:hover &": { bgcolor: "action.hover" },
+        ".MuiTableRow-root.Mui-selected &": { bgcolor: "action.selected" },
+      }),
+});
 
 function GridTable<T>({
   grid,
   selectable,
-  rowMenu,
+  rowActions,
+  rowQuickActions,
   rowMenuWidth,
+  onRowClick,
+  isRowSelected,
   noRecordsContent,
+  loadingContent,
 }: {
   grid: LyoDataGridController<T>;
   selectable: boolean;
-  rowMenu?: (row: T) => ReactNode;
+  rowActions: (row: T) => ReactNode;
+  rowQuickActions?: (row: T) => ReactNode;
   rowMenuWidth: number;
+  onRowClick?: (row: T) => void;
+  isRowSelected?: (row: T) => boolean;
   noRecordsContent?: ReactNode;
+  loadingContent?: ReactNode;
 }) {
   const columns = useMemo<ColumnDef<T>[]>(() => {
     const defs: ColumnDef<T>[] = [];
@@ -327,29 +532,45 @@ function GridTable<T>({
         size: col.size ?? 140,
         minSize: col.minSize ?? 64,
         maxSize: col.maxSize,
-        cell: ({ row, getValue }) =>
-          col.cell
-            ? col.cell(
-                row.original,
-                col.related ? grid.getRelated(col.related.route, projectedValue(row.original, col.field)) : undefined
-              )
-            : formatCell(getValue()),
+        cell: ({ row }) => renderLyoCell(col, row.original, grid),
       });
     }
-    if (rowMenu) {
-      defs.push({
-        id: "__menu",
-        enableSorting: false,
-        enableResizing: false,
-        size: rowMenuWidth,
-        minSize: rowMenuWidth,
-        maxSize: rowMenuWidth,
-        header: "",
-        cell: ({ row }) => rowMenu(row.original),
-      });
-    }
+    defs.push({
+      id: "__menu",
+      enableSorting: false,
+      enableResizing: false,
+      size: rowMenuWidth,
+      minSize: rowMenuWidth,
+      maxSize: rowMenuWidth,
+      header: "",
+      cell: ({ row }) => (
+        <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+          {rowQuickActions ? (
+            <Box
+              className="lyo-row-quick"
+              sx={{
+                position: "absolute",
+                right: "100%",
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "flex",
+                alignItems: "center",
+                opacity: 0,
+                pointerEvents: "none",
+                ".MuiTableRow-root:hover &": { opacity: 1, pointerEvents: "auto" },
+              }}
+            >
+              {rowQuickActions(row.original)}
+            </Box>
+          ) : null}
+          <Stack direction="row" alignItems="center" spacing={0.25}>
+            {rowActions(row.original)}
+          </Stack>
+        </Box>
+      ),
+    });
     return defs;
-  }, [grid, selectable, rowMenu, rowMenuWidth]);
+  }, [grid, selectable, rowActions, rowQuickActions, rowMenuWidth]);
 
   const sorting = useMemo<SortingState>(
     () =>
@@ -393,15 +614,12 @@ function GridTable<T>({
   const tableWidth = table.getTotalSize();
 
   return (
-    <Box sx={{ width: "100%", overflowX: "auto" }}>
-      <Table size="small" sx={{ width: "100%", minWidth: tableWidth, tableLayout: "fixed" }}>
+    <Box sx={{ width: "100%", minWidth: 0, overflow: "auto" }}>
+      <Table size="small" sx={{ width: tableWidth, minWidth: "100%", tableLayout: "fixed" }}>
         <colgroup>
-          {table.getAllLeafColumns().map((col) => {
-            const min = col.columnDef.minSize;
-            const max = col.columnDef.maxSize;
-            const fixed = min != null && min === max;
-            return <col key={col.id} style={fixed ? { width: col.getSize() } : undefined} />;
-          })}
+          {table.getAllLeafColumns().map((col) => (
+            <col key={col.id} style={{ width: col.getSize() }} />
+          ))}
         </colgroup>
         <TableHead>
           {headerGroups.map((hg) => (
@@ -415,6 +633,7 @@ function GridTable<T>({
                 const isSelect = header.column.id === "__select";
                 const isMenu = header.column.id === "__menu";
                 const fixed = isSelect || isMenu;
+                const align = grid.visibleColumns.find((c) => c.field === header.column.id)?.align;
                 return (
                   <TableCell
                     key={header.id}
@@ -428,12 +647,13 @@ function GridTable<T>({
                       cursor: sortable && !isSelect ? "pointer" : "default",
                       fontWeight: 600,
                       width: header.getSize(),
-                      minWidth: header.column.columnDef.minSize ?? header.getSize(),
+                      minWidth: fixed ? header.getSize() : (header.column.columnDef.minSize ?? header.getSize()),
                       maxWidth: header.column.columnDef.maxSize ?? (fixed ? header.getSize() : undefined),
-                      overflow: isSelect ? "visible" : "hidden",
-                      textAlign: isSelect ? "center" : "inherit",
+                      overflow: "hidden",
+                      textAlign: isSelect ? "center" : (align ?? "inherit"),
                       px: isSelect ? 0 : isMenu ? 0.5 : undefined,
                       userSelect: "none",
+                      ...(isSelect ? stickyCell("left", true) : isMenu ? stickyCell("right", true) : {}),
                     }}
                   >
                     <Stack direction="row" spacing={0.5} alignItems="center" sx={{ pr: isSelect ? 0 : 1, minWidth: 0, justifyContent: isSelect ? "center" : undefined }}>
@@ -479,7 +699,11 @@ function GridTable<T>({
           ))}
         </TableHead>
         <TableBody>
-          {rows.length === 0 && !grid.loading ? (
+          {rows.length === 0 && grid.loading && loadingContent ? (
+            <TableRow>
+              <TableCell colSpan={colSpan}>{loadingContent}</TableCell>
+            </TableRow>
+          ) : rows.length === 0 && !grid.loading ? (
             <TableRow>
               <TableCell colSpan={colSpan}>
                 {noRecordsContent ?? (
@@ -491,24 +715,32 @@ function GridTable<T>({
             </TableRow>
           ) : (
             rows.map((row) => (
-              <TableRow key={row.id} hover selected={grid.isSelected(row.original)}>
+              <TableRow
+                key={row.id}
+                hover
+                selected={grid.isSelected(row.original) || Boolean(isRowSelected?.(row.original))}
+                onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                sx={onRowClick ? { cursor: "pointer" } : undefined}
+              >
                 {row.getVisibleCells().map((cell) => {
                   const isSelect = cell.column.id === "__select";
                   const isMenu = cell.column.id === "__menu";
                   const fixed = isSelect || isMenu;
+                  const align = grid.visibleColumns.find((c) => c.field === cell.column.id)?.align;
                   return (
                     <TableCell
                       key={cell.id}
                       padding={fixed ? "none" : undefined}
                       sx={{
                         width: cell.column.getSize(),
-                        minWidth: cell.column.columnDef.minSize ?? cell.column.getSize(),
+                        minWidth: fixed ? cell.column.getSize() : (cell.column.columnDef.minSize ?? cell.column.getSize()),
                         maxWidth: cell.column.columnDef.maxSize ?? (fixed ? cell.column.getSize() : undefined),
-                        overflow: isSelect || isMenu ? "visible" : "hidden",
-                        textOverflow: isSelect || isMenu ? "clip" : "ellipsis",
-                        whiteSpace: isMenu ? "normal" : "nowrap",
-                        textAlign: isSelect ? "center" : "inherit",
+                        overflow: isMenu ? "visible" : "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        textAlign: isSelect ? "center" : (align ?? "inherit"),
                         px: isSelect ? 0 : isMenu ? 0.5 : undefined,
+                        ...(isSelect ? stickyCell("left", false) : isMenu ? stickyCell("right", false) : {}),
                       }}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -524,14 +756,8 @@ function GridTable<T>({
   );
 }
 
-function formatCell(value: unknown): string {
-  if (value == null) return "—";
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
-
 export function LyoDataGrid<T>(props: LyoDataGridProps<T>) {
-  const { elementId, leftControls, rowMenu, rowMenuWidth, bulkMenuItems, noRecordsContent, ...opts } = props;
+  const { elementId, leftControls, rowMenu, rowQuickActions, rowMenuWidth, bulkMenuItems, noRecordsContent, loadingContent, onRowClick, isRowSelected, ...opts } = props;
   const grid = useLyoDataGrid({ ...opts, mode: opts.mode ?? "concrete" });
   return (
     <GridInner
@@ -539,15 +765,19 @@ export function LyoDataGrid<T>(props: LyoDataGridProps<T>) {
       elementId={elementId}
       leftControls={leftControls}
       rowMenu={rowMenu}
+      rowQuickActions={rowQuickActions}
       rowMenuWidth={rowMenuWidth}
       bulkMenuItems={bulkMenuItems}
       noRecordsContent={noRecordsContent}
+      loadingContent={loadingContent}
+      onRowClick={onRowClick}
+      isRowSelected={isRowSelected}
     />
   );
 }
 
 export function LyoDataGridProjected<T>(props: LyoDataGridProps<T>) {
-  const { elementId, leftControls, rowMenu, rowMenuWidth, bulkMenuItems, noRecordsContent, ...opts } = props;
+  const { elementId, leftControls, rowMenu, rowQuickActions, rowMenuWidth, bulkMenuItems, noRecordsContent, loadingContent, onRowClick, isRowSelected, ...opts } = props;
   const grid = useLyoDataGrid({ ...opts, mode: "project" });
   return (
     <GridInner
@@ -555,9 +785,13 @@ export function LyoDataGridProjected<T>(props: LyoDataGridProps<T>) {
       elementId={elementId}
       leftControls={leftControls}
       rowMenu={rowMenu}
+      rowQuickActions={rowQuickActions}
       rowMenuWidth={rowMenuWidth}
       bulkMenuItems={bulkMenuItems}
       noRecordsContent={noRecordsContent}
+      loadingContent={loadingContent}
+      onRowClick={onRowClick}
+      isRowSelected={isRowSelected}
     />
   );
 }

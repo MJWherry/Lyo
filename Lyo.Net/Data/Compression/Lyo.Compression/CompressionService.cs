@@ -10,6 +10,7 @@ using Lyo.Metrics;
 using Lyo.Streams;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Compression;
 
@@ -191,7 +192,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     {
         // GUID-based temp name to avoid clashes with existing files.
         var tempDir = Path.GetDirectoryName(targetFilePath);
-        var tempFileName = Guid.NewGuid() + ".tmp";
+        var tempFileName = LyoGuid.CreateV7() + ".tmp";
         var tempFilePath = string.IsNullOrEmpty(tempDir) ? tempFileName : Path.Combine(tempDir, tempFileName);
         try {
             writeOperation(tempFilePath);
@@ -217,7 +218,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     {
         // GUID-based temp name to avoid clashes with existing files.
         var tempDir = Path.GetDirectoryName(targetFilePath);
-        var tempFileName = Guid.NewGuid() + ".tmp";
+        var tempFileName = LyoGuid.CreateV7() + ".tmp";
         var tempFilePath = string.IsNullOrEmpty(tempDir) ? tempFileName : Path.Combine(tempDir, tempFileName);
         try {
             await writeOperationAsync(tempFilePath, ct).ConfigureAwait(false);

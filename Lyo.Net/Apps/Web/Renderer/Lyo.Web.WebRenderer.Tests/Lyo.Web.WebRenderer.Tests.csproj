@@ -7,6 +7,7 @@
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+        <ProjectReference Include="..\Lyo.Web.WebRenderer.Models\Lyo.Web.WebRenderer.Models.csproj"/>
         <ProjectReference Include="..\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
         <ProjectReference Include="..\..\..\..\Plugins\Reporting\Lyo.Reporting.Web\Lyo.Reporting.Web.csproj"/>
         <ProjectReference Include="..\..\..\..\Plugins\Reporting\Lyo.Reporting.Models\Lyo.Reporting.Models.csproj"/>

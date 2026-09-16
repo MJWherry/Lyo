@@ -61,6 +61,6 @@ public static class ReportColorHelper
     /// <summary>Chip color for a completed duration: quick success, then info / warning / error.</summary>
     public static Color ForDurationMs(double ms) => LyoDurationDisplay.ForDurationMs(ms);
 
-    /// <summary>Chip color for a report parameter type (CLR FullName or a catalog alias).</summary>
-    public static Color ForParameterType(string? type) => LyoTypeUi.ForType(type);
+    /// <summary>Chip spec for a report parameter type (CLR FullName or a catalog alias).</summary>
+    public static LyoChipSpec ForParameterType(string? type) => LyoTypeUi.ForType(type);
 }

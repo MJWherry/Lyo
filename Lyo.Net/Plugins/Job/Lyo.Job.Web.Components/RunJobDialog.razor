@@ -27,9 +27,6 @@
             <MudItem xs="12" md="6">
                 <MudTextField @bind-Value="_createdBy" Label="Created By" Variant="Variant.Outlined" Margin="Margin.Dense" Required MaxLength="128"/>
             </MudItem>
-            <MudItem xs="12" md="6" Class="d-flex align-center">
-                <MudSwitch T="bool" @bind-Value="_allowTriggers" Label="Allow Triggers" Color="Color.Primary" Size="Size.Small"/>
-            </MudItem>
         </MudGrid>
 
         <LyoParameterValueGrid Entries="@_parameters" ApiClient="ApiClient" ShowEncrypt="true" FormatterContext="@_formatterContext" ValueChanged="StateHasChanged"/>

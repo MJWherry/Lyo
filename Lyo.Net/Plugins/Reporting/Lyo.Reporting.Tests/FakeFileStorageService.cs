@@ -1,10 +1,12 @@
 using System.Text.Json;
 using Lyo.Compression.Models;
 using Lyo.FileMetadataStore.Models;
+using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
 using Lyo.Health;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 
@@ -31,7 +33,7 @@ public sealed class FakeFileStorageService : IFileStorageService
         JsonElement? metadata = null,
         CancellationToken ct = default)
     {
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         Files[id] = data;
         return Task.FromResult(CreateResult(id, originalFileName, data.LongLength, contentType, charset, pathPrefix, metadata));
     }
@@ -81,6 +83,8 @@ public sealed class FakeFileStorageService : IFileStorageService
 
     public Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default) => throw new NotSupportedException();
 
+    public Task<int> SweepExpiredDirectUploadsAsync(int maxUploads = 1000, CancellationToken ct = default) => throw new NotSupportedException();
+
     public Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
         => throw new NotSupportedException();
 
@@ -109,6 +113,9 @@ public sealed class FakeFileStorageService : IFileStorageService
 
         return Task.FromResult(CreateResult(fileId, null, data.LongLength, null, null, null));
     }
+
+    public async Task<FileContentIntegrity> GetContentIntegrityAsync(Guid fileId, CancellationToken ct = default)
+        => FileContentIntegrity.From(await GetMetadataAsync(fileId, ct).ConfigureAwait(false));
 
     public Task<DekMigrationResult> MigrateDeksAsync(
         string sourceKeyId,

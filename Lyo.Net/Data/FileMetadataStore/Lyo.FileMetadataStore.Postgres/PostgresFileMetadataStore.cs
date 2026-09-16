@@ -165,6 +165,63 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     public string HealthCheckName => "filestore-postgres";
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> ListPendingDirectUploadsAsync(DateTime beganBefore, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var cutoff = DateTime.SpecifyKind(beganBefore, DateTimeKind.Utc);
+        var entities = await _dbContext.FileMetadata
+            .Where(e => e.DeletedAt == null && e.Availability == nameof(FileAvailability.PendingDirectUpload) && e.Timestamp < cutoff)
+            .OrderBy(e => e.Timestamp)
+            .Take(maxKeys)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        return entities.Select(e => e.ToFileStoreResult()).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> SearchByNameAsync(string text, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var entities = await _dbContext.FileMetadata
+            .Where(e => e.DeletedAt == null && e.OriginalFileName != null && e.OriginalFileName.Contains(text))
+            .OrderBy(e => e.OriginalFileName)
+            .Take(maxKeys)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+        return entities.Select(e => e.ToFileStoreResult()).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<FileRevision> SaveNewVersionAsync(Guid fileId, string storedKey, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(storedKey);
+        var id = fileId.ToString();
+        var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(e => e.Id == id && e.DeletedAt == null, ct).ConfigureAwait(false);
+        if (entity is null)
+            throw new FileNotFoundException($"Metadata for file {fileId} not found");
+
+        var revision = new FileRevisionEntity {
+            Id = Guid.NewGuid(),
+            ParentId = fileId,
+            StoredKey = entity.SourceFileName,
+            CreatedAt = DateTime.UtcNow
+        };
+        _dbContext.FileRevisions.Add(revision);
+        entity.SourceFileName = storedKey;
+        await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+        return new(revision.Id, revision.ParentId, revision.StoredKey, revision.CreatedAt);
+    }
+
+    /// <inheritdoc />
+    public async Task<FileRevision?> GetVersionAsync(Guid revisionId, CancellationToken ct = default)
+    {
+        var entity = await _dbContext.FileRevisions.AsNoTracking().FirstOrDefaultAsync(e => e.Id == revisionId, ct).ConfigureAwait(false);
+        return entity is null ? null : new FileRevision(entity.Id, entity.ParentId, entity.StoredKey, entity.CreatedAt);
+    }
+
+    /// <inheritdoc />
     public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
         => PostgresHealth.CheckAsync(_dbContext, PostgresFileMetadataStoreOptions.Schema, ct);
 }

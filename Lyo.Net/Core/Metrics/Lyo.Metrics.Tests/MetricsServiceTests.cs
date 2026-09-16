@@ -288,10 +288,10 @@ public class MetricsServiceTests : IDisposable
                     () => {
                         for (var j = 0; j < 100; j++)
                             _metrics.IncrementCounter($"counter.{threadId}", 1);
-                    }, TestContext.Current.CancellationToken));
+                    }, TestCt));
         }
 
-        Task.WaitAll(tasks.ToArray(), TestContext.Current.CancellationToken);
+        Task.WaitAll(tasks.ToArray(), TestCt);
 
         // Each thread counter should be exactly 100
         for (var i = 0; i < 10; i++) {

@@ -25,7 +25,7 @@ public class EmailServiceErrorHandlingTests
     {
         var service = new EmailService(_options, _logger);
         var builder = EmailRequestBuilder.New().SetSubject("Test").SetTextBody("Test body").AddTo("recipient@example.com");
-        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken);
+        var result = await service.SendEmailAsync(builder, TestCt);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Errors);
         Assert.True(result.Errors!.Count > 0);
@@ -51,7 +51,7 @@ public class EmailServiceErrorHandlingTests
     {
         var service = new EmailService(_options, _logger);
         var builders = Array.Empty<EmailRequestBuilder>();
-        var results = await service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken);
+        var results = await service.SendBulkEmailAsync(builders, TestCt);
         Assert.Empty(results);
     }
 
@@ -76,7 +76,7 @@ public class EmailServiceErrorHandlingTests
     public async Task TestConnectionAsync_InvalidServer_ReturnsFalse()
     {
         var service = new EmailService(_options, _logger);
-        var result = await service.TestConnectionAsync(TestContext.Current.CancellationToken);
+        var result = await service.TestConnectionAsync(TestCt);
         Assert.False(result);
     }
 

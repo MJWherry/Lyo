@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\Lyo.Story\Lyo.Story.csproj"/>
+    </ItemGroup>
+
+</Project>

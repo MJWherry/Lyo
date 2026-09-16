@@ -6,6 +6,7 @@ using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
@@ -78,7 +79,7 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
         }
 
         var entity = new LinkedIdentityEntity {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             UserId = userId,
             TenantId = resolvedTenant,
             Provider = provider,

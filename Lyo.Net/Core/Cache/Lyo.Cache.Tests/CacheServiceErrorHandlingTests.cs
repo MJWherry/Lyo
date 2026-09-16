@@ -137,7 +137,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
             key, _ => {
                 callCount++;
                 return Task.FromResult("cached-value")!;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         result1.ShouldBe("cached-value");
         callCount.ShouldBe(1);
@@ -154,7 +154,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
             key, _ => {
                 callCount++;
                 return Task.FromResult("new-value")!;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         Assert.Equal("new-value", result2);
         Assert.Equal(2, callCount);
@@ -198,7 +198,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
         var key = "null-type-name-test";
 
         // A type whose FullName is null should fall back to Name.
-        var result = await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value"), typeof(string), token: TestContext.Current.CancellationToken);
+        var result = await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value"), typeof(string), token: TestCt);
         result.ShouldBe("value");
     }
 

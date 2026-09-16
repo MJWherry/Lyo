@@ -5,6 +5,7 @@ using Lyo.Lock.Redis;
 using Microsoft.Extensions.Logging.Abstractions;
 using StackExchange.Redis;
 using Testcontainers.Redis;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Lock.Benchmarks;
 
@@ -42,7 +43,7 @@ public class LockComparisonBenchmarks
     [BenchmarkSla(MaxMeanUs = 10, Standard = "An uncontended in-process lock acquire/release should be a few microseconds (no network).")]
     public async Task Local_AcquireRelease()
     {
-        var handle = await _local.AcquireAsync($"local-{Guid.NewGuid():N}", TimeSpan.FromSeconds(5));
+        var handle = await _local.AcquireAsync($"local-{LyoGuid.CreateV7():N}", TimeSpan.FromSeconds(5));
         await handle!.ReleaseAsync();
     }
 
@@ -51,16 +52,16 @@ public class LockComparisonBenchmarks
         MaxMeanMs = 5, Standard = "A distributed Redis lock acquire/release is bounded by a network round-trip and should stay within a few milliseconds on a local network.")]
     public async Task Redis_AcquireRelease()
     {
-        var handle = await _redisLock.AcquireAsync($"redis-{Guid.NewGuid():N}", TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
+        var handle = await _redisLock.AcquireAsync($"redis-{LyoGuid.CreateV7():N}", TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
         await handle!.ReleaseAsync();
     }
 
     [Benchmark]
     [BenchmarkSla(MaxMeanUs = 15, Standard = "In-process execute-with-lock adds only local coordination and should stay in the low tens of microseconds.")]
-    public async Task Local_ExecuteWithLock() => await _local.ExecuteWithLockAsync($"local-exec-{Guid.NewGuid():N}", _ => Task.CompletedTask, TimeSpan.FromSeconds(5));
+    public async Task Local_ExecuteWithLock() => await _local.ExecuteWithLockAsync($"local-exec-{LyoGuid.CreateV7():N}", _ => Task.CompletedTask, TimeSpan.FromSeconds(5));
 
     [Benchmark]
     [BenchmarkSla(MaxMeanMs = 5, Standard = "Distributed execute-with-lock is bounded by Redis round-trips and should stay within a few milliseconds on a local network.")]
     public async Task Redis_ExecuteWithLock()
-        => await _redisLock.ExecuteWithLockAsync($"redis-exec-{Guid.NewGuid():N}", _ => Task.CompletedTask, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
+        => await _redisLock.ExecuteWithLockAsync($"redis-exec-{LyoGuid.CreateV7():N}", _ => Task.CompletedTask, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
 }

@@ -1,6 +1,7 @@
 using Lyo.Web.Primitives.DataGrid;
 using MudBlazor;
 using MudBlazor.Services;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Web.Components.Tests;
 
@@ -143,7 +144,7 @@ public class LyoViewportWatcherTests
         public async Task ReportAsync(Breakpoint breakpoint)
         {
             foreach (var observer in _observers.Values.ToList())
-                await observer(new BrowserViewportEventArgs(Guid.NewGuid(), new BrowserWindowSize(), breakpoint, false));
+                await observer(new BrowserViewportEventArgs(LyoGuid.CreateV7(), new BrowserWindowSize(), breakpoint, false));
         }
 
         public Task SubscribeAsync(Guid observerId, Func<BrowserViewportEventArgs, Task> lambda, ResizeOptions? options = null, bool fireImmediately = true)

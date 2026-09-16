@@ -1,3 +1,5 @@
+using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Job.Web.Components;
 
 /// <summary>
@@ -71,7 +73,7 @@ public partial class JobBlackoutCalendarEditor
     {
         public Guid? Id { get; set; }
 
-        public Guid ClientKey { get; } = Guid.NewGuid();
+        public Guid ClientKey { get; } = LyoGuid.CreateV7();
 
         public bool IsNew { get; set; }
 

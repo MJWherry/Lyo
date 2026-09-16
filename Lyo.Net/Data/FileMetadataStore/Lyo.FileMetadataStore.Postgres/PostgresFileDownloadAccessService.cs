@@ -7,6 +7,7 @@ using Lyo.Lock.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileMetadataStore.Postgres;
 
@@ -48,7 +49,7 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
         var (token, tokenHash) = FileDownloadAccessToken.Create();
         var now = DateTime.UtcNow;
         var link = new FileDownloadAccessLinkEntity {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             FileId = request.FileId,
             TokenHash = tokenHash,
             CreatedUtc = now,
@@ -142,7 +143,7 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
         var normalizedError = string.IsNullOrWhiteSpace(ipAddress) ? error : $"{error ?? "n/a"};ip={ipAddress}";
         _dbContext.FileAuditEvents.Add(
             new() {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 EventType = eventType,
                 Outcome = outcome,
                 Timestamp = DateTime.UtcNow,

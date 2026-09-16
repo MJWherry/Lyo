@@ -2,6 +2,7 @@ using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Stores;
 using Lyo.EntityReference.Models;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Tests;
 
@@ -14,9 +15,9 @@ public sealed class PostgresUserStoreTests
     [Fact]
     public async Task Create_And_Get_RoundTrip()
     {
-        var user = NewUser($"alice-{Guid.NewGuid():N}@example.com");
-        await _fixture.UserStore.CreateAsync(user, null, TestContext.Current.CancellationToken);
-        var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken);
+        var user = NewUser($"alice-{LyoGuid.CreateV7():N}@example.com");
+        await _fixture.UserStore.CreateAsync(user, null, TestCt);
+        var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestCt);
         Assert.NotNull(loaded);
         Assert.Equal(user.Email, loaded.Email);
         Assert.Equal(user.DisplayName, loaded.DisplayName);
@@ -25,9 +26,9 @@ public sealed class PostgresUserStoreTests
     [Fact]
     public async Task GetByEmail_IsCaseInsensitive()
     {
-        var user = NewUser($"Mixed-{Guid.NewGuid():N}@EXAMPLE.COM");
-        await _fixture.UserStore.CreateAsync(user, null, TestContext.Current.CancellationToken);
-        var loaded = await _fixture.UserStore.GetByEmailAsync(user.Email.ToLowerInvariant(), null, TestContext.Current.CancellationToken);
+        var user = NewUser($"Mixed-{LyoGuid.CreateV7():N}@EXAMPLE.COM");
+        await _fixture.UserStore.CreateAsync(user, null, TestCt);
+        var loaded = await _fixture.UserStore.GetByEmailAsync(user.Email.ToLowerInvariant(), null, TestCt);
         Assert.NotNull(loaded);
         Assert.Equal(user.Id, loaded.Id);
     }
@@ -35,20 +36,20 @@ public sealed class PostgresUserStoreTests
     [Fact]
     public async Task Create_DuplicateEmail_Throws()
     {
-        var email = $"dup-{Guid.NewGuid():N}@example.com";
+        var email = $"dup-{LyoGuid.CreateV7():N}@example.com";
         var first = NewUser(email);
-        await _fixture.UserStore.CreateAsync(first, null, TestContext.Current.CancellationToken);
+        await _fixture.UserStore.CreateAsync(first, null, TestCt);
         var second = NewUser(email);
-        await Assert.ThrowsAnyAsync<Exception>(() => _fixture.UserStore.CreateAsync(second, null, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<Exception>(() => _fixture.UserStore.CreateAsync(second, null, TestCt));
     }
 
     [Fact]
     public async Task SetScopes_PersistsNewSnapshot()
     {
-        var user = NewUser($"scopes-{Guid.NewGuid():N}@example.com");
-        await _fixture.UserStore.CreateAsync(user, null, TestContext.Current.CancellationToken);
-        await _fixture.UserStore.SetScopesAsync(user.Id, ["admin", "people.read"], null, TestContext.Current.CancellationToken);
-        var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken);
+        var user = NewUser($"scopes-{LyoGuid.CreateV7():N}@example.com");
+        await _fixture.UserStore.CreateAsync(user, null, TestCt);
+        await _fixture.UserStore.SetScopesAsync(user.Id, ["admin", "people.read"], null, TestCt);
+        var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestCt);
         Assert.NotNull(loaded);
         Assert.Equal(["admin", "people.read"], loaded.Scopes);
     }
@@ -56,11 +57,11 @@ public sealed class PostgresUserStoreTests
     [Fact]
     public async Task SetDisabled_FlipsKillSwitch()
     {
-        var user = NewUser($"disable-{Guid.NewGuid():N}@example.com");
-        await _fixture.UserStore.CreateAsync(user, null, TestContext.Current.CancellationToken);
+        var user = NewUser($"disable-{LyoGuid.CreateV7():N}@example.com");
+        await _fixture.UserStore.CreateAsync(user, null, TestCt);
         var when = DateTime.UtcNow;
-        await _fixture.UserStore.SetDisabledAsync(user.Id, when, "policy", null, TestContext.Current.CancellationToken);
-        var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken);
+        await _fixture.UserStore.SetDisabledAsync(user.Id, when, "policy", null, TestCt);
+        var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestCt);
         Assert.NotNull(loaded);
         Assert.True(loaded.IsDisabled);
         Assert.Equal("policy", loaded.DisabledReason);
@@ -69,11 +70,11 @@ public sealed class PostgresUserStoreTests
     [Fact]
     public async Task UpdateLastLogin_Touches()
     {
-        var user = NewUser($"login-{Guid.NewGuid():N}@example.com");
-        await _fixture.UserStore.CreateAsync(user, null, TestContext.Current.CancellationToken);
+        var user = NewUser($"login-{LyoGuid.CreateV7():N}@example.com");
+        await _fixture.UserStore.CreateAsync(user, null, TestCt);
         var now = DateTime.UtcNow;
-        await _fixture.UserStore.UpdateLastLoginAsync(user.Id, now, null, TestContext.Current.CancellationToken);
-        var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken);
+        await _fixture.UserStore.UpdateLastLoginAsync(user.Id, now, null, TestCt);
+        var loaded = await _fixture.UserStore.GetByIdAsync(user.Id, null, TestCt);
         Assert.NotNull(loaded);
         Assert.NotNull(loaded.LastLoginAt);
     }
@@ -85,9 +86,9 @@ public sealed class PostgresUserStoreTests
             _fixture.ContextFactory, NullLogger<PostgresUserStore>.Instance, new EntityRefOptions(),
             new PostgresUserOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
 
-        var user = NewUser($"strict-{Guid.NewGuid():N}@example.com");
-        await Assert.ThrowsAsync<ArgumentNullException>(() => strictStore.CreateAsync(user, null, TestContext.Current.CancellationToken));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => strictStore.GetByIdAsync(user.Id, null, TestContext.Current.CancellationToken));
+        var user = NewUser($"strict-{LyoGuid.CreateV7():N}@example.com");
+        await Assert.ThrowsAsync<ArgumentNullException>(() => strictStore.CreateAsync(user, null, TestCt));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => strictStore.GetByIdAsync(user.Id, null, TestCt));
     }
 
     [Fact]
@@ -97,12 +98,12 @@ public sealed class PostgresUserStoreTests
             _fixture.ContextFactory, NullLogger<PostgresUserStore>.Instance, new EntityRefOptions(),
             new PostgresUserOptions { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
 
-        var user = NewUser($"system-{Guid.NewGuid():N}@example.com");
-        await systemStore.CreateAsync(user, Guid.NewGuid(), TestContext.Current.CancellationToken);
-        var loaded = await systemStore.GetByIdAsync(user.Id, Guid.NewGuid(), TestContext.Current.CancellationToken);
+        var user = NewUser($"system-{LyoGuid.CreateV7():N}@example.com");
+        await systemStore.CreateAsync(user, LyoGuid.CreateV7(), TestCt);
+        var loaded = await systemStore.GetByIdAsync(user.Id, LyoGuid.CreateV7(), TestCt);
         Assert.NotNull(loaded);
         Assert.Equal(user.Email, loaded.Email);
     }
 
-    private static LyoUser NewUser(string email) => new(Guid.NewGuid(), "Alice", email, true, null, "en-US", ["people.read"], null, null, DateTime.UtcNow, null, null, null, null);
+    private static LyoUser NewUser(string email) => new(LyoGuid.CreateV7(), "Alice", email, true, null, "en-US", ["people.read"], null, null, DateTime.UtcNow, null, null, null, null);
 }

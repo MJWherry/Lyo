@@ -1,0 +1,62 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="RecipeGrid"
+                      Route="@_recipesRoute"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <LeftControls>
+        <MudButton OnClick="@OpenCreate"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Size="Size.Small"
+                   Variant="Variant.Outlined">
+            Add recipe
+        </MudButton>
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit recipe" OnClick="@(() => OpenRecipe(cell.Item))"/>
+                <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small" title="Cook" OnClick="@(() => OpenCook(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Title" Title="Title" QuickSearchPropertyName="Title"/>
+        <LyoProjectedColumn Field="Status" Title="Status">
+            <CellContent Context="item">
+                @{
+                    var stateText = ProjectedValueHelper.GetDisplayValue(item, "Status");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<RecipeStatus>(stateText, RecipeColorHelper.ForStatus))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Servings" Title="Servings"/>
+        <LyoProjectedColumn Field="PrepMinutes" Title="Prep"/>
+        <LyoProjectedColumn Field="CookMinutes" Title="Cook"/>
+        <LyoProjectedColumn Field="CategoryId" Title="Category">
+            <CellContent Context="item">
+                @{
+                    var categoryId = ProjectedValueHelper.GetDisplayValue(item, "CategoryId");
+                }
+                <span>@CategoryName(categoryId)</span>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Difficulty" Title="Difficulty">
+            <CellContent Context="item">
+                @{
+                    var difficultyText = ProjectedValueHelper.GetDisplayValue(item, "Difficulty");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<RecipeDifficulty>(difficultyText, RecipeColorHelper.ForDifficulty))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" HiddenByDefault="true" Timestamp="LyoTimestampKind.Absolute"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenRecipe(item))">Edit</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.PlayArrow" OnClick="@(() => OpenCook(item))">Cook</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

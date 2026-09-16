@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Components.Catalog;
 
-public partial class PackageDoc
+public partial class PackageDoc : IDisposable
 {
     /// <summary>Package id (for example <c>Lyo.Cache</c>). Loads <c>_content/Lyo.Web.Components/catalog/packages/{id}.json</c>.</summary>
     [Parameter][EditorRequired]
@@ -15,29 +15,54 @@ public partial class PackageDoc
     [Parameter]
     public string CatalogBasePath { get; set; } = "_content/Lyo.Web.Components/catalog";
 
+    private readonly CatalogLoadGate _gate = new();
+
     private CatalogPackageDoc? _doc;
     private bool _loading = true;
     private string? _error;
 
     /// <inheritdoc />
-    protected override async Task OnParametersSetAsync() => await LoadAsync();
-
-    private async Task LoadAsync()
+    protected override Task OnParametersSetAsync()
     {
+        var key = CatalogLoadGate.Key(CatalogBasePath, PackageId);
+        if (_gate.IsCurrentRequest(key))
+            return Task.CompletedTask;
+
+        return LoadAsync(key);
+    }
+
+    /// <inheritdoc />
+    public void Dispose() => _gate.Dispose();
+
+    private async Task LoadAsync(string key)
+    {
+        var (requestId, ct) = _gate.Begin(key);
+        var packageId = PackageId;
         _loading = true;
         _error = null;
         _doc = null;
         try {
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(PackageId);
-            var url = $"{CatalogBasePath.TrimEnd('/')}/packages/{Uri.EscapeDataString(PackageId)}.json";
-            _doc = await Http.GetFromJsonAsync<CatalogPackageDoc>(url, CatalogJson.Options);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(packageId);
+            var url = CatalogAssetUri.Resolve(Navigation, $"{CatalogBasePath.TrimEnd('/')}/packages/{Uri.EscapeDataString(packageId)}.json");
+            var doc = await Http.GetFromJsonAsync<CatalogPackageDoc>(url, CatalogJson.Options, ct);
+            if (!_gate.IsCurrent(requestId))
+                return;
+
+            _doc = doc;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+            return;
         }
         catch (Exception ex) {
-            Logger.LogWarning(ex, "Failed to load catalog package {PackageId}", PackageId);
-            _error = $"Could not load docs for {PackageId}.";
+            if (!_gate.IsCurrent(requestId))
+                return;
+
+            Logger.LogWarning(ex, "Failed to load catalog package {PackageId}", packageId);
+            _error = $"Could not load docs for {packageId}.";
         }
         finally {
-            _loading = false;
+            if (_gate.IsCurrent(requestId))
+                _loading = false;
         }
     }
 }

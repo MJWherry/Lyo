@@ -138,6 +138,28 @@ describe("loadRelatedEntities", () => {
   });
 });
 
+describe("per-column related client", () => {
+  it("splits groups by client and calls that column's client instead of the grid's", async () => {
+    const a = "11111111-1111-1111-1111-111111111111";
+    const gridProject = vi.fn(async () => ({ ok: true, data: { isSuccess: true, items: [] } }));
+    const otherProject = vi.fn(async () => ({ ok: true, data: { isSuccess: true, items: [{ Id: a, Name: "Other API" }] } }));
+    const other = { queryProject: otherProject };
+    const columns = [
+      createLyoIdColumn({ id: "local", field: "LocalId", header: "Local", related: { route: "Person", select: ["Name"] } }),
+      createLyoIdColumn({ id: "remote", field: "RemoteId", header: "Remote", related: { route: "Person", select: ["Name"], client: other } }),
+    ];
+
+    expect(relatedGroups(columns, new Set())).toHaveLength(2);
+
+    const lookup = await loadRelatedEntities(gridProject, columns, new Set(), [{ LocalId: a, RemoteId: a }]);
+    expect(otherProject).toHaveBeenCalledTimes(1);
+    expect(otherProject.mock.calls[0]).toEqual(["Person", expect.objectContaining({ Keys: [[a]] })]);
+    expect(gridProject).toHaveBeenCalledTimes(1);
+    expect(lookupRelated(lookup, "Person", a, other)).toEqual({ Id: a, Name: "Other API" });
+    expect(lookupRelated(lookup, "Person", a)).toBeUndefined();
+  });
+});
+
 describe("relatedIdKey", () => {
   it("rejects empty guid and null", () => {
     expect(relatedIdKey(null)).toBeNull();

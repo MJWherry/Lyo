@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Seed.Tests;
 
@@ -28,7 +29,7 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
     {
         var result = await RunAsync(new ParentContributor(3));
         Assert.True(result.Success);
-        Assert.Equal(3, await _db.Parents.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(3, await _db.Parents.CountAsync(TestCt));
         Assert.Equal(3, result.Counts["ParentRow"]);
     }
 
@@ -36,9 +37,9 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
     public async Task SeedAsync_ForEach_SetsParentId()
     {
         await RunAsync(new ParentChildContributor());
-        var children = await _db.Children.AsNoTracking().ToListAsync(TestContext.Current.CancellationToken);
+        var children = await _db.Children.AsNoTracking().ToListAsync(TestCt);
         Assert.Equal(4, children.Count);
-        var parentIds = await _db.Parents.Select(p => p.Id).ToListAsync(TestContext.Current.CancellationToken);
+        var parentIds = await _db.Parents.Select(p => p.Id).ToListAsync(TestCt);
         Assert.All(children, c => Assert.Contains(c.ParentId, parentIds));
     }
 
@@ -49,7 +50,7 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
         await RunAsync(new ParentContributor(2), skip);
         var second = await RunAsync(new ParentContributor(9), skip);
         Assert.True(second.Skipped);
-        Assert.Equal(2, await _db.Parents.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(2, await _db.Parents.CountAsync(TestCt));
     }
 
     [Fact]
@@ -58,7 +59,7 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
         await RunAsync(new ParentContributor(2));
         var second = await RunAsync(new ParentContributor(3));
         Assert.False(second.Skipped);
-        Assert.Equal(5, await _db.Parents.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(5, await _db.Parents.CountAsync(TestCt));
     }
 
     [Fact]
@@ -67,7 +68,7 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
         await RunAsync(new ParentContributor(2));
         var second = await RunAsync(new ParentContributor(3), new SeedOptions { Conflict = SeedConflictMode.Append, Count = 3 });
         Assert.False(second.Skipped);
-        Assert.Equal(5, await _db.Parents.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(5, await _db.Parents.CountAsync(TestCt));
     }
 
     [Fact]
@@ -76,14 +77,14 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
         var afterNames = new List<string>();
         await RunAsync(new AfterContributor(afterNames));
         Assert.Equal(["p-0", "p-1"], afterNames);
-        Assert.Equal(2, await _db.Parents.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(2, await _db.Parents.CountAsync(TestCt));
     }
 
     private Task<SeedResult> RunAsync(SeedContributor contributor, SeedOptions? options = null)
     {
         ISeedRunner runner = new SeedRunner();
         var transport = new EfSeedTransport<SeedHarnessDbContext>(_db);
-        return runner.SeedAsync(contributor, transport, options ?? new() { Count = 3 }, TestContext.Current.CancellationToken);
+        return runner.SeedAsync(contributor, transport, options ?? new() { Count = 3 }, TestCt);
     }
 
     private sealed class ParentContributor(int count) : SeedContributor
@@ -93,7 +94,7 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
         public override SeedTransportKind SupportedTransports => SeedTransportKind.Ef;
 
         protected override void Configure(SeedGraph graph, SeedOptions options)
-            => graph.Entity(count, i => new ParentRow { Id = Guid.NewGuid(), Name = $"p-{i}" });
+            => graph.Entity(count, i => new ParentRow { Id = LyoGuid.CreateV7(), Name = $"p-{i}" });
     }
 
     private sealed class ParentChildContributor : SeedContributor
@@ -103,8 +104,8 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
         public override SeedTransportKind SupportedTransports => SeedTransportKind.Ef;
 
         protected override void Configure(SeedGraph graph, SeedOptions options)
-            => graph.Entity(2, i => new ParentRow { Id = Guid.NewGuid(), Name = $"p-{i}" })
-                .ForEach(_ => 2, (parent, i) => new ChildRow { Id = Guid.NewGuid(), ParentId = parent.Id, Label = $"{parent.Name}-{i}" });
+            => graph.Entity(2, i => new ParentRow { Id = LyoGuid.CreateV7(), Name = $"p-{i}" })
+                .ForEach(_ => 2, (parent, i) => new ChildRow { Id = LyoGuid.CreateV7(), ParentId = parent.Id, Label = $"{parent.Name}-{i}" });
     }
 
     private sealed class AfterContributor(List<string> names) : SeedContributor
@@ -114,7 +115,7 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
         public override SeedTransportKind SupportedTransports => SeedTransportKind.Ef;
 
         protected override void Configure(SeedGraph graph, SeedOptions options)
-            => graph.Entity(2, i => new ParentRow { Id = Guid.NewGuid(), Name = $"p-{i}" })
+            => graph.Entity(2, i => new ParentRow { Id = LyoGuid.CreateV7(), Name = $"p-{i}" })
                 .After((session, _) => {
                     names.AddRange(session.Generated<ParentRow>().Select(p => p.Name));
                     return Task.CompletedTask;

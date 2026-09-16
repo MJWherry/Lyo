@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Leaderboard domain: custom scoring properties, membership, invites, entries, and standings.</Description>
+        <PackageTags>leaderboard scoring games invites</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Text.Json"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication\Lyo.Authentication.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Leaderboard.Tests"/>
+    </ItemGroup>
+</Project>

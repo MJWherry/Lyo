@@ -53,8 +53,8 @@ public class TwilioPostgresExtensionsTests
     public async Task DbContext_CanConnectAndQuerySchema()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        var canConnect = await context.Database.CanConnectAsync(TestCt);
         Assert.True(canConnect);
     }
 
@@ -62,8 +62,8 @@ public class TwilioPostgresExtensionsTests
     public async Task DbContext_MigrationsApplied_SchemaExists()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        var pending = await context.Database.GetPendingMigrationsAsync(TestCt);
         Assert.Empty(pending);
     }
 
@@ -81,13 +81,13 @@ public class TwilioPostgresExtensionsTests
             CreatedTimestamp = DateTime.UtcNow
         };
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
             context.TwilioSmsLogs.Add(entity);
-            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await context.SaveChangesAsync(TestCt);
         }
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            var retrieved = await context.TwilioSmsLogs.FindAsync(["SM1234567890abcdef1234567890abcdef"], TestContext.Current.CancellationToken);
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
+            var retrieved = await context.TwilioSmsLogs.FindAsync(["SM1234567890abcdef1234567890abcdef"], TestCt);
             Assert.NotNull(retrieved);
             Assert.Equal("+15551234567", retrieved.To);
             Assert.Equal("Test message", retrieved.Body);
@@ -109,13 +109,13 @@ public class TwilioPostgresExtensionsTests
             CreatedTimestamp = DateTime.UtcNow
         };
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
             context.TwilioSmsLogs.Add(entity);
-            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await context.SaveChangesAsync(TestCt);
         }
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            var retrieved = await context.TwilioSmsLogs.FindAsync(["SMfailed1234567890abcdef12345678"], TestContext.Current.CancellationToken);
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
+            var retrieved = await context.TwilioSmsLogs.FindAsync(["SMfailed1234567890abcdef12345678"], TestCt);
             Assert.NotNull(retrieved);
             Assert.False(retrieved.IsSuccess);
             Assert.Equal("Invalid phone number", retrieved.ErrorMessage);

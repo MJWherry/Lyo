@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Text.Json;
 using Lyo.Web.Components.DataGrid;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Web.Components.Tests;
 
@@ -185,6 +186,6 @@ public class RelatedProjectionTests
 
         Assert.True(lookup.TryGet<AddressLookup>("PersonAddress", id, out var found));
         Assert.Equal("Denver", found?.City);
-        Assert.False(lookup.TryGet<AddressLookup>("PersonAddress", Guid.NewGuid(), out _));
+        Assert.False(lookup.TryGet<AddressLookup>("PersonAddress", LyoGuid.CreateV7(), out _));
     }
 }

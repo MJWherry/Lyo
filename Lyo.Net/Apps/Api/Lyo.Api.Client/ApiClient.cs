@@ -62,6 +62,10 @@ public class ApiClient : LyoHttpClient, IApiClient
     public Task<TResult?> QueryConcreteAsync<TResult>(string route, QueryConcreteReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => PostAsAsync<QueryConcreteReq, TResult?>(QueryPath(route, "QueryConcrete"), request, before, ct)!;
 
+    /// <inheritdoc />
+    public Task<TResult?> QuerySqlAsync<TResult>(string route, QueryRequestBase request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        => PostAsAsync<QueryRequestBase, TResult?>(QueryPath(route, "QuerySql"), request, before, ct)!;
+
     /// <summary>Joins <paramref name="route" /> and a Query/QueryProject suffix.</summary>
     public static string QueryPath(string route, string suffix)
     {

@@ -1,0 +1,162 @@
+{
+  "id": "Lyo.Story",
+  "name": "Lyo.Story",
+  "area": "Plugins",
+  "tagline": "Play-graph contracts for interactive stories and quests: nodes, choices, named actions, trigger/condition/response rules, optional presentation, and `IStoryStore`.",
+  "description": "Domain contracts for a quest-style play graph. The system of record is nodes, choices, named actions, and trigger/condition/response reactions. Presentation (text, cutscene, or none) is optional on a node. Scenes are optional groups, not the play cursor. Conditions persist as Lyo.Query `WhereClause` trees (`var.*` / `chose.*` / `visited.*` field prefixes) and are evaluated by `StoryPlayEngine` against the play bag — not `WhereClauseEvaluator`. Consequence tracking is the play log (`CausedByEventId`), not an authoring table. Persistence facade is `IStoryStore`.",
+  "features": [
+    "**Play graph.** `Story` with nodes, optional scenes, declared variables, named actions, choices, and ambient reactions.",
+    "**Builders.** `StoryBuilder` with `WhenAll` / `WhenOneOf` and `.Do` response lists. `StorySamples.TheHeist()` is the canonical sample.",
+    "**Engine.** `StoryPlayEngine` is pure: start, available moves, take choice, advance, get causes. No EF.",
+    "**Query conditions.** Reuses `WhereClause` / `GroupClause` (And = All, Or = OneOf). Story sugar (`Flag`, `Chose`, `Visited`) emits those nodes.",
+    "**Tenancy.** `Story.TenantId` and `Story.GameKey` scope a graph to a tenant and a game. `IStoryStore.ListStoriesAsync(tenantId, gameKey)` lists headers ordered by title; a null tenant lists only stories with no tenant. Slugs stay globally unique."
+  ],
+  "examples": [
+    {
+      "title": "Author a graph",
+      "language": "csharp",
+      "code": "var story = StoryBuilder.New(\"The Heist\")\n    .Slug(\"the-heist\")\n    .Variable(\"alarm\", StoryVariableType.Boolean, false)\n    .StartNode(\"vault_door\", n => n\n        .Choice(\"smash\", c => c.Do(d => d.Set(\"alarm\", true).GoesTo(\"guards\"))))\n    .Node(\"guards\", n => n.Ending())\n    .Build();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "What is deliberately not here",
+      "items": [
+        "Authorization / tenancy.",
+        "Playing cutscene media. Store `MediaRef` and compose with FileStorage.",
+        "Favorites, tags, ratings. Attach via `EntityRef` and `StoryEntityTypes` at the host.",
+        "Characters, inventory, locations."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Layering map",
+      "headers": [
+        "Assembly",
+        "Responsibility"
+      ],
+      "rows": [
+        [
+          "`Lyo.Story` (this)",
+          "POCOs, builders, `StoryPlayEngine`, `IStoryStore` (`netstandard2.0;net10.0`). Text MIME defaults use `MimeTypeInfo`."
+        ],
+        [
+          "`Lyo.Story.Models`",
+          "Req/Res pairs and route constants. No `StoryQuery`."
+        ],
+        [
+          "`Lyo.Story.Postgres`",
+          "EF `StoryDbContext` schema `story`, `PostgresStoryStore`, `StoryLyoMapper`, `AddLyoCrudServices`."
+        ],
+        [
+          "`Lyo.Story.Api`",
+          "`AddStoryApi` + `BuildStoryGroup` (Req/Res CRUD, Query, graph, play)."
+        ],
+        [
+          "`Lyo.Story.Client`",
+          "Typed HTTP client for graph and play. Query stays on `IApiClient`."
+        ],
+        [
+          "`Lyo.Story.Web.Components`",
+          "Blazor story builder: library, computed graph, editors, and play. The host registers `IStoryClient`."
+        ]
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Story/Lyo.Story/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

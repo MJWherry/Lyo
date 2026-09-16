@@ -13,13 +13,15 @@ using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Delete;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Read.Query.Root;
+using Lyo.Api.Services.Crud.Read.Query.Sql;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Common.Request;
+using Lyo.Query.Sql;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -117,6 +119,40 @@ public static class DynamicCrudEndpointBuilder
 
         EndpointAuthorizationApplier.Apply(endpoint, auth);
         configure?.Invoke(endpoint);
+
+        var sqlEndpoint = webApp.MapPost(
+                $"{routePrefix}QuerySql", ([FromBody] QueryReq queryRequest, HttpContext httpContext) => {
+                    var deniedErrors = DeniedSelectFieldPolicy.ValidateRootQuery(queryRequest, deniedSelectFields);
+                    if (deniedErrors.Count > 0) {
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity()
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                            .WithMessage("Invalid query.")
+                            .AddErrors(deniedErrors)
+                            .Build();
+
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, problem);
+                    }
+
+                    try {
+                        return Results.Ok(QuerySqlPreview.Translate(queryRequest, rootQueryRegistry));
+                    }
+                    catch (SqlTranslationException ex) {
+                        return ApiErrorResponseFactory.ThrowForError(
+                            httpContext,
+                            LyoProblemDetailsBuilder.CreateWithActivity()
+                                .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                                .WithStatus(400)
+                                .WithMessage(ex.Message)
+                                .Build());
+                    }
+                })
+            .WithTags("Dynamic")
+            .WithName($"RootQuerySql{typeof(TContext).Name}{(string.IsNullOrEmpty(baseRoute) ? "" : "_" + baseRoute.Replace('/', '_'))}")
+            .Produces<QuerySqlRes>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
+
+        EndpointAuthorizationApplier.Apply(sqlEndpoint, auth);
+        configure?.Invoke(sqlEndpoint);
         return webApp;
     }
 
@@ -467,6 +503,8 @@ public static class DynamicCrudEndpointBuilder
                 $"Entity '{entityType.Name}' configures {string.Join(", ", ignored)}, which dynamic CRUD does not invoke. Map this entity with the typed CreateBuilder, or " +
                 "remove the hooks.");
         }
+
+        return;
 
         static void AddIf(List<string> target, bool condition, string name)
         {

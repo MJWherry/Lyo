@@ -154,6 +154,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
             await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(_cache).ConfigureAwait(false);
 
         await PurgeExpiredRunsAsync(ct).ConfigureAwait(false);
+        await PurgeExpiredWorkflowRunsAsync(ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -525,5 +526,39 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         _metrics.IncrementCounter(Constants.Metrics.Maintenance.RunsPurged, totalPurged);
         _logger.LogInformation("Purged {Count} expired job runs (retention policy)", totalPurged);
         await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(_cache).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Deletes settled workflow runs (and their run steps) finished longer ago than <see cref="JobMaintenanceOptions.WorkflowRetentionDays" />. Age is read from
+    /// <c>FinishedTimestamp</c>, so an in-flight run has no cutoff to be past and is never purged — deleting one would orphan the job runs still reporting into it.
+    /// </summary>
+    private async Task PurgeExpiredWorkflowRunsAsync(CancellationToken ct)
+    {
+        var retentionDays = _options.WorkflowRetentionDays;
+        if (retentionDays <= 0)
+            return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var cutoff = DateTime.UtcNow.AddDays(-retentionDays);
+        var expired = await db.JobWorkflowRuns
+            .Where(r => r.FinishedTimestamp != null && r.FinishedTimestamp < cutoff && r.State != JobWorkflowRunState.Pending && r.State != JobWorkflowRunState.Running)
+            .OrderBy(r => r.FinishedTimestamp)
+            .ThenBy(r => r.Id)
+            .Take(_options.PurgeBatchSize)
+            .Include(r => r.JobWorkflowRunSteps)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        if (expired.Count == 0)
+            return;
+
+        foreach (var run in expired)
+            db.JobWorkflowRunSteps.RemoveRange(run.JobWorkflowRunSteps);
+
+        db.JobWorkflowRuns.RemoveRange(expired);
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        _metrics.IncrementCounter(Constants.Metrics.Maintenance.WorkflowRunsPurged, expired.Count);
+        _logger.LogInformation("Purged {Count} expired workflow runs (retention policy)", expired.Count);
+        await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobWorkflowRun, JobWorkflow>(_cache).ConfigureAwait(false);
     }
 }

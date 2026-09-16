@@ -58,7 +58,7 @@ public sealed class TextTokenizer : ITextTokenizer
                 i++;
         }
 
-        return list.ToArray();
+        return [.. list];
     }
 
     private static TextToken[] TokenizeWords(string text, CultureInfo? culture)
@@ -83,6 +83,6 @@ public sealed class TextTokenizer : ITextTokenizer
             list.Add(new(start, i - start));
         }
 
-        return list.Count == 0 ? [] : list.ToArray();
+        return list.Count == 0 ? [] : [.. list];
     }
 }

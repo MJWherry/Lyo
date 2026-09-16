@@ -24,6 +24,17 @@ export interface QueryRes<TItem, TRequest = unknown> {
     error?: LyoProblemDetails | null;
 }
 
+export interface QuerySqlParameter {
+    name: string;
+    value?: unknown;
+}
+
+/** `POST {route}/QuerySql` — SQL text and parameters. The query was not executed. */
+export interface QuerySqlRes {
+    sql: string;
+    parameters: QuerySqlParameter[];
+}
+
 export interface ProjectedQueryRes<TRow = Record<string, unknown>, TRequest = unknown> {
     queryRequest: TRequest;
     isSuccess: boolean;
@@ -87,7 +98,7 @@ export interface DeleteBulkResult<T = unknown> {
     failedCount: number;
 }
 
-export type ExportFormat = "Csv" | "Xlsx" | "Json";
+export type ExportFormat = "Csv" | "Xlsx" | "Json" | "Yaml" | "Xml" | "Toml";
 
 export interface ExportColumnMapping {
     /** Column header in the file. */

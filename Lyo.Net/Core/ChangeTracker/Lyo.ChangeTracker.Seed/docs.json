@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.ChangeTracker.Seed",
+  "name": "Lyo.ChangeTracker.Seed",
+  "area": "Core",
+  "tagline": "EF seed of change tracker entries.",
+  "description": "EF seed of Count change entries. Schema change_tracker.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/ChangeTracker/Lyo.ChangeTracker.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

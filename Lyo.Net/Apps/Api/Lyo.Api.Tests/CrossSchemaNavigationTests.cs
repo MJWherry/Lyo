@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests;
 
@@ -75,20 +76,20 @@ public class CrossSchemaNavigationTests
 
         using var scope = provider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<RootDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        await context.Database.OpenConnectionAsync(TestContext.Current.CancellationToken);
-        await context.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
-        var ann = new SameContextChild { Id = Guid.NewGuid(), Label = "Ann" };
-        var bob = new SameContextChild { Id = Guid.NewGuid(), Label = "Bob" };
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        await context.Database.OpenConnectionAsync(TestCt);
+        await context.Database.EnsureCreatedAsync(TestCt);
+        var ann = new SameContextChild { Id = LyoGuid.CreateV7(), Label = "Ann" };
+        var bob = new SameContextChild { Id = LyoGuid.CreateV7(), Label = "Bob" };
         context.Set<SameContextChild>().AddRange(ann, bob);
-        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestCt);
         context.Set<RootEntity>()
             .AddRange(
-                new RootEntity { Id = Guid.NewGuid(), ChildId = ann.Id }, new RootEntity { Id = Guid.NewGuid(), ChildId = ann.Id },
-                new RootEntity { Id = Guid.NewGuid(), ChildId = bob.Id }, new RootEntity { Id = Guid.NewGuid(), ChildId = bob.Id },
-                new RootEntity { Id = Guid.NewGuid(), ChildId = bob.Id });
+                new RootEntity { Id = LyoGuid.CreateV7(), ChildId = ann.Id }, new RootEntity { Id = LyoGuid.CreateV7(), ChildId = ann.Id },
+                new RootEntity { Id = LyoGuid.CreateV7(), ChildId = bob.Id }, new RootEntity { Id = LyoGuid.CreateV7(), ChildId = bob.Id },
+                new RootEntity { Id = LyoGuid.CreateV7(), ChildId = bob.Id });
 
-        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await context.SaveChangesAsync(TestCt);
         var page = await context.Set<RootEntity>()
             .AsNoTracking()
             .Include(r => r.Child)
@@ -96,9 +97,9 @@ public class CrossSchemaNavigationTests
             .OrderBy(r => r.Id)
             .Skip(0)
             .Take(10)
-            .ToListAsync(TestContext.Current.CancellationToken);
+            .ToListAsync(TestCt);
 
-        var total = await context.Set<RootEntity>().AsNoTracking().Where(r => r.Child!.Label == "Ann").CountAsync(TestContext.Current.CancellationToken);
+        var total = await context.Set<RootEntity>().AsNoTracking().Where(r => r.Child!.Label == "Ann").CountAsync(TestCt);
         Assert.Equal(2, total);
         Assert.Equal(2, page.Count);
         Assert.All(page, r => Assert.Equal("Ann", r.Child!.Label));

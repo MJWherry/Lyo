@@ -128,7 +128,7 @@ public class CsvTokenizerTests
         var svc = new CsvService();
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
         var rows = new List<IReadOnlyList<string>>();
-        await foreach (var row in svc.ParseStreamRowsStreamingAsync(ms, TestContext.Current.CancellationToken))
+        await foreach (var row in svc.ParseStreamRowsStreamingAsync(ms, TestCt))
             rows.Add(row);
 
         Assert.Equal(3, rows.Count);
@@ -150,9 +150,9 @@ public class CsvTokenizerTests
         }
 
         await using var ms = new MemoryStream();
-        await svc.ExportToCsvStreamAsync(Source(), ms, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvStreamAsync(Source(), ms, TestCt);
         ms.Position = 0;
-        var parsed = await svc.ParseStreamAsync<PersonRow>(ms, TestContext.Current.CancellationToken);
+        var parsed = await svc.ParseStreamAsync<PersonRow>(ms, TestCt);
         Assert.Equal(2, parsed.Count);
         Assert.Equal("B", parsed[1].Name);
     }

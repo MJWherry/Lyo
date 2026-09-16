@@ -2,6 +2,7 @@ using Lyo.Reporting.Models.Rendering;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 
@@ -19,22 +20,22 @@ public sealed class ReportGenerationCleanupTests
         };
 
         var withOutput = new ReportGeneration {
-            Id = Guid.NewGuid(),
-            OutputFileId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            OutputFileId = LyoGuid.CreateV7(),
             ReportDataJson = "{}",
             Format = "Csv",
             Status = "Succeeded"
         };
 
         var withoutOutput = new ReportGeneration {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             ReportDataJson = "{}",
             Format = "Csv",
             Status = "Failed"
         };
 
         await using var provider = new ServiceCollection().BuildServiceProvider();
-        await ReportGenerationCleanup.InvokeCleanupHooksAsync([withOutput, withoutOutput], hooks, provider, TestContext.Current.CancellationToken);
+        await ReportGenerationCleanup.InvokeCleanupHooksAsync([withOutput, withoutOutput], hooks, provider, TestCt);
         Assert.Single(cleaned);
         Assert.Equal(withOutput.OutputFileId, cleaned[0]);
     }
@@ -46,13 +47,13 @@ public sealed class ReportGenerationCleanupTests
         await ReportGenerationCleanup.InvokeCleanupHooksAsync(
         [
             new() {
-                Id = Guid.NewGuid(),
-                OutputFileId = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
+                OutputFileId = LyoGuid.CreateV7(),
                 ReportDataJson = "{}",
                 Format = "Csv",
                 Status = "Succeeded"
             }
-        ], null, provider, TestContext.Current.CancellationToken);
+        ], null, provider, TestCt);
     }
 
     [Fact]
@@ -63,12 +64,12 @@ public sealed class ReportGenerationCleanupTests
         await Assert.ThrowsAsync<IOException>(async () => await ReportGenerationCleanup.InvokeCleanupHooksAsync(
         [
             new() {
-                Id = Guid.NewGuid(),
-                OutputFileId = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
+                OutputFileId = LyoGuid.CreateV7(),
                 ReportDataJson = "{}",
                 Format = "Csv",
                 Status = "Succeeded"
             }
-        ], hooks, provider, TestContext.Current.CancellationToken));
+        ], hooks, provider, TestCt));
     }
 }

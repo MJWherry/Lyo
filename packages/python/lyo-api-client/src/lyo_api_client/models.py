@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal, Mapping
 
-HttpMethod = Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
+HttpMethod = Literal["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"]
 
 
 @dataclass
@@ -25,12 +25,15 @@ class ApiRequest:
 
 @dataclass
 class TransportRequest:
-    """The fully resolved HTTP request handed to a Transport."""
+    """The fully resolved HTTP request handed to a Transport.
+
+    ``body`` is a JSON string, or raw bytes when the caller sent a multipart payload.
+    """
 
     method: HttpMethod
     url: str
     headers: dict[str, str]
-    body: str | None = None
+    body: str | bytes | None = None
 
 
 @dataclass

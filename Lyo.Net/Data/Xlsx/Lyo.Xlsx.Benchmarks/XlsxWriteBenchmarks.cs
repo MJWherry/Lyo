@@ -3,12 +3,12 @@ using System.Text;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Xlsx.Benchmarks;
 
 /// <summary>
-/// Times XLSX serialization across destinations (bytes/stream/file), sync vs async, selected columns, multi-sheet workbooks, and dynamic sources (DataTable,
-/// dictionary).
+/// Times XLSX serialization across destinations (bytes/stream/file), sync vs async, selected columns, multi-sheet workbooks, and dynamic sources (DataTable, dictionary).
 /// </summary>
 [BenchmarkDescription(
     "Serializes RowCount SampleRecords to XLSX via the streaming OpenXML writer across every write surface: typed-list to bytes / stream / file, the async byte path, a selected-columns subset (3 of 7), a 3-worksheet workbook, and the dynamic DataTable and row/column-dictionary sources. Shows the relative cost of file I/O, multi-sheet workbooks, and dynamic vs typed column construction.")]
@@ -47,7 +47,7 @@ public class XlsxWriteBenchmarks
             ["Sheet1"] = _rows.Take(third).ToList(), ["Sheet2"] = _rows.Skip(third).Take(third).ToList(), ["Sheet3"] = _rows.Skip(third * 2).ToList()
         };
 
-        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-write-{Guid.NewGuid():N}.xlsx");
+        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-write-{LyoGuid.CreateV7():N}.xlsx");
     }
 
     [GlobalCleanup]

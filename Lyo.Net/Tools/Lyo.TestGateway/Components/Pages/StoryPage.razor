@@ -1,0 +1,9 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Story)]
+@inherits AuthorizedPage
+
+<PageTitle>Story</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <Lyo.TestGateway.Components.TestGateway.StoryWorkbench/>
+</MudContainer>

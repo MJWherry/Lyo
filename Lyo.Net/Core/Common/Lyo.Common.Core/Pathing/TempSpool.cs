@@ -1,4 +1,5 @@
 using Lyo.Exceptions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Common.Core.Pathing;
 
@@ -25,7 +26,7 @@ public static class TempSpool
     /// <param name="name">Short scope tag identifying the caller, for example <c>fs-scan</c>. Must be non-empty.</param>
     /// <param name="extension">Extension including the leading dot.</param>
     public static string CreatePath(string name, string extension = DefaultExtension)
-        => CreatePath(name, Guid.NewGuid(), extension);
+        => CreatePath(name, LyoGuid.CreateV7(), extension);
 
     /// <summary>
     /// Builds a temp path named <c>lyo-{name}-{id}{extension}</c> from a caller-supplied correlation id (file id, session id, stage id). Callers must keep the id

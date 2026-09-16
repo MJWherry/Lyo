@@ -1,0 +1,28 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Diagram.Models",
+  "name": "Lyo.Diagram.Models",
+  "area": "Core",
+  "tagline": "Diagram contracts: a named document of pages and cells, plus the store that saves it.",
+  "description": "The stored diagram model. A `DiagramDocument` has a name and one or more `DiagramPage` values. Each page holds vertex and edge `DiagramCell` values with draw.io geometry (bounds, relative connectors, waypoints, floating endpoints). Parent links express groups. Cell ids `0` and `1` stay reserved for the draw.io root and are not stored.\n\n`IDiagramStore` loads and saves documents. `ListAsync` returns `DiagramSummary` (id, name, last saved) and leaves the cell payload out. The in-memory store lives in [`Lyo.Diagram`](../Lyo.Diagram/README.md). PostgreSQL lives in [`Lyo.Diagram.Postgres`](../Lyo.Diagram.Postgres/README.md).",
+  "features": [
+    "**Document.** `DiagramDocument`, `DiagramPage`, `DiagramCell`, `DiagramGeometry`, `DiagramPoint`.",
+    "**Summary.** `DiagramSummary` is the list row: id, name, and last-saved time.",
+    "**Store.** `IDiagramStore` get, list, upsert by id, and delete."
+  ],
+  "examples": [
+    {
+      "title": "A page with a shape and a connector",
+      "language": "csharp",
+      "code": "var diagram = new DiagramDocument {\n    Id = LyoGuid.CreateV7(),\n    Name = \"Checkout\",\n    Pages = [\n        new DiagramPage {\n            Id = \"flow\",\n            Name = \"Flow\",\n            Cells = [\n                new DiagramCell {\n                    Id = \"start\",\n                    Value = \"Start\",\n                    IsVertex = true,\n                    Geometry = new DiagramGeometry { X = 40, Y = 40, Width = 120, Height = 60 },\n                },\n            ],\n        },\n    ],\n};"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Diagram/Lyo.Diagram.Models/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

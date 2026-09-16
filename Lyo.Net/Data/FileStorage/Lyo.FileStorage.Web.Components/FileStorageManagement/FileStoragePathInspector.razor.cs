@@ -318,10 +318,22 @@ public partial class FileStoragePathInspector : IAsyncDisposable
     private bool InCatalog
         => Selected is { FileId: not null } && Selected.Presence != FileStoragePresence.Physical;
 
+    private bool IsPhysicalOnly => Selected is { Presence: FileStoragePresence.Physical };
+
     private bool CanDownload
         => Selected is { IsDeleted: false } && (InCatalog || !string.IsNullOrEmpty(Selected.PhysicalKey));
 
     private bool CatalogActionsEnabled => InCatalog && Selected is { IsDeleted: false };
+
+    private bool PhysicalActionsEnabled
+        => IsPhysicalOnly && Selected is { IsDeleted: false } && !string.IsNullOrEmpty(Selected.PhysicalKey);
+
+    private bool ObjectActionsEnabled => CatalogActionsEnabled || PhysicalActionsEnabled;
+
+    private FileStorageBackendKind BackendKind
+        => FolderSource is FileStorageHttpTreeSource src ? src.BackendKind : FileStorageBackendKind.None;
+
+    private string BackendLabel => FileStoragePresenceUi.DisplayName(BackendKind);
 
     private Task ViewMetadataAsync()
         => InCatalog && Selected?.FileId is { } id ? Actions.ViewAsync(id) : Task.CompletedTask;
@@ -343,19 +355,39 @@ public partial class FileStoragePathInspector : IAsyncDisposable
     }
 
     private Task MoveAsync()
-        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.MoveAsync(id, Selected.PathPrefix) : Task.CompletedTask;
+    {
+        if (PhysicalActionsEnabled)
+            return Actions.MovePhysicalAsync(Selected!.PhysicalKey!, Selected.PathPrefix);
+
+        return CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.MoveAsync(id, Selected.PathPrefix) : Task.CompletedTask;
+    }
 
     private Task CopyAsync()
-        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.CopyAsync(id, Selected.PathPrefix) : Task.CompletedTask;
+    {
+        if (PhysicalActionsEnabled)
+            return Actions.CopyPhysicalAsync(Selected!.PhysicalKey!, Selected.PathPrefix);
+
+        return CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.CopyAsync(id, Selected.PathPrefix) : Task.CompletedTask;
+    }
 
     private Task RenameAsync()
-        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.RenameAsync(id, Selected.Name) : Task.CompletedTask;
+    {
+        if (PhysicalActionsEnabled)
+            return Actions.RenamePhysicalAsync(Selected!.PhysicalKey!, Selected.Name);
+
+        return CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.RenameAsync(id, Selected.Name) : Task.CompletedTask;
+    }
 
     private Task RotateDekAsync()
         => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.RotateDekAsync(id) : Task.CompletedTask;
 
     private Task DeleteAsync()
-        => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.DeleteAsync(id) : Task.CompletedTask;
+    {
+        if (PhysicalActionsEnabled)
+            return Actions.DeletePhysicalAsync(Selected!.PhysicalKey!);
+
+        return CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.DeleteAsync(id) : Task.CompletedTask;
+    }
 
     private static string? NullIfWhiteSpace(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

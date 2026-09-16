@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Lyo.Api.Client;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 

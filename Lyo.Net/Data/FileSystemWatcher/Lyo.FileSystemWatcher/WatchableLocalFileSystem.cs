@@ -62,10 +62,20 @@ public sealed class WatchableLocalFileSystem : IFileSystem
     public Task<IReadOnlyList<FileSystemEntry>> ListDirectoryAsync(string path, CancellationToken ct = default) => _inner.ListDirectoryAsync(path, ct);
 
     /// <inheritdoc />
+    public IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(string path, bool recursive = false, CancellationToken ct = default)
+        => _inner.EnumerateDirectoryAsync(path, recursive, ct);
+
+    /// <inheritdoc />
     public bool FileExists(string path) => _inner.FileExists(path);
 
     /// <inheritdoc />
     public Task<bool> FileExistsAsync(string path, CancellationToken ct = default) => _inner.FileExistsAsync(path, ct);
+
+    /// <inheritdoc />
+    public FileSystemEntry? GetEntry(string path) => _inner.GetEntry(path);
+
+    /// <inheritdoc />
+    public Task<FileSystemEntry?> GetEntryAsync(string path, CancellationToken ct = default) => _inner.GetEntryAsync(path, ct);
 
     /// <inheritdoc />
     public void DeleteFile(string path) => _inner.DeleteFile(path);
@@ -74,16 +84,17 @@ public sealed class WatchableLocalFileSystem : IFileSystem
     public Task DeleteFileAsync(string path, CancellationToken ct = default) => _inner.DeleteFileAsync(path, ct);
 
     /// <inheritdoc />
-    public void Move(string source, string dest) => _inner.Move(source, dest);
+    public void Move(string source, string dest, bool overwrite = false) => _inner.Move(source, dest, overwrite);
 
     /// <inheritdoc />
-    public Task MoveAsync(string source, string dest, CancellationToken ct = default) => _inner.MoveAsync(source, dest, ct);
+    public Task MoveAsync(string source, string dest, bool overwrite = false, CancellationToken ct = default) => _inner.MoveAsync(source, dest, overwrite, ct);
 
     /// <inheritdoc />
-    public void CopyFile(string source, string dest) => _inner.CopyFile(source, dest);
+    public void CopyFile(string source, string dest, bool overwrite = false) => _inner.CopyFile(source, dest, overwrite);
 
     /// <inheritdoc />
-    public Task CopyFileAsync(string source, string dest, CancellationToken ct = default) => _inner.CopyFileAsync(source, dest, ct);
+    public Task CopyFileAsync(string source, string dest, bool overwrite = false, CancellationToken ct = default)
+        => _inner.CopyFileAsync(source, dest, overwrite, ct);
 
     /// <inheritdoc />
     public Stream OpenRead(string path) => _inner.OpenRead(path);

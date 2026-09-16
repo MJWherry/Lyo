@@ -34,7 +34,7 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
     {
         Assert.NotNull(_lockService);
         var key = "redis-test-acquire-1";
-        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
     }
@@ -44,9 +44,9 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
     {
         Assert.NotNull(_lockService);
         var key = "redis-test-blocked-2";
-        var handle1 = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle1 = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle1.ShouldNotBeNull();
-        var handle2 = await _lockService.AcquireAsync(key, TimeSpan.FromMilliseconds(200), ct: TestContext.Current.CancellationToken);
+        var handle2 = await _lockService.AcquireAsync(key, TimeSpan.FromMilliseconds(200), ct: TestCt);
         handle2.ShouldBeNull();
         await handle1.ReleaseAsync();
     }
@@ -61,7 +61,7 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
             key, async ct => {
                 await Task.Delay(10, ct);
                 executed = true;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         executed.ShouldBeTrue();
     }
@@ -71,7 +71,7 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
     {
         Assert.NotNull(_lockService);
         var key = "redis-test-return-4";
-        var result = await _lockService.ExecuteWithLockAsync(key, _ => Task.FromResult(123), ct: TestContext.Current.CancellationToken);
+        var result = await _lockService.ExecuteWithLockAsync(key, _ => Task.FromResult(123), ct: TestCt);
         result.ShouldBe(123);
     }
 
@@ -80,10 +80,10 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
     {
         Assert.NotNull(_lockService);
         var key = "redis-test-timeout-5";
-        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await Assert.ThrowsAsync<TimeoutException>(async () => await _lockService.ExecuteWithLockAsync(
-            key, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(100), ct: TestContext.Current.CancellationToken));
+            key, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(100), ct: TestCt));
 
         await handle.ReleaseAsync();
     }
@@ -93,7 +93,7 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
     {
         Assert.NotNull(_lockService);
         var key = "redis-test-idempotent-6";
-        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
         await handle.ReleaseAsync();
@@ -106,8 +106,8 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
         Assert.NotNull(_lockService);
         var keyA = "redis-test-key-a-7";
         var keyB = "redis-test-key-b-7";
-        var handle1 = await _lockService.AcquireAsync(keyA, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
-        var handle2 = await _lockService.AcquireAsync(keyB, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle1 = await _lockService.AcquireAsync(keyA, TimeSpan.FromSeconds(5), ct: TestCt);
+        var handle2 = await _lockService.AcquireAsync(keyB, TimeSpan.FromSeconds(5), ct: TestCt);
         handle1.ShouldNotBeNull();
         handle2.ShouldNotBeNull();
         await handle1.ReleaseAsync();
@@ -120,9 +120,9 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
         Assert.NotNull(_lockService);
         var key = "redis-test-exception-8";
         await Assert.ThrowsAsync<InvalidOperationException>(async ()
-            => await _lockService.ExecuteWithLockAsync(key, _ => throw new InvalidOperationException("test"), ct: TestContext.Current.CancellationToken));
+            => await _lockService.ExecuteWithLockAsync(key, _ => throw new InvalidOperationException("test"), ct: TestCt));
 
-        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
     }
@@ -132,11 +132,11 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
     {
         Assert.NotNull(_lockService);
         var key = "redis-test-expiry-9";
-        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100), TestContext.Current.CancellationToken);
+        var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100), TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
-        await Task.Delay(150, TestContext.Current.CancellationToken);
-        var handle2 = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        await Task.Delay(150, TestCt);
+        var handle2 = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle2.ShouldNotBeNull();
         await handle2.ReleaseAsync();
     }

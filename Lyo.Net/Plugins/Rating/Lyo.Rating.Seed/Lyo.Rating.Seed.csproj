@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>EF seed of ratings on a fixed seed subject.</Description>
+        <PackageTags>rating seed ef</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bogus"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Seed\Lyo.Seed\Lyo.Seed.csproj"/>
+        <ProjectReference Include="..\Lyo.Rating.Postgres\Lyo.Rating.Postgres.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -72,7 +72,14 @@ public interface IWebRendererService
     byte[] RenderToHtmlBytes<T, TOptions>(TOptions options)
         where T : IComponent where TOptions : class;
 
+    /// <summary>Captures <paramref name="htmlContent" /> as a PDF. A CSS <c>@page</c> size wins; otherwise the page is A4.</summary>
     Task<byte[]> ConvertHtmlToPdfAsync(string htmlContent, CancellationToken ct = default);
+
+    /// <summary>Writes a PDF capture of <paramref name="html" /> to <paramref name="destination" /> without buffering a second copy in the service.</summary>
+    Task CopyCaptureToAsync(string html, Stream destination, CancellationToken ct = default);
+
+    /// <summary>Writes a capture of <paramref name="html" /> to <paramref name="destination" /> using <paramref name="request" />.</summary>
+    Task CopyCaptureToAsync(string html, Stream destination, WebRenderReq request, CancellationToken ct = default);
 
     byte[] ConvertHtmlToPdf(string htmlContent);
 

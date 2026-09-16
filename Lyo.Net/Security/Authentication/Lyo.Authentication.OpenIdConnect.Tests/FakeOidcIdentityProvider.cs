@@ -8,6 +8,7 @@ using Lyo.Authentication.OpenIdConnect.Discovery;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.OpenIdConnect.Tests;
 
@@ -40,7 +41,7 @@ internal sealed class FakeOidcIdentityProvider
 
     public string IssueCode(IDictionary<string, object?> claims)
     {
-        var code = Guid.NewGuid().ToString("N");
+        var code = LyoGuid.CreateV7().ToString("N");
         _claimsByCode[code] = claims;
         return code;
     }

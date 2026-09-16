@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
@@ -10,6 +10,7 @@ using Lyo.Result;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.MessageQueue;
 
@@ -366,7 +367,7 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     /// </summary>
     private async Task<bool> ApplicationRequeueAsync(TRequest payload, QueueMessageEnvelope<TRequest>? envelope, byte[] originalBytes)
     {
-        envelope ??= new(payload, 0, Guid.NewGuid().ToString("N"), DateTime.UtcNow);
+        envelope ??= new(payload, 0, LyoGuid.CreateV7().ToString("N"), DateTime.UtcNow);
         if (_maxRequeueCount.HasValue && envelope.RequeueCount >= _maxRequeueCount.Value) {
             await HandleMaxRequeueExceededAsync(envelope, originalBytes).ConfigureAwait(false);
             return false;
@@ -418,7 +419,7 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
         DateTime? enqueuedAt = null,
         string? traceId = null)
     {
-        var envelope = new QueueMessageEnvelope<T>(payload, 0, messageId ?? Guid.NewGuid().ToString("N"), enqueuedAt ?? DateTime.UtcNow, traceId);
+        var envelope = new QueueMessageEnvelope<T>(payload, 0, messageId ?? LyoGuid.CreateV7().ToString("N"), enqueuedAt ?? DateTime.UtcNow, traceId);
         var options = serializerOptions ?? SerializerOptions;
         var bytes = JsonSerializer.SerializeToUtf8Bytes(envelope, options);
         return MqService.SendToQueue(queueName, bytes);

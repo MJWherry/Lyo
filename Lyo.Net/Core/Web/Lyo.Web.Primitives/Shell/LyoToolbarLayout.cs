@@ -23,6 +23,12 @@ internal static class LyoToolbarLayout
     /// <summary>Field wrapper class list.</summary>
     public static string Field(bool grow) => grow ? "lyo-toolbar-field lyo-toolbar-field-grow" : "lyo-toolbar-field";
 
+    /// <summary>
+    /// Cascading value name for <see cref="LyoToolbar.Disabled" />. Cascading the owner instance is fixed (<c>Value="this"</c>), so wrappers
+    /// must subscribe to this bool or they keep the first-render disabled state forever.
+    /// </summary>
+    public const string DisabledCascadeName = "LyoToolbarDisabled";
+
     /// <summary>True when the control or its owning toolbar is disabled.</summary>
     public static bool IsDisabled(bool disabled, bool ownerDisabled) => disabled || ownerDisabled;
 }

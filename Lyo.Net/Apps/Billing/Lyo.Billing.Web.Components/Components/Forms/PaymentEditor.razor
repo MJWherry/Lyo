@@ -1,0 +1,26 @@
+@namespace Lyo.Billing.Web.Components.Components.Forms
+
+<LyoDialog Busy="@_saving" OnSave="SaveAsync" SaveDisabled="@(!_canSave)" SaveText="Record payment">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Record payment</MudText>
+    </TitleContent>
+    <ChildContent>
+        <LyoForm TModel="PaymentEditModel" Model="_edit" ShowActions="false" HasChangesChanged="@(v => _formHasChanges = v)">
+            <MudGrid Spacing="2" Class="pa-1">
+                <MudItem xs="12" sm="6">
+                    <LyoFormInput TModel="PaymentEditModel" TValue="decimal" Model="_edit" PropertyExpression="@(m => m.Amount)" Label="Amount" AllowEditing="true"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="PaymentMethod" @bind-Value="_edit.Method" Label="Method" Dense="true">
+                        @foreach (var method in Enum.GetValues<PaymentMethod>()) {
+                            <MudSelectItem Value="method">@method</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <LyoFormInput TModel="PaymentEditModel" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Reference)" Label="Reference" AllowEditing="true"/>
+                </MudItem>
+            </MudGrid>
+        </LyoForm>
+    </ChildContent>
+</LyoDialog>

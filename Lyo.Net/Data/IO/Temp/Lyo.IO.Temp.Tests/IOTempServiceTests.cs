@@ -3,6 +3,7 @@ using Lyo.Common.Metadata.Records;
 using Lyo.IO.Temp.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Lyo.Common.Core.Identifiers;
 namespace Lyo.IO.Temp.Tests;
 
 public sealed class IOTempServiceTests : IDisposable
@@ -12,7 +13,7 @@ public sealed class IOTempServiceTests : IDisposable
     public void Dispose() => _service.Dispose();
 
     private static IOTempServiceOptions TestOptions()
-        => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-tests"), DirectoryName = Guid.NewGuid().ToString("N") };
+        => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-tests"), DirectoryName = LyoGuid.CreateV7().ToString("N") };
 
     [Fact]
     public void AddIOTempService_Registers_Service()
@@ -271,16 +272,16 @@ public sealed class IOTempServiceTests : IDisposable
     {
         var options = new IOTempCleanupOptions { InitialDelay = TimeSpan.FromHours(24), Interval = TimeSpan.FromHours(24) };
         using var worker = new IOTempCleanupWorker(_service, options);
-        await worker.StartAsync(TestContext.Current.CancellationToken);
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StartAsync(TestCt);
+        await worker.StopAsync(TestCt);
     }
 
     [Fact]
     public async Task CleanupWorker_DefaultOptionsUsedWhenNone_Provided()
     {
         using var worker = new IOTempCleanupWorker(_service);
-        await worker.StartAsync(TestContext.Current.CancellationToken);
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StartAsync(TestCt);
+        await worker.StopAsync(TestCt);
     }
 
     [Fact]
@@ -354,7 +355,7 @@ public sealed class IOTempServiceTests : IDisposable
     public void MaxFileCount_ThrowStrategy_PreventsExceedingLimit()
     {
         var serviceOpts = new IOTempServiceOptions {
-            TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-maxcount-tests"), DirectoryName = Guid.NewGuid().ToString("N"), MaxFileCount = 2
+            TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-maxcount-tests"), DirectoryName = LyoGuid.CreateV7().ToString("N"), MaxFileCount = 2
         };
 
         using var service = new IOTempService(serviceOpts);
@@ -368,7 +369,7 @@ public sealed class IOTempServiceTests : IDisposable
     public void MaxFileCount_Is_PropagatedToSessionFromService()
     {
         var serviceOpts = new IOTempServiceOptions {
-            TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-maxcount-prop-tests"), DirectoryName = Guid.NewGuid().ToString("N"), MaxFileCount = 1
+            TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-maxcount-prop-tests"), DirectoryName = LyoGuid.CreateV7().ToString("N"), MaxFileCount = 1
         };
 
         using var service = new IOTempService(serviceOpts);

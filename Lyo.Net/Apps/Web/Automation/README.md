@@ -1,6 +1,6 @@
 # Lyo.Web.Automation
 
-**Serializable automation plans** and a shared **runner** for **Selenium** and **Playwright** via `IWebAutomationSession` / `IWebAutomationBrowser`. The browser façade composes *
+**Serializable automation plans** and a shared **runner** for **Selenium**, **Playwright**, and **PuppeteerSharp** via `IWebAutomationSession` / `IWebAutomationBrowser`. The browser façade composes *
 *`IWebAutomationNavigator`** (navigate / reload), **`IWebAutomationPage`** (find elements, source, URL/title, viewport PNG, **`SetViewportSizeAsync`**), **`IWebAutomationTabs`**
 (list/switch/open/close tabs via opaque keys), cookies, and optional extra headers—the same instance exposes **`Navigator`**, **`CurrentPage`**, and **`Tabs`** for narrower
 dependencies.
@@ -10,6 +10,8 @@ dependencies.
 | `Lyo.Web.Automation`            | Plan types, `AutomationPlanBuilder`, `IAutomationPlanRunner`, interpolation, hooks / metrics |
 | `Lyo.Web.Automation.Selenium`   | Selenium-backed session and `SeleniumBrowser`                                                |
 | `Lyo.Web.Automation.Playwright` | Playwright-backed session and browser adapter                                                |
+| `Lyo.Web.Automation.Studio`   | Visible window to record a plan, play one, and use page tools                              |
+| `Lyo.Web.Automation.PuppeteerSharp` | PuppeteerSharp-backed session (Chrome, Chromium, Edge, Firefox)                         |
 
 Plans are **ordered lists of steps** (`AutomationPlan`). Steps can navigate, reload, **resize viewport/window**, **switch/open/close tabs**, find elements (single or lists), act on
 elements, extract text or attributes into **string variables**, write files, download URL lists/single files, call HTTP APIs, extract image source URLs, upload local directories
@@ -47,11 +49,11 @@ Single-segment chains are equivalent to a simple find; multi-segment steps use c
   **`SetViewportSizeAsync`**, etc. Applies to the **active tab/window** and **current iframe stack** (after frame navigation). Distinct from Playwright's native `IPage`. Selenium *
   *`SetViewportSizeAsync`** adjusts the OS window size, not necessarily the CSS layout viewport.
 - **`Tabs`** (`IWebAutomationTabs`): `ListTabsAsync`, `SwitchToTabAsync` (by index or opaque **`TabKey`**), `OpenNewTabAsync`, `CloseCurrentTabAsync`, `SetTabDisplayNameAsync`. Tab
-  keys are **opaque** (Selenium window handle vs Playwright page id).
+  keys are **opaque** (Selenium window handle, Playwright page id, or PuppeteerSharp page id).
 - **`CookieJar`** / **`ExtraHeaders`**: optional engine capabilities as today.
 
-**Typed sessions** (`ISeleniumBrowserSession` / `IPlaywrightBrowserSession`) still expose engine-native **`Tabs`** pointing at **`SeleniumBrowser.NativeTabs`** (`TabManager`) or *
-*`PlaywrightBrowser.NativeTabs`** (`PlaywrightTabManager`) for advanced operations (predicate switches, window vs tab, etc.).
+**Typed sessions** (`ISeleniumBrowserSession` / `IPlaywrightBrowserSession` / `IPuppeteerSharpBrowserSession`) still expose engine-native **`Tabs`** pointing at **`SeleniumBrowser.NativeTabs`** (`TabManager`), *
+*`PlaywrightBrowser.NativeTabs`** (`PlaywrightTabManager`), or **`PuppeteerSharpBrowser.NativeTabs`** (`PuppeteerSharpTabManager`) for advanced operations (predicate switches, window vs tab, etc.).
 
 You can still call navigation and page methods directly on `IWebAutomationBrowser`; it inherits the narrower interfaces.
 
@@ -158,7 +160,7 @@ Artifact write failures are logged as warnings and do not fail the run (except i
 
 ### Cookie management
 
-**`IWebAutomationBrowser.CookieJar`** exposes **`IBrowserCookies`** when the engine supports it (Playwright; `null` for Selenium). Call the `Try*` extension methods from *
+**`IWebAutomationBrowser.CookieJar`** exposes **`IBrowserCookies`** when the engine supports it (Playwright and PuppeteerSharp; `null` for Selenium). Call the `Try*` extension methods from *
 *`WebAutomationBrowserExtensions`** for graceful degradation:
 
 | Extension method                    | Behaviour when `CookieJar` is `null` |
@@ -182,7 +184,7 @@ await session.Browser.TryAddCookiesAsync([
 
 ### Extra request headers
 
-**`IWebAutomationBrowser.ExtraHeaders`** exposes **`IBrowserHeaders`** when supported (Playwright). Headers are sent with every subsequent request:
+**`IWebAutomationBrowser.ExtraHeaders`** exposes **`IBrowserHeaders`** when supported (Playwright and PuppeteerSharp). Headers are sent with every subsequent request:
 
 | Extension method                       | Behaviour when `ExtraHeaders` is `null` |
 |----------------------------------------|-----------------------------------------|
@@ -630,7 +632,7 @@ var plan = AutomationPlanBuilder
 
 ## Target frameworks
 
-All three projects (**`Lyo.Web.Automation`**, **`Lyo.Web.Automation.Selenium`**, **`Lyo.Web.Automation.Playwright`**) target **`netstandard2.0`** and **`net10.0`**.
+**`Lyo.Web.Automation`**, **`Lyo.Web.Automation.Selenium`**, **`Lyo.Web.Automation.Playwright`**, and **`Lyo.Web.Automation.PuppeteerSharp`** target **`netstandard2.0`** and **`net10.0`**.
 
 ---
 

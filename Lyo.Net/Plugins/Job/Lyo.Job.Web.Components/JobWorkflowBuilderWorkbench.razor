@@ -1,0 +1,84 @@
+@inject ISnackbar Snackbar
+@using Lyo.Web.Components.ParamTable
+
+<MudStack Spacing="2" Class="pa-2">
+    <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h6">@Title</MudText>
+        <MudSpacer/>
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddStep"
+                   title="Adds a step that waits on the selected one">
+            Add step
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.CallSplit" OnClick="AddParallelStep"
+                   Disabled="@(SelectedStep is null)" title="Adds a step alongside the selected one, sharing its dependencies">
+            Add parallel step
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Save" Disabled="@(_saving || _buildError is not null)"
+                   OnClick="SaveWorkflowAsync">
+            Save workflow
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DeleteSweep" OnClick="ResetAsync">Reset</MudButton>
+    </MudStack>
+
+    <MudStack Row Spacing="2">
+        <MudTextField T="string" Label="Workflow name" Value="@_state.Name" ValueChanged="OnNameChanged" Dense Style="min-width: 260px;"/>
+        <MudTextField T="string" Label="Description" Value="@_state.Description" ValueChanged="OnDescriptionChanged" Dense Style="min-width: 320px;"/>
+        <MudSwitch T="bool" Value="@_state.Enabled" ValueChanged="OnEnabledChanged" Label="Enabled" Color="Color.Primary"/>
+    </MudStack>
+
+    @if (_buildError is not null) {
+        <MudAlert Severity="Severity.Warning" Dense>@_buildError</MudAlert>
+    }
+
+    <MudTabs Elevation="1" Rounded ApplyEffectsToContainer PanelClass="pa-2">
+        <MudTabPanel Text="Visual builder" Icon="@Icons.Material.Filled.AccountTree">
+            <MudStack Spacing="2">
+                @if (_state.Steps.Count == 0) {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">No steps yet. Add one to start building the workflow.</MudText>
+                }
+                else {
+                    <JobWorkflowGraphView Steps="@_state.Steps" Definitions="@_definitions" SelectedStepId="@_state.SelectedStepId"
+                                          OnStepSelected="SelectStepAsync"/>
+                    @if (SelectedStep is { } selected) {
+                        <JobWorkflowStepEditor Step="@selected" Steps="@_state.Steps" Definitions="@_definitions" OtherSteps="@OtherSteps(selected)"
+                                               ApiClient="@ApiClient" InputKeys="@InputKeys" Workflow="@DraftWorkflow" OnChanged="OnStepChangedAsync"
+                                               StepSelected="SelectStepAsync" OnRemove="RemoveStepAsync"/>
+                    }
+                }
+            </MudStack>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Request JSON" Icon="@Icons.Material.Filled.DataObject">
+            <JsonEditor T="JobWorkflowReq" Value="@_request" Editable="false" EditorSurfaceHeight="min(55vh, 560px)"/>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                Built through JobWorkflowBuilder, so step ids, dependency resolution, and cycle rejection match what the API and engine see.
+            </MudText>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Runs" Icon="@Icons.Material.Filled.PlayArrow">
+            <MudStack Spacing="2">
+                <LyoParameterEditor Title="Run inputs" TitleTypo="Typo.subtitle2" Items="@_inputRows" ApiClient="@ApiClient" OnChanged="OnInputsChangedAsync"/>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Sent with <b>Run now</b>, and offered to every step as <code>Input.&lt;key&gt;</code> in both parameter templates and condition fields. A saved schedule's
+                    enabled parameters are merged underneath these when the run starts.
+                </MudText>
+
+                <MudDivider/>
+
+                @if (_state.LastStartedWorkflowId is { } workflowId) {
+                    <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   Disabled="@_starting" OnClick="@(() => StartRunAsync(workflowId))">
+                            Run now
+                        </MudButton>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Workflow @workflowId</MudText>
+                    </MudStack>
+                    <JobWorkflowRunGrid ApiClient="@ApiClient" BaseRoute="@BaseRoute" WorkflowId="@workflowId"/>
+                }
+                else {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Save the workflow to run it and see its run history here.</MudText>
+                }
+            </MudStack>
+        </MudTabPanel>
+    </MudTabs>
+</MudStack>

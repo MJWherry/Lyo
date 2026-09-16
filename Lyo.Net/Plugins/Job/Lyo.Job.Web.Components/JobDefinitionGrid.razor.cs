@@ -23,8 +23,6 @@ public partial class JobDefinitionGrid
 
     private string _scheduleRoute => $"{BaseRoute.TrimEnd('/')}/Schedule";
 
-    private string _triggerRoute => $"{BaseRoute.TrimEnd('/')}/Trigger";
-
     private LyoDataGridProjected? _dataGrid;
 
     private readonly ProjectedBoolOverrides _enabled = new("Enabled");
@@ -72,8 +70,7 @@ public partial class JobDefinitionGrid
         var parameters = new DialogParameters<JobDefinitionView> {
             { d => d.JobDefinition, def },
             { d => d.DefinitionRoute, _definitionRoute },
-            { d => d.ScheduleRoute, _scheduleRoute },
-            { d => d.TriggerRoute, _triggerRoute }
+            { d => d.ScheduleRoute, _scheduleRoute }
         };
 
         var dialog = await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, LyoDialogPresets.Large);
@@ -115,7 +112,11 @@ public partial class JobDefinitionGrid
         await OnViewRuns.InvokeAsync((guid, string.IsNullOrWhiteSpace(name) ? null : name));
     }
 
-    private Task ToggleDefinition(object? item) => _enabled.ToggleAsync(ApiClient, _definitionRoute, item, Snackbar, "Definition");
+    private async Task ToggleDefinition(object? item)
+    {
+        if (await _enabled.ToggleAsync(ApiClient, _definitionRoute, item, Snackbar, "Definition"))
+            await RefreshAsync();
+    }
 
     private async Task BulkToggle(bool value)
     {

@@ -129,18 +129,18 @@
                 </MudStack>
                 @if (Selected.Presence == FileStoragePresence.Physical) {
                     <MudAlert Severity="Severity.Info" Dense="true">
-                        On disk only — not in the catalog. Download streams the raw object (not decrypted).
+                        On @BackendLabel only — not in the catalog. Download, move, copy, rename, and delete act on the raw object (not decrypted).
                     </MudAlert>
                 }
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Info" Disabled="@(!InCatalog)" OnClick="ViewMetadataAsync">View metadata</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Link" Disabled="@(!CatalogActionsEnabled)" OnClick="AccessLinkAsync">Access link…</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" Disabled="@(!CanDownload)" OnClick="DownloadAsync">Download</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!CatalogActionsEnabled)" OnClick="MoveAsync">Move…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!CatalogActionsEnabled)" OnClick="CopyAsync">Copy…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@(!CatalogActionsEnabled)" OnClick="RenameAsync">Rename…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!ObjectActionsEnabled)" OnClick="MoveAsync">Move…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!ObjectActionsEnabled)" OnClick="CopyAsync">Copy…</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@(!ObjectActionsEnabled)" OnClick="RenameAsync">Rename…</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!CatalogActionsEnabled)" OnClick="RotateDekAsync">Rotate DEK…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!CatalogActionsEnabled)" OnClick="DeleteAsync">Delete</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!ObjectActionsEnabled)" OnClick="DeleteAsync">Delete</MudButton>
                 </MudStack>
             </MudStack>
         </div>

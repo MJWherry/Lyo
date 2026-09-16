@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Drift.Seed",
+  "name": "Lyo.Drift.Seed",
+  "area": "Security",
+  "tagline": "EF seed of drift instances, structure snapshots, diffs, and change events.",
+  "description": "EF seed of Count stopped drift instances, one structure snapshot, one diff, and one change event each. Schema drift.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Security/Drift/Lyo.Drift.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

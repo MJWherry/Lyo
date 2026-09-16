@@ -24,7 +24,7 @@ public sealed class CompressEncryptPipelineTests
     [Fact]
     public async Task Roundtrip_CompressEncrypt_DecryptDecompress_RestoresPlaintext()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var compression = CreateCompressionService();
         var encryption = CreateEncryptionService();
         var key = TestData.Create(32);
@@ -44,7 +44,7 @@ public sealed class CompressEncryptPipelineTests
     [Fact]
     public async Task DecryptThenDecompress_BombGuardTrips_Throws_InsteadOfDeadlocking()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var encryption = CreateEncryptionService();
         var key = TestData.Create(32);
 
@@ -66,7 +66,7 @@ public sealed class CompressEncryptPipelineTests
     [Fact]
     public async Task CompressThenEncrypt_EncryptStageFails_Throws_InsteadOfDeadlocking()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
 
         // Invalid AES key: the encrypt stage faults before consuming the pipe, while the compress stage wants to write ~1 MB.
         var invalidKey = new byte[5];

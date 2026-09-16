@@ -37,6 +37,7 @@ public static class QueryRequestClone
             Include = [.. source.Include],
             Select = [.. source.Select],
             ComputedFields = [.. source.ComputedFields.Select(c => new ComputedField(c.Name, c.Template))],
+            Aggregates = [.. source.Aggregates.Select(a => new AggregateSelect(a.Function, a.Name, a.Field))],
             Keys = CloneKeys(source.Keys),
             SortBy = CloneSortBy(source.SortBy)
         };

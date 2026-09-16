@@ -5,6 +5,7 @@ using Lyo.Authentication.Postgres.Stores;
 using Lyo.EntityReference.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Tests;
 
@@ -21,10 +22,10 @@ public sealed class PostgresAuthAuditRecorderTests
     public async Task RecordAsync_PersistsRow()
     {
         var recorder = NewRecorder();
-        var evt = NewEvent(AuthAuditEventKind.JwtIssued, subject: "jti-" + Guid.NewGuid().ToString("N"));
-        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var row = await ctx.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        var evt = NewEvent(AuthAuditEventKind.JwtIssued, subject: "jti-" + LyoGuid.CreateV7().ToString("N"));
+        await recorder.RecordAsync(evt, TestCt);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
+        var row = await ctx.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == evt.Id, TestCt);
         Assert.NotNull(row);
         Assert.Equal(evt.Kind, row.Kind);
         Assert.Equal(evt.Subject, row.Subject);
@@ -35,10 +36,10 @@ public sealed class PostgresAuthAuditRecorderTests
     {
         var recorder = NewRecorder();
         var evt = NewEvent(AuthAuditEventKind.HandoffCodeIssued);
-        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(evt, TestCt);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
         var conn = ctx.Database.GetDbConnection();
-        await conn.OpenAsync(TestContext.Current.CancellationToken);
+        await conn.OpenAsync(TestCt);
         try {
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT kind FROM \"user\".event WHERE id = @id";
@@ -46,7 +47,7 @@ public sealed class PostgresAuthAuditRecorderTests
             p.ParameterName = "id";
             p.Value = evt.Id;
             cmd.Parameters.Add(p);
-            var raw = (string?)await cmd.ExecuteScalarAsync(TestContext.Current.CancellationToken);
+            var raw = (string?)await cmd.ExecuteScalarAsync(TestCt);
             Assert.Equal("HandoffCodeIssued", raw);
         }
         finally {
@@ -60,9 +61,9 @@ public sealed class PostgresAuthAuditRecorderTests
         var recorder = NewRecorder();
         var metadata = new Dictionary<string, object?> { ["origin"] = "https://gateway.example", ["count"] = 3 };
         var evt = NewEvent(AuthAuditEventKind.HandoffCodeConsumed, metadata: metadata);
-        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(evt, TestCt);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
+        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestCt);
         Assert.NotNull(row.MetadataJson);
         Assert.Contains("origin", row.MetadataJson);
         Assert.Contains("gateway.example", row.MetadataJson);
@@ -74,9 +75,9 @@ public sealed class PostgresAuthAuditRecorderTests
         var user = await CreateUserAsync();
         var recorder = NewRecorder();
         var evt = NewEvent(AuthAuditEventKind.ExternalLoginSucceeded, user.Id, provider: "google");
-        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(evt, TestCt);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
+        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestCt);
         Assert.Equal(user.Id, row.UserId);
         Assert.Equal("google", row.Provider);
     }
@@ -86,9 +87,9 @@ public sealed class PostgresAuthAuditRecorderTests
     {
         var recorder = NewRecorder();
         var evt = NewEvent(AuthAuditEventKind.TokenRejected, metadata: null);
-        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(evt, TestCt);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
+        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestCt);
         Assert.Null(row.MetadataJson);
     }
 
@@ -96,12 +97,12 @@ public sealed class PostgresAuthAuditRecorderTests
     public async Task RecordAsync_AcceptsEnrichmentFromContext()
     {
         var recorder = NewRecorder();
-        var ctxAccessor = new FakeAccessor("203.0.113.7", "ua/postgres-test", "trace-" + Guid.NewGuid().ToString("N"));
+        var ctxAccessor = new FakeAccessor("203.0.113.7", "ua/postgres-test", "trace-" + LyoGuid.CreateV7().ToString("N"));
         await recorder.RecordAsync(
-            ctxAccessor, NullLogger.Instance, AuthAuditEventKind.SignedOut, outcome: "success", reason: "user_initiated", ct: TestContext.Current.CancellationToken);
+            ctxAccessor, NullLogger.Instance, AuthAuditEventKind.SignedOut, outcome: "success", reason: "user_initiated", ct: TestCt);
 
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var row = await ctx.Events.AsNoTracking().Where(e => e.CorrelationId == ctxAccessor.CorrelationId).FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
+        var row = await ctx.Events.AsNoTracking().Where(e => e.CorrelationId == ctxAccessor.CorrelationId).FirstOrDefaultAsync(TestCt);
         Assert.NotNull(row);
         Assert.Equal("203.0.113.7", row.IpAddress);
         Assert.Equal("ua/postgres-test", row.UserAgent);
@@ -113,11 +114,11 @@ public sealed class PostgresAuthAuditRecorderTests
     public async Task RecordAsync_WithTenantId_PersistsTenantOnRow()
     {
         var recorder = NewRecorder();
-        var tenantId = Guid.NewGuid();
+        var tenantId = LyoGuid.CreateV7();
         var evt = NewEvent(AuthAuditEventKind.JwtIssued, tenantId: tenantId);
-        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(evt, TestCt);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
+        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestCt);
         Assert.Equal(tenantId, row.TenantId);
     }
 
@@ -128,10 +129,10 @@ public sealed class PostgresAuthAuditRecorderTests
             _fixture.ContextFactory, NullLogger<PostgresAuthAuditRecorder>.Instance, new EntityRefOptions(),
             new PostgresUserOptions { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
 
-        var evt = NewEvent(AuthAuditEventKind.JwtIssued, tenantId: Guid.NewGuid());
-        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        var evt = NewEvent(AuthAuditEventKind.JwtIssued, tenantId: LyoGuid.CreateV7());
+        await recorder.RecordAsync(evt, TestCt);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
+        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestCt);
         Assert.Null(row.TenantId);
     }
 
@@ -143,22 +144,22 @@ public sealed class PostgresAuthAuditRecorderTests
             new PostgresUserOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
 
         var evt = NewEvent(AuthAuditEventKind.JwtIssued);
-        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var row = await ctx.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(evt, TestCt);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
+        var row = await ctx.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == evt.Id, TestCt);
         Assert.Null(row);
     }
 
     [Fact]
     public async Task UserSchema_EventTable_Exists()
     {
-        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
         var conn = ctx.Database.GetDbConnection();
-        await conn.OpenAsync(TestContext.Current.CancellationToken);
+        await conn.OpenAsync(TestCt);
         try {
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'user' AND table_name = 'event'";
-            var scalar = await cmd.ExecuteScalarAsync(TestContext.Current.CancellationToken);
+            var scalar = await cmd.ExecuteScalarAsync(TestCt);
             Assert.NotNull(scalar);
             Assert.Equal(1L, (long)scalar);
         }
@@ -180,13 +181,13 @@ public sealed class PostgresAuthAuditRecorderTests
         Guid? tenantId = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
         => new(
-            Guid.NewGuid(), DateTime.UtcNow, kind, userId, subject, provider, "success", null, "127.0.0.1", "test-runner", "test-" + Guid.NewGuid().ToString("N"),
+            LyoGuid.CreateV7(), DateTime.UtcNow, kind, userId, subject, provider, "success", null, "127.0.0.1", "test-runner", "test-" + LyoGuid.CreateV7().ToString("N"),
             TenantId: tenantId, Metadata: metadata);
 
     private async Task<LyoUser> CreateUserAsync()
     {
-        var user = new LyoUser(Guid.NewGuid(), "Audit User", $"audit-{Guid.NewGuid():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
-        return await _fixture.UserStore.CreateAsync(user, null, TestContext.Current.CancellationToken);
+        var user = new LyoUser(LyoGuid.CreateV7(), "Audit User", $"audit-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+        return await _fixture.UserStore.CreateAsync(user, null, TestCt);
     }
 
     private sealed class FakeAccessor(string ip, string ua, string corr) : IAuthAuditContextAccessor

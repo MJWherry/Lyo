@@ -9,6 +9,7 @@ using Lyo.Parameters;
 using Lyo.Query.Models.Enums;
 using Lyo.Schedule.Models;
 using JobRunResult = Lyo.Job.Models.Enums.JobRunResult;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -19,7 +20,7 @@ public class JobLyoMapperTests
     [Fact]
     public void Definition_ReqToEntityToRes_RoundTripsNestedGraph()
     {
-        var otherDefId = Guid.NewGuid();
+        var otherDefId = LyoGuid.CreateV7();
         var req = new JobDefinitionReq("Mapped Job", "desc") {
             Type = "Test",
             WorkerType = "cs",
@@ -46,24 +47,7 @@ public class JobLyoMapperTests
                         new() {
                             Key = "ClientId",
                             Type = LyoTypeInfo.Guid.FullName,
-                            Value = Guid.NewGuid().ToString("D"),
-                            Enabled = true
-                        }
-                    ]
-                }
-            ],
-            CreateTriggers = [
-                new() {
-                    TriggersJobDefinitionId = otherDefId,
-                    JobResultKey = "Result",
-                    Comparison = ComparisonOperatorEnum.Equals,
-                    JobResultValue = "Success",
-                    Enabled = true,
-                    CreateTriggerParameters = [
-                        new() {
-                            Key = "X",
-                            Type = LyoTypeInfo.Int.FullName,
-                            Value = "2",
+                            Value = LyoGuid.CreateV7().ToString("D"),
                             Enabled = true
                         }
                     ]
@@ -92,8 +76,6 @@ public class JobLyoMapperTests
         Assert.Single(entity.JobSchedules);
         Assert.NotEqual(default, entity.JobSchedules.First().CreatedTimestamp);
         Assert.NotNull(entity.JobSchedules.First().JobBlackoutCalendar);
-        Assert.Single(entity.JobTriggerJobDefinitions);
-        Assert.Single(entity.JobTriggerJobDefinitions.First().JobTriggerParameters);
         Assert.Single(entity.JobParallelRestrictionBaseJobDefinitions);
         var res = _mapper.Map<JobDefinitionRes>(entity);
         Assert.Equal("Mapped Job", res.Name);
@@ -102,8 +84,6 @@ public class JobLyoMapperTests
         Assert.Single(res.JobSchedules!);
         Assert.NotNull(res.JobSchedules![0].JobBlackoutCalendar);
         Assert.Equal("Maint", res.JobSchedules[0].JobBlackoutCalendar!.Name);
-        Assert.Single(res.JobTriggers!);
-        Assert.Single(res.JobTriggers![0].TriggerParameters!);
         Assert.Single(res.JobParallelRestrictions!);
     }
 
@@ -111,13 +91,12 @@ public class JobLyoMapperTests
     public void RunResToReq_DoesNotCopyIdempotencyKeyOrScheduledSlot()
     {
         var res = new JobRunRes {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             State = JobState.Finished,
             Result = JobRunResult.Success,
             RetryAttempt = 1,
             Priority = 3,
-            AllowTriggers = true,
             IdempotencyKey = "retry:abc:1",
             ScheduledSlotUtc = DateTime.UtcNow.AddMinutes(-5)
         };

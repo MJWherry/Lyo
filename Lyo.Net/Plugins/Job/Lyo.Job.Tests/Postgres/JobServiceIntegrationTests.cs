@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Constants = Lyo.Job.Models.Constants;
 using JobRunResultEnum = Lyo.Job.Models.Enums.JobRunResult;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -27,13 +28,13 @@ public class JobServiceIntegrationTests
     {
         var createService = _fixture.CreateService;
         var jobService = _fixture.JobService;
-        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false);
+        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user");
         var runResult = await createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
             runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Running;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -48,9 +49,9 @@ public class JobServiceIntegrationTests
     public async Task CreateJobRun_WhenConnected_ReturnsQueuedRunAndPublishesEvent()
     {
         var jobService = _fixture.JobService;
-        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false);
+        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user");
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
-        var result = await jobService.CreateJobRun(runReq, TestContext.Current.CancellationToken);
+        var result = await jobService.CreateJobRun(runReq, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.Equal(JobState.Queued, result.Data!.State);
@@ -76,8 +77,8 @@ public class JobServiceIntegrationTests
         var sp = services.BuildServiceProvider();
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
-        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false);
-        var result = await jobService.CreateJobRun(runReq, TestContext.Current.CancellationToken);
+        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user");
+        var result = await jobService.CreateJobRun(runReq, TestCt);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
     }
@@ -87,13 +88,13 @@ public class JobServiceIntegrationTests
     {
         var createService = _fixture.CreateService;
         var jobService = _fixture.JobService;
-        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false);
+        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user");
         var runResult = await createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
             runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -121,16 +122,16 @@ public class JobServiceIntegrationTests
                 StartedTimestamp = now,
                 LastHeartbeatUtc = now,
                 Metadata = new Dictionary<string, string?> { ["os"] = "test" }
-            }, ctx => ctx.Entity.Id = Guid.NewGuid(), ct: TestContext.Current.CancellationToken);
+            }, ctx => ctx.Entity.Id = LyoGuid.CreateV7(), ct: TestCt);
         Assert.True(workerResult.IsSuccess);
 
         var runResult = await _fixture.CreateService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            new JobRunReq(_fixture.JobDefinitionId, "test-user", false),
+            new JobRunReq(_fixture.JobDefinitionId, "test-user"),
             ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
         Assert.True(runResult.IsSuccess);
 
         var (result, error) = await _fixture.JobService.StartedJobRun(runResult.Data!.Id, new JobRunStartedReq { WorkerInstanceId = workerResult.Data!.Id });
@@ -145,12 +146,12 @@ public class JobServiceIntegrationTests
     public async Task StartedJobRun_WhenMachineAndPidProvidedWithoutInstance_SnapshotsThose()
     {
         var runResult = await _fixture.CreateService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            new JobRunReq(_fixture.JobDefinitionId, "test-user", false),
+            new JobRunReq(_fixture.JobDefinitionId, "test-user"),
             ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
         Assert.True(runResult.IsSuccess);
 
         var (result, error) = await _fixture.JobService.StartedJobRun(
@@ -166,7 +167,7 @@ public class JobServiceIntegrationTests
     public async Task StartedJobRun_WhenJobNotFound_ReturnsError()
     {
         var jobService = _fixture.JobService;
-        var nonExistentId = Guid.NewGuid();
+        var nonExistentId = LyoGuid.CreateV7();
         var (result, error) = await jobService.StartedJobRun(nonExistentId);
         Assert.NotNull(error);
         Assert.Null(result);
@@ -177,14 +178,14 @@ public class JobServiceIntegrationTests
     {
         var createService = _fixture.CreateService;
         var jobService = _fixture.JobService;
-        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false);
+        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user");
         var runResult = await createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
             runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Running;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
                 ctx.Entity.StartedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -201,14 +202,14 @@ public class JobServiceIntegrationTests
     {
         var createService = _fixture.CreateService;
         var jobService = _fixture.JobService;
-        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false);
+        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user");
         var runResult = await createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
             runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Finished; // Finished is not a cancellable state
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
                 ctx.Entity.FinishedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -222,14 +223,14 @@ public class JobServiceIntegrationTests
     {
         var createService = _fixture.CreateService;
         var jobService = _fixture.JobService;
-        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false);
+        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user");
         var runResult = await createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
             runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Running;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
                 ctx.Entity.StartedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -246,16 +247,16 @@ public class JobServiceIntegrationTests
     {
         var createService = _fixture.CreateService;
         var jobService = _fixture.JobService;
-        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user", false);
+        var runReq = new JobRunReq(_fixture.JobDefinitionId, "test-user");
         var runResult = await createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
             runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Finished;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
                 ctx.Entity.StartedTimestamp = DateTime.UtcNow;
                 ctx.Entity.FinishedTimestamp = DateTime.UtcNow;
                 ctx.Entity.Result = JobRunResultEnum.Success;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -271,7 +272,7 @@ public class JobServiceIntegrationTests
     public async Task RerunJob_WhenJobNotFound_ReturnsFailure()
     {
         var jobService = _fixture.JobService;
-        var nonExistentId = Guid.NewGuid();
+        var nonExistentId = LyoGuid.CreateV7();
         var result = await jobService.RerunJob(nonExistentId);
         Assert.NotNull(result);
         Assert.False(result.IsSuccess);

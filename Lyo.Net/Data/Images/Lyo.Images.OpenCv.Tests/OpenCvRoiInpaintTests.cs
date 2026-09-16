@@ -25,12 +25,12 @@ public sealed class OpenCvRoiInpaintTests
         }
 
         await using var ms = new MemoryStream();
-        await img.SaveAsPngAsync(ms, TestContext.Current.CancellationToken);
+        await img.SaveAsPngAsync(ms, TestCt);
         var png = ms.ToArray();
         var r = OpenCvRoiInpaint.InpaintTelea(png, 16, 16, 16, 16, 5);
         Assert.True(r.IsSuccess, r.Errors is { Count: > 0 } ? r.Errors[0].Message : "expected success");
         Assert.NotNull(r.Data);
-        using var outImg = await Image.LoadAsync<Rgba32>(new MemoryStream(r.Data), TestContext.Current.CancellationToken);
+        using var outImg = await Image.LoadAsync<Rgba32>(new MemoryStream(r.Data), TestCt);
         Assert.Equal(48, outImg.Width);
         Assert.Equal(48, outImg.Height);
         var before = img[24, 24];
@@ -51,12 +51,12 @@ public sealed class OpenCvRoiInpaintTests
         }
 
         await using var ms = new MemoryStream();
-        await img.SaveAsPngAsync(ms, TestContext.Current.CancellationToken);
+        await img.SaveAsPngAsync(ms, TestCt);
         var png = ms.ToArray();
         var r = OpenCvRoiInpaint.InpaintColorRoiPng(png, 16, 16, 16, 16, 5, OpenCvInpaintAlgorithm.NavierStokes);
         Assert.True(r.IsSuccess, r.Errors is { Count: > 0 } ? r.Errors[0].Message : "expected success");
         Assert.NotNull(r.Data);
-        using var outImg = await Image.LoadAsync<Rgba32>(new MemoryStream(r.Data), TestContext.Current.CancellationToken);
+        using var outImg = await Image.LoadAsync<Rgba32>(new MemoryStream(r.Data), TestCt);
         Assert.Equal(48, outImg.Width);
         Assert.Equal(48, outImg.Height);
         var before = img[24, 24];

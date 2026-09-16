@@ -5,6 +5,7 @@ using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Comment.Postgres;
 
@@ -52,7 +53,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         }
 
         var entity = new CommentEntity {
-            Id = comment.Id == default ? Guid.NewGuid() : comment.Id,
+            Id = comment.Id == default ? LyoGuid.CreateV7() : comment.Id,
             SubjectEntityType = comment.SubjectEntityType,
             SubjectEntityId = forId,
             ActorEntityType = comment.ActorEntityType,
@@ -78,7 +79,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     {
         var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Comments.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(c => c.Id == id, ct).ConfigureAwait(false);
+        var entity = await context.Comments.AsNoTracking().WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(c => c.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToRecord(entity);
     }
 
@@ -89,7 +90,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         var tenant = ResolveTenant(tenantId);
         var forId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Comments.WhereActive().WhereTenant(tenant).Where(c => c.SubjectEntityType == forEntity.EntityType && c.SubjectEntityId == forId);
+        var query = context.Comments.AsNoTracking().WhereActive().WhereTenant(tenant).Where(c => c.SubjectEntityType == forEntity.EntityType && c.SubjectEntityId == forId);
         if (!includeReplies)
             query = query.Where(c => c.ReplyToCommentId == null);
 
@@ -102,7 +103,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     {
         var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Comments.WhereActive()
+        var entities = await context.Comments.AsNoTracking().WhereActive()
             .WhereTenant(tenant)
             .Where(c => c.ReplyToCommentId == replyToCommentId)
             .OrderBy(c => c.CreatedAt)
@@ -119,7 +120,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         var tenant = ResolveTenant(tenantId);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Comments.WhereActive()
+        var entities = await context.Comments.AsNoTracking().WhereActive()
             .WhereTenant(tenant)
             .Where(c => c.ActorEntityType == fromEntity.EntityType && c.ActorEntityId == fromId)
             .OrderBy(c => c.CreatedAt)
@@ -135,7 +136,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Comments.WhereActive().WhereTenant(tenant).Where(c => c.SubjectEntityType == forEntityType);
+        var query = context.Comments.AsNoTracking().WhereActive().WhereTenant(tenant).Where(c => c.SubjectEntityType == forEntityType);
         if (forEntityId.HasValue)
             query = query.Where(c => c.SubjectEntityId == forEntityId.Value.ToString());
 
@@ -180,7 +181,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         }
         else {
             var reaction = new CommentReactionEntity {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 SubjectEntityType = commentRef.EntityType,
                 SubjectEntityId = commentId.ToString(),
                 ActorEntityType = fromEntity.EntityType,
@@ -238,7 +239,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
-        var entity = await context.CommentReactions.FirstOrDefaultAsync(
+        var entity = await context.CommentReactions.AsNoTracking().FirstOrDefaultAsync(
                 r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType &&
                     r.ActorEntityId == fromId, ct)
             .ConfigureAwait(false);

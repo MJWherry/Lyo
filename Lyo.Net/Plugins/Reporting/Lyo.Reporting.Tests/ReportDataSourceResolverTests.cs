@@ -34,7 +34,7 @@ public sealed class ReportDataSourceResolverTests
             new("Lines", LyoTypeInfo.JsonArray.FullName, ParameterOptionsJson.Serialize(new() { Kind = ParameterOptionsKind.Sproc, StoredProcName = "public.report_lines" }))
         };
 
-        var updated = await resolver.ApplyAsync(json, defs, merged, TestContext.Current.CancellationToken);
+        var updated = await resolver.ApplyAsync(json, defs, merged, TestCt);
         var report = ReportJson.Deserialize<object>(updated);
         var table = Assert.Single(SectionBody.CollectTables(report.Sections));
         Assert.Equal("Ada", CellText(table.Rows[0].Cells[0]));
@@ -50,7 +50,7 @@ public sealed class ReportDataSourceResolverTests
             ReportBuilder<object>.New()
                 .AddSection(s => s.AddTable("Lines", t => t.AddColumn("Name").SetFromParameter("Missing")))
                 .Build());
-        var updated = await resolver.ApplyAsync(json, [], [], TestContext.Current.CancellationToken);
+        var updated = await resolver.ApplyAsync(json, [], [], TestCt);
         var report = ReportJson.Deserialize<object>(updated);
         Assert.Empty(Assert.Single(SectionBody.CollectTables(report.Sections)).Rows);
     }
@@ -68,7 +68,7 @@ public sealed class ReportDataSourceResolverTests
             new("Lines", LyoTypeInfo.JsonArray.FullName, ParameterOptionsJson.Serialize(new() { Kind = ParameterOptionsKind.Sproc, StoredProcName = "public.report_lines" }))
         };
 
-        var ex = await Assert.ThrowsAsync<ReportValidationException>(() => resolver.ApplyAsync(json, defs, merged, TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<ReportValidationException>(() => resolver.ApplyAsync(json, defs, merged, TestCt));
         Assert.Contains("Lines", ex.Message, StringComparison.Ordinal);
         Assert.Contains("ISprocService", ex.Message, StringComparison.Ordinal);
     }
@@ -93,7 +93,7 @@ public sealed class ReportDataSourceResolverTests
                     }))
         };
 
-        await resolver.ApplyAsync(json, defs, merged, TestContext.Current.CancellationToken);
+        await resolver.ApplyAsync(json, defs, merged, TestCt);
         Assert.Equal("\"c-1\"", sproc.LastArgs?["client_id"]);
     }
 
@@ -116,7 +116,7 @@ public sealed class ReportDataSourceResolverTests
             new("Lines", LyoTypeInfo.JsonArray.FullName, ParameterOptionsJson.Serialize(new() { Kind = ParameterOptionsKind.Sproc, StoredProcName = "public.report_lines" }))
         };
 
-        var updated = await resolver.ApplyAsync(json, defs, merged, TestContext.Current.CancellationToken);
+        var updated = await resolver.ApplyAsync(json, defs, merged, TestCt);
         var bound = ReportJson.Deserialize<object>(updated);
         Assert.Equal(["Ada|9"], SectionBody.WalkControls(bound.Sections[0].Controls).OfType<Block>().Single().ListItems);
     }
@@ -137,7 +137,7 @@ public sealed class ReportDataSourceResolverTests
             new("Lines", LyoTypeInfo.JsonArray.FullName, ParameterOptionsJson.Serialize(new() { Kind = ParameterOptionsKind.Sproc, StoredProcName = "public.report_lines" }))
         };
 
-        var updated = await resolver.ApplyAsync(json, defs, merged, TestContext.Current.CancellationToken);
+        var updated = await resolver.ApplyAsync(json, defs, merged, TestCt);
         var table = Assert.Single(SectionBody.CollectTables(ReportJson.Deserialize<object>(updated).Sections));
         Assert.Equal("Ada", CellText(table.Rows[0].Cells[0]));
     }
@@ -154,7 +154,7 @@ public sealed class ReportDataSourceResolverTests
                 .AddSection(s => s.AddTable("Lines", t => t.AddColumn("Name", "Name").SetFromSproc("public.report_lines")))
                 .Build());
 
-        var updated = await resolver.ApplyAsync(json, [], [], TestContext.Current.CancellationToken);
+        var updated = await resolver.ApplyAsync(json, [], [], TestCt);
         var table = Assert.Single(SectionBody.CollectTables(ReportJson.Deserialize<object>(updated).Sections));
         Assert.Equal("Ada", CellText(table.Rows[0].Cells[0]));
         Assert.Equal("public.report_lines", sproc.LastName);
@@ -169,7 +169,7 @@ public sealed class ReportDataSourceResolverTests
                 .AddSection(s => s.AddTable("Lines", t => t.AddColumn("Name").SetFromSproc("public.report_lines")))
                 .Build());
 
-        var ex = await Assert.ThrowsAsync<ReportValidationException>(() => resolver.ApplyAsync(json, [], [], TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<ReportValidationException>(() => resolver.ApplyAsync(json, [], [], TestCt));
         Assert.Contains("ISprocService", ex.Message, StringComparison.Ordinal);
     }
 

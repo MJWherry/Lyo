@@ -3,7 +3,7 @@
   "name": "Lyo.TextEncoding",
   "area": "Core",
   "tagline": "Binary codecs (Base64 / Base64Url / Hex) plus charset encode/decode/convert with CodePages, detection, PEM/MIME, and injectable services.",
-  "description": "Span-first binary-to-text codecs and character-set helpers for buffers, streams, and files. Two injectable services — `IBinaryEncodingService` and `ICharsetEncodingService` — sit beside static `BinaryEncoding` / `CharsetEncoding`. The namespace is `Lyo.TextEncoding`, so `System.Text.Encoding` needs no alias. Code pages come from `System.Text.Encoding.CodePages`. Hex casing uses `TextLetterCase` from `Lyo.Common.Core`.",
+  "description": "Span-first binary-to-text codecs and character-set helpers for buffers, streams, and files. Two injectable services — `IBinaryEncodingService` and `ICharsetEncodingService` — sit beside static `BinaryEncoding` / `CharsetEncoding`. The namespace is `Lyo.TextEncoding`, so `System.Text.Encoding` needs no alias. Code pages come from `System.Text.Encoding.CodePages`. Hex casing uses `TextLetterCase` from `Lyo.Common.Core`. A plain hex string, and buffer encode and decode, go through `ByteConvert` in that package.",
   "features": [
     "**`IBinaryEncodingService` / `BinaryEncoding`.** Hex, Base64, Base64Url. Streaming decode, MIME line wrap, PEM helpers, `TryEncode` / `TryDecode`.",
     "**`ICharsetEncodingService` / `CharsetEncoding`.** Resolve CodePages, convert streams sync or async, `EmitBom`, `CharsetConvertingStream`.",

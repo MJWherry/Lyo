@@ -248,7 +248,6 @@ public class JobService(
 
         var children = request.Children.Select(child => {
                 var req = CloneRunRequest(template);
-                req.AllowTriggers = false;
                 req.BatchIndex = child.BatchIndex;
                 if (child.Parameters.Count > 0) {
                     req.JobRunParameters.Clear();
@@ -566,9 +565,6 @@ public class JobService(
         if (durationSlaBreached)
             await PublishSlaAlertAsync(existing.JobDefinitionId, jobRunId, existing.JobDefinition?.Name, "Run exceeded ExpectedDuration SLA").ConfigureAwait(false);
 
-        if (resultEnum == JobRunResult.Failure && existing.JobDefinition is { AlertOnFailure: true, AlertAfterConsecutiveFailures: 0 })
-            await PublishFailureAlertAsync(existing.JobDefinitionId, jobRunId, existing.JobDefinition.Name).ConfigureAwait(false);
-
         var notified = await TryPublishAsync(() => eventPublisher.PublishRunFinishedAsync(jobRunId), "Failed to publish run {RunId} finished", jobRunId).ConfigureAwait(false);
         if (!notified) {
             // The run is committed as Finished. The caller must not retry the finish (the CAS would reject it). Surface the publish failure
@@ -580,8 +576,7 @@ public class JobService(
         var savedResult = await queryService.Get<JobRun, JobRunRes>(
                 [jobRunId],
                 [
-                    "JobRunResults", "JobRunLogs", "JobRunParameters", "JobTrigger", "JobSchedule", "JobDefinition", "JobDefinition.JobSchedules",
-                    "JobDefinition.JobTriggerTriggersJobDefinitions"
+                    "JobRunResults", "JobRunLogs", "JobRunParameters", "JobSchedule", "JobDefinition", "JobDefinition.JobSchedules"
                 ])
             .ConfigureAwait(false);
 
@@ -744,7 +739,6 @@ public class JobService(
         var request = new JobRunReq {
             JobDefinitionId = run.JobDefinitionId,
             CreatedBy = run.CreatedBy,
-            AllowTriggers = run.AllowTriggers,
             Priority = run.Priority,
             TraceId = null
         };
@@ -786,7 +780,6 @@ public class JobService(
         var clone = new JobRunReq {
             JobDefinitionId = template.JobDefinitionId,
             CreatedBy = template.CreatedBy,
-            AllowTriggers = template.AllowTriggers,
             Priority = template.Priority,
             TraceId = template.TraceId
         };
@@ -849,11 +842,9 @@ public class JobService(
             Id = Guid.Empty,
             State = JobState.Queued,
             CreatedTimestamp = now,
-            AllowTriggers = request.AllowTriggers,
             JobDefinitionId = request.JobDefinitionId,
             JobDefinition = mapper.Map<JobDefinitionRes>(def),
             JobScheduleId = request.JobScheduleId,
-            JobTriggerId = request.JobTriggerId,
             ScheduledSlotUtc = request.ScheduledSlotUtc,
             RetryAttempt = request.RetryAttempt,
             Priority = request.Priority ?? def.Priority,
@@ -1088,11 +1079,6 @@ public class JobService(
 
     /// <summary>A due <c>Queued</c> run reduced to the fields required to republish its dispatch message.</summary>
     private sealed record ResyncCandidate(Guid Id, string WorkerType, int Priority);
-
-    private Task PublishFailureAlertAsync(Guid definitionId, Guid runId, string? definitionName)
-        => TryPublishAsync(
-            () => eventPublisher.PublishAlertAsync(definitionId, runId, JobAlertType.Failure, $"Job '{definitionName ?? definitionId.ToString()}' failed (run {runId})"),
-            "Failed to publish failure alert for run {RunId}", runId);
 
     private Task PublishSlaAlertAsync(Guid definitionId, Guid runId, string? definitionName, string detail)
         => TryPublishAsync(

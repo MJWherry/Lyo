@@ -1,5 +1,6 @@
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Models.Audit;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Tests;
 
@@ -10,7 +11,7 @@ public class AuthAuditEventTests
     {
         var recorder = new CapturingRecorder();
         var context = new FakeContextAccessor("203.0.113.5", "ua/test", "trace-abc");
-        await recorder.RecordAsync(context, null, AuthAuditEventKind.JwtIssued, Guid.NewGuid(), "jti", "google", "success", ct: TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(context, null, AuthAuditEventKind.JwtIssued, LyoGuid.CreateV7(), "jti", "google", "success", ct: TestCt);
         var evt = Assert.Single(recorder.Events);
         Assert.Equal(AuthAuditEventKind.JwtIssued, evt.Kind);
         Assert.Equal("203.0.113.5", evt.IpAddress);
@@ -26,7 +27,7 @@ public class AuthAuditEventTests
     public async Task RecordAsync_NullContext_DoesNotThrow()
     {
         var recorder = new CapturingRecorder();
-        await recorder.RecordAsync(null, null, AuthAuditEventKind.SignedOut, outcome: "success", ct: TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(null, null, AuthAuditEventKind.SignedOut, outcome: "success", ct: TestCt);
         var evt = Assert.Single(recorder.Events);
         Assert.Null(evt.IpAddress);
         Assert.Null(evt.UserAgent);
@@ -38,7 +39,7 @@ public class AuthAuditEventTests
     {
         var recorder = new ThrowingRecorder();
         var ex = await Record.ExceptionAsync(() => recorder.RecordAsync(
-            null, null, AuthAuditEventKind.TokenRejected, reason: "Revoked", ct: TestContext.Current.CancellationToken));
+            null, null, AuthAuditEventKind.TokenRejected, reason: "Revoked", ct: TestCt));
 
         Assert.Null(ex);
     }
@@ -46,8 +47,8 @@ public class AuthAuditEventTests
     [Fact]
     public async Task NullAuthAuditRecorder_IsNoOp()
     {
-        var evt = new AuthAuditEvent(Guid.NewGuid(), DateTime.UtcNow, AuthAuditEventKind.HandoffCodeConsumed);
-        await NullAuthAuditRecorder.Instance.RecordAsync(evt, TestContext.Current.CancellationToken);
+        var evt = new AuthAuditEvent(LyoGuid.CreateV7(), DateTime.UtcNow, AuthAuditEventKind.HandoffCodeConsumed);
+        await NullAuthAuditRecorder.Instance.RecordAsync(evt, TestCt);
     }
 
     [Fact]
@@ -62,8 +63,8 @@ public class AuthAuditEventTests
     public async Task RecordAsync_PropagatesTenantId()
     {
         var recorder = new CapturingRecorder();
-        var tenant = Guid.NewGuid();
-        await recorder.RecordAsync(null, null, AuthAuditEventKind.JwtIssued, tenantId: tenant, ct: TestContext.Current.CancellationToken);
+        var tenant = LyoGuid.CreateV7();
+        await recorder.RecordAsync(null, null, AuthAuditEventKind.JwtIssued, tenantId: tenant, ct: TestCt);
         var evt = Assert.Single(recorder.Events);
         Assert.Equal(tenant, evt.TenantId);
     }
@@ -73,7 +74,7 @@ public class AuthAuditEventTests
     {
         var recorder = new CapturingRecorder();
         var metadata = new Dictionary<string, object?> { ["jti"] = "abc", ["exp"] = 1234, ["nullable"] = null };
-        await recorder.RecordAsync(null, null, AuthAuditEventKind.JwtIssued, metadata: metadata, ct: TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(null, null, AuthAuditEventKind.JwtIssued, metadata: metadata, ct: TestCt);
         var evt = Assert.Single(recorder.Events);
         Assert.NotNull(evt.Metadata);
         Assert.Equal(3, evt.Metadata.Count);

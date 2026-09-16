@@ -1,0 +1,50 @@
+<MudStack Spacing="1">
+    @if (Effects.Count == 0) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">No response steps.</MudText>
+    }
+    @for (var index = 0; index < Effects.Count; index++) {
+        var effect = Effects[index];
+        var captured = index;
+        <MudPaper Class="pa-2" Outlined="true">
+            <MudStack Spacing="1">
+                <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+                    <MudSelect T="StoryEffectKind" Value="effect.Kind" ValueChanged="@(kind => SetKind(captured, kind))" Label="Step" Margin="Margin.Dense" Variant="Variant.Outlined">
+                        @foreach (var kind in Enum.GetValues<StoryEffectKind>()) {
+                            if (kind != StoryEffectKind.Unknown) {
+                                <MudSelectItem Value="kind">@kind</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" Disabled="@(captured == 0)" aria-label="Move step up" OnClick="@(() => Move(captured, -1))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" Disabled="@(captured == Effects.Count - 1)" aria-label="Move step down" OnClick="@(() => Move(captured, 1))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" aria-label="Remove step" OnClick="@(() => Remove(captured))"/>
+                </MudStack>
+                @if (effect.Kind is StoryEffectKind.Set or StoryEffectKind.Unset or StoryEffectKind.Increment) {
+                    <MudSelect T="string" Value="effect.VariableKey" ValueChanged="@(value => Set(captured, item => item.VariableKey = value))" Label="Variable" Margin="Margin.Dense" Variant="Variant.Outlined">
+                        @foreach (var variable in Variables) {
+                            <MudSelectItem Value="@variable.Key">@variable.Key</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                @if (effect.Kind is StoryEffectKind.Set or StoryEffectKind.Increment) {
+                    <MudTextField T="string" Value="effect.Value" ValueChanged="@(value => Set(captured, item => item.Value = value))" Label="Value" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+                }
+                @if (effect.Kind == StoryEffectKind.GotoNode) {
+                    <MudSelect T="string" Value="effect.TargetNodeKey" ValueChanged="@(value => Set(captured, item => item.TargetNodeKey = value))" Label="Go to" Margin="Margin.Dense" Variant="Variant.Outlined">
+                        @foreach (var node in Nodes) {
+                            <MudSelectItem Value="@node.Key">@node.Key</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                @if (effect.Kind == StoryEffectKind.InvokeAction) {
+                    <MudSelect T="string" Value="effect.InvokeActionKey" ValueChanged="@(value => Set(captured, item => item.InvokeActionKey = value))" Label="Action" Margin="Margin.Dense" Variant="Variant.Outlined">
+                        @foreach (var action in Actions) {
+                            <MudSelectItem Value="@action.Key">@action.Key</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+            </MudStack>
+        </MudPaper>
+    }
+    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="Add">Add step</MudButton>
+</MudStack>

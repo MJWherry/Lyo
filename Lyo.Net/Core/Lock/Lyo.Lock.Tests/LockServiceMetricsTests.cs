@@ -4,6 +4,7 @@ using Lyo.Metrics.Models;
 using Lyo.Testing;
 using Lyo.Testing.Containers;
 using StackExchange.Redis;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Lock.Tests;
 
@@ -36,8 +37,8 @@ public class LockServiceMetricsTests
     {
         var metrics = new LockTestMetrics();
         var service = new LocalLockService(null, OptionsWithMetrics, metrics);
-        var key = "metrics-acquire-" + Guid.NewGuid().ToString("N");
-        var handle = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var key = "metrics-acquire-" + LyoGuid.CreateV7().ToString("N");
+        var handle = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
         Assert.True(metrics.AcquireSuccessCounters.Count > 0);
@@ -51,10 +52,10 @@ public class LockServiceMetricsTests
     {
         var metrics = new LockTestMetrics();
         var service = new LocalLockService(null, OptionsWithMetrics, metrics);
-        var key = "metrics-failure-" + Guid.NewGuid().ToString("N");
-        var handle1 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var key = "metrics-failure-" + LyoGuid.CreateV7().ToString("N");
+        var handle1 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle1.ShouldNotBeNull();
-        var handle2 = await service.AcquireAsync(key, TimeSpan.FromMilliseconds(100), ct: TestContext.Current.CancellationToken);
+        var handle2 = await service.AcquireAsync(key, TimeSpan.FromMilliseconds(100), ct: TestCt);
         handle2.ShouldBeNull();
         await handle1.ReleaseAsync();
         Assert.True(metrics.AcquireFailureCounters.Count > 0);
@@ -67,8 +68,8 @@ public class LockServiceMetricsTests
     {
         var metrics = new LockTestMetrics();
         var service = new LocalLockService(null, OptionsWithMetrics, metrics);
-        var key = "metrics-release-" + Guid.NewGuid().ToString("N");
-        var handle = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var key = "metrics-release-" + LyoGuid.CreateV7().ToString("N");
+        var handle = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
         Assert.True(metrics.ReleaseTimings.Count > 0);
@@ -80,8 +81,8 @@ public class LockServiceMetricsTests
     {
         var metrics = new LockTestMetrics();
         var service = new LocalLockService(null, OptionsWithMetrics, metrics);
-        var key = "metrics-execute-" + Guid.NewGuid().ToString("N");
-        await service.ExecuteWithLockAsync(key, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var key = "metrics-execute-" + LyoGuid.CreateV7().ToString("N");
+        await service.ExecuteWithLockAsync(key, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), ct: TestCt);
         Assert.True(metrics.ExecuteTimings.Count > 0);
         Assert.Contains(metrics.ExecuteTimings, t => HasKey(t.Tags, key));
     }
@@ -92,8 +93,8 @@ public class LockServiceMetricsTests
         var metrics = new LockTestMetrics();
         var options = new LockOptions { EnableMetrics = false };
         var service = new LocalLockService(null, options, metrics);
-        var key = "metrics-disabled-" + Guid.NewGuid().ToString("N");
-        await service.ExecuteWithLockAsync(key, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var key = "metrics-disabled-" + LyoGuid.CreateV7().ToString("N");
+        await service.ExecuteWithLockAsync(key, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), ct: TestCt);
         Assert.Empty(metrics.AcquireSuccessCounters);
         Assert.Empty(metrics.AcquireTimings);
         Assert.Empty(metrics.ExecuteTimings);
@@ -104,8 +105,8 @@ public class LockServiceMetricsTests
     {
         var metrics = new LockTestMetrics();
         var service = new LocalKeyedSemaphoreService(null, SemaphoreOptionsWithMetrics, metrics);
-        var key = "semaphore-metrics-acquire-" + Guid.NewGuid().ToString("N");
-        var handle = await service.AcquireAsync(key, 2, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var key = "semaphore-metrics-acquire-" + LyoGuid.CreateV7().ToString("N");
+        var handle = await service.AcquireAsync(key, 2, TimeSpan.FromSeconds(5), TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
         Assert.True(metrics.SemaphoreAcquireSuccessCounters.Count > 0);
@@ -119,10 +120,10 @@ public class LockServiceMetricsTests
     {
         var metrics = new LockTestMetrics();
         var service = new LocalKeyedSemaphoreService(null, SemaphoreOptionsWithMetrics, metrics);
-        var key = "semaphore-metrics-failure-" + Guid.NewGuid().ToString("N");
-        var handle1 = await service.AcquireAsync(key, 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var key = "semaphore-metrics-failure-" + LyoGuid.CreateV7().ToString("N");
+        var handle1 = await service.AcquireAsync(key, 1, TimeSpan.FromSeconds(5), TestCt);
         handle1.ShouldNotBeNull();
-        var handle2 = await service.AcquireAsync(key, 1, TimeSpan.FromMilliseconds(100), TestContext.Current.CancellationToken);
+        var handle2 = await service.AcquireAsync(key, 1, TimeSpan.FromMilliseconds(100), TestCt);
         handle2.ShouldBeNull();
         await handle1.ReleaseAsync();
         Assert.True(metrics.SemaphoreAcquireFailureCounters.Count > 0);
@@ -134,8 +135,8 @@ public class LockServiceMetricsTests
     {
         var metrics = new LockTestMetrics();
         var service = new LocalKeyedSemaphoreService(null, SemaphoreOptionsWithMetrics, metrics);
-        var key = "semaphore-metrics-release-" + Guid.NewGuid().ToString("N");
-        var handle = await service.AcquireAsync(key, 2, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var key = "semaphore-metrics-release-" + LyoGuid.CreateV7().ToString("N");
+        var handle = await service.AcquireAsync(key, 2, TimeSpan.FromSeconds(5), TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
         Assert.True(metrics.SemaphoreReleaseTimings.Count > 0);
@@ -147,8 +148,8 @@ public class LockServiceMetricsTests
     {
         var metrics = new LockTestMetrics();
         var service = new LocalKeyedSemaphoreService(null, SemaphoreOptionsWithMetrics, metrics);
-        var key = "semaphore-metrics-execute-" + Guid.NewGuid().ToString("N");
-        await service.ExecuteAsync(key, 2, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var key = "semaphore-metrics-execute-" + LyoGuid.CreateV7().ToString("N");
+        await service.ExecuteAsync(key, 2, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), TestCt);
         Assert.True(metrics.SemaphoreExecuteTimings.Count > 0);
         Assert.Contains(metrics.SemaphoreExecuteTimings, t => HasSemaphoreKey(t.Tags, key));
     }
@@ -159,8 +160,8 @@ public class LockServiceMetricsTests
         var metrics = new LockTestMetrics();
         var options = new KeyedSemaphoreOptions { EnableMetrics = false };
         var service = new LocalKeyedSemaphoreService(null, options, metrics);
-        var key = "semaphore-metrics-disabled-" + Guid.NewGuid().ToString("N");
-        await service.ExecuteAsync(key, 2, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var key = "semaphore-metrics-disabled-" + LyoGuid.CreateV7().ToString("N");
+        await service.ExecuteAsync(key, 2, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), TestCt);
         Assert.Empty(metrics.SemaphoreAcquireSuccessCounters);
         Assert.Empty(metrics.SemaphoreAcquireTimings);
         Assert.Empty(metrics.SemaphoreExecuteTimings);
@@ -173,8 +174,8 @@ public class LockServiceMetricsTests
         var redis = await CreateRedisConnectionAsync();
         try {
             var service = new RedisLockService(redis, null, RedisOptionsWithMetrics, metrics);
-            var key = "redis-metrics-acquire-" + Guid.NewGuid().ToString("N");
-            var handle = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+            var key = "redis-metrics-acquire-" + LyoGuid.CreateV7().ToString("N");
+            var handle = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
             handle.ShouldNotBeNull();
             await handle.ReleaseAsync();
             Assert.True(metrics.AcquireSuccessCounters.Count > 0);
@@ -194,8 +195,8 @@ public class LockServiceMetricsTests
         var redis = await CreateRedisConnectionAsync();
         try {
             var service = new RedisLockService(redis, null, RedisOptionsWithMetrics, metrics);
-            var key = "redis-metrics-execute-" + Guid.NewGuid().ToString("N");
-            await service.ExecuteWithLockAsync(key, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+            var key = "redis-metrics-execute-" + LyoGuid.CreateV7().ToString("N");
+            await service.ExecuteWithLockAsync(key, _ => Task.CompletedTask, TimeSpan.FromSeconds(5), ct: TestCt);
             Assert.True(metrics.ExecuteTimings.Count > 0);
             Assert.Contains(metrics.ExecuteTimings, t => HasKey(t.Tags, key));
         }

@@ -15,6 +15,7 @@ using Lyo.Formatter;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
+using Lyo.Query.Services.Path;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.Extensions.Logging;
 
@@ -183,17 +184,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         if (specs.Count == 1) {
             // Normalize collection results (for example List<string>) to List<object?> so they match in-memory projection.
             var results = new List<object?>(raw.Count);
-            foreach (var item in raw) {
-                if (item is IEnumerable enumerable && item is not string and not byte[]) {
-                    var list = new List<object?>();
-                    foreach (var x in enumerable)
-                        list.Add(x);
-
-                    results.Add(list);
-                }
-                else
-                    results.Add(item);
-            }
+            foreach (var item in raw)
+                results.Add(NormalizeProjectedCollection(item));
 
             return results;
         }
@@ -215,7 +207,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 var slotValue = GetOuterProjectionSlotValue(item, slotIx, slotCount);
                 switch (slot) {
                     case SqlProjectionSingleSlot(var specIndex):
-                        dict[specs[specIndex].RequestedPath] = slotValue;
+                        dict[specs[specIndex].RequestedPath] = NormalizeProjectedCollection(slotValue);
                         break;
                     case SqlProjectionMergedCollectionSlot(var indices):
                         ExpandMergedSqlCollectionSlot(dict, specs, slotValue, indices);
@@ -296,7 +288,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         foreach (var condition in queryConditions) {
             try {
                 var normalizedField = NormalizeFieldPath(typeof(TDbModel), condition.Field);
-                conditions.Add(new(normalizedField, condition.Comparison, condition.Value));
+                conditions.Add(new(normalizedField, condition.Comparison, condition.Value, condition.Threshold));
             }
             catch (Exception ex) {
                 // A dropped condition silently widens MatchedOnly. The collection keeps items the caller filtered out, and the response looks like the filter was ignored.
@@ -320,7 +312,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 continue;
 
             var scopedConditions = filterConditions.Conditions.Where(i => i.NormalizedField.StartsWith(scope.CollectionPath + ".", StringComparison.OrdinalIgnoreCase))
-                .Select(i => new ProjectedFilterCondition(i.NormalizedField[(scope.CollectionPath.Length + 1)..], i.Comparison, i.Value))
+                .Select(i => new ProjectedFilterCondition(i.NormalizedField[(scope.CollectionPath.Length + 1)..], i.Comparison, i.Value, i.Threshold))
                 .ToList();
 
             if (scopedConditions.Count == 0)
@@ -544,6 +536,13 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         if (!TryBuildExpressionToCollectionNavigation(parameter, rootType, outerPrefixParts, out var collectionExpr, out var elementType))
             return null;
 
+        if (QueryPath.TryParseSegment(outerPrefixParts[^1], out _, out var window, out _) && window is not null) {
+            if (!QueryPath.TryWindowSequence(collectionExpr, elementType, window.Value, out var windowed, out _))
+                return null;
+
+            collectionExpr = windowed!;
+        }
+
         var innerStartPartIndex = outerSegmentCount;
         var innerParam = Expression.Parameter(elementType, "x");
         var leafExprs = new List<Expression>(groupSpecs.Count);
@@ -578,7 +577,10 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             if (SharedEntityMetadataCache.IsCollectionType(current))
                 current = SharedEntityMetadataCache.GetCollectionElementType(current);
 
-            var property = SharedEntityMetadataCache.ResolveProperty(current, mergePrefixParts[i]);
+            if (!QueryPath.TryParseSegment(mergePrefixParts[i], out var segmentName, out _, out _))
+                return false;
+
+            var property = SharedEntityMetadataCache.ResolveProperty(current, segmentName);
             if (property is null)
                 return false;
 
@@ -607,7 +609,10 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             if (SharedEntityMetadataCache.IsCollectionType(currentType))
                 currentType = SharedEntityMetadataCache.GetCollectionElementType(currentType);
 
-            var property = SharedEntityMetadataCache.ResolveProperty(currentType, part);
+            if (!QueryPath.TryParseSegment(part, out var segmentName, out _, out _))
+                return false;
+
+            var property = SharedEntityMetadataCache.ResolveProperty(currentType, segmentName);
             if (property == null)
                 return false;
 
@@ -646,6 +651,18 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         }
 
         return multiResults;
+    }
+
+    private static object? NormalizeProjectedCollection(object? value)
+    {
+        if (value is not IEnumerable enumerable || value is string or byte[])
+            return value;
+
+        var list = new List<object?>();
+        foreach (var item in enumerable)
+            list.Add(item);
+
+        return list;
     }
 
     private static object? GetOuterProjectionSlotValue(object item, int slotIndex, int slotCount)
@@ -939,7 +956,10 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             if (SharedEntityMetadataCache.IsCollectionType(currentType))
                 currentType = SharedEntityMetadataCache.GetCollectionElementType(currentType);
 
-            var property = ResolvePropertyCached(currentType, part);
+            if (!QueryPath.TryParseSegment(part, out var segmentName, out _, out _))
+                break;
+
+            var property = ResolvePropertyCached(currentType, segmentName);
             if (property == null)
                 break;
 
@@ -998,8 +1018,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 continue;
 
             var isMatch = op == GroupOperatorEnum.Or
-                ? scopedConditions.Any(c => EvaluateComparisonOnPossibleCollection(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value))
-                : scopedConditions.All(c => EvaluateComparisonOnPossibleCollection(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value));
+                ? scopedConditions.Any(c => EvaluateComparisonOnPossibleCollection(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value, c.Threshold))
+                : scopedConditions.All(c => EvaluateComparisonOnPossibleCollection(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value, c.Threshold));
 
             if (isMatch)
                 filteredItems.Add(item);
@@ -1079,8 +1099,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return current;
     }
 
-    private static bool EvaluateComparisonOnPossibleCollection(object? actualValue, ComparisonOperatorEnum comparator, object? expectedValue)
-        => ComparisonEvaluator.Evaluate(actualValue, comparator, expectedValue);
+    private static bool EvaluateComparisonOnPossibleCollection(object? actualValue, ComparisonOperatorEnum comparator, object? expectedValue, double? threshold = null)
+        => ComparisonEvaluator.Evaluate(actualValue, comparator, expectedValue, threshold);
 
     private static object? ApplyMatchedOnlyProjectionFilter(object? value, ProjectedFieldSpec spec, ProjectedFilterConditions filterConditions)
     {
@@ -1091,15 +1111,15 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         if (spec.NormalizedParts.Length > 0 && spec.NormalizedParts[^1] == "*" && value is List<object?> objectList) {
             var wildcardRoot = spec.NormalizedPath[..^2];
             var scopedConditions = conditions.Where(i => i.NormalizedField.StartsWith(wildcardRoot + ".", StringComparison.OrdinalIgnoreCase))
-                .Select(i => new ProjectedFilterCondition(i.NormalizedField[(wildcardRoot.Length + 1)..], i.Comparison, i.Value))
+                .Select(i => new ProjectedFilterCondition(i.NormalizedField[(wildcardRoot.Length + 1)..], i.Comparison, i.Value, i.Threshold))
                 .ToList();
 
             if (scopedConditions.Count == 0)
                 return value;
 
             var matchScoped = filterConditions.Operator == GroupOperatorEnum.Or
-                ? (Func<object?, bool>)(item => scopedConditions.Any(c => ComparisonEvaluator.Evaluate(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value)))
-                : item => scopedConditions.All(c => ComparisonEvaluator.Evaluate(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value));
+                ? (Func<object?, bool>)(item => scopedConditions.Any(c => ComparisonEvaluator.Evaluate(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value, c.Threshold)))
+                : item => scopedConditions.All(c => ComparisonEvaluator.Evaluate(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value, c.Threshold));
 
             return objectList.Where(matchScoped).ToList();
         }
@@ -1110,8 +1130,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 return value;
 
             var matchScalar = filterConditions.Operator == GroupOperatorEnum.Or
-                ? (Func<object?, bool>)(v => exactConditions.Any(c => ComparisonEvaluator.Evaluate(v, c.Comparison, c.Value)))
-                : v => exactConditions.All(c => ComparisonEvaluator.Evaluate(v, c.Comparison, c.Value));
+                ? (Func<object?, bool>)(v => exactConditions.Any(c => ComparisonEvaluator.Evaluate(v, c.Comparison, c.Value, c.Threshold)))
+                : v => exactConditions.All(c => ComparisonEvaluator.Evaluate(v, c.Comparison, c.Value, c.Threshold));
 
             return scalarList.Where(matchScalar).ToList();
         }
@@ -1128,6 +1148,9 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             return ToTerminalValue(current);
 
         var part = parts[index];
+        if (part.Contains('[') || part.Contains(']'))
+            return ExtractWindowedPathValue(current, parts, index);
+
         if (part.Equals("count", StringComparison.OrdinalIgnoreCase) && current is IEnumerable countEnumerable && current is not string and not byte[])
             return countEnumerable.Cast<object?>().Count();
 
@@ -1156,6 +1179,50 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
 
         var next = property.GetValue(current);
         return ExtractPathValue(next, parts, index + 1);
+    }
+
+    private static bool HasWindow(IReadOnlyList<string> parts, int partIndex)
+    {
+        for (var i = partIndex; i < parts.Count; i++) {
+            if (parts[i].Contains('[') || parts[i].Contains(']'))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsWindowTarget(Type type)
+        => (Nullable.GetUnderlyingType(type) ?? type) == typeof(string) || SharedEntityMetadataCache.IsCollectionType(type);
+
+    private static object? ExtractWindowedPathValue(object current, IReadOnlyList<string> parts, int index)
+    {
+        var part = parts[index];
+        if (!QueryPath.TryParseSegment(part, out var name, out var window, out _) || window is null)
+            return null;
+
+        var property = SharedEntityMetadataCache.ResolveProperty(current.GetType(), name);
+        if (property == null)
+            return null;
+
+        var next = property.GetValue(current);
+        if ((Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType) == typeof(string))
+            return ExtractPathValue(QueryPath.SliceString(next as string, window.Value), parts, index + 1);
+
+        if (next is not IEnumerable || next is string or byte[] || !SharedEntityMetadataCache.IsCollectionType(property.PropertyType))
+            return null;
+
+        var elementType = SharedEntityMetadataCache.GetCollectionElementType(property.PropertyType);
+        if (!QueryPath.TryOrderedWindow(next, elementType, window.Value, out var ordered, out _))
+            return null;
+
+        if (window.Value.IsSingle)
+            return ExtractPathValue(ordered!.FirstOrDefault(), parts, index + 1);
+
+        var list = new List<object?>();
+        foreach (var item in ordered!)
+            list.Add(ExtractPathValue(item, parts, index + 1));
+
+        return list;
     }
 
     private static object? ToTerminalValue(object? value)
@@ -1231,7 +1298,12 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 if (part == "*" && i == spec.NormalizedParts.Length - 1)
                     break;
 
-                if (part.Equals("count", StringComparison.OrdinalIgnoreCase) && i > 0) {
+                if (!QueryPath.TryParseSegment(part, out var segmentName, out var window, out var parseError)) {
+                    list.Add(new(Constants.ApiErrorCodes.InvalidSelectField, $"Projection path '{spec.RequestedPath}' {parseError}"));
+                    break;
+                }
+
+                if (segmentName.Equals("count", StringComparison.OrdinalIgnoreCase) && window is null && i > 0) {
                     if (!SharedEntityMetadataCache.IsCollectionType(currentType)) {
                         list.Add(
                             new(
@@ -1245,17 +1317,28 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 if (SharedEntityMetadataCache.IsCollectionType(currentType))
                     currentType = SharedEntityMetadataCache.GetCollectionElementType(currentType);
 
-                var property = SharedEntityMetadataCache.ResolveProperty(currentType, part);
+                var property = SharedEntityMetadataCache.ResolveProperty(currentType, segmentName);
                 if (property == null) {
                     list.Add(
                         new(
                             Constants.ApiErrorCodes.InvalidSelectField,
-                            $"Entity '{GetProjectionEntityDisplayName(currentType)}' does not have field '{part}' (in path '{spec.RequestedPath}')."));
+                            $"Entity '{GetProjectionEntityDisplayName(currentType)}' does not have field '{segmentName}' (in path '{spec.RequestedPath}')."));
 
                     break;
                 }
 
-                currentType = property.PropertyType;
+                if (window is not null && !IsWindowTarget(property.PropertyType)) {
+                    list.Add(
+                        new(
+                            Constants.ApiErrorCodes.InvalidSelectField,
+                            $"Index is only valid on a string or a collection ('{spec.RequestedPath}')."));
+
+                    break;
+                }
+
+                currentType = window is { IsSingle: true } && SharedEntityMetadataCache.IsCollectionType(property.PropertyType)
+                    ? SharedEntityMetadataCache.GetCollectionElementType(property.PropertyType)
+                    : property.PropertyType;
             }
         }
 
@@ -1268,6 +1351,9 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
     {
         if (partIndex >= parts.Length)
             return null;
+
+        if (HasWindow(parts, partIndex))
+            return QueryPath.TryBind(rootType, parts, partIndex, parameter, requireScalar: false, out var bound, out _) ? bound : null;
 
         var currentType = rootType;
         if (SharedEntityMetadataCache.IsCollectionType(currentType))
@@ -1310,6 +1396,9 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
     {
         if (partIndex >= parts.Length)
             return current;
+
+        if (HasWindow(parts, partIndex))
+            return QueryPath.TryBind(currentType, parts, partIndex, current, requireScalar: false, out var bound, out _) ? bound : null;
 
         if (SharedEntityMetadataCache.IsCollectionType(currentType))
             currentType = SharedEntityMetadataCache.GetCollectionElementType(currentType);
@@ -1642,25 +1731,26 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
 
     private static class ComparisonEvaluator
     {
-        public static bool Evaluate(object? actualValue, ComparisonOperatorEnum comparator, object? expectedValue)
+        public static bool Evaluate(object? actualValue, ComparisonOperatorEnum comparator, object? expectedValue, double? threshold = null)
         {
             if (actualValue is not IEnumerable enumerable || actualValue is string or byte[])
-                return EvaluateScalar(actualValue, comparator, expectedValue);
+                return EvaluateScalar(actualValue, comparator, expectedValue, threshold);
 
             var values = enumerable.Cast<object?>().ToList();
             if (values.Count == 0)
                 return false;
 
             var isNegated = comparator is ComparisonOperatorEnum.NotEquals or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.NotStartsWith
-                or ComparisonOperatorEnum.NotEndsWith or ComparisonOperatorEnum.NotIn or ComparisonOperatorEnum.NotRegex;
+                or ComparisonOperatorEnum.NotEndsWith or ComparisonOperatorEnum.NotIn or ComparisonOperatorEnum.NotRegex or ComparisonOperatorEnum.NotFuzzy;
 
-            return isNegated ? values.All(v => EvaluateScalar(v, comparator, expectedValue)) : values.Any(v => EvaluateScalar(v, comparator, expectedValue));
+            return isNegated ? values.All(v => EvaluateScalar(v, comparator, expectedValue, threshold)) : values.Any(v => EvaluateScalar(v, comparator, expectedValue, threshold));
         }
 
-        private static bool EvaluateScalar(object? actualValue, ComparisonOperatorEnum comparator, object? expectedValue)
+        private static bool EvaluateScalar(object? actualValue, ComparisonOperatorEnum comparator, object? expectedValue, double? threshold)
         {
             var actualText = actualValue?.ToString();
             var expectedText = expectedValue?.ToString();
+            var fuzzyThreshold = threshold ?? ConditionClause.DefaultFuzzyThreshold;
             return comparator switch {
                 ComparisonOperatorEnum.Equals => string.Equals(actualText, expectedText, StringComparison.OrdinalIgnoreCase),
                 ComparisonOperatorEnum.NotEquals => !string.Equals(actualText, expectedText, StringComparison.OrdinalIgnoreCase),
@@ -1678,6 +1768,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 ComparisonOperatorEnum.LessThanOrEqual => CompareOrdered(actualValue, expectedValue, static c => c <= 0),
                 ComparisonOperatorEnum.Regex => MatchesRegex(actualText, expectedText),
                 ComparisonOperatorEnum.NotRegex => !MatchesRegex(actualText, expectedText),
+                ComparisonOperatorEnum.Fuzzy => Lyo.Query.FuzzyMatch.IsSimilar(actualText, expectedText, fuzzyThreshold),
+                ComparisonOperatorEnum.NotFuzzy => !Lyo.Query.FuzzyMatch.IsSimilar(actualText, expectedText, fuzzyThreshold),
                 // An unrecognized comparator cannot be shown to match. Returning true kept every collection item under MatchedOnly, which reads as "the filter did nothing".
                 var _ => false
             };

@@ -13,8 +13,9 @@
     "`ParseFromUrl*` helpers download from a URL and share an optional injected `HttpClient`.",
     "File append, combine, and split (async, `net10.0` only).",
     "`IAsyncEnumerable<T>` and string-row streaming reads, `IAsyncEnumerable` exports, chunked processing, statistics, schema validation, column-mapping parses, and CSV-to-CSV comparison.",
-    "Dialect through `CsvOptions`: delimiter, quote, escape, comments, trim, blank-line skip, column-count detection, culture, encoding.",
+    "Dialect through `CsvOptions`: delimiter, quote, escape, comments, trim, blank-line skip, column-count detection, culture, encoding. `Order` is Defined, Alphabetical, or Specified (`OrderNames` and `[MemberOrder]`). A caller-supplied column list stays in that order.",
     "Header rename through `[CsvColumn]`; encoding through `SetEncoding` / `SetOptions`; `CodePagesEncodingProvider` is registered in the service constructor.",
+    "`CsvService.Default` is the stock dialect. Concurrent parse and export on one instance is safe. `SetEncoding` and `SetOptions` publish a new options copy, so a call already running keeps the dialect it started with. Do not reconfigure `Default`.",
     "Ships `ICsvValueConverter` implementations: `DecimalCsvConverter`, `Int32CsvConverter`, `Int64CsvConverter`, `YesNoBoolCsvConverter`.",
     "When wrapping failures in `Result<T>`, uses `CsvErrorCodes` constants (`CSV_EXPORT_FAILED`, `CSV_PARSE_FAILED`, `CSV_OPERATION_CANCELLED`, `CSV_FILE_OPERATION_FAILED`, `CSV_VALIDATION_FAILED`)."
   ],

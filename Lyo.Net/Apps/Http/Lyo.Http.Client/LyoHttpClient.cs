@@ -7,8 +7,9 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Net;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Http.Client.Plan;
@@ -628,7 +629,7 @@ public class LyoHttpClient : ILyoHttpClient
     {
         var ua = BaseOptions.UserAgent;
         return ua.Rotation switch {
-            LyoHttpUserAgentRotation.PerRequest => ua.Resolve(Environment.TickCount ^ Guid.NewGuid().GetHashCode()),
+            LyoHttpUserAgentRotation.PerRequest => ua.Resolve(Environment.TickCount ^ LyoGuid.CreateV7().GetHashCode()),
             LyoHttpUserAgentRotation.PerSession => ua.Resolve(Session.SessionId.GetHashCode()),
             LyoHttpUserAgentRotation.PerClient => ua.Resolve(_clientUaSeed),
             var _ => ua.Resolve(0)

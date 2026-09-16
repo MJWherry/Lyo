@@ -68,6 +68,7 @@ await scheduler.StartAsync();
 - **Interval.** Fire every N minutes/hours inside a daily window.
 - **OneShot.** Fire once at a specific time.
 - **Cron.** 5-field or 6-field cron (`"0 8 * * MON-FRI"`, `"*/30 * * * * *"`).
+- **Calendar.** `ScheduleCalendar.From(definition, year, month, zone)` places fires on a `Calendar`. A disabled schedule yields an empty grid. An interval schedule also places its daily window as a span. The entry title is the schedule description when one is set. Pass a hue and `EntityRef` list when the schedule stands in for a meeting. `keyScope` keeps two schedules that share an instant from using the same key.
 
 ## Options
 
@@ -89,6 +90,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Schedule.Models` (direct, lyo)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

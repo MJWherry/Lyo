@@ -102,11 +102,11 @@ internal sealed class FileStorageDekOperations
         var errors = new List<string>();
         for (var i = 0; i < filesList.Count; i += batchSize) {
             ct.ThrowIfCancellationRequested();
-            var batch = filesList.Skip(i).Take(batchSize).ToList();
-            _logger.LogDebug(
-                "Processing batch {BatchNumber} ({StartIndex}-{EndIndex} of {Total})", i / batchSize + 1, i + 1, Math.Min(i + batchSize, filesList.Count), filesList.Count);
-
-            foreach (var fileMetadata in batch) {
+            // The batch only exists for log granularity, so walk the list in place rather than re-enumerating a prefix of it per batch.
+            var batchEnd = Math.Min(i + batchSize, filesList.Count);
+            _logger.LogDebug("Processing batch {BatchNumber} ({StartIndex}-{EndIndex} of {Total})", i / batchSize + 1, i + 1, batchEnd, filesList.Count);
+            for (var j = i; j < batchEnd; j++) {
+                var fileMetadata = filesList[j];
                 ct.ThrowIfCancellationRequested();
                 try {
                     if (fileMetadata.DataEncryptionKeyId == actualTargetKeyId && fileMetadata.DataEncryptionKeyVersion == actualTargetVersion) {
@@ -200,13 +200,12 @@ internal sealed class FileStorageDekOperations
         var errors = new List<string>();
         for (var i = 0; i < requestedFileIds.Count; i += batchSize) {
             ct.ThrowIfCancellationRequested();
-            var batch = requestedFileIds.Skip(i).Take(batchSize).ToList();
-            _logger.LogDebug(
-                "Processing DEK rotation batch {BatchNumber} ({StartIndex}-{EndIndex} of {Total})", i / batchSize + 1, i + 1, Math.Min(i + batchSize, requestedFileIds.Count),
-                requestedFileIds.Count);
-
-            foreach (var fileId in batch) {
+            // The batch only exists for log granularity, so walk the list in place rather than re-enumerating a prefix of it per batch.
+            var batchEnd = Math.Min(i + batchSize, requestedFileIds.Count);
+            _logger.LogDebug("Processing DEK rotation batch {BatchNumber} ({StartIndex}-{EndIndex} of {Total})", i / batchSize + 1, i + 1, batchEnd, requestedFileIds.Count);
+            for (var j = i; j < batchEnd; j++) {
                 ct.ThrowIfCancellationRequested();
+                var fileId = requestedFileIds[j];
                 try {
                     var fileMetadata = await _metadataService.GetMetadataAsync(fileId, ct).ConfigureAwait(false);
                     ValidateDekRotationMetadata(fileMetadata);

@@ -47,7 +47,7 @@ public static class JobBlackoutCalendarEvaluator
         return slotUtc;
     }
 
-    private static bool MatchesWindowDate(JobBlackoutWindowRes window, DateTime local, DayFlags dayFlag)
+    internal static bool MatchesWindowDate(JobBlackoutWindowRes window, DateTime local, DayFlags dayFlag)
     {
         if (!string.IsNullOrWhiteSpace(window.HolidaySlug)) {
             var holiday = HolidayInfo.FromSlug(window.HolidaySlug);

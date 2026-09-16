@@ -31,7 +31,7 @@ internal static class Extensions
             LyoTypeCategory.Text or LyoTypeCategory.Identifier => [
                 ComparisonOperatorEnum.Contains, ComparisonOperatorEnum.NotContains, ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals,
                 ComparisonOperatorEnum.StartsWith, ComparisonOperatorEnum.NotStartsWith, ComparisonOperatorEnum.EndsWith, ComparisonOperatorEnum.NotEndsWith,
-                ComparisonOperatorEnum.In, ComparisonOperatorEnum.NotIn
+                ComparisonOperatorEnum.In, ComparisonOperatorEnum.NotIn, ComparisonOperatorEnum.Fuzzy, ComparisonOperatorEnum.NotFuzzy
             ],
             LyoTypeCategory.Integer or LyoTypeCategory.Number => [
                 ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals, ComparisonOperatorEnum.GreaterThan, ComparisonOperatorEnum.GreaterThanOrEqual,
@@ -47,6 +47,9 @@ internal static class Extensions
         };
 
     public static bool IsMultiValueComparisonOperator(this ComparisonOperatorEnum comparison) => comparison is ComparisonOperatorEnum.In or ComparisonOperatorEnum.NotIn;
+
+    public static bool IsFuzzyComparisonOperator(this ComparisonOperatorEnum comparison)
+        => comparison is ComparisonOperatorEnum.Fuzzy or ComparisonOperatorEnum.NotFuzzy;
 
     /// <summary>
     /// Normalizes a condition <c>In</c>/<c>NotIn</c> value for chip and CSV editors. Handles JSON-deserialized <see cref="JsonElement" /> arrays and non-string enumerables,

@@ -14,7 +14,7 @@ Blazor Server workbench for the Lyo platform. It hosts about 30 routed test page
 Each workbench page lives under `Components/Pages/` and uses `@attribute [Route("/" + Constants.Page.X)]` so route strings are taken from `Lyo.TestGateway.Constants.Page`.
 
 | Route | Page | Backed by |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `/` | `Home` | `AuthorizedPage` placeholder |
 | `/PeopleManagement` | `People/PeopleManagement` | `Lyo.Api.Client` aimed at Gateway.Api `Person` CRUD |
 | `/query-builder` | `QueryBuilderExample` | `Lyo.Query.Web.Components` |
@@ -32,7 +32,7 @@ Each workbench page lives under `Components/Pages/` and uses `@attribute [Route(
 | `/text-diff` | `TextDiffTest` | `Lyo.Web.Components` diff viewer |
 | `/formatter` | `FormatterTest` | `Lyo.Formatter.Web.Components` live template editor plus annotated preview (`AddFormatterService()`) |
 | `/rich-text-editor` | `RichTextEditorTest` | `Lyo.Web.Components` editor |
-| `/cache`, `/locks`, `/rabbitmq`, `/metrics`, `/schedule`, `/diagnostics`, `/jobs`, `/drift`, `/reports`, `/report-design`, `/config`, `/privacy-redaction`, `/seed` | Infra workbenches | `Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.Drift.Web.Components`, `Lyo.Reporting.Web.Components` (`ReportManagement` + `ReportDesignWorkbench`; Seed posts people plus designer report templates), `Lyo.Config.Web.Components`, `Lyo.Privacy.Web.Components` |
+| `/cache`, `/locks`, `/rabbitmq`, `/metrics`, `/schedule`, `/diagnostics`, `/jobs`, `/home-inventory`, `/recipe`, `/story`, `/drift`, `/reports`, `/report-design`, `/config`, `/billing`, `/privacy-redaction`, `/seed` | Infra workbenches | `Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.HomeInventory.Web.Components` (`HomeInventoryManagement`; FileStorage prefix `Workbench/FileStorage`), `Lyo.Recipe.Web.Components` (`RecipeManagement`; FileStorage prefix `Workbench/FileStorage`), `Lyo.Story.Web.Components` (`StoryManagement` on `IStoryClient` against TestApi), `Lyo.Drift.Web.Components`, `Lyo.Reporting.Web.Components` (`ReportManagement` + `ReportDesignWorkbench`; Seed posts people plus designer report templates), `Lyo.Config.Web.Components`, `Lyo.Billing.Web.Components` (invoice demo via TestApi + in-process `IPaymentCollector`), `Lyo.Privacy.Web.Components` |
 
 Constants live in `Lyo.TestGateway.Constants.Page` (workbench routes) and `Lyo.TestGateway.Models.Constants` (Person/FileStorageWorkbench API routes).
 
@@ -54,6 +54,7 @@ Downloads open the API `GET {ApiRoutePrefix}/files/{id}/download` URL. The Gatew
 - API client: `Configure<ApiClientOptions>(…ApiClientOptions.SectionName)`, `AddLyoApiClient`.
 - File workbench: `AddFileStorageWorkbenchSupport(builder.Configuration)`. Key store: `AddLocalKeyStore()`.
 - Config workbench: `AddConfigApiStore()` (`IConfigStore` → TestApi manage routes). Encryption remains on TestApi.
+- Billing workbench: `AddInternalPaymentCollector()` (`IPaymentCollector` → in-process Internal collector). Invoice writes go through TestApi.
 - Seed page: `AddLyoSeed()` plus `ApiSeedTransport` against `POST Person/Bulk` (People API) and `POST Reporting/Definition/Bulk` (designer templates: controls gallery, sales summary, invoice, operations dashboard).
 
 ## Config sections
@@ -87,8 +88,9 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Authentication.Web.Components.Server` (direct, lyo)
 - `Lyo.Barcode.Native` (direct, lyo)
 - `Lyo.Barcode.TestWorkbench.Web.Components` (direct, lyo)
+- `Lyo.Billing.Client` (direct, lyo)
+- `Lyo.Billing.Web.Components` (direct, lyo)
 - `Lyo.Cache` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Compression` (direct, lyo)
 - `Lyo.Compression.BZip2` (direct, lyo)
@@ -115,20 +117,25 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Formatter` (direct, lyo)
 - `Lyo.Formatter.Web.Components` (direct, lyo)
 - `Lyo.Hashing` (direct, lyo)
+- `Lyo.HomeInventory.Web.Components` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
 - `Lyo.IO.Temp` (direct, lyo)
 - `Lyo.Images` (direct, lyo)
 - `Lyo.Images.Web.Components` (direct, lyo)
 - `Lyo.Job.Web.Components` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.KeyStore` (direct, lyo)
 - `Lyo.KeyStore.Aws` (direct, lyo)
 - `Lyo.KeyStore.Web.Components` (direct, lyo)
+- `Lyo.Leaderboard.Api.Client` (direct, lyo)
+- `Lyo.Leaderboard.Web.Components` (direct, lyo)
 - `Lyo.Lock` (direct, lyo)
 - `Lyo.MessageQueue` (direct, lyo)
 - `Lyo.MessageQueue.RabbitMq` (direct, lyo)
 - `Lyo.MessageQueue.RabbitMq.Web.Components` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Metrics.OpenTelemetry` (direct, lyo)
+- `Lyo.Payments` (direct, lyo)
 - `Lyo.Pdf` (direct, lyo)
 - `Lyo.Pdf.Web.Components` (direct, lyo)
 - `Lyo.People.Models` (direct, lyo)
@@ -137,6 +144,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.QRCode` (direct, lyo)
 - `Lyo.QRCode.Web.Components` (direct, lyo)
 - `Lyo.Query.Web.Components` (direct, lyo)
+- `Lyo.Recipe.Client` (direct, lyo)
+- `Lyo.Recipe.Web.Components` (direct, lyo)
 - `Lyo.Reporting.Business.Example` (direct, lyo)
 - `Lyo.Reporting.Models` (direct, lyo)
 - `Lyo.Reporting.Web` (direct, lyo)
@@ -147,16 +156,23 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Seed` (direct, lyo)
 - `Lyo.Sms.Twilio` (direct, lyo)
 - `Lyo.Sms.Web.Components` (direct, lyo)
+- `Lyo.Story.Client` (direct, lyo)
+- `Lyo.Story.Web.Components` (direct, lyo)
 - `Lyo.Tag` (direct, lyo)
 - `Lyo.Translation.Aws` (direct, lyo)
 - `Lyo.Translation.Web.Components` (direct, lyo)
 - `Lyo.Tts.AwsPolly.Web.Components` (direct, lyo)
 - `Lyo.Tts.Typecast` (direct, lyo)
 - `Lyo.Tts.Typecast.Web.Components` (direct, lyo)
+- `Lyo.Web.Automation.Client` (direct, lyo)
+- `Lyo.Web.Automation.Web.Components` (direct, lyo)
 - `Lyo.Web.Components` (direct, lyo)
 - `Lyo.Web.Components.Export` (direct, lyo)
 - `Lyo.Web.Components.Export.Csv` (direct, lyo)
+- `Lyo.Web.Components.Export.Toml` (direct, lyo)
 - `Lyo.Web.Components.Export.Xlsx` (direct, lyo)
+- `Lyo.Web.Components.Export.Xml` (direct, lyo)
+- `Lyo.Web.Components.Export.Yaml` (direct, lyo)
 - `Lyo.Web.Host` (direct, lyo)
 - `Lyo.Web.WebRenderer` (direct, lyo)
 - `Lyo.Xlsx` (direct, lyo)
@@ -165,9 +181,11 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `MudBlazor` `9.3` (direct, third-party)
 - `Lyo.Api.FileStorage.Models` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Authentication` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
 - `Lyo.Barcode` (transitive, lyo)
 - `Lyo.Barcode.Web.Components` (transitive, lyo)
+- `Lyo.Billing` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Config` (transitive, lyo)
 - `Lyo.Config.Api.Models` (transitive, lyo)
@@ -176,6 +194,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Diagnostic.AspNetCore` (transitive, lyo)
+- `Lyo.Diagram` (transitive, lyo)
+- `Lyo.Diagram.Models` (transitive, lyo)
 - `Lyo.Drift.Models` (transitive, lyo)
 - `Lyo.Email.Models` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)
@@ -183,19 +203,28 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.FileSystemWatcher.Models` (transitive, lyo)
 - `Lyo.Geolocation.Models` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.HomeInventory.Models` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
+- `Lyo.IO.FileSystem.Web.Components` (transitive, lyo)
 - `Lyo.Job.Models` (transitive, lyo)
+- `Lyo.Leaderboard` (transitive, lyo)
+- `Lyo.Leaderboard.Api.Models` (transitive, lyo)
+- `Lyo.Ledger` (transitive, lyo)
 - `Lyo.MessageQueue.Web.Components` (transitive, lyo)
+- `Lyo.Note` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Pdf.Models` (transitive, lyo)
 - `Lyo.Privacy` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Recipe.Models` (transitive, lyo)
 - `Lyo.Reporting.Client` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Sms` (transitive, lyo)
 - `Lyo.Sms.Models` (transitive, lyo)
+- `Lyo.Story` (transitive, lyo)
+- `Lyo.Story.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.SystemInformation` (transitive, lyo)
 - `Lyo.Translation` (transitive, lyo)
@@ -205,7 +234,9 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Typecast.Client` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
+- `Lyo.Web.Automation` (transitive, lyo)
 - `Lyo.Web.Primitives` (transitive, lyo)
+- `Lyo.Web.WebRenderer.Models` (transitive, lyo)
 - `Lyo.Xlsx.Models` (transitive, lyo)
 - `AWSSDK.Polly` `4.0.100.3` (transitive, third-party)
 - `AWSSDK.SecretsManager` `4.0.100.3` (transitive, third-party)
@@ -240,6 +271,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` (transitive, microsoft)
+- `Npgsql` `10.0.3` (transitive, third-party)
 - `OpenTelemetry` `1.16.0` (transitive, third-party)
 - `OpenTelemetry.Exporter.Console` `1.16.0` (transitive, third-party)
 - `OpenTelemetry.Exporter.OpenTelemetryProtocol` `1.16.0` (transitive, third-party)

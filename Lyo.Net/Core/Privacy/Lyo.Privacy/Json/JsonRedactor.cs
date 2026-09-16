@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Lyo.Common.Core.Conversion;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Metrics;
@@ -206,25 +207,6 @@ public sealed class JsonRedactor : IStructuredRedactor
         Buffer.BlockCopy(salt, 0, buf, 0, salt.Length);
         Buffer.BlockCopy(payload, 0, buf, salt.Length, payload.Length);
         var h = sha.ComputeHash(buf);
-        return HexPrefix8(h);
-    }
-
-    private static string HexPrefix8(byte[] h)
-    {
-        var n = Math.Min(8, h.Length);
-        var chars = new char[2 * n];
-        for (var i = 0; i < n; i++) {
-            var b = h[i];
-            chars[2 * i] = NibbleHex(b >> 4);
-            chars[2 * i + 1] = NibbleHex(b & 0xF);
-        }
-
-        return new(chars);
-
-        static char NibbleHex(int v)
-        {
-            v &= 0xF;
-            return (char)(v < 10 ? '0' + v : 'A' + (v - 10));
-        }
+        return ByteConvert.ToHex(h.AsSpan(0, Math.Min(8, h.Length)));
     }
 }

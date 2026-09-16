@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Web.Automation.Playwright.Browser;
@@ -46,7 +47,7 @@ public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
 
     private IPlaywrightBrowserSession CreateSessionCore(PlaywrightBrowserOptions effective)
     {
-        var sessionId = Guid.NewGuid();
+        var sessionId = LyoGuid.CreateV7();
         var ctx = PlaywrightExecutionContextFactory.Create(effective, sessionId);
         var baseLogger = _loggerFactory?.CreateLogger<PlaywrightBrowser>() ?? NullLogger<PlaywrightBrowser>.Instance;
         var browser = new PlaywrightBrowser(effective, ctx, baseLogger, _metrics);

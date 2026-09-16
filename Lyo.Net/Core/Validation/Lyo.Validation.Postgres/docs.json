@@ -32,7 +32,7 @@
   "readmePath": "Lyo.Net/Core/Validation/Lyo.Validation.Postgres/README.md",
   "dependencies": [
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -40,7 +40,7 @@
       ]
     },
     {
-      "name": "Lyo.Exceptions",
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -73,6 +73,15 @@
     },
     {
       "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [
@@ -225,6 +234,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

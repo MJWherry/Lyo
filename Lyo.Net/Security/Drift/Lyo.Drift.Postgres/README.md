@@ -24,12 +24,12 @@ services.AddPostgresDriftManagementFromConfiguration(configuration);
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Api` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Diff` (direct, lyo)
 - `Lyo.Drift.Models` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.FileSystemWatcher.Models` (direct, lyo)
 - `Lyo.Hashing` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Postgres` (direct, lyo)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
@@ -51,6 +51,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.SystemInformation` (transitive, lyo)
@@ -78,5 +79,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

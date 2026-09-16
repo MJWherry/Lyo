@@ -52,6 +52,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Postgres` (direct, lyo)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)

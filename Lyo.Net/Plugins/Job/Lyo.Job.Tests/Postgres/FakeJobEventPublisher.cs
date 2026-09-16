@@ -47,6 +47,12 @@ public sealed class FakeJobEventPublisher : IJobEventPublisher
         return Task.CompletedTask;
     }
 
+    public Task PublishWorkflowRunCreatedAsync(Guid workflowRunId, CancellationToken ct = default)
+    {
+        Published.Add(("WorkflowRunCreated", workflowRunId));
+        return Task.CompletedTask;
+    }
+
     public Task PublishDefinitionUpdatedAsync(Guid definitionId, CancellationToken ct = default)
     {
         Published.Add(("DefinitionUpdated", definitionId));

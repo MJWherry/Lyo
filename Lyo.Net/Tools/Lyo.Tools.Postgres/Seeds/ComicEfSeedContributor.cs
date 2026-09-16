@@ -1,6 +1,7 @@
 using Bogus;
 using Lyo.Comic.Enums;
 using Lyo.Comic.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.Seed;
 using Lyo.Tag.Postgres.Database;
@@ -103,7 +104,7 @@ public sealed class ComicEfSeedContributor(ConnectionStringProvider connStr, ILo
 
                 tagDb.Tags.Add(
                     new() {
-                        Id = Guid.NewGuid(),
+                        Id = LyoGuid.CreateV7(),
                         SubjectEntityType = SeriesEntityType,
                         SubjectEntityId = s.Id.ToString(),
                         ActorEntityType = EntityRefWellKnown.SystemActorType,
@@ -129,7 +130,7 @@ public sealed class ComicEfSeedContributor(ConnectionStringProvider connStr, ILo
         var usedSlugs = new HashSet<string>(StringComparer.Ordinal);
         var title = faker.Lorem.Sentence(faker.Random.Int(1, 4)).TrimEnd('.');
         var series = new SeriesEntity {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             Title = title,
             Slug = UniqueSlug(SlugOf(title), usedSlugs),
             ComicType = faker.PickRandom(ComicType.Manga, ComicType.Manhwa, ComicType.Manhua, ComicType.Webtoon, ComicType.Western),
@@ -156,7 +157,7 @@ public sealed class ComicEfSeedContributor(ConnectionStringProvider connStr, ILo
         var count = f.Random.Int(0, 3);
         return Enumerable.Range(0, count)
             .Select(_ => new AlternateTitleEntity {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 SeriesId = series.Id,
                 Title = f.Lorem.Sentence(f.Random.Int(1, 3)).TrimEnd('.'),
                 Language = f.PickRandom(Languages)
@@ -171,7 +172,7 @@ public sealed class ComicEfSeedContributor(ConnectionStringProvider connStr, ILo
         for (var i = 0; i < volumeCount; i++) {
             volumes.Add(
                 new() {
-                    Id = Guid.NewGuid(),
+                    Id = LyoGuid.CreateV7(),
                     SeriesId = series.Id,
                     Series = series,
                     VolumeNumber = i + 1,
@@ -189,7 +190,7 @@ public sealed class ComicEfSeedContributor(ConnectionStringProvider connStr, ILo
             var vol = volumes[Math.Min(i * volumeCount / chapterCount, volumeCount - 1)];
             var pageCount = f.Random.Int(4, 8);
             var chapter = new ChapterEntity {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 SeriesId = series.Id,
                 Series = series,
                 VolumeId = vol.Id,
@@ -217,7 +218,7 @@ public sealed class ComicEfSeedContributor(ConnectionStringProvider connStr, ILo
         var count = chapter.PageCount ?? 0;
         return Enumerable.Range(1, count)
             .Select(pageNum => new PageEntity {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 ChapterId = chapter.Id,
                 PageNumber = pageNum,
                 ImageRef = f.Image.PicsumUrl(),
@@ -234,7 +235,7 @@ public sealed class ComicEfSeedContributor(ConnectionStringProvider connStr, ILo
         var count = faker.Random.Int(2, 6);
         return Enumerable.Range(0, count)
             .Select(_ => new CharacterEntity {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 SeriesId = series.Id,
                 Series = series,
                 Name = faker.Name.FirstName(),

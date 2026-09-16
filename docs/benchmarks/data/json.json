@@ -1,0 +1,1690 @@
+{
+  "type": "micro",
+  "groups": [
+    {
+      "name": "JsonEncodingBenchmarks",
+      "description": "Round-trips SampleRecords through JSON in UTF-8, UTF-16, and UTF-32. Export writes typed rows to bytes. Parse reads those bytes back into typed rows. UTF-8 is the baseline.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows round-tripped (10,000 or 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record; only the byte encoding differs between algorithms."
+      },
+      "measurements": [
+        {
+          "method": "Utf8_Export",
+          "description": "Serialize the rows to UTF-8 JSON bytes (baseline encoding).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 2560015.4296875,
+          "stdDevNs": 40158.8792363558,
+          "allocatedBytes": 1441688,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Export",
+          "description": "Serialize the rows to UTF-16 JSON bytes.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 3393811.4462239584,
+          "stdDevNs": 30738.128007449573,
+          "allocatedBytes": 5764233,
+          "ratioToBaseline": 1.3256996058958284,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Export",
+          "description": "Serialize the rows to UTF-32 JSON bytes.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 8679202.878348215,
+          "stdDevNs": 67329.36519146824,
+          "allocatedBytes": 8649404,
+          "ratioToBaseline": 3.390293190306154,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf8_Parse",
+          "description": "Parse UTF-8 JSON bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 5350738.965364584,
+          "stdDevNs": 91863.20631178397,
+          "allocatedBytes": 2174363,
+          "ratioToBaseline": 2.090119810730104,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Parse",
+          "description": "Parse UTF-16 JSON bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 6303764.574609375,
+          "stdDevNs": 127439.53503867776,
+          "allocatedBytes": 7938085,
+          "ratioToBaseline": 2.4623931955671345,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Parse",
+          "description": "Parse UTF-32 JSON bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 16950920.12666667,
+          "stdDevNs": 250435.62221061194,
+          "allocatedBytes": 10819650,
+          "ratioToBaseline": 6.621413265753582,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf8_Export",
+          "description": "Serialize the rows to UTF-8 JSON bytes (baseline encoding).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 23355580.36875,
+          "stdDevNs": 273015.94276484085,
+          "allocatedBytes": 14806424,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Export",
+          "description": "Serialize the rows to UTF-16 JSON bytes.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 34257111.6,
+          "stdDevNs": 196486.14858550302,
+          "allocatedBytes": 59224458,
+          "ratioToBaseline": 1.4667634483549963,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Export",
+          "description": "Serialize the rows to UTF-32 JSON bytes.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 78748180.44285715,
+          "stdDevNs": 820153.6241022865,
+          "allocatedBytes": 88836528,
+          "ratioToBaseline": 3.371707283635863,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf8_Parse",
+          "description": "Parse UTF-8 JSON bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 58825908.07407407,
+          "stdDevNs": 1016242.5428823751,
+          "allocatedBytes": 21289786,
+          "ratioToBaseline": 2.5187088972014466,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Parse",
+          "description": "Parse UTF-16 JSON bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 73476554.05882353,
+          "stdDevNs": 1443726.2543680863,
+          "allocatedBytes": 80513816,
+          "ratioToBaseline": 3.145995642100844,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Parse",
+          "description": "Parse UTF-32 JSON bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 186374873.61666667,
+          "stdDevNs": 8264255.021895289,
+          "allocatedBytes": 110125756,
+          "ratioToBaseline": 7.979886205955221,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding."
+        }
+      ]
+    },
+    {
+      "name": "JsonNestedBenchmarks",
+      "description": "Serializes and parses NestedRecord rows. JSON keeps Address and Geo as nested objects.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of NestedRecord rows round-tripped (1,000 or 10,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "NestedRecord",
+        "columnCount": 3,
+        "maxNestingDepth": 2,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Address",
+            "type": "NestedAddress",
+            "kind": "object",
+            "children": [
+              {
+                "name": "City",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Country",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "PostalCode",
+                "type": "int",
+                "kind": "scalar"
+              },
+              {
+                "name": "Geo",
+                "type": "NestedGeo",
+                "kind": "object",
+                "children": [
+                  {
+                    "name": "Latitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  },
+                  {
+                    "name": "Longitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": "Address nests a Geo coordinate (depth 2). JSON preserves the object graph."
+      },
+      "measurements": [
+        {
+          "method": "ExportNestedBytes",
+          "description": "Serialize the nested records to JSON bytes.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 432577.642578125,
+          "stdDevNs": 2611.540578912324,
+          "allocatedBytes": 144878,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 200 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through JSON should complete within a couple hundred milliseconds."
+        },
+        {
+          "method": "ParseNestedBytes",
+          "description": "Parse the JSON bytes back into typed NestedRecords.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 614272.33828125,
+          "stdDevNs": 7525.63740840939,
+          "allocatedBytes": 376272,
+          "ratioToBaseline": 1.4200279390775734,
+          "isBaseline": false,
+          "slaTarget": "<= 200 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through JSON should complete within a couple hundred milliseconds."
+        },
+        {
+          "method": "ExportNestedBytes",
+          "description": "Serialize the nested records to JSON bytes.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 4262254.893973215,
+          "stdDevNs": 51923.252715219896,
+          "allocatedBytes": 1464834,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 200 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through JSON should complete within a couple hundred milliseconds."
+        },
+        {
+          "method": "ParseNestedBytes",
+          "description": "Parse the JSON bytes back into typed NestedRecords.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 9999952.125,
+          "stdDevNs": 169743.27882122487,
+          "allocatedBytes": 3862525,
+          "ratioToBaseline": 2.346164735276586,
+          "isBaseline": false,
+          "slaTarget": "<= 200 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through JSON should complete within a couple hundred milliseconds."
+        }
+      ]
+    },
+    {
+      "name": "JsonReadBenchmarks",
+      "description": "Parses a JSON array of RowCount SampleRecords from bytes, a string, a UTF-8 span, a stream, a file, and the async byte path. NDJSON is one object per line.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows in the document (100 to 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record serialized as a JSON array, or one object per line for NDJSON."
+      },
+      "measurements": [
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 40830.493591308594,
+          "stdDevNs": 415.35257292901053,
+          "allocatedBytes": 20264,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseString",
+          "description": "Parse all rows into typed SampleRecords from a JSON string.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 41687.78994140625,
+          "stdDevNs": 225.54238623569464,
+          "allocatedBytes": 20264,
+          "ratioToBaseline": 1.0209964728489136,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseSpan",
+          "description": "Parse all rows into typed SampleRecords from a UTF-8 span.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 39991.46750895182,
+          "stdDevNs": 517.2664285755768,
+          "allocatedBytes": 20264,
+          "ratioToBaseline": 0.9794509933983415,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 43841.72047932943,
+          "stdDevNs": 364.1154752784037,
+          "allocatedBytes": 83888,
+          "ratioToBaseline": 1.0737494608358549,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 49055.793477376305,
+          "stdDevNs": 753.1373427376161,
+          "allocatedBytes": 88179,
+          "ratioToBaseline": 1.2014499253523252,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed list via the async byte path.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 40500.874202473955,
+          "stdDevNs": 504.76905751912176,
+          "allocatedBytes": 20408,
+          "ratioToBaseline": 0.9919271270111512,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseNdjson",
+          "description": "Parse NDJSON, one SampleRecord per line, from UTF-8 bytes.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 50170.913442758414,
+          "stdDevNs": 336.63628564484117,
+          "allocatedBytes": 76848,
+          "ratioToBaseline": 1.2287608850616019,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 399919.9455403646,
+          "stdDevNs": 2596.293190624488,
+          "allocatedBytes": 200272,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseString",
+          "description": "Parse all rows into typed SampleRecords from a JSON string.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 409258.401171875,
+          "stdDevNs": 5336.7167473676245,
+          "allocatedBytes": 200272,
+          "ratioToBaseline": 1.023350812420452,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseSpan",
+          "description": "Parse all rows into typed SampleRecords from a UTF-8 span.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 398226.2851236979,
+          "stdDevNs": 4763.578096048398,
+          "allocatedBytes": 200272,
+          "ratioToBaseline": 0.9957650013820184,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 499064.56754557294,
+          "stdDevNs": 8303.288333935874,
+          "allocatedBytes": 774626,
+          "ratioToBaseline": 1.2479111710001007,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 530139.9914550781,
+          "stdDevNs": 4827.340490798785,
+          "allocatedBytes": 778717,
+          "ratioToBaseline": 1.3256152821754428,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed list via the async byte path.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 397648.27964564733,
+          "stdDevNs": 4137.47620781817,
+          "allocatedBytes": 200416,
+          "ratioToBaseline": 0.9943196984295248,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseNdjson",
+          "description": "Parse NDJSON, one SampleRecord per line, from UTF-8 bytes.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 547421.1737154447,
+          "stdDevNs": 4435.232966274725,
+          "allocatedBytes": 783698,
+          "ratioToBaseline": 1.3688268860303507,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 5364175.906738281,
+          "stdDevNs": 102074.97156197065,
+          "allocatedBytes": 2174536,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseString",
+          "description": "Parse all rows into typed SampleRecords from a JSON string.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 5422581.82578125,
+          "stdDevNs": 106367.36177584645,
+          "allocatedBytes": 2174503,
+          "ratioToBaseline": 1.0108881438749244,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseSpan",
+          "description": "Parse all rows into typed SampleRecords from a UTF-8 span.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 5357174.576450893,
+          "stdDevNs": 94381.02252857694,
+          "allocatedBytes": 2174521,
+          "ratioToBaseline": 0.9986947985284014,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 7165781.846540178,
+          "stdDevNs": 68851.78342170104,
+          "allocatedBytes": 7970360,
+          "ratioToBaseline": 1.3358588478686513,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 7395162.013020833,
+          "stdDevNs": 85499.93502523334,
+          "allocatedBytes": 7974724,
+          "ratioToBaseline": 1.3786203401218258,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed list via the async byte path.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 5341154.607572115,
+          "stdDevNs": 56005.43973091268,
+          "allocatedBytes": 2174703,
+          "ratioToBaseline": 0.9957083250873172,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseNdjson",
+          "description": "Parse NDJSON, one SampleRecord per line, from UTF-8 bytes.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 7948662.972956731,
+          "stdDevNs": 92367.63925053716,
+          "allocatedBytes": 8166840,
+          "ratioToBaseline": 1.4818050547096921,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 58619420.33777776,
+          "stdDevNs": 1533706.1847557547,
+          "allocatedBytes": 21291765,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseString",
+          "description": "Parse all rows into typed SampleRecords from a JSON string.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 63146878,
+          "stdDevNs": 1964005.8759341629,
+          "allocatedBytes": 21291682,
+          "ratioToBaseline": 1.0772347736660317,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseSpan",
+          "description": "Parse all rows into typed SampleRecords from a UTF-8 span.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 59242992.74999999,
+          "stdDevNs": 1505735.1961454905,
+          "allocatedBytes": 21290996,
+          "ratioToBaseline": 1.010637642075426,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 89291331.46666665,
+          "stdDevNs": 827054.0175007647,
+          "allocatedBytes": 80666284,
+          "ratioToBaseline": 1.5232380489631374,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 91326707.1,
+          "stdDevNs": 1701263.850266069,
+          "allocatedBytes": 80672011,
+          "ratioToBaseline": 1.5579599145429242,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed list via the async byte path.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 59043905.768115945,
+          "stdDevNs": 1465271.4015143698,
+          "allocatedBytes": 21291636,
+          "ratioToBaseline": 1.0072413788449666,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ParseNdjson",
+          "description": "Parse NDJSON, one SampleRecord per line, from UTF-8 bytes.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 87973260.43333335,
+          "stdDevNs": 1618877.460962791,
+          "allocatedBytes": 82814091,
+          "ratioToBaseline": 1.5007528209322512,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        }
+      ]
+    },
+    {
+      "name": "JsonWriteBenchmarks",
+      "description": "Serializes RowCount SampleRecords to JSON across the same write surfaces as CSV: bytes, string, stream, file, and the async byte path, plus a pre-sized span and NDJSON.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows serialized (100 to 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record generated by SampleRecord.Generate. NDJSON is one compact object per line."
+      },
+      "measurements": [
+        {
+          "method": "ExportBytes",
+          "description": "Serialize the typed record list straight to UTF-8 JSON bytes (baseline).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 22312.57265625,
+          "stdDevNs": 206.27742646696848,
+          "allocatedBytes": 14176,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportString",
+          "description": "Serialize the typed record list to a JSON string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 21834.675150553387,
+          "stdDevNs": 239.56263154054375,
+          "allocatedBytes": 27888,
+          "ratioToBaseline": 0.978581694139033,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportStream",
+          "description": "Serialize the typed record list into a MemoryStream.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 21497.016298566545,
+          "stdDevNs": 204.80017246210573,
+          "allocatedBytes": 27992,
+          "ratioToBaseline": 0.9634485735801063,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportFile",
+          "description": "Serialize the typed record list to a file on disk.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 54797.690067545576,
+          "stdDevNs": 878.2479583333078,
+          "allocatedBytes": 14241,
+          "ratioToBaseline": 2.4559108853902663,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportBytesAsync",
+          "description": "Serialize the typed record list to JSON bytes via the async path.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 21540.56827735901,
+          "stdDevNs": 403.17421154002193,
+          "allocatedBytes": 14320,
+          "ratioToBaseline": 0.9654004766377873,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "TryExport",
+          "description": "Serialize the rows into a pre-sized UTF-8 span.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 21651.163793945314,
+          "stdDevNs": 222.65918700602646,
+          "allocatedBytes": 14176,
+          "ratioToBaseline": 0.9703571223052391,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportNdjson",
+          "description": "Serialize the rows to UTF-8 NDJSON, one compact object per line.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 34219.96437072754,
+          "stdDevNs": 222.53516955886525,
+          "allocatedBytes": 115696,
+          "ratioToBaseline": 1.5336628768866842,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportBytes",
+          "description": "Serialize the typed record list straight to UTF-8 JSON bytes (baseline).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 251511.13474934894,
+          "stdDevNs": 4122.304125012903,
+          "allocatedBytes": 140763,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportString",
+          "description": "Serialize the typed record list to a JSON string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 282340.78357872594,
+          "stdDevNs": 2347.7403661447884,
+          "allocatedBytes": 281076,
+          "ratioToBaseline": 1.1225776698121188,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportStream",
+          "description": "Serialize the typed record list into a MemoryStream.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 270601.68899972097,
+          "stdDevNs": 2547.8110129726238,
+          "allocatedBytes": 281167,
+          "ratioToBaseline": 1.0759034158443812,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportFile",
+          "description": "Serialize the typed record list to a file on disk.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 338811.0522155762,
+          "stdDevNs": 6417.229992818814,
+          "allocatedBytes": 140838,
+          "ratioToBaseline": 1.3471016007033987,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportBytesAsync",
+          "description": "Serialize the typed record list to JSON bytes via the async path.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 249755.4651529948,
+          "stdDevNs": 1776.7699769733042,
+          "allocatedBytes": 140907,
+          "ratioToBaseline": 0.9930195154258128,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "TryExport",
+          "description": "Serialize the rows into a pre-sized UTF-8 span.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 264731.3459147135,
+          "stdDevNs": 4862.927567256503,
+          "allocatedBytes": 140764,
+          "ratioToBaseline": 1.052563124803757,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportNdjson",
+          "description": "Serialize the rows to UTF-8 NDJSON, one compact object per line.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 403588.87511625746,
+          "stdDevNs": 9133.802642633584,
+          "allocatedBytes": 1127030,
+          "ratioToBaseline": 1.6046560941266723,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportBytes",
+          "description": "Serialize the typed record list straight to UTF-8 JSON bytes (baseline).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 2451976.5387834823,
+          "stdDevNs": 25951.4578021361,
+          "allocatedBytes": 1441955,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportString",
+          "description": "Serialize the typed record list to a JSON string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 2633847.8299278845,
+          "stdDevNs": 36206.126839129254,
+          "allocatedBytes": 2882541,
+          "ratioToBaseline": 1.074173340677491,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportStream",
+          "description": "Serialize the typed record list into a MemoryStream.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 2713457.8514122595,
+          "stdDevNs": 21988.590571787012,
+          "allocatedBytes": 2882722,
+          "ratioToBaseline": 1.106641033669314,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportFile",
+          "description": "Serialize the typed record list to a file on disk.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 3004867.5286959135,
+          "stdDevNs": 49837.94017438225,
+          "allocatedBytes": 1442347,
+          "ratioToBaseline": 1.2254878793362114,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportBytesAsync",
+          "description": "Serialize the typed record list to JSON bytes via the async path.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 2534560.6381510417,
+          "stdDevNs": 34041.19484734208,
+          "allocatedBytes": 1442137,
+          "ratioToBaseline": 1.033680623799334,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "TryExport",
+          "description": "Serialize the rows into a pre-sized UTF-8 span.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 2511829.405691964,
+          "stdDevNs": 26655.781784976698,
+          "allocatedBytes": 1441876,
+          "ratioToBaseline": 1.0244100487756613,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportNdjson",
+          "description": "Serialize the rows to UTF-8 NDJSON, one compact object per line.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 4758348.304765625,
+          "stdDevNs": 284411.3212653874,
+          "allocatedBytes": 11467687,
+          "ratioToBaseline": 1.9406173874430384,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportBytes",
+          "description": "Serialize the typed record list straight to UTF-8 JSON bytes (baseline).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 24844379.258333333,
+          "stdDevNs": 424072.3196782613,
+          "allocatedBytes": 14807275,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportString",
+          "description": "Serialize the typed record list to a JSON string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 28251421.975,
+          "stdDevNs": 277803.842354631,
+          "allocatedBytes": 29612850,
+          "ratioToBaseline": 1.1371353528796206,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportStream",
+          "description": "Serialize the typed record list into a MemoryStream.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 28876656.658333335,
+          "stdDevNs": 405467.0803581295,
+          "allocatedBytes": 29613242,
+          "ratioToBaseline": 1.162301394535647,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportFile",
+          "description": "Serialize the typed record list to a file on disk.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 33416770.759999998,
+          "stdDevNs": 593366.3798782643,
+          "allocatedBytes": 14807126,
+          "ratioToBaseline": 1.3450434970634777,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportBytesAsync",
+          "description": "Serialize the typed record list to JSON bytes via the async path.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 24654281.839583334,
+          "stdDevNs": 308517.06078853196,
+          "allocatedBytes": 14807406,
+          "ratioToBaseline": 0.992348473802732,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "TryExport",
+          "description": "Serialize the rows into a pre-sized UTF-8 span.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 25952178.110416666,
+          "stdDevNs": 292627.27737415244,
+          "allocatedBytes": 14807064,
+          "ratioToBaseline": 1.044589516226764,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        },
+        {
+          "method": "ExportNdjson",
+          "description": "Serialize the rows to UTF-8 NDJSON, one compact object per line.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 58528491.50793649,
+          "stdDevNs": 850832.272472424,
+          "allocatedBytes": 117281734,
+          "ratioToBaseline": 2.3558041398158416,
+          "isBaseline": false,
+          "slaTarget": "<= 500 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path."
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "baseline": "Utf8",
+    "description": "Round-trips SampleRecords through JSON in UTF-8, UTF-16, and UTF-32. Export writes typed rows to bytes. Parse reads those bytes back into typed rows. UTF-8 is the baseline.",
+    "parameters": [
+      {
+        "name": "RowCount",
+        "unit": "rows",
+        "description": "Number of SampleRecord rows round-tripped (10,000 or 100,000)."
+      }
+    ],
+    "groups": [
+      {
+        "axis": "Export",
+        "rows": [
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 2560015.4296875,
+            "allocatedBytes": 1441688,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 3393811.4462239584,
+            "allocatedBytes": 5764233,
+            "ratioToBaseline": 1.3256996058958284,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 8679202.878348215,
+            "allocatedBytes": 8649404,
+            "ratioToBaseline": 3.390293190306154,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 23355580.36875,
+            "allocatedBytes": 14806424,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 34257111.6,
+            "allocatedBytes": 59224458,
+            "ratioToBaseline": 1.4667634483549963,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 78748180.44285715,
+            "allocatedBytes": 88836528,
+            "ratioToBaseline": 3.371707283635863,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          }
+        ]
+      },
+      {
+        "axis": "Parse",
+        "rows": [
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 5350738.965364584,
+            "allocatedBytes": 2174363,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 6303764.574609375,
+            "allocatedBytes": 7938085,
+            "ratioToBaseline": 1.1781110264234045,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 16950920.12666667,
+            "allocatedBytes": 10819650,
+            "ratioToBaseline": 3.1679587130656603,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 58825908.07407407,
+            "allocatedBytes": 21289786,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 73476554.05882353,
+            "allocatedBytes": 80513816,
+            "ratioToBaseline": 1.2490509108044918,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 186374873.61666667,
+            "allocatedBytes": 110125756,
+            "ratioToBaseline": 3.1682447363495334,
+            "slaTarget": "<= 500 ms",
+            "slaResult": "Exceeds"
+          }
+        ]
+      }
+    ]
+  },
+  "slo": [
+    {
+      "area": "ExportBytes",
+      "target": "<= 500 ms \u2014 Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "22.31 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportBytesAsync",
+      "target": "<= 500 ms \u2014 Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "21.54 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportFile",
+      "target": "<= 500 ms \u2014 Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "54.8 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportNdjson",
+      "target": "<= 500 ms \u2014 Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "34.22 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportNestedBytes",
+      "target": "<= 200 ms \u2014 Round-tripping up to 10k nested records through JSON should complete within a couple hundred milliseconds.",
+      "latest": "432.58 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportStream",
+      "target": "<= 500 ms \u2014 Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "21.5 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportString",
+      "target": "<= 500 ms \u2014 Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "21.83 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseBytes",
+      "target": "<= 500 ms \u2014 Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "40.83 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseBytesAsync",
+      "target": "<= 500 ms \u2014 Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "40.5 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseFile",
+      "target": "<= 500 ms \u2014 Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "49.06 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseNdjson",
+      "target": "<= 500 ms \u2014 Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "50.17 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseNestedBytes",
+      "target": "<= 200 ms \u2014 Round-tripping up to 10k nested records through JSON should complete within a couple hundred milliseconds.",
+      "latest": "614.27 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseSpan",
+      "target": "<= 500 ms \u2014 Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "39.99 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseStream",
+      "target": "<= 500 ms \u2014 Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "43.84 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseString",
+      "target": "<= 500 ms \u2014 Parsing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "41.69 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "TryExport",
+      "target": "<= 500 ms \u2014 Serializing up to 100k JSON records should complete within a few hundred milliseconds on the byte path.",
+      "latest": "21.65 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf16_Export",
+      "target": "<= 500 ms \u2014 Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "3.39 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf16_Parse",
+      "target": "<= 500 ms \u2014 Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "6.3 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf32_Export",
+      "target": "<= 500 ms \u2014 Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "8.68 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf32_Parse",
+      "target": "<= 500 ms \u2014 Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "16.95 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf8_Export",
+      "target": "<= 500 ms \u2014 Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "2.56 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf8_Parse",
+      "target": "<= 500 ms \u2014 Round-trips of up to 100k JSON rows should stay within a few hundred milliseconds regardless of encoding.",
+      "latest": "5.35 ms",
+      "result": "Exceeds"
+    }
+  ],
+  "grades": [
+    {
+      "category": "JsonEncodingBenchmarks",
+      "grade": "A",
+      "rationale": "12 exceed of 12 SLA targets vs declared standards"
+    },
+    {
+      "category": "JsonNestedBenchmarks",
+      "grade": "A",
+      "rationale": "4 exceed of 4 SLA targets vs declared standards"
+    },
+    {
+      "category": "JsonReadBenchmarks",
+      "grade": "A",
+      "rationale": "28 exceed of 28 SLA targets vs declared standards"
+    },
+    {
+      "category": "JsonWriteBenchmarks",
+      "grade": "A",
+      "rationale": "28 exceed of 28 SLA targets vs declared standards"
+    }
+  ],
+  "schema": "lyo.bench/v1",
+  "name": "json",
+  "title": "JSON",
+  "description": "JSON write, read, nested, NDJSON, and encoding paths for Lyo.Json over a flat 7-column SampleRecord (int/string/decimal/bool/DateTime). Write covers bytes, string, stream, file, async, a pre-sized span, and NDJSON. Read covers the same sources plus NDJSON. Encoding compares UTF-8, UTF-16, and UTF-32. NestedRecord round-trips a depth-2 address. RowCount is the number of records.",
+  "runId": "BenchmarkRun-joined-2026-10-06-21-56-28",
+  "generatedAt": "2026-10-07T01:56:28.4876342+00:00",
+  "runStarted": "2026-10-07T01:31:23.852345+00:00",
+  "runEnded": "2026-10-07T01:56:28.4876342+00:00",
+  "durationSeconds": 1504.6352892,
+  "environment": {
+    "tool": "BenchmarkDotNet",
+    "toolVersion": "0.15.8",
+    "runtime": ".NET 10.0.12",
+    "cpu": "Intel(R) Core(TM) Ultra 7 155U",
+    "os": "Linux Mint 22.1",
+    "architecture": "X64",
+    "logicalCores": 14,
+    "physicalCores": 12,
+    "memoryBytes": 66857267200,
+    "gcMode": "Workstation",
+    "configuration": "Release",
+    "dotnetSdkVersion": "10.0.112",
+    "dependencies": {
+      "BenchmarkDotNet": "0.15.8",
+      "Microsoft.Extensions.Configuration.Binder": "10.0.5",
+      "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+      "System.Text.Encoding.CodePages": "10.0.5",
+      "Testcontainers.Redis": "4.13.0"
+    }
+  },
+  "notes": [],
+  "history": [
+    {
+      "file": "20261007T015628Z_BenchmarkRun-joined-2026-10-06-21-56-28.json",
+      "runId": "BenchmarkRun-joined-2026-10-06-21-56-28",
+      "runStarted": "2026-10-07T01:31:23.852345+00:00",
+      "runEnded": "2026-10-07T01:56:28.4876342+00:00",
+      "generatedAt": "2026-10-07T01:56:28.4876342+00:00",
+      "isCurrent": true,
+      "measurementCount": 72,
+      "medianMeanNs": 3004867.5286959135
+    }
+  ]
+}

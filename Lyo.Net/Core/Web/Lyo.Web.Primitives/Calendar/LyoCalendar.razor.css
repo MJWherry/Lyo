@@ -1,0 +1,274 @@
+.lyo-cal-month {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.lyo-cal-day {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    min-height: 7.5rem;
+    padding: 4px;
+    overflow: visible;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    background: var(--mud-palette-surface);
+    cursor: pointer;
+}
+
+.lyo-cal-day-outside {
+    opacity: 0.55;
+}
+
+.lyo-cal-day-num {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--mud-palette-text-primary);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.lyo-cal-day-today .lyo-cal-day-num {
+    background: var(--mud-palette-primary);
+    color: var(--mud-palette-primary-text);
+}
+
+.lyo-cal-month .lyo-cal-day-events {
+    max-height: 5.6rem;
+    overflow: hidden;
+}
+
+.lyo-cal-more {
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: var(--mud-palette-primary);
+    font: inherit;
+    font-size: 0.7rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.lyo-cal-day-peek {
+    z-index: 40;
+}
+
+.lyo-cal-peek {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--mud-palette-text-secondary);
+    cursor: pointer;
+}
+
+.lyo-cal-hover {
+    display: block;
+    position: absolute;
+    z-index: 41;
+    top: 0;
+    left: 0;
+    width: 22rem;
+    height: 22rem;
+    overflow: auto;
+    padding: 4px;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    background: var(--mud-palette-surface);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+    cursor: default;
+}
+
+.lyo-cal-hover .lyo-cal-scroll {
+    max-height: none;
+    border: 0;
+}
+
+.lyo-cal-agenda {
+    align-items: stretch;
+}
+
+.lyo-cal-agenda .lyo-cal-day {
+    max-height: 36rem;
+}
+
+.lyo-cal-agenda .lyo-cal-day-events {
+    max-height: 32rem;
+    overflow: auto;
+}
+
+.lyo-cal-day-events,
+.lyo-cal-allday-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+.lyo-cal-event,
+.lyo-cal-block {
+    display: flex;
+    gap: 0.25rem;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    padding: 1px 4px;
+    border: 0;
+    border-left: 3px solid hsl(var(--lyo-cal-hue, 207) 70% 45%);
+    border-radius: 3px;
+    background: color-mix(in srgb, hsl(var(--lyo-cal-hue, 207) 70% 45%) 28%, var(--mud-palette-surface));
+    color: var(--mud-palette-text-primary);
+    font-size: 0.7rem;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+}
+
+.lyo-cal-event-selected {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 1px;
+}
+
+.lyo-cal-muted {
+    opacity: 0.45;
+    filter: grayscale(1);
+}
+
+.lyo-cal-dialog-backdrop {
+    position: fixed;
+    z-index: 1400;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(0 0 0 / 45%);
+}
+
+.lyo-cal-dialog {
+    width: min(28rem, calc(100vw - 2rem));
+    max-height: min(32rem, calc(100vh - 2rem));
+    overflow: auto;
+    padding: 16px;
+}
+
+.lyo-cal-event-time {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.lyo-cal-event-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lyo-cal-entry-host {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.lyo-cal-detail-bar {
+    flex: none;
+    align-self: stretch;
+    width: 4px;
+    border-radius: 2px;
+    background: hsl(var(--lyo-cal-hue, 207) 70% 45%);
+}
+
+.lyo-cal-timehead,
+.lyo-cal-allday,
+.lyo-cal-time {
+    display: grid;
+    grid-template-columns: 3.25rem repeat(var(--lyo-cal-cols, 1), minmax(0, 1fr));
+}
+
+.lyo-cal-colhead {
+    padding: 4px;
+    border: 0;
+    background: transparent;
+    color: var(--mud-palette-text-primary);
+    font: inherit;
+    font-size: 0.75rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.lyo-cal-allday {
+    border-top: 1px solid var(--mud-palette-lines-default);
+}
+
+.lyo-cal-allday-label {
+    padding: 4px;
+    color: var(--mud-palette-text-secondary);
+    font-size: 0.7rem;
+    text-align: right;
+}
+
+.lyo-cal-allday-col {
+    padding: 2px;
+    border-left: 1px solid var(--mud-palette-lines-default);
+}
+
+.lyo-cal-scroll {
+    max-height: 36rem;
+    overflow: auto;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+}
+
+.lyo-cal-hour,
+.lyo-cal-slot {
+    height: 3rem;
+    border-top: 1px solid var(--mud-palette-lines-default);
+}
+
+.lyo-cal-hour {
+    padding-right: 0.35rem;
+    color: var(--mud-palette-text-secondary);
+    font-size: 0.7rem;
+    text-align: right;
+}
+
+.lyo-cal-col {
+    position: relative;
+    min-width: 0;
+    border-left: 1px solid var(--mud-palette-lines-default);
+}
+
+.lyo-cal-block {
+    position: absolute;
+    z-index: 1;
+    box-sizing: border-box;
+    width: auto;
+    min-height: 1.25rem;
+    padding: 2px 4px;
+}
+
+.lyo-cal-block .lyo-cal-event-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+}

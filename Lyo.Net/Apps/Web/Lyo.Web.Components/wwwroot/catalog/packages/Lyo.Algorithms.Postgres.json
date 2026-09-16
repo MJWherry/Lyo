@@ -1,0 +1,200 @@
+{
+  "id": "Lyo.Algorithms.Postgres",
+  "name": "Lyo.Algorithms.Postgres",
+  "area": "Data",
+  "tagline": "PostgreSQL catalog for Lyo.Algorithms. Schema algorithms, append-only revisions, labels.",
+  "description": "IAlgorithmDefinitionStore on PostgreSQL. Tables algorithm_definition, algorithm_definition_revision, and algorithm_definition_label live in schema algorithms. Reads are AsNoTracking. SaveRevision locks the definition row, then allocates the next revision inside a transaction. Revision rows have an optional payload column for structured scorers. The store also implements IHealth.",
+  "features": [
+    "**Options.** PostgresAlgorithmOptions (section PostgresAlgorithms) extends PostgresOptionsBase. Schema is algorithms.",
+    "**DI.** AddPostgresAlgorithmStore, the Action overload, and AddPostgresAlgorithmStoreFromConfiguration register the store and IHealth.",
+    "**Migrations.** AddPostgresMigrations applies the schema when EnableAutoMigrations is true."
+  ],
+  "examples": [
+    {
+      "title": "Register from configuration",
+      "language": "csharp",
+      "code": "services.AddAlgorithms();\nservices.AddPostgresAlgorithmStoreFromConfiguration(configuration);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "When to use",
+      "text": "Use this package when more than one process shares the catalog. SQLite is single-writer. Product tables keep their own algorithm key and optional revision or label; this schema stores the source."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Algorithms/Lyo.Algorithms.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Algorithms",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "DynamicExpresso.Core",
+      "kind": "package",
+      "version": "2.19.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

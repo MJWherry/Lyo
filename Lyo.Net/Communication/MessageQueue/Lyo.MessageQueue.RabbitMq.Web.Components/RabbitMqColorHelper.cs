@@ -18,14 +18,14 @@ public static class RabbitMqColorHelper
             : string.IsNullOrWhiteSpace(state) ? Color.Default
             : Color.Warning;
 
-    /// <summary>Color for an exchange type (direct, topic, fanout, headers).</summary>
-    public static Color ForExchangeType(string? type)
+    /// <summary>Identity hue for an exchange type (direct, topic, fanout, headers). Unknown types stay uncolored.</summary>
+    public static LyoChipHue? ForExchangeType(string? type)
         => type?.ToLowerInvariant() switch {
-            "direct" => Color.Primary,
-            "topic" => Color.Info,
-            "fanout" => Color.Tertiary,
-            "headers" => Color.Warning,
-            var _ => Color.Default
+            "direct" => LyoChipHue.Blue,
+            "topic" => LyoChipHue.Teal,
+            "fanout" => LyoChipHue.Amber,
+            "headers" => LyoChipHue.Violet,
+            var _ => null
         };
 
     /// <summary>Filled chip when <paramref name="on" /> is true; outlined otherwise.</summary>
@@ -66,13 +66,30 @@ public static class RabbitMqColorHelper
     public static LyoChipSpec? StateChip(string? state)
         => string.IsNullOrWhiteSpace(state) ? null : LyoChips.Of(state, ForState(state));
 
-    /// <summary>Classic/quorum/other type chip, or null when type is missing.</summary>
+    /// <summary>Classic, quorum, or stream type chip, or null when type is missing. Any other reported type is cyan.</summary>
     public static LyoChipSpec? QueueTypeChip(string? type)
-        => string.IsNullOrWhiteSpace(type) ? null : LyoChips.Of(type, Color.Info, variant: Variant.Outlined);
+    {
+        if (string.IsNullOrWhiteSpace(type))
+            return null;
+
+        var hue = type.ToLowerInvariant() switch {
+            "classic" => LyoChipHue.Blue,
+            "quorum" => LyoChipHue.Indigo,
+            "stream" => LyoChipHue.Teal,
+            var _ => LyoChipHue.Cyan
+        };
+        return LyoChips.Of(type, hue, variant: Variant.Outlined);
+    }
 
     /// <summary>Chip for the exchange type.</summary>
     public static LyoChipSpec ExchangeTypeChip(string? type)
-        => LyoChips.Of(string.IsNullOrWhiteSpace(type) ? "—" : type, ForExchangeType(type));
+    {
+        if (string.IsNullOrWhiteSpace(type))
+            return LyoChips.Of("—");
+
+        var hue = ForExchangeType(type);
+        return hue is null ? LyoChips.Of(type) : LyoChips.Of(type, hue);
+    }
 
     /// <summary>DLQ chip when additional properties include <c>x-dead-letter-routing-key</c>.</summary>
     public static LyoChipSpec? DlqChip(IReadOnlyDictionary<string, object>? properties)

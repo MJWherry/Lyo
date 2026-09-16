@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Reflection;
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.Mapping;
 using Lyo.Api.Models.Builders;
@@ -16,6 +18,8 @@ using Lyo.Metrics;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
+using Lyo.Query.Models.Exceptions;
+using Lyo.Query.Services.Aggregate;
 using Lyo.Query.Services.WhereClause;
 using Lyo.Result;
 using Microsoft.EntityFrameworkCore;
@@ -480,6 +484,9 @@ public class QueryService<TContext>(
 
         // Echo the client request as-is. Select is mutated server-side for computed dependencies.
         var queryRequestForEcho = CloneProjectionQueryReq(queryRequest);
+        if (queryRequest.Aggregates.Count > 0)
+            return await QueryAggregated<TDbModel>(queryRequest, queryRequestForEcho, ct).ConfigureAwait(false);
+
         var pathCache = new QueryPathValidationCache();
 
         IReadOnlyList<Error> CollectQueryModelErrors(TContext? db, IReadOnlyList<string> includePathsForValidation)
@@ -942,5 +949,131 @@ public class QueryService<TContext>(
     private readonly record struct QueryCoreCacheAugmentation(IReadOnlyList<string>? SelectForCacheKey, IReadOnlyList<ComputedField>? ComputedForCacheKey);
 
     /// <summary>Thrown when SQL projection fails so we fall through to load-then-project without caching.</summary>
-    private sealed class SqlProjectionFallbackException : Exception;
+    /// <summary>
+    /// Groups by <see cref="ProjectionQueryReq.Select" /> and projects <see cref="ProjectionQueryReq.Aggregates" /> in SQL. A translation failure is returned to the caller. Grouping a
+    /// page of entities would report the wrong metric.
+    /// </summary>
+    private async Task<ProjectedQueryRes<object?>> QueryAggregated<TDbModel>(ProjectionQueryReq queryRequest, ProjectionQueryReq queryRequestForEcho, CancellationToken ct)
+        where TDbModel : class
+    {
+        var aggregatedErrors = new List<ApiError>();
+        aggregatedErrors.AddRange(QueryPagingBoundsValidator.Validate(queryRequest, queryOptions, queryOptions.MaxPageSize));
+        aggregatedErrors.AddRange(ValidateProjectedQueryGuardrails(queryRequest));
+        foreach (var message in AggregateQuery.Validate<TDbModel>(queryRequest))
+            aggregatedErrors.Add(new(ApiErrorCodes.InvalidQuery, message));
+
+        if (aggregatedErrors.Count > 0)
+            return ResultFactory.ProjectedQueryFailure<object?>(queryRequestForEcho, AggregatedValidationProblemDetails(aggregatedErrors, "Invalid projected query."));
+
+        var pageSize = queryRequest.Amount ?? queryOptions.DefaultPageSize;
+        var startIndex = queryRequest.Start ?? 0;
+        var totalCountMode = queryRequest.Options.TotalCountMode;
+        var cacheKey = QueryCacheKeyBuilder.Build<TDbModel, object>(queryRequest);
+        Logger.LogDebug("Aggregate query cache key: {CacheKey}", cacheKey);
+
+        async Task<(ProjectedQueryRes<object?>? projected, string[]? tags)> BuildAsync(CancellationToken token)
+        {
+            await using var context = await ContextFactory.CreateDbContextAsync(token).ConfigureAwait(false);
+            context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+            var filtered = filterService.ApplyWhereClause(context.Set<TDbModel>().AsQueryable(), queryRequest.WhereClause);
+            var plan = AggregateQuery.Compose(filtered, queryRequest);
+            AggregateQueryPage page;
+            try {
+                page = await ExecuteAggregatePlanAsync(plan, startIndex, pageSize, totalCountMode, token).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (IsSqlProjectionFallbackException(ex)) {
+                throw new SqlProjectionFallbackException(ex);
+            }
+
+            var items = page.Items.Cast<object?>().ToList();
+            var projected = ResultFactory.ProjectedQuerySuccess(
+                queryRequestForEcho, items, startIndex, items.Count, page.Total, page.HasMore, entityTypes: [typeof(TDbModel).Name]);
+
+            return (projected, QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>());
+        }
+
+        try {
+            ProjectedQueryRes<object?>? result;
+            if (queryOptions.CacheQueryResultsAsUtf8Payload)
+                result = await cache.GetOrSetPayloadAsync(cacheKey, BuildAsync, token: ct).ConfigureAwait(false);
+            else
+                result = await cache.GetOrSetAsync(cacheKey, BuildAsync, token: ct).ConfigureAwait(false);
+
+            return result ?? ResultFactory.ProjectedQueryFailure<object?>(
+                queryRequestForEcho, AggregatedValidationProblemDetails([new(ApiErrorCodes.InvalidQuery, "Aggregate query could not be translated.")], "Invalid projected query."));
+        }
+        catch (SqlProjectionFallbackException ex) {
+            Logger.LogDebug(ex, "Aggregate query could not be translated for {EntityType}", typeof(TDbModel).Name);
+            return ResultFactory.ProjectedQueryFailure<object?>(
+                queryRequestForEcho,
+                AggregatedValidationProblemDetails([new(ApiErrorCodes.InvalidQuery, "Aggregate query could not be translated.")], "Invalid projected query."));
+        }
+        catch (InvalidQueryException ex) {
+            return ResultFactory.ProjectedQueryFailure<object?>(
+                queryRequestForEcho, AggregatedValidationProblemDetails([new(ApiErrorCodes.InvalidQuery, ex.Message)], "Invalid projected query."));
+        }
+    }
+
+    private static async Task<AggregateQueryPage> ExecuteAggregatePlanAsync(
+        AggregateQueryPlan plan,
+        int start,
+        int pageSize,
+        QueryTotalCountMode mode,
+        CancellationToken ct)
+    {
+        if (plan.Ungrouped) {
+            var one = await MaterializeAsync(plan.Slice(0, 1), plan.RowType, ct).ConfigureAwait(false);
+            var row = one.Count == 0 ? plan.EmptySummary() : plan.ToRows(one)[0];
+            IReadOnlyList<Dictionary<string, object?>> items = start == 0 && pageSize > 0 ? [row] : [];
+            int? total = mode == QueryTotalCountMode.None ? null : 1;
+            bool? hasMore = mode == QueryTotalCountMode.HasMore ? false : null;
+            return new(items, total, hasMore);
+        }
+
+        int? groupCount = null;
+        if (mode == QueryTotalCountMode.Exact)
+            groupCount = await CountAsync(plan.Ordered, plan.RowType, ct).ConfigureAwait(false);
+
+        var take = mode == QueryTotalCountMode.HasMore ? pageSize + 1 : pageSize;
+        var rows = plan.ToRows(await MaterializeAsync(plan.Slice(start, take), plan.RowType, ct).ConfigureAwait(false));
+        bool? more = null;
+        if (mode == QueryTotalCountMode.HasMore) {
+            more = rows.Count > pageSize;
+            if (more == true)
+                rows = rows.Take(pageSize).ToList();
+
+            if (more == false)
+                groupCount = start + rows.Count;
+        }
+
+        return new(rows, groupCount, more);
+    }
+
+    private static async Task<int> CountAsync(IQueryable query, Type elementType, CancellationToken ct)
+    {
+        var method = typeof(EntityFrameworkQueryableExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(m => m.Name == nameof(EntityFrameworkQueryableExtensions.CountAsync) && m.IsGenericMethodDefinition && m.GetParameters() is [_, { ParameterType: var second }] && second == typeof(CancellationToken));
+
+        var task = (Task)method.MakeGenericMethod(elementType).Invoke(null, [query, ct])!;
+        await task.ConfigureAwait(false);
+        return (int)task.GetType().GetProperty(nameof(Task<int>.Result))!.GetValue(task)!;
+    }
+
+    private static async Task<List<object?>> MaterializeAsync(IQueryable query, Type elementType, CancellationToken ct)
+    {
+        var method = typeof(EntityFrameworkQueryableExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(m => m.Name == nameof(EntityFrameworkQueryableExtensions.ToListAsync) && m.IsGenericMethodDefinition && m.GetParameters() is [_, { ParameterType: var second }] && second == typeof(CancellationToken));
+
+        var task = (Task)method.MakeGenericMethod(elementType).Invoke(null, [query, ct])!;
+        await task.ConfigureAwait(false);
+        var result = (IEnumerable)task.GetType().GetProperty(nameof(Task<int>.Result))!.GetValue(task)!;
+        return result.Cast<object?>().ToList();
+    }
+
+    private sealed class SqlProjectionFallbackException : Exception
+    {
+        public SqlProjectionFallbackException() { }
+
+        public SqlProjectionFallbackException(Exception inner) : base(inner.Message, inner) { }
+    }
 }

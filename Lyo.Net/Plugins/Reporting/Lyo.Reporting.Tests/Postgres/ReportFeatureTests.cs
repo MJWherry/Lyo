@@ -13,6 +13,7 @@ using Lyo.Xlsx.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Lyo.Common.Core.Identifiers;
 namespace Lyo.Reporting.Tests.Postgres;
 
 /// <summary>Integration coverage for new reporting features: Xlsx and Json formats, rerun, retention cleanup, and input hygiene.</summary>
@@ -41,7 +42,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         };
 
         var result = await reportService.GenerateAsync(
-            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Xlsx, FileName = "sample.xlsx" }, hooks, TestContext.Current.CancellationToken);
+            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Xlsx, FileName = "sample.xlsx" }, hooks, TestCt);
 
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.ContentType);
@@ -68,7 +69,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         };
 
         var json = SampleReportJson();
-        var result = await reportService.GenerateAsync(new() { ReportDataJson = json, Format = ReportFormat.Json }, hooks, TestContext.Current.CancellationToken);
+        var result = await reportService.GenerateAsync(new() { ReportDataJson = json, Format = ReportFormat.Json }, hooks, TestCt);
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal("application/json; charset=utf-8", result.ContentType);
         Assert.Equal(json, stagedText);
@@ -80,7 +81,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
         var result = await reportService.GenerateAsync(
-            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Csv, FileName = "../../etc/we\0ird.csv" }, ct: TestContext.Current.CancellationToken);
+            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Csv, FileName = "../../etc/we\0ird.csv" }, ct: TestCt);
 
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal("weird.csv", result.OriginalFileName);
@@ -92,12 +93,12 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
         var ex = await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(
-            new() { ReportDataJson = "{definitely not json", Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken));
+            new() { ReportDataJson = "{definitely not json", Format = ReportFormat.Csv }, ct: TestCt));
 
         Assert.Contains("not valid JSON", ex.Message, StringComparison.OrdinalIgnoreCase);
-        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestCt);
         Assert.False(
-            await db.ReportGenerations.AnyAsync(g => g.ReportDataJson == "{definitely not json", TestContext.Current.CancellationToken),
+            await db.ReportGenerations.AnyAsync(g => g.ReportDataJson == "{definitely not json", TestCt),
             "Malformed payloads must fail fast, before a generation row is persisted.");
     }
 
@@ -108,7 +109,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         var options = new PostgresReportingOptions { ConnectionString = "unused", AllowAdHocGeneration = false };
         var reportService = CreateService(scope.ServiceProvider, options);
         var ex = await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(
-            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken));
+            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Csv }, ct: TestCt));
 
         Assert.Contains("AllowAdHocGeneration", ex.Message, StringComparison.Ordinal);
     }
@@ -116,9 +117,9 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     [Fact]
     public async Task Generate_Rejects_OverrideJsonOnDefinitionWhenAdhocDisabled()
     {
-        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestCt);
         var definition = new ReportDefinition {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             Name = "NoAdhoc",
             ReportDataJson = SampleReportJson(),
             IsActive = true,
@@ -126,15 +127,15 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         };
 
         db.ReportDefinitions.Add(definition);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         using var scope = fixture.CreateScope();
         var options = new PostgresReportingOptions { ConnectionString = "unused", AllowAdHocGeneration = false };
         var reportService = CreateService(scope.ServiceProvider, options);
         await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(
-            new() { ReportDefinitionId = definition.Id, OverrideReportDataJson = SampleReportJson(), Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken));
+            new() { ReportDefinitionId = definition.Id, OverrideReportDataJson = SampleReportJson(), Format = ReportFormat.Csv }, ct: TestCt));
 
         // Generating from the stored definition JSON is still permitted.
-        var ok = await reportService.GenerateAsync(new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken);
+        var ok = await reportService.GenerateAsync(new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Csv }, ct: TestCt);
         Assert.Equal(ReportGenerationStatus.Succeeded, ok.Status);
     }
 
@@ -142,9 +143,9 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     public async Task Generate_WithoutOverride_UsesStoredReportDataJson()
     {
         var stored = SampleReportJson();
-        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestCt);
         var definition = new ReportDefinition {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             Name = "StoredJson",
             ReportDataJson = stored,
             IsActive = true,
@@ -152,11 +153,11 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         };
 
         db.ReportDefinitions.Add(definition);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
         var result = await reportService.GenerateAsync(
-            new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Json, IncludeReportData = true }, ct: TestContext.Current.CancellationToken);
+            new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Json, IncludeReportData = true }, ct: TestCt);
 
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal(stored, result.ReportDataJson);
@@ -165,9 +166,9 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     [Fact]
     public async Task Generate_Rejects_UnknownParameterKeysForDefinitions()
     {
-        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestCt);
         var definition = new ReportDefinition {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             Name = "StrictKeys",
             ReportDataJson = SampleReportJson(),
             IsActive = true,
@@ -175,12 +176,12 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         };
 
         db.ReportDefinitions.Add(definition);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
         var ex = await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(
             new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Csv, Parameters = [new("NotDeclared", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("x"))] },
-            ct: TestContext.Current.CancellationToken));
+            ct: TestCt));
 
         Assert.Contains("NotDeclared", ex.Message, StringComparison.Ordinal);
     }
@@ -198,9 +199,9 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
                 Parameters = [new("Tag", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("keep-me"))],
                 CreatedBy = "original-user",
                 IncludeReportData = true
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
-        var rerun = await reportService.RerunAsync(original.Id, "rerun-user", includeReportData: true, ct: TestContext.Current.CancellationToken);
+        var rerun = await reportService.RerunAsync(original.Id, "rerun-user", includeReportData: true, ct: TestCt);
         Assert.NotEqual(original.Id, rerun.Id);
         Assert.Equal(ReportGenerationStatus.Succeeded, rerun.Status);
         Assert.Equal(ReportFormat.Csv, rerun.Format);
@@ -217,22 +218,22 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-        await Assert.ThrowsAsync<ReportValidationException>(() => reportService.RerunAsync(Guid.NewGuid(), ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ReportValidationException>(() => reportService.RerunAsync(LyoGuid.CreateV7(), ct: TestCt));
     }
 
     [Fact]
     public async Task Retention_CleanupDeletesOnlyOldTerminalRowsAndInvokes_Hook()
     {
         var dbFactory = fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>();
-        await using var db = await dbFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var outputFileId = Guid.NewGuid();
+        await using var db = await dbFactory.CreateDbContextAsync(TestCt);
+        var outputFileId = LyoGuid.CreateV7();
         fixture.FakeFileStorage.Files[outputFileId] = [1, 2, 3];
         var oldWithFile = NewGeneration(nameof(ReportGenerationStatus.Succeeded), DateTime.UtcNow.AddDays(-30), outputFileId);
         var oldFailed = NewGeneration(nameof(ReportGenerationStatus.Failed), DateTime.UtcNow.AddDays(-30));
         var oldRunning = NewGeneration(nameof(ReportGenerationStatus.Running), DateTime.UtcNow.AddDays(-30));
         var recent = NewGeneration(nameof(ReportGenerationStatus.Succeeded), DateTime.UtcNow);
         db.ReportGenerations.AddRange(oldWithFile, oldFailed, oldRunning, recent);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         var cleanupCalls = new List<Guid?>();
         var hooks = new ReportGenerationHooks {
             OnCleanupAsync = async (ctx, ct) => {
@@ -246,15 +247,15 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
             dbFactory, fixture.ServiceProvider, new PostgresReportingOptions { ConnectionString = "unused", GenerationRetention = TimeSpan.FromDays(7) },
             fixture.ServiceProvider.GetRequiredService<ILogger<ReportRetentionService>>());
 
-        var deleted = await service.CleanupAsync(hooks, TestContext.Current.CancellationToken);
+        var deleted = await service.CleanupAsync(hooks, TestCt);
         Assert.True(deleted >= 2, $"Expected at least the two old terminal rows to be deleted, got {deleted}.");
         Assert.Contains(outputFileId, cleanupCalls);
         Assert.False(fixture.FakeFileStorage.Files.ContainsKey(outputFileId));
-        await using var verify = await dbFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        Assert.False(await verify.ReportGenerations.AnyAsync(g => g.Id == oldWithFile.Id, TestContext.Current.CancellationToken));
-        Assert.False(await verify.ReportGenerations.AnyAsync(g => g.Id == oldFailed.Id, TestContext.Current.CancellationToken));
-        Assert.True(await verify.ReportGenerations.AnyAsync(g => g.Id == oldRunning.Id, TestContext.Current.CancellationToken), "In-flight rows must be kept.");
-        Assert.True(await verify.ReportGenerations.AnyAsync(g => g.Id == recent.Id, TestContext.Current.CancellationToken), "Recent rows must be kept.");
+        await using var verify = await dbFactory.CreateDbContextAsync(TestCt);
+        Assert.False(await verify.ReportGenerations.AnyAsync(g => g.Id == oldWithFile.Id, TestCt));
+        Assert.False(await verify.ReportGenerations.AnyAsync(g => g.Id == oldFailed.Id, TestCt));
+        Assert.True(await verify.ReportGenerations.AnyAsync(g => g.Id == oldRunning.Id, TestCt), "In-flight rows must be kept.");
+        Assert.True(await verify.ReportGenerations.AnyAsync(g => g.Id == recent.Id, TestCt), "Recent rows must be kept.");
     }
 
     [Fact]
@@ -265,43 +266,43 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
             dbFactory, fixture.ServiceProvider, new PostgresReportingOptions { ConnectionString = "unused" },
             fixture.ServiceProvider.GetRequiredService<ILogger<ReportRetentionService>>());
 
-        Assert.Equal(0, await service.CleanupAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(0, await service.CleanupAsync(TestCt));
     }
 
     [Fact]
     public async Task Download_FactoryStreamsPersistedOutputViaFake_Storage()
     {
         // Exercises the host-pluggable contract used by the Download endpoint: the factory resolves the blob by OutputFileId.
-        var fileId = Guid.NewGuid();
+        var fileId = LyoGuid.CreateV7();
         fixture.FakeFileStorage.Files[fileId] = [9, 8, 7];
         Func<ReportDownloadContext, CancellationToken, Task<Stream?>> factory = (ctx, ct) => fixture.FakeFileStorage.GetFileStreamAsync(ctx.OutputFileId, ct: ct);
         var context = new ReportDownloadContext {
-            GenerationId = Guid.NewGuid(),
+            GenerationId = LyoGuid.CreateV7(),
             OutputFileId = fileId,
             ContentType = "text/csv",
             FileName = "x.csv",
             Services = fixture.ServiceProvider
         };
 
-        await using var stream = await factory(context, TestContext.Current.CancellationToken);
+        await using var stream = await factory(context, TestCt);
         Assert.NotNull(stream);
         using var ms = new MemoryStream();
-        await stream!.CopyToAsync(ms, TestContext.Current.CancellationToken);
+        await stream!.CopyToAsync(ms, TestCt);
         Assert.Equal([9, 8, 7], ms.ToArray());
-        var missingContext = new ReportDownloadContext { GenerationId = Guid.NewGuid(), OutputFileId = Guid.NewGuid(), Services = fixture.ServiceProvider };
-        Assert.Null(await factory(missingContext, TestContext.Current.CancellationToken));
+        var missingContext = new ReportDownloadContext { GenerationId = LyoGuid.CreateV7(), OutputFileId = LyoGuid.CreateV7(), Services = fixture.ServiceProvider };
+        Assert.Null(await factory(missingContext, TestCt));
     }
 
     [Fact]
     public async Task Delete_GenerationInvokesCleanupHookAnd_RemovesStoredFile()
     {
         var dbFactory = fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>();
-        await using var db = await dbFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var outputFileId = Guid.NewGuid();
+        await using var db = await dbFactory.CreateDbContextAsync(TestCt);
+        var outputFileId = LyoGuid.CreateV7();
         fixture.FakeFileStorage.Files[outputFileId] = [1, 2, 3];
         var generation = NewGeneration(nameof(ReportGenerationStatus.Succeeded), DateTime.UtcNow, outputFileId);
         db.ReportGenerations.Add(generation);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
 
         var hooks = new ReportGenerationHooks {
             OnCleanupAsync = async (ctx, ct) => {
@@ -314,17 +315,17 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         var delete = scope.ServiceProvider.GetRequiredService<IDeleteService<ReportingContext>>();
         var result = await delete.DeleteAsync<ReportGeneration, ReportGenerationRes>(
             [generation.Id], beforeAsync: (ctx, ct) => ReportGenerationCleanup.InvokeCleanupHooksAsync([ctx.Entity], hooks, ctx.Services, ct).AsTask(),
-            ct: TestContext.Current.CancellationToken);
+            ct: TestCt);
 
         Assert.True(result.IsSuccess);
         Assert.False(fixture.FakeFileStorage.Files.ContainsKey(outputFileId));
-        await using var verify = await dbFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        Assert.False(await verify.ReportGenerations.AnyAsync(g => g.Id == generation.Id, TestContext.Current.CancellationToken));
+        await using var verify = await dbFactory.CreateDbContextAsync(TestCt);
+        Assert.False(await verify.ReportGenerations.AnyAsync(g => g.Id == generation.Id, TestCt));
     }
 
     private static ReportGeneration NewGeneration(string status, DateTime created, Guid? outputFileId = null)
         => new() {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             ReportDataJson = "{}",
             Format = nameof(ReportFormat.Csv),
             Status = status,

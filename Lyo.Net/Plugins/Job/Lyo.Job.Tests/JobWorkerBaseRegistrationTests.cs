@@ -11,6 +11,7 @@ using Lyo.Job.Tests.Postgres;
 using Lyo.Job.Worker;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -22,18 +23,18 @@ public class JobWorkerBaseRegistrationTests
         var api = new ControllableWorkerInstanceApiClient { FailRegisterCount = 1 };
         var worker = CreateWorker(api);
         try {
-            await worker.StartAsync(TestContext.Current.CancellationToken);
+            await worker.StartAsync(TestCt);
             Assert.True(worker.IsRunning);
             Assert.Equal(1, api.RegisterAttempts);
             Assert.Equal(0, api.SuccessfulRegisters);
-            await WaitUntilAsync(() => api.SuccessfulRegisters >= 1 && api.HeartbeatCount >= 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            await WaitUntilAsync(() => api.SuccessfulRegisters >= 1 && api.HeartbeatCount >= 1, TimeSpan.FromSeconds(5), TestCt);
             Assert.True(api.RegisterAttempts >= 2);
             Assert.Equal(1, api.SuccessfulRegisters);
             Assert.True(api.HeartbeatCount >= 1);
             AssertRegisteredMetadata(api.LastRegisterRequest?.Metadata);
         }
         finally {
-            await worker.StopAsync(TestContext.Current.CancellationToken);
+            await worker.StopAsync(TestCt);
         }
     }
 
@@ -43,16 +44,16 @@ public class JobWorkerBaseRegistrationTests
         var api = new ControllableWorkerInstanceApiClient { FailHeartbeat404Count = 1 };
         var worker = CreateWorker(api);
         try {
-            await worker.StartAsync(TestContext.Current.CancellationToken);
+            await worker.StartAsync(TestCt);
             Assert.Equal(1, api.SuccessfulRegisters);
-            await WaitUntilAsync(() => api.SuccessfulRegisters >= 2 && api.HeartbeatCount >= 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            await WaitUntilAsync(() => api.SuccessfulRegisters >= 2 && api.HeartbeatCount >= 1, TimeSpan.FromSeconds(5), TestCt);
             Assert.True(api.RegisterAttempts >= 2);
             Assert.Equal(2, api.SuccessfulRegisters);
             Assert.True(api.Heartbeat404Count >= 1);
             Assert.True(api.HeartbeatCount >= 1);
         }
         finally {
-            await worker.StopAsync(TestContext.Current.CancellationToken);
+            await worker.StopAsync(TestCt);
         }
     }
 
@@ -62,11 +63,11 @@ public class JobWorkerBaseRegistrationTests
         var api = new ControllableWorkerInstanceApiClient();
         var worker = CreateWorker(api);
         try {
-            await worker.StartAsync(TestContext.Current.CancellationToken);
+            await worker.StartAsync(TestCt);
             AssertRegisteredMetadata(api.LastRegisterRequest?.Metadata);
         }
         finally {
-            await worker.StopAsync(TestContext.Current.CancellationToken);
+            await worker.StopAsync(TestCt);
         }
     }
 
@@ -77,7 +78,7 @@ public class JobWorkerBaseRegistrationTests
         var api = new ControllableWorkerInstanceApiClient();
         var worker = new TestJobWorker(mq, new JobClient(api), new FakeJobEventPublisher(), "cs");
         try {
-            await worker.StartAsync(TestContext.Current.CancellationToken);
+            await worker.StartAsync(TestCt);
             var exchange = Assert.Single(mq.CreatedExchanges);
             Assert.Equal(Constants.Mq.JobEventExchange, exchange.Name);
             Assert.Equal(Constants.Mq.JobEventExchangeType, exchange.Type);
@@ -85,7 +86,7 @@ public class JobWorkerBaseRegistrationTests
             Assert.Contains(mq.CreatedQueues, q => q.Name == Constants.Mq.QueueGetJobRunCreated("cs") && q.Durable && !q.Exclusive && !q.AutoDelete);
         }
         finally {
-            await worker.StopAsync(TestContext.Current.CancellationToken);
+            await worker.StopAsync(TestCt);
         }
     }
 
@@ -180,7 +181,7 @@ public class JobWorkerBaseRegistrationTests
                 throw new HttpRequestException("Connection refused (localhost:5074)");
             }
 
-            var id = Guid.NewGuid();
+            var id = LyoGuid.CreateV7();
             SuccessfulRegisters++;
             var now = DateTime.UtcNow;
             LastRegisterRequest = request as JobWorkerInstanceReq;

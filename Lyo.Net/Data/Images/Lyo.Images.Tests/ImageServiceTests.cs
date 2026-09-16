@@ -8,6 +8,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using ResizeMode = Lyo.Images.Models.ResizeMode;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Images.Tests;
 
@@ -103,12 +104,12 @@ public class ImageServiceTests
         var inputBytes = CreateTestImage(200, 200);
         using var inputStream = new MemoryStream(inputBytes);
         using var outputStream = new MemoryStream();
-        var result = await service.ResizeAsync(inputStream, outputStream, 100, 100, ct: TestContext.Current.CancellationToken);
+        var result = await service.ResizeAsync(inputStream, outputStream, 100, 100, ct: TestCt);
         Assert.True(result.IsSuccess);
         Assert.True(result.Data);
         Assert.True(outputStream.Length > 0);
         outputStream.Position = 0;
-        using var resultImage = await Image.LoadAsync(outputStream, TestContext.Current.CancellationToken);
+        using var resultImage = await Image.LoadAsync(outputStream, TestCt);
         Assert.True(resultImage.Width <= 100);
         Assert.True(resultImage.Height <= 100);
     }
@@ -122,7 +123,7 @@ public class ImageServiceTests
             var inputBytes = CreateTestImage(200, 200);
             using var inputStream = new MemoryStream(inputBytes);
             using var outputStream = new MemoryStream();
-            var result = await service.ResizeAsync(inputStream, outputStream, 100, 100, mode, ct: TestContext.Current.CancellationToken);
+            var result = await service.ResizeAsync(inputStream, outputStream, 100, 100, mode, ct: TestCt);
             Assert.True(result.IsSuccess);
             Assert.True(outputStream.Length > 0);
         }
@@ -135,12 +136,12 @@ public class ImageServiceTests
         var inputBytes = CreateTestImage(200, 200);
         using var inputStream = new MemoryStream(inputBytes);
         using var outputStream = new MemoryStream();
-        var result = await service.CropAsync(inputStream, outputStream, 50, 50, 100, 100, ct: TestContext.Current.CancellationToken);
+        var result = await service.CropAsync(inputStream, outputStream, 50, 50, 100, 100, ct: TestCt);
         Assert.True(result.IsSuccess);
         Assert.True(result.Data);
         Assert.True(outputStream.Length > 0);
         outputStream.Position = 0;
-        using var resultImage = await Image.LoadAsync(outputStream, TestContext.Current.CancellationToken);
+        using var resultImage = await Image.LoadAsync(outputStream, TestCt);
         Assert.Equal(100, resultImage.Width);
         Assert.Equal(100, resultImage.Height);
     }
@@ -152,12 +153,12 @@ public class ImageServiceTests
         var inputBytes = CreateTestImage(100, 200);
         using var inputStream = new MemoryStream(inputBytes);
         using var outputStream = new MemoryStream();
-        var result = await service.RotateAsync(inputStream, outputStream, 90, ct: TestContext.Current.CancellationToken);
+        var result = await service.RotateAsync(inputStream, outputStream, 90, ct: TestCt);
         Assert.True(result.IsSuccess);
         Assert.True(result.Data);
         Assert.True(outputStream.Length > 0);
         outputStream.Position = 0;
-        using var resultImage = await Image.LoadAsync(outputStream, TestContext.Current.CancellationToken);
+        using var resultImage = await Image.LoadAsync(outputStream, TestCt);
         // SkiaImageService rotates inside the same canvas (no expansion), so size stays 100x200
         Assert.Equal(100, resultImage.Width);
         Assert.Equal(200, resultImage.Height);
@@ -179,7 +180,7 @@ public class ImageServiceTests
             Padding = 10
         };
 
-        var result = await service.WatermarkAsync(inputStream, outputStream, "Test Watermark", watermarkOptions, ct: TestContext.Current.CancellationToken);
+        var result = await service.WatermarkAsync(inputStream, outputStream, "Test Watermark", watermarkOptions, ct: TestCt);
         Assert.True(result.IsSuccess);
         Assert.True(result.Data);
         Assert.True(outputStream.Length > 0);
@@ -192,7 +193,7 @@ public class ImageServiceTests
         var inputBytes = CreateTestImage();
         using var inputStream = new MemoryStream(inputBytes);
         using var outputStream = new MemoryStream();
-        var result = await service.ConvertFormatAsync(inputStream, outputStream, ImageFormat.Jpeg, ct: TestContext.Current.CancellationToken);
+        var result = await service.ConvertFormatAsync(inputStream, outputStream, ImageFormat.Jpeg, ct: TestCt);
         Assert.True(result.IsSuccess);
         Assert.True(result.Data);
         Assert.True(outputStream.Length > 0);
@@ -204,12 +205,12 @@ public class ImageServiceTests
         var service = CreateService();
         var inputBytes = CreateTestImage(500, 500);
         using var inputStream = new MemoryStream(inputBytes);
-        var result = await service.GenerateThumbnailAsync(inputStream, 200, 200, ct: TestContext.Current.CancellationToken);
+        var result = await service.GenerateThumbnailAsync(inputStream, 200, 200, ct: TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.True(result.Data!.Length > 0);
         using var thumbnailStream = new MemoryStream(result.Data);
-        using var thumbnailImage = await Image.LoadAsync(thumbnailStream, TestContext.Current.CancellationToken);
+        using var thumbnailImage = await Image.LoadAsync(thumbnailStream, TestCt);
         Assert.True(thumbnailImage.Width <= 200);
         Assert.True(thumbnailImage.Height <= 200);
     }
@@ -220,7 +221,7 @@ public class ImageServiceTests
         var service = CreateService();
         var inputBytes = CreateTestImage(200, 200);
         using var inputStream = new MemoryStream(inputBytes);
-        var result = await service.GetPaletteAsync(inputStream, 10, TestContext.Current.CancellationToken);
+        var result = await service.GetPaletteAsync(inputStream, 10, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.NotEmpty(result.Data!.Colors);
@@ -234,7 +235,7 @@ public class ImageServiceTests
         var service = CreateService();
         var inputBytes = CreateMultiColorTestImage(200, 200);
         using var inputStream = new MemoryStream(inputBytes);
-        var result = await service.GetPaletteAsync(inputStream, 10, TestContext.Current.CancellationToken);
+        var result = await service.GetPaletteAsync(inputStream, 10, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.True(result.Data!.Colors.Count >= 2, "Multi-color image should produce at least 2 palette colors");
@@ -249,7 +250,7 @@ public class ImageServiceTests
         var service = CreateService();
         var inputBytes = CreateMultiColorTestImage(200, 200);
         using var inputStream = new MemoryStream(inputBytes);
-        var result = await service.GetPaletteAsync(inputStream, 5, TestContext.Current.CancellationToken);
+        var result = await service.GetPaletteAsync(inputStream, 5, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.True(result.Data!.Colors.Count <= 5);
@@ -261,7 +262,7 @@ public class ImageServiceTests
         var service = CreateService();
         var inputBytes = CreateMultiColorTestImage(200, 200, 20); // 10 color blocks
         using var inputStream = new MemoryStream(inputBytes);
-        var result = await service.GetPaletteAsync(inputStream, 20, TestContext.Current.CancellationToken);
+        var result = await service.GetPaletteAsync(inputStream, 20, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.True(result.Data!.Colors.Count >= 2);
@@ -274,7 +275,7 @@ public class ImageServiceTests
         var service = CreateService();
         var inputBytes = CreateWeightedColorImage();
         using var inputStream = new MemoryStream(inputBytes);
-        var result = await service.GetPaletteAsync(inputStream, 3, TestContext.Current.CancellationToken);
+        var result = await service.GetPaletteAsync(inputStream, 3, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.Equal(3, result.Data!.Colors.Count);
@@ -290,7 +291,7 @@ public class ImageServiceTests
         var service = CreateService();
         var inputBytes = CreateMostlyTransparentImage();
         using var inputStream = new MemoryStream(inputBytes);
-        var result = await service.GetPaletteAsync(inputStream, 4, TestContext.Current.CancellationToken);
+        var result = await service.GetPaletteAsync(inputStream, 4, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.NotEmpty(result.Data!.Colors);
@@ -315,7 +316,7 @@ public class ImageServiceTests
 
         var inputBytes = CreateMostlyTransparentImage();
         using var inputStream = new MemoryStream(inputBytes);
-        var result = await service.GetPaletteAsync(inputStream, 3, TestContext.Current.CancellationToken);
+        var result = await service.GetPaletteAsync(inputStream, 3, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.Equal("#000000", result.Data!.Colors[0]);
@@ -327,7 +328,7 @@ public class ImageServiceTests
         var service = CreateService();
         var inputBytes = CreateTestImage(200, 150);
         using var inputStream = new MemoryStream(inputBytes);
-        var result = await service.GetMetadataAsync(inputStream, TestContext.Current.CancellationToken);
+        var result = await service.GetMetadataAsync(inputStream, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.Equal(200, result.Data!.Width);
@@ -341,10 +342,10 @@ public class ImageServiceTests
     {
         var service = CreateService();
         var inputBytes = CreateTestImage(200, 150);
-        var filePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
+        var filePath = Path.Combine(Path.GetTempPath(), LyoGuid.CreateV7() + ".png");
         try {
-            await File.WriteAllBytesAsync(filePath, inputBytes, TestContext.Current.CancellationToken);
-            var result = await service.GetMetadataFromFileAsync(filePath, TestContext.Current.CancellationToken);
+            await File.WriteAllBytesAsync(filePath, inputBytes, TestCt);
+            var result = await service.GetMetadataFromFileAsync(filePath, TestCt);
             Assert.True(result.IsSuccess);
             Assert.NotNull(result.Data);
             Assert.Equal(200, result.Data!.Width);
@@ -364,7 +365,7 @@ public class ImageServiceTests
         var inputBytes = CreateTestImage(500, 500);
         using var inputStream = new MemoryStream(inputBytes);
         using var outputStream = new MemoryStream();
-        var result = await service.CompressAsync(inputStream, outputStream, 80, ImageFormat.Jpeg, TestContext.Current.CancellationToken);
+        var result = await service.CompressAsync(inputStream, outputStream, 80, ImageFormat.Jpeg, TestCt);
         Assert.True(result.IsSuccess);
         Assert.True(result.Data);
         Assert.True(outputStream.Length > 0);
@@ -377,11 +378,11 @@ public class ImageServiceTests
     {
         var service = CreateService();
         var inputBytes = CreateTestImage(200, 200);
-        var inputPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
-        var outputPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
+        var inputPath = Path.Combine(Path.GetTempPath(), LyoGuid.CreateV7() + ".png");
+        var outputPath = Path.Combine(Path.GetTempPath(), LyoGuid.CreateV7() + ".png");
         try {
-            await File.WriteAllBytesAsync(inputPath, inputBytes, TestContext.Current.CancellationToken);
-            var result = await service.ResizeFileAsync(inputPath, outputPath, 100, 100, ct: TestContext.Current.CancellationToken);
+            await File.WriteAllBytesAsync(inputPath, inputBytes, TestCt);
+            var result = await service.ResizeFileAsync(inputPath, outputPath, 100, 100, ct: TestCt);
             Assert.True(result.IsSuccess);
             Assert.True(result.Data);
             Assert.True(File.Exists(outputPath));
@@ -422,7 +423,7 @@ public class ImageServiceTests
             }
         };
 
-        var result = await service.ProcessBatchAsync(requests, TestContext.Current.CancellationToken);
+        var result = await service.ProcessBatchAsync(requests, TestCt);
         Assert.NotNull(result);
         Assert.Equal(2, result.TotalCount);
         Assert.Equal(2, result.SuccessCount);
@@ -440,7 +441,7 @@ public class ImageServiceTests
         using var inputStream = new MemoryStream(inputBytes);
         using var outputStream = new MemoryStream();
         await Assert.ThrowsAsync<ArgumentOutsideRangeException>(async () => {
-            await service.ResizeAsync(inputStream, outputStream, 0, 100, ct: TestContext.Current.CancellationToken);
+            await service.ResizeAsync(inputStream, outputStream, 0, 100, ct: TestCt);
         });
     }
 
@@ -452,7 +453,7 @@ public class ImageServiceTests
         using var inputStream = new MemoryStream(inputBytes);
         using var outputStream = new MemoryStream();
         await Assert.ThrowsAsync<ArgumentOutsideRangeException>(async () => {
-            await service.CropAsync(inputStream, outputStream, -1, 0, 100, 100, ct: TestContext.Current.CancellationToken);
+            await service.CropAsync(inputStream, outputStream, -1, 0, 100, 100, ct: TestCt);
         });
     }
 
@@ -477,7 +478,7 @@ public class ImageServiceTests
         var inputBytes = CreateTestImage(200, 200);
         using var inputStream = new MemoryStream(inputBytes);
         using var outputStream = new MemoryStream();
-        var result = await service.ResizeAsync(inputStream, outputStream, 100, 100, ResizeMode.Max, ImageFormat.Jpeg, 50, TestContext.Current.CancellationToken);
+        var result = await service.ResizeAsync(inputStream, outputStream, 100, 100, ResizeMode.Max, ImageFormat.Jpeg, 50, TestCt);
         Assert.True(result.IsSuccess);
         Assert.True(result.Data);
         Assert.True(outputStream.Length > 0);

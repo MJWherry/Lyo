@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Lyo.Http.Client;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Espn.Fantasy.Football.Client.Models.Request;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;

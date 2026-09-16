@@ -1,0 +1,62 @@
+@namespace Lyo.Billing.Web.Components.Components.Grids
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="BillingChargeGrid"
+                      Route="Billing/Charges"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="ApplyQuery"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <LeftControls>
+        <MudButton OnClick="OpenCreateAsync" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary">
+            New charge
+        </MudButton>
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit charge"
+                               OnClick="@(() => EditAsync(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoIdColumn T="object?" TRes="ClientLookup" Field="ClientId" Route="Billing/Clients" Title="Client"
+                     Select="@(new[] { "DisplayName" })" HeaderStyle="width: 180px;" Context="client">
+            @(client?.DisplayName)
+        </LyoIdColumn>
+        <LyoProjectedColumn Field="Kind" Title="Kind" Align="Align.Center" HeaderStyle="width: 110px;">
+            <CellContent Context="item">
+                @{
+                    var kindText = ProjectedValueHelper.GetDisplayValue(item, "Kind");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<ChargeKind>(kindText, BillingColorHelper.ForChargeKind))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Description" Title="Description" QuickSearchPropertyName="Description"/>
+        <LyoProjectedColumn Field="Quantity" Title="Qty" Align="Align.Right"/>
+        <LyoProjectedColumn Field="UnitAmount" Title="Rate" Align="Align.Right">
+            <CellContent Context="item">
+                @BillingMoney.Format(ProjectedValueHelper.GetValue(item, "UnitAmount"), ProjectedValueHelper.GetDisplayValue(item, "Currency"))
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="InvoiceId" Title="Invoice"/>
+        <LyoProjectedColumn Field="CreatedAt" Title="Created" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Relative"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditAsync(item))">Edit</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

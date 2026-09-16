@@ -13,7 +13,11 @@ namespace Lyo.Job.Models.Request;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobScheduleReq
 {
-    public Guid JobDefinitionId { get; set; }
+    /// <summary>Definition this schedule fires. Set exactly one of this and <see cref="JobWorkflowId" />.</summary>
+    public Guid? JobDefinitionId { get; set; }
+
+    /// <summary>Workflow this schedule starts. Set exactly one of this and <see cref="JobDefinitionId" />.</summary>
+    public Guid? JobWorkflowId { get; set; }
 
     public MonthFlags MonthFlags { get; set; }
 

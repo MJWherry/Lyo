@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Strongly typed, reusable state machine: immutable definitions with typed trigger payloads, guards, hooks, hierarchical states, observers, versioned snapshots, and Mermaid/DOT export.</Description>
+        <PackageTags>state-machine fsm hierarchical workflow game job worker</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Text.Json"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\Lyo.StateMachine.Models\Lyo.StateMachine.Models.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.StateMachine.Tests"/>
+    </ItemGroup>
+
+</Project>

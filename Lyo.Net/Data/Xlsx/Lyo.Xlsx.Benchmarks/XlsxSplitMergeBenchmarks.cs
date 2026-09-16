@@ -3,6 +3,7 @@ using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
 using Lyo.Xlsx.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Xlsx.Benchmarks;
 
@@ -47,11 +48,11 @@ public class XlsxSplitMergeBenchmarks
                 { "SheetC", SampleRecord.Generate(perSheetRows, perSheetRows * 2) }
             });
 
-        _singleSheetFilePath = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-splitmerge-{Guid.NewGuid():N}.xlsx");
+        _singleSheetFilePath = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-splitmerge-{LyoGuid.CreateV7():N}.xlsx");
         File.WriteAllBytes(_singleSheetFilePath, _singleSheetBytes);
-        _outputDirectory = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-split-out-{Guid.NewGuid():N}");
+        _outputDirectory = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-split-out-{LyoGuid.CreateV7():N}");
         Directory.CreateDirectory(_outputDirectory);
-        _mergeOutputPath = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-merged-{Guid.NewGuid():N}.xlsx");
+        _mergeOutputPath = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-merged-{LyoGuid.CreateV7():N}.xlsx");
     }
 
     [GlobalCleanup]

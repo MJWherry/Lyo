@@ -9,7 +9,7 @@ public class WatchableLocalFileSystemTests
     [Fact]
     public async Task Watch_RaisesCreated_WhenFileAppears()
     {
-        await using var session = IOTempSession.CreateForTests(nameof(WatchableLocalFileSystemTests));
+        using var session = new IOTempSession();
         using var fs = new WatchableLocalFileSystem(session.SessionDirectory);
         Assert.Equal(FileSystemCapabilities.Watch, fs.Capabilities & FileSystemCapabilities.Watch);
         FileSystemChange? seen = null;
@@ -23,9 +23,9 @@ public class WatchableLocalFileSystemTests
                 seen = e;
         };
         var path = Path.Combine(fs.RootPath, "created.txt");
-        await File.WriteAllTextAsync(path, "x", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(path, "x", TestCt);
         await PollAssert.ThatAsync(() => seen is { Kind: FileSystemChangeKind.Created, IsDirectory: false }, TimeSpan.FromSeconds(3));
-        var listed = await fs.ListDirectoryAsync(fs.RootPath, TestContext.Current.CancellationToken);
+        var listed = await fs.ListDirectoryAsync(fs.RootPath, TestCt);
         Assert.Contains(listed, e => e.Name == "created.txt");
     }
 }

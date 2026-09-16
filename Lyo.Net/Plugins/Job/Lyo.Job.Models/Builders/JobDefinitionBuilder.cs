@@ -186,37 +186,6 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
         return this;
     }
 
-    public JobDefinitionBuilder AddJobTrigger(
-        Guid triggersJobDefinitionId,
-        string jobResultKey,
-        ComparisonOperatorEnum comparator,
-        string? jobResultValue = null,
-        string? description = null,
-        bool? enabled = null)
-    {
-        var trigger = new JobTriggerReq {
-            TriggersJobDefinitionId = triggersJobDefinitionId,
-            JobResultKey = jobResultKey,
-            Comparison = comparator,
-            JobResultValue = jobResultValue,
-            Description = description,
-            Enabled = enabled ?? true
-        };
-
-        _request.CreateTriggers.Add(trigger);
-        return this;
-    }
-
-    public JobDefinitionBuilder AddJobTrigger(Guid triggersJobDefinitionId, Action<JobTriggerBuilder> configureTrigger)
-    {
-        var builder = new JobTriggerBuilder();
-        configureTrigger(builder);
-        var trigger = builder.Build();
-        trigger.TriggersJobDefinitionId = triggersJobDefinitionId;
-        _request.CreateTriggers.Add(trigger);
-        return this;
-    }
-
     public JobDefinitionBuilder AddJobParallelRestriction(Guid forbidsJobDefinitionId, string? description = null, bool? enabled = true)
     {
         _request.CreateParallelRestrictions.Add(new(forbidsJobDefinitionId, description, enabled));
@@ -289,15 +258,6 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
     {
         _request.ExpectedDurationMinutes = expectedDurationMinutes;
         _request.MustStartByMinutes = mustStartByMinutes;
-        return this;
-    }
-
-    /// <summary>Turns on failure alerting with an optional consecutive-failure threshold and webhook URL.</summary>
-    public JobDefinitionBuilder WithAlerts(bool alertOnFailure = true, int afterConsecutiveFailures = 0, string? webhookUrl = null)
-    {
-        _request.AlertOnFailure = alertOnFailure;
-        _request.AlertAfterConsecutiveFailures = afterConsecutiveFailures;
-        _request.AlertWebhookUrl = webhookUrl;
         return this;
     }
 

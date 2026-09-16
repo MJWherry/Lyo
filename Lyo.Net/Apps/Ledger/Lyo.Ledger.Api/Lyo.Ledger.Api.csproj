@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>HTTP API surface for Lyo Ledger: chart of accounts, journals, post/void, and AR balance.</Description>
+        <PackageTags>api ledger accounting aspnetcore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\Api\Export\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Ledger\Lyo.Ledger.Postgres\Lyo.Ledger.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Ledger\Lyo.Ledger\Lyo.Ledger.csproj"/>
+    </ItemGroup>
+
+</Project>

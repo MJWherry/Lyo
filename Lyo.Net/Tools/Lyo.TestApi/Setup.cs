@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Dynamic;
 using Lyo.Api.Authentication;
@@ -10,9 +11,23 @@ using Lyo.Config.Api;
 using Lyo.Discord.Postgres;
 using Lyo.Endato.Postgres.Database;
 using Lyo.FileStorage.Abstractions;
+using Lyo.Book;
+using Lyo.Book.Postgres.Database;
+using Lyo.Music;
+using Lyo.Music.Postgres.Database;
+using Lyo.Video;
+using Lyo.Video.Postgres.Database;
 using Lyo.Comic.Api;
+using Lyo.Algorithms.Api;
+using Lyo.Story.Api;
+using Lyo.Leaderboard.Api;
 using Lyo.HomeInventory.Api;
+using Lyo.Recipe.Api;
+using Lyo.Ledger.Api;
+using Lyo.Billing.Api;
 using Lyo.Job.Api;
+using Lyo.Web.Automation.Api;
+using Lyo.Web.Automation.Postgres;
 using Lyo.Job.Postgres;
 using Lyo.Drift.Api;
 using Lyo.Drift.Postgres;
@@ -32,10 +47,19 @@ public static class Setup
         {
             app = app.BuildAuthenticationApi()
                 .BuildJobGroup()
+                .BuildAutomationGroup()
+                .BuildAutomationPlanRecords()
                 .BuildDriftGroup()
+                .BuildBookGroup()
+                .BuildMusicGroup()
+                .BuildVideoGroup()
                 .BuildComicGroup()
+                .BuildStoryGroup(allowAnonymous: true)
+                .BuildAlgorithmsGroup()
                 .BuildHomeInventoryGroup()
-                //.BuildClientGroup()
+                .BuildRecipeGroup()
+                .BuildLedgerGroup()
+                .BuildBillingGroup()
                 //.BuildDocketGroup()
                 // Same as the Job test host: leave open for the Gateway workbench (auth can be tightened later).
                 // Stream stored outputs from this host's keyed FileStorage so it matches the AfterRender save hook.
@@ -59,6 +83,130 @@ public static class Setup
 
             app.MapCacheEndpoints("Cache", auth: EndpointAuth.Anonymous());
             app.MapConfigApiEndpoints(requireAuthentication: false);
+            app.MapLeaderboardApiEndpoints(requireAuthentication: false);
+            return app;
+        }
+
+        public WebApplication BuildBookGroup()
+        {
+            app.MapDynamicCrudEndpoints<BookDbContext>(c => c.AllowAnonymous()
+                .WithDefaults(d => d.BaseRoute = "Book")
+                .IncludeOnly(
+                    typeof(BookEntity),
+                    typeof(BookSeriesEntity),
+                    typeof(BookSeriesAlternateTitleEntity),
+                    typeof(BookAlternateTitleEntity),
+                    typeof(BookContributorEntity),
+                    typeof(BookIdentifierEntity),
+                    typeof(BookTypeEntity),
+                    typeof(BookFormatEntity),
+                    typeof(BookGenreEntity),
+                    typeof(BookBookGenreEntity),
+                    typeof(BookChapterEntity)));
+
+            app.MapPost("/Book/search", async (BookQuery query, IBookStore store, CancellationToken ct) => Results.Ok(await store.SearchBooksAsync(query, ct)))
+                .WithTags("Book")
+                .AllowAnonymous();
+            app.MapPost("/Book/pages/search", async (PageQuery query, IBookStore store, CancellationToken ct) => Results.Ok(await store.SearchPagesAsync(query, ct)))
+                .WithTags("Book")
+                .AllowAnonymous();
+            app.MapGet("/Book/page/{id:guid}/text", async (Guid id, IBookStore store, CancellationToken ct) => {
+                var text = await store.GetPageTextAsync(id, ct);
+                return text is null && await store.GetPageByIdAsync(id, ct: ct) is null ? Results.NotFound() : Results.Ok(text);
+            }).WithTags("Book").AllowAnonymous();
+            app.MapPut("/Book/page/{id:guid}/text", async (Guid id, BookPageTextBody body, IBookStore store, CancellationToken ct) => {
+                await store.SavePageTextAsync(id, body.Text, body.ContentType, ct);
+                return Results.NoContent();
+            }).WithTags("Book").AllowAnonymous();
+            return app;
+        }
+
+        public WebApplication BuildMusicGroup()
+        {
+            app.MapDynamicCrudEndpoints<MusicDbContext>(c => c.AllowAnonymous()
+                .WithDefaults(d => d.BaseRoute = "Music")
+                .DenySelectFields("Lyrics", "SearchVector")
+                .IncludeOnly(
+                    typeof(MusicReleaseGroupEntity),
+                    typeof(MusicReleaseEntity),
+                    typeof(MusicTrackEntity),
+                    typeof(MusicCreditEntity),
+                    typeof(MusicIdentifierEntity),
+                    typeof(MusicGenreEntity),
+                    typeof(MusicFormatEntity),
+                    typeof(MusicReleaseGenreEntity),
+                    typeof(MusicRecordingEntity)));
+
+            app.MapPost("/Music/search", async (MusicReleaseQuery query, IMusicStore store, CancellationToken ct) => Results.Ok(await store.SearchReleasesAsync(query, ct)))
+                .WithTags("Music")
+                .AllowAnonymous();
+            app.MapPost("/Music/lyrics/search", async (MusicLyricsQuery query, IMusicStore store, CancellationToken ct) => Results.Ok(await store.SearchLyricsAsync(query, ct)))
+                .WithTags("Music")
+                .AllowAnonymous();
+            app.MapGet("/Music/track/{id:guid}/lyrics", async (Guid id, IMusicStore store, CancellationToken ct) => {
+                try {
+                    return Results.Ok(await store.GetTrackLyricsAsync(id, ct));
+                }
+                catch (NotFoundException) {
+                    return Results.NotFound();
+                }
+            }).WithTags("Music").AllowAnonymous();
+            app.MapPut("/Music/track/{id:guid}/lyrics", async (Guid id, CatalogTextBody body, IMusicStore store, CancellationToken ct) => {
+                await store.SaveTrackLyricsAsync(id, body.Text, ct);
+                return Results.NoContent();
+            }).WithTags("Music").AllowAnonymous();
+            return app;
+        }
+
+        public WebApplication BuildVideoGroup()
+        {
+            app.MapDynamicCrudEndpoints<VideoDbContext>(c => c.AllowAnonymous()
+                .WithDefaults(d => d.BaseRoute = "Video")
+                .DenySelectFields("Transcript", "SearchVector")
+                .IncludeOnly(
+                    typeof(VideoTitleEntity),
+                    typeof(VideoSeasonEntity),
+                    typeof(VideoEpisodeEntity),
+                    typeof(VideoCreditEntity),
+                    typeof(VideoTitleIdentifierEntity),
+                    typeof(VideoEpisodeIdentifierEntity),
+                    typeof(VideoYoutubeLinkEntity),
+                    typeof(VideoGenreEntity),
+                    typeof(VideoTitleGenreEntity),
+                    typeof(VideoAlternateTitleEntity),
+                    typeof(VideoCollectionEntity),
+                    typeof(VideoCutEntity)));
+
+            app.MapPost("/Video/search", async (VideoTitleQuery query, IVideoStore store, CancellationToken ct) => Results.Ok(await store.SearchTitlesAsync(query, ct)))
+                .WithTags("Video")
+                .AllowAnonymous();
+            app.MapPost("/Video/transcripts/search", async (VideoTranscriptQuery query, IVideoStore store, CancellationToken ct) => Results.Ok(await store.SearchTranscriptsAsync(query, ct)))
+                .WithTags("Video")
+                .AllowAnonymous();
+            app.MapGet("/Video/title/{id:guid}/transcript", async (Guid id, IVideoStore store, CancellationToken ct) => {
+                try {
+                    return Results.Ok(await store.GetTitleTranscriptAsync(id, ct));
+                }
+                catch (NotFoundException) {
+                    return Results.NotFound();
+                }
+            }).WithTags("Video").AllowAnonymous();
+            app.MapPut("/Video/title/{id:guid}/transcript", async (Guid id, CatalogTextBody body, IVideoStore store, CancellationToken ct) => {
+                await store.SaveTitleTranscriptAsync(id, body.Text, ct);
+                return Results.NoContent();
+            }).WithTags("Video").AllowAnonymous();
+            app.MapGet("/Video/episode/{id:guid}/transcript", async (Guid id, IVideoStore store, CancellationToken ct) => {
+                try {
+                    return Results.Ok(await store.GetEpisodeTranscriptAsync(id, ct));
+                }
+                catch (NotFoundException) {
+                    return Results.NotFound();
+                }
+            }).WithTags("Video").AllowAnonymous();
+            app.MapPut("/Video/episode/{id:guid}/transcript", async (Guid id, CatalogTextBody body, IVideoStore store, CancellationToken ct) => {
+                await store.SaveEpisodeTranscriptAsync(id, body.Text, ct);
+                return Results.NoContent();
+            }).WithTags("Video").AllowAnonymous();
             return app;
         }
 

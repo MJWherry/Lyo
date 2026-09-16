@@ -20,7 +20,9 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@mui/icons-material": "^7.3.5",
     "lyo-api-client": "file:../lyo-api-client",
+    "lyo-formatter": "file:../lyo-formatter",
     "lyo-query": "file:../lyo-query",
     "lyo-reporting-api-client": "file:../lyo-reporting-api-client",
     "lyo-web-components": "file:../lyo-web-components"

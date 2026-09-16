@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using Lyo.Common.Core;
 using Lyo.Exceptions;
 using SmartFormat;
 using SmartFormat.Core.Settings;
@@ -10,7 +11,7 @@ namespace Lyo.Formatter;
 /// <summary>Default <see cref="IFormatterService" />: SmartFormat named placeholders plus C#-like expressions (DateTime, ternary, in-memory LINQ).</summary>
 public sealed class FormatterService : IFormatterService
 {
-    private readonly FormatterExpressionEngine _expressions;
+    private readonly IFormatterExpressionEvaluator _expressions;
 
     /// <summary>
     /// Builds a <see cref="FormatterService" /> with the default SmartFormat setup. FormatErrorAction is MaintainTokens so missing placeholders stay in the output (so
@@ -33,11 +34,29 @@ public sealed class FormatterService : IFormatterService
     /// <param name="formatter">SmartFormatter to use. Must not be null.</param>
     /// <param name="clock">Returns the current instant. Must not be null.</param>
     public FormatterService(SmartFormatter formatter, Func<DateTimeOffset> clock)
+        : this(formatter, clock, null) { }
+
+    /// <summary>Builds a service that evaluates <c>{...}</c> with <paramref name="expressions" /> instead of the built-in engine.</summary>
+    /// <param name="expressions">Host evaluator. <c>Algo("key")</c> comes from <c>AddFormatterAlgorithms</c>.</param>
+    public FormatterService(IFormatterExpressionEvaluator expressions)
+        : this(CreateDefaultFormatter(), static () => DateTimeOffset.Now, expressions) { }
+
+    /// <summary>Builds a service with a caller-supplied SmartFormatter and expression evaluator.</summary>
+    /// <param name="formatter">SmartFormatter to use. Must not be null.</param>
+    /// <param name="expressions">Host evaluator. Must not be null.</param>
+    public FormatterService(SmartFormatter formatter, IFormatterExpressionEvaluator expressions)
+        : this(formatter, static () => DateTimeOffset.Now, expressions) { }
+
+    /// <summary>Builds a service with a caller-supplied SmartFormatter, clock, and optional expression evaluator.</summary>
+    /// <param name="formatter">SmartFormatter to use. Must not be null.</param>
+    /// <param name="clock">Returns the current instant. Must not be null. Used when <paramref name="expressions" /> is null.</param>
+    /// <param name="expressions">When set, <c>{...}</c> uses this evaluator. Otherwise the built-in engine runs.</param>
+    public FormatterService(SmartFormatter formatter, Func<DateTimeOffset> clock, IFormatterExpressionEvaluator? expressions)
     {
         ArgumentHelpers.ThrowIfNull(formatter);
         ArgumentHelpers.ThrowIfNull(clock);
         Formatter = formatter;
-        _expressions = new(clock);
+        _expressions = expressions ?? new FormatterExpressionEvaluator(clock);
     }
 
     /// <inheritdoc />
@@ -82,7 +101,7 @@ public sealed class FormatterService : IFormatterService
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
         ArgumentHelpers.ThrowIfNull(configure);
-        var context = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        var context = new BindableBag();
         var contextBuilder = new ContextBuilder(context, Culture ?? CultureInfo.CurrentCulture);
         configure(contextBuilder);
         return Format(template, context);
@@ -246,6 +265,8 @@ public sealed class FormatterService : IFormatterService
 
     private string FormatCore(string template, object? context, object?[]? extra)
     {
+        if (context is ContextBag callerBag)
+            context = callerBag.Copy();
         var provider = Culture ?? CultureInfo.CurrentCulture;
         var tokens = FormatterTemplateScanner.Scan(template);
         if (IsUnmatchedBrace(template, tokens))
@@ -367,7 +388,7 @@ public sealed class FormatterService : IFormatterService
 
     private sealed class Template : ITemplate
     {
-        private readonly Dictionary<string, object?> _mergedContext = new(StringComparer.OrdinalIgnoreCase);
+        private readonly BindableBag _mergedContext = new();
         private readonly List<object?> _otherContextItems = [];
         private readonly FormatterService _service;
 
@@ -434,10 +455,8 @@ public sealed class FormatterService : IFormatterService
 
         public ITemplate WithContext(object? context)
         {
-            if (context is IReadOnlyDictionary<string, object?> dict) {
-                foreach (var kv in dict)
-                    _mergedContext[kv.Key] = kv.Value;
-            }
+            if (context is IReadOnlyDictionary<string, object?> dict)
+                Merge(dict);
             else
                 _otherContextItems.Add(context);
 
@@ -446,15 +465,13 @@ public sealed class FormatterService : IFormatterService
 
         public ITemplate WithContext(IReadOnlyDictionary<string, object?> context)
         {
-            foreach (var kv in context)
-                _mergedContext[kv.Key] = kv.Value;
-
+            Merge(context);
             return this;
         }
 
         public ITemplate WithValue(string name, object? value)
         {
-            _mergedContext[name] = value;
+            _mergedContext.Set(name, value);
             return this;
         }
 
@@ -477,9 +494,14 @@ public sealed class FormatterService : IFormatterService
         public string Format(object? additionalContext)
         {
             if (additionalContext is IReadOnlyDictionary<string, object?> dict) {
-                var combined = new Dictionary<string, object?>(_mergedContext, StringComparer.OrdinalIgnoreCase);
-                foreach (var kv in dict)
-                    combined[kv.Key] = kv.Value;
+                var combined = new BindableBag();
+                combined.Import(_mergedContext);
+                if (dict is ContextBag extra)
+                    combined.Import(extra);
+                else {
+                    foreach (var kv in dict)
+                        combined.Set(kv.Key, kv.Value);
+                }
 
                 return _otherContextItems.Count == 0
                     ? _service.Format(TemplateString, combined)
@@ -498,14 +520,25 @@ public sealed class FormatterService : IFormatterService
         public bool AllPlaceholdersResolved(string formattedOutput) => _service.AllPlaceholdersResolved(TemplateString, formattedOutput);
 
         public IReadOnlyList<string> GetUnresolvedPlaceholders(string formattedOutput) => _service.GetUnresolvedPlaceholders(TemplateString, formattedOutput);
+
+        private void Merge(IReadOnlyDictionary<string, object?> context)
+        {
+            if (context is ContextBag bag) {
+                _mergedContext.Import(bag);
+                return;
+            }
+
+            foreach (var kv in context)
+                _mergedContext.Set(kv.Key, kv.Value);
+        }
     }
 
     private sealed class ContextBuilder : IContextBuilder
     {
         private readonly IFormatProvider _formatProvider;
-        private readonly Dictionary<string, object?> _target;
+        private readonly BindableBag _target;
 
-        public ContextBuilder(Dictionary<string, object?> target, IFormatProvider formatProvider)
+        public ContextBuilder(BindableBag target, IFormatProvider formatProvider)
         {
             _target = target;
             _formatProvider = formatProvider;
@@ -513,35 +546,42 @@ public sealed class FormatterService : IFormatterService
 
         public IContextBuilder Add(string key, object? value)
         {
-            _target[key] = value;
+            _target.Set(key, value);
+            return this;
+        }
+
+        public IContextBuilder Add(string key, Func<object?> factory)
+        {
+            ArgumentHelpers.ThrowIfNull(factory);
+            _target.Set(key, factory);
             return this;
         }
 
         public IContextBuilder Add(string key, object? value, string format)
         {
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(format);
-            _target[key] = value is IFormattable formattable ? formattable.ToString(format, _formatProvider) : value?.ToString() ?? string.Empty;
+            _target.Set(key, value is IFormattable formattable ? formattable.ToString(format, _formatProvider) : value?.ToString() ?? string.Empty);
             return this;
         }
 
         public IContextBuilder Add(string key, object? value, Func<object?, string?> formatter)
         {
             ArgumentHelpers.ThrowIfNull(formatter);
-            _target[key] = formatter(value);
+            _target.Set(key, formatter(value));
             return this;
         }
 
         public IContextBuilder Add<T>(string key, T? value, Func<T?, string?> formatter)
         {
             ArgumentHelpers.ThrowIfNull(formatter);
-            _target[key] = formatter(value);
+            _target.Set(key, formatter(value));
             return this;
         }
 
         public IContextBuilder AddIf(string key, object? value, bool condition)
         {
             if (condition)
-                _target[key] = value;
+                _target.Set(key, value);
 
             return this;
         }
@@ -550,7 +590,7 @@ public sealed class FormatterService : IFormatterService
         {
             if (condition) {
                 ArgumentHelpers.ThrowIfNullOrWhiteSpace(format);
-                _target[key] = value is IFormattable formattable ? formattable.ToString(format, _formatProvider) : value?.ToString() ?? string.Empty;
+                _target.Set(key, value is IFormattable formattable ? formattable.ToString(format, _formatProvider) : value?.ToString() ?? string.Empty);
             }
 
             return this;
@@ -560,7 +600,7 @@ public sealed class FormatterService : IFormatterService
         {
             ArgumentHelpers.ThrowIfNull(predicate);
             if (predicate(value))
-                _target[key] = value;
+                _target.Set(key, value);
 
             return this;
         }
@@ -569,7 +609,7 @@ public sealed class FormatterService : IFormatterService
         {
             ArgumentHelpers.ThrowIfNull(predicate);
             if (predicate(value))
-                _target[key] = value;
+                _target.Set(key, value);
 
             return this;
         }

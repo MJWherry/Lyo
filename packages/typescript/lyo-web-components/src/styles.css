@@ -46,3 +46,13 @@
 .lyo-diff__del {
   background: rgba(248, 113, 113, 0.18);
 }
+
+.lyo-diff__hit {
+  background: rgba(250, 204, 21, 0.35);
+  border-radius: 2px;
+}
+
+.lyo-diff__hit--active {
+  background: rgba(250, 204, 21, 0.85);
+  outline: 1px solid rgba(202, 138, 4, 0.9);
+}

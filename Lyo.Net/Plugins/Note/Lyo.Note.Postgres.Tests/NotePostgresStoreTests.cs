@@ -1,5 +1,6 @@
 using Lyo.Note;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Note.Postgres.Tests;
 
@@ -9,12 +10,12 @@ public sealed class NotePostgresStoreTests(NotePostgresFixture fixture)
     [Fact]
     public async Task Save_ThenGetById_RoundTrips()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = fixture.ServiceProvider.GetRequiredService<INoteStore>();
-        var subject = Guid.NewGuid();
-        var actor = Guid.NewGuid();
+        var subject = LyoGuid.CreateV7();
+        var actor = LyoGuid.CreateV7();
         var row = new NoteRecord {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             SubjectEntityType = "thing",
             SubjectEntityId = subject.ToString(),
             ActorEntityType = "person",

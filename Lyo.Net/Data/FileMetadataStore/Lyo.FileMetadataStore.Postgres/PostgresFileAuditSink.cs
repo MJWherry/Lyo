@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Lyo.Exceptions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileMetadataStore.Postgres;
 
@@ -26,7 +27,7 @@ public sealed class PostgresFileAuditSink : IFileAuditEventHandler
         ArgumentHelpers.ThrowIfNull(auditEvent);
         await using var db = await _dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = new FileAuditEventEntity {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             EventType = auditEvent.EventType.ToString(),
             Timestamp = auditEvent.UtcTimestamp.Kind == DateTimeKind.Utc ? auditEvent.UtcTimestamp : auditEvent.UtcTimestamp.ToUniversalTime(),
             FileId = auditEvent.FileId,

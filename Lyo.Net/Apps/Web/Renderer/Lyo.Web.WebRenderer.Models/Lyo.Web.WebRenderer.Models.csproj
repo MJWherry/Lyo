@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Serializable HTML capture request and response for Lyo.Web.WebRenderer. No Blazor and no browser dependency.</Description>
+        <PackageTags>web renderer html pdf models</PackageTags>
+        <RootNamespace>Lyo.Web.WebRenderer.Models</RootNamespace>
+    </PropertyGroup>
+
+</Project>

@@ -1,0 +1,140 @@
+{
+  "id": "Lyo.Idempotency",
+  "name": "Lyo.Idempotency",
+  "area": "Core",
+  "tagline": "Shared idempotency store. The same scope, key, and request hash replays the stored result. A different hash does not run the work again.",
+  "description": "A scope and key claim one in-progress row. API rows do not steal: a crashed in-progress row stays in progress until expires_at or Abandon. The same hash replays a completed or failed response. A different hash is a conflict. Scopes that start with outbox/ are reserved for the outbox.",
+  "features": [
+    "**API keys do not steal.** A crashed in-progress API row stays in progress until expires_at (default 24 hours) or Abandon. Stealing would run the work twice.",
+    "**Replay includes failures.** Fail stores the status and body the same way Complete does. A process crash before either call stays in progress.",
+    "**Equal to utc now is expired.** After the sweeper marks the row expired, the key can be used again. The sweeper does not expire outbox rows."
+  ],
+  "examples": [
+    {
+      "title": "Claim and finish",
+      "language": "csharp",
+      "code": "var hash = IdempotencyHash.Of(body);\nvar begin = await store.TryBeginAsync(scope, key, hash, ct: ct);\nif (begin.Outcome != IdempotencyOutcome.Began)\n    return begin;\nawait store.CompleteAsync(begin.Id, begin.LeaseToken!.Value, 200, body, \"application/json\", ct);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "markdown",
+      "title": "Recovery",
+      "body": "API rows use a lease that lasts until expires_at. Complete and Fail require that lease token. A wrong token does not change the row. The in-memory store throws NotSupportedException when a DbTransaction is passed. The Postgres store joins a caller transaction with a savepoint so a unique violation does not abort the caller transaction."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Idempotency/Lyo.Idempotency/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

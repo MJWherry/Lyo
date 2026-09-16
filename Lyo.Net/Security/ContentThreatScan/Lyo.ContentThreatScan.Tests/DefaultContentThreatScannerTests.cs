@@ -9,7 +9,7 @@ public sealed class DefaultContentThreatScannerTests
         DefaultContentThreatScanner sut = new(opts);
         var ctx = new ContentThreatScanContext("data.json", "application/json");
         var harmless = "{\"hello\":\"world\"}"u8.ToArray();
-        var hits = await sut.CollectHeuristicContributionsAsync(harmless, ctx, TestContext.Current.CancellationToken);
+        var hits = await sut.CollectHeuristicContributionsAsync(harmless, ctx, TestCt);
         Assert.Empty(hits);
     }
 
@@ -19,7 +19,7 @@ public sealed class DefaultContentThreatScannerTests
         var opts = new ContentThreatHeuristicOptions();
         DefaultContentThreatScanner sut = new(opts);
         var hostile = "{\"payload\":\" UNION SELECT username FROM accounts\"}"u8.ToArray();
-        var hits = await sut.CollectHeuristicContributionsAsync(hostile, new("evil.json", "application/json"), TestContext.Current.CancellationToken);
+        var hits = await sut.CollectHeuristicContributionsAsync(hostile, new("evil.json", "application/json"), TestCt);
         Assert.Contains(hits, contribution => string.Equals(contribution.RuleId, "sql.union_select", StringComparison.Ordinal));
         Assert.True(hits.Sum(point => point.Points) >= 35m);
     }
@@ -30,7 +30,7 @@ public sealed class DefaultContentThreatScannerTests
         ContentThreatHeuristicOptions opts = new() { SkipIfLikelyBinary = true, TreatNullOctetAsBinary = true };
         DefaultContentThreatScanner sut = new(opts);
         var buffer = "{a,,,,,,,,\0}"u8.ToArray();
-        var hits = await sut.CollectHeuristicContributionsAsync(buffer, new("sample.json", "application/json"), TestContext.Current.CancellationToken);
+        var hits = await sut.CollectHeuristicContributionsAsync(buffer, new("sample.json", "application/json"), TestCt);
         Assert.Empty(hits);
     }
 }

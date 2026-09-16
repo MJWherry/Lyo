@@ -4,6 +4,7 @@ using Lyo.Exceptions;
 using Lyo.Http.Client.Pipeline;
 using Lyo.Http.Client.Session;
 using Lyo.Metrics;
+using Lyo.RateLimit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -93,6 +94,47 @@ public static class Extensions
                 sectionName,
                 (sp, http, options) => new LyoHttpClient(http, options, sp.GetService<ILogger<LyoHttpClient>>(), session: sp.GetService<ILyoHttpSession>()),
                 clientName ?? nameof(ILyoHttpClient));
+
+        /// <summary>
+        /// Registers <see cref="ILyoHttpClientFactory" />. <paramref name="configure" /> runs once when the factory is created and receives the root provider.
+        /// Sites can still be added later with <see cref="ILyoHttpClientFactory.Register" />.
+        /// </summary>
+        public IServiceCollection AddLyoHttpClientFactory(Action<ILyoHttpClientFactory, IServiceProvider>? configure = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton(sp => {
+                var factory = new LyoHttpClientFactory(sp, sp.GetService<ILogger<LyoHttpClientFactory>>(), sp.GetService<IRateLimitService>());
+                configure?.Invoke(factory, sp);
+                return factory;
+            });
+            services.AddSingleton<ILyoHttpClientFactory>(static sp => sp.GetRequiredService<LyoHttpClientFactory>());
+            return services;
+        }
+
+        /// <summary>
+        /// Binds <see cref="LyoHttpClientFactoryOptions.SectionName" /> and registers <see cref="ILyoHttpClientFactory" />. A missing section leaves the factory empty.
+        /// <paramref name="configure" /> runs after the bind, so a <c>Register</c> for the same key replaces that site's static bearer with a delegate.
+        /// </summary>
+        public IServiceCollection AddLyoHttpClientFactoryFromConfiguration(
+            IConfiguration configuration,
+            Action<ILyoHttpClientFactory, IServiceProvider>? configure = null,
+            string? sectionName = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            sectionName ??= LyoHttpClientFactoryOptions.SectionName;
+            services.AddSingleton(sp => {
+                var bound = new LyoHttpClientFactoryOptions();
+                configuration.GetSection(sectionName).Bind(bound);
+                var factory = new LyoHttpClientFactory(sp, sp.GetService<ILogger<LyoHttpClientFactory>>(), sp.GetService<IRateLimitService>());
+                factory.LoadConfiguration(bound);
+                configure?.Invoke(factory, sp);
+                factory.Materialize();
+                return factory;
+            });
+            services.AddSingleton<ILyoHttpClientFactory>(static sp => sp.GetRequiredService<LyoHttpClientFactory>());
+            return services;
+        }
     }
 
     /// <summary>
@@ -134,9 +176,9 @@ public static class Extensions
             services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<TOptions>>().Value);
         }
 
-        services.TryAddSingleton<LyoHttpRateLimiterCache<TOptions>>(sp => {
+        services.TryAddSingleton<LyoHttpRateLimitGateCache<TOptions>>(sp => {
             var resolved = sp.GetRequiredService<IOptions<TOptions>>().Value;
-            return new(new LyoHttpRateLimiter(resolved.RateLimit, sp.GetService<IMetrics>()));
+            return new(new LyoHttpRateLimitGate(resolved.RateLimit));
         });
 
         IHttpClientBuilder builder = services.AddHttpClient(clientName);
@@ -175,13 +217,25 @@ public static class Extensions
     private static void AttachPipeline<TOptions>(IHttpClientBuilder builder)
         where TOptions : LyoHttpClientOptions
     {
-        // First added = outermost: observe → metrics → rate limit → timing (innermost, next to primary). Acquire, then delay, then send.
+        // First added = outermost: observe → metrics → headers → rate limit → timing (innermost, next to primary).
         builder.AddHttpMessageHandler(sp => new LyoHttpObserveHandler());
         builder.AddHttpMessageHandler(sp => new LyoHttpMetricsHandler(sp.GetService<IMetrics>()));
         builder.AddHttpMessageHandler(sp => {
             var options = sp.GetRequiredService<IOptions<TOptions>>().Value;
-            var limiter = sp.GetRequiredService<LyoHttpRateLimiterCache<TOptions>>().Limiter;
-            return new LyoHttpRateLimitHandler(options.RateLimit, limiter, sp.GetService<IMetrics>(), sp.GetService<ILoggerFactory>()?.CreateLogger("Lyo.Http.Client.RateLimit"));
+            return new LyoHttpHeaderHandler(options, sp);
+        });
+        builder.AddHttpMessageHandler(sp => {
+            var options = sp.GetRequiredService<IOptions<TOptions>>().Value;
+            IRateLimitService? limiter = null;
+            if (options.RateLimit.Enabled) {
+                limiter = sp.GetService<IRateLimitService>();
+                if (limiter is null)
+                    throw new InvalidOperationException("Rate limiting is enabled but IRateLimitService is not registered. Call AddLocalRateLimit or AddRedisRateLimit.");
+            }
+
+            var gate = sp.GetRequiredService<LyoHttpRateLimitGateCache<TOptions>>().Gate;
+            var policy = typeof(TOptions).FullName ?? typeof(TOptions).Name;
+            return new LyoHttpRateLimitHandler(options.RateLimit, limiter, policy, gate, sp.GetService<IMetrics>(), sp.GetService<ILoggerFactory>()?.CreateLogger("Lyo.Http.Client.RateLimit"));
         });
         builder.AddHttpMessageHandler(sp => {
             var options = sp.GetRequiredService<IOptions<TOptions>>().Value;
@@ -190,10 +244,10 @@ public static class Extensions
     }
 }
 
-/// <summary>Singleton cache so transient handlers share one token-bucket set per options type.</summary>
-public sealed class LyoHttpRateLimiterCache<TOptions>(LyoHttpRateLimiter limiter)
+/// <summary>Singleton cache so transient handlers share one waiter queue and concurrency cap per options type.</summary>
+public sealed class LyoHttpRateLimitGateCache<TOptions>(LyoHttpRateLimitGate gate)
     where TOptions : LyoHttpClientOptions
 {
-    /// <summary>Shared limiter.</summary>
-    public LyoHttpRateLimiter Limiter { get; } = limiter;
+    /// <summary>Shared gate.</summary>
+    public LyoHttpRateLimitGate Gate { get; } = gate;
 }

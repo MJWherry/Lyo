@@ -9,17 +9,18 @@ alwaysApply: true
 
 - Solution is `Lyo.Net/Lyo.slnx` (XML). Projects live under top-level areas: `Core`, `Data`, `Security`, `Communication`, `Integration`, `Plugins`, `Apps`, `Tools`. Solution folders mirror disk paths.
 - Every package is classified by archetype. Before adding or moving a package, read `Lyo.Net/docs/package-layout.md` and follow its classification checklist:
-  - A = canonical Lyo domain → `Core/{Domain}/` (e.g. `Lyo.People.Models`)
+  - A = canonical Lyo domain → `Core/{Domain}/` (e.g. `Lyo.Geolocation.Models`)
   - B = capability + vendor provider → `Communication|Security/{Capability}/` (e.g. `Lyo.Translation.Google`)
   - C = thin vendor client → `Integration/{Vendor}/`, named `Lyo.{Vendor}.{X}.Client`
   - D = vendor product vertical → `Integration/{Vendor}/` (e.g. `Lyo.Discord.*`)
   - E = platform → `Plugins/*`, `Apps/*`, `Data/*`, `Tools/*`
-- Dependency law (hard rule): `Core` must NEVER reference `Apps` platform packages, `Integration` vendors, vendor SDKs, or vendor clients. `Communication`/`Security` may reference `Core` and `Integration` vendor clients. Hosts wire vendor client → mapper → Core store.
+- Dependency law (hard rule): `Core` must NEVER reference `Apps` platform packages, `Integration` vendors, vendor SDKs, or vendor clients. `Communication`/`Security` may reference `Core` and `Integration` vendor clients. Hosts wire vendor client → mapper → store.
 - Suffix conventions: `.Models` (contracts/DTOs), `.Postgres` (EF Core persistence), `.Client` (HTTP/SDK wrapper), `.Web.Components` (Blazor), `.Tests` (xUnit), `.Benchmarks` (BenchmarkDotNet).
 
 ## C# style
 
 - File-scoped namespaces, primary constructors, collection expressions, pattern matching, target-typed `new`. Use C# 14 `extension(IServiceCollection services)` blocks for extension members.
+- Every non-interface member has an explicit access modifier: `public`, `private`, `protected`, or `internal`. Write `private` on private methods, fields, and nested types. Do not leave it off. Explicit interface implementations and static constructors are the exception; they cannot take a modifier.
 - Null-guard public entry points with `ArgumentHelpers.ThrowIfNull(...)` from `Lyo.Exceptions` (netstandard2.0-safe) — not `ArgumentNullException.ThrowIfNull`.
 - XML doc comments on all public API. Docs explain usage and prerequisites, not just what the member does.
 - Exceptions are one-liners: `public sealed class FooException(string message) : Exception(message);`

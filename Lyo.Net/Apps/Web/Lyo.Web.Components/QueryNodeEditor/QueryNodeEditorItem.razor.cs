@@ -106,6 +106,15 @@ public partial class QueryNodeEditorItem
         OnNodeChanged.InvokeAsync(Node);
     }
 
+    private void OnThresholdChanged(double? value)
+    {
+        if (Node is not ConditionClause conditionNode)
+            return;
+
+        conditionNode.Threshold = value;
+        OnNodeChanged.InvokeAsync(Node);
+    }
+
     private Task<IEnumerable<string>> SearchFieldNames(string? value, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(value))

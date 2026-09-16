@@ -1,9 +1,9 @@
 {
   "id": "Lyo.People.Postgres",
   "name": "Lyo.People.Postgres",
-  "area": "Core",
+  "area": "Plugins",
   "tagline": "EF Core persistence of Lyo.People.Models in PostgreSQL.",
-  "description": "EF Core persistence of Lyo.People.Models in PostgreSQL.\n\n**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host. See [package layout](../../../docs/package-layout.md).",
+  "description": "EF Core persistence of Lyo.People.Models in PostgreSQL.\n\n**Archetype E (plugin).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host. See [package layout](../../../docs/package-layout.md).",
   "features": [
     "**person.** Flattened name, core person data, demographics, and JSON columns for preferences/citizenship/custom fields.",
     "**phone_number.** Base phone numbers (E.164).",
@@ -33,7 +33,7 @@
     {
       "title": "Migrations",
       "language": "bash",
-      "code": "export PEOPLE_CONNECTION_STRING=\"Host=localhost;Database=lyo_people;Username=postgres;Password=postgres\"\ndotnet ef migrations add MigrationName --project Core/People/Lyo.People.Postgres --context PeopleDbContext"
+      "code": "export PEOPLE_CONNECTION_STRING=\"Host=localhost;Database=lyo_people;Username=postgres;Password=postgres\"\ndotnet ef migrations add MigrationName --project Plugins/People/Lyo.People.Postgres --context PeopleDbContext"
     }
   ],
   "sections": [
@@ -78,7 +78,7 @@
     }
   ],
   "links": [],
-  "readmePath": "Lyo.Net/Core/People/Lyo.People.Postgres/README.md",
+  "readmePath": "Lyo.Net/Plugins/People/Lyo.People.Postgres/README.md",
   "dependencies": [
     {
       "name": "Lyo.Common.Metadata",
@@ -114,6 +114,14 @@
     },
     {
       "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Search.Postgres",
       "kind": "lyo",
       "tags": [
         "direct",

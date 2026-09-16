@@ -2,15 +2,15 @@ using System.Collections;
 using System.Reflection;
 using Lyo.Formatter;
 using Lyo.Job.Models.Enums;
-using Lyo.Query.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Response;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
-/// Exercises the circuit breaker and failure-alert accounting in completion handling, including the fail-open regression: clearing the failure counter after a failed disable patch
-/// left the definition running and restarted counting from zero on the next failure.
+/// Exercises the circuit breaker in completion handling, including the fail-open regression: clearing the failure counter after a failed disable patch left the definition
+/// running and restarted counting from zero on the next failure.
 /// </summary>
 public class JobSchedulerCircuitBreakerTests
 {
@@ -91,64 +91,6 @@ public class JobSchedulerCircuitBreakerTests
         Assert.Single(api.DefinitionPatches);
     }
 
-    [Fact]
-    public async Task FailureAlerts_HonourTheConsecutiveFailureThreshold()
-    {
-        var definition = BuildDefinition(circuitBreakerThreshold: 0, alertOnFailure: true, alertAfterConsecutiveFailures: 2);
-        var api = new FakeSchedulerApiClient(definition);
-        var (scheduler, events) = await CreateSchedulerAsync(api);
-        await CompleteFailedRunAsync(scheduler, definition.Id);
-        Assert.Empty(events.Alerts);
-        await CompleteFailedRunAsync(scheduler, definition.Id);
-        Assert.Single(events.Alerts, a => a.AlertType == JobAlertType.Failure);
-    }
-
-    [Fact]
-    public async Task Trigger_FiresTheTargetDefinitionWithADeterministicIdempotencyKey()
-    {
-        var trigger = BuildTrigger(Guid.NewGuid(), "Result", "Success");
-        var definition = BuildDefinition(circuitBreakerThreshold: 0);
-
-        // The trigger targets the same definition so the fake's definition GET can answer for it.
-        definition = definition with { JobTriggers = [trigger with { TriggersJobDefinitionId = definition.Id }] };
-        var api = new FakeSchedulerApiClient(definition);
-        var (scheduler, _) = await CreateSchedulerAsync(api);
-        var run = BuildRun(definition.Id, JobRunResult.Success, allowTriggers: true, resultKey: "Result", resultValue: "Success");
-        await CompleteRunAsync(scheduler, run);
-
-        var created = Assert.Single(api.CreatedRunRequests);
-        Assert.Equal(definition.Id, created.JobDefinitionId);
-        Assert.Equal($"trigger:{trigger.Id:N}:{run.Id:N}", created.IdempotencyKey);
-    }
-
-    [Fact]
-    public async Task Trigger_DoesNotFireWhenDisabledOrWhenTheResultDoesNotMatch()
-    {
-        var disabled = BuildTrigger(Guid.NewGuid(), "Result", "Success", enabled: false);
-        var mismatch = BuildTrigger(Guid.NewGuid(), "Result", "Warning");
-        var definition = BuildDefinition(circuitBreakerThreshold: 0);
-        definition = definition with {
-            JobTriggers = [disabled with { TriggersJobDefinitionId = definition.Id }, mismatch with { TriggersJobDefinitionId = definition.Id }]
-        };
-
-        var api = new FakeSchedulerApiClient(definition);
-        var (scheduler, _) = await CreateSchedulerAsync(api);
-        await CompleteRunAsync(scheduler, BuildRun(definition.Id, JobRunResult.Success, allowTriggers: true, resultKey: "Result", resultValue: "Success"));
-        Assert.Empty(api.CreatedRunRequests);
-    }
-
-    [Fact]
-    public async Task Triggers_AreSkippedWhenTheRunDisallowsThem()
-    {
-        var trigger = BuildTrigger(Guid.NewGuid(), "Result", "Success");
-        var definition = BuildDefinition(circuitBreakerThreshold: 0);
-        definition = definition with { JobTriggers = [trigger with { TriggersJobDefinitionId = definition.Id }] };
-        var api = new FakeSchedulerApiClient(definition);
-        var (scheduler, _) = await CreateSchedulerAsync(api);
-        await CompleteRunAsync(scheduler, BuildRun(definition.Id, JobRunResult.Success, resultKey: "Result", resultValue: "Success"));
-        Assert.Empty(api.CreatedRunRequests);
-    }
-
     private static async Task<(JobScheduler Scheduler, FakeEventPublisher Events)> CreateSchedulerAsync(FakeSchedulerApiClient api)
     {
         var events = new FakeEventPublisher();
@@ -160,39 +102,24 @@ public class JobSchedulerCircuitBreakerTests
                 EnableMisfireCatchUp = false
             }, api, new FormatterService(), events);
 
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
         return (scheduler, events);
     }
 
-    private static JobDefinitionRes BuildDefinition(
-        int circuitBreakerThreshold,
-        bool alertOnFailure = false,
-        int alertAfterConsecutiveFailures = 0,
-        IReadOnlyList<JobTriggerRes>? triggers = null)
-        => new(
-            Guid.NewGuid(), "BreakerDef", null, "Test", "cs", true, [], [], triggers ?? [], null, CircuitBreakerThreshold: circuitBreakerThreshold,
-            AlertOnFailure: alertOnFailure, AlertAfterConsecutiveFailures: alertAfterConsecutiveFailures);
+    private static JobDefinitionRes BuildDefinition(int circuitBreakerThreshold)
+        => new(LyoGuid.CreateV7(), "BreakerDef", null, "Test", "cs", true, [], [], null, CircuitBreakerThreshold: circuitBreakerThreshold);
 
-    private static JobTriggerRes BuildTrigger(Guid targetDefinitionId, string key, string? value, bool enabled = true)
-        => new(Guid.NewGuid(), targetDefinitionId, key, ComparisonOperatorEnum.Equals, value, null, enabled, null, null, null);
-
-    private static JobRunRes BuildRun(
-        Guid definitionId,
-        JobRunResult result,
-        bool allowTriggers = false,
-        string? resultKey = null,
-        string? resultValue = null)
+    private static JobRunRes BuildRun(Guid definitionId, JobRunResult result, string? resultKey = null, string? resultValue = null)
     {
-        var runId = Guid.NewGuid();
+        var runId = LyoGuid.CreateV7();
         return new() {
             Id = runId,
             JobDefinitionId = definitionId,
             State = JobState.Finished,
             Result = result,
-            AllowTriggers = allowTriggers,
             CreatedTimestamp = DateTime.UtcNow.AddMinutes(-1),
             FinishedTimestamp = DateTime.UtcNow,
-            JobRunResults = resultKey is null ? [] : [new(Guid.NewGuid(), runId, resultKey, "String", resultValue)]
+            JobRunResults = resultKey is null ? [] : [new(LyoGuid.CreateV7(), runId, resultKey, "String", resultValue)]
         };
     }
 

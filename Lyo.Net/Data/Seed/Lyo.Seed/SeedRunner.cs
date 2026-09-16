@@ -31,8 +31,11 @@ public sealed class SeedRunner : ISeedRunner
         try {
             await graph.ExecuteAsync(session, ct).ConfigureAwait(false);
         }
-        catch (SeedException ex) {
-            return SeedResult.Fail(contributor.Name, [ex.Message], session.Counts);
+        catch (OperationCanceledException) {
+            throw;
+        }
+        catch (Exception ex) {
+            return SeedResult.Fail(contributor.Name, [SeedFailureText.Format(ex)], session.Counts);
         }
 
         return SeedResult.Ok(contributor.Name, session.Counts);

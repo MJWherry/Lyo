@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.FileMetadataStore.Seed",
+  "name": "Lyo.FileMetadataStore.Seed",
+  "area": "Data",
+  "tagline": "EF seed of file metadata, blobs, revisions, audit events, multipart sessions, and download links.",
+  "description": "EF seed of Count files with a tiny UTF-8 blob, one revision, one audit event, one multipart session, and one download link. Schema filestore.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/FileMetadataStore/Lyo.FileMetadataStore.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

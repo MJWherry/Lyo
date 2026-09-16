@@ -1,0 +1,43 @@
+{
+  "id": "Lyo.Search.Postgres",
+  "name": "Lyo.Search.Postgres",
+  "area": "Data",
+  "tagline": "Shared Postgres full-text column.",
+  "description": "Maps a stored English tsvector and a GIN index, and filters a query with plainto_tsquery. Callers pass the SQL expression for the text they search.",
+  "features": [
+    "Map adds search_vector and a GIN index.",
+    "WhereMatches keeps rows that match a plain query."
+  ],
+  "examples": [
+    {
+      "title": "Map a body column",
+      "language": "csharp",
+      "code": "PostgresTextSearch.Map(builder, e => e.SearchVector, PostgresTextSearch.EnglishColumn(\"content\"), \"ix_note_search_vector\");"
+    }
+  ],
+  "readmePath": "README.md",
+  "dependencies": [
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ],
+  "sections": []
+}

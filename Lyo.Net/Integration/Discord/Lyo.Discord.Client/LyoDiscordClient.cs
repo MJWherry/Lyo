@@ -1,5 +1,5 @@
 using Lyo.Http.Client;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Discord.Client.Managers;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;

@@ -7,7 +7,7 @@ SSH.NET wrapper for SFTP used by Lyo hosts and storage adapters (`Lyo.FileStorag
 - **Async.** Hosts and adapters should call `*Async`. Sync wrappers wait on the async implementation. No `Task.Run`.
 - **Pooled leases.** Up to `MaxPooledClients` SSH.NET clients at once. Each client serializes work across awaits with a `SemaphoreSlim`.
 - **Concurrent callers.** Parallelism stops at the pool size. A single leased stream is not thread-safe.
-- **IFileSystem.** `SftpFileSystem` wraps `ISftpClient`. Register with `AddSftpFileSystem`.
+- **IFileSystem.** `SftpFileSystem` wraps `ISftpClient` and is held to the shared `IFileSystemContractTests` suite from `Lyo.IO.FileSystem.Tests`, including `Append` and directory moves. Register with `AddSftpFileSystem`.
 - **Path jail.** Paths stay under `RootRemoteDirectory` with `PathStyle.Posix`.
 - **Auth.** Password and/or a PEM or key-file private key. Host-key fingerprint allow list, or `AcceptAny` in tests.
 - **Logging and metrics.** `ILogger` and `IMetrics` (`sftp.connect`, `sftp.operation`, `sftp.bytes`, `sftp.pool`, `sftp.errors`). Turning `EnableMetrics` off uses `NullMetrics`.

@@ -147,6 +147,12 @@ public partial class QueryRequestBuilder
         await RequestChanged.InvokeAsync(Request);
     }
 
+    private async Task OnAggregatesChanged(List<AggregateSelect> aggregates)
+    {
+        Request.Aggregates = aggregates;
+        await RequestChanged.InvokeAsync(Request);
+    }
+
     private async Task OnWhereClauseChanged(WhereClause? queryNode)
     {
         Request.WhereClause = queryNode;

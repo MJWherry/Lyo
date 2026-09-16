@@ -90,7 +90,12 @@
     {
       "type": "paragraph",
       "title": "Inventory (`IKeyInventoryStore`)",
-      "text": "Optional capability for admin UIs and audits: enumerate logical `keyId`s and versions. Not every store implements listing. Probe for `IKeyInventoryStore` or your cloud-specific API before assuming discovery works."
+      "text": "Optional capability for admin UIs and audits: enumerate logical `keyId`s and versions. Not every store implements listing. Probe for `IKeyInventoryStore` or your cloud-specific API before assuming discovery works. `KeyStoreMigrator` requires it on the source."
+    },
+    {
+      "type": "markdown",
+      "title": "Copying a store (`KeyStoreMigrator`)",
+      "body": "`KeyStoreMigrator.CopyAsync` copies every version of the given key ids from a source that implements `IKeyInventoryStore` onto another `IKeyStore`. `CopyInventoryAsync` does that for every id the source lists, including keys no file uses. Both take an optional `IProgress<KeyStoreMigrationProgress>`. Null reports nothing. Each report is one version after it is verified: copied, skipped, or failed.\n\nThe copy uses `AddKey`, so version strings stay the ones already written into ciphertext (`\"1\"`, `\"v1\"`, `\"2025-01\"`). A destination version with the same bytes is skipped. Different bytes throw before `AddKey` overwrites them. The destination current pointer is set to the source pointer only when the destination had no pointer, or already pointed at the same version. A different pointer throws and is left where it was. After `AddKey`, the destination `GetKey` must match the source bytes or the copy stops before `SetCurrentVersion`.\n\n`FileStorageTransfer` in `Lyo.FileStorage` calls `CopyAsync` for the key ids a transfer actually references. Use `CopyInventoryAsync` when the whole store should move."
     },
     {
       "type": "table",

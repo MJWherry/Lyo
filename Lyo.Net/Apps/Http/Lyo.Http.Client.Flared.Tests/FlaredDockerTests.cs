@@ -12,7 +12,7 @@ public sealed class FlaredDockerTests
         if (string.Equals(Environment.GetEnvironmentVariable("NO_DOCKER"), "1", StringComparison.Ordinal))
             Assert.Skip("NO_DOCKER=1");
 
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var container = await ContainerTestHost.TryStartAsync(
             "ghcr.io/flaresolverr/flaresolverr:latest",
             builder => builder

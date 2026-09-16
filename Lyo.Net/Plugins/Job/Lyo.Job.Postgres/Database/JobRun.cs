@@ -11,10 +11,6 @@ public class JobRun
 
     public Guid? JobScheduleId { get; set; }
 
-    public Guid? JobTriggerId { get; set; }
-
-    public Guid? TriggeredByJobRunId { get; set; }
-
     public Guid? ReRanFromJobRunId { get; set; }
 
     [Required]
@@ -22,8 +18,6 @@ public class JobRun
     public string CreatedBy { get; set; } = null!;
 
     public JobState State { get; set; }
-
-    public bool AllowTriggers { get; set; }
 
     public DateTime CreatedTimestamp { get; set; }
 
@@ -98,8 +92,6 @@ public class JobRun
 
     public virtual ICollection<JobRun> InverseReRanFromJobRun { get; set; } = new List<JobRun>();
 
-    public virtual ICollection<JobRun> InverseTriggeredByJobRun { get; set; } = new List<JobRun>();
-
     public virtual JobDefinition JobDefinition { get; set; } = null!;
 
     public virtual ICollection<JobRunLog> JobRunLogs { get; set; } = new List<JobRunLog>();
@@ -110,11 +102,7 @@ public class JobRun
 
     public virtual JobSchedule? JobSchedule { get; set; }
 
-    public virtual JobTrigger? JobTrigger { get; set; }
-
     public virtual JobRun? ReRanFromJobRun { get; set; }
-
-    public virtual JobRun? TriggeredByJobRun { get; set; }
 
     public virtual JobRun? ParentJobRun { get; set; }
 

@@ -34,7 +34,7 @@ public class SubdirectoryTests : IDisposable
                 eventFired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir", fileName), TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir", fileName), TestCt);
         await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
     }
@@ -47,10 +47,10 @@ public class SubdirectoryTests : IDisposable
         Directory.CreateDirectory(subDir);
         var fileName = Path.GetFileName(_tempSession.GetFilePath());
         var filePath = Path.Combine(subDir, fileName);
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir", fileName), TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir", fileName), TestCt);
         var eventFired = false;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, options);
-        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
+        await Task.Delay(200, TestCt); // Wait for initial snapshot
         watcher.FileDeleted += (_, e) => {
             if (e.OldPath == filePath)
                 eventFired = true;
@@ -76,7 +76,7 @@ public class SubdirectoryTests : IDisposable
                 eventFired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir1", "subdir2", fileName), TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir1", "subdir2", fileName), TestCt);
         await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
     }
@@ -90,7 +90,7 @@ public class SubdirectoryTests : IDisposable
         var eventFired = false;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, options);
         Directory.CreateDirectory(subDir);
-        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for subdir to be detected
+        await Task.Delay(200, TestCt); // Wait for subdir to be detected
         watcher.DirectoryCreated += (_, e) => {
             if (e.NewPath == nestedDir)
                 eventFired = true;
@@ -112,10 +112,10 @@ public class SubdirectoryTests : IDisposable
         var fileName = Path.GetFileName(_tempSession.GetFilePath());
         var sourcePath = Path.Combine(subDir1, fileName);
         var destPath = Path.Combine(subDir2, fileName);
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir1", fileName), TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir1", fileName), TestCt);
         var moveFired = false;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, options);
-        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
+        await Task.Delay(200, TestCt); // Wait for initial snapshot
         watcher.FileMoved += (_, e) => {
             if (e.OldPath == sourcePath && e.NewPath == destPath)
                 moveFired = true;

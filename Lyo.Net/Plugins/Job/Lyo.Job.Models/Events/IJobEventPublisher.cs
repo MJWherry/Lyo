@@ -36,6 +36,14 @@ public interface IJobEventPublisher
     /// <param name="ct">Cancellation token.</param>
     Task PublishRunFinishedAsync(Guid runId, CancellationToken ct = default);
 
+    /// <summary>
+    /// Send a freshly materialized workflow run to the engine queue so its root steps are dispatched. A workflow run is created in <c>Pending</c> with every step
+    /// <c>Pending</c>; nothing moves it forward until the engine receives this event, because there is no completed job run to react to yet.
+    /// </summary>
+    /// <param name="workflowRunId">ID of the newly created workflow run.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task PublishWorkflowRunCreatedAsync(Guid workflowRunId, CancellationToken ct = default);
+
     /// <summary>Broadcast a cancellation request to any worker currently processing this run.</summary>
     /// <param name="runId">ID of the job run to cancel.</param>
     /// <param name="ct">Cancellation token.</param>

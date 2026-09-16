@@ -1,5 +1,6 @@
 using System.Text;
 using Xunit;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.MessageQueue.RabbitMq.Tests;
 
@@ -8,11 +9,11 @@ public sealed class RabbitMqServiceTests
 {
     private readonly RabbitMqBrokerFixture _broker;
 
-    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+    private static CancellationToken Ct => TestCt;
 
     public RabbitMqServiceTests(RabbitMqBrokerFixture broker) => _broker = broker;
 
-    private static string UniqueQueue(string prefix) => $"{prefix}.{Guid.NewGuid():N}";
+    private static string UniqueQueue(string prefix) => $"{prefix}.{LyoGuid.CreateV7():N}";
 
     /// <summary>Polls until <paramref name="condition" /> is true or the timeout expires. Management API stats trail broker state by a few seconds.</summary>
     private static async Task<bool> WaitUntilAsync(Func<Task<bool>> condition, TimeSpan? timeout = null)
@@ -222,7 +223,7 @@ public sealed class RabbitMqServiceTests
 
         var all = await service.GetAllQueuesInfoAsync(Ct);
         Assert.Contains(all, q => q.Name == queue && Equals(q.AdditionalProperties.GetValueOrDefault(Constants.QueueInfoProperties.Durable), true));
-        var missing = await service.GetQueueInfoAsync($"does-not-exist-{Guid.NewGuid():N}", Ct);
+        var missing = await service.GetQueueInfoAsync($"does-not-exist-{LyoGuid.CreateV7():N}", Ct);
         Assert.Null(missing);
     }
 
@@ -250,7 +251,7 @@ public sealed class RabbitMqServiceTests
 
         var all = await service.GetAllExchangesInfoAsync(Ct);
         Assert.Contains(all, e => e.Name == exchange && e.Type == "topic");
-        var missing = await service.GetExchangeInfoAsync($"does-not-exist-{Guid.NewGuid():N}", Ct);
+        var missing = await service.GetExchangeInfoAsync($"does-not-exist-{LyoGuid.CreateV7():N}", Ct);
         Assert.Null(missing);
 
         Assert.True(await service.DeleteExchange(exchange, ct: Ct));

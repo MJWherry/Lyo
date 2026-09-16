@@ -7,5 +7,10 @@ public enum JobWorkflowStepState
     Running = 1,
     Finished = 2,
     Failed = 3,
-    Skipped = 4
+
+    /// <summary>An earlier step stopped the workflow before this one could run.</summary>
+    Skipped = 4,
+
+    /// <summary>The step's condition did not match, so it was never dispatched. Distinct from <see cref="Skipped" />: nothing failed and the run is still on its happy path.</summary>
+    ConditionNotMet = 5
 }

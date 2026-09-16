@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\DateAndTime\Lyo.DateAndTime\Lyo.DateAndTime.csproj"/>
+        <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
         <ProjectReference Include="..\..\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
         <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>

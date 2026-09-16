@@ -1,0 +1,10 @@
+<MudStack Spacing="2">
+    <MudTextField T="string" Label="Choice key" Value="@Choice.Key" ValueChanged="OnKey" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+    <MudTextField T="string" Label="Prompt" Value="@Choice.Prompt" ValueChanged="OnPrompt" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+    <MudText Typo="Typo.subtitle2">Enabled when</MudText>
+    <QueryNodeEditorPanel WhereClause="Choice.EnabledWhen" WhereClauseChanged="OnEnabled" PropertyDefinitions="Fields"/>
+    <MudText Typo="Typo.subtitle2">Visible when</MudText>
+    <QueryNodeEditorPanel WhereClause="Choice.VisibleWhen" WhereClauseChanged="OnVisible" PropertyDefinitions="Fields"/>
+    <MudText Typo="Typo.subtitle2">Response</MudText>
+    <StoryEffectListEditor Effects="Choice.Effects" Variables="Variables" Nodes="Nodes" Actions="Actions" OnChanged="OnChanged"/>
+</MudStack>

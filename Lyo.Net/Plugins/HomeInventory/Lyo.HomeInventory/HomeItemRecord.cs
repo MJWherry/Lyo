@@ -1,111 +1,59 @@
 using Lyo.Common.Core.Extensions;
 using Lyo.EntityReference.Models;
+using Lyo.HomeInventory.Models;
+using Lyo.HomeInventory.Models.Enums;
 
 namespace Lyo.HomeInventory;
 
 /// <summary>
-/// A household item: device, appliance, major purchase, and similar. Tracks receipts/order refs, part numbers, barcodes, network ids, and warranty dates; use
-/// <see cref="CustomAttributesJson" /> for additional fields.
+/// A household item: device, appliance, major purchase, and similar. Identifiers live on <see cref="ProductKeys"/> (SKU, serial, Wi-Fi MAC, …). Free-text comments
+/// live on <c>INoteStore</c>, not this row.
 /// </summary>
+[EntityRefLogicalType(HomeInventoryEntityTypes.Item)]
 public sealed class HomeItemRecord
 {
+    /// <summary>Row id.</summary>
     public Guid Id { get; set; }
 
     /// <summary>owner (e.g. Person, Account) using EntityRef components. Present only when supplied.</summary>
     public string? OwnerEntityType { get; set; }
 
+    /// <summary>Owner entity id.</summary>
     public string? OwnerEntityId { get; set; }
 
+    /// <summary>Optional category.</summary>
     public Guid? CategoryId { get; set; }
 
     /// <summary>parent for variants or kit components. Present only when supplied.</summary>
     public Guid? ParentItemId { get; set; }
 
+    /// <summary>Optional room or location this unique item lives in. Independent of stock rows.</summary>
+    public Guid? LocationId { get; set; }
+
+    /// <summary>Display name.</summary>
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>Catalog description.</summary>
     public string? Description { get; set; }
 
-    public string? Notes { get; set; }
-
+    /// <summary>Lifecycle status.</summary>
     public HomeItemStatus Status { get; set; } = HomeItemStatus.Active;
 
+    /// <summary>Physical or commercial condition.</summary>
     public HomeItemCondition Condition { get; set; } = HomeItemCondition.Unknown;
 
-    /// <summary>SKU; unique when present.</summary>
-    public string? Sku { get; set; }
+    /// <summary>
+    /// Identifiers (SKU, serial, Wi-Fi MAC, …). The same <see cref="HomeProductKeyEntry.Kind"/> may appear more than once. Each row may carry a note for that
+    /// pair.
+    /// </summary>
+    public List<HomeProductKeyEntry> ProductKeys { get; set; } = [];
 
-    /// <summary>PO reference (vendor or internal).</summary>
-    public string? PurchaseOrderNumber { get; set; }
-
-    /// <summary>Sales/fulfillment order ref.</summary>
-    public string? SalesOrderNumber { get; set; }
-
-    /// <summary>Brand or OEM name.</summary>
-    public string? Manufacturer { get; set; }
-
-    /// <summary>Manufacturer part number / MPN.</summary>
-    public string? ManufacturerPartNumber { get; set; }
-
-    /// <summary>Name of the retailer, marketplace, or distributor.</summary>
-    public string? Seller { get; set; }
-
-    /// <summary>Catalog number on this line (distinct from <see cref="Sku" />).</summary>
-    public string? VendorSku { get; set; }
-
-    /// <summary>UPC-A or GTIN-12 when one exists.</summary>
-    public string? Upc { get; set; }
-
-    public string? Ean { get; set; }
-
-    public string? Isbn { get; set; }
-
-    public string? ModelNumber { get; set; }
-
-    public string? Color { get; set; }
-
-    public string? SerialNumber { get; set; }
-
-    public string? Imei { get; set; }
-
-    /// <summary>Wired Ethernet MAC (e.g. AA:BB:CC:DD:EE:FF).</summary>
-    public string? EthernetMacAddress { get; set; }
-
-    public string? WifiMacAddress { get; set; }
-
-    public string? BluetoothMacAddress { get; set; }
-
-    public decimal? Msrp { get; set; }
-
-    public decimal? Cost { get; set; }
-
-    /// <summary>ISO 4217 currency when monetary fields are used.</summary>
-    public string? Currency { get; set; }
-
-    public int? WeightGrams { get; set; }
-
-    public int? LengthMm { get; set; }
-
-    public int? WidthMm { get; set; }
-
-    public int? HeightMm { get; set; }
-
-    public DateTime? AcquiredDate { get; set; }
-
-    public DateTime? WarrantyExpires { get; set; }
-
-    /// <summary>ISO 3166-1 alpha-2 origin country.</summary>
-    public string? CountryOfOrigin { get; set; }
-
-    public string? LotNumber { get; set; }
-
-    public string? BatchNumber { get; set; }
-
-    /// <summary>Free-form JSON for extended attributes (localized names, certifications, etc.).</summary>
-    public string? CustomAttributesJson { get; set; }
-
+    /// <summary>Created (UTC).</summary>
     public DateTime CreatedTimestamp { get; set; }
 
+    /// <summary>Last write (UTC).</summary>
     public DateTime? UpdatedTimestamp { get; set; }
 
+    /// <summary>Owner as an <see cref="EntityRef" /> when both type and id are set.</summary>
     public EntityRef? Owner => OwnerEntityType.IsNullOrWhitespace() || OwnerEntityId.IsNullOrWhitespace() ? null : new EntityRef(OwnerEntityType, OwnerEntityId);
 }

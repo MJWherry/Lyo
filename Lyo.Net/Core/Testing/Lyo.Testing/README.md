@@ -5,6 +5,7 @@ Helpers for xUnit v3: fluent `Should*` asserts, exception and collection helpers
 ## Features
 
 - **TestData.** Reproducible seeded byte payloads (`TestData.Seed` / `Create` / `Fill`). Shares its seed with `BenchmarkData.PayloadSeed` and `DeterministicPayloadStream.DefaultSeed`.
+- **TestCt.** `TestCancellation.TestCt` is the current xUnit cancellation token. `*.Tests` projects import the class statically, so call sites pass `TestCt`.
 
 ## Examples
 

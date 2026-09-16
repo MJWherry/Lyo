@@ -2,8 +2,8 @@
   "id": "Lyo.Web.Automation.Selenium",
   "name": "Lyo.Web.Automation.Selenium",
   "area": "Apps",
-  "tagline": "Selenium WebDriver backend for the `Lyo.Web.Automation` abstractions: launch Chrome / Edge / Firefox / Safari (plus Selenium Grid), isolate sessions, and cover polling, tabs, frames, and plans.",
-  "description": "Selenium WebDriver backend for the `Lyo.Web.Automation` abstractions: launch Chrome / Edge / Firefox / Safari (plus Selenium Grid), isolate\nsessions, and cover polling, tab/frame/dialog/keyboard helpers, typed element controls, automation plans, and DI registration.",
+  "tagline": "Selenium WebDriver backend for the `Lyo.Web.Automation` abstractions: launch Chrome / Chromium / Edge / Firefox (plus Selenium Grid), isolate sessions, and cover polling, tabs, frames, and plans.",
+  "description": "Selenium WebDriver backend for the `Lyo.Web.Automation` abstractions: launch Chrome / Chromium / Edge / Firefox (plus Selenium Grid), isolate\nsessions, and cover polling, tab/frame/dialog/keyboard helpers, typed element controls, automation plans, and DI registration.",
   "features": [],
   "examples": [
     {
@@ -46,7 +46,7 @@
         [
           "`BrowserKind`",
           "`Chrome`",
-          "`SeleniumBrowserKind`: `Chrome`, `Edge`, `Firefox`, `Safari`."
+          "`AutomationBrowserKind`: `Chrome`, `Chromium`, `Edge`, `Firefox`. Chromium uses ChromeDriver. WebKit is rejected. A detected install path is the local browser binary."
         ],
         [
           "`Headless`",
@@ -60,8 +60,8 @@
         ],
         [
           "`UserAgents`",
-          "4 desktop UAs",
-          "Cycled for stealth."
+          "empty",
+          "An empty list is generated for `BrowserKind` on this host. A list the host sets is cycled at launch."
         ],
         [
           "`WebDriverArguments`",
@@ -155,7 +155,7 @@
     {
       "type": "paragraph",
       "title": "WebDriver and automation ([`WebDriver/`](WebDriver), [`Automation/ElementLocatorMapping.cs`](Automation/ElementLocatorMapping.cs))",
-      "text": "Driver-factory helpers (Edge / Chrome / Safari / Firefox + Remote) and the locator mapping that lets `Lyo.Web.Automation` JSON automation plans target Selenium-style locators."
+      "text": "Driver-factory helpers (Chrome / Chromium / Edge / Firefox + Remote) and the locator mapping that lets `Lyo.Web.Automation` JSON automation plans target Selenium-style locators."
     },
     {
       "type": "table",

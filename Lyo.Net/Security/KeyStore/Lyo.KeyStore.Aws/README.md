@@ -2,7 +2,7 @@
 
 `AwsKeyStore` takes an `IAmazonSecretsManager` client and a secret-name prefix. It implements `Lyo.KeyStore.IKeyStore` and `Lyo.KeyStore.IKeyInventoryStore`, so admin UIs and key-rotation jobs can encrypt against it and list `keyId`s and versions.
 
-The backing secret is stored as JSON (`{ "<keyId>": "plaintext-or-derived-material", ... }`) under a single secret per prefix. Logical version strings map onto AWS `VersionId` stages. Unresolved version requests fall through to `AWSCURRENT`. String values run through key derivation so callers receive cryptographic-length KEK bytes usable by `AesGcmEncryptionService` and the other symmetric services in `Lyo.Encryption`.
+The backing secret is stored as JSON (`{ "<keyId>": "<material>", ... }`) under a single secret per prefix. Logical version strings map onto AWS `VersionId` values, including short labels such as `"1"` and `"2025-01"`. `AddKey` stores raw key bytes with the prefix `lyo-kek-raw:v1:`. `GetKey` returns those bytes unchanged. A secret value with no prefix still goes through derive-on-read, so secrets already in AWS keep their meaning. `AddKeyFromString` derives once, the same way `LocalKeyStore` does, then stores the derived bytes as raw. `GetCurrentVersion` only reads. `AddKey` sets the logical version as current when none is set.
 
 ## AwsKeyStore methods
 
@@ -32,6 +32,12 @@ The backing secret is stored as JSON (`{ "<keyId>": "plaintext-or-derived-materi
 
 `AddAwsKeyStore(Func<...>)` registers `AwsKeyStore` as a concrete singleton only, no `IKeyStore` indirection. `AddAwsKeyStoreFromConfiguration` and the two-key extensions also register `IKeyStore` so `Lyo.Encryption` can resolve it.
 
+## Raw key bytes and short versions
+
+`AwsKeyStore.RawKeyPrefix` is `lyo-kek-raw:v1:`. `AddKey` writes that prefix plus base64. `GetKey` strips it and returns the bytes, so a key copied from `LocalKeyStore` decrypts the same ciphertext. Values without the prefix still run through PBKDF2 on read.
+
+Any non-empty logical version is resolved through the version map first. Only when that map has no entry, and the string is at least 32 characters, is it tried as an AWS `VersionId`. Short current versions are stored and returned as written. `GetCurrentVersion` does not write. One prefix is one Secrets Manager secret, and every `AddKey` stores a new version of that whole JSON document, so a large copy can hit AWS version retention. `KeyStoreMigrator` surfaces that exception and does not hide it.
+
 ## See also
 
 - [`Lyo.KeyStore`](../Lyo.KeyStore/README.md). Interfaces and local store.
@@ -45,6 +51,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.KeyStore` (direct, lyo)
 - `AWSSDK.SecretsManager` `4.0.100.3` (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)

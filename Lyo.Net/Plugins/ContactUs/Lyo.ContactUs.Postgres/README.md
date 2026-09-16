@@ -5,7 +5,7 @@ PostgreSQL and EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../
 ## Package contents
 
 - `ContactUsDbContext` + `ContactUsDbContextFactory` under `Database/`, with a single `DbSet<ContactSubmissionEntity>` (name / email / subject / message / phone / company / created timestamp; lengths match `ContactUsRequest`).
-- `PostgresContactUsService`. A `ContactUsServiceBase` subclass that persists each submission through the registered `IDbContextFactory<ContactUsDbContext>`, logs the new id, and implements `TestConnectionAsync` by issuing `Database.CanConnectAsync(...)`.
+- `PostgresContactUsService`. A `ContactUsServiceBase` subclass that persists each submission through the registered `IDbContextFactory<ContactUsDbContext>`, logs the new id, loads rows with `AsNoTracking()` (`GetByIdCoreAsync` / `ListCoreAsync`, newest `CreatedTimestamp` first, mapped by `ContactSubmissionEntity.ToSubmission()`), and implements `TestConnectionAsync` by issuing `Database.CanConnectAsync(...)`.
 - `PostgresContactUsOptions` (`SectionName = "PostgresContactUs"`, `Schema = "contact"`, `ConnectionString`, `EnableAutoMigrations`).
 - `InitialCreate` migration under `Migrations/`.
 
@@ -33,18 +33,22 @@ Migrations history is tracked in `__EFMigrationsHistory` under the `contact` sch
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.ContactUs` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Postgres` (direct, lyo)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
 - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

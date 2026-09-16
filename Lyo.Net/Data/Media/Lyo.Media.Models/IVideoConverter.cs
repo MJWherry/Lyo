@@ -49,4 +49,10 @@ public interface IVideoConverter
 
     /// <summary>Writes one video frame to an image file. Default <paramref name="at" /> is the start of the file.</summary>
     Task<Result<bool>> ExtractFrameAsync(string inputPath, string outputPath, TimeSpan? at = null, VideoConversionOptions? options = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Concatenates files with the concat demuxer. Null <paramref name="options" /> copies streams.
+    /// Inputs must share a stream layout. A set encoder re-encodes through the same demuxer.
+    /// </summary>
+    Task<Result<bool>> ConcatAsync(IReadOnlyList<string> inputPaths, string outputPath, VideoConversionOptions? options = null, CancellationToken ct = default);
 }

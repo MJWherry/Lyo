@@ -38,6 +38,24 @@ public static class LyoChips
         return Of(text);
     }
 
+    /// <summary>
+    /// Parses a projected enum name into an identity hue. A null hue keeps <see cref="Color.Default" /> and no style.
+    /// Unknown or blank text matches <see cref="Of(string?, Color, string?, Variant, string?)" />.
+    /// </summary>
+    public static LyoChipSpec FromEnum<T>(string? text, Func<T, LyoChipHue?> hue, Func<T, string>? icon = null)
+        where T : struct, Enum
+    {
+        ArgumentHelpers.ThrowIfNull(hue);
+        if (Enum.TryParse<T>(text, ignoreCase: true, out var value)) {
+            var named = hue(value);
+            return named is null
+                ? new LyoChipSpec(value.ToString(), Color.Default, icon?.Invoke(value))
+                : new LyoChipSpec(value.ToString(), Color.Default, icon?.Invoke(value), Style: named.Style);
+        }
+
+        return Of(text);
+    }
+
     /// <summary>Parses a projected enum name into a full spec (custom hue, icon, variant).</summary>
     public static LyoChipSpec FromEnum<T>(string? text, Func<T, LyoChipSpec> spec)
         where T : struct, Enum

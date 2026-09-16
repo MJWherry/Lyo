@@ -1,0 +1,77 @@
+.story-graph-scroll {
+  overflow: auto;
+  padding-bottom: 4px;
+}
+
+.story-graph-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.story-graph-edge {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  opacity: 0.55;
+}
+
+.story-graph-arrow {
+  fill: currentColor;
+  opacity: 0.55;
+}
+
+.story-graph-node-shape {
+  fill: transparent;
+}
+
+.story-graph-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.story-graph-caption {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.story-graph-node-clickable {
+  cursor: pointer;
+}
+
+.lyo-story-management {
+  min-width: 0;
+  width: 100%;
+}
+
+.story-workbench-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .story-workbench-split {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+}
+
+.story-variable-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 0.8fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.story-library-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.story-library-table th,
+.story-library-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid currentColor;
+  border-bottom-color: color-mix(in srgb, currentColor 18%, transparent);
+}

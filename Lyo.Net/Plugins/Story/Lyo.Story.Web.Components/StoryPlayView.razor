@@ -1,0 +1,69 @@
+<MudStack Spacing="2">
+    @if (StoryId == Guid.Empty) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">Save the story to play it.</MudText>
+    }
+    else if (_state is null) {
+        <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+            <MudTextField T="string" Label="Player ref" Value="_playerRef" ValueChanged="@(value => _playerRef = value)" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width: 220px;"/>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="StartAsync">Start</MudButton>
+        </MudStack>
+    }
+    else {
+        <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+            <MudChip T="string" Color="Color.Primary" Size="Size.Small">@_state.Playthrough.Status</MudChip>
+            <MudText Typo="Typo.body2">@_state.Playthrough.CurrentNodeKey</MudText>
+            <MudSpacer/>
+            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="RestartAsync">Restart</MudButton>
+        </MudStack>
+        @if (_state.CurrentNode is { } node) {
+            <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(node.Title) ? node.Key : node.Title)</MudText>
+            @if (node.PresentationKind == StoryPresentationKind.Text && !string.IsNullOrWhiteSpace(node.Body)) {
+                <MudText Typo="Typo.body1">@node.Body</MudText>
+            }
+            @if (node.PresentationKind == StoryPresentationKind.Cutscene) {
+                <MudAlert Severity="Severity.Info" Dense>Cutscene @node.MediaRef</MudAlert>
+            }
+        }
+        <MudStack Row Spacing="1">
+            @foreach (var move in _state.Moves) {
+                if (move.Kind == StoryMoveKind.Advance) {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_busy || !move.Enabled)" OnClick="AdvanceAsync">Advance</MudButton>
+                }
+                else {
+                    <MudButton Variant="Variant.Outlined" Disabled="@(_busy || !move.Enabled)" OnClick="@(() => ChooseAsync(move.ChoiceKey))">@(move.Prompt ?? move.ChoiceKey)</MudButton>
+                }
+            }
+        </MudStack>
+        <MudText Typo="Typo.subtitle2">Variables</MudText>
+        @if (_state.Playthrough.Variables.Count == 0) {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">No variable values yet.</MudText>
+        }
+        else {
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var variable in _state.Playthrough.Variables) {
+                    <tr>
+                        <td>@variable.VariableKey</td>
+                        <td>@variable.Value</td>
+                        <td><MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => CausesAsync(variable.VariableKey))">Causes</MudButton></td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+        @if (_causes is not null) {
+            <MudText Typo="Typo.subtitle2">Causes for @_causeKey</MudText>
+            @foreach (var cause in _causes) {
+                <MudText Typo="Typo.body2">#@cause.Sequence @cause.Kind @cause.NodeKey @cause.ChoiceKey @cause.OldValue → @cause.NewValue</MudText>
+            }
+        }
+        <MudText Typo="Typo.subtitle2">Event log</MudText>
+        @if (_events.Count == 0) {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">No events yet.</MudText>
+        }
+        @foreach (var row in _events) {
+            <MudText Typo="Typo.body2">#@row.Sequence @row.Kind @row.NodeKey @row.ChoiceKey @row.VariableKey</MudText>
+        }
+    }
+</MudStack>

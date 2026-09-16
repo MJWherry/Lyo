@@ -126,4 +126,11 @@ internal abstract class StubApiClient : IApiClient
         Action<HttpRequestMessage>? before = null,
         CancellationToken ct = default)
         => throw new NotImplementedException(route);
+
+    public Task<TResult?> QuerySqlAsync<TResult>(
+        string route,
+        QueryRequestBase request,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
+        => throw new NotImplementedException(route);
 }

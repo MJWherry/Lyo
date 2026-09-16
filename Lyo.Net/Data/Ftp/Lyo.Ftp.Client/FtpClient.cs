@@ -20,7 +20,7 @@ public sealed class FtpClient : IFtpClient
     private readonly ILogger _logger;
     private readonly IMetrics _metrics;
     private readonly FtpClientOptions _options;
-    private readonly ConcurrentBag<PooledConnection> _pool = new();
+    private readonly ConcurrentBag<PooledConnection> _pool = [];
     private readonly SemaphoreSlim _poolGate;
     private bool _disposed;
     private int _leased;
@@ -228,10 +228,7 @@ public sealed class FtpClient : IFtpClient
                         await c.CreateDirectory(parent, true, token).ConfigureAwait(false);
 
                     var ok = await c.MoveFile(s, d, FtpRemoteExists.Overwrite, token).ConfigureAwait(false);
-                    if (!ok)
-                        throw new FtpException($"FTP rename/move failed from '{s}' to '{d}'.");
-
-                    return 0;
+                    return ok ? 0 : throw new FtpException($"FTP rename/move failed from '{s}' to '{d}'.");
                 }, ct)
             .ConfigureAwait(false);
 
@@ -501,11 +498,7 @@ public sealed class FtpClient : IFtpClient
         await client.DeleteDirectory(path, ct).ConfigureAwait(false);
     }
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(FtpClient));
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(FtpClient));
 
     private static T SyncWait<T>(Task<T> task) => task.ConfigureAwait(false).GetAwaiter().GetResult();
 

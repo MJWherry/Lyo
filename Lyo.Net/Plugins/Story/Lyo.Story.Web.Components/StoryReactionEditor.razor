@@ -1,0 +1,41 @@
+<MudStack Spacing="2">
+    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="Add">Add reaction</MudButton>
+    @if (Reactions.Count == 0) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">No reactions.</MudText>
+    }
+    else {
+        <MudSelect T="int" Value="_index" ValueChanged="Select" Label="Reaction" Margin="Margin.Dense" Variant="Variant.Outlined">
+            @for (var index = 0; index < Reactions.Count; index++) {
+                var captured = index;
+                var reaction = Reactions[captured];
+                <MudSelectItem T="int" Value="captured">@reaction.Key</MudSelectItem>
+            }
+        </MudSelect>
+        @if (_index >= 0 && _index < Reactions.Count) {
+            var reaction = Reactions[_index];
+            <MudTextField T="string" Label="Key" Value="@reaction.Key" ValueChanged="@(value => Set(item => item.Key = value))" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+            <MudSelect T="StoryTrigger" Value="reaction.Trigger" ValueChanged="@(value => Set(item => item.Trigger = value))" Label="Trigger" Margin="Margin.Dense" Variant="Variant.Outlined">
+                @foreach (var trigger in Enum.GetValues<StoryTrigger>()) {
+                    if (trigger != StoryTrigger.Unknown) {
+                        <MudSelectItem Value="trigger">@trigger</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+            <MudSelect T="string" Value="@reaction.ScopeNodeKey" ValueChanged="@(value => Set(item => item.ScopeNodeKey = value))" Label="Scope node" Margin="Margin.Dense" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var node in Nodes) {
+                    <MudSelectItem T="string" Value="@node.Key">@node.Key</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="string" Value="@reaction.ScopeVariableKey" ValueChanged="@(value => Set(item => item.ScopeVariableKey = value))" Label="Scope variable" Margin="Margin.Dense" Variant="Variant.Outlined" Clearable="true">
+                @foreach (var variable in Variables) {
+                    <MudSelectItem T="string" Value="@variable.Key">@variable.Key</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSwitch T="bool" Value="reaction.Once" ValueChanged="@(value => Set(item => item.Once = value))" Label="Once per playthrough" Color="Color.Primary"/>
+            <MudText Typo="Typo.subtitle2">When</MudText>
+            <QueryNodeEditorPanel WhereClause="reaction.When" WhereClauseChanged="@(clause => Set(item => item.When = clause))" PropertyDefinitions="Fields"/>
+            <StoryEffectListEditor Effects="reaction.Effects" Variables="Variables" Nodes="Nodes" Actions="Actions" OnChanged="OnChanged"/>
+            <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="Remove">Remove reaction</MudButton>
+        }
+    }
+</MudStack>

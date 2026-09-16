@@ -1,4 +1,5 @@
 using Lyo.FileStorage;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.Tests;
 
@@ -14,11 +15,11 @@ public sealed class FileStorageArchivePathTests
 
     [Fact]
     public void NormalizeZipPath_RejectsParentSegments()
-        => Assert.Throws<ArgumentException>(() => FileStorageArchivePath.NormalizeZipPath("../x", Guid.NewGuid()));
+        => Assert.Throws<ArgumentException>(() => FileStorageArchivePath.NormalizeZipPath("../x", LyoGuid.CreateV7()));
 
     [Fact]
     public void NormalizeZipPath_UsesForwardSlashes()
-        => Assert.Equal("Vol. 01/Ch. 001/001", FileStorageArchivePath.NormalizeZipPath(@"Vol. 01\Ch. 001\001", Guid.NewGuid()));
+        => Assert.Equal("Vol. 01/Ch. 001/001", FileStorageArchivePath.NormalizeZipPath(@"Vol. 01\Ch. 001\001", LyoGuid.CreateV7()));
 
     [Fact]
     public void SanitizePathSegment_ReplacesInvalidChars()

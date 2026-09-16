@@ -5,7 +5,7 @@ MudBlazor tree that lazy-lists folders through `IFileTreeSource`. It does not kn
 ## Features
 
 - **Lazy expand.** Children load from `IFileTreeSource.ListChildrenAsync` when a directory is opened.
-- **Optional properties.** Extra `FileSystemEntry.Properties` (for example FileId or presence) show as chips.
+- **Optional filter, selection, and trailing content.** Search filters loaded nodes. Multi-select is opt-in. Hosts supply `ItemTrailing` (FileStorage draws Store / Physical / Both chips); raw property dumps are not rendered.
 
 ## Examples
 
@@ -31,16 +31,17 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Client` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
@@ -48,6 +49,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
@@ -66,6 +68,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

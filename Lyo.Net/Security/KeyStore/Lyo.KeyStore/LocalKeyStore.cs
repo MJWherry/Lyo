@@ -4,6 +4,7 @@ using System.Text;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
 using Lyo.KeyStore.KeyDerivation;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.KeyStore;
 
@@ -368,12 +369,5 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
         return versions.TryRemove(version, out var _);
     }
 
-    private static string NewKeyVersionString()
-    {
-#if NET10_0_OR_GREATER
-        return Guid.CreateVersion7().ToString();
-#else
-        return Guid.NewGuid().ToString();
-#endif
-    }
+    private static string NewKeyVersionString() => LyoGuid.CreateV7().ToString();
 }

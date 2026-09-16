@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Diagram contracts: pages, cells, geometry, and the store used to save them.</Description>
+        <PackageTags>diagram model store</PackageTags>
+    </PropertyGroup>
+
+</Project>

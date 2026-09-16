@@ -17,6 +17,7 @@
 ## Writing an `IPackageMetadataStore`
 
 - Honour longest registered namespace-prefix wins (`normalizedPrefix.` + `strippedMethodPrefix.StartsWith(prefix, Ordinal)`) for `TryGetManyForStrippedMethodPrefixesAsync` and `TryGetForFrameAsync`.
+- A normalised prefix belongs to one package. A later registration that claims it replaces the previous owner. Re-registering a package replaces that package's prefix set. Duplicate prefixes in one registration are stored once.
 - Return a map from `TryGetManyForStrippedMethodPrefixesAsync` that includes one entry per distinct requested key, with `null` when no prefix matches. Empty input returns an empty map.
 
 ## `namespacePrefix` argument

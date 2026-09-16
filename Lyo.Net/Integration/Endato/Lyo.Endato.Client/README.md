@@ -2,7 +2,7 @@
 
 Typed HTTP client for the [Endato](https://www.endato.com/) data-enrichment REST API.
 
-**Archetype C (vendor client).** Canonical people rows live in [`Lyo.People.Postgres`](../../../Core/People/Lyo.People.Postgres/README.md) (Archetype A); optional vendor cache in [ `Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). The host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` / `EndatoCePerson` on `source_entity_*`). See [package layout](../../../docs/package-layout.md).
+**Archetype C (vendor client).** People rows live in [`Lyo.People.Postgres`](../../../Plugins/People/Lyo.People.Postgres/README.md) (Archetype E); optional vendor cache in [`Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). The host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` / `EndatoCePerson` on `source_entity_*`). See [package layout](../../../docs/package-layout.md).
 
 Subclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and optional request compression behave the same as any other Lyo HTTP client.
 
@@ -110,8 +110,8 @@ Example `appsettings.json`:
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
@@ -124,5 +124,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)

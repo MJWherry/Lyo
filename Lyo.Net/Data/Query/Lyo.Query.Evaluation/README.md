@@ -12,9 +12,10 @@ Metrics are recorded here rather than in `Lyo.Query`, because `Lyo.Metrics` has 
 - **Match explanation.** `ExplainMatch` produces the `WhereClauseExplainNode` tree that validation turns into errors.
 - **Queryable translation.** `ApplyWhereClause`, `SortByProperty`, and `ApplyOrdering` against `IQueryable<T>`.
 - **Path resolution.** Dotted paths, including collection segments, go through `TryValidatePropertyPath` and `SharedEntityMetadataCache`.
+- **FuzzyMatch.** CLR trigram Jaccard for `Fuzzy` / `NotFuzzy`. Postgres hosts rewrite the same call to SQL `similarity()`.
 - **Value conversion.** Filter literals go through `IValueConversionService` / `ValueConversionService`, which delegates to `TypeConversion`.
 - **Metrics.** Durations, success counters, and errors under `Lyo.Query.Constants.Metrics`, tagged `entity_type`. Pass an `IMetrics` to opt in; omit it and nothing is recorded or allocated.
-- **Extension points.** `GetMatcher`, `GetEfPredicate`, and `GetIncludePaths` are virtual so a host can plug in its own caching.
+- **Extension points.** `GetMatcher`, `GetEfPredicate`, `GetIncludePaths`, and `RewriteQueryablePredicate` are virtual so a host can plug in caching or provider-specific rewrites (Postgres Fuzzy → `similarity()`).
 
 ## Examples
 
@@ -72,9 +73,10 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

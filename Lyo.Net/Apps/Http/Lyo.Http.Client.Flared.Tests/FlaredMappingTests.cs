@@ -21,7 +21,7 @@ public sealed class FlaredMappingTests
         };
         using var response = FlaredHttpMessageHandler.ToResponse(request, solution);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("<html>ok</html>", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal("<html>ok</html>", await response.Content.ReadAsStringAsync(TestCt));
         Assert.True(response.Headers.Contains("X-FlareSolverr-UserAgent"));
     }
 
@@ -57,7 +57,7 @@ public sealed class FlaredMappingTests
         using var client = new HttpClient(handler);
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://example.test/file.bin");
         LyoHttpRequestMarkers.SetStreamBinary(request);
-        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await client.SendAsync(request, TestCt);
         Assert.Equal(1, inner.Sends);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

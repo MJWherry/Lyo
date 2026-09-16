@@ -27,7 +27,7 @@ Files, Tree, and Browser talk only to a backend host (typically Lyo.Gateway.Api,
 | FileStoreMetadataDialog | Dialog that wraps FileStoreMetadataTable. |
 | FileStoreMoveDialog, FileStoreCopyDialog, FileStoreRenameDialog, FileStoreRotateDekDialog | Path-prefix, display-name, and DEK rotation prompts for Browser row and bulk actions. |
 | FileStorageGridRowHelper | Projected-row helpers (file id, active-only QueryProject filter, expected storage key) used by the Browser grids. |
-| FileStorageColorHelper | MudBlazor chip colors for file-type, encryption-algorithm, and compression-algorithm cells. |
+| FileStorageColorHelper | Identity chips for each file type, encryption algorithm, and compression algorithm. Each kind uses a `LyoChipHue` so the fill shifts with the light and dark theme. |
 
 ## Services
 
@@ -61,6 +61,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Api.Client` (direct, lyo)
 - `Lyo.Api.FileStorage.Models` (direct, lyo)
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Csv` (direct, lyo)
 - `Lyo.Csv.Models` (direct, lyo)
@@ -74,25 +75,29 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Web.Components` (direct, lyo)
 - `Lyo.Web.Components.Export` (direct, lyo)
 - `Lyo.Web.Components.Export.Csv` (direct, lyo)
+- `Lyo.Web.Components.Export.Toml` (direct, lyo)
 - `Lyo.Web.Components.Export.Xlsx` (direct, lyo)
+- `Lyo.Web.Components.Export.Xml` (direct, lyo)
+- `Lyo.Web.Components.Export.Yaml` (direct, lyo)
 - `Lyo.Xlsx` (direct, lyo)
 - `Lyo.Xlsx.Models` (direct, lyo)
 - `MudBlazor` `9.3` (direct, third-party)
 - `Lyo.Api.Models` (transitive, lyo)
-- `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)

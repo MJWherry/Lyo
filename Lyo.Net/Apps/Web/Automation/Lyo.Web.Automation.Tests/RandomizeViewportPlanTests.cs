@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Plan;
@@ -58,6 +59,12 @@ public sealed class RandomizeViewportPlanTests
     {
         public Task<IReadOnlyList<string>> UploadDirectoryAsync(string sourceDirectory, string destinationPrefix, CancellationToken ct)
             => Task.FromResult<IReadOnlyList<string>>([]);
+
+        public Task<string?> SaveSnapshotAsync(byte[] png, Guid runId, Guid stepId, CancellationToken ct) => Task.FromResult<string?>(null);
+
+        public Task<string?> SaveAsync(byte[] data, string fileName, string pathPrefix, string contentType, CancellationToken ct) => Task.FromResult<string?>(null);
+
+        public Task<byte[]?> ReadSnapshotAsync(string fileId, CancellationToken ct) => Task.FromResult<byte[]?>(null);
     }
 
     private sealed class EmptyServices : IServiceProvider
@@ -67,7 +74,7 @@ public sealed class RandomizeViewportPlanTests
 
     private sealed class RecordingSession : IWebAutomationSession
     {
-        public Guid SessionId { get; } = Guid.NewGuid();
+        public Guid SessionId { get; } = LyoGuid.CreateV7();
 
         public string? SessionDirectory => null;
 
@@ -101,6 +108,9 @@ public sealed class RandomizeViewportPlanTests
         public Task NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct = default) => Task.CompletedTask;
 
         public Task ReloadAsync(CancellationToken ct = default) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<string>> CaptureNetworkAsync(string? urlPattern, int durationMilliseconds, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<string>>([]);
 
         public Task<IWebAutomationElement> PollForElementAsync(ElementLocatorChain chain, CancellationToken ct = default) => throw new NotSupportedException();
 

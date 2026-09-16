@@ -1,86 +1,46 @@
 # lyo-api-client (Python)
 
-Python client for the Lyo API. One pip-installable distribution with four importable packages,
-mirroring the TypeScript packages in `packages/typescript/`:
+Core Python client for Lyo APIs. This package is the transport other domain clients share.
+It has no domain endpoints.
 
-- `lyo_api_client` — core, reusable API client foundation (no domain-specific endpoints):
-  generic request/response types, bearer-token auth, normalized `ApiClientError`, and a
-  pluggable transport with a zero-dependency stdlib default.
-- `lyo_person_api_client` — typed Person Query API client built on top: request contracts,
-  query builders, runtime response guards, and `PersonApiClient`.
-- `lyo_job_api_client` — typed Job API client (definitions, runs, workers, schedules, workflows).
-- `lyo_reporting_api_client` — typed Reporting API client (definitions, parameters, generations).
+Domain clients are sibling directories, one package each, same as `packages/typescript/`:
 
-No runtime dependencies. Ships `py.typed` so consumers get full type checking.
+- `lyo-person-api-client`
+- `lyo-job-api-client`
+- `lyo-reporting-api-client`
+- `lyo-automation-api-client`
+- `lyo-import-api-client`
+- `lyo-auth-api-client`
+- `lyo-config-api-client`
+- `lyo-recipe-api-client`
+- `lyo-file-storage-api-client`
+
+`lyo` and `lyo-mcp` are documented in `packages/python/lyo-cli`.
+
+No runtime dependencies. Ships `py.typed`.
 
 ## Install
 
 ```bash
-pip install ./packages/python/lyo-api-client
-# or for development:
 pip install -e "./packages/python/lyo-api-client[dev]"
 ```
 
+Install this package before a domain client. Each domain package depends on `lyo-api-client`.
+
 ## Usage
 
-Works out of the box against a running API:
-
 ```python
-from lyo_api_client import ApiClient
-from lyo_person_api_client import PersonApiClient, baseline_query, is_query_res
+from lyo_api_client import ApiClient, ApiClientError, ApiRequest
 
 api = ApiClient("http://localhost:5251", token="optional-token")
-person_api = PersonApiClient(api)
-
-res = person_api.query_person(baseline_query(start=0, amount=10))
-if not is_query_res(res.data):
-    raise RuntimeError("Unexpected response shape.")
-
-for person in res.data["items"] or []:
-    print(person["firstName"], person["lastName"])
-```
-
-Non-2xx responses raise `ApiClientError` with `status` and `details` (the parsed
-problem-details payload when the API returned one):
-
-```python
-from lyo_api_client import ApiClientError
-
 try:
-    person_api.query_person(baseline_query())
+    response = api.request(ApiRequest(method="GET", path="/health"))
 except ApiClientError as err:
     print(err, err.status, err.details)
 ```
 
-### Building custom queries
-
-Request models keep snake_case attribute names and serialize to the exact wire shape the
-API expects (PascalCase keys, `$type` discriminators):
-
-```python
-from lyo_person_api_client import (
-    ConditionClause,
-    GroupClause,
-    QueryConcreteReq,
-    SortBy,
-    build_options,
-)
-
-request = QueryConcreteReq(
-    options=build_options(),
-    start=0,
-    amount=50,
-    where_clause=GroupClause("And", [
-        ConditionClause("FirstName", "NotEquals", None),
-        ConditionClause("IsActive", "Equals", True),
-    ]),
-    sort_by=[SortBy("LastName", "Asc", priority=0)],
-)
-res = person_api.query_person(request)
-```
-
-Optional fields left unset are omitted from the payload entirely; pass `None` explicitly to
-send a JSON `null` (mirroring the undefined/null distinction in the TypeScript client).
+Non-2xx responses raise `ApiClientError` with `status` and `details` (the parsed
+problem-details payload when the API returned one).
 
 ### Custom transport
 
@@ -105,6 +65,9 @@ api = ApiClient("http://localhost:5251", transport=httpx_transport)
 
 Transports must not raise on non-2xx statuses; report them via `ApiResponse.ok` and the
 client will normalize the error.
+
+Bytes bodies, such as multipart uploads from `multipart_form`, are sent as-is. A caller-supplied
+`Content-Type` replaces the default `application/json`.
 
 ## Tests
 

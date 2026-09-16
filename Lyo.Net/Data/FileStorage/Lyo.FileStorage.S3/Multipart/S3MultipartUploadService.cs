@@ -15,6 +15,7 @@ using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using CompleteMultipartUploadRequest = Lyo.FileStorage.Multipart.CompleteMultipartUploadRequest;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.S3.Multipart;
 
@@ -72,8 +73,8 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
             throw new FilePolicyRejectedException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
 
         FileStorageServiceBase.ValidatePathPrefix(request.PathPrefix);
-        var sessionId = Guid.NewGuid();
-        var targetFileId = Guid.NewGuid();
+        var sessionId = LyoGuid.CreateV7();
+        var targetFileId = LyoGuid.CreateV7();
         var ttl = request.SessionTtl ?? TimeSpan.FromHours(24);
         var now = DateTime.UtcNow;
         var stagingKey = BuildStagingKey(request.PathPrefix, sessionId);

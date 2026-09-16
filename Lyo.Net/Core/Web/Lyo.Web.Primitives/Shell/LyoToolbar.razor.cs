@@ -54,7 +54,10 @@ public partial class LyoToolbar
     [Parameter]
     public bool Dense { get; set; }
 
-    /// <summary>Disables every wrapper that reads the cascade. Per-control <c>Disabled</c> still ORs in.</summary>
+    /// <summary>
+    /// Disables every wrapper that reads the cascade. Per-control <c>Disabled</c> still ORs in. Cascaded as a bool (not via the owner instance) so
+    /// buttons re-enable when this flips from true to false.
+    /// </summary>
     [Parameter]
     public bool Disabled { get; set; }
 

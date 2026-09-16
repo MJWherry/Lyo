@@ -135,6 +135,14 @@
   "readmePath": "Lyo.Net/Data/FileMetadataStore/Lyo.FileMetadataStore/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
@@ -210,14 +218,6 @@
         "direct",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
       ]
     },
     {

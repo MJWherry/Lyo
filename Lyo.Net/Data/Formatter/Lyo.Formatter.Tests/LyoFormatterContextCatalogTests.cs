@@ -13,6 +13,29 @@ public class LyoFormatterContextCatalogTests
         new("User.Address.City", "London", false)
     ];
 
+    /// <summary>
+    /// The default budget suits a session context of a handful of keys. A workflow step's context is far wider — every dependency contributes a whole run shape — and
+    /// truncating it drops the paths the user came for, so a caller that knows its context is large can ask for more.
+    /// </summary>
+    [Fact]
+    public void Build_RaisedBudget_KeepsPathsTheDefaultBudgetWouldTruncate()
+    {
+        var context = Enumerable.Range(0, 200).ToDictionary(i => $"Key{i:D3}", i => (object?)i);
+
+        var capped = LyoFormatterContextCatalog.Build(context).Select(e => e.Path).ToList();
+        var raised = LyoFormatterContextCatalog.Build(context, maxItems: 250).Select(e => e.Path).ToList();
+
+        Assert.DoesNotContain("Key199", capped);
+        Assert.Contains("Key199", raised);
+    }
+
+    [Fact]
+    public void Build_BudgetSmallerThanTheClockRows_StillStopsAtTheBudget()
+    {
+        var rows = LyoFormatterContextCatalog.Build(new Dictionary<string, object?> { ["Name"] = "Ada" }, maxItems: 1);
+        Assert.Single(rows);
+    }
+
     [Fact]
     public void Filter_PrefixDo_DropsKeysThatDoNotStartWithDo()
     {

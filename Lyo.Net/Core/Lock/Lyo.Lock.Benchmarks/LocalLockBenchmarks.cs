@@ -2,6 +2,7 @@ using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Lock.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Lock.Benchmarks;
 
@@ -23,7 +24,7 @@ public class LocalLockBenchmarks
     [BenchmarkSla(MaxMeanUs = 10, Standard = "An uncontended in-process lock acquire/release is pure local coordination and should be a few microseconds at most.")]
     public async Task Uncontended_AcquireRelease()
     {
-        var handle = await _local.AcquireAsync($"uncontended-{Guid.NewGuid():N}", TimeSpan.FromSeconds(5));
+        var handle = await _local.AcquireAsync($"uncontended-{LyoGuid.CreateV7():N}", TimeSpan.FromSeconds(5));
         await handle!.ReleaseAsync();
     }
 

@@ -1,4 +1,4 @@
-import type { ApiResponse, AsyncApiClient, ExportRequest, ProjectedQueryRes, QueryRes } from "lyo-api-client";
+import type { ApiResponse, AsyncApiClient, ExportRequest, ProjectedQueryRes, QueryRes, QuerySqlRes } from "lyo-api-client";
 
 /** Narrow client surface grids and query pickers need. */
 export interface LyoQueryClient {
@@ -14,6 +14,8 @@ export interface LyoQueryClient {
     baseRoute: string,
     body: unknown
   ): Promise<ApiResponse<ProjectedQueryRes<TRow>>>;
+  /** `POST {baseRoute}/QuerySql`. Returns SQL text and parameters. The query is not executed. */
+  querySql?(baseRoute: string, body: unknown): Promise<ApiResponse<QuerySqlRes>>;
   bulkDelete?(baseRoute: string, keys: unknown[][]): Promise<unknown>;
   bulkPatch?(baseRoute: string, keys: unknown[][], data: unknown): Promise<unknown>;
   export?(baseRoute: string, body: ExportRequest): Promise<{ blob: Blob; fileName: string | null }>;
@@ -24,6 +26,7 @@ export function asLyoQueryClient(client: AsyncApiClient): LyoQueryClient {
     queryProject: (route, body) => client.queryProject(route, body),
     queryConcrete: (route, body) => client.queryConcrete(route, body),
     query: (route, body) => client.query(route, body),
+    querySql: (route, body) => client.querySql(route, body),
     bulkDelete: (route, keys) => client.bulkDelete(route, keys),
     bulkPatch: (route, keys, data) => client.bulkPatch(route, keys, data),
     export: (route, body) => client.export(route, body),
@@ -35,6 +38,7 @@ export function createBffQueryClient(options: {
   projectPath: string;
   concretePath?: string;
   queryPath?: string;
+  sqlPath?: string;
   exportPath?: string;
   fetchImpl?: typeof fetch;
 }): LyoQueryClient {
@@ -60,6 +64,9 @@ export function createBffQueryClient(options: {
       : undefined,
     query: options.queryPath
       ? (route, body) => post(options.queryPath!, withRoute(route, body))
+      : undefined,
+    querySql: options.sqlPath
+      ? (route, body) => post<QuerySqlRes>(options.sqlPath!, withRoute(route, body))
       : undefined,
     export: options.exportPath
       ? async (_route, body) => {

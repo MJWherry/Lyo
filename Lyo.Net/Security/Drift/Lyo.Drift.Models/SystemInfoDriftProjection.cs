@@ -27,6 +27,8 @@ public sealed class SystemInfoDriftProjection
     public DriveFact[] Drives { get; set; } = [];
     public InterfaceFact[] Interfaces { get; set; } = [];
     public MonitorFact[] Monitors { get; set; } = [];
+    public AudioDeviceFact[] AudioDevices { get; set; } = [];
+    public PrinterFact[] Printers { get; set; } = [];
     public EnvVarFact[] Variables { get; set; } = [];
 
     /// <summary>Maps a live <see cref="SystemInfo" /> onto the identity-only projection.</summary>
@@ -107,6 +109,20 @@ public sealed class SystemInfoDriftProjection
                 .ToArray();
         }
 
+        if (Has(SystemInfoDriftGroup.AudioDevices)) {
+            projection.AudioDevices = info.Hardware.AudioDevices
+                .Select(device => new AudioDeviceFact { Name = device.Name, Kind = device.Kind, FormFactor = device.FormFactor, IsDefault = device.IsDefault })
+                .OrderBy(device => device.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        if (Has(SystemInfoDriftGroup.Printers)) {
+            projection.Printers = info.Hardware.Printers
+                .Select(printer => new PrinterFact { Name = printer.Name, Driver = printer.Driver, Port = printer.Port, IsDefault = printer.IsDefault })
+                .OrderBy(printer => printer.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
         if (Has(SystemInfoDriftGroup.Variables)) {
             projection.Variables = info.Environment.Variables
                 .Select(kv => new EnvVarFact { Key = kv.Key, Value = kv.Value })
@@ -132,6 +148,24 @@ public sealed class SystemInfoDriftProjection
         public string Name { get; set; } = "";
         public string? MacAddress { get; set; }
         public string[] UnicastAddresses { get; set; } = [];
+    }
+
+    /// <summary>Audio endpoint identity. Volume and mute are omitted.</summary>
+    public sealed class AudioDeviceFact
+    {
+        public string Name { get; set; } = "";
+        public string Kind { get; set; } = "";
+        public string? FormFactor { get; set; }
+        public bool? IsDefault { get; set; }
+    }
+
+    /// <summary>Printer identity. <c>Status</c> is omitted because it changes while the printer stays installed.</summary>
+    public sealed class PrinterFact
+    {
+        public string Name { get; set; } = "";
+        public string? Driver { get; set; }
+        public string? Port { get; set; }
+        public bool IsDefault { get; set; }
     }
 
     /// <summary>Monitor identity. Refresh rate is omitted because it can change without a hardware swap.</summary>

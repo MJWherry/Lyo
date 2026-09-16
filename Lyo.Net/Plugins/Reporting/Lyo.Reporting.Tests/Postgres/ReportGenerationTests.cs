@@ -7,6 +7,7 @@ using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests.Postgres;
 
@@ -22,9 +23,9 @@ public sealed class ReportGenerationTests(ReportingPostgresFixture fixture) : IC
             .Build();
 
         var json = ReportJson.Serialize(report);
-        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestCt);
         var definition = new ReportDefinition {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             Name = "People Report",
             ReportDataJson = json,
             IsActive = true,
@@ -33,7 +34,7 @@ public sealed class ReportGenerationTests(ReportingPostgresFixture fixture) : IC
         };
 
         db.ReportDefinitions.Add(definition);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
         var hooks = new ReportGenerationHooks {
@@ -53,7 +54,7 @@ public sealed class ReportGenerationTests(ReportingPostgresFixture fixture) : IC
                 Format = ReportFormat.Csv,
                 FileName = "people.csv",
                 PathPrefix = "reports/test"
-            }, hooks, TestContext.Current.CancellationToken);
+            }, hooks, TestCt);
 
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.NotNull(result.OutputFileId);
@@ -69,7 +70,7 @@ public sealed class ReportGenerationTests(ReportingPostgresFixture fixture) : IC
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
         var result = await reportService.GenerateAsync(
-            new() { ReportDataJson = ReportJson.Serialize(report), Format = ReportFormat.Csv }, ct: TestContext.Current.CancellationToken);
+            new() { ReportDataJson = ReportJson.Serialize(report), Format = ReportFormat.Csv }, ct: TestCt);
 
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Null(result.OutputFileId);

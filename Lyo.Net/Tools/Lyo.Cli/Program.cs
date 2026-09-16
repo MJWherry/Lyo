@@ -4,7 +4,7 @@ using Lyo.Cli.Commands;
 
 // ExcelDataReader (xlsx) requires older encodings such as Windows-1252.
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-var root = new RootCommand("Lyo command-line tools — crypt, enc, compress, hash, id, query, csv, xlsx");
+var root = new RootCommand("Lyo command-line tools — crypt, enc, compress, hash, id, query, csv, xlsx, json, yaml, xml, toml, nfc, rfid");
 root.Subcommands.Add(CryptCommands.Create());
 foreach (var c in CompressCommands.Create())
     root.Subcommands.Add(c);
@@ -17,6 +17,10 @@ root.Subcommands.Add(IdCommands.Create());
 root.Subcommands.Add(QueryCommands.Create());
 root.Subcommands.Add(CsvCommands.Create());
 root.Subcommands.Add(XlsxCommands.Create());
+foreach (var command in DocumentCommands.Create())
+    root.Subcommands.Add(command);
+root.Subcommands.Add(NfcCommands.Create());
+root.Subcommands.Add(RfidCommands.Create());
 try {
     return await root.Parse(args).InvokeAsync();
 }

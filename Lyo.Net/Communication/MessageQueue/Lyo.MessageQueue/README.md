@@ -101,13 +101,14 @@ Lyo job and email workers use this hosted-consumer path.
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Health` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

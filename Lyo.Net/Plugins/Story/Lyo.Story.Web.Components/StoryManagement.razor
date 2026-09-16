@@ -1,0 +1,35 @@
+<MudStack Spacing="2" Class="pa-2">
+    @if (_open is null) {
+        <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h6">Stories</MudText>
+            <MudSpacer/>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="Create">New story</MudButton>
+        </MudStack>
+        @if (_stories.Count == 0) {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">No stories for this tenant and game.</MudText>
+        }
+        else {
+            <MudSimpleTable Hover="true" Dense="true">
+                <thead><tr><th>Title</th><th>Slug</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var story in _stories) {
+                    <tr>
+                        <td>@story.Title</td>
+                        <td>@story.Slug</td>
+                        <td>@story.Status</td>
+                        <td>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => OpenAsync(story.Id))">Open</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => DuplicateAsync(story.Id))">Duplicate</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error" OnClick="@(() => DeleteAsync(story.Id))">Delete</MudButton>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+    }
+    else {
+        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="Close">Library</MudButton>
+        <StoryBuilderWorkbench StoryClient="StoryClient" BaseRoute="@BaseRoute" Draft="_open" Saved="OnSaved"/>
+    }
+</MudStack>

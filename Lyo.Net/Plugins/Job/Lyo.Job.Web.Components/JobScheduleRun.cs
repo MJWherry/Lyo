@@ -10,8 +10,8 @@ internal static class JobScheduleRun
     public const string CreatedBy = "gateway";
 
     /// <summary>Creates a run request for <paramref name="schedule" /> against <paramref name="definitionId" />.</summary>
-    public static JobRunReq CreateRequest(Guid definitionId, JobScheduleRes schedule, string createdBy = CreatedBy, bool allowTriggers = true)
-        => new(definitionId, createdBy, allowTriggers, scheduleId: schedule.Id) {
+    public static JobRunReq CreateRequest(Guid definitionId, JobScheduleRes schedule, string createdBy = CreatedBy)
+        => new(definitionId, createdBy, scheduleId: schedule.Id) {
             JobRunParameters = [.. (schedule.Parameters ?? []).Where(p => p.Enabled).Select(ToRunParameter)]
         };
 

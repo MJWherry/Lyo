@@ -20,11 +20,20 @@ public sealed record VideoEncoder
     /// <summary>VP9 (<c>vp9</c>).</summary>
     public static readonly VideoEncoder Vp9 = Create("Vp9", "vp9");
 
+    /// <summary>VP8 (<c>vp8</c>).</summary>
+    public static readonly VideoEncoder Vp8 = Create("Vp8", "vp8");
+
+    /// <summary>HEVC (<c>hevc</c>).</summary>
+    public static readonly VideoEncoder Hevc = Create("Hevc", "hevc");
+
+    /// <summary>AV1 (<c>av1</c>).</summary>
+    public static readonly VideoEncoder Av1 = Create("Av1", "av1");
+
     /// <summary>Stream copy (<c>copy</c>).</summary>
     public static readonly VideoEncoder Copy = Create("Copy", "copy");
 
     /// <summary>Every built-in encoder. Touching this list registers the static instances for lookup.</summary>
-    public static IReadOnlyList<VideoEncoder> BuiltIns { get; } = [H264, Mpeg4, Vp9, Copy];
+    public static IReadOnlyList<VideoEncoder> BuiltIns { get; } = [H264, Mpeg4, Vp9, Vp8, Hevc, Av1, Copy];
 
     /// <summary>Stable display name (e.g. <c>H264</c>).</summary>
     public string Name { get; }

@@ -3,6 +3,7 @@ using Lyo.Config;
 using Lyo.Config.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Config.Postgres.Tests;
 
@@ -16,7 +17,7 @@ public sealed class ConfigPostgresStoreTests
     [Fact]
     public async Task SaveDefinition_CreatesRevision1()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = Store();
         var definition = NewDefinition("rev1-key", typeof(string));
         definition.Description = "first";
@@ -32,7 +33,7 @@ public sealed class ConfigPostgresStoreTests
     [Fact]
     public async Task SecondSave_CreatesRevision2()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = Store();
         var definition = NewDefinition("rev2-key", typeof(string));
         definition.Description = "one";
@@ -48,7 +49,7 @@ public sealed class ConfigPostgresStoreTests
     [Fact]
     public async Task Revert_AppendsNewRevision()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = Store();
         var definition = NewDefinition("revert-key", typeof(string));
         definition.Description = "original";
@@ -67,7 +68,7 @@ public sealed class ConfigPostgresStoreTests
     [Fact]
     public async Task Encrypted_RoundTripStoresCiphertext_AndDecryptsOnRead()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = Store();
         const string plaintext = "s3cret-config-value";
         var definition = NewDefinition("enc-key", typeof(string));
@@ -90,7 +91,7 @@ public sealed class ConfigPostgresStoreTests
     [Fact]
     public async Task TogglingEncrypted_RewritesExistingBindingRevisions()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = Store();
         var definition = NewDefinition("toggle-enc", typeof(string));
         definition.DefaultValue = ConfigValue.From("default-plain");
@@ -147,7 +148,7 @@ public sealed class ConfigPostgresStoreTests
     [Fact]
     public async Task SaveDefinition_RejectsTypeMismatch()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = Store();
         var definition = NewDefinition("bad-type", typeof(int));
         definition.DefaultValue = new() { TypeName = typeof(int).FullName!, Json = "\"not-an-int\"" };
@@ -162,7 +163,7 @@ public sealed class ConfigPostgresStoreTests
     private static ConfigDefinitionRecord NewDefinition(string key, Type valueType)
         => new() {
             SubjectEntityType = AppConfigEntity.AppEntityType,
-            Key = $"{key}-{Guid.NewGuid():N}",
+            Key = $"{key}-{LyoGuid.CreateV7():N}",
             ForValueType = ConfigValue.GetTypeName(valueType)
         };
 }

@@ -66,6 +66,27 @@ public sealed class QueryCacheKeyHardeningTests
     [Fact]
     public void Build_KeysContainingSeparator_DoNotCollide() => Assert.NotEqual(BuildConcreteKey([["a|b", "c"]]), BuildConcreteKey([["a", "b|c"]]));
 
+    [Fact]
+    public void Build_Aggregates_DoNotCollideWithTheSameSelect()
+    {
+        var rows = new ProjectionQueryReq { Start = 0, Amount = 10, Select = ["Name"] };
+        var grouped = new ProjectionQueryReq { Start = 0, Amount = 10, Select = ["Name"], Aggregates = [new(AggregateFunction.Count, "Count")] };
+        var summed = new ProjectionQueryReq { Start = 0, Amount = 10, Select = ["Name"], Aggregates = [new(AggregateFunction.Sum, "Total", "Age")] };
+        Assert.NotEqual(QueryCacheKeyBuilder.Build<WidgetA, object>(rows), QueryCacheKeyBuilder.Build<WidgetA, object>(grouped));
+        Assert.NotEqual(QueryCacheKeyBuilder.Build<WidgetA, object>(grouped), QueryCacheKeyBuilder.Build<WidgetA, object>(summed));
+    }
+
+    /// <summary>Grouped queries filter before they aggregate. Omitting the where tree let one state's county counts answer every other state.</summary>
+    [Fact]
+    public void Build_AggregateWhereClauses_DoNotCollide()
+    {
+        var unfiltered = AggregateByState(null);
+        var pennsylvania = AggregateByState("PA");
+        var delaware = AggregateByState("DE");
+        Assert.NotEqual(unfiltered, pennsylvania);
+        Assert.NotEqual(pennsylvania, delaware);
+    }
+
     private static string BuildTreeKey(string defaultSortExpression, SortDirection direction)
         => QueryCacheKeyBuilder.BuildTree<WidgetA, WidgetA>(
             null, 0, 10, [], [], QueryTotalCountMode.Exact, QueryIncludeFilterMode.Full, defaultSortKey: QueryCacheKeyBuilder.FormatDefaultSortKey(defaultSortExpression, direction));
@@ -75,4 +96,18 @@ public sealed class QueryCacheKeyHardeningTests
 
     private static string BuildConcreteKey(IReadOnlyList<object[]> keys)
         => QueryCacheKeyBuilder.Build<WidgetA, WidgetA>(new QueryConcreteReq { Start = 0, Amount = 10, Keys = [.. keys] });
+
+    private static string AggregateByState(string? state)
+    {
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 500,
+            Select = ["State", "County"],
+            Aggregates = [new(AggregateFunction.Count, "Count", "Id")]
+        };
+        if (state != null)
+            request.WhereClause = WhereClauseBuilder.Condition("State", ComparisonOperatorEnum.Equals, state);
+
+        return QueryCacheKeyBuilder.Build<WidgetA, object>(request);
+    }
 }

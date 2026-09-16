@@ -1,7 +1,9 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Lyo.Common.Metadata.Records;
 using Lyo.Formatter;
 using Lyo.Job.Models;
+using Lyo.Job.Models.Context;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Parameters;
@@ -26,26 +28,21 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
 
     /// <summary>
     /// Builds a run request for <paramref name="jobInfo" />. Definition parameters come first; schedule parameters replace same-key entries rather than appending, so the API never
-    /// sees a duplicate key carrying an empty definition default next to the schedule value. Trigger parameters are appended.
+    /// sees a duplicate key carrying an empty definition default next to the schedule value.
     /// </summary>
     /// <param name="jobInfo">Definition and its recent runs, used as template data.</param>
     /// <param name="schedule">Schedule that fired, when this is a scheduled run.</param>
-    /// <param name="trigger">Trigger that fired, when this is a triggered run.</param>
-    /// <param name="triggeredBy">Completed run that fired the trigger.</param>
-    public JobRunReq Build(JobInfo jobInfo, JobScheduleRes? schedule, JobTriggerRes? trigger, JobRunRes? triggeredBy)
+    public JobRunReq Build(JobInfo jobInfo, JobScheduleRes? schedule)
     {
         ArgumentHelpers.ThrowIfNull(jobInfo);
         var req = new JobRunReq {
             JobDefinitionId = jobInfo.Definition.Id,
             JobScheduleId = schedule?.Id,
-            JobTriggerId = trigger?.Id,
-            TriggeredByJobRunId = triggeredBy?.Id,
-            AllowTriggers = true,
             CreatedBy = createdBy,
             JobRunParameters = []
         };
 
-        var templateData = BuildTemplateData(jobInfo, trigger, triggeredBy, schedule);
+        var templateData = BuildTemplateData(jobInfo, schedule);
         foreach (var p in jobInfo.Definition.JobParameters ?? [])
             req.JobRunParameters.Add(CreateRunParameterFromDefinition(p, templateData));
 
@@ -58,10 +55,74 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
             req.JobRunParameters.Add(runParam);
         }
 
-        foreach (var tp in trigger?.TriggerParameters ?? [])
-            req.JobRunParameters.Add(CreateRunParameterFromTrigger(tp, templateData));
+        return req;
+    }
+
+    /// <summary>
+    /// Builds the run request for one workflow step. Definition parameters come first, then the step's own <c>ParametersJson</c> values <b>replace</b> same-key entries — the
+    /// same merge rule schedules use — so one shared definition can serve many workflows with different inputs.
+    /// <para>
+    /// <c>ParametersJson</c> is a flat object map (<c>{"Path":"/tmp/out"}</c>). The parameter type comes from the matching definition parameter; a key the definition does not
+    /// declare is treated as a string. Unparseable JSON is logged and ignored rather than failing the step: a bad step configuration should still produce a runnable request
+    /// from the definition defaults, and the workflow's own failure policy then decides what happens.
+    /// </para>
+    /// </summary>
+    /// <param name="definition">Definition the step runs.</param>
+    /// <param name="step">Step being started, supplying the parameter overrides.</param>
+    /// <param name="stepScope">Context the step's templates resolve against, including any upstream runs seeded with <c>WithUpstreamRun</c>.</param>
+    public JobRunReq BuildForWorkflowStep(JobDefinitionRes definition, JobWorkflowStepRes step, JobContextBag stepScope)
+    {
+        ArgumentHelpers.ThrowIfNull(definition);
+        ArgumentHelpers.ThrowIfNull(step);
+        ArgumentHelpers.ThrowIfNull(stepScope);
+        var req = new JobRunReq {
+            JobDefinitionId = definition.Id,
+            CreatedBy = createdBy,
+            JobRunParameters = []
+        };
+
+        foreach (var p in definition.JobParameters ?? [])
+            req.JobRunParameters.Add(CreateRunParameterFromDefinition(p, stepScope));
+
+        foreach (var (key, value) in ParseStepParameters(step)) {
+            var declared = (definition.JobParameters ?? []).FirstOrDefault(p => string.Equals(p.Key, key, StringComparison.OrdinalIgnoreCase));
+            var type = declared?.Type ?? LyoTypeInfo.String.FullName;
+            var formatted = FormatterLyoType.IsFormattable(LyoTypeInfo.FromName(type)) ? FormatTemplateValue(value ?? "", stepScope) : value;
+            req.JobRunParameters.RemoveAll(existing => string.Equals(existing.Key, key, StringComparison.OrdinalIgnoreCase));
+            req.JobRunParameters.Add(
+                new JobRunParameterReq {
+                    Key = declared?.Key ?? key,
+                    Description = declared?.Description,
+                    Type = LyoTypeInfo.NormalizeFullName(type),
+                    Value = formatted
+                });
+        }
 
         return req;
+    }
+
+    /// <summary>Reads a step's <c>ParametersJson</c> object map. A JSON string becomes its text; anything else keeps its raw JSON so a structured value survives intact.</summary>
+    private IReadOnlyList<KeyValuePair<string, string?>> ParseStepParameters(JobWorkflowStepRes step)
+    {
+        if (string.IsNullOrWhiteSpace(step.ParametersJson))
+            return [];
+
+        try {
+            using var document = JsonDocument.Parse(step.ParametersJson!);
+            if (document.RootElement.ValueKind != JsonValueKind.Object) {
+                _logger.LogWarning("Workflow step {StepName} has a ParametersJson that is not an object map; the step runs on definition defaults", step.StepName);
+                return [];
+            }
+
+            return [
+                .. document.RootElement.EnumerateObject()
+                    .Select(p => new KeyValuePair<string, string?>(p.Name, p.Value.ValueKind == JsonValueKind.String ? p.Value.GetString() : p.Value.GetRawText()))
+            ];
+        }
+        catch (JsonException ex) {
+            _logger.LogWarning(ex, "Workflow step {StepName} has malformed ParametersJson; the step runs on definition defaults", step.StepName);
+            return [];
+        }
     }
 
     /// <summary>
@@ -70,7 +131,7 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
     /// </summary>
     /// <param name="template">Raw parameter value.</param>
     /// <param name="templateData">Data the template resolves against.</param>
-    public string FormatTemplateValue(string template, Dictionary<string, object?> templateData)
+    public string FormatTemplateValue(string template, JobContextBag templateData)
     {
         if (string.IsNullOrEmpty(template) || template.IndexOf('{') < 0)
             return template;
@@ -86,58 +147,17 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
     }
 
     /// <summary>
-    /// The data every parameter template resolves against. Internal so tests can assert the template editor's advertised token list against
-    /// what actually resolves.
+    /// The context every parameter template resolves against. Internal so tests can assert the template editor's advertised token list against what actually resolves —
+    /// the editor builds its own bag from the same <see cref="JobContextBag" /> seeders.
     /// </summary>
     /// <param name="jobInfo">Definition and its recent runs.</param>
-    /// <param name="trigger">Trigger that fired, if any.</param>
-    /// <param name="triggeredBy">Run that fired the trigger, if any.</param>
     /// <param name="schedule">Schedule that fired, if any.</param>
-    internal static Dictionary<string, object?> BuildTemplateData(JobInfo jobInfo, JobTriggerRes? trigger, JobRunRes? triggeredBy, JobScheduleRes? schedule)
-    {
-        var data = new Dictionary<string, object?> {
-            ["Definition"] = jobInfo.Definition,
-            ["LastRun"] = jobInfo.LastRun,
-            ["LastSuccessfulRun"] = jobInfo.LastSuccessfulRun,
-            ["LastFailedRun"] = jobInfo.LastFailedRun,
-            ["Trigger"] = trigger,
-            ["TriggeredByRun"] = triggeredBy,
-            ["Schedule"] = schedule
-        };
+    internal static JobContextBag BuildTemplateData(JobInfo jobInfo, JobScheduleRes? schedule)
+        => new JobContextBag().WithDefinition(jobInfo.Definition)
+            .WithLastRuns(jobInfo.LastRun, jobInfo.LastSuccessfulRun, jobInfo.LastFailedRun)
+            .WithSchedule(schedule);
 
-        AddRunTemplateData(data, "LastRun", jobInfo.LastRun);
-        AddRunTemplateData(data, "LastSuccessfulRun", jobInfo.LastSuccessfulRun);
-        AddRunTemplateData(data, "LastFailedRun", jobInfo.LastFailedRun);
-        AddRunTemplateData(data, "TriggeredByRun", triggeredBy);
-        foreach (var sp in schedule?.Parameters ?? []) {
-            if (sp.Enabled)
-                data[$"Schedule_Parameter_{sp.Key}"] = sp.Value;
-        }
-
-        if (trigger?.TriggerParameters == null)
-            return data;
-
-        foreach (var tp in trigger.TriggerParameters)
-            data[$"Trigger_Parameter_{tp.Key}"] = tp.Value;
-
-        return data;
-    }
-
-    private static void AddRunTemplateData(IDictionary<string, object?> data, string prefix, JobRunRes? run)
-    {
-        if (run == null)
-            return;
-
-        var results = run.GetResultDictionary();
-        var parameters = run.GetParameterDictionary();
-        foreach (var kvp in results)
-            data[$"{prefix}_Result_{kvp.Key}"] = kvp.Value;
-
-        foreach (var kvp in parameters)
-            data[$"{prefix}_Parameter_{kvp.Key}"] = kvp.Value;
-    }
-
-    private JobRunParameterReq CreateRunParameterFromDefinition(JobParameterRes p, Dictionary<string, object?> templateData)
+    private JobRunParameterReq CreateRunParameterFromDefinition(JobParameterRes p, JobContextBag templateData)
     {
         var known = LyoTypeInfo.FromName(p.Type);
         var req = new JobRunParameterReq { Key = p.Key, Description = p.Description, Type = LyoTypeInfo.NormalizeFullName(p.Type) };
@@ -159,7 +179,7 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
         return req;
     }
 
-    private JobRunParameterReq CreateRunParameterFromSchedule(JobScheduleParameterRes p, Dictionary<string, object?> templateData)
+    private JobRunParameterReq CreateRunParameterFromSchedule(JobScheduleParameterRes p, JobContextBag templateData)
     {
         var known = LyoTypeInfo.FromName(p.Type);
         var req = new JobRunParameterReq {
@@ -169,14 +189,6 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
             EncryptedValue = p.EncryptedValue
         };
 
-        req.Value = FormatterLyoType.IsFormattable(known) ? FormatTemplateValue(p.Value ?? "", templateData) : p.Value;
-        return req;
-    }
-
-    private JobRunParameterReq CreateRunParameterFromTrigger(JobTriggerParameterRes p, Dictionary<string, object?> templateData)
-    {
-        var known = LyoTypeInfo.FromName(p.Type);
-        var req = new JobRunParameterReq { Key = p.Key, Description = p.Description, Type = LyoTypeInfo.NormalizeFullName(p.Type) };
         req.Value = FormatterLyoType.IsFormattable(known) ? FormatTemplateValue(p.Value ?? "", templateData) : p.Value;
         return req;
     }

@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.TextEncoding.Tests;
 
@@ -43,7 +44,7 @@ public sealed class CharsetEncodingTests
         CharsetEncoding.Convert(input1, out1, CharsetInfo.Utf16Le, CharsetInfo.Utf8);
         using var input2 = new MemoryStream(utf16);
         using var out2 = new MemoryStream();
-        await CharsetEncoding.ConvertAsync(input2, out2, CharsetInfo.Utf16Le, CharsetInfo.Utf8, ct: TestContext.Current.CancellationToken);
+        await CharsetEncoding.ConvertAsync(input2, out2, CharsetInfo.Utf16Le, CharsetInfo.Utf8, ct: TestCt);
         Assert.Equal(out1.ToArray(), out2.ToArray());
         Assert.Equal(text, Encoding.UTF8.GetString(out1.ToArray()));
     }
@@ -135,10 +136,10 @@ public sealed class CharsetEncodingTests
     [Fact]
     public async Task WriteAllTextAsync_EmitBom_WritesUtf8Preamble()
     {
-        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".txt");
+        var path = Path.Combine(Path.GetTempPath(), LyoGuid.CreateV7().ToString("N") + ".txt");
         try {
-            await CharsetEncoding.WriteAllTextAsync(path, "hi", Encoding.UTF8, true, ct: TestContext.Current.CancellationToken);
-            var bytes = await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken);
+            await CharsetEncoding.WriteAllTextAsync(path, "hi", Encoding.UTF8, true, ct: TestCt);
+            var bytes = await File.ReadAllBytesAsync(path, TestCt);
             Assert.Equal(0xEF, bytes[0]);
             Assert.Equal(0xBB, bytes[1]);
             Assert.Equal(0xBF, bytes[2]);
@@ -151,10 +152,10 @@ public sealed class CharsetEncodingTests
     [Fact]
     public async Task WriteAllTextAsync_Default_OmitsBom()
     {
-        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".txt");
+        var path = Path.Combine(Path.GetTempPath(), LyoGuid.CreateV7().ToString("N") + ".txt");
         try {
-            await CharsetEncoding.WriteAllTextAsync(path, "hi", Encoding.UTF8, false, ct: TestContext.Current.CancellationToken);
-            var bytes = await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken);
+            await CharsetEncoding.WriteAllTextAsync(path, "hi", Encoding.UTF8, false, ct: TestCt);
+            var bytes = await File.ReadAllBytesAsync(path, TestCt);
             Assert.Equal((byte)'h', bytes[0]);
         }
         finally {
@@ -178,15 +179,15 @@ public sealed class CharsetEncodingTests
     [Fact]
     public async Task ConvertFileAsync_RoundTrip()
     {
-        var dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var dir = Path.Combine(Path.GetTempPath(), LyoGuid.CreateV7().ToString("N"));
         Directory.CreateDirectory(dir);
         try {
             var input = Path.Combine(dir, "in.txt");
             var output = Path.Combine(dir, "out.txt");
             const string text = "hello";
-            await File.WriteAllBytesAsync(input, Encoding.Unicode.GetBytes(text), TestContext.Current.CancellationToken);
-            await CharsetEncoding.ConvertFileAsync(input, output, CharsetInfo.Utf16Le, CharsetInfo.Utf8, ct: TestContext.Current.CancellationToken);
-            Assert.Equal(text, Encoding.UTF8.GetString(await File.ReadAllBytesAsync(output, TestContext.Current.CancellationToken)));
+            await File.WriteAllBytesAsync(input, Encoding.Unicode.GetBytes(text), TestCt);
+            await CharsetEncoding.ConvertFileAsync(input, output, CharsetInfo.Utf16Le, CharsetInfo.Utf8, ct: TestCt);
+            Assert.Equal(text, Encoding.UTF8.GetString(await File.ReadAllBytesAsync(output, TestCt)));
         }
         finally {
             Directory.Delete(dir, true);

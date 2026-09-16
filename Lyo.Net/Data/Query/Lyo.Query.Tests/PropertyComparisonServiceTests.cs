@@ -2,6 +2,7 @@ using Lyo.Cache;
 using Lyo.Query.Services.PropertyComparison;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Query.Tests;
 
@@ -52,7 +53,7 @@ public class PropertyComparisonServiceTests
     public void GetPropertyDifferences_IgnoresPropertiesNotOnRequest()
     {
         var svc = CreateService();
-        var entity = new PersonBuilder().WithName("Alice").WithAge(30).WithId(Guid.NewGuid()).Build();
+        var entity = new PersonBuilder().WithName("Alice").WithAge(30).WithId(LyoGuid.CreateV7()).Build();
         var newData = new { Name = "Alice" };
         var diff = svc.GetPropertyDifferences(entity, newData);
         Assert.Empty(diff);

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Comic.Web.Components;
 
@@ -13,7 +14,7 @@ public partial class ComicViewer
     // Prefetch map: page number to a URL resolved early
     private readonly Dictionary<int, string?> _prefetchCache = [];
 
-    private readonly string _viewerId = $"comic-viewer-{Guid.NewGuid():N}";
+    private readonly string _viewerId = $"comic-viewer-{LyoGuid.CreateV7():N}";
     private CancellationTokenSource _cts = new();
     private string? _currentImageUrl;
     private DotNetObjectReference<ComicViewer>? _dotNetRef;

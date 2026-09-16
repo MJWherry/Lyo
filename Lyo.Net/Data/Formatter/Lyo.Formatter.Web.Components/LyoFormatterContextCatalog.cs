@@ -28,7 +28,7 @@ public static class LyoFormatterContextCatalog
     /// <summary>Nested property/key levels to walk, counting the root key as depth 0.</summary>
     public const int MaxDepth = 3;
 
-    /// <summary>Hard limit so a large graph cannot flood the dropdown.</summary>
+    /// <summary>Default ceiling on how many paths a single walk produces, so a large object graph cannot run away.</summary>
     public const int MaxItems = 80;
 
     /// <summary>Starting number of rows shown after filtering.</summary>
@@ -46,13 +46,17 @@ public static class LyoFormatterContextCatalog
     };
 
     /// <summary>Builds the full path list for <paramref name="context" />, plus clock-expression shortcuts. Clock rows remain when context is null or a leaf.</summary>
-    public static IReadOnlyList<LyoFormatterContextEntry> Build(object? context)
+    /// <param name="context">Dictionary or POCO to walk.</param>
+    /// <param name="maxItems">Ceiling on the produced list, clock rows included. Raise it when the context is wide enough that <see cref="MaxItems" /> would cut off paths the user needs.</param>
+    public static IReadOnlyList<LyoFormatterContextEntry> Build(object? context, int maxItems = MaxItems)
     {
         var items = new List<LyoFormatterContextEntry>(ExpressionSuggestions);
+        if (items.Count > maxItems)
+            return items[..Math.Max(maxItems, 0)];
         if (context is null || IsLeaf(context))
             return items;
 
-        Walk(context, path: string.Empty, depth: 0, items, new HashSet<object>(ReferenceEqualityComparer.Instance));
+        Walk(context, path: string.Empty, depth: 0, items, new HashSet<object>(ReferenceEqualityComparer.Instance), maxItems);
         return items;
     }
 
@@ -209,27 +213,27 @@ public static class LyoFormatterContextCatalog
         return true;
     }
 
-    private static void Walk(object? value, string path, int depth, List<LyoFormatterContextEntry> items, HashSet<object> seen)
+    private static void Walk(object? value, string path, int depth, List<LyoFormatterContextEntry> items, HashSet<object> seen, int maxItems)
     {
-        if (items.Count >= MaxItems)
+        if (items.Count >= maxItems)
             return;
 
         if (path.Length > 0) {
             items.Add(new(path, Preview(value), HasChildren(value, depth)));
-            if (items.Count >= MaxItems)
+            if (items.Count >= maxItems)
                 return;
         }
 
         if (depth >= MaxDepth || value is null || IsLeaf(value) || !seen.Add(value))
             return;
 
-        if (TryWalkDictionary(value, path, depth, items, seen))
+        if (TryWalkDictionary(value, path, depth, items, seen, maxItems))
             return;
 
         if (value is IEnumerable and not IDictionary) {
             if (value is ICollection collection) {
                 var countPath = Combine(path, "Count");
-                if (countPath.Length > 0 && items.Count < MaxItems)
+                if (countPath.Length > 0 && items.Count < maxItems)
                     items.Add(new(countPath, collection.Count.ToString(CultureInfo.InvariantCulture), HasChildren: false));
             }
 
@@ -237,7 +241,7 @@ public static class LyoFormatterContextCatalog
         }
 
         foreach (var prop in GetReadableProperties(value.GetType(), value)) {
-            if (items.Count >= MaxItems)
+            if (items.Count >= maxItems)
                 return;
 
             object? child;
@@ -248,20 +252,20 @@ public static class LyoFormatterContextCatalog
                 continue;
             }
 
-            Walk(child, Combine(path, prop.Name), depth + 1, items, seen);
+            Walk(child, Combine(path, prop.Name), depth + 1, items, seen, maxItems);
         }
     }
 
-    private static bool TryWalkDictionary(object value, string path, int depth, List<LyoFormatterContextEntry> items, HashSet<object> seen)
+    private static bool TryWalkDictionary(object value, string path, int depth, List<LyoFormatterContextEntry> items, HashSet<object> seen, int maxItems)
     {
         if (value is IReadOnlyDictionary<string, object?> typed) {
             foreach (var entry in typed) {
-                if (items.Count >= MaxItems)
+                if (items.Count >= maxItems)
                     return true;
                 if (string.IsNullOrEmpty(entry.Key))
                     continue;
 
-                Walk(entry.Value, Combine(path, entry.Key), depth + 1, items, seen);
+                Walk(entry.Value, Combine(path, entry.Key), depth + 1, items, seen, maxItems);
             }
 
             return true;
@@ -269,14 +273,14 @@ public static class LyoFormatterContextCatalog
 
         if (value is IDictionary dictionary) {
             foreach (DictionaryEntry entry in dictionary) {
-                if (items.Count >= MaxItems)
+                if (items.Count >= maxItems)
                     return true;
 
                 var key = Convert.ToString(entry.Key, CultureInfo.InvariantCulture);
                 if (string.IsNullOrEmpty(key))
                     continue;
 
-                Walk(entry.Value, Combine(path, key), depth + 1, items, seen);
+                Walk(entry.Value, Combine(path, key), depth + 1, items, seen, maxItems);
             }
 
             return true;

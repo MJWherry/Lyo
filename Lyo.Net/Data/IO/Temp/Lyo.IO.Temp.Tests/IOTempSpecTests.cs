@@ -1,5 +1,6 @@
 using Lyo.Common.Metadata.Records;
 using Lyo.IO.Temp.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.IO.Temp.Tests;
 
@@ -9,7 +10,7 @@ public sealed class IOTempSpecTests : IDisposable
 
     public void Dispose() => _service.Dispose();
 
-    private static IOTempServiceOptions TestOptions() => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-spec-tests"), DirectoryName = Guid.NewGuid().ToString("N") };
+    private static IOTempServiceOptions TestOptions() => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-spec-tests"), DirectoryName = LyoGuid.CreateV7().ToString("N") };
 
     [Fact]
     public void Builder_Creates_SpecWithFiles()

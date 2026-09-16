@@ -8,6 +8,7 @@ using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Images.Web.Components;
 
@@ -286,7 +287,7 @@ public partial class SpriteSheetWorkbench : IAsyncDisposable
                 return;
             }
 
-            entry = new(Guid.NewGuid(), file);
+            entry = new(LyoGuid.CreateV7(), file);
             _animatorSheets.Add(entry);
             _selectedAnimatorSheetId = entry.Id;
             await LoadAnimatorSheetCoreAsync(file);

@@ -30,8 +30,8 @@ public class JobRetentionPurgeTests
         var stepRunId = await SeedWorkflowRunStepAsync(definitionId, runId);
         await InvokeMaintenanceAsync();
         await using var db = await CreateDbContextAsync();
-        Assert.False(await db.JobRuns.AnyAsync(r => r.Id == runId, TestContext.Current.CancellationToken));
-        var step = await db.JobWorkflowRunSteps.AsNoTracking().SingleAsync(s => s.Id == stepRunId, TestContext.Current.CancellationToken);
+        Assert.False(await db.JobRuns.AnyAsync(r => r.Id == runId, TestCt));
+        var step = await db.JobWorkflowRunSteps.AsNoTracking().SingleAsync(s => s.Id == stepRunId, TestCt);
         Assert.Null(step.JobRunId); // workflow history preserved, run reference detached
     }
 
@@ -55,16 +55,15 @@ public class JobRetentionPurgeTests
                     CreatedBy = "test",
                     CreatedTimestamp = DateTime.UtcNow,
                     FinishedTimestamp = DateTime.UtcNow,
-                    AllowTriggers = false
                 });
 
-            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await db.SaveChangesAsync(TestCt);
         }
 
         await InvokeMaintenanceAsync();
         await using (var db = await CreateDbContextAsync()) {
-            Assert.False(await db.JobRuns.AnyAsync(r => r.Id == parentId, TestContext.Current.CancellationToken));
-            var child = await db.JobRuns.AsNoTracking().SingleAsync(r => r.Id == childId, TestContext.Current.CancellationToken);
+            Assert.False(await db.JobRuns.AnyAsync(r => r.Id == parentId, TestCt));
+            var child = await db.JobRuns.AsNoTracking().SingleAsync(r => r.Id == childId, TestCt);
             Assert.Null(child.ParentJobRunId);
         }
     }
@@ -84,7 +83,7 @@ public class JobRetentionPurgeTests
                 CreatedTimestamp = DateTime.UtcNow
             });
 
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return id;
     }
 
@@ -101,10 +100,9 @@ public class JobRetentionPurgeTests
                 CreatedBy = "test",
                 CreatedTimestamp = DateTime.UtcNow.AddDays(-10),
                 FinishedTimestamp = DateTime.UtcNow.AddDays(-10),
-                AllowTriggers = false
             });
 
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return runId;
     }
 
@@ -153,7 +151,7 @@ public class JobRetentionPurgeTests
                 CreatedTimestamp = DateTime.UtcNow
             });
 
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return runStepId;
     }
 
@@ -164,13 +162,13 @@ public class JobRetentionPurgeTests
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<JobMaintenanceService>>();
         var maintenance = new JobMaintenanceService(factory, logger, _fixture.FakePublisher);
         var method = typeof(JobMaintenanceService).GetMethod("RunMaintenanceAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        await (Task)method.Invoke(maintenance, [TestContext.Current.CancellationToken])!;
+        await (Task)method.Invoke(maintenance, [TestCt])!;
     }
 
     private async Task<JobContext> CreateDbContextAsync()
     {
         using var scope = _fixture.ServiceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        return await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        return await factory.CreateDbContextAsync(TestCt);
     }
 }

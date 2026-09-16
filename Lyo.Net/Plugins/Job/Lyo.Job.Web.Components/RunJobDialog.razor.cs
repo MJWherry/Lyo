@@ -31,7 +31,6 @@ public partial class RunJobDialog
 
     private JobDefinitionRes? _selectedDef;
     private string _createdBy = "gateway";
-    private bool _allowTriggers = true;
     private bool _submitting;
     private List<LyoParameterEntry> _parameters = [];
 
@@ -67,7 +66,6 @@ public partial class RunJobDialog
             var req = new JobRunReq {
                 JobDefinitionId = _selectedDef.Id,
                 CreatedBy = _createdBy,
-                AllowTriggers = _allowTriggers,
                 JobRunParameters = runParams
             };
 

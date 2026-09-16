@@ -2,6 +2,7 @@ using System.Reflection;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Csv.Benchmarks;
 
@@ -38,7 +39,7 @@ public class CsvWriteBenchmarks
             typeof(SampleRecord).GetProperty(nameof(SampleRecord.Email))!
         ];
 
-        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-csv-write-{Guid.NewGuid():N}.csv");
+        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-csv-write-{LyoGuid.CreateV7():N}.csv");
     }
 
     [GlobalCleanup]

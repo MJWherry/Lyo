@@ -33,14 +33,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
@@ -50,6 +42,14 @@
     },
     {
       "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -89,6 +89,14 @@
       ]
     },
     {
+      "name": "Lyo.Web.WebRenderer.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Microsoft.AspNetCore.Components.Web",
       "kind": "package",
       "version": "10.0.5",
@@ -109,6 +117,15 @@
     },
     {
       "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [
@@ -151,6 +168,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

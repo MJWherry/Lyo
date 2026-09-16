@@ -8,9 +8,11 @@ using Lyo.Api.Mapping;
 using Lyo.Audit.Postgres;
 using Lyo.Audit.Postgres.Database;
 using Lyo.Cache.Fusion;
+using Lyo.Book.Postgres;
 using Lyo.Comic.Postgres;
+using Lyo.Story.Postgres;
 using Lyo.Comment.Postgres;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Compression;
 using Lyo.Csv;
 using Lyo.DateAndTime.Json;
@@ -20,6 +22,7 @@ using Lyo.Email.Postgres;
 using Lyo.Endato.Client;
 using Lyo.Endato.Postgres;
 using Lyo.Espn.Fantasy.Football.Client;
+using Lyo.Espn.Fantasy.Football.Client.Models.Request;
 using Lyo.FFmpeg;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
@@ -28,6 +31,7 @@ using Lyo.FileStorage;
 using Lyo.FileStorage.S3;
 using Lyo.Formatter;
 using Lyo.HomeInventory.Postgres;
+using Lyo.Recipe.Postgres;
 using Lyo.Http.Client;
 using Lyo.Http.Client.Flared;
 using Lyo.Http.Client.Plan;
@@ -42,6 +46,7 @@ using Lyo.Pdf;
 using Lyo.People.Postgres;
 using Lyo.Profanity;
 using Lyo.QRCode;
+using Lyo.RateLimit;
 using Lyo.Query.Models.Common;
 using Lyo.Reporting.Postgres;
 using Lyo.Scheduler;
@@ -106,6 +111,7 @@ var host = Host.CreateDefaultBuilder(args)
             => new TypecastTtsAppService(
                 sp.GetRequiredService<TypecastTtsService>())); // non-generic TTS for Discord; use AwsPollyTtsAppService + AwsPollyTtsService for Polly instead
 
+        services.AddLocalRateLimit();
         services.AddFlaredHttpClientFromConfiguration(context.Configuration);
         services.AddAwsTranslationServiceFromConfiguration(context.Configuration); //translation
         services.AddProfanityFilterServiceFromConfiguration(context.Configuration); //profanity filter
@@ -132,6 +138,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddPostgresCommentStore(new PostgresCommentOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddPostgresHomeInventoryStore(new PostgresHomeInventoryOptions { ConnectionString = connStr, EnableAutoMigrations = true });
+        services.AddPostgresRecipeStore(new PostgresRecipeOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddLyoCrudServices<TwilioSmsDbContext>();
         services.AddLyoCrudServices<AuditDbContext>();
         services.AddEmailDbContextFactory(new PostgresEmailOptions { ConnectionString = connStr, EnableAutoMigrations = true });
@@ -139,7 +146,9 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddPostgresJobManagement(new PostgresJobOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddLyoCrudServices<JobContext>();
         services.AddScoped<JobService>();
+        services.AddBookDbContextFactory(new PostgresBookOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddComicDbContextFactory(new PostgresComicOptions { ConnectionString = connStr, EnableAutoMigrations = true });
+        services.AddStoryDbContextFactory(new PostgresStoryOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddPostgresTagStore(new PostgresTagOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         var config = new TypeAdapterConfig();
         config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
@@ -205,4 +214,7 @@ var host = Host.CreateDefaultBuilder(args)
     .Build();
 
 await host.StartAsync();
+var clr = host.Services.GetRequiredService<FantasyFootballClient>();
+var league = await clr.League.GetAsync(1874757777, 2026);
+var a = await clr.Communication.GetLeagueChatAsync(league.Id, 2026, new());
 Console.ReadLine();

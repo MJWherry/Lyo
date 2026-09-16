@@ -4,7 +4,7 @@
   "name": "Lyo.Job.Api",
   "area": "Apps",
   "tagline": "HTTP mapping for the Lyo Job API (`BuildJobGroup`).",
-  "description": "Maps job definition CRUD, run lifecycle, stats, next-runs, and scheduler batch routes. Register the store with `AddPostgresJobManagement` from `Lyo.Job.Postgres` first, then call `BuildJobGroup`. Standalone host: `Lyo.Job.Api.Host`.",
+  "description": "Maps job definition CRUD, run lifecycle, stats, next-runs, and scheduler batch routes. Register the store with `AddPostgresJobManagement` from `Lyo.Job.Postgres` first, then call `BuildJobGroup`. Example host: `Lyo.Job.Api.Example`.",
   "features": [
     "`BuildJobGroup` maps Job CRUD plus run lifecycle (`Started`, `Finished`, `Cancel`, `Requeue`, `Rerun`, `Heartbeat`, child runs).",
     "Export contributors are optional on the host (`AddLyoApiExport` + CSV/XLSX)."
@@ -40,11 +40,6 @@
           "`Job/Schedule`",
           "`JobSchedule`",
           "Misfire policy, calendar link, cron"
-        ],
-        [
-          "`Job/Triggers`",
-          "`JobTrigger`",
-          ""
         ],
         [
           "`Job/BlackoutCalendar`, `Job/BlackoutCalendar/Window`",
@@ -172,14 +167,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
@@ -268,6 +255,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
@@ -333,6 +328,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -618,6 +621,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

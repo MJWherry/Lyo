@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Lyo.Api.Mapping;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.DateAndTime;
@@ -9,6 +9,9 @@ using Lyo.FileMetadataStore.Models;
 using Lyo.Geolocation.Models.Enums;
 using Lyo.Api.Authentication;
 using Lyo.Drift.Postgres.Mapping;
+using Lyo.HomeInventory.Postgres.Mapping;
+using Lyo.Recipe.Postgres.Mapping;
+using Lyo.Story.Postgres.Mapping;
 using Lyo.Job.Postgres.Mapping;
 using Lyo.People.Models.Enum;
 using Lyo.People.Postgres.Database;
@@ -146,11 +149,20 @@ public static class SetupMapster
         services.AddSingleton<JobLyoMapper>();
         services.AddSingleton<DriftLyoMapper>();
         services.AddSingleton<AuthenticationLyoMapper>();
+        services.AddSingleton<HomeInventoryLyoMapper>();
+        services.AddSingleton<RecipeLyoMapper>();
+        services.AddSingleton<StoryLyoMapper>();
         services.AddScoped<ILyoMapper>(sp => new CompositeLyoMapper(
+            sp.GetRequiredService<StoryLyoMapper>(),
+            new CompositeLyoMapper(
             sp.GetRequiredService<AuthenticationLyoMapper>(),
             new CompositeLyoMapper(
-                sp.GetRequiredService<JobLyoMapper>(),
-                new CompositeLyoMapper(sp.GetRequiredService<DriftLyoMapper>(), new MapsterLyoMapper(sp.GetRequiredService<IMapper>())))));
+                sp.GetRequiredService<RecipeLyoMapper>(),
+                new CompositeLyoMapper(
+                sp.GetRequiredService<HomeInventoryLyoMapper>(),
+                new CompositeLyoMapper(
+                    sp.GetRequiredService<JobLyoMapper>(),
+                    new CompositeLyoMapper(sp.GetRequiredService<DriftLyoMapper>(), new MapsterLyoMapper(sp.GetRequiredService<IMapper>()))))))));
         return services;
     }
 

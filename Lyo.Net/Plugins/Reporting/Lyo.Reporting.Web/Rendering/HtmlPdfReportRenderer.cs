@@ -53,13 +53,13 @@ public sealed class HtmlPdfReportRenderer(IWebRendererService webRenderer) : IRe
         }
 
         fileName ??= "report" + ReportFormat.Pdf.Extension;
-        var pdfBytes = await webRenderer.ConvertHtmlToPdfAsync(html, ct).ConfigureAwait(false);
-        await File.WriteAllBytesAsync(request.OutputFilePath, pdfBytes, ct).ConfigureAwait(false);
+        await using (var stream = new FileStream(request.OutputFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
+            await webRenderer.CopyCaptureToAsync(html, stream, ct).ConfigureAwait(false);
         return new() {
             FilePath = request.OutputFilePath,
             ContentType = ReportFormat.Pdf.ContentType,
             FileName = fileName,
-            ByteLength = pdfBytes.LongLength
+            ByteLength = new FileInfo(request.OutputFilePath).Length
         };
     }
 }

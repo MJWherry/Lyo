@@ -13,7 +13,7 @@ public sealed class ReportSectionJsonTests
         var back = ReportJson.Deserialize<object>(ReportJson.Serialize(invoice));
         var controls = back.Sections.SelectMany(s => SectionBody.WalkControls(s.Controls)).ToList();
         Assert.Contains(controls, c => c is Table table && table.DataSourceKind == DataSourceKind.FromParameter && table.DataParameterKey == "LineItems");
-        Assert.Contains(controls, c => c is Card card && card.Label == "Invoice");
+        Assert.Contains(controls, c => c is Card card && card.Label == "Issued");
         Assert.Contains(controls, c => c is Grid grid && grid.TemplateColumns == "repeat(auto-fit, minmax(220px, 1fr))");
     }
 

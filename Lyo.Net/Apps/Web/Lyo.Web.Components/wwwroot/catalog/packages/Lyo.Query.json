@@ -6,7 +6,7 @@
   "description": "Execution engine for [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) filter trees. `IWhereClauseService` / `BaseWhereClauseService` turns polymorphic `WhereClause` ASTs (`condition` / `group`, optional `SubClause`) into LINQ expression trees on `IQueryable<T>`, applies multi-key `SortBy`, and can evaluate / explain the same AST against a loaded entity in memory.\n\n**What this package is.** AST → expression / matcher. **What it is not.** HTTP endpoints, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq` builders, or query-*result* caching. Those live in Models + [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md).\n\nEF-agnostic at the boundary (works on any `IQueryable`, including EF `DbSet` and in-memory). Needs `ICacheService` + `CacheOptions` for compiled predicate / matcher / metadata caches.\n\nTargets `net10.0`.",
   "features": [
     "**AST → `IQueryable`.** `ApplyWhereClause` builds expression trees from `WhereClause` that EF (or the provider) can translate.",
-    "**16 comparators.** Equals / NotEquals / Contains* / StartsWith* / EndsWith* / Greater* / Less* / In / NotIn / Regex / NotRegex.",
+    "**18 comparators.** Equals / NotEquals / Contains* / StartsWith* / EndsWith* / Greater* / Less* / In / NotIn / Regex / NotRegex / Fuzzy / NotFuzzy.",
     "**Collection paths.** `Lines.Quantity` becomes `Any(...)` on collection elements. Bare collection / `.Count` style paths compare against count.",
     "**Two-phase SubClause.** `includeSubClauses: false` for the SQL root pass. Load includes then match the sub-tree in memory.",
     "**Multi-key sort.** `SortByProperty` + `ApplyOrdering` using `Priority` and a stable default tie-break.",
@@ -15,7 +15,8 @@
     "**Path validation.** Bad dotted paths raise `InvalidQueryException` via `TryValidatePropertyPath`.",
     "**Contains→Regex coalesce.** Adjacent `Contains` leaves on the same string field can merge into a single `Regex` alternation.",
     "**Property diffing.** `IPropertyComparisonService` for patch and update pipelines.",
-    "**Value coercion.** `IValueConversionService` maps JSON literals → CLR property types (suppressible when `Lyo.Api` owns conversion)."
+    "**Value coercion.** `IValueConversionService` maps JSON literals → CLR property types (suppressible when `Lyo.Api` owns conversion).",
+    "**QueryProject aggregates.** `AggregateQuery` groups an `IQueryable` by `Select` and projects `Count`, `CountDistinct`, `Sum`, `Average`, `Min`, and `Max`. Empty `Select` is one summary row. `Count` with no field counts rows in the group. A collection field, or a path ending in `.count`, totals that collection. Select and aggregate paths accept `[n]`, `[start:]`, `[:end]`, `[start:end]`, and `[:]` on a string or a collection."
   ],
   "examples": [
     {
@@ -63,7 +64,12 @@
     {
       "type": "markdown",
       "title": "Package map",
-      "body": "| Package | Responsibility |\n| --- | --- |\n| **`Lyo.Query` (this)** | `WhereClause` → LINQ / matcher; sort; explain; path metadata; `ICache` for compiled trees |\n| [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) | AST types, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, builders, enums |\n| [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md) | `POST …/QueryConcrete`, `/QueryProject`, root `/Query`; **query result** caching; projection SQL |\n| [`Lyo.Query.Web.Components`](../Lyo.Query.Web.Components/README.md) | Blazor query workbench |\n\nBuilders and endpoint payloads are documented on Models / Api. This doc covers the runtime translator."
+      "body": "| Package | Responsibility |\n| --- | --- |\n| **`Lyo.Query` (this)** | `WhereClause` → LINQ / matcher; sort; explain; path metadata; `AggregateQuery` group-by; `ICache` for compiled trees |\n| [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) | AST types, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, builders, enums |\n| [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md) | `POST …/QueryConcrete`, `/QueryProject`, root `/Query`; **query result** caching; projection SQL |\n| [`Lyo.Query.Web.Components`](../Lyo.Query.Web.Components/README.md) | Blazor query workbench |\n\nBuilders and endpoint payloads are documented on Models / Api. This doc covers the runtime translator."
+    },
+    {
+      "type": "markdown",
+      "title": "QueryProject aggregates",
+      "body": "`AggregateQuery` groups an `IQueryable<T>` when `ProjectionQueryReq.Aggregates` is non-empty. `Select` is the group key. An empty `Select` is one summary row over the filtered set. `WhereClause` filters rows before grouping. `SortBy` may name a select path or an aggregate output name. `Start` / `Amount` page groups, and an exact total is the number of groups.\n\n`Count` with no field is `COUNT(*)` (every row in the group). `Count` of a collection, or of a path ending in `.count`, totals that collection's elements in the group. `Count` of a scalar skips nulls and keeps duplicates. `CountDistinct` counts distinct values of a scalar field and skips nulls. `Sum` and `Average` take a numeric field; `Average` of an integral field is `double`, and `decimal` stays `decimal`. `Min` and `Max` take a scalar field. An empty ungrouped source returns one row: `Count` and `CountDistinct` are 0, a non-nullable `Sum` is 0, and a nullable `Sum` / `Average` / `Min` / `Max` is null. A grouped query over no rows returns no items.\n\nA path segment may end with `[n]`, `[start:]`, `[:end]`, `[start:end]`, or `[:]`. `start` is inclusive and `end` is exclusive. On a string the window is still a string, so it can be a group key. On a collection, entity elements order by a single `[Key]` or `Id`, and scalar elements order by their value. A one-element window is a scalar. A longer collection window is a select list and is rejected as a group key.\n\n`Lyo.Api` runs this before the entity projection. If the provider cannot translate the grouping, the call fails instead of grouping a loaded page."
     },
     {
       "type": "markdown",
@@ -73,7 +79,7 @@
     {
       "type": "markdown",
       "title": "Comparator and path semantics",
-      "body": "Operators come from `ComparisonOperatorEnum` on each `ConditionClause`:\n\n| Operator | Notes |\n| --- | --- |\n| `Equals` / `NotEquals` | Simple comparison; null-safe rules enforced |\n| `GreaterThan` / `GreaterThanOrEqual` / `LessThan` / `LessThanOrEqual` | On scalars: value compare. On **collection** navigations: compare against **collection count** |\n| `Contains` / `NotContains` / `StartsWith` / `EndsWith` / negations | String methods when the target type supports them |\n| `In` / `NotIn` | Value may be a list or CSV string |\n| `Regex` / `NotRegex` | String regex; trivial patterns like `.*` short-circuit to `true` |\n\n**Dotted paths**\n\n- Scalar: `Status`, `Address.City`\n- Into collection: `Lines.Quantity` → `lines.Any(e => e.Quantity …)`\n- Collection count: path metadata `IsCountPath` builds `Enumerable.Count` then compares\n\n**Group optimization:** within an AND/OR group, multiple `Contains` leaves on the same string field may be coalesced into a single case-insensitive `Regex` alternation before expression build."
+      "body": "Operators come from `ComparisonOperatorEnum` on each `ConditionClause`:\n\n| Operator | Notes |\n| --- | --- |\n| `Equals` / `NotEquals` | Simple comparison; null-safe rules enforced |\n| `GreaterThan` / `GreaterThanOrEqual` / `LessThan` / `LessThanOrEqual` | On scalars: value compare. On **collection** navigations: compare against **collection count** |\n| `Contains` / `NotContains` / `StartsWith` / `EndsWith` / negations | String methods when the target type supports them |\n| `In` / `NotIn` | Value may be a list or CSV string |\n| `Regex` / `NotRegex` | String regex; trivial patterns like `.*` short-circuit to `true` |\n| `Fuzzy` / `NotFuzzy` | Trigram Jaccard (`FuzzyMatch.Similarity`); optional `Threshold` (default `0.3`). Postgres emits `similarity()` via `Lyo.Query.Postgres` |\n\n**Dotted paths**\n\n- Scalar: `Status`, `Address.City`\n- Into collection: `Lines.Quantity` → `lines.Any(e => e.Quantity …)`\n- Collection count: path metadata `IsCountPath` builds `Enumerable.Count` then compares\n\n**Group optimization:** within an AND/OR group, multiple `Contains` leaves on the same string field may be coalesced into a single case-insensitive `Regex` alternation before expression build."
     },
     {
       "type": "markdown",
@@ -231,14 +237,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
@@ -272,6 +270,14 @@
     },
     {
       "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -421,6 +427,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

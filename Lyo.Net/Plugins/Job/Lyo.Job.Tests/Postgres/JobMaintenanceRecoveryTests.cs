@@ -35,7 +35,7 @@ public class JobMaintenanceRecoveryTests
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
         await InvokeMaintenanceAsync();
         await using var db = await CreateDbContextAsync();
-        var run = await db.JobRuns.AsNoTracking().SingleAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
+        var run = await db.JobRuns.AsNoTracking().SingleAsync(r => r.Id == runId, TestCt);
         Assert.Equal(JobState.Finished, run.State);
         Assert.Equal(JobRunResultEnum.Timeout, run.Result);
 
@@ -59,7 +59,7 @@ public class JobMaintenanceRecoveryTests
 
         // Redispatch bumps UpdatedTimestamp so the run is retried once per threshold window, not every tick.
         await using var db = await CreateDbContextAsync();
-        var run = await db.JobRuns.AsNoTracking().SingleAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
+        var run = await db.JobRuns.AsNoTracking().SingleAsync(r => r.Id == runId, TestCt);
         Assert.True(run.UpdatedTimestamp > DateTime.UtcNow.AddMinutes(-5));
     }
 
@@ -111,25 +111,25 @@ public class JobMaintenanceRecoveryTests
                     Enabled = true
                 });
 
-            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await db.SaveChangesAsync(TestCt);
         }
 
         DateTime created;
         await using (var db = await CreateDbContextAsync()) {
-            var def = await db.JobDefinitions.AsNoTracking().SingleAsync(d => d.Id == definitionId, TestContext.Current.CancellationToken);
+            var def = await db.JobDefinitions.AsNoTracking().SingleAsync(d => d.Id == definitionId, TestCt);
             Assert.NotEqual(default, def.CreatedTimestamp);
             Assert.Null(def.UpdatedTimestamp);
             created = def.CreatedTimestamp;
         }
 
         await using (var db = await CreateDbContextAsync()) {
-            var def = await db.JobDefinitions.SingleAsync(d => d.Id == definitionId, TestContext.Current.CancellationToken);
+            var def = await db.JobDefinitions.SingleAsync(d => d.Id == definitionId, TestCt);
             def.Description = "modified";
-            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await db.SaveChangesAsync(TestCt);
         }
 
         await using (var verify = await CreateDbContextAsync()) {
-            var def = await verify.JobDefinitions.AsNoTracking().SingleAsync(d => d.Id == definitionId, TestContext.Current.CancellationToken);
+            var def = await verify.JobDefinitions.AsNoTracking().SingleAsync(d => d.Id == definitionId, TestCt);
             Assert.NotNull(def.UpdatedTimestamp); // before the fix, only sync SaveChanges() stamped this
             Assert.Equal(created, def.CreatedTimestamp);
         }
@@ -150,7 +150,7 @@ public class JobMaintenanceRecoveryTests
         configure?.Invoke(definition);
         await using var db = await CreateDbContextAsync();
         db.JobDefinitions.Add(definition);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return id;
     }
 
@@ -162,13 +162,12 @@ public class JobMaintenanceRecoveryTests
             State = state,
             CreatedBy = "test",
             CreatedTimestamp = DateTime.UtcNow,
-            AllowTriggers = false
         };
 
         configure?.Invoke(run);
         await using var db = await CreateDbContextAsync();
         db.JobRuns.Add(run);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return run.Id;
     }
 
@@ -179,13 +178,13 @@ public class JobMaintenanceRecoveryTests
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<JobMaintenanceService>>();
         var maintenance = new JobMaintenanceService(factory, logger, _fixture.FakePublisher, options);
         var method = typeof(JobMaintenanceService).GetMethod("RunMaintenanceAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        await (Task)method.Invoke(maintenance, [TestContext.Current.CancellationToken])!;
+        await (Task)method.Invoke(maintenance, [TestCt])!;
     }
 
     private async Task<JobContext> CreateDbContextAsync()
     {
         using var scope = _fixture.ServiceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        return await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        return await factory.CreateDbContextAsync(TestCt);
     }
 }

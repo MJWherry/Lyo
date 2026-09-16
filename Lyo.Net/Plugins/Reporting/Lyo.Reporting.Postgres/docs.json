@@ -230,6 +230,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Lyo.Api.Models",
       "kind": "lyo",
       "tags": [
@@ -247,14 +256,6 @@
     },
     {
       "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -366,6 +367,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
@@ -391,6 +400,14 @@
     },
     {
       "name": "Lyo.Query.Evaluation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -558,15 +575,6 @@
     },
     {
       "name": "Microsoft.Extensions.Configuration",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

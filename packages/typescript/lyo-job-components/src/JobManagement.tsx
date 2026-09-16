@@ -4,7 +4,8 @@ import {useEffect, useMemo, useState} from "react";
 import type {AsyncApiClient} from "lyo-api-client";
 import type {AsyncJobApiClient} from "lyo-job-api-client";
 import {createAsyncJobApiClient} from "lyo-job-api-client";
-import {LyoAlert, LyoCard, LyoProgress, LyoTab, LyoTabs, useLyoSnackbar} from "lyo-web-components";
+import {LyoAlert, LyoCard, LyoProgress, LyoStack, LyoTab, LyoTabs, useLyoSnackbar} from "lyo-web-components";
+import {statisticSeries} from "./jobEditors.js";
 import {
     JobDefinitionGrid,
     JobRunGrid,
@@ -35,6 +36,8 @@ export type JobManagementProps = {
     initialTab?: JobManagementTab | string;
     definitionId?: string | null;
     runId?: string | null;
+    scheduleId?: string | null;
+    workflowId?: string | null;
     createdBy?: string;
 };
 
@@ -80,10 +83,21 @@ export function JobStats({
     }
     if (loading) return <LyoProgress />;
     if (error) return <LyoAlert severity="error">{error}</LyoAlert>;
+    const rows = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+    const series = statisticSeries(rows);
+    const max = Math.max(1, ...series.map((item) => item.count));
     return (
         <LyoCard sx={{p: 2}}>
             <h3>Statistics</h3>
-            <pre style={{whiteSpace: "pre-wrap", fontSize: 12}}>{JSON.stringify(data, null, 2)}</pre>
+            <LyoStack spacing={1}>
+                {series.map((item) => (
+                    <LyoStack key={item.name} direction="row" spacing={1} alignItems="center">
+                        <span style={{width: 140}}>{item.name}</span>
+                        <span style={{display: "inline-block", height: 12, width: `${(item.count / max) * 240}px`, background: "currentColor"}} />
+                        <span>{item.count}</span>
+                    </LyoStack>
+                ))}
+            </LyoStack>
         </LyoCard>
     );
 }
@@ -97,6 +111,8 @@ export function JobManagement({
     initialTab,
     definitionId,
     runId,
+    scheduleId,
+    workflowId,
     createdBy = "ui",
 }: JobManagementProps) {
     const jobs = useMemo(
@@ -104,7 +120,7 @@ export function JobManagement({
         [apiClient, jobsProp, routePrefix]
     );
     const snackbar = useLyoSnackbar();
-    const [tab, setTab] = useState(() => resolveTabIndex(initialTab, definitionId, runId));
+    const [tab, setTab] = useState(() => resolveTabIndex(initialTab, definitionId, runId, scheduleId, workflowId));
     const [runsDefinitionId, setRunsDefinitionId] = useState<string | null>(definitionId ?? null);
     const [runsDefinitionName, setRunsDefinitionName] = useState<string | null>(null);
     const [openDef, setOpenDef] = useState<string | null>(null);
@@ -114,11 +130,15 @@ export function JobManagement({
         if (runId) {
             setOpenRun(runId);
             setTab(3);
+        } else if (scheduleId) {
+            setTab(2);
+        } else if (workflowId) {
+            setTab(5);
         } else if (definitionId) {
             setOpenDef(definitionId);
             setTab(1);
         }
-    }, [definitionId, runId]);
+    }, [definitionId, runId, scheduleId, workflowId]);
 
     return (
         <div className="lyo-job-management">
@@ -148,7 +168,9 @@ export function JobManagement({
                         }}
                     />
                 ) : null}
-                {tab === 2 ? <JobScheduleGrid apiClient={apiClient} routePrefix={routePrefix} /> : null}
+                {tab === 2 ? (
+                    <JobScheduleGrid apiClient={apiClient} jobs={jobs} routePrefix={routePrefix} createdBy={createdBy} />
+                ) : null}
                 {tab === 3 ? (
                     <JobRunGrid
                         apiClient={apiClient}
@@ -164,16 +186,26 @@ export function JobManagement({
                     />
                 ) : null}
                 {tab === 4 ? <JobWorkerInstanceGrid apiClient={apiClient} routePrefix={routePrefix} /> : null}
-                {tab === 5 ? <JobWorkflowGrid apiClient={apiClient} routePrefix={routePrefix} /> : null}
+                {tab === 5 ? (
+                    <JobWorkflowGrid apiClient={apiClient} jobs={jobs} routePrefix={routePrefix} initialWorkflowId={workflowId} />
+                ) : null}
             </div>
-            <JobDefinitionView open={Boolean(openDef)} onClose={() => setOpenDef(null)} jobs={jobs} definitionId={openDef} />
+            <JobDefinitionView open={Boolean(openDef)} onClose={() => setOpenDef(null)} jobs={jobs} definitionId={openDef} apiClient={apiClient} />
             <JobRunDetailView open={Boolean(openRun)} onClose={() => setOpenRun(null)} jobs={jobs} runId={openRun} />
         </div>
     );
 }
 
-function resolveTabIndex(initialTab?: string, definitionId?: string | null, runId?: string | null): number {
+function resolveTabIndex(
+    initialTab?: string,
+    definitionId?: string | null,
+    runId?: string | null,
+    scheduleId?: string | null,
+    workflowId?: string | null
+): number {
     if (runId) return 3;
+    if (scheduleId) return 2;
+    if (workflowId) return 5;
     if (definitionId) return 1;
     const key = (initialTab ?? "").trim().toLowerCase() as JobManagementTab;
     const idx = TAB_INDEX.indexOf(key);

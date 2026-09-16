@@ -29,4 +29,7 @@ public interface INoteStore
 
     /// <summary>Removes every notes for an entity.</summary>
     Task DeleteForEntityAsync(EntityRef forEntity, Guid? tenantId = null, CancellationToken ct = default);
+
+    /// <summary>Notes whose body matches <paramref name="term" />. Notes that do not match are omitted.</summary>
+    Task<IReadOnlyList<NoteRecord>> SearchAsync(string term, Guid? tenantId = null, CancellationToken ct = default);
 }

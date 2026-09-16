@@ -37,6 +37,12 @@
             <MudTabPanel Text="Audit">
                 <AuthEventGrid ApiClient="ResolvedApiClient" BaseRoute="@BaseRoute"/>
             </MudTabPanel>
+            <MudTabPanel Text="Grants">
+                <MudStack Spacing="3">
+                    <GrantPanel AllowEdit="true"/>
+                    <GrantCheckForm/>
+                </MudStack>
+            </MudTabPanel>
         </MudTabs>
     </MudStack>
 </MudContainer>

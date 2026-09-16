@@ -43,6 +43,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)

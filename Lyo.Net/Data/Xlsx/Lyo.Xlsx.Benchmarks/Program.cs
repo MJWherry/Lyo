@@ -3,8 +3,9 @@ using Lyo.Benchmark;
 [assembly:
     BenchmarkReport(
         "xlsx", "XLSX",
-        Description = "XLSX write (streaming OpenXML), read (ExcelDataReader), convert, split, and merge paths for Lyo.Xlsx over a flat 7-column SampleRecord. " +
-            "Split benchmarks cover row chunks and per-worksheet outputs; merge benchmarks cover PreserveSheets and ConcatenateRows. Row counts are smaller than CSV because XLSX is markedly heavier per row. RowCount is the number of " +
-            "records; the column set and types are captured in each class's data shape.")]
+        Description = "XLSX write (streaming OpenXML), read (ExcelDataReader), nested, convert, split, and merge paths for Lyo.Xlsx over a flat 7-column SampleRecord. " +
+            "Write covers bytes, stream, file, async, selected columns, multi-sheet, DataTable, and a dictionary source. Read covers dictionary and DataTable parse from bytes, stream, file, and async. " +
+            "NestedRecord writes nested members as text. Convert covers CSV in UTF-8, UTF-16, and UTF-32 plus HTML. " +
+            "Split covers row chunks and per-worksheet outputs; merge covers PreserveSheets and ConcatenateRows. RowCount is the number of records.")]
 
 BenchmarkEntry.Run(args);

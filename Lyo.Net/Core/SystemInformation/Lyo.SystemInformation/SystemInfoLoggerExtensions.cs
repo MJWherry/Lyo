@@ -28,7 +28,7 @@ public static class SystemInfoLoggerExtensions
             logger.LogEnvironmentInfo(info.Environment, level);
         }
 
-        /// <summary>Writes a hardware summary line plus one line per drive at <paramref name="level" />.</summary>
+        /// <summary>Writes a hardware summary line plus one line per drive, monitor, audio device, printer, and power-policy facts at <paramref name="level" />.</summary>
         /// <param name="hardware">The hardware facts to write.</param>
         /// <param name="level">The level used for every entry.</param>
         public void LogHardwareInfo(HardwareInfo hardware, LogLevel level)
@@ -52,6 +52,26 @@ public static class SystemInfoLoggerExtensions
                 logger.Log(
                     level, "Monitor {Connector} ({ManufacturerId}, {CurrentResolution}): {MonitorModel}", monitor.Connector, monitor.ManufacturerId ?? "unknown",
                     monitor.CurrentResolution ?? "unknown", monitor.Model ?? "Unknown model");
+            }
+
+            foreach (var audio in hardware.AudioDevices) {
+                logger.Log(
+                    level, "Audio {AudioName} ({AudioKind}, {FormFactor}, default {IsDefault}): {AudioDescription}", audio.Name, audio.Kind, audio.FormFactor ?? "unknown",
+                    audio.IsDefault, audio.Description ?? "unknown");
+            }
+
+            foreach (var printer in hardware.Printers) {
+                logger.Log(
+                    level, "Printer {PrinterName} (driver {PrinterDriver}, port {PrinterPort}, default {IsDefault}): {PrinterStatus}", printer.Name, printer.Driver ?? "unknown",
+                    printer.Port ?? "unknown", printer.IsDefault, printer.Status ?? "ready");
+            }
+
+            var power = hardware.PowerPolicy;
+            if (power.Profile is not null || power.CpuGovernor is not null || power.EnergyPerformancePreference is not null || power.SchemeId is not null
+                || power.OnAcPower is not null) {
+                logger.Log(
+                    level, "Power: {PowerProfile} | governor {CpuGovernor} | EPP {EnergyPerformancePreference} | scheme {PowerSchemeId} | AC {OnAcPower}",
+                    power.Profile, power.CpuGovernor, power.EnergyPerformancePreference, power.SchemeId, power.OnAcPower);
             }
         }
 

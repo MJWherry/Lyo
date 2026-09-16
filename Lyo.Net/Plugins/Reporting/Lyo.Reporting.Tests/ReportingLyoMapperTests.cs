@@ -6,6 +6,7 @@ using Lyo.Reporting.Models.Response;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Lyo.Reporting.Postgres.Mapping;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 
@@ -35,12 +36,12 @@ public sealed class ReportingLyoMapperTests
         };
 
         var entity = _mapper.Map<ReportDefinition>(req);
-        entity.Id = Guid.NewGuid();
+        entity.Id = LyoGuid.CreateV7();
         entity.CreatedTimestamp = DateTime.UtcNow;
         entity.UpdatedTimestamp = entity.CreatedTimestamp;
         entity.CreatedBy = "tester";
         foreach (var p in entity.Parameters) {
-            p.Id = Guid.NewGuid();
+            p.Id = LyoGuid.CreateV7();
             p.ReportDefinitionId = entity.Id;
             p.CreatedTimestamp = entity.CreatedTimestamp;
         }
@@ -63,16 +64,16 @@ public sealed class ReportingLyoMapperTests
             Format = ReportFormat.Csv,
             Status = ReportGenerationStatus.Succeeded,
             CreatedBy = "worker",
-            Parameters = [new("ClientId", LyoTypeInfo.Guid, LyoTypeInfo.Guid.ToJson(Guid.NewGuid()))]
+            Parameters = [new("ClientId", LyoTypeInfo.Guid, LyoTypeInfo.Guid.ToJson(LyoGuid.CreateV7()))]
         };
 
         var entity = _mapper.Map<ReportGeneration>(req);
         Assert.Equal(nameof(ReportFormat.Csv), entity.Format);
         Assert.Single(entity.Parameters);
-        entity.Id = Guid.NewGuid();
+        entity.Id = LyoGuid.CreateV7();
         entity.CreatedTimestamp = DateTime.UtcNow;
         foreach (var p in entity.Parameters) {
-            p.Id = Guid.NewGuid();
+            p.Id = LyoGuid.CreateV7();
             p.ReportGenerationId = entity.Id;
         }
 

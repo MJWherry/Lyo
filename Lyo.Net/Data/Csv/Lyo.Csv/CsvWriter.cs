@@ -1,31 +1,53 @@
 using System.Globalization;
 using System.Reflection;
+using Lyo.Common.Core;
+using Lyo.Common.Core.Enums;
 using Lyo.Csv.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
-#if NETSTANDARD2_0
-using Lyo.Common.Core;
-#endif
 
 namespace Lyo.Csv;
 
 internal sealed class CsvWriter : ICsvWriter
 {
     private const int ExportBytesPerRowGuess = 64;
-    private readonly Func<CsvOptions> _getOptions;
+    private readonly CallSnapshot<CsvOptions> _calls;
     private readonly ILogger _logger;
 
-    private CsvOptions Config => _getOptions();
+    private CsvOptions Config => _calls.Current;
 
     internal CsvWriter(Func<CsvOptions> getOptions, ILogger logger)
     {
-        _getOptions = getOptions;
+        _calls = new(getOptions, static options => options.Clone());
         _logger = logger;
+    }
+
+    private IDisposable BeginCall() => _calls.Enter();
+
+    private static CsvTypeBinder.ColumnMap[] Columns<T>(CsvOptions options) => CsvTypeBinder.OrderColumns(CsvTypeBinder.GetMap<T>(), options.Order, options.OrderNames);
+
+    private int[] DataTableColumnOrder(DataTable.Models.DataTable dataTable, int maxCol)
+    {
+        var indexes = new int[maxCol];
+        var names = new string[maxCol];
+        for (var i = 0; i < maxCol; i++)
+            indexes[i] = i;
+
+        foreach (var header in dataTable.Headers) {
+            if (header.Key >= 0 && header.Key < maxCol)
+                names[header.Key] = header.Value.DisplayValue ?? "";
+        }
+
+        if (Config.Order == MemberOrder.Defined || maxCol <= 1)
+            return indexes;
+
+        return MemberOrderSort.Sort(indexes, index => names[index] ?? "", static _ => (int?)null, Config.Order, Config.OrderNames).ToArray();
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsv``1(System.Collections.Generic.IEnumerable{``0},System.String)' />
     public void ExportToCsv<T>(IEnumerable<T> data, string csvFilePath)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting {ExportType} to {ExportCsvPath}", typeof(T).FullName, csvFilePath);
@@ -36,6 +58,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStream``1(System.Collections.Generic.IEnumerable{``0},System.IO.Stream)' />
     public void ExportToCsvStream<T>(IEnumerable<T> data, Stream csvStream)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
@@ -48,19 +71,20 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsv``1(System.Collections.Generic.IEnumerable{``0},System.IO.TextWriter)' />
     public void ExportToCsv<T>(IEnumerable<T> data, TextWriter writer)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(writer);
         _logger.LogDebug("Exporting {ExportType} to csv writer", typeof(T).FullName);
         var options = Config;
-        var map = CsvTypeBinder.GetMap<T>();
+        var columns = Columns<T>(options);
         using var csv = new CsvTextWriter(writer, options);
         if (options.HasHeaderRecord) {
-            csv.WriteFields(CsvTypeBinder.GetHeaders(map));
+            csv.WriteFields(CsvTypeBinder.HeadersFor(columns));
             csv.NextRecord();
         }
 
         foreach (var item in data) {
-            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
+            CsvTypeBinder.WriteColumns(item, columns, csv, options.Culture);
             csv.NextRecord();
         }
 
@@ -70,6 +94,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvString``1(System.Collections.Generic.IEnumerable{``0})' />
     public string ExportToCsvString<T>(IEnumerable<T> data)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {ExportType} to csv string", typeof(T).FullName);
         using var writer = new StringWriter();
@@ -80,6 +105,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytes``1(System.Collections.Generic.IEnumerable{``0})' />
     public byte[] ExportToCsvBytes<T>(IEnumerable<T> data)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {ExportType} to csv bytes", typeof(T).FullName);
         using var memoryStream = CreateExportBuffer(data);
@@ -91,6 +117,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsv``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String)' />
     public void ExportToCsv<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, string csvFilePath)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting {ExportType} to {ExportCsvPath} with {PropertyCount} selected properties", typeof(T).FullName, csvFilePath, selectedProperties.Count);
@@ -102,6 +129,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStream``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.Stream)' />
     public void ExportToCsvStream<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, Stream csvStream)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         ArgumentHelpers.ThrowIfNull(csvStream);
@@ -116,6 +144,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsv``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.TextWriter)' />
     public void ExportToCsv<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, TextWriter writer)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         _logger.LogDebug("Exporting {ExportType} to csv writer with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         var options = Config;
@@ -138,6 +167,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvString``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo})' />
     public string ExportToCsvString<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         _logger.LogDebug("Exporting {ExportType} to csv string with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         using var writer = new StringWriter();
@@ -149,6 +179,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytes``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo})' />
     public byte[] ExportToCsvBytes<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         _logger.LogDebug("Exporting {ExportType} to csv bytes with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         using var memoryStream = new MemoryStream();
@@ -160,6 +191,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean,System.Boolean)' />
     public void ExportToCsvFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string csvFilePath, bool hasHeaderRow = true, bool hasFooterRow = false)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting dictionary to {ExportCsvPath}", csvFilePath);
@@ -175,6 +207,7 @@ internal sealed class CsvWriter : ICsvWriter
         bool hasHeaderRow = true,
         bool hasFooterRow = false)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
@@ -188,6 +221,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Boolean)' />
     public string ExportToCsvStringFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         using var writer = new StringWriter();
         WriteDictionaryToCsv(data, writer, hasHeaderRow, hasFooterRow);
@@ -198,6 +232,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytesFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Boolean)' />
     public byte[] ExportToCsvBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool hasHeaderRow = true, bool hasFooterRow = false)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         using var ms = new MemoryStream();
         ExportToCsvStreamFromDictionary(data, ms, hasHeaderRow, hasFooterRow);
@@ -207,6 +242,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvFromDataTable(Lyo.DataTable.Models.DataTable,System.String)' />
     public void ExportToCsvFromDataTable(DataTable.Models.DataTable dataTable, string csvFilePath)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting tabular to {ExportCsvPath}", csvFilePath);
@@ -217,6 +253,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamFromDataTable(Lyo.DataTable.Models.DataTable,System.IO.Stream)' />
     public void ExportToCsvStreamFromDataTable(DataTable.Models.DataTable dataTable, Stream csvStream)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
@@ -229,6 +266,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringFromDataTable(Lyo.DataTable.Models.DataTable)' />
     public string ExportToCsvStringFromDataTable(DataTable.Models.DataTable dataTable)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(dataTable);
         using var writer = new StringWriter();
         WriteDataTableToCsv(dataTable, writer);
@@ -238,6 +276,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytesFromDataTable(Lyo.DataTable.Models.DataTable)' />
     public byte[] ExportToCsvBytesFromDataTable(DataTable.Models.DataTable dataTable)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(dataTable);
         using var ms = new MemoryStream();
         ExportToCsvStreamFromDataTable(dataTable, ms);
@@ -296,17 +335,18 @@ internal sealed class CsvWriter : ICsvWriter
     {
         var options = Config;
         var maxCol = dataTable.MaxColumn >= 0 ? dataTable.MaxColumn + 1 : 0;
+        var columns = DataTableColumnOrder(dataTable, maxCol);
         var orderedHeaders = dataTable.Headers.OrderBy(kv => kv.Key).ToList();
         using var csv = new CsvTextWriter(writer, options);
         for (var c = 0; c < maxCol; c++) {
-            var header = orderedHeaders.FirstOrDefault(h => h.Key == c).Value;
+            var header = orderedHeaders.FirstOrDefault(h => h.Key == columns[c]).Value;
             csv.WriteField(header?.DisplayValue ?? "");
         }
 
         csv.NextRecord();
         foreach (var row in dataTable.Rows) {
             for (var c = 0; c < maxCol; c++) {
-                var cell = row.Cells.TryGetValue(c, out var cellVal) ? cellVal : null;
+                var cell = row.Cells.TryGetValue(columns[c], out var cellVal) ? cellVal : null;
                 csv.WriteField(cell?.DisplayValue ?? "");
             }
 
@@ -316,7 +356,7 @@ internal sealed class CsvWriter : ICsvWriter
         if (dataTable.Footer.Count > 0) {
             var orderedFooters = dataTable.Footer.OrderBy(kv => kv.Key).ToList();
             for (var c = 0; c < maxCol; c++) {
-                var footer = orderedFooters.FirstOrDefault(f => f.Key == c).Value;
+                var footer = orderedFooters.FirstOrDefault(f => f.Key == columns[c]).Value;
                 csv.WriteField(footer?.DisplayValue ?? "");
             }
 
@@ -358,6 +398,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.String,System.Threading.CancellationToken)' />
     public async Task ExportToCsvAsync<T>(IEnumerable<T> data, string csvFilePath, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting {ExportType} to {ExportCsvPath}", typeof(T).FullName, csvFilePath);
         await using var writer = new StreamWriter(csvFilePath, false, Config.Encoding);
@@ -367,6 +408,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamAsync``1(System.Collections.Generic.IEnumerable{``0},System.IO.Stream,System.Threading.CancellationToken)' />
     public async Task ExportToCsvStreamAsync<T>(IEnumerable<T> data, Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
@@ -379,20 +421,21 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.IO.TextWriter,System.Threading.CancellationToken)' />
     public async Task ExportToCsvAsync<T>(IEnumerable<T> data, TextWriter writer, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(writer);
         _logger.LogDebug("Exporting {ExportType} to csv writer", typeof(T).FullName);
         var options = Config;
-        var map = CsvTypeBinder.GetMap<T>();
+        var columns = Columns<T>(options);
         await using var csv = new CsvTextWriter(writer, options);
         if (options.HasHeaderRecord) {
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.WriteFieldsAsync(CsvTypeBinder.HeadersFor(columns), ct).ConfigureAwait(false);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         foreach (var item in data) {
             ct.ThrowIfCancellationRequested();
-            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
+            CsvTypeBinder.WriteColumns(item, columns, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
@@ -402,6 +445,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <summary>Streams <paramref name="data" /> to <paramref name="csvFilePath" /> without buffering the entire sequence.</summary>
     public async Task ExportToCsvAsync<T>(IAsyncEnumerable<T> data, string csvFilePath, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting {ExportType} to {ExportCsvPath}", typeof(T).FullName, csvFilePath);
@@ -412,6 +456,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <summary>Streams <paramref name="data" /> to <paramref name="csvStream" /> without buffering the entire sequence.</summary>
     public async Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
@@ -424,19 +469,20 @@ internal sealed class CsvWriter : ICsvWriter
     /// <summary>Streams <paramref name="data" /> to <paramref name="writer" /> without buffering the entire sequence.</summary>
     public async Task ExportToCsvAsync<T>(IAsyncEnumerable<T> data, TextWriter writer, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(writer);
         _logger.LogDebug("Exporting {ExportType} to csv writer", typeof(T).FullName);
         var options = Config;
-        var map = CsvTypeBinder.GetMap<T>();
+        var columns = Columns<T>(options);
         await using var csv = new CsvTextWriter(writer, options);
         if (options.HasHeaderRecord) {
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.WriteFieldsAsync(CsvTypeBinder.HeadersFor(columns), ct).ConfigureAwait(false);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         await foreach (var item in data.WithCancellation(ct).ConfigureAwait(false)) {
-            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
+            CsvTypeBinder.WriteColumns(item, columns, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
@@ -446,6 +492,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringAsync``1(System.Collections.Generic.IEnumerable{``0},System.Threading.CancellationToken)' />
     public async Task<string> ExportToCsvStringAsync<T>(IEnumerable<T> data, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {ExportType} to csv string", typeof(T).FullName);
         await using var writer = new StringWriter();
@@ -456,6 +503,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytesAsync``1(System.Collections.Generic.IEnumerable{``0},System.Threading.CancellationToken)' />
     public async Task<byte[]> ExportToCsvBytesAsync<T>(IEnumerable<T> data, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {ExportType} to csv bytes", typeof(T).FullName);
         await using var memoryStream = CreateExportBuffer(data);
@@ -467,6 +515,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String,System.Threading.CancellationToken)' />
     public async Task ExportToCsvAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, string csvFilePath, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting {ExportType} to {ExportCsvPath} with {PropertyCount} selected properties", typeof(T).FullName, csvFilePath, selectedProperties.Count);
@@ -483,6 +532,7 @@ internal sealed class CsvWriter : ICsvWriter
         bool hasFooterRow = false,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting dictionary to {ExportCsvPath}", csvFilePath);
@@ -499,6 +549,7 @@ internal sealed class CsvWriter : ICsvWriter
         bool hasFooterRow = false,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
@@ -516,6 +567,7 @@ internal sealed class CsvWriter : ICsvWriter
         bool hasFooterRow = false,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         await using var writer = new StringWriter();
         await WriteDictionaryToCsvAsync(data, writer, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
@@ -530,6 +582,7 @@ internal sealed class CsvWriter : ICsvWriter
         bool hasFooterRow = false,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         await using var ms = new MemoryStream();
         await ExportToCsvStreamFromDictionaryAsync(data, ms, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
@@ -539,6 +592,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvFromDataTableAsync(Lyo.DataTable.Models.DataTable,System.String,System.Threading.CancellationToken)' />
     public async Task ExportToCsvFromDataTableAsync(DataTable.Models.DataTable dataTable, string csvFilePath, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         _logger.LogDebug("Exporting tabular to {ExportCsvPath}", csvFilePath);
@@ -549,6 +603,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamFromDataTableAsync(Lyo.DataTable.Models.DataTable,System.IO.Stream,System.Threading.CancellationToken)' />
     public async Task ExportToCsvStreamFromDataTableAsync(DataTable.Models.DataTable dataTable, Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
@@ -561,6 +616,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringFromDataTableAsync(Lyo.DataTable.Models.DataTable,System.Threading.CancellationToken)' />
     public async Task<string> ExportToCsvStringFromDataTableAsync(DataTable.Models.DataTable dataTable, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(dataTable);
         await using var writer = new StringWriter();
         await WriteDataTableToCsvAsync(dataTable, writer, ct).ConfigureAwait(false);
@@ -570,6 +626,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytesFromDataTableAsync(Lyo.DataTable.Models.DataTable,System.Threading.CancellationToken)' />
     public async Task<byte[]> ExportToCsvBytesFromDataTableAsync(DataTable.Models.DataTable dataTable, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(dataTable);
         await using var ms = new MemoryStream();
         await ExportToCsvStreamFromDataTableAsync(dataTable, ms, ct).ConfigureAwait(false);
@@ -634,10 +691,11 @@ internal sealed class CsvWriter : ICsvWriter
     {
         var options = Config;
         var maxCol = dataTable.MaxColumn >= 0 ? dataTable.MaxColumn + 1 : 0;
+        var columns = DataTableColumnOrder(dataTable, maxCol);
         var orderedHeaders = dataTable.Headers.OrderBy(kv => kv.Key).ToList();
         await using var csv = new CsvTextWriter(writer, options);
         for (var c = 0; c < maxCol; c++) {
-            var header = orderedHeaders.FirstOrDefault(h => h.Key == c).Value;
+            var header = orderedHeaders.FirstOrDefault(h => h.Key == columns[c]).Value;
             await csv.WriteFieldAsync(header?.DisplayValue ?? "", ct).ConfigureAwait(false);
         }
 
@@ -645,7 +703,7 @@ internal sealed class CsvWriter : ICsvWriter
         foreach (var row in dataTable.Rows) {
             ct.ThrowIfCancellationRequested();
             for (var c = 0; c < maxCol; c++) {
-                var cell = row.Cells!.GetValueOrDefault(c, null);
+                var cell = row.Cells!.GetValueOrDefault(columns[c], null);
                 await csv.WriteFieldAsync(cell?.DisplayValue ?? "", ct).ConfigureAwait(false);
             }
 
@@ -655,7 +713,7 @@ internal sealed class CsvWriter : ICsvWriter
         if (dataTable.Footer.Count > 0) {
             var orderedFooters = dataTable.Footer.OrderBy(kv => kv.Key).ToList();
             for (var c = 0; c < maxCol; c++) {
-                var footer = orderedFooters.FirstOrDefault(f => f.Key == c).Value;
+                var footer = orderedFooters.FirstOrDefault(f => f.Key == columns[c]).Value;
                 await csv.WriteFieldAsync(footer?.DisplayValue ?? "", ct).ConfigureAwait(false);
             }
 
@@ -669,6 +727,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.Stream,System.Threading.CancellationToken)' />
     public async Task ExportToCsvStreamAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         ArgumentHelpers.ThrowIfNull(csvStream);
@@ -682,6 +741,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <summary>Asynchronously streams selected properties from <paramref name="data" /> without buffering the full sequence.</summary>
     public async Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         ArgumentHelpers.ThrowIfNull(csvStream);
@@ -709,6 +769,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.TextWriter,System.Threading.CancellationToken)' />
     public async Task ExportToCsvAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, TextWriter writer, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         _logger.LogDebug("Exporting {ExportType} to csv writer with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         var options = Config;
@@ -732,6 +793,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Reflection.PropertyInfo},System.IO.Stream,System.Threading.CancellationToken)' />
     public async Task ExportToCsvStreamAsync<T>(IEnumerable<T> data, IReadOnlyDictionary<string, PropertyInfo> columns, Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrEmpty(columns);
         ArgumentHelpers.ThrowIfNull(csvStream);
@@ -745,6 +807,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <summary>Asynchronously streams custom columns from <paramref name="data" /> without buffering the full sequence.</summary>
     public async Task ExportToCsvStreamAsync<T>(IAsyncEnumerable<T> data, IReadOnlyDictionary<string, PropertyInfo> columns, Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrEmpty(columns);
         ArgumentHelpers.ThrowIfNull(csvStream);
@@ -771,6 +834,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <summary>Asynchronously writes rows using custom column headers (property map) to <paramref name="writer" />.</summary>
     public async Task ExportToCsvAsync<T>(IEnumerable<T> data, IReadOnlyDictionary<string, PropertyInfo> columns, TextWriter writer, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(columns);
         _logger.LogDebug("Exporting {ExportType} to csv writer with {ColumnCount} custom columns", typeof(T).FullName, columns.Count);
         var options = Config;
@@ -798,6 +862,7 @@ internal sealed class CsvWriter : ICsvWriter
         Stream csvStream,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrEmpty(columnFormatters);
         ArgumentHelpers.ThrowIfNull(csvStream);
@@ -815,6 +880,7 @@ internal sealed class CsvWriter : ICsvWriter
         Stream csvStream,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrEmpty(columnFormatters);
         ArgumentHelpers.ThrowIfNull(csvStream);
@@ -842,6 +908,7 @@ internal sealed class CsvWriter : ICsvWriter
     /// <summary>Asynchronously writes rows using per-column formatters to <paramref name="writer" />.</summary>
     public async Task ExportToCsvAsync<T>(IEnumerable<T> data, IReadOnlyDictionary<string, Func<T, string>> columnFormatters, TextWriter writer, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(columnFormatters);
         _logger.LogDebug("Exporting {ExportType} to csv writer with {ColumnCount} formatter columns", typeof(T).FullName, columnFormatters.Count);
         var options = Config;
@@ -866,6 +933,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStringAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.Threading.CancellationToken)' />
     public async Task<string> ExportToCsvStringAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         _logger.LogDebug("Exporting {ExportType} to csv string with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         await using var writer = new StringWriter();
@@ -877,6 +945,7 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvBytesAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.Threading.CancellationToken)' />
     public async Task<byte[]> ExportToCsvBytesAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrEmpty(selectedProperties);
         _logger.LogDebug("Exporting {ExportType} to csv bytes with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         await using var memoryStream = new MemoryStream();
@@ -888,22 +957,23 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvWithProgressAsync``1(System.Collections.Generic.IEnumerable{``0},System.String,System.IProgress{Lyo.Csv.Models.CsvProgress},System.Threading.CancellationToken)' />
     public async Task ExportToCsvWithProgressAsync<T>(IEnumerable<T> data, string csvFilePath, IProgress<CsvProgress>? progress, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         var dataList = data.ToList();
         var totalRows = dataList.Count;
         var options = Config;
-        var map = CsvTypeBinder.GetMap<T>();
+        var columns = Columns<T>(options);
         await using var writer = new StreamWriter(csvFilePath, false, options.Encoding);
         await using var csv = new CsvTextWriter(writer, options);
         if (options.HasHeaderRecord) {
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.WriteFieldsAsync(CsvTypeBinder.HeadersFor(columns), ct).ConfigureAwait(false);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         long rowsProcessed = 0;
         foreach (var item in dataList) {
             ct.ThrowIfCancellationRequested();
-            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
+            CsvTypeBinder.WriteColumns(item, columns, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
             rowsProcessed++;
             if ((progress != null && rowsProcessed % 100 == 0) || rowsProcessed == totalRows)
@@ -917,24 +987,25 @@ internal sealed class CsvWriter : ICsvWriter
     ///     cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsvStreamWithProgressAsync``1(System.Collections.Generic.IEnumerable{``0},System.IO.Stream,System.IProgress{Lyo.Csv.Models.CsvProgress},System.Threading.CancellationToken)' />
     public async Task ExportToCsvStreamWithProgressAsync<T>(IEnumerable<T> data, Stream csvStream, IProgress<CsvProgress>? progress, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotWritable(csvStream, $"Stream '{nameof(csvStream)}' must be writable.");
         var dataList = data.ToList();
         var totalRows = dataList.Count;
         var options = Config;
-        var map = CsvTypeBinder.GetMap<T>();
+        var columns = Columns<T>(options);
         await using var writer = new StreamWriter(csvStream, options.Encoding, 8192, true);
         await using var csv = new CsvTextWriter(writer, options);
         if (options.HasHeaderRecord) {
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.WriteFieldsAsync(CsvTypeBinder.HeadersFor(columns), ct).ConfigureAwait(false);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         long rowsProcessed = 0;
         foreach (var item in dataList) {
             ct.ThrowIfCancellationRequested();
-            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
+            CsvTypeBinder.WriteColumns(item, columns, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
             rowsProcessed++;
             if (progress != null && (rowsProcessed % 100 == 0 || rowsProcessed == totalRows))
@@ -948,22 +1019,23 @@ internal sealed class CsvWriter : ICsvWriter
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.AppendToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.String,System.Boolean,System.Threading.CancellationToken)' />
     public async Task AppendToCsvAsync<T>(IEnumerable<T> data, string csvFilePath, bool includeHeaderIfMissing = false, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         var fileExists = File.Exists(csvFilePath);
         var fileIsEmpty = fileExists && new FileInfo(csvFilePath).Length == 0;
         var options = Config;
-        var map = CsvTypeBinder.GetMap<T>();
+        var columns = Columns<T>(options);
         await using var stream = new FileStream(csvFilePath, FileMode.Append, FileAccess.Write, FileShare.Read);
         await using var writer = new StreamWriter(stream, options.Encoding);
         await using var csv = new CsvTextWriter(writer, options);
         if ((!fileExists || fileIsEmpty) && includeHeaderIfMissing) {
-            await csv.WriteFieldsAsync(CsvTypeBinder.GetHeaders(map), ct).ConfigureAwait(false);
+            await csv.WriteFieldsAsync(CsvTypeBinder.HeadersFor(columns), ct).ConfigureAwait(false);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 
         foreach (var item in data) {
             ct.ThrowIfCancellationRequested();
-            CsvTypeBinder.WriteRecord(item, map, csv, options.Culture);
+            CsvTypeBinder.WriteColumns(item, columns, csv, options.Culture);
             await csv.NextRecordAsync(ct).ConfigureAwait(false);
         }
 

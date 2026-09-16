@@ -25,11 +25,12 @@ using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.AzureBlob;
 
 /// <summary><see cref="IFileStorageService" /> over Azure Blob Storage (package-level abstraction uses <c>Blob</c> naming).</summary>
-public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService, IFileStoragePhysical
+public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService, IFileStoragePhysical, IDirectUploadVerification
 {
     private readonly AzureBlobFileStorageOptions _blobOptions;
     private readonly BlobContainerClient _containerClient;
@@ -44,11 +45,12 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
         IMetrics? metrics = null,
         IFileOperationContextAccessor? operationContextAccessor = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
-        IFileContentPolicy? contentPolicy = null)
+        IFileContentPolicy? contentPolicy = null,
+        IFileTypeSniffer? fileTypeSniffer = null)
         : base(
             ArgumentHelpers.ThrowIfNullReturn(options), ArgumentHelpers.ThrowIfNullReturn(metadataService),
             (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<AzureBlobFileStorageService>(), compressionService, twoKeyEncryptionService, metrics,
-            operationContextAccessor, auditHandlers, contentPolicy)
+            operationContextAccessor, auditHandlers, contentPolicy, fileTypeSniffer)
     {
         _blobOptions = options;
         _containerClient = containerClient ?? new BlobContainerClient(options.ConnectionString, options.ContainerName);
@@ -110,7 +112,7 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
         if (srcBlobName == null)
             throw new FileNotFoundException($"Source blob missing for id {sourceFileId}.");
 
-        var destId = Guid.NewGuid();
+        var destId = LyoGuid.CreateV7();
         var destPrefixArg = NormalizePathPrefix(request?.PathPrefix ?? meta.PathPrefix);
         var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
         var destBlobName = GetBlobName(destId, suffix, destPrefixArg);
@@ -203,6 +205,11 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
         }
     }
 
+    /// <summary>
+    /// Presigned read, direct upload, copy, move, and physical listing are supported. An account that uses SSE-C still rejects a presigned read when that call runs.
+    /// </summary>
+    public override FileStorageCapabilities GetCapabilities() => new(true, true, true, true, true);
+
     /// <inheritdoc />
     public override async Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default)
     {
@@ -211,8 +218,8 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
             _blobOptions.UsesCustomerProvidedKey, "Direct upload presigned PUT is not compatible with SSE-C CustomerProvidedKey; remove it or disable direct uploads.");
 
         var normalized = NormalizePathPrefix(request.PathPrefix) ?? "";
-        var fileId = Guid.NewGuid();
-        await PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalized, ct).ConfigureAwait(false);
+        var fileId = LyoGuid.CreateV7();
+        await PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalized, ct, HashAlgorithm.Md5).ConfigureAwait(false);
         var blobName = GetBlobName(fileId, "", normalized);
         var expiry = request.UrlExpiration ?? TimeSpan.FromHours(1);
         ArgumentHelpers.ThrowIfNotInRange(expiry, TimeSpan.Zero, TimeSpan.FromDays(7));
@@ -242,6 +249,10 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
             if (!string.IsNullOrWhiteSpace(_blobOptions.EncryptionScope))
                 requiredHeaders["x-ms-encryption-scope"] = _blobOptions.EncryptionScope!;
 
+            // Blob storage rejects a Put Blob whose body does not match Content-MD5, so the declared digest is enforced at upload time.
+            if (request.ExpectedContentMd5 is { } md5)
+                requiredHeaders["Content-MD5"] = Convert.ToBase64String(md5);
+
             return new() {
                 FileId = fileId,
                 PresignedPutUrl = url.ToString(),
@@ -264,6 +275,32 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
     /// <inheritdoc />
     public override Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
         => FinalizePendingPlainDirectUploadCoreAsync(fileId, completeRequest, ct);
+
+    /// <remarks>
+    /// A single-shot Put Blob stores Content-MD5 even when the client did not send one. Blobs committed from staged blocks have none unless the client set
+    /// <c>x-ms-blob-content-md5</c>; those fall back to download-and-hash.
+    /// </remarks>
+    async Task<DirectUploadObjectAttributes?> IDirectUploadVerification.GetDirectUploadAttributesAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
+    {
+        BlobProperties properties;
+        try {
+            properties = (await GetBlobClient(fileId, "", pathPrefix).GetPropertiesAsync(cancellationToken: ct).ConfigureAwait(false)).Value;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404) {
+            return null;
+        }
+
+        return properties.ContentHash is { Length: 16 } md5 ? new(properties.ContentLength, md5, HashAlgorithm.Md5) : null;
+    }
+
+    async Task<byte[]> IDirectUploadVerification.ReadDirectUploadPrefixAsync(Guid fileId, string? pathPrefix, int maxBytes, CancellationToken ct)
+    {
+        var response = await GetBlobClient(fileId, "", pathPrefix)
+            .DownloadContentAsync(new BlobDownloadOptions { Range = new(0, maxBytes) }, ct)
+            .ConfigureAwait(false);
+
+        return response.Value.Content.ToArray();
+    }
 
     /// <remarks>
     /// <c>OpenWriteAsync(overwrite: true)</c> writes a zero-byte blob before returning the stream, so an empty save still leaves an object instead of metadata
@@ -374,6 +411,9 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
         }
     }
 
+    /// <inheritdoc />
+    public override bool SupportsPlainByteRange => true;
+
     protected override async Task<Stream?> ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
     {
         var blobName = await FindBlobNameAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
@@ -382,6 +422,29 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
 
         var blobClient = GetBlobClientWithEncryption(blobName);
         var response = await blobClient.DownloadStreamingAsync(cancellationToken: ct).ConfigureAwait(false);
+        return response.Value.Content;
+    }
+
+    /// <inheritdoc />
+    protected override async Task<Stream?> ReadPlainByteRangeAsync(FileStoreResult metadata, long startInclusive, long endInclusive, CancellationToken ct)
+    {
+        var suffix = InferTrailingSuffixAfterFileId(metadata.Id, metadata.SourceFileName);
+        var blobName = GetBlobName(metadata.Id, suffix, metadata.PathPrefix);
+        var length = endInclusive - startInclusive + 1;
+        var response = await GetBlobClientWithEncryption(blobName).DownloadStreamingAsync(new() { Range = new(startInclusive, length) }, ct).ConfigureAwait(false);
+        return response.Value.Content;
+    }
+
+    /// <inheritdoc />
+    protected override async Task<Stream?> ReadPlainByteRangeAsync(Guid fileId, string? pathPrefix, long startInclusive, long endInclusive, CancellationToken ct)
+    {
+        var blobName = await FindBlobNameAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
+        if (blobName == null)
+            return null;
+
+        var length = endInclusive - startInclusive + 1;
+        var blobClient = GetBlobClientWithEncryption(blobName);
+        var response = await blobClient.DownloadStreamingAsync(new() { Range = new(startInclusive, length) }, ct).ConfigureAwait(false);
         return response.Value.Content;
     }
 

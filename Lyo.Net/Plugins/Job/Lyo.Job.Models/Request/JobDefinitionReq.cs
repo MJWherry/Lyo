@@ -52,15 +52,6 @@ public sealed class JobDefinitionReq
     /// <summary>Minutes after a run is queued within which it must start, or SLA is breached. 0 means not configured.</summary>
     public int MustStartByMinutes { get; set; }
 
-    /// <summary>Whether an alert is emitted when a run fails.</summary>
-    public bool AlertOnFailure { get; set; }
-
-    /// <summary>Consecutive failures before an alert is emitted. 0 alerts on every failure when <see cref="AlertOnFailure" /> is true.</summary>
-    public int AlertAfterConsecutiveFailures { get; set; }
-
-    /// <summary>Optional webhook URL that receives POSTed alert payloads.</summary>
-    public string? AlertWebhookUrl { get; set; }
-
     /// <summary>Default blackout calendar id applied to each schedule unless a schedule sets its own.</summary>
     public Guid? JobBlackoutCalendarId { get; set; }
 
@@ -70,8 +61,6 @@ public sealed class JobDefinitionReq
     public List<JobParameterReq> CreateParameters { get; set; } = [];
 
     public List<JobScheduleReq> CreateSchedules { get; set; } = [];
-
-    public List<JobTriggerReq> CreateTriggers { get; set; } = [];
 
     public List<JobParallelRestrictionReq> CreateParallelRestrictions { get; set; } = [];
 
@@ -85,6 +74,6 @@ public sealed class JobDefinitionReq
     }
 
     public override string ToString()
-        => $"{Name}, {Description} (Enabled={Enabled}) Params(C={CreateParameters.Count}) " + $"Schedules(C={CreateSchedules.Count}) Triggers(C={CreateTriggers.Count}) " +
+        => $"{Name}, {Description} (Enabled={Enabled}) Params(C={CreateParameters.Count}) " + $"Schedules(C={CreateSchedules.Count}) " +
             $"Blackout(Id={JobBlackoutCalendarId}, Inline={CreateBlackoutCalendar != null})";
 }

@@ -1,5 +1,5 @@
 using Lyo.Http.Client;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models;
 using Lyo.Geolocation.Models.Coordinates;

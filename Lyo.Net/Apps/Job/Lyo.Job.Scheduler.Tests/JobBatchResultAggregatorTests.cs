@@ -2,6 +2,7 @@ using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
 using Constants = Lyo.Job.Models.Constants;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -51,14 +52,14 @@ public class JobBatchResultAggregatorTests
 
     private static JobRunRes Child(JobRunResult result, params (string Key, int Value)[] counters)
     {
-        var runId = Guid.NewGuid();
+        var runId = LyoGuid.CreateV7();
         return new() {
             Id = runId,
-            JobDefinitionId = Guid.NewGuid(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             State = JobState.Finished,
             Result = result,
             CreatedTimestamp = DateTime.UtcNow,
-            JobRunResults = counters.Select(c => new JobRunResultRes(Guid.NewGuid(), runId, c.Key, LyoTypeInfo.Int.FullName, c.Value.ToString())).ToList()
+            JobRunResults = counters.Select(c => new JobRunResultRes(LyoGuid.CreateV7(), runId, c.Key, LyoTypeInfo.Int.FullName, c.Value.ToString())).ToList()
         };
     }
 }

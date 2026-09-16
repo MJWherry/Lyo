@@ -1,6 +1,7 @@
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Microsoft.AspNetCore.Components;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Web.Components.Form;
 
@@ -132,7 +133,7 @@ public partial class LyoForm<TModel>
     {
         var previousHasChanges = HasChanges;
         var previousChangeCount = ChangeCount;
-        var id = Guid.NewGuid().ToString();
+        var id = LyoGuid.CreateV7().ToString();
         _operations.Add(
             new() {
                 Id = id,

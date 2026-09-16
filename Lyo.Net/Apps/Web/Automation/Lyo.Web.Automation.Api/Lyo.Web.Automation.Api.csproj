@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>HTTP API that runs an automation plan on a host-supplied browser session and serves the run log and viewport snapshots.</Description>
+        <PackageTags>api web-automation automation-plans aspnetcore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Web.Automation\Lyo.Web.Automation.csproj"/>
+        <ProjectReference Include="..\..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
+    </ItemGroup>
+
+</Project>

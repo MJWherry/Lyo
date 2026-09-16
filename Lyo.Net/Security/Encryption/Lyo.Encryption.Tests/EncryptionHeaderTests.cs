@@ -388,7 +388,7 @@ public class EncryptionHeaderTests
     [Fact]
     public async Task InferDekEncoding_MatchesActualStreamHeaderEncoding()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var keyStore = new LocalKeyStore();
 
         // 32-byte KEK plus a symmetric AEAD KEK service selects AES Key Wrap.

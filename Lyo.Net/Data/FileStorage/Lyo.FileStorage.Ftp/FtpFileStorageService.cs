@@ -28,9 +28,10 @@ public sealed class FtpFileStorageService : RemoteFileStorageServiceBase
         IMetrics? metrics = null,
         IFileOperationContextAccessor? operationContextAccessor = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
-        IFileContentPolicy? contentPolicy = null)
+        IFileContentPolicy? contentPolicy = null,
+        IFileTypeSniffer? fileTypeSniffer = null)
         : base(
             options, metadataService, new FtpRemoteFileTransport(ArgumentHelpers.ThrowIfNullReturn(ftpClient)),
             (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<FtpFileStorageService>(), compressionService, twoKeyEncryptionService, metrics, operationContextAccessor,
-            auditHandlers, contentPolicy) { }
+            auditHandlers, contentPolicy, fileTypeSniffer) { }
 }

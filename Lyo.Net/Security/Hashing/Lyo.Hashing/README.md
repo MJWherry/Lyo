@@ -13,7 +13,7 @@ Hex letter casing for service helpers uses `TextLetterCase` (`Upper` / `Lower`) 
 - **Checksums.** `Checksummer` / `ChecksumStream`: CRC-32, CRC-32C, CRC-64/ECMA-182, Adler-32 for corruption detection. Not for security.
 - **`IHashingService`.** Buffers, streams, files, hex encode/parse, timing-safe equality, HMAC-SHA-256/512, fingerprinting, `CreateHashingStream`, checksums (`Checksum` / `ChecksumValue` / `ChecksumFileAsync` / `CreateChecksumStream`).
 - **`Hasher`.** Static digest helpers without allocating a service.
-- **`HexEncoding`.** Encode/decode hex with explicit casing.
+- **`HexEncoding`.** Encode/decode hex with explicit casing. A plain string with no separators is `ByteConvert` in `Lyo.Common.Core`.
 - **`byte[].ToHexString()`.** Extension in namespace `Lyo.Hashing` (`ByteArrayHexExtensions`). Lowercase hex for historical consistency.
 - **`HashingStream`.** Wrap any `Stream`. Hash updates on read/write. `GetHash()` / `GetHashHex`.
 - **Sparse fingerprints.** `SparseFileFingerprinter` samples large files. MD5 of size + samples, and mtime for very large files.

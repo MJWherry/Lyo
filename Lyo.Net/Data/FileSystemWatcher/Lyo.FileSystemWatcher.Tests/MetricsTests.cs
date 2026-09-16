@@ -37,8 +37,8 @@ public class MetricsTests : IDisposable
         var options = new FileSystemWatcherOptions { EnableMetrics = true };
         var fileName = Path.GetFileName(_tempSession.GetFilePath());
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, options, null, metrics);
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestCt);
+        await Task.Delay(500, TestCt);
         Assert.True(metrics.Counters.ContainsKey(Constants.Metrics.FileCreatedCount));
     }
 
@@ -47,11 +47,11 @@ public class MetricsTests : IDisposable
     {
         var metrics = new TestMetrics();
         var options = new FileSystemWatcherOptions { EnableMetrics = true };
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, options, null, metrics);
-        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
+        await Task.Delay(200, TestCt); // Wait for initial snapshot
         File.Delete(filePath);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestCt);
         Assert.True(metrics.Counters.ContainsKey(Constants.Metrics.FileDeletedCount));
     }
 
@@ -60,9 +60,9 @@ public class MetricsTests : IDisposable
     {
         var metrics = new TestMetrics();
         var options = new FileSystemWatcherOptions { EnableMetrics = true };
-        await _tempSession.CreateFileAsync(new byte[100], "test.txt", TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], "test.txt", TestCt);
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, options, null, metrics);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestCt);
         Assert.True(metrics.Gauges.ContainsKey(Constants.Metrics.SnapshotFileCount));
         Assert.True(metrics.Gauges.ContainsKey(Constants.Metrics.SnapshotItemCount));
     }
@@ -79,7 +79,7 @@ public class MetricsTests : IDisposable
 
         // Error metrics must be recorded when errors occur
         // Thresholds may need tuning against the real error scenarios
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestCt);
     }
 }
 

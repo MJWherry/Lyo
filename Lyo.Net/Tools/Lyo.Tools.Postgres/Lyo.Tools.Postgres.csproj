@@ -15,11 +15,11 @@
         <ProjectReference Include="..\..\Data\Seed\Lyo.Seed\Lyo.Seed.csproj"/>
         <ProjectReference Include="..\..\Apps\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
-        <ProjectReference Include="..\..\Core\People\Lyo.People.Models\Lyo.People.Models.csproj"/>
+        <ProjectReference Include="..\..\Plugins\People\Lyo.People.Models\Lyo.People.Models.csproj"/>
         <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
         <ProjectReference Include="..\..\Core\ChangeTracker\Lyo.ChangeTracker.Postgres\Lyo.ChangeTracker.Postgres.csproj"/>
         <ProjectReference Include="..\..\Core\Geolocation\Lyo.Geolocation.Postgres\Lyo.Geolocation.Postgres.csproj"/>
-        <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
 
         <!-- Communication -->
         <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Postgres\Lyo.Email.Postgres.csproj"/>
@@ -27,16 +27,55 @@
         <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Postgres\Lyo.Sms.Twilio.Postgres.csproj"/>
 
         <!-- Plugins -->
+        <ProjectReference Include="..\..\Plugins\Book\Lyo.Book\Lyo.Book.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Book\Lyo.Book.Postgres\Lyo.Book.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Story\Lyo.Story\Lyo.Story.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Story\Lyo.Story.Postgres\Lyo.Story.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Comment\Lyo.Comment.Postgres\Lyo.Comment.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Config\Lyo.Config.Postgres\Lyo.Config.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\ContactUs\Lyo.ContactUs.Postgres\Lyo.ContactUs.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Favorite\Lyo.Favorite.Postgres\Lyo.Favorite.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\HomeInventory\Lyo.HomeInventory.Postgres\Lyo.HomeInventory.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Recipe\Lyo.Recipe.Postgres\Lyo.Recipe.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Note\Lyo.Note.Postgres\Lyo.Note.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Rating\Lyo.Rating.Postgres\Lyo.Rating.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Billing\Lyo.Billing.Seed\Lyo.Billing.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Comment\Lyo.Comment.Seed\Lyo.Comment.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Config\Lyo.Config.Seed\Lyo.Config.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\ContactUs\Lyo.ContactUs.Seed\Lyo.ContactUs.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Favorite\Lyo.Favorite.Seed\Lyo.Favorite.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\HomeInventory\Lyo.HomeInventory.Seed\Lyo.HomeInventory.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Recipe\Lyo.Recipe.Seed\Lyo.Recipe.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Job\Lyo.Job.Seed\Lyo.Job.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Ledger\Lyo.Ledger.Seed\Lyo.Ledger.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Note\Lyo.Note.Seed\Lyo.Note.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Rating\Lyo.Rating.Seed\Lyo.Rating.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Reporting\Lyo.Reporting.Seed\Lyo.Reporting.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\ShortUrl\Lyo.ShortUrl.Seed\Lyo.ShortUrl.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Tag\Lyo.Tag.Seed\Lyo.Tag.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Law\Lyo.Law.Seed\Lyo.Law.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Music\Lyo.Music.Seed\Lyo.Music.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Video\Lyo.Video.Seed\Lyo.Video.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Leaderboard\Lyo.Leaderboard.Seed\Lyo.Leaderboard.Seed.csproj"/>
+        <ProjectReference Include="..\..\Data\Algorithms\Lyo.Algorithms.Seed\Lyo.Algorithms.Seed.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Seed\Lyo.Authentication.Seed.csproj"/>
+        <ProjectReference Include="..\..\Core\Geolocation\Lyo.Geolocation.Seed\Lyo.Geolocation.Seed.csproj"/>
+        <ProjectReference Include="..\..\Core\Validation\Lyo.Validation.Seed\Lyo.Validation.Seed.csproj"/>
+        <ProjectReference Include="..\..\Core\StateMachine\Lyo.StateMachine.Seed\Lyo.StateMachine.Seed.csproj"/>
+        <ProjectReference Include="..\..\Core\PackageMetadata\Lyo.PackageMetadata.Seed\Lyo.PackageMetadata.Seed.csproj"/>
+        <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Seed\Lyo.FileMetadataStore.Seed.csproj"/>
+        <ProjectReference Include="..\..\Data\FileSystemWatcher\Lyo.FileSystemWatcher.Seed\Lyo.FileSystemWatcher.Seed.csproj"/>
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Seed\Lyo.Email.Seed.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Seed\Lyo.Sms.Seed.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Seed\Lyo.Sms.Twilio.Seed.csproj"/>
+        <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Seed\Lyo.Discord.Seed.csproj"/>
+        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Seed\Lyo.Endato.Seed.csproj"/>
+        <ProjectReference Include="..\..\Security\Drift\Lyo.Drift.Seed\Lyo.Drift.Seed.csproj"/>
+        <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Seed\Lyo.Audit.Seed.csproj"/>
+        <ProjectReference Include="..\..\Core\ChangeTracker\Lyo.ChangeTracker.Seed\Lyo.ChangeTracker.Seed.csproj"/>
 
         <!-- Data -->
         <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>

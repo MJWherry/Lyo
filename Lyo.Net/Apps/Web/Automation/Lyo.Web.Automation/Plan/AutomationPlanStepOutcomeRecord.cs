@@ -15,7 +15,9 @@ public readonly record struct AutomationPlanStepOutcomeRecord(
     AutomationPlanStepOutcome Outcome,
     TimeSpan Duration,
     AutomationStepDefinition Step,
-    Exception? Error)
+    Exception? Error,
+    string? ScreenshotFileId = null,
+    AutomationPlanContextSnapshot? Context = null)
 {
     /// <inheritdoc />
     public override string ToString()

@@ -9,6 +9,7 @@ using Lyo.Job.Postgres.Database;
 using Lyo.Schedule.Models;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests.Fixtures;
 
@@ -42,12 +43,12 @@ public sealed class ApiPostgresFixture : PostgresContainerFixtureBase
         var req = new JobDefinitionReq(name, description ?? "Integration test job") { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
         var result = await createService.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
             req, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.Type = "Test";
                 ctx.Entity.WorkerType = ProgrammingLanguageInfo.CSharp.ShortName;
                 if (createdTimestamp.HasValue)
                     ctx.Entity.CreatedTimestamp = createdTimestamp.Value;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         OperationHelpers.ThrowIf(!result.IsSuccess, $"Failed to seed JobDefinition: {result.Error?.Detail}");
         return result.Data!.Id;
@@ -58,13 +59,13 @@ public sealed class ApiPostgresFixture : PostgresContainerFixtureBase
     {
         using var scope = CreateScope();
         var createService = scope.ServiceProvider.GetRequiredService<ICreateService<JobContext>>();
-        var req = new JobRunReq(jobDefinitionId, createdBy, false);
+        var req = new JobRunReq(jobDefinitionId, createdBy);
         var result = await createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
             req, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
 
         OperationHelpers.ThrowIf(!result.IsSuccess, $"Failed to seed JobRun: {result.Error?.Detail}");
         return result.Data!.Id;
@@ -78,9 +79,9 @@ public sealed class ApiPostgresFixture : PostgresContainerFixtureBase
         var req = new JobRunLogReq(level, message, "TestContext");
         var result = await createService.CreateAsync<JobRunLogReq, JobRunLog, JobRunLogRes>(
             req, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.JobRunId = jobRunId;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         OperationHelpers.ThrowIf(!result.IsSuccess, $"Failed to seed JobRunLog: {result.Error?.Detail}");
         return result.Data!.Id;
@@ -99,9 +100,9 @@ public sealed class ApiPostgresFixture : PostgresContainerFixtureBase
         };
         var result = await createService.CreateAsync<JobParameterReq, JobParameter, JobParameterRes>(
             req, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.JobDefinitionId = jobDefinitionId;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         OperationHelpers.ThrowIf(!result.IsSuccess, $"Failed to seed JobParameter: {result.Error?.Detail}");
         return result.Data!.Id;
@@ -122,9 +123,9 @@ public sealed class ApiPostgresFixture : PostgresContainerFixtureBase
         };
         var result = await createService.CreateAsync<JobScheduleReq, JobSchedule, JobScheduleRes>(
             req, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.JobDefinitionId = jobDefinitionId;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         OperationHelpers.ThrowIf(!result.IsSuccess, $"Failed to seed JobSchedule: {result.Error?.Detail}");
         return result.Data!.Id;

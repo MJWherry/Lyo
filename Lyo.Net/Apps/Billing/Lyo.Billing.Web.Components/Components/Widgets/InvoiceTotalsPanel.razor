@@ -1,0 +1,28 @@
+@namespace Lyo.Billing.Web.Components.Components.Widgets
+
+<MudPaper Outlined="true" Class="pa-3">
+    <MudText Typo="Typo.subtitle2" Class="mb-2">Totals</MudText>
+    <MudStack Spacing="1">
+        <MudStack Row="true" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Subtotal</MudText>
+            <MudText>@BillingMoney.Format(Invoice.Subtotal, Invoice.Currency)</MudText>
+        </MudStack>
+        <MudStack Row="true" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Tax (@Invoice.TaxRate.ToString("P1"))</MudText>
+            <MudText>@BillingMoney.Format(Invoice.TaxAmount, Invoice.Currency)</MudText>
+        </MudStack>
+        <MudDivider/>
+        <MudStack Row="true" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.subtitle2">Total</MudText>
+            <MudText Typo="Typo.subtitle2">@BillingMoney.Format(Invoice.Total, Invoice.Currency)</MudText>
+        </MudStack>
+        <MudStack Row="true" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Paid</MudText>
+            <MudText>@BillingMoney.Format(Invoice.AmountPaid, Invoice.Currency)</MudText>
+        </MudStack>
+        <MudStack Row="true" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Balance</MudText>
+            <MudText>@BillingMoney.Format(Invoice.Total - Invoice.AmountPaid, Invoice.Currency)</MudText>
+        </MudStack>
+    </MudStack>
+</MudPaper>

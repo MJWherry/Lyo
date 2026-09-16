@@ -1,0 +1,23 @@
+{
+  "id": "Lyo.Story.Sqlite",
+  "name": "Lyo.Story.Sqlite",
+  "area": "Plugins",
+  "tagline": "Local SQLite `IStoryStore` for offline desktop games and tools.",
+  "description": "EF Core SQLite implementation of `Lyo.Story.IStoryStore` (`SqliteStoryStore`) with the same story graph, playthrough, and event tables as `Lyo.Story.Postgres`, so a game plays the same stories offline. It does not depend on `Lyo.Api` or its CRUD services. Migrations ship in the package; the host runs them with `MigrateSqliteStoryAsync` (a game has no hosted service to do it).",
+  "features": [
+    "**Same contract.** Passes the shared `IStoryStore` contract tests with the Postgres store: graph save and load by id or slug, delete, tenancy listing, and playthrough start, choose, advance, variables, events, and causes.",
+    "**DI.** `AddSqliteStoryStore` with an `Action<SqliteStoryOptions>` or an options instance, and `AddSqliteStoryStoreFromConfiguration` (section `SqliteStory`). `AddSqliteStoryDbContextFactory` registers only the context factory.",
+    "**Tenancy.** A null tenant is stored as `Guid.Empty`. `ListStoriesAsync(tenantId, gameKey)` filters on `tenant_id` and `game_key`.",
+    "**Runtime.** `Lyo.Game.Runtime` uses this store for `{DataDirectory}/story.db` in Local mode, and includes it in save slots."
+  ],
+  "examples": [
+    {
+      "title": "Register and migrate",
+      "language": "csharp",
+      "code": "services.AddSqliteStoryStore(o => o.ConnectionString = \"Data Source=story.db\");\nawait using var provider = services.BuildServiceProvider();\nawait provider.MigrateSqliteStoryAsync(ct);\n\nvar stories = provider.GetRequiredService<IStoryStore>();\nvar state = await stories.StartPlaythroughAsync(storyId, \"player:hero-1\", ct);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Story/Lyo.Story.Sqlite/README.md"
+}

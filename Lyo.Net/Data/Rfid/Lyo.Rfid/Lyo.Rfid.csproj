@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>ISO 15693 RFID access. IRfidTag reads and writes blocks. IIso15693Transceiver sends one command frame that already includes the CRC. A PN5180-class reader implements it. Type 2 NFC readers do not.</Description>
+        <PackageTags>rfid iso15693 slix</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Memory"/>
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

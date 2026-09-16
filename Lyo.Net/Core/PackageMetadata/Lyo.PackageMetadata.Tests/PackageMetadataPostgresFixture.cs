@@ -3,6 +3,7 @@ using Lyo.PackageMetadata.Postgres.Database;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.PackageMetadata.Tests;
 
@@ -41,8 +42,8 @@ public sealed class PackageMetadataPostgresFixture : PostgresServiceFixtureBase<
             });
 
         ctx.StackPrefixes.AddRange(
-            new PackageStackPrefixEntity { Id = Guid.NewGuid(), PackageMetadataId = shortId, NormalizedPrefix = "Npgsql." },
-            new PackageStackPrefixEntity { Id = Guid.NewGuid(), PackageMetadataId = longId, NormalizedPrefix = "Npgsql.Internal." });
+            new PackageStackPrefixEntity { Id = LyoGuid.CreateV7(), PackageMetadataId = shortId, NormalizedPrefix = "Npgsql." },
+            new PackageStackPrefixEntity { Id = LyoGuid.CreateV7(), PackageMetadataId = longId, NormalizedPrefix = "Npgsql.Internal." });
 
         await ctx.SaveChangesAsync(cancellationToken);
     }

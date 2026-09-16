@@ -9,6 +9,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Renderer\Lyo.Web.WebRenderer.Models\Lyo.Web.WebRenderer.Models.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Web\Renderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
         <ProjectReference Include="..\Lyo.Pdf\Lyo.Pdf.csproj"/>
         <ProjectReference Include="..\Lyo.Pdf.Models\Lyo.Pdf.Models.csproj"/>

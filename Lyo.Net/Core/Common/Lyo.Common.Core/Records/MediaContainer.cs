@@ -42,8 +42,23 @@ public sealed record MediaContainer
     /// <summary>FLAC (<c>flac</c> / <c>.flac</c>).</summary>
     public static readonly MediaContainer Flac = new("Flac", "flac", ".flac");
 
+    /// <summary>Matroska (<c>matroska</c> / <c>.mkv</c>).</summary>
+    public static readonly MediaContainer Mkv = new("Mkv", "matroska", ".mkv");
+
+    /// <summary>MPEG-4 audio (<c>ipod</c> / <c>.m4a</c>).</summary>
+    public static readonly MediaContainer M4a = new("M4a", "ipod", ".m4a");
+
+    /// <summary>GIF (<c>gif</c> / <c>.gif</c>).</summary>
+    public static readonly MediaContainer Gif = new("Gif", "gif", ".gif");
+
+    /// <summary>HTTP Live Streaming (<c>hls</c> / <c>.m3u8</c>).</summary>
+    public static readonly MediaContainer Hls = new("Hls", "hls", ".m3u8");
+
+    /// <summary>DASH (<c>dash</c> / <c>.mpd</c>).</summary>
+    public static readonly MediaContainer Dash = new("Dash", "dash", ".mpd");
+
     /// <summary>Every built-in container. Touching this list registers the static instances for lookup.</summary>
-    public static IReadOnlyList<MediaContainer> BuiltIns { get; } = [Mp4, WebM, Mov, Mp3, Wav, S16le, Adts, Ogg, Flac];
+    public static IReadOnlyList<MediaContainer> BuiltIns { get; } = [Mp4, WebM, Mov, Mp3, Wav, S16le, Adts, Ogg, Flac, Mkv, M4a, Gif, Hls, Dash];
 
     /// <summary>Stable display name (e.g. <c>Mp4</c>).</summary>
     public string Name { get; }
@@ -119,7 +134,7 @@ public sealed record MediaContainer
             AudioFormat.Ogg => Ogg,
             AudioFormat.Flac => Flac,
             AudioFormat.Aac => Adts,
-            AudioFormat.M4a => Mp4,
+            AudioFormat.M4a => M4a,
             AudioFormat.Opus => Ogg,
             AudioFormat.Pcm => S16le,
             AudioFormat.Webm => WebM,
@@ -139,6 +154,8 @@ public sealed record MediaContainer
             return AudioFormat.Flac;
         if (ReferenceEquals(this, Adts) || string.Equals(Format, "adts", StringComparison.OrdinalIgnoreCase))
             return AudioFormat.Aac;
+        if (ReferenceEquals(this, M4a) || string.Equals(Format, "ipod", StringComparison.OrdinalIgnoreCase))
+            return AudioFormat.M4a;
         if (IsMp4)
             return AudioFormat.M4a;
         if (ReferenceEquals(this, S16le) || string.Equals(Format, "s16le", StringComparison.OrdinalIgnoreCase))

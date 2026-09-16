@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Xlsx;
 
 /// <summary>Facade for XLSX export (streaming OpenXML writer) and import (ExcelDataReader / ClosedXML), plus CSV conversion and batch HTML helpers.</summary>
-/// <remarks>Safe for concurrent calls; configuration can be replaced via <see cref="SetExcelDataTableConfiguration" />.</remarks>
+/// <remarks>Safe for concurrent calls. A call clones the data-table configuration it starts with. <see cref="SetExcelDataTableConfiguration" /> publishes a new instance for later calls.</remarks>
 public class XlsxService : IXlsxService
 {
     private readonly ILogger<XlsxService> _logger;
@@ -22,6 +22,9 @@ public class XlsxService : IXlsxService
     private readonly XlsxWriter _writer;
 
     private ExcelDataTableConfiguration _excelDataTableConfiguration;
+
+    /// <summary>Service with a header row and the default XLSX pooling options. Do not call <see cref="SetExcelDataTableConfiguration" /> on this instance.</summary>
+    public static XlsxService Default { get; } = new();
 
     /// <summary>Builds a service with optional logging, ExcelDataReader configuration (starts with a header row), and XLSX options (pooling defaults).</summary>
     public XlsxService(ILogger<XlsxService>? logger = null, ExcelDataTableConfiguration? excelDataTableConfiguration = null, XlsxOptions? options = null)
@@ -32,8 +35,8 @@ public class XlsxService : IXlsxService
         _options.Validate();
         // ExcelDataReader requires legacy code pages (e.g. Windows-1252).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        _writer = new(_logger);
-        _reader = new(() => _excelDataTableConfiguration, _logger, () => _options.Pooling);
+        _writer = new(_logger, _options);
+        _reader = new(() => Volatile.Read(ref _excelDataTableConfiguration), _logger, () => _options.Pooling);
     }
 
     /// <inheritdoc cref='P:Lyo.Xlsx.Models.IXlsxService.Writer' />
@@ -257,7 +260,8 @@ public class XlsxService : IXlsxService
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         _logger.LogDebug("Converting xlsx stream to csv stream");
         using var reader = ExcelReaderFactory.CreateReader(inputStream);
-        var dataSet = reader.AsDataSet(new() { ConfigureDataTable = _ => _excelDataTableConfiguration });
+        var configuration = ExcelDataTableConfigurationClone.Clone(Volatile.Read(ref _excelDataTableConfiguration));
+        var dataSet = reader.AsDataSet(new() { ConfigureDataTable = _ => configuration });
         OperationHelpers.ThrowIf(dataSet.Tables.Count == 0, "The XLSX file contains no worksheets.");
         var table = dataSet.Tables[0];
         using var writer = new StreamWriter(outputStream, encoding ?? Encoding.UTF8, 1024, true);
@@ -491,7 +495,7 @@ public class XlsxService : IXlsxService
     public void SetExcelDataTableConfiguration(ExcelDataTableConfiguration excelDataTableConfiguration)
     {
         ArgumentHelpers.ThrowIfNull(excelDataTableConfiguration);
-        _excelDataTableConfiguration = excelDataTableConfiguration;
+        Volatile.Write(ref _excelDataTableConfiguration, ExcelDataTableConfigurationClone.Clone(excelDataTableConfiguration));
     }
 
     private static void WriteDataTableToCsv(System.Data.DataTable table, StreamWriter writer)
@@ -1052,7 +1056,8 @@ public class XlsxService : IXlsxService
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         _logger.LogDebug("Converting xlsx stream to csv stream");
         using var reader = ExcelReaderFactory.CreateReader(inputStream);
-        var dataSet = reader.AsDataSet(new() { ConfigureDataTable = _ => _excelDataTableConfiguration });
+        var configuration = ExcelDataTableConfigurationClone.Clone(Volatile.Read(ref _excelDataTableConfiguration));
+        var dataSet = reader.AsDataSet(new() { ConfigureDataTable = _ => configuration });
         OperationHelpers.ThrowIf(dataSet.Tables.Count == 0, "The XLSX file contains no worksheets.");
         var table = dataSet.Tables[0];
         await using var writer = new StreamWriter(outputStream, encoding, 1024, true);
@@ -1207,4 +1212,9 @@ public class XlsxService : IXlsxService
         where T : new()
         => _reader.ParseXlsxStreamStreamingAsync<T>(xlsxStream, ct);
 #endif
+
+    /// <inheritdoc cref="IXlsxService.ParseBytesAsResult{T}" />
+    public XlsxParseResult<T> ParseBytesAsResult<T>(byte[] xlsxBytes, string? sheetName = null, IReadOnlyCollection<string>? requiredHeaders = null)
+        where T : new()
+        => _reader.ParseBytesAsResult<T>(xlsxBytes, sheetName, requiredHeaders);
 }

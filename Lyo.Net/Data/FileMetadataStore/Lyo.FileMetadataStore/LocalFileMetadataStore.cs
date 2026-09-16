@@ -266,6 +266,99 @@ public class LocalFileMetadataStore : IFileMetadataStore
             .ToList();
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> ListPendingDirectUploadsAsync(DateTime beganBefore, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var results = new List<FileStoreResult>();
+        if (!Directory.Exists(_rootDirectoryPath))
+            return results;
+
+        var cutoff = DateTime.SpecifyKind(beganBefore, DateTimeKind.Utc);
+        foreach (var metadataPath in Directory.GetFiles(_rootDirectoryPath, $"*{MetadataExtension}", SearchOption.AllDirectories)) {
+            ct.ThrowIfCancellationRequested();
+            try {
+#if NETSTANDARD2_0
+                var json = File.ReadAllText(metadataPath);
+#else
+                var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
+#endif
+                var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
+                if (metadata is { DeletedAt: null, Availability: FileAvailability.PendingDirectUpload } && metadata.Timestamp.ToUniversalTime() < cutoff)
+                    results.Add(metadata);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to read metadata file {MetadataPath}", metadataPath);
+            }
+        }
+
+        return results.OrderBy(static r => r.Timestamp).Take(maxKeys).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> SearchByNameAsync(string text, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var results = new List<FileStoreResult>();
+        if (!Directory.Exists(_rootDirectoryPath))
+            return results;
+
+        foreach (var metadataPath in Directory.GetFiles(_rootDirectoryPath, $"*{MetadataExtension}", SearchOption.AllDirectories)) {
+            ct.ThrowIfCancellationRequested();
+            try {
+#if NETSTANDARD2_0
+                var json = File.ReadAllText(metadataPath);
+#else
+                var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
+#endif
+                var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
+                if (metadata is { DeletedAt: null, OriginalFileName: { } name } && name.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
+                    results.Add(metadata);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to read metadata file {MetadataPath}", metadataPath);
+            }
+        }
+
+        return results.OrderBy(static row => row.OriginalFileName, StringComparer.OrdinalIgnoreCase).Take(maxKeys).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<FileRevision> SaveNewVersionAsync(Guid fileId, string storedKey, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(storedKey);
+        var current = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+        var revision = new FileRevision(Guid.NewGuid(), fileId, current.SourceFileName, DateTime.UtcNow);
+        var directory = Path.Combine(_rootDirectoryPath, "versions");
+        Directory.CreateDirectory(directory);
+        var json = JsonSerializer.Serialize(revision);
+        var path = Path.Combine(directory, revision.Id.ToString("N") + ".ver");
+#if NETSTANDARD2_0
+        ct.ThrowIfCancellationRequested();
+        File.WriteAllText(path, json);
+#else
+        await File.WriteAllTextAsync(path, json, ct).ConfigureAwait(false);
+#endif
+        await SaveMetadataAsync(fileId, current with { SourceFileName = storedKey }, ct).ConfigureAwait(false);
+        return revision;
+    }
+
+    /// <inheritdoc />
+    public async Task<FileRevision?> GetVersionAsync(Guid revisionId, CancellationToken ct = default)
+    {
+        var path = Path.Combine(_rootDirectoryPath, "versions", revisionId.ToString("N") + ".ver");
+        if (!File.Exists(path))
+            return null;
+#if NETSTANDARD2_0
+        ct.ThrowIfCancellationRequested();
+        var json = File.ReadAllText(path);
+#else
+        var json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
+#endif
+        return JsonSerializer.Deserialize<FileRevision>(json);
+    }
+
     private string GetMetadataPath(Guid fileId)
     {
         var idString = fileId.ToString("N");

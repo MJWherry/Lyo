@@ -11,6 +11,7 @@ using Lyo.Job.Postgres.Database;
 using Lyo.Job.Postgres.Mapping;
 using Lyo.Testing.Containers;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -58,7 +59,7 @@ public sealed class JobPostgresFixture : PostgresServiceFixtureBase<JobContext>
 
         var result = await CreateService.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
             req, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.Type = "Test";
                 ctx.Entity.WorkerType = ProgrammingLanguageInfo.CSharp.ShortName;
             }, ct: cancellationToken);

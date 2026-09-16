@@ -1,0 +1,66 @@
+@using Lyo.Web.Primitives
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudStack Spacing="2" Class="mt-3">
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.subtitle1">Verification queue</MudText>
+        <MudSpacer/>
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Refresh" Disabled="@(_boardId == null)" OnClick="LoadAsync">
+            Reload
+        </MudButton>
+    </MudStack>
+    @if (_boardId == null) {
+        <MudAlert Severity="Severity.Info" Dense="true">Load a board to verify entries.</MudAlert>
+        return;
+    }
+    <MudTable Items="_rows" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Loading="_loading">
+        <HeaderContent>
+            <MudTh>Status</MudTh>
+            <MudTh>Score</MudTh>
+            <MudTh>Member</MudTh>
+            <MudTh>Title</MudTh>
+            <MudTh>Occurred</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Status">
+                <LyoChip Spec="@LyoChips.Of(context.Status.ToString(), LeaderboardColorHelper.ForEntryStatus(context.Status))"/>
+            </MudTd>
+            <MudTd DataLabel="Score">@context.ComputedScore</MudTd>
+            <MudTd DataLabel="Member">@MemberName(context.MemberId)</MudTd>
+            <MudTd DataLabel="Title">@(context.Title ?? "—")</MudTd>
+            <MudTd DataLabel="Occurred">
+                <LyoTimestamp Value="context.OccurredAt"/>
+            </MudTd>
+            <MudTd>
+                @if (context.Status == EntryStatus.Pending) {
+                    <MudStack Row="true" Spacing="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" title="Approve"
+                                       OnClick="@(() => SetStatusAsync(context, EntryStatus.Approved))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" Size="Size.Small" title="Reject"
+                                       OnClick="@(() => RejectAsync(context))"/>
+                    </MudStack>
+                }
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No entries.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.subtitle2">Adjustment</MudText>
+            <MudSelect T="Guid" Label="Member" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_adjustMemberId">
+                @foreach (var member in _members) {
+                    <MudSelectItem T="Guid" Value="member.Id">@member.DisplayName</MudSelectItem>
+                }
+            </MudSelect>
+            <MudNumericField T="decimal" Label="Delta" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_adjustDelta"/>
+            <MudTextField T="string" Label="Reason" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_adjustReason"/>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Disabled="@_adjusting" OnClick="AdjustAsync">
+                Add adjustment
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</MudStack>

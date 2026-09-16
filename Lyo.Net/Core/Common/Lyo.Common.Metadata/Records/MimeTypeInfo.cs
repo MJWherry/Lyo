@@ -29,6 +29,8 @@ public sealed class MimeTypeInfo
     public static readonly MimeTypeInfo Tex = new("application/x-tex");
     public static readonly MimeTypeInfo Json = new("application/json", ["text/json", "application/x-json"]);
     public static readonly MimeTypeInfo Xml = new("application/xml", ["text/xml"]);
+    public static readonly MimeTypeInfo Yaml = new("application/yaml", ["text/yaml", "application/x-yaml"]);
+    public static readonly MimeTypeInfo Toml = new("application/toml");
     public static readonly MimeTypeInfo ProblemJson = new("application/problem+json");
 
     public static readonly MimeTypeInfo Html = new("text/html");

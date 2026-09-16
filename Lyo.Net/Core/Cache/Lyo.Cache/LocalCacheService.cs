@@ -6,6 +6,7 @@ using Lyo.Metrics;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Cache;
 
@@ -72,7 +73,7 @@ public sealed class LocalCacheService : ICacheService
     {
         var sw = Stopwatch.StartNew();
         try {
-            var testKey = $"lyo-health-{Guid.NewGuid():N}";
+            var testKey = $"lyo-health-{LyoGuid.CreateV7():N}";
             var testValue = "ok";
             Set(testKey, testValue, ["lyo-health-check"]);
             var fromCache = await GetOrSetAsync(testKey, _ => Task.FromResult<string?>(testValue), TimeSpan.FromSeconds(5), ["lyo-health-check"], ct).ConfigureAwait(false);

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Build a diagram from pages and cells, and read or write it as an uncompressed or compressed draw.io mxfile.</Description>
+        <PackageTags>diagram drawio mxgraph</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Diagram.Models\Lyo.Diagram.Models.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Diagram.Tests"/>
+    </ItemGroup>
+
+</Project>

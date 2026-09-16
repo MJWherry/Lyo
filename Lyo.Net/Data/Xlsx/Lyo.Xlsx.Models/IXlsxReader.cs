@@ -278,4 +278,11 @@ public interface IXlsxReader
     /// <summary>Streams typed rows from a stream by mapping header names to public writable properties.</summary>
     IAsyncEnumerable<T> ParseXlsxStreamStreamingAsync<T>(Stream xlsxStream, CancellationToken ct = default) where T : new();
 #endif
+
+    /// <summary>
+    /// Parses a worksheet into good rows and per-row errors. A null <paramref name="sheetName" /> uses the first sheet. A missing sheet or a missing required header fails the
+    /// document. A bad cell omits that row. <see cref="XlsxParseError.RowNumber" /> is the 1-based worksheet row.
+    /// </summary>
+    /// <typeparam name="T">Row type. Needs a public parameterless constructor.</typeparam>
+    XlsxParseResult<T> ParseBytesAsResult<T>(byte[] xlsxBytes, string? sheetName = null, IReadOnlyCollection<string>? requiredHeaders = null) where T : new();
 }

@@ -2,6 +2,7 @@ using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark.Data;
 using Lyo.IO.Temp;
 using Lyo.IO.Temp.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Benchmark;
 
@@ -47,7 +48,7 @@ public abstract class LyoBenchmarkBase
 
         TempService = new IOTempService(
             new() {
-                DirectoryName = $"lyo-bench-{Guid.NewGuid():N}",
+                DirectoryName = $"lyo-bench-{LyoGuid.CreateV7():N}",
                 EnableMetrics = false,
                 // Streaming suites can emit 2 GiB of plaintext plus matching ciphertext/compressed files and per-iteration outputs.
                 MaxFileSizeBytes = 8L * BenchmarkData.MiB * 1024,

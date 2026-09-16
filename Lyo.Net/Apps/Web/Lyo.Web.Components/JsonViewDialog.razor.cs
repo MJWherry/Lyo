@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components;

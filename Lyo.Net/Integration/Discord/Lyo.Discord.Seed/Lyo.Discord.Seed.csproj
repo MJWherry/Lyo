@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>EF seed of Discord guilds and their users, members, channels, roles, emojis, messages, attachments, reactions, and interactions.</Description>
+        <PackageTags>discord seed ef</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bogus"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Seed\Lyo.Seed\Lyo.Seed.csproj"/>
+        <ProjectReference Include="..\Lyo.Discord.Postgres\Lyo.Discord.Postgres.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -30,12 +30,13 @@ Fluent builders, API contracts, generation hooks, and composition models for Lyo
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Parameters` (direct, lyo)
 - `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)

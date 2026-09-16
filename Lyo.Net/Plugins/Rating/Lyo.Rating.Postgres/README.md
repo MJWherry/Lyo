@@ -140,6 +140,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Rating` (direct, lyo)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)

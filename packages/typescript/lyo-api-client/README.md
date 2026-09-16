@@ -12,10 +12,12 @@ Core, reusable API client foundation for Lyo TypeScript consumers.
 - Generic CRUD / Query helpers (`queryProject`, `queryConcrete`, `query`, `create`, `update`, `deleteById`, `getById`, `patch`, `bulkDelete`, `bulkPatch`, `export`)
 - Query/CRUD result types (`QueryRes`, `ProjectedQueryRes`, `CreateResult`, `PatchRequest`, …) and response guards
 
-Domain-specific Person endpoints live in `lyo-person-api-client`. Job and Reporting
-endpoints live in `lyo-job-api-client` and `lyo-reporting-api-client`. UI packages:
-`lyo-job-components`, `lyo-reporting-components`. Comic-specific
-reads (slug, nested lists, tags, files) live in `lyo-comic-api-client` in the Lyo-Comic repo.
+Domain-specific Person endpoints live in `lyo-person-api-client`. Job, Reporting, Recipe, and Story
+endpoints live in `lyo-job-api-client`, `lyo-reporting-api-client`, `lyo-recipe-api-client`, and `lyo-story-api-client`.
+Config, auth, and import live in `lyo-config-api-client`, `lyo-auth-api-client`, and `lyo-import-api-client`.
+UI packages: `lyo-job-components`, `lyo-reporting-components`, `lyo-story-components`, `lyo-config-components`,
+`lyo-auth-components`, `lyo-import-components`. CLIs: `lyo-config`, `lyo-auth`, `lyo-import`.
+Comic-specific reads (slug, nested lists, tags, files) live in `lyo-comic-api-client` in the Lyo-Comic repo.
 
 ## Usage
 

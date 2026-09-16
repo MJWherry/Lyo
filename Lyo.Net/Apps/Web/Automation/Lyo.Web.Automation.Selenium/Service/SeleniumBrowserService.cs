@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Web.Automation.Selenium.Browser;
@@ -32,7 +33,7 @@ public sealed class SeleniumBrowserService : ISeleniumBrowserService
     {
         ThrowIfDisposed();
         var effective = sessionOptions?.Clone() ?? _serviceOptions.Clone();
-        var sessionId = Guid.NewGuid();
+        var sessionId = LyoGuid.CreateV7();
         var ctx = SeleniumExecutionContextFactory.Create(effective, sessionId);
         var baseLogger = _loggerFactory?.CreateLogger<SeleniumBrowser>() ?? NullLogger<SeleniumBrowser>.Instance;
         var scraper = new SeleniumBrowser(effective, ctx, baseLogger, _metrics);

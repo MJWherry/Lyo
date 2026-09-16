@@ -80,6 +80,26 @@ class TestApiClientRequest:
         client.request(ApiRequest(method="POST", path="/p", body=Model()))
         assert json.loads(stub_transport.last.body) == {"Name": "n"}
 
+    def test_bytes_body_is_not_json(self, stub_transport):
+        client = ApiClient("http://x", transport=stub_transport)
+        raw = b"--bound\r\nscan-bytes\r\n"
+        content_type = "multipart/form-data; boundary=bound"
+        client.request(ApiRequest(method="POST", path="/upload", body=raw, headers={"Content-Type": content_type}))
+        assert stub_transport.last.body == raw
+        assert stub_transport.last.headers["Content-Type"] == content_type
+
+    def test_multipart_form_builds_bytes_payload(self):
+        from lyo_api_client import multipart_form
+
+        body, content_type = multipart_form(
+            [("entityType", "Recipe"), ("file", b"scan-bytes", "scan.bin")]
+        )
+        assert content_type.startswith("multipart/form-data; boundary=")
+        assert b"scan-bytes" in body
+        assert b'name="entityType"' in body
+        assert b"scan.bin" in body
+        assert b"application/json" not in body
+
     def test_returns_response_on_success(self, stub_transport):
         stub_transport.response = ApiResponse(status=200, ok=True, data={"ok": 1})
         client = ApiClient("http://x", transport=stub_transport)
@@ -179,3 +199,42 @@ class TestGetByIdAndPatch:
             "properties": {"enabled": True},
             "keys": [["abc"]],
         }
+
+
+class TestGenericCrud:
+    def test_query_project_posts_body_unchanged(self, stub_transport):
+        client = ApiClient("http://x", transport=stub_transport)
+        body = {
+            "Select": ["Id", "Name"],
+            "whereClause": {
+                "$type": "group",
+                "Operator": "And",
+                "Children": [{"$type": "condition", "Field": "Name", "Comparison": "Equals", "Value": "a"}],
+            },
+            "Amount": 20,
+        }
+        client.query_project("api/Job/Definition", body)
+        assert stub_transport.last.method == "POST"
+        assert stub_transport.last.url == "http://x/api/Job/Definition/QueryProject"
+        assert json.loads(stub_transport.last.body) == body
+
+    def test_create_posts_body_unchanged(self, stub_transport):
+        client = ApiClient("http://x", transport=stub_transport)
+        client.create("/api/Job/Definition", {"name": "nightly"})
+        assert stub_transport.last.method == "POST"
+        assert stub_transport.last.url == "http://x/api/Job/Definition"
+        assert json.loads(stub_transport.last.body) == {"name": "nightly"}
+
+    def test_update_posts_keys_and_data(self, stub_transport):
+        client = ApiClient("http://x", transport=stub_transport)
+        client.update("api/Job/Definition", "abc", {"name": "nightly"})
+        assert stub_transport.last.method == "POST"
+        assert stub_transport.last.url == "http://x/api/Job/Definition/Update"
+        assert json.loads(stub_transport.last.body) == {"keys": ["abc"], "data": {"name": "nightly"}}
+
+    def test_delete_by_id_encodes_id(self, stub_transport):
+        client = ApiClient("http://x", transport=stub_transport)
+        client.delete_by_id("api/Job/Definition", "a/b")
+        assert stub_transport.last.method == "DELETE"
+        assert stub_transport.last.url == "http://x/api/Job/Definition/a%2Fb"
+        assert stub_transport.last.body is None

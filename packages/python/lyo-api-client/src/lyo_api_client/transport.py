@@ -41,9 +41,15 @@ class UrllibTransport:
         self.timeout = timeout
 
     def __call__(self, request: TransportRequest) -> ApiResponse:
+        if request.body is None:
+            data = None
+        elif isinstance(request.body, bytes):
+            data = request.body
+        else:
+            data = request.body.encode("utf-8")
         req = urllib.request.Request(
             request.url,
-            data=request.body.encode("utf-8") if request.body is not None else None,
+            data=data,
             headers=request.headers,
             method=request.method,
         )

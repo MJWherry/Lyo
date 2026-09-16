@@ -1,16 +1,21 @@
 using Blazored.LocalStorage;
 using Lyo.Api.Client;
+using Lyo.Web.Automation.Client;
 using Lyo.Authentication.Client;
 using Lyo.Authentication.Web.Components;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Authentication.Web.Components.Options;
 using Lyo.Authentication.Web.Components.Server;
 using Lyo.Barcode.Native;
+using Lyo.Billing.Client;
+using Lyo.Leaderboard.Api.Client;
+using Lyo.Story.Client;
 using Lyo.Cache;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
 using Lyo.Config.Api.Client;
+using Lyo.Payments;
 using Lyo.Csv;
 using Lyo.DateAndTime.Json;
 using Lyo.Email;
@@ -27,7 +32,10 @@ using Lyo.Images;
 using Lyo.IO.Temp;
 using Lyo.Job.Web.Components;
 using Lyo.Drift.Web.Components;
+using Lyo.Authorization;
+using Lyo.Authorization.AspNetCore;
 using Lyo.KeyStore;
+using Microsoft.AspNetCore.Authorization;
 using Lyo.Lock;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.MessageQueue.RabbitMq.Web.Components;
@@ -93,7 +101,10 @@ builder.Services.AddWebRendererServiceFromConfiguration(builder.Configuration);
 ReportingBusinessExamples.Register();
 builder.Services.AddFileStorageWorkbenchSupport(builder.Configuration);
 builder.Services.AddLocalKeyStore();
+builder.Services.AddInMemoryAuthorization();
+builder.Services.Configure<AuthorizationOptions>(options => options.AddPolicy(GrantEndpoints.ManagePolicyName, policy => policy.RequireAuthenticatedUser()));
 builder.Services.AddConfigApiStore();
+builder.Services.AddInternalPaymentCollector();
 builder.Services.AddLyoSeed();
 builder.Services.AddFormatterService();
 builder.Services.AddLyoFormatterValueEditor(c => {
@@ -112,7 +123,12 @@ builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<A
 builder.Services.AddLyoAuthClient(builder.Configuration);
 builder.Services.AddLyoAuthBlazorStateProvider();
 builder.Services.AddLyoApiClient(httpClientBuilderOverride: clientBuilder => clientBuilder.AddLyoAuthHandler());
+builder.Services.AddAutomationPlanClient<ApiClient>();
+builder.Services.AddBillingClient<ApiClient>();
+builder.Services.AddLeaderboardApiClientFromConfiguration(builder.Configuration);
+builder.Services.AddStoryClient<ApiClient>();
 builder.Services.AddAuthorization();
+builder.Services.AddLyoGrantAuthorization();
 builder.Services.AddLyoAuthWebComponents(builder.Configuration);
 builder.Services.PostConfigure<LyoAuthWebComponentsOptions>(opts => {
     if (opts.Providers.Count == 0) {
@@ -167,6 +183,7 @@ if (!app.Environment.IsDevelopment()) {
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapGrantEndpoints(GrantEndpoints.ManagePolicyName);
 app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapLyoAuthSignIn();

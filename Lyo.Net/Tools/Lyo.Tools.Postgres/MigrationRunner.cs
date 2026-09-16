@@ -1,6 +1,9 @@
 using Lyo.Audit.Postgres.Database;
 using Lyo.ChangeTracker.Postgres.Database;
+using Lyo.Book.Postgres;
+using Lyo.Book.Postgres.Database;
 using Lyo.Comic.Postgres.Database;
+using Lyo.Story.Postgres.Database;
 using Lyo.Comment.Postgres.Database;
 using Lyo.Config.Postgres.Database;
 using Lyo.ContactUs.Postgres.Database;
@@ -11,6 +14,7 @@ using Lyo.Favorite.Postgres.Database;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.Geolocation.Postgres.Database;
 using Lyo.HomeInventory.Postgres.Database;
+using Lyo.Recipe.Postgres.Database;
 using Lyo.Job.Postgres.Database;
 using Lyo.Note.Postgres.Database;
 using Lyo.People.Postgres.Database;
@@ -50,7 +54,11 @@ public sealed class MigrationRunner
 
     public Task RunChangeTrackerAsync(CancellationToken ct = default) => MigrateLatestAsync<ChangeTrackerDbContext>("change_tracker", ct);
 
+    public Task RunBookAsync(CancellationToken ct = default) => MigrateLatestAsync<BookDbContext>("book", ct);
+
     public Task RunComicAsync(CancellationToken ct = default) => MigrateLatestAsync<ComicDbContext>("comic", ct);
+
+    public Task RunStoryAsync(CancellationToken ct = default) => MigrateLatestAsync<StoryDbContext>("story", ct);
 
     public Task RunCommentAsync(CancellationToken ct = default) => MigrateLatestAsync<CommentDbContext>("comment", ct);
 
@@ -71,6 +79,8 @@ public sealed class MigrationRunner
     public Task RunGeolocationAsync(CancellationToken ct = default) => MigrateLatestAsync<GeolocationDbContext>("geolocation", ct);
 
     public Task RunHomeInventoryAsync(CancellationToken ct = default) => MigrateLatestAsync<HomeInventoryDbContext>("home_inventory", ct);
+
+    public Task RunRecipeAsync(CancellationToken ct = default) => MigrateLatestAsync<RecipeDbContext>("recipe", ct);
 
     public Task RunJobAsync(CancellationToken ct = default) => MigrateLatestAsync<JobContext>("job", ct);
 
@@ -94,6 +104,7 @@ public sealed class MigrationRunner
     {
         await RunAuditAsync(ct);
         await RunChangeTrackerAsync(ct);
+        await RunBookAsync(ct);
         await RunComicAsync(ct);
         await RunCommentAsync(ct);
         await RunConfigAsync(ct);
@@ -105,6 +116,7 @@ public sealed class MigrationRunner
         await RunFileMetadataStoreAsync(ct);
         await RunGeolocationAsync(ct);
         await RunHomeInventoryAsync(ct);
+        await RunRecipeAsync(ct);
         await RunJobAsync(ct);
         await RunNoteAsync(ct);
         await RunPeopleAsync(ct);
@@ -113,6 +125,7 @@ public sealed class MigrationRunner
         await RunShortUrlAsync(ct);
         await RunSmsAsync(ct);
         await RunSmsTwilioAsync(ct);
+        await RunStoryAsync(ct);
         await RunTagAsync(ct);
     }
 
@@ -125,6 +138,8 @@ public sealed class MigrationRunner
             await using var context = CreateContext<TContext>(schema);
             await PostgresSchema.EnsureAsync(context, schema, ct);
             await context.Database.MigrateAsync(ct);
+            if (context is BookDbContext bookDb)
+                await BookDbSeeder.SeedAsync(bookDb, ct);
             _logger.LogInformation("Migrations complete for {Context}", typeof(TContext).Name);
         }
         catch (Exception ex) {

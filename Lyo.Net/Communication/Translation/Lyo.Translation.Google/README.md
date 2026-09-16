@@ -48,9 +48,9 @@ Configuration section name: `GoogleTranslationOptions.SectionName = "GoogleTrans
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Translation` (direct, lyo)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
@@ -61,4 +61,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

@@ -52,6 +52,7 @@ else {
                 <MudNavMenu Dense="true">
                     @foreach (var package in _filtered) {
                         <MudNavLink OnClick="@(() => Select(package))"
+                                    Class="@(package.Id == _selected?.Id ? "lyo-package-catalog-selected" : null)"
                                     Icon="@Icons.Material.Filled.Extension">
                             <div>
                                 <div>@package.Name</div>

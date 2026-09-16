@@ -52,15 +52,6 @@ public static class JobDefinitionCascadeDelete
         }
 
         db.JobParameters.RemoveRange(db.JobParameters.Where(p => p.JobDefinitionId == definitionId).ToList());
-        var triggers = db.JobTriggers.Where(t => t.JobDefinitionId == definitionId || t.TriggersJobDefinitionId == definitionId).Include(t => t.JobTriggerParameters).ToList();
-        var triggerIds = triggers.Select(t => t.Id).ToHashSet();
-        foreach (var run in db.JobRuns.Where(r => r.JobTriggerId != null && triggerIds.Contains(r.JobTriggerId.Value)).ToList())
-            run.JobTriggerId = null;
-
-        foreach (var trigger in triggers)
-            db.JobTriggerParameters.RemoveRange(trigger.JobTriggerParameters);
-
-        db.JobTriggers.RemoveRange(triggers);
         db.JobParallelRestrictions.RemoveRange(db.JobParallelRestrictions.Where(r => r.BaseJobDefinitionId == definitionId || r.OtherJobDefinitionId == definitionId).ToList());
         db.JobWorkflowSteps.RemoveRange(db.JobWorkflowSteps.Where(s => s.JobDefinitionId == definitionId).ToList());
     }

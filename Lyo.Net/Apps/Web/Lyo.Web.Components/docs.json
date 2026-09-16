@@ -93,7 +93,7 @@
       "type": "list",
       "title": "Query builder UI",
       "items": [
-        "**Query node editor (`QueryNodeEditor/`).** Visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `LyoTypeInfo.Category` via `Extensions.GetAvailableComparisonOperators`. `In` / `NotIn` are flagged through `IsMultiValueComparisonOperator`.",
+        "**Query node editor (`QueryNodeEditor/`).** Visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `LyoTypeInfo.Category` via `Extensions.GetAvailableComparisonOperators`. `In` / `NotIn` are flagged through `IsMultiValueComparisonOperator`. `Fuzzy` / `NotFuzzy` expose an optional `Threshold` (0–1, default 0.3).",
         "**Query request builder (`QueryRequestBuilder/`).** Form editor for a `ProjectionQueryReq`: `IncludeList`, `SelectList`, `SortByList`, `KeysList`, `ComputedFieldsList`, `StartAmountFields`, and `QueryReqForm`, plus the `QueryRequestBuilder` component that renders the live query score."
       ]
     },
@@ -149,9 +149,9 @@
         "**`ParamTable/LyoParameterValueField`.** Value editor: password when encrypting at run time, Options/AllowedValues select, or `LyoTypeValueInput`. Forwards `FormatterContext` to formatter-typed values.",
         "**`LyoType/LyoTypeSelect`.** Ordered catalog picker (capitalized labels, Custom… / enum FullName). List and array are a Shape control beside the type. Pass `ShowFullNameField=false` to put the CLR FullName in a parent expander.",
         "**`LyoType/LyoTypeValueInput`.** JSON-backed value editor from `LyoTypeInfo.EditorKind` (Mud scalars with Guid/Uri parse errors, enum member dropdown when the CLR type is loaded, chip collections with numeric/bool/GUID guards, free-text SmartFormat templates, `JsonEditor` for JSON/binary/unknown).",
-        "**`LyoType/LyoTypeChip`.** Capitalized type chip colored by `LyoTypeCategory` with FullName tooltip.",
+        "**`LyoType/LyoTypeChip`.** Capitalized type chip. Each `LyoTypeCategory` uses a `LyoChipHue` (Regex and Xml stay warning) with a FullName tooltip.",
         "**`Validation/LyoValidationWrapper`.** Wraps a field with validation message rendering.",
-        "**`LyoDataGrid` / `LyoDataGridProjected`.** Data grids with filtering, bulk actions, and export menu items via [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).",
+        "**`LyoDataGrid` / `LyoDataGridProjected`.** Data grids with filtering, bulk actions, and export menu items via [`Lyo.Web.Components.Export`](../Export/Lyo.Web.Components.Export/README.md).",
         "**`JsonViewDialog` + `LyoElementRoot`.** Utility dialog and the element-id root used by every component. Optional `Path` and `Chips` render in the header (grid Dev request/response).",
         "**`Dialog/LyoDialog`.** Shared popup chrome (scrollable body, save/close). Header always has a raw-JSON debug button (`DebugData`). Click opens `JsonViewDialog`. Use `LyoDialogPresets` for size."
       ]
@@ -188,7 +188,7 @@
     {
       "type": "paragraph",
       "title": "Internal helpers (`Extensions`)",
-      "text": "Shared visual helpers sit on internal `Extensions`: `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`, `GetAvailableComparisonOperators(LyoTypeInfo)`, and the `IsMultiValueComparisonOperator` extension on `ComparisonOperatorEnum`. Status badges and operator menus on the grid, query editor, and form call these."
+      "text": "Shared visual helpers sit on internal `Extensions`: `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`, `GetAvailableComparisonOperators(LyoTypeInfo)`, and the `IsMultiValueComparisonOperator` / `IsFuzzyComparisonOperator` extensions on `ComparisonOperatorEnum`. Status badges and operator menus on the grid, query editor, and form call these."
     }
   ],
   "links": [],
@@ -196,14 +196,6 @@
   "dependencies": [
     {
       "name": "Lyo.Api.Client",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -244,6 +236,14 @@
     },
     {
       "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -300,6 +300,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "MudBlazor",
       "kind": "package",
       "version": "9.3",
@@ -334,6 +343,14 @@
     },
     {
       "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -397,6 +414,14 @@
       ]
     },
     {
+      "name": "Lyo.Schedule.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Streams",
       "kind": "lyo",
       "tags": [
@@ -448,15 +473,6 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
       ]
     },
     {
@@ -534,6 +550,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

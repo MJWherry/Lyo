@@ -1,4 +1,7 @@
 using System.Reflection;
+using Lyo.Common.Core;
+using Lyo.Common.Core.Attributes;
+using Lyo.Common.Core.Enums;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
 using Lyo.Xlsx.Models;
@@ -15,16 +18,18 @@ namespace Lyo.Xlsx;
 internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
 {
     private readonly ILogger _logger;
+    private readonly XlsxOptions _options;
     private readonly Stream? _ownedStream;
 
     private readonly HashSet<string> _sheetNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly OpenXmlStreamWriter _writer;
     private bool _disposed;
 
-    internal XlsxDocumentWriter(Stream xlsxStream, ILogger logger, bool ownsStream = false)
+    internal XlsxDocumentWriter(Stream xlsxStream, ILogger logger, XlsxOptions options, bool ownsStream = false)
     {
         _writer = new(xlsxStream);
         _logger = logger;
+        _options = options;
         _ownedStream = ownsStream ? xlsxStream : null;
     }
 
@@ -33,6 +38,14 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
     {
         ArgumentHelpers.ThrowIfNull(rows);
         var properties = XlsxWriter.ReadableProperties<T>();
+        if (_options.Order != MemberOrder.Defined && properties.Count > 1)
+            properties = MemberOrderSort.Sort(
+                properties,
+                static property => property.Name,
+                static property => property.GetCustomAttribute<MemberOrderAttribute>()?.Order,
+                _options.Order,
+                _options.OrderNames);
+
         WriteSheet(sheetName, XlsxWriter.HeaderNames(properties), XlsxWriter.RowsFromProperties(rows, properties), ct);
     }
 
@@ -49,7 +62,7 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
     public void AddSheetFromDataTable(string sheetName, DataTable.Models.DataTable dataTable, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
-        var (headers, rows, headerFormats, footer, footerFormats) = XlsxWriter.BuildFromDataTable(dataTable);
+        var (headers, rows, headerFormats, footer, footerFormats) = XlsxWriter.BuildFromDataTable(dataTable, _options.Order, _options.OrderNames);
         WriteSheet(sheetName, headers, rows, ct, headerFormats, footer, footerFormats);
     }
 

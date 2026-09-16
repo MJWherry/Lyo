@@ -1,4 +1,3 @@
-using Lyo.Common.Core.Enums;
 using Lyo.Common.Metadata.Records;
 using Lyo.FileStorage.Web.Components.FileStorageManagement;
 using Lyo.Web.Components;
@@ -19,13 +18,7 @@ public static class FileStorageColorHelper
         if (type == FileTypeInfo.Unknown)
             return LyoChips.Of(string.IsNullOrWhiteSpace(mime) ? "File" : mime);
 
-        var color = type.Category switch {
-            FileTypeCategory.Images => Color.Success,
-            FileTypeCategory.Documents => Color.Info,
-            FileTypeCategory.DataFiles => Color.Primary,
-            var _ => Color.Default
-        };
-        return LyoChips.Of(type.Name, color);
+        return LyoChips.Of(type.Name, HueForType(type));
     }
 
     /// <summary>Known <see cref="FileTypeInfo" /> from MIME, then filename, used for preview routing.</summary>
@@ -49,13 +42,15 @@ public static class FileStorageColorHelper
         if (string.IsNullOrWhiteSpace(algorithm))
             return LyoChips.Of("None", Color.Default, Icons.Material.Filled.LockOpen);
 
-        var color = Normalize(algorithm) switch {
-            "AESGCM" or "AESGCMRSA" or "AESCCM" or "AESSIV" => Color.Primary,
-            "CHACHA20POLY1305" or "XCHACHA20POLY1305" => Color.Tertiary,
-            "RSA" => Color.Info,
-            var _ => Color.Default
+        var hue = Normalize(algorithm) switch {
+            "AESGCM" or "AESGCMRSA" or "AESCCM" or "AESSIV" => LyoChipHue.Blue,
+            "CHACHA20POLY1305" or "XCHACHA20POLY1305" => LyoChipHue.Teal,
+            "RSA" => LyoChipHue.Violet,
+            var _ => null
         };
-        return LyoChips.Of(algorithm, color, Icons.Material.Filled.Lock);
+        return hue is null
+            ? LyoChips.Of(algorithm, Color.Default, Icons.Material.Filled.Lock)
+            : LyoChips.Of(algorithm, hue, Icons.Material.Filled.Lock);
     }
 
     /// <summary>Compression algorithm chip; blank shows <c>None</c>.</summary>
@@ -68,14 +63,28 @@ public static class FileStorageColorHelper
         if (string.IsNullOrWhiteSpace(algorithm))
             return LyoChips.Of("None", Color.Default);
 
-        var color = Normalize(algorithm) switch {
-            "BROTLI" => Color.Primary,
-            "GZIP" => Color.Info,
-            "DEFLATE" or "ZLIB" => Color.Secondary,
-            "LZ4" => Color.Tertiary,
-            var _ => Color.Default
+        var hue = Normalize(algorithm) switch {
+            "BROTLI" => LyoChipHue.Lime,
+            "GZIP" => LyoChipHue.Amber,
+            "DEFLATE" or "ZLIB" => LyoChipHue.Cyan,
+            "LZ4" => LyoChipHue.Coral,
+            var _ => null
         };
-        return LyoChips.Of(algorithm, color, Icons.Material.Filled.Compress);
+        return hue is null
+            ? LyoChips.Of(algorithm, icon: Icons.Material.Filled.Compress)
+            : LyoChips.Of(algorithm, hue, Icons.Material.Filled.Compress);
+    }
+
+    /// <summary>
+    /// Hue for one file type name. A stride of five around <see cref="LyoChipHue.All" /> keeps names whose
+    /// character sums differ by one (CSV and HTML) about 150° apart, so they do not both read as cyan.
+    /// </summary>
+    private static LyoChipHue HueForType(FileTypeInfo type)
+    {
+        var sum = 0;
+        foreach (var c in type.Name)
+            sum += c;
+        return LyoChipHue.All[sum * 5 % LyoChipHue.All.Count];
     }
 
     private static string? MediaTypeOnly(string? contentType)

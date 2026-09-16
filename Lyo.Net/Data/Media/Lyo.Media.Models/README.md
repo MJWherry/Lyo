@@ -6,9 +6,11 @@ Contracts for audio and video convert, probe, and play. There is no IMediaConver
 
 - **Two families.** IAudioConverter / IAudioProber / IAudioPlayer and IVideoConverter / IVideoProber / IVideoPlayer. No shared converter base.
 - **Shared plumbing that is not a converter.** IMediaProcessSession (live stdout), MediaIoMode, MediaProgress, MediaProbeResult (muxed files list every stream; attached_pic is not HasVideo).
-- **Factories.** ForRawPcm / ForCompressAudio on AudioConversionOptions. ForCompressVideo / ForStreamingVideo on VideoConversionOptions. ForStreamingVideo defaults to fragmented Mp4; WebM is copy plus pipe with no movflags.
+- **Factories.** ForRawPcm, ForCompressAudio, and ForExtract on audio. ForCompressVideo, ForStreamingVideo, ForGif, ForHls, ForDash, and ForThumbnail on video. ForStreamingVideo defaults to fragmented Mp4; WebM is copy plus pipe with no movflags.
+- **Builders.** AudioConversion and VideoConversion return a builder. Build() is the file request. BuildOptions() is the knobs for streams and StartConvertAsync. BuildConcat() is the multi-file request.
 - **PcmFrameReader.** Slices s16le PCM into 20 ms frames without referencing Discord. Single-consumer.
-- **Thread-safe catalogs.** TryFromName / Custom use ConcurrentDictionary. Bitrate stays a string (128k, 2M).
+- **Thread-safe catalogs.** TryFromName / Custom use ConcurrentDictionary. Bitrate, sample rate, channels, CRF, and frame rate are records (`MediaBitRate` id `128k`, not a raw string).
+- **Tags.** Convert metadata dictionaries use [`FileTagKey`](../../FileTags/Lyo.FileTags/README.md). The same catalog is what file storage stores under `fileTags`.
 
 ## Examples
 
@@ -25,15 +27,17 @@ await foreach (var frame in frames.ReadFramesAsync(ct))
 ## Public types
 
 | Type | Description |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| IAudioConverter | Audio convert matrix, StartConvertAsync, StartRawPcmAsync. Always drops video. |
-| IVideoConverter | Video convert matrix, StartConvertAsync, ExtractFrameAsync. |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| IAudioConverter | Audio convert matrix, StartConvertAsync, StartRawPcmAsync, ExtractAsync, ConcatAsync. Always drops video. Null ExtractAsync options use ForExtract (AAC in M4A). |
+| IVideoConverter | Video convert matrix, StartConvertAsync, ExtractFrameAsync, ConcatAsync. Concat uses the demuxer and still needs a matching stream layout. |
 | IAudioProber / IVideoProber | ProbeAsync / ProbeStreamAsync / ProbeBytesAsync return MediaProbeResult. Each flattens the first real audio vs first real video stream. |
 | IAudioPlayer / IVideoPlayer | Local play. NoDisplay defaults true; video window is opt-in. Network streaming is StartConvertAsync. |
 | IMediaProcessSession | Running convert: StandardOutput readable before exit. Single-consumer. Dispose cancels. No process timeout. |
-| AudioConversionOptions / VideoConversionOptions | Records with Validate(). Factories on the matching type. Progress callbacks fire on the process I/O thread. |
-| AudioEncoder / VideoEncoder / PixelFormat / EncoderPreset | Static instances, TryFromName / TryFromId, Custom. Ids are codec tokens (h264, mp3), not backend encoder names. |
+| AudioConversionOptions / VideoConversionOptions | Records with Validate(). Factories on the matching type. AudioConversion and VideoConversion build them. Progress callbacks fire on the process I/O thread. |
+| AudioEncoder / VideoEncoder / PixelFormat / EncoderPreset | Static instances, TryFromName / TryFromId, Custom. Ids are codec tokens (h264, hevc, av1, mp3, flac), not backend encoder names. EncoderPreset.Svt8 is the libsvtav1 default. P1 through P7 are NVENC. |
 | PcmFrameReader | IAsyncEnumerable of s16le frames. Default 20 ms, 48 kHz, stereo. |
+| MediaBitRate / AudioSampleRate / ChannelLayout / ConstantRateFactor / VideoFrameRate | Named values for bitrate, hertz, channel count, CRF, and frame rate. Custom and FromHertz / FromCount / FromValue / FromDouble cover the rest. |
+| HardwareAccel / ScaleMode / SubtitleMode / LoudnessTarget / StreamPackaging | GPU device, scale behavior, subtitle burn-in or copy, loudnorm targets, and HLS/DASH segment settings. |
 
 ## Dependencies
 
@@ -41,7 +45,9 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
+- `Lyo.FileTags` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

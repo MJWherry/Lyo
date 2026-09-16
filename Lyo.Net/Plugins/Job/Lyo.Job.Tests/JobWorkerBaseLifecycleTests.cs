@@ -9,6 +9,7 @@ using Lyo.Job.Worker;
 using Lyo.MessageQueue;
 using Lyo.Result;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -23,7 +24,7 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { StartException = new ApiException(400, "Run not in Queued state") };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-        var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
+        var result = await worker.InvokeDoWorkAsync(api.RunId, TestCt);
 
         // Duplicate dispatch delivery: requeueing would be rejected the same way every time, churning the message to the DLQ.
         Assert.False(result.IsSuccess);
@@ -37,7 +38,7 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { StartException = new HttpRequestException("Connection refused") };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-        var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
+        var result = await worker.InvokeDoWorkAsync(api.RunId, TestCt);
 
         // The run is still Queued, so the counted requeue may retry it.
         Assert.False(result.IsSuccess);
@@ -49,7 +50,7 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { FinishException = new ApiException(400, "Run is not finishable") };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-        var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
+        var result = await worker.InvokeDoWorkAsync(api.RunId, TestCt);
 
         // The run was already finalized (typically Timeout via dead-job detection). retrying or requeueing can never succeed.
         Assert.False(result.IsSuccess);
@@ -62,7 +63,7 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { FailFinishTransientCount = 2 };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-        var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
+        var result = await worker.InvokeDoWorkAsync(api.RunId, TestCt);
         Assert.True(result.IsSuccess);
         Assert.Equal(3, api.FinishAttempts);
     }
@@ -91,7 +92,7 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient();
         var worker = CreateWorker(api, ctx => throw new OperationCanceledException(ctx.CancellationToken));
-        var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
+        var result = await worker.InvokeDoWorkAsync(api.RunId, TestCt);
 
         // User cancellation (host token not signalled) still finishes the run as Cancelled. no requeue, no hand-back.
         Assert.True(result.IsSuccess);
@@ -104,7 +105,7 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { GetException = new ApiException(404, "Not found") };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-        var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
+        var result = await worker.InvokeDoWorkAsync(api.RunId, TestCt);
 
         // A deleted or retention-purged run can never be found by redelivery, so it cannot burn the requeue budget.
         Assert.False(result.IsSuccess);
@@ -117,7 +118,7 @@ public class JobWorkerBaseLifecycleTests
     {
         var api = new ControllableJobRunApiClient { GetException = new HttpRequestException("Connection refused") };
         var worker = CreateWorker(api, _ => Task.CompletedTask);
-        var result = await worker.InvokeDoWorkAsync(api.RunId, TestContext.Current.CancellationToken);
+        var result = await worker.InvokeDoWorkAsync(api.RunId, TestCt);
         Assert.False(result.IsSuccess);
         Assert.True(result.Metadata is null || !result.Metadata.ContainsKey("requeue"));
     }
@@ -149,8 +150,8 @@ public class JobWorkerBaseLifecycleTests
     public async Task ConcurrentRuns_DoNotCrossReportProgress()
     {
         var api = new ControllableJobRunApiClient();
-        var runA = Guid.NewGuid();
-        var runB = Guid.NewGuid();
+        var runA = LyoGuid.CreateV7();
+        var runB = LyoGuid.CreateV7();
         var expected = new Dictionary<Guid, int> { [runA] = 10, [runB] = 90 };
         using var bothReported = new SemaphoreSlim(0, 2);
         var worker = CreateWorker(
@@ -163,8 +164,8 @@ public class JobWorkerBaseLifecycleTests
             }, TimeSpan.FromMilliseconds(25));
 
         await Task.WhenAll(
-            worker.InvokeDoWorkAsync(runA, TestContext.Current.CancellationToken),
-            worker.InvokeDoWorkAsync(runB, TestContext.Current.CancellationToken));
+            worker.InvokeDoWorkAsync(runA, TestCt),
+            worker.InvokeDoWorkAsync(runB, TestCt));
 
         Assert.NotEmpty(api.ProgressPatches);
         Assert.All(api.ProgressPatches, patch => Assert.Equal(expected[patch.RunId], patch.Percent));
@@ -193,7 +194,7 @@ public class JobWorkerBaseLifecycleTests
     {
         private int _remainingTransientFinishFailures;
 
-        public Guid RunId { get; } = Guid.NewGuid();
+        public Guid RunId { get; } = LyoGuid.CreateV7();
 
         public Exception? StartException { get; set; }
 
@@ -295,8 +296,8 @@ public class JobWorkerBaseLifecycleTests
                 Id = runId is { } id && id != Guid.Empty ? id : RunId,
                 State = state,
                 CreatedTimestamp = DateTime.UtcNow,
-                JobDefinitionId = Guid.NewGuid(),
-                JobDefinition = new(Guid.NewGuid(), "TestDef", null, "Test", "cs", true, null, null, null, null),
+                JobDefinitionId = LyoGuid.CreateV7(),
+                JobDefinition = new(LyoGuid.CreateV7(), "TestDef", null, "Test", "cs", true, null, null, null),
                 JobRunParameters = []
             };
     }

@@ -39,6 +39,12 @@ public sealed class InMemoryS3Bucket
             _objects.TryRemove(req.Key, out _);
             return new();
         };
+        fake.OnDeleteObjects = req => {
+            foreach (var key in req.Objects)
+                _objects.TryRemove(key.Key, out _);
+
+            return new();
+        };
         fake.OnCopyObject = req => {
             if (!_objects.TryGetValue(req.SourceKey, out var entry))
                 throw new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound };

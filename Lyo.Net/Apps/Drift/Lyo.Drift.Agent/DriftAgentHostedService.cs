@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Threading.Channels;
 using Lyo.Api.Client;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Diff.ObjectGraph;
 using Lyo.Drift.Client;
 using Lyo.Drift.Models;

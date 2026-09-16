@@ -22,6 +22,8 @@ public sealed class SystemInfoDriftProjectionTests
         projection.Interfaces[0].UnicastAddresses.ShouldBeEmpty();
         projection.Variables.ShouldBeEmpty();
         projection.Monitors.ShouldBeEmpty();
+        projection.AudioDevices.ShouldBeEmpty();
+        projection.Printers.ShouldBeEmpty();
         projection.CultureName.ShouldBeNull();
         typeof(SystemInfoDriftProjection).GetProperty("CollectedAtUtc").ShouldBeNull();
         typeof(SystemInfoDriftProjection).GetProperty("ProcessUptime").ShouldBeNull();
@@ -52,6 +54,29 @@ public sealed class SystemInfoDriftProjectionTests
     }
 
     [Fact]
+    public void From_Identity_OmitsAudioDevicesAndPrinters()
+    {
+        var projection = SystemInfoDriftProjection.From(SampleInfo());
+        projection.AudioDevices.ShouldBeEmpty();
+        projection.Printers.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void From_AudioDevicesAndPrinters_ProjectsStableFieldsSortedByName()
+    {
+        var projection = SystemInfoDriftProjection.From(SampleInfo(), [SystemInfoDriftGroup.AudioDevices, SystemInfoDriftGroup.Printers]);
+        projection.AudioDevices.Select(device => device.Name).ToArray().ShouldBe(["Amy", "Zed"]);
+        projection.AudioDevices[0].Kind.ShouldBe(AudioDeviceInfo.Capture);
+        projection.AudioDevices[0].FormFactor.ShouldBe("Microphone");
+        projection.AudioDevices[1].IsDefault.ShouldBe(true);
+        projection.Printers.Select(printer => printer.Name).ToArray().ShouldBe(["Amy", "Zed"]);
+        projection.Printers[0].Driver.ShouldBe("drv-a");
+        projection.Printers[0].Port.ShouldBe("port-a");
+        projection.Printers[0].IsDefault.ShouldBeTrue();
+        typeof(SystemInfoDriftProjection.PrinterFact).GetProperty("Status").ShouldBeNull();
+    }
+
+    [Fact]
     public void Parse_UnknownGroup_Throws()
         => Assert.Throws<ArgumentException>(() => SystemInfoDriftGroups.Parse(["not-a-group"]));
 
@@ -65,7 +90,13 @@ public sealed class SystemInfoDriftProjectionTests
                 8, "cpu", "X64", "X64", 1024, [
                     new DriveSpaceInfo("Z:", "Fixed", "ext4", 200, freeSpace),
                     new DriveSpaceInfo("A:", "Fixed", "ext4", 100, freeSpace)
-                ], []),
+                ], [], [
+                    new AudioDeviceInfo("Zed", AudioDeviceInfo.Playback, "z", "Speakers", true),
+                    new AudioDeviceInfo("Amy", AudioDeviceInfo.Capture, "a", "Microphone", false)
+                ], [
+                    new PrinterInfo("Zed", "drv-z", "port-z", false, "Idle"),
+                    new PrinterInfo("Amy", "drv-a", "port-a", true, "Error")
+                ], new PowerPolicyInfo(null, null, null, null, null)),
             new SoftwareInfo("Linux", "Linux", "1", "net", "linux-x64", "10.0", true, true, false, 1, "proc", DateTime.UtcNow, TimeSpan.FromHours(1)),
             new NetworkInfo("host", true, [
                 new NetworkInterfaceInfo("eth1", "d", "Ethernet", "Up", 1, "mac", ["10.0.0.2", "10.0.0.1"], [], []),

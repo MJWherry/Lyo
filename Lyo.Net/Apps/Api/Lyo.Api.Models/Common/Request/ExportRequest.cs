@@ -9,13 +9,13 @@ public class ExportRequest
     /// <summary>Query to run (filters, sort, projection, and so on). Amount is capped by MaxExportSize.</summary>
     public ProjectionQueryReq Query { get; set; } = null!;
 
-    /// <summary>Export format: Csv, Xlsx, or Json.</summary>
+    /// <summary>Export format.</summary>
     public ExportFormat Format { get; set; }
 
     /// <summary>
-    /// Optional. Column header to property name or SmartFormat template for Csv/Xlsx. When null or empty, every property is exported using property names as headers. When
-    /// IFormatterService is registered, values with '{' are SmartFormat templates (for example "{FirstName} {LastName}",
-    /// "{CreatedAt:yyyy-MM-dd}"); otherwise they are property names.
+    /// Optional. Column header to property name or SmartFormat template. When null or empty, every property is exported. When IFormatterService is registered, values with '{'
+    /// are SmartFormat templates (for example "{FirstName} {LastName}", "{CreatedAt:yyyy-MM-dd}"); otherwise they are property names. Formatter columns and their order apply
+    /// to every format, including JSON, YAML, XML, and TOML.
     /// </summary>
     /// <example>{"Email Address": "Email", "Full Name": "{FirstName} {LastName}", "Created": "{CreatedAt:yyyy-MM-dd}"}</example>
     public Dictionary<string, string>? Columns { get; set; }

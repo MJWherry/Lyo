@@ -41,6 +41,25 @@ public sealed class ReportLayoutCssTests
     public void ResolvePageRule_AutoWithoutMargin_ReturnsEmpty()
         => Assert.Equal(string.Empty, ReportLayoutCss.ResolvePageRule(new()));
 
+    [Theory]
+    [InlineData("Letter", "Portrait", "letter portrait")]
+    [InlineData("Letter", "Landscape", "letter landscape")]
+    [InlineData("Legal", "Portrait", "legal portrait")]
+    [InlineData("Legal", "Landscape", "legal landscape")]
+    [InlineData("Tabloid", "Portrait", "tabloid portrait")]
+    [InlineData("Tabloid", "Landscape", "tabloid landscape")]
+    [InlineData("A3", "Portrait", "A3 portrait")]
+    [InlineData("A3", "Landscape", "A3 landscape")]
+    [InlineData("A4", "Portrait", "A4 portrait")]
+    [InlineData("A4", "Landscape", "A4 landscape")]
+    [InlineData("A5", "Portrait", "A5 portrait")]
+    [InlineData("A5", "Landscape", "A5 landscape")]
+    public void ResolvePageRule_NamedPapers_EmitsSize(string paper, string orientation, string expected)
+    {
+        var css = ReportLayoutCss.ResolvePageRule(new() { PageSize = paper, Orientation = orientation });
+        Assert.Contains("size: " + expected, css, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Serialize_NewLayoutFields_RoundTrips()
     {

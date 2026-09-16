@@ -7,6 +7,7 @@ using Lyo.MessageQueue.RabbitMq;
 using Lyo.Web.Components.Dialog;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.MessageQueue.RabbitMq.Web.Components;
 
@@ -318,7 +319,7 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
         if (_wrapInEnvelope) {
             var json = string.IsNullOrWhiteSpace(_messageBody) ? "{}" : _messageBody;
             var payload = JsonSerializer.Deserialize<JsonElement>(json);
-            var messageId = string.IsNullOrWhiteSpace(_envelopeMessageId) ? Guid.NewGuid().ToString("D") : _envelopeMessageId.Trim();
+            var messageId = string.IsNullOrWhiteSpace(_envelopeMessageId) ? LyoGuid.CreateV7().ToString("D") : _envelopeMessageId.Trim();
             var traceId = string.IsNullOrWhiteSpace(_envelopeTraceId) ? null : _envelopeTraceId.Trim();
             return await MqService.SendToQueueWithEnvelopeAsync(_queueName, payload, messageId: messageId, traceId: traceId, priority: (byte)Math.Clamp(_messagePriority, 0, 255));
         }
@@ -516,7 +517,7 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
         try {
             var json = string.IsNullOrWhiteSpace(_messageBody) ? "{}" : _messageBody;
             var payload = JsonSerializer.Deserialize<JsonElement>(json);
-            var messageId = string.IsNullOrWhiteSpace(_envelopeMessageId) ? Guid.NewGuid().ToString("D") : _envelopeMessageId.Trim();
+            var messageId = string.IsNullOrWhiteSpace(_envelopeMessageId) ? LyoGuid.CreateV7().ToString("D") : _envelopeMessageId.Trim();
             var traceId = string.IsNullOrWhiteSpace(_envelopeTraceId) ? null : _envelopeTraceId.Trim();
             var envelope = new QueueMessageEnvelope<JsonElement>(payload, 0, messageId, DateTime.UtcNow, traceId);
             bytes = JsonSerializer.SerializeToUtf8Bytes(envelope);

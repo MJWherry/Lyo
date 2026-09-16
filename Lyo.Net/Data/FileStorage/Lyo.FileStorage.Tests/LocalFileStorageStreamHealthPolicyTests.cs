@@ -3,6 +3,7 @@ using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Policy;
 using Lyo.FileStorage.Tests.Support;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.Tests;
 
@@ -18,9 +19,9 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
         using var scope = LocalFileStorageTestScope.Create();
         var payload = "stream-save-me"u8.ToArray();
         await using var input = new MemoryStream(payload, false);
-        var saved = await scope.Storage.SaveFromStreamAsync(input, payload.LongLength, "stream.txt", ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFromStreamAsync(input, payload.LongLength, "stream.txt", ct: TestCt);
         Assert.Equal(payload.LongLength, saved.OriginalFileSize);
-        var roundtrip = await scope.Storage.GetFileAsync(saved.Id, ct: TestContext.Current.CancellationToken);
+        var roundtrip = await scope.Storage.GetFileAsync(saved.Id, ct: TestCt);
         Assert.Equal(payload, roundtrip);
     }
 
@@ -28,10 +29,10 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
     public async Task SaveFromStreamAsync_FileIdOverride_UsesProvidedId()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        var desired = Guid.NewGuid();
+        var desired = LyoGuid.CreateV7();
         var payload = "force-id"u8.ToArray();
         await using var input = new MemoryStream(payload);
-        var saved = await scope.Storage.SaveFromStreamAsync(input, payload.LongLength, "force.txt", fileId: desired, ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFromStreamAsync(input, payload.LongLength, "force.txt", fileId: desired, ct: TestCt);
         Assert.Equal(desired, saved.Id);
     }
 
@@ -40,10 +41,10 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
     {
         using var scope = LocalFileStorageTestScope.Create();
         var payload = "stream-read"u8.ToArray();
-        var saved = await scope.Storage.SaveFileAsync(payload, "x.bin", ct: TestContext.Current.CancellationToken);
-        await using var stream = await scope.Storage.GetFileStreamAsync(saved.Id, ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFileAsync(payload, "x.bin", ct: TestCt);
+        await using var stream = await scope.Storage.GetFileStreamAsync(saved.Id, ct: TestCt);
         using var ms = new MemoryStream();
-        await stream!.CopyToAsync(ms, TestContext.Current.CancellationToken);
+        await stream!.CopyToAsync(ms, TestCt);
         Assert.Equal(payload, ms.ToArray());
     }
 
@@ -56,7 +57,7 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
             return o;
         });
 
-        var result = await scope.Storage.GetFileAsync(Guid.NewGuid(), ct: TestContext.Current.CancellationToken);
+        var result = await scope.Storage.GetFileAsync(LyoGuid.CreateV7(), ct: TestCt);
         Assert.NotNull(result);
         Assert.Empty(result);
     }
@@ -69,7 +70,7 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
             return o;
         });
 
-        var result = await scope.Storage.CheckHealthAsync(TestContext.Current.CancellationToken);
+        var result = await scope.Storage.CheckHealthAsync(TestCt);
         Assert.True(result.IsHealthy);
     }
 
@@ -83,7 +84,7 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
             return o;
         });
 
-        var result = await scope.Storage.CheckHealthAsync(TestContext.Current.CancellationToken);
+        var result = await scope.Storage.CheckHealthAsync(TestCt);
         Assert.True(result.IsHealthy, result.Message);
     }
 
@@ -95,7 +96,7 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
             return o;
         });
 
-        var result = await scope.Storage.CheckHealthAsync(TestContext.Current.CancellationToken);
+        var result = await scope.Storage.CheckHealthAsync(TestCt);
         Assert.True(result.IsHealthy, result.Message);
         Assert.False(Directory.Exists(Path.Combine(scope.Options.RootDirectoryPath, ".lyo-health")) &&
             Directory.EnumerateFiles(Path.Combine(scope.Options.RootDirectoryPath, ".lyo-health")).Any());
@@ -109,7 +110,7 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
             return o;
         });
 
-        var result = await scope.Storage.CheckHealthAsync(TestContext.Current.CancellationToken);
+        var result = await scope.Storage.CheckHealthAsync(TestCt);
         Assert.True(result.IsHealthy);
     }
 
@@ -123,8 +124,8 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
         });
 
         var payload = "duplicate-me"u8.ToArray();
-        var first = await scope.Storage.SaveFileAsync(payload, "a.txt", ct: TestContext.Current.CancellationToken);
-        var second = await scope.Storage.SaveFileAsync(payload, "a.txt", ct: TestContext.Current.CancellationToken);
+        var first = await scope.Storage.SaveFileAsync(payload, "a.txt", ct: TestCt);
+        var second = await scope.Storage.SaveFileAsync(payload, "a.txt", ct: TestCt);
         Assert.Equal(first.Id, second.Id);
     }
 
@@ -138,8 +139,8 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
         });
 
         var payload = "dup-allow"u8.ToArray();
-        var first = await scope.Storage.SaveFileAsync(payload, "a.txt", ct: TestContext.Current.CancellationToken);
-        var second = await scope.Storage.SaveFileAsync(payload, "a.txt", ct: TestContext.Current.CancellationToken);
+        var first = await scope.Storage.SaveFileAsync(payload, "a.txt", ct: TestCt);
+        var second = await scope.Storage.SaveFileAsync(payload, "a.txt", ct: TestCt);
         Assert.NotEqual(first.Id, second.Id);
     }
 
@@ -151,11 +152,11 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
             return o;
         });
 
-        var saved = await scope.Storage.SaveFileAsync("blocked"u8.ToArray(), "f.bin", ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFileAsync("blocked"u8.ToArray(), "f.bin", ct: TestCt);
         Assert.Equal(FileAvailability.Quarantined, saved.Availability);
 
         // Quarantined reads must fail unless admin override is on.
-        await Assert.ThrowsAnyAsync<FileNotAvailableException>(() => scope.Storage.GetFileAsync(saved.Id, ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<FileNotAvailableException>(() => scope.Storage.GetFileAsync(saved.Id, ct: TestCt));
     }
 
     [Fact]
@@ -168,8 +169,8 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
         });
 
         var payload = "admin-readable"u8.ToArray();
-        var saved = await scope.Storage.SaveFileAsync(payload, "f.bin", ct: TestContext.Current.CancellationToken);
-        var bytes = await scope.Storage.GetFileAsync(saved.Id, ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFileAsync(payload, "f.bin", ct: TestCt);
+        var bytes = await scope.Storage.GetFileAsync(saved.Id, ct: TestCt);
         Assert.Equal(payload, bytes);
     }
 
@@ -182,7 +183,7 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
         });
 
         var oversized = new byte[32];
-        await Assert.ThrowsAnyAsync<FilePolicyRejectedException>(() => scope.Storage.SaveFileAsync(oversized, "big.bin", ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<FilePolicyRejectedException>(() => scope.Storage.SaveFileAsync(oversized, "big.bin", ct: TestCt));
     }
 
     [Fact]
@@ -195,7 +196,7 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
         });
 
         await using var input = new MemoryStream(new byte[32], false);
-        await Assert.ThrowsAnyAsync<FilePolicyRejectedException>(() => scope.Storage.SaveFromStreamAsync(input, 4, "lying.bin", ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<FilePolicyRejectedException>(() => scope.Storage.SaveFromStreamAsync(input, 4, "lying.bin", ct: TestCt));
     }
 
     [Fact]
@@ -204,9 +205,9 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
         using var scope = LocalFileStorageTestScope.Create();
         var payload = "actual-size-wins"u8.ToArray();
         await using var input = new MemoryStream(payload, false);
-        var saved = await scope.Storage.SaveFromStreamAsync(input, 1, "mismatch.txt", ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFromStreamAsync(input, 1, "mismatch.txt", ct: TestCt);
         Assert.Equal(payload.LongLength, saved.OriginalFileSize);
-        Assert.Equal(payload, await scope.Storage.GetFileAsync(saved.Id, ct: TestContext.Current.CancellationToken));
+        Assert.Equal(payload, await scope.Storage.GetFileAsync(saved.Id, ct: TestCt));
     }
 
     [Fact]
@@ -214,9 +215,9 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
     {
         using var scope = LocalFileStorageTestScope.Create();
         await using var input = new MemoryStream([], false);
-        var saved = await scope.Storage.SaveFromStreamAsync(input, 0, "empty.bin", ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFromStreamAsync(input, 0, "empty.bin", ct: TestCt);
         Assert.Equal(0, saved.OriginalFileSize);
-        Assert.Empty(await scope.Storage.GetFileAsync(saved.Id, ct: TestContext.Current.CancellationToken) ?? []);
+        Assert.Empty(await scope.Storage.GetFileAsync(saved.Id, ct: TestCt) ?? []);
     }
 
     [Fact]
@@ -232,11 +233,11 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
     public async Task DeleteFileAsync_DefaultMode_TombstonesMetadata()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        var saved = await scope.Storage.SaveFileAsync("to-delete"u8.ToArray(), "del.bin", ct: TestContext.Current.CancellationToken);
-        var deleted = await scope.Storage.DeleteFileAsync(saved.Id, ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFileAsync("to-delete"u8.ToArray(), "del.bin", ct: TestCt);
+        var deleted = await scope.Storage.DeleteFileAsync(saved.Id, ct: TestCt);
         Assert.True(deleted);
 
         // Default config has ThrowOnFileNotFound = true; metadata should no longer come back as available.
-        await Assert.ThrowsAnyAsync<Exception>(() => scope.Storage.GetFileAsync(saved.Id, ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<Exception>(() => scope.Storage.GetFileAsync(saved.Id, ct: TestCt));
     }
 }

@@ -1,6 +1,8 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Metrics;
+using Lyo.Web.Automation.Plan;
 using Lyo.Web.Automation.Selenium.Automation;
 using Lyo.Web.Automation.Selenium.Configuration;
 using Lyo.Web.Automation.Selenium.Controls;
@@ -72,7 +74,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     {
         ArgumentHelpers.ThrowIfNull(options);
         Options = options;
-        ExecutionContext = executionContext ?? SeleniumExecutionContextFactory.Create(options, Guid.NewGuid());
+        ExecutionContext = executionContext ?? SeleniumExecutionContextFactory.Create(options, LyoGuid.CreateV7());
         var baseLogger = logger ?? NullLogger.Instance;
         Logger = ExecutionContext.BuildBrowserLogger(baseLogger);
         Metrics = Options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
@@ -163,6 +165,35 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                 ct.ThrowIfCancellationRequested();
                 Driver!.Navigate().Refresh();
             }, ct);
+
+    async Task<IReadOnlyList<string>> IWebAutomationNavigator.CaptureNetworkAsync(string? urlPattern, int durationMilliseconds, CancellationToken ct)
+    {
+        EnsureDriver();
+        ArgumentHelpers.ThrowIfNegative(durationMilliseconds);
+        var urls = new List<string>();
+        var deadline = DateTime.UtcNow + TimeSpan.FromMilliseconds(durationMilliseconds);
+        do {
+            ct.ThrowIfCancellationRequested();
+            try {
+                var logs = Driver!.Manage().Logs.GetLog(LogType.Performance);
+                foreach (var entry in logs) {
+                    var reqUrl = TryParseNetworkRequestUrl(entry.Message);
+                    if (reqUrl != null && NetworkUrlMatcher.Matches(urlPattern, reqUrl) && !urls.Contains(reqUrl))
+                        urls.Add(reqUrl);
+                }
+            }
+            catch {
+                // performance log unavailable for this browser/driver combination
+            }
+
+            if (DateTime.UtcNow >= deadline)
+                break;
+
+            await Task.Delay(50, ct).ConfigureAwait(false);
+        } while (true);
+
+        return urls;
+    }
 
     Task<string> IWebAutomationPage.GetCurrentUrlAsync(CancellationToken ct)
         => Task.Run(

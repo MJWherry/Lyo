@@ -9,6 +9,7 @@ using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests;
 
@@ -27,10 +28,10 @@ public class CrudServicePostgresTests
         var req = new JobDefinitionReq("CreateTest", "Created by test") { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
         var result = await createService.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
             req, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.Type = "Test";
                 ctx.Entity.WorkerType = ProgrammingLanguageInfo.CSharp.ShortName;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
@@ -50,10 +51,10 @@ public class CrudServicePostgresTests
 
         var result = await createService.CreateBulkAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
             requests, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.Type = "Test";
                 ctx.Entity.WorkerType = ProgrammingLanguageInfo.CSharp.ShortName;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.Equal(2, result.CreatedCount);
         Assert.Equal(0, result.FailedCount);
@@ -68,7 +69,7 @@ public class CrudServicePostgresTests
         var updateService = scope.ServiceProvider.GetRequiredService<IUpdateService<JobContext>>();
         var req = new JobDefinitionReq("UpdateModified", "Updated description", false) { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
         var updateRequest = new UpdateRequest<JobDefinitionReq>(req, defId);
-        var result = await updateService.UpdateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(updateRequest, ct: TestContext.Current.CancellationToken);
+        var result = await updateService.UpdateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(updateRequest, ct: TestCt);
         Assert.Equal(UpdateResultEnum.Updated, result.Result);
         Assert.NotNull(result.NewData);
         Assert.Equal("UpdateModified", result.NewData!.Name);
@@ -83,7 +84,7 @@ public class CrudServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var patchService = scope.ServiceProvider.GetRequiredService<IPatchService<JobContext>>();
         var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new() { ["Name"] = "PatchModified", ["Description"] = "Patched" } };
-        var result = await patchService.PatchAsync<JobDefinition, JobDefinitionRes>(patchRequest, ct: TestContext.Current.CancellationToken);
+        var result = await patchService.PatchAsync<JobDefinition, JobDefinitionRes>(patchRequest, ct: TestCt);
         Assert.Equal(PatchResultEnum.Updated, result.Result);
         Assert.NotNull(result.NewData);
         Assert.Equal("PatchModified", result.NewData!.Name);
@@ -97,9 +98,9 @@ public class CrudServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var deleteService = scope.ServiceProvider.GetRequiredService<IDeleteService<JobContext>>();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var deleteResult = await deleteService.DeleteAsync<JobDefinition, JobDefinitionRes>([defId], ct: TestContext.Current.CancellationToken);
+        var deleteResult = await deleteService.DeleteAsync<JobDefinition, JobDefinitionRes>([defId], ct: TestCt);
         Assert.True(deleteResult.IsSuccess);
-        var getResult = await queryService.Get<JobDefinition, JobDefinitionRes>([defId], null, null, null, TestContext.Current.CancellationToken);
+        var getResult = await queryService.Get<JobDefinition, JobDefinitionRes>([defId], null, null, null, TestCt);
         Assert.Null(getResult);
     }
 
@@ -110,7 +111,7 @@ public class CrudServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var deleteService = scope.ServiceProvider.GetRequiredService<IDeleteService<JobContext>>();
         var deleteRequest = new DeleteRequest("Name", "DeleteByIdentifier");
-        var deleteResult = await deleteService.DeleteAsync<JobDefinition, JobDefinitionRes>(deleteRequest, ct: TestContext.Current.CancellationToken);
+        var deleteResult = await deleteService.DeleteAsync<JobDefinition, JobDefinitionRes>(deleteRequest, ct: TestCt);
         Assert.True(deleteResult.IsSuccess);
     }
 
@@ -125,7 +126,7 @@ public class CrudServicePostgresTests
             [defId], _ => order.Add("sync"), async (ctx, _) => {
                 await Task.Yield();
                 order.Add($"async:{ctx.Entity.Id}");
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.True(deleteResult.IsSuccess);
         Assert.Equal(["sync", $"async:{defId}"], order);
@@ -139,10 +140,10 @@ public class CrudServicePostgresTests
         var deleteService = scope.ServiceProvider.GetRequiredService<IDeleteService<JobContext>>();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var deleteResult = await deleteService.DeleteAsync<JobDefinition, JobDefinitionRes>(
-            [defId], beforeAsync: (_, _) => throw new IOException("external cleanup failed"), ct: TestContext.Current.CancellationToken);
+            [defId], beforeAsync: (_, _) => throw new IOException("external cleanup failed"), ct: TestCt);
 
         Assert.False(deleteResult.IsSuccess);
-        var stillThere = await queryService.Get<JobDefinition, JobDefinitionRes>([defId], null, null, null, TestContext.Current.CancellationToken);
+        var stillThere = await queryService.Get<JobDefinition, JobDefinitionRes>([defId], null, null, null, TestCt);
         Assert.NotNull(stillThere);
     }
 
@@ -155,10 +156,10 @@ public class CrudServicePostgresTests
         var upsertRequest = new UpsertRequest<JobDefinitionReq>(req, "Name", "UpsertCreate");
         var result = await upsertService.UpsertAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
             upsertRequest, beforeCreate: ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.Type = "Test";
                 ctx.Entity.WorkerType = ProgrammingLanguageInfo.CSharp.ShortName;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.Equal(UpsertResultEnum.Created, result.Result);
         Assert.NotNull(result.NewData);
@@ -173,7 +174,7 @@ public class CrudServicePostgresTests
         var upsertService = scope.ServiceProvider.GetRequiredService<IUpsertService<JobContext>>();
         var req = new JobDefinitionReq("UpsertUpdated", "Upsert updated desc", false) { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
         var upsertRequest = new UpsertRequest<JobDefinitionReq>(req, "Id", defId);
-        var result = await upsertService.UpsertAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(upsertRequest, ct: TestContext.Current.CancellationToken);
+        var result = await upsertService.UpsertAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(upsertRequest, ct: TestCt);
         Assert.Equal(UpsertResultEnum.Updated, result.Result);
         Assert.NotNull(result.NewData);
         Assert.Equal(defId, result.NewData!.Id);

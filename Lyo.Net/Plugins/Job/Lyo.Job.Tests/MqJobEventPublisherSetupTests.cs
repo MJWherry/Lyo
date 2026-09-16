@@ -19,7 +19,7 @@ public class MqJobEventPublisherSetupTests
     {
         var mq = new FakeMqService();
         var publisher = new ClientPublisher(mq, NullLogger<ClientPublisher>.Instance, new ClientJobMqOptions { WorkerTypes = ["cs"] });
-        await publisher.SetupAsync(TestContext.Current.CancellationToken);
+        await publisher.SetupAsync(TestCt);
         AssertJobEventTopology(mq, "cs");
     }
 
@@ -28,7 +28,7 @@ public class MqJobEventPublisherSetupTests
     {
         var mq = new FakeMqService();
         var publisher = new PostgresPublisher(mq, NullLogger<PostgresPublisher>.Instance, new PostgresJobMqOptions { WorkerTypes = ["cs"] });
-        await publisher.SetupAsync(TestContext.Current.CancellationToken);
+        await publisher.SetupAsync(TestCt);
         AssertJobEventTopology(mq, "cs");
     }
 

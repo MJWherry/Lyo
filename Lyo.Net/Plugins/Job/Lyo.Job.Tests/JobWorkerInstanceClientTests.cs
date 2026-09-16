@@ -2,6 +2,7 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Job.Client;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -20,7 +21,7 @@ public class JobWorkerInstanceClientTests
                 State = JobWorkerInstanceState.Running,
                 StartedTimestamp = DateTime.UtcNow,
                 LastHeartbeatUtc = DateTime.UtcNow
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         Assert.Equal("https://api.test/Job/WorkerInstance", api.LastUri);
         Assert.IsType<JobWorkerInstanceReq>(api.LastBody);
@@ -31,8 +32,8 @@ public class JobWorkerInstanceClientTests
     {
         var api = new RecordingApiClient();
         var client = new JobWorkerInstanceClient(api);
-        var id = Guid.NewGuid();
-        await client.HeartbeatAsync(id, 3, TestContext.Current.CancellationToken);
+        var id = LyoGuid.CreateV7();
+        await client.HeartbeatAsync(id, 3, TestCt);
         Assert.Equal("Job/WorkerInstance", api.LastUri);
         var patch = Assert.IsType<PatchRequest>(api.LastBody);
         Assert.NotNull(patch.Keys);
@@ -46,8 +47,8 @@ public class JobWorkerInstanceClientTests
     {
         var api = new RecordingApiClient();
         var client = new JobWorkerInstanceClient(api);
-        var id = Guid.NewGuid();
-        await client.HeartbeatAsync(id, 1, TestContext.Current.CancellationToken, new Dictionary<string, string?> { ["workingSetBytes"] = "2048" });
+        var id = LyoGuid.CreateV7();
+        await client.HeartbeatAsync(id, 1, TestCt, new Dictionary<string, string?> { ["workingSetBytes"] = "2048" });
         var patch = Assert.IsType<PatchRequest>(api.LastBody);
         Assert.True(patch.Properties.ContainsKey("MetadataJson"));
         Assert.Contains("workingSetBytes", Assert.IsType<string>(patch.Properties["MetadataJson"]), StringComparison.Ordinal);

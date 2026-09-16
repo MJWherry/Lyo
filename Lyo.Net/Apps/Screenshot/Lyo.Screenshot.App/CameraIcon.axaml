@@ -1,0 +1,7 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Lyo.Screenshot.App.CameraIcon">
+    <Viewbox>
+        <Path x:Name="Mark" Width="24" Height="24" Stretch="Fill"/>
+    </Viewbox>
+</UserControl>

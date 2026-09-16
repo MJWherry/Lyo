@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Formatter addon that evaluates Algo("key") and score("key") through Lyo.Algorithms. Base Lyo.Formatter does not reference this package.</Description>
+        <PackageTags>formatter algorithm expression template</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Formatter.Algorithms.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Lyo.Formatter\Lyo.Formatter.csproj"/>
+        <ProjectReference Include="..\..\Algorithms\Lyo.Algorithms\Lyo.Algorithms.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+    </ItemGroup>
+
+</Project>

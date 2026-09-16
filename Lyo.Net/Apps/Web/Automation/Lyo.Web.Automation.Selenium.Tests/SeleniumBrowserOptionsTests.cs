@@ -1,3 +1,4 @@
+using Lyo.Exceptions.Models;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Selenium.Configuration;
 
@@ -34,5 +35,13 @@ public sealed class SeleniumBrowserOptionsTests
         var options = SeleniumBrowserOptionsBuilder.New().RandomizeViewportOnSessionStart().ViewportJitterPixels(2).Build();
         Assert.True(options.RandomizeViewportOnSessionStart);
         Assert.Equal(2, options.ViewportJitterPixels);
+    }
+
+    [Fact]
+    public void Validate_WebKit_Throws()
+    {
+        var options = new SeleniumBrowserOptions { BrowserKind = AutomationBrowserKind.WebKit };
+        var ex = Assert.Throws<ConfigurationException>(options.Validate);
+        Assert.Contains("WebKit", ex.Message, StringComparison.Ordinal);
     }
 }

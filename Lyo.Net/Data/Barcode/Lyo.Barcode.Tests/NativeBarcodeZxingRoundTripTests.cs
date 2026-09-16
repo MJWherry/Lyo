@@ -22,7 +22,7 @@ public class NativeBarcodeZxingRoundTripTests
                 ModuleWidthPixels = 2,
                 BarHeightPixels = 80,
                 QuietZoneModules = 10
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         var br = Assert.IsType<BarcodeResult>(result);
         Assert.True(result.IsSuccess, result.Errors?[0].Message);

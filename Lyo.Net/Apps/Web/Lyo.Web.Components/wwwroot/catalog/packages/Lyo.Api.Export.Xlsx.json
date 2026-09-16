@@ -14,7 +14,7 @@
   ],
   "sections": [],
   "links": [],
-  "readmePath": "Lyo.Net/Apps/Api/Lyo.Api.Export.Xlsx/README.md",
+  "readmePath": "Lyo.Net/Apps/Api/Export/Lyo.Api.Export.Xlsx/README.md",
   "dependencies": [
     {
       "name": "Lyo.Api",
@@ -50,14 +50,6 @@
     },
     {
       "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -161,6 +153,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
@@ -210,6 +210,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
       "kind": "lyo",
       "tags": [
         "transitive",

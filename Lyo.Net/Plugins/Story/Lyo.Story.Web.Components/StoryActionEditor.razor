@@ -1,0 +1,24 @@
+<MudStack Spacing="2">
+    <MudStack Row Spacing="1">
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="Add">Add action</MudButton>
+    </MudStack>
+    @if (Actions.Count == 0) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">No named actions.</MudText>
+    }
+    else {
+        <MudSelect T="int" Value="_index" ValueChanged="Select" Label="Action" Margin="Margin.Dense" Variant="Variant.Outlined">
+            @for (var index = 0; index < Actions.Count; index++) {
+                var captured = index;
+                var action = Actions[captured];
+                <MudSelectItem T="int" Value="captured">@action.Key</MudSelectItem>
+            }
+        </MudSelect>
+        @if (_index >= 0 && _index < Actions.Count) {
+            var action = Actions[_index];
+            <MudTextField T="string" Label="Key" Value="@action.Key" ValueChanged="@(value => Set(item => item.Key = value))" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+            <MudTextField T="string" Label="Name" Value="@action.Name" ValueChanged="@(value => Set(item => item.Name = value))" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+            <StoryEffectListEditor Effects="action.Effects" Variables="Variables" Nodes="Nodes" Actions="Actions" OnChanged="OnChanged"/>
+            <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="Remove">Remove action</MudButton>
+        }
+    }
+</MudStack>

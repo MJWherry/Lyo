@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Contracts for Lyo state machines: versioned state snapshots, transition results and records, and the state store abstraction. No runtime dependency.</Description>
+        <PackageTags>state-machine fsm workflow contracts</PackageTags>
+    </PropertyGroup>
+
+</Project>

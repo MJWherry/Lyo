@@ -33,7 +33,7 @@ await session.Browser.NavigateToAsync(url);
 - **Integrations.** `AddFantasyFootballClientFromConfiguration` (ESPN), `AddLyoDiscordBot<LyoDiscordBot>(…)`.
 - **AWS file storage (S3 plus two-key).** `AddAwsKeyStoreFromConfiguration` + `AddTwoKeyEncryptionServiceKeyed("two-key-aws", "dev/FileStore")`, then `AddPostgresFileMetadataStoreKeyed("postgres-filemetadatastore")` and `AddS3FileStorageServiceKeyed("client-files")` chained to `UseFileMetadataStore` + `UseEncryptionService` + `ConfigureS3FileStorage().Build(configuration)`.
 - **Local file storage (alternate key).** `AddFileStorageServiceKeyed("two-key-local-filestore", …, "two-key-aws")` rooted at `~/My Documents/local-filestorage` with `EnableDuplicateDetection = true` and `DuplicateStrategy = ReturnExisting`, backed by `LocalFileMetadataStore` at `~/My Documents/local-filestore`. Both file storage services share the same `two-key-aws` encryption key store.
-- **Database stores.** `ConnectionString` (root config key, default `null`) is passed to `AddReportingDbContextFactory`, `AddEndatoDbContextFactory`, `AddShortUrlDbContextFactory`, `AddTwilioSmsDbContextFactory`, `AddPostgresAuditRecorder`, `AddPeopleDbContextFactory`, `AddPostgresCommentStore`, `AddPostgresHomeInventoryStore`, `AddEmailDbContextFactory`, `AddFileMetadataStoreDbContextFactory`, `AddPostgresJobManagement`, `AddComicDbContextFactory`, `AddPostgresTagStore`. All use `EnableAutoMigrations = true`.
+- **Database stores.** `ConnectionString` (root config key, default `null`) is passed to `AddReportingDbContextFactory`, `AddEndatoDbContextFactory`, `AddShortUrlDbContextFactory`, `AddTwilioSmsDbContextFactory`, `AddPostgresAuditRecorder`, `AddPeopleDbContextFactory`, `AddPostgresCommentStore`, `AddPostgresHomeInventoryStore`, `AddPostgresRecipeStore`, `AddEmailDbContextFactory`, `AddFileMetadataStoreDbContextFactory`, `AddPostgresJobManagement`, `AddBookDbContextFactory`, `AddComicDbContextFactory`, `AddStoryDbContextFactory`, `AddPostgresTagStore`. All use `EnableAutoMigrations = true`.
 - **CRUD/QueryConcrete.** `AddLyoCrudServices<TwilioSmsDbContext>()`, `AddLyoCrudServices<AuditDbContext>()`, `AddLyoCrudServices<JobContext>()`, `AddLyoQueryServices()`, `AddScoped<JobService>`.
 - **Mapping.** Mapster `TypeAdapterConfig` set up with `EnumMappingStrategy.ByName`, `MaxDepth(8)`, `NameMatchingStrategy.IgnoreCase`, a polymorphic `ConstructUsing(src => src)` for the abstract `WhereClause`, and a bidirectional mapping between `TwilioSmsResult` and `TwilioSmsLogEntity` (forward by Mapster, reverse via `SmsLogMappingHelper.MapToTwilioSmsResult`). Wired up via `IMapper`/`ILyoMapper` (`MapsterLyoMapper`).
 - **API client.** `IApiClient` wired as `new ApiClient(LyoJsonSerializerOptions.Create().AddLyoDateOnlyModelConverters())`.
@@ -65,10 +65,10 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Client` (direct, lyo)
 - `Lyo.Api.Models` (direct, lyo)
 - `Lyo.Audit.Postgres` (direct, lyo)
+- `Lyo.Book.Postgres` (direct, lyo)
 - `Lyo.Cache.Fusion` (direct, lyo)
 - `Lyo.Comic.Postgres` (direct, lyo)
 - `Lyo.Comment.Postgres` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Compression` (direct, lyo)
 - `Lyo.Csv` (direct, lyo)
 - `Lyo.Discord.Bot` (direct, lyo)
@@ -92,6 +92,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Job.Models` (direct, lyo)
 - `Lyo.Job.Postgres` (direct, lyo)
 - `Lyo.Job.Scheduler` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.KeyStore.Aws` (direct, lyo)
 - `Lyo.MessageQueue` (direct, lyo)
 - `Lyo.MessageQueue.RabbitMq` (direct, lyo)
@@ -101,6 +102,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.People.Postgres` (direct, lyo)
 - `Lyo.Profanity` (direct, lyo)
 - `Lyo.QRCode` (direct, lyo)
+- `Lyo.Recipe.Postgres` (direct, lyo)
 - `Lyo.Reporting.Models` (direct, lyo)
 - `Lyo.Reporting.Postgres` (direct, lyo)
 - `Lyo.Reporting.Web` (direct, lyo)
@@ -109,6 +111,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.ShortUrl.Postgres` (direct, lyo)
 - `Lyo.Sms.Twilio` (direct, lyo)
 - `Lyo.Sms.Twilio.Postgres` (direct, lyo)
+- `Lyo.Story.Postgres` (direct, lyo)
 - `Lyo.Tag.Postgres` (direct, lyo)
 - `Lyo.Translation.Aws` (direct, lyo)
 - `Lyo.Tts.AwsPolly` (direct, lyo)
@@ -121,6 +124,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Mapster.DependencyInjection` `10.0.10` (direct, third-party)
 - `Lyo.Api.Export` (transitive, lyo)
 - `Lyo.Audit` (transitive, lyo)
+- `Lyo.Book` (transitive, lyo)
 - `Lyo.Cache` (transitive, lyo)
 - `Lyo.Comic` (transitive, lyo)
 - `Lyo.Comment` (transitive, lyo)
@@ -145,6 +149,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.HomeInventory` (transitive, lyo)
+- `Lyo.HomeInventory.Models` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.Images` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
@@ -160,10 +165,16 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
+- `Lyo.Recipe` (transitive, lyo)
+- `Lyo.Recipe.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
+- `Lyo.Search.Postgres` (transitive, lyo)
 - `Lyo.Sms` (transitive, lyo)
 - `Lyo.Sms.Models` (transitive, lyo)
+- `Lyo.Story` (transitive, lyo)
+- `Lyo.Story.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Tag` (transitive, lyo)
 - `Lyo.Translation` (transitive, lyo)
@@ -175,6 +186,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Web.Automation` (transitive, lyo)
 - `Lyo.Web.Components` (transitive, lyo)
 - `Lyo.Web.Primitives` (transitive, lyo)
+- `Lyo.Web.WebRenderer.Models` (transitive, lyo)
 - `Lyo.Xlsx.Models` (transitive, lyo)
 - `AWSSDK.Core` `4.0.100.4` (transitive, third-party)
 - `AWSSDK.Polly` `4.0.100.3` (transitive, third-party)

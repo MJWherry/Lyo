@@ -7,7 +7,7 @@
   "features": [
     "**ThroughSolver.** Map `HttpRequestMessage` → `request.get` / `request.post`; synthetic response from `solution.response`; merge cookies; pin `solution.userAgent`.",
     "**Downloads.** Large binaries skip the JSON envelope; stream with cookies+UA after clearance (`LyoHttpRequestMarkers.StreamBinary`).",
-    "**Stealth knobs on the base pipeline.** Timing 200–800 ms + jitter, rate limit 1/2s, PerSession UA. `PerRequest` rotation fails `Validate()`.",
+    "**Stealth knobs on the base pipeline.** Timing 200–800 ms + jitter, token bucket 1 permit / 2s refilled from the last spend, PerSession UA. `PerRequest` rotation fails `Validate()`. The host registers `AddLocalRateLimit` or `AddRedisRateLimit` before this client.",
     "**Named client `Lyo.Http.Flared`.** Own handler and rate-limit bucket. Replay mode: `ConfigurePrimaryHttpMessageHandler(() => new ClearanceHandler(...))` — new instance each time."
   ],
   "examples": [
@@ -36,7 +36,7 @@
     {
       "type": "markdown",
       "title": "Playwright handoff and VPN IP",
-      "body": "Diagrams: [`HttpClientArchitecture.drawio`](../Lyo.Http.Client/HttpClientArchitecture.drawio) (packages, ThroughSolver vs StreamBinary, Playwright handoff).\n\n`cf_clearance` is bound to IP plus User-Agent. FlareSolverr in Docker (`docker compose --profile flared`) is not your host VPN exit. Set `FlaredHttpOptions.ProxyUrl` (applied to FlareSolverr and to StreamBinary/.NET fetches) and `PlaywrightBrowserOptions.ProxyUrl` to the same exit. Playwright does not reference this package — the host copies solver UA onto `PlaywrightBrowserOptions.UserAgents` before `StartBrowserAsync` and cookies onto `CookieJar` after start. Worked example: [`FlaredPlaywrightHandoff.cs`](../../../Tools/Lyo.TestConsole/FlaredPlaywrightHandoff.cs). Require `BrowserKind` Chromium; Firefox Nightly under automation cannot take Flared cookies. Navigate with `NavigationWaitUntil` = `DOMContentLoaded` (Cloudflare often never fires `load`)."
+      "body": "Diagrams: [`HttpClientArchitecture.drawio`](../Lyo.Http.Client/HttpClientArchitecture.drawio) (packages, ThroughSolver vs StreamBinary, Playwright handoff).\n\n`cf_clearance` is bound to IP plus User-Agent. FlareSolverr in Docker (`docker compose --profile flared`) is not your host VPN exit. Set `FlaredHttpOptions.ProxyUrl` (applied to FlareSolverr and to StreamBinary/.NET fetches) and `PlaywrightBrowserOptions.ProxyUrl` to the same exit. Playwright does not reference this package — the host copies solver UA onto `PlaywrightBrowserOptions.UserAgents` before `StartBrowserAsync` and cookies onto `CookieJar` after start. Worked example: [`FlaredPlaywrightHandoff.cs`](../../../Tools/Lyo.TestConsole/FlaredPlaywrightHandoff.cs). Require `BrowserKind` Chrome, Chromium, or Edge. Firefox and WebKit cannot take Flared cookies. Navigate with `NavigationWaitUntil` = `DOMContentLoaded` (Cloudflare often never fires `load`)."
     }
   ],
   "links": [
@@ -120,7 +120,15 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -129,6 +137,14 @@
     },
     {
       "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.RateLimit",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -163,6 +179,25 @@
       ]
     },
     {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "System.Memory",
       "kind": "package",
       "version": "4.6.3",
@@ -170,6 +205,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

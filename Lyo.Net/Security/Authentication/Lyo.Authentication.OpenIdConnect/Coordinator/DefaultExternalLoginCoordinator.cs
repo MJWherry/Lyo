@@ -12,6 +12,7 @@ using Lyo.Authentication.Services.Users;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
+using Lyo.Common.Core.Identifiers;
 namespace Lyo.Authentication.OpenIdConnect.Coordinator;
 
 /// <summary>Default <see cref="IExternalLoginCoordinator" />: runs the BFF callback per the plan's flow diagram.</summary>
@@ -241,7 +242,7 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
         var now = DateTime.UtcNow;
         var baselineScopes = _options.DefaultUserScopes.Count == 0 ? Array.Empty<string>() : _options.DefaultUserScopes.Distinct(StringComparer.Ordinal).ToArray();
         var user = new LyoUser(
-            Guid.NewGuid(), mapping.DisplayName.IsNullOrWhitespace() ? mapping.Email : mapping.DisplayName, mapping.Email, mapping.EmailVerified, mapping.AvatarUrl,
+            LyoGuid.CreateV7(), mapping.DisplayName.IsNullOrWhitespace() ? mapping.Email : mapping.DisplayName, mapping.Email, mapping.EmailVerified, mapping.AvatarUrl,
             mapping.PreferredLanguageBcp47, baselineScopes, null, null, now, null, null, null, null);
 
         return await _users.CreateAsync(user, null, ct).ConfigureAwait(false);

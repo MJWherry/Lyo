@@ -8,7 +8,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Common.Metadata.Records;
 
-/// <summary>Catalog row for a file type: MIME, extensions, category, and display name.</summary>
+/// <summary>Catalog row for a file type: MIME, extensions, category, display name, and optional header signatures.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileTypeInfo
 {
@@ -22,9 +22,12 @@ public sealed class FileTypeInfo
     public static readonly FileTypeInfo Unknown = new("Unknown", MimeTypeInfo.Unknown, ".unknown", null, FileTypeCategory.Unknown, "Unknown or unsupported file type");
 
     // Document formats
-    public static readonly FileTypeInfo Pdf = new("PDF", MimeTypeInfo.Pdf, ".pdf", null, FileTypeCategory.Documents, "Adobe PDF document");
+    public static readonly FileTypeInfo Pdf = new(
+        "PDF", MimeTypeInfo.Pdf, ".pdf", null, FileTypeCategory.Documents, "Adobe PDF document", [FileHeaderSignature.At(0, "%PDF"u8)]);
 
-    public static readonly FileTypeInfo Doc = new("DOC", MimeTypeInfo.Doc, ".doc", null, FileTypeCategory.Documents, "Microsoft Word document");
+    public static readonly FileTypeInfo Doc = new(
+        "DOC", MimeTypeInfo.Doc, ".doc", null, FileTypeCategory.Documents, "Microsoft Word document",
+        [FileHeaderSignature.At(0, [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1])]);
 
     public static readonly FileTypeInfo Docx = new(
         "DOCX", MimeTypeInfo.Docx, ".docx", null, FileTypeCategory.Documents, "Microsoft Word Open XML document");
@@ -44,6 +47,10 @@ public sealed class FileTypeInfo
     public static readonly FileTypeInfo Json = new("JSON", MimeTypeInfo.Json, ".json", null, FileTypeCategory.DataFiles, "JSON data file");
 
     public static readonly FileTypeInfo Xml = new("XML", MimeTypeInfo.Xml, ".xml", null, FileTypeCategory.DataFiles, "XML data file");
+
+    public static readonly FileTypeInfo Yaml = new("YAML", MimeTypeInfo.Yaml, ".yaml", [".yml"], FileTypeCategory.DataFiles, "YAML data file");
+
+    public static readonly FileTypeInfo Toml = new("TOML", MimeTypeInfo.Toml, ".toml", null, FileTypeCategory.DataFiles, "TOML data file");
 
     /// <summary>RFC 9457 problem-details body; the content type ASP.NET Core emits for <c>ProblemDetails</c> responses.</summary>
     public static readonly FileTypeInfo ProblemJson = new(
@@ -67,38 +74,58 @@ public sealed class FileTypeInfo
     public static readonly FileTypeInfo Dump = new("DUMP", MimeTypeInfo.Dump, ".dump", null, FileTypeCategory.DataFiles, "Generic data dump file");
 
     // Image formats
-    public static readonly FileTypeInfo Jpeg = new("JPEG", MimeTypeInfo.Jpeg, ".jpg", [".jpeg"], FileTypeCategory.Images, "JPEG image file");
+    public static readonly FileTypeInfo Jpeg = new(
+        "JPEG", MimeTypeInfo.Jpeg, ".jpg", [".jpeg"], FileTypeCategory.Images, "JPEG image file", [FileHeaderSignature.At(0, [0xFF, 0xD8, 0xFF])]);
 
-    public static readonly FileTypeInfo Png = new("PNG", MimeTypeInfo.Png, ".png", null, FileTypeCategory.Images, "Portable Network Graphics image");
+    public static readonly FileTypeInfo Png = new(
+        "PNG", MimeTypeInfo.Png, ".png", null, FileTypeCategory.Images, "Portable Network Graphics image",
+        [FileHeaderSignature.At(0, [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])]);
 
-    public static readonly FileTypeInfo Gif = new("GIF", MimeTypeInfo.Gif, ".gif", null, FileTypeCategory.Images, "Graphics Interchange Format image");
+    public static readonly FileTypeInfo Gif = new(
+        "GIF", MimeTypeInfo.Gif, ".gif", null, FileTypeCategory.Images, "Graphics Interchange Format image",
+        [FileHeaderSignature.At(0, "GIF87a"u8), FileHeaderSignature.At(0, "GIF89a"u8)]);
 
-    public static readonly FileTypeInfo Bmp = new("BMP", MimeTypeInfo.Bmp, ".bmp", null, FileTypeCategory.Images, "Bitmap image file");
+    public static readonly FileTypeInfo Bmp = new(
+        "BMP", MimeTypeInfo.Bmp, ".bmp", null, FileTypeCategory.Images, "Bitmap image file", [FileHeaderSignature.At(0, "BM"u8)]);
 
     public static readonly FileTypeInfo Svg = new("SVG", MimeTypeInfo.Svg, ".svg", null, FileTypeCategory.Images, "Scalable Vector Graphics image");
 
-    public static readonly FileTypeInfo Tiff = new("TIFF", MimeTypeInfo.Tiff, ".tif", [".tiff"], FileTypeCategory.Images, "Tagged Image File Format");
+    public static readonly FileTypeInfo Tiff = new(
+        "TIFF", MimeTypeInfo.Tiff, ".tif", [".tiff"], FileTypeCategory.Images, "Tagged Image File Format",
+        [FileHeaderSignature.At(0, [0x49, 0x49, 0x2A, 0x00]), FileHeaderSignature.At(0, [0x4D, 0x4D, 0x00, 0x2A])]);
 
-    public static readonly FileTypeInfo Webp = new("WEBP", MimeTypeInfo.Webp, ".webp", null, FileTypeCategory.Images, "WebP image file");
+    public static readonly FileTypeInfo Webp = new(
+        "WEBP", MimeTypeInfo.Webp, ".webp", null, FileTypeCategory.Images, "WebP image file", [FileHeaderSignature.At(0, "RIFF"u8, 8, "WEBP"u8)]);
 
-    public static readonly FileTypeInfo Ico = new("ICO", MimeTypeInfo.Ico, ".ico", null, FileTypeCategory.Images, "Windows icon file");
+    public static readonly FileTypeInfo Ico = new(
+        "ICO", MimeTypeInfo.Ico, ".ico", null, FileTypeCategory.Images, "Windows icon file", [FileHeaderSignature.At(0, [0x00, 0x00, 0x01, 0x00])]);
 
-    public static readonly FileTypeInfo Avif = new("AVIF", MimeTypeInfo.Avif, ".avif", null, FileTypeCategory.Images, "AV1 Image File Format");
+    public static readonly FileTypeInfo Avif = new(
+        "AVIF", MimeTypeInfo.Avif, ".avif", null, FileTypeCategory.Images, "AV1 Image File Format",
+        [FileHeaderSignature.At(4, "ftyp"u8, 8, "avif"u8), FileHeaderSignature.At(4, "ftyp"u8, 8, "avis"u8)]);
 
     // Compressed formats
-    public static readonly FileTypeInfo Zip = new("ZIP", MimeTypeInfo.Zip, ".zip", null, FileTypeCategory.Compressed, "ZIP archive file");
+    public static readonly FileTypeInfo Zip = new(
+        "ZIP", MimeTypeInfo.Zip, ".zip", null, FileTypeCategory.Compressed, "ZIP archive file", [
+            FileHeaderSignature.At(0, [0x50, 0x4B, 0x03, 0x04]), FileHeaderSignature.At(0, [0x50, 0x4B, 0x05, 0x06]), FileHeaderSignature.At(0, [0x50, 0x4B, 0x07, 0x08])
+        ]);
 
-    public static readonly FileTypeInfo Rar = new("RAR", MimeTypeInfo.Rar, ".rar", null, FileTypeCategory.Compressed, "RAR archive file");
+    public static readonly FileTypeInfo Rar = new(
+        "RAR", MimeTypeInfo.Rar, ".rar", null, FileTypeCategory.Compressed, "RAR archive file", [FileHeaderSignature.At(0, [0x52, 0x61, 0x72, 0x21, 0x1A, 0x07])]);
 
-    public static readonly FileTypeInfo SevenZip = new("7Z", MimeTypeInfo.SevenZip, ".7z", null, FileTypeCategory.Compressed, "7-Zip archive file");
+    public static readonly FileTypeInfo SevenZip = new(
+        "7Z", MimeTypeInfo.SevenZip, ".7z", null, FileTypeCategory.Compressed, "7-Zip archive file", [FileHeaderSignature.At(0, [0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C])]);
 
     public static readonly FileTypeInfo Tar = new("TAR", MimeTypeInfo.Tar, ".tar", null, FileTypeCategory.Compressed, "TAR archive file");
 
-    public static readonly FileTypeInfo Gz = new("GZ", MimeTypeInfo.Gz, ".gz", [".gzip"], FileTypeCategory.Compressed, "GZIP compressed file");
+    public static readonly FileTypeInfo Gz = new(
+        "GZ", MimeTypeInfo.Gz, ".gz", [".gzip"], FileTypeCategory.Compressed, "GZIP compressed file", [FileHeaderSignature.At(0, [0x1F, 0x8B])]);
 
-    public static readonly FileTypeInfo Bz2 = new("BZ2", MimeTypeInfo.Bz2, ".bz2", [".bzip2"], FileTypeCategory.Compressed, "BZIP2 compressed file");
+    public static readonly FileTypeInfo Bz2 = new(
+        "BZ2", MimeTypeInfo.Bz2, ".bz2", [".bzip2"], FileTypeCategory.Compressed, "BZIP2 compressed file", [FileHeaderSignature.At(0, "BZh"u8)]);
 
-    public static readonly FileTypeInfo Xz = new("XZ", MimeTypeInfo.Xz, ".xz", null, FileTypeCategory.Compressed, "XZ compressed file");
+    public static readonly FileTypeInfo Xz = new(
+        "XZ", MimeTypeInfo.Xz, ".xz", null, FileTypeCategory.Compressed, "XZ compressed file", [FileHeaderSignature.At(0, [0xFD, 0x37, 0x7A, 0x58, 0x7A, 0x00])]);
 
     public static readonly FileTypeInfo Brotli = new("Brotli", MimeTypeInfo.Brotli, ".br", null, FileTypeCategory.Compressed, "Brotli compressed stream");
 
@@ -108,9 +135,11 @@ public sealed class FileTypeInfo
 
     public static readonly FileTypeInfo SnappyStream = new("Snappy", MimeTypeInfo.SnappyStream, ".snappy", null, FileTypeCategory.Compressed, "Snappy compressed stream");
 
-    public static readonly FileTypeInfo ZstdStream = new("Zstandard", MimeTypeInfo.ZstdStream, ".zst", null, FileTypeCategory.Compressed, "Zstandard compressed stream");
+    public static readonly FileTypeInfo ZstdStream = new(
+        "Zstandard", MimeTypeInfo.ZstdStream, ".zst", null, FileTypeCategory.Compressed, "Zstandard compressed stream", [FileHeaderSignature.At(0, [0x28, 0xB5, 0x2F, 0xFD])]);
 
-    public static readonly FileTypeInfo LZ4Stream = new("LZ4", MimeTypeInfo.LZ4Stream, ".lz4", null, FileTypeCategory.Compressed, "LZ4 compressed stream");
+    public static readonly FileTypeInfo LZ4Stream = new(
+        "LZ4", MimeTypeInfo.LZ4Stream, ".lz4", null, FileTypeCategory.Compressed, "LZ4 compressed stream", [FileHeaderSignature.At(0, [0x04, 0x22, 0x4D, 0x18])]);
 
     public static readonly FileTypeInfo LZMAStream = new("LZMA", MimeTypeInfo.LZMAStream, ".lzma", null, FileTypeCategory.Compressed, "LZMA compressed stream");
 
@@ -129,9 +158,10 @@ public sealed class FileTypeInfo
     public static readonly FileTypeInfo AndroidAar = new("AAR", MimeTypeInfo.AndroidAar, ".aar", null, FileTypeCategory.PackageManager, "Android library archive (AAR)");
 
     public static readonly FileTypeInfo DebianPackage = new(
-        "Debian package", MimeTypeInfo.DebianPackage, ".deb", null, FileTypeCategory.PackageManager, "Debian binary package");
+        "Debian package", MimeTypeInfo.DebianPackage, ".deb", null, FileTypeCategory.PackageManager, "Debian binary package", [FileHeaderSignature.At(0, "!<arch>\n"u8)]);
 
-    public static readonly FileTypeInfo RpmPackage = new("RPM package", MimeTypeInfo.RpmPackage, ".rpm", null, FileTypeCategory.PackageManager, "RPM package");
+    public static readonly FileTypeInfo RpmPackage = new(
+        "RPM package", MimeTypeInfo.RpmPackage, ".rpm", null, FileTypeCategory.PackageManager, "RPM package", [FileHeaderSignature.At(0, [0xED, 0xAB, 0xEE, 0xDB])]);
 
     public static readonly FileTypeInfo WindowsInstallerMsi = new("MSI", MimeTypeInfo.WindowsInstallerMsi, ".msi", null, FileTypeCategory.PackageManager, "Windows Installer package (MSI)");
 
@@ -165,17 +195,21 @@ public sealed class FileTypeInfo
         "Lyo envelope: data encrypted with a DEK and key-wrapped by a KEK");
 
     // Audio formats
-    public static readonly FileTypeInfo Wav = new("WAV", MimeTypeInfo.Wav, ".wav", null, FileTypeCategory.Audio, "WAV audio file");
+    public static readonly FileTypeInfo Wav = new(
+        "WAV", MimeTypeInfo.Wav, ".wav", null, FileTypeCategory.Audio, "WAV audio file", [FileHeaderSignature.At(0, "RIFF"u8, 8, "WAVE"u8)]);
 
-    public static readonly FileTypeInfo Mp3 = new("MP3", MimeTypeInfo.Mp3, ".mp3", null, FileTypeCategory.Audio, "MP3 audio file");
+    public static readonly FileTypeInfo Mp3 = new("MP3", MimeTypeInfo.Mp3, ".mp3", null, FileTypeCategory.Audio, "MP3 audio file", [FileHeaderSignature.At(0, "ID3"u8)]);
 
-    public static readonly FileTypeInfo Ogg = new("OGG", MimeTypeInfo.Ogg, ".ogg", [".oga"], FileTypeCategory.Audio, "OGG audio file");
+    public static readonly FileTypeInfo Ogg = new(
+        "OGG", MimeTypeInfo.Ogg, ".ogg", [".oga"], FileTypeCategory.Audio, "OGG audio file", [FileHeaderSignature.At(0, "OggS"u8)]);
 
-    public static readonly FileTypeInfo Flac = new("FLAC", MimeTypeInfo.Flac, ".flac", null, FileTypeCategory.Audio, "FLAC audio file");
+    public static readonly FileTypeInfo Flac = new(
+        "FLAC", MimeTypeInfo.Flac, ".flac", null, FileTypeCategory.Audio, "FLAC audio file", [FileHeaderSignature.At(0, "fLaC"u8)]);
 
     public static readonly FileTypeInfo Aac = new("AAC", MimeTypeInfo.Aac, ".aac", null, FileTypeCategory.Audio, "AAC audio file");
 
-    public static readonly FileTypeInfo M4a = new("M4A", MimeTypeInfo.M4a, ".m4a", null, FileTypeCategory.Audio, "M4A audio file");
+    public static readonly FileTypeInfo M4a = new(
+        "M4A", MimeTypeInfo.M4a, ".m4a", null, FileTypeCategory.Audio, "M4A audio file", [FileHeaderSignature.At(4, "ftyp"u8, 8, "M4A "u8)]);
 
     public static readonly FileTypeInfo Opus = new("OPUS", MimeTypeInfo.Opus, ".opus", null, FileTypeCategory.Audio, "OPUS audio file");
 
@@ -185,16 +219,20 @@ public sealed class FileTypeInfo
 
     // Video formats
     /// <summary>MPEG-4 video (<c>video/mp4</c>, <c>.mp4</c> / <c>.m4v</c>).</summary>
-    public static readonly FileTypeInfo Mp4 = new("MP4", MimeTypeInfo.Mp4, ".mp4", [".m4v"], FileTypeCategory.Video, "MPEG-4 video file");
+    public static readonly FileTypeInfo Mp4 = new(
+        "MP4", MimeTypeInfo.Mp4, ".mp4", [".m4v"], FileTypeCategory.Video, "MPEG-4 video file", [FileHeaderSignature.At(4, "ftyp"u8)]);
 
     /// <summary>QuickTime movie (<c>video/quicktime</c>, <c>.mov</c> / <c>.qt</c>).</summary>
-    public static readonly FileTypeInfo Mov = new("MOV", MimeTypeInfo.Mov, ".mov", [".qt"], FileTypeCategory.Video, "QuickTime movie file");
+    public static readonly FileTypeInfo Mov = new(
+        "MOV", MimeTypeInfo.Mov, ".mov", [".qt"], FileTypeCategory.Video, "QuickTime movie file", [FileHeaderSignature.At(4, "ftyp"u8, 8, "qt  "u8)]);
 
     /// <summary>Matroska video (<c>video/x-matroska</c>, <c>.mkv</c> / <c>.mk3d</c>).</summary>
-    public static readonly FileTypeInfo Mkv = new("MKV", MimeTypeInfo.Mkv, ".mkv", [".mk3d"], FileTypeCategory.Video, "Matroska video file");
+    public static readonly FileTypeInfo Mkv = new(
+        "MKV", MimeTypeInfo.Mkv, ".mkv", [".mk3d"], FileTypeCategory.Video, "Matroska video file", [FileHeaderSignature.At(0, [0x1A, 0x45, 0xDF, 0xA3])]);
 
     /// <summary>Audio Video Interleave (<c>video/x-msvideo</c>, <c>.avi</c>).</summary>
-    public static readonly FileTypeInfo Avi = new("AVI", MimeTypeInfo.Avi, ".avi", null, FileTypeCategory.Video, "Audio Video Interleave file");
+    public static readonly FileTypeInfo Avi = new(
+        "AVI", MimeTypeInfo.Avi, ".avi", null, FileTypeCategory.Video, "Audio Video Interleave file", [FileHeaderSignature.At(0, "RIFF"u8, 8, "AVI "u8)]);
 
     /// <summary>MPEG video (<c>video/mpeg</c>, <c>.mpeg</c> / <c>.mpg</c> / <c>.mpe</c> / <c>.m1v</c>).</summary>
     public static readonly FileTypeInfo Mpeg = new("MPEG", MimeTypeInfo.Mpeg, ".mpeg", [".mpg", ".mpe", ".m1v"], FileTypeCategory.Video, "MPEG video file");
@@ -207,7 +245,11 @@ public sealed class FileTypeInfo
         "MPEG-TS", MimeTypeInfo.MpegTs, ".ts", [".m2ts", ".mts"], FileTypeCategory.Video, "MPEG transport stream");
 
     /// <summary>3GPP mobile video (<c>video/3gpp</c>, <c>.3gp</c> / <c>.3gpp</c>).</summary>
-    public static readonly FileTypeInfo ThreeGp = new("3GP", MimeTypeInfo.ThreeGp, ".3gp", [".3gpp"], FileTypeCategory.Video, "3GPP mobile video file");
+    public static readonly FileTypeInfo ThreeGp = new(
+        "3GP", MimeTypeInfo.ThreeGp, ".3gp", [".3gpp"], FileTypeCategory.Video, "3GPP mobile video file", [
+            FileHeaderSignature.At(4, "ftyp"u8, 8, "3gp4"u8), FileHeaderSignature.At(4, "ftyp"u8, 8, "3gp5"u8), FileHeaderSignature.At(4, "ftyp"u8, 8, "3gp6"u8),
+            FileHeaderSignature.At(4, "ftyp"u8, 8, "3g2a"u8)
+        ]);
 
     /// <summary>HTTP Live Streaming playlist (<c>application/vnd.apple.mpegurl</c>, <c>.m3u8</c> / <c>.m3u</c>).</summary>
     public static readonly FileTypeInfo Hls = new("HLS", MimeTypeInfo.Hls, ".m3u8", [".m3u"], FileTypeCategory.Video, "HTTP Live Streaming playlist");
@@ -270,6 +312,18 @@ public sealed class FileTypeInfo
 
     public string Description { get; }
 
+    /// <summary>
+    /// Header alternatives for this row. Empty when the type has no magic bytes. Each entry is one complete alternative; a type such as GIF or ZIP has several. Shared containers
+    /// leave this empty and set <see cref="SignatureFamily" /> to the row that owns the bytes.
+    /// </summary>
+    public IReadOnlyList<FileHeaderSignature> HeaderSignatures { get; }
+
+    /// <summary>
+    /// The row that owns the on-disk header when this type cannot be told apart from that container (JAR points at ZIP). Null on the row that carries
+    /// <see cref="HeaderSignatures" />.
+    /// </summary>
+    public FileTypeInfo? SignatureFamily { get; private set; }
+
     /// <summary>Every registered file type in the catalog.</summary>
     public static IReadOnlyList<FileTypeInfo> All => AllTypes;
 
@@ -285,6 +339,11 @@ public sealed class FileTypeInfo
             foreach (var ext in fileType.Extensions)
                 ByExtension[ext.ToLowerInvariant()] = fileType;
         }
+
+        LinkSignatureFamily(Zip, Docx, Xlsx, JavaJar, JavaWar, JavaEar, AndroidAar, NuGetPackage, NuGetSymbolsPackage);
+        LinkSignatureFamily(Doc, Xls, WindowsInstallerMsi);
+        LinkSignatureFamily(Mkv, Webm);
+        LinkSignatureFamily(Ogg, Opus);
     }
 
     /// <summary>Creates a catalog row. Prefer the static fields; this constructor exists so tests can add a one-off type.</summary>
@@ -294,7 +353,10 @@ public sealed class FileTypeInfo
     /// <param name="aliases">Alternate extensions that <see cref="FromExtension" /> still accepts.</param>
     /// <param name="category">File-type bucket.</param>
     /// <param name="description">Human-readable description.</param>
-    public FileTypeInfo(string name, MimeTypeInfo mime, string defaultExtension, string[]? aliases, FileTypeCategory category, string description)
+    /// <param name="headerSignatures">Header alternatives. Omit for a type with no magic bytes.</param>
+    public FileTypeInfo(
+        string name, MimeTypeInfo mime, string defaultExtension, string[]? aliases, FileTypeCategory category, string description,
+        IEnumerable<FileHeaderSignature>? headerSignatures = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         ArgumentHelpers.ThrowIfNull(mime);
@@ -307,6 +369,13 @@ public sealed class FileTypeInfo
         Extensions = Aliases.Length == 0 ? [DefaultExtension] : Enumerable.Repeat(DefaultExtension, 1).Concat(Aliases).ToArray();
         Category = category;
         Description = description;
+        HeaderSignatures = headerSignatures == null ? [] : headerSignatures.ToArray();
+    }
+
+    private static void LinkSignatureFamily(FileTypeInfo representative, params FileTypeInfo[] members)
+    {
+        foreach (var member in members)
+            member.SignatureFamily = representative;
     }
 
     public override string ToString() => $"{Name} ({MimeType})";

@@ -9,13 +9,14 @@
     "**No generator dependency.** Factories that return `T` go to `SeedGraph.Entity` and `ForEach`. Contributors can use Bogus, hand-built objects, or anything else.",
     "**EF transport.** Each batch is persisted by `EfSeedTransport<TContext>` with `SaveChangesAsync`. `After` callbacks may call `SeedSession.PersistAsync` or use `Context` for schema-specific deletes.",
     "**API transport.** `ApiSeedTransport` maps request types onto Lyo.Api routes, chunks at `MaxBulkAmount` (default 2000), and fails the run when `CreateBulkResult.FailedCount > 0`.",
-    "**Conflict modes.** `Append` (default), optional `SkipIfNotEmpty`, and `Replace` (`OnClear` is required)."
+    "**Conflict modes.** `Append` (default), optional `SkipIfNotEmpty`, and `Replace` (`OnClear` is required).",
+    "**EF source.** `IEfSeedSource` names the Postgres schema and opens the `DbContext`. Hosts that see the interface build `EfSeedTransport<T>` without a per-contributor switch."
   ],
   "examples": [
     {
       "title": "Contributor on EF",
       "language": "csharp",
-      "code": "public sealed class ParentContributor : SeedContributor\n{\n    public override string Name => \"parents\";\n    public override SeedTransportKind SupportedTransports => SeedTransportKind.Ef;\n\n    protected override void Configure(SeedGraph graph, SeedOptions options)\n        => graph.Entity(options.Count, i => new ParentRow { Id = Guid.NewGuid(), Name = $\"p-{i}\" })\n            .ForEach(_ => 2, (parent, i) => new ChildRow { Id = Guid.NewGuid(), ParentId = parent.Id, Label = $\"{parent.Name}-{i}\" });\n}\n\nawait using var db = new MyDbContext(options);\nvar result = await new SeedRunner().SeedAsync(new ParentContributor(), new EfSeedTransport<MyDbContext>(db));"
+      "code": "using Lyo.Common.Core.Identifiers;\n\npublic sealed class ParentContributor : SeedContributor\n{\n    public override string Name => \"parents\";\n    public override SeedTransportKind SupportedTransports => SeedTransportKind.Ef;\n\n    protected override void Configure(SeedGraph graph, SeedOptions options)\n        => graph.Entity(options.Count, i => new ParentRow { Id = LyoGuid.CreateV7(), Name = $\"p-{i}\" })\n            .ForEach(_ => 2, (parent, i) => new ChildRow { Id = LyoGuid.CreateV7(), ParentId = parent.Id, Label = $\"{parent.Name}-{i}\" });\n}\n\nawait using var db = new MyDbContext(options);\nvar result = await new SeedRunner().SeedAsync(new ParentContributor(), new EfSeedTransport<MyDbContext>(db));"
     },
     {
       "title": "Transport over the API",
@@ -32,7 +33,7 @@
     {
       "type": "markdown",
       "title": "How transports are built",
-      "body": "Build `EfSeedTransport<TContext>` on a live `DbContext`, or `ApiSeedTransport` on `IApiClient` plus a `SeedApiCatalog`. `ISeedRunner` rejects a transport whose `Kind` is missing from `SeedContributor.SupportedTransports`."
+      "body": "Build `EfSeedTransport<TContext>` on a live `DbContext`, or `ApiSeedTransport` on `IApiClient` plus a `SeedApiCatalog`. A contributor that implements `IEfSeedSource` opens its own context from the connection string (`CreateContext`) so the host does not switch on contributor type. `ISeedRunner` rejects a transport whose `Kind` is missing from `SeedContributor.SupportedTransports`."
     }
   ],
   "links": [],
@@ -97,15 +98,16 @@
       ]
     },
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
+      "name": "Npgsql",
+      "kind": "package",
+      "version": "10.0.3",
       "tags": [
-        "transitive",
-        "lyo"
+        "direct",
+        "third-party"
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -138,6 +140,14 @@
     },
     {
       "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -240,6 +250,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

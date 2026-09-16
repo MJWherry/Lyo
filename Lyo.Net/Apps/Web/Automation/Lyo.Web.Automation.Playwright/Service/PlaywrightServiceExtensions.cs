@@ -1,10 +1,12 @@
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
 using Lyo.Metrics;
+using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Playwright.Browser;
 using Lyo.Web.Automation.Playwright.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Automation.Playwright.Service;
@@ -57,6 +59,17 @@ public static class PlaywrightServiceExtensions
         services.AddSingleton(options);
         services.AddScoped(RegisterPlaywrightBrowser);
         RegisterPlaywrightBrowserServiceSingleton(services);
+        return services;
+    }
+
+    /// <summary>
+    /// Registers <see cref="IAutomationBrowserSessionFactory" /> against the <see cref="IPlaywrightBrowserService" /> already in the container. An undefined
+    /// <see cref="Lyo.Web.Automation.Models.AutomationBrowserKind" /> throws before a browser process starts.
+    /// </summary>
+    public static IServiceCollection AddPlaywrightBrowserSessionFactory(this IServiceCollection services)
+    {
+        ArgumentHelpers.ThrowIfNull(services);
+        services.TryAddSingleton<IAutomationBrowserSessionFactory, PlaywrightBrowserSessionFactory>();
         return services;
     }
 

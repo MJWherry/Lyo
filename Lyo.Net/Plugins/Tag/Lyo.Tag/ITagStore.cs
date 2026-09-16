@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Enums;
 using Lyo.EntityReference.Models;
 
 namespace Lyo.Tag;
@@ -36,6 +37,33 @@ public interface ITagStore
 
     /// <summary>Loads all distinct tag values that have been applied to any entity of the given type, optionally filtered by tag type.</summary>
     Task<IReadOnlyList<string>> GetAllTagsForEntityTypeAsync(string forEntityType, string? tagType = null, Guid? tenantId = null, CancellationToken ct = default);
+
+    /// <summary>Returns the most-used tags, each with how many active assignments use that name and tag type.</summary>
+    /// <param name="take">Maximum rows to return. Must be at least 1.</param>
+    /// <param name="sortBy">Count or name. Defaults to count.</param>
+    /// <param name="direction">Ascending or descending. Defaults to descending.</param>
+    /// <param name="forEntityType">When set, only assignments on that entity type are counted.</param>
+    /// <param name="tagType">When set, only that tag type is counted. Null counts every type.</param>
+    /// <param name="name">When set, only that tag name is counted. Null counts every name.</param>
+    /// <param name="text">When set, only tags whose name or tag type contains this text are counted. The match is case-insensitive. Null or whitespace counts every tag.</param>
+    /// <param name="skip">Rows to skip before <paramref name="take" />. Defaults to 0. Must not be negative.</param>
+    /// <param name="tenantId">Tenant scope; null on single-tenant hosts.</param>
+    /// <param name="ct">Token that can abort the call.</param>
+    /// <remarks>
+    /// Count sorts break ties by name, then tag type. Name sorts break ties by tag type. The tie-break does not follow <paramref name="direction" />.
+    /// Soft-deleted rows are excluded.
+    /// </remarks>
+    Task<IReadOnlyList<TagCount>> GetTopTagsAsync(
+        int take,
+        TagSort sortBy = TagSort.Count,
+        SortDirection direction = SortDirection.Desc,
+        string? forEntityType = null,
+        string? tagType = null,
+        string? name = null,
+        string? text = null,
+        int skip = 0,
+        Guid? tenantId = null,
+        CancellationToken ct = default);
 
     /// <summary>Clears all tags from an entity.</summary>
     Task RemoveAllTagsForEntityAsync(EntityRef forEntity, Guid? tenantId = null, CancellationToken ct = default);

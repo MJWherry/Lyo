@@ -119,11 +119,14 @@ public sealed class ReportCompositionProcessorTests
     {
         var invoice = ReportDesignTemplates.Invoice();
         var blocks = invoice.Sections.SelectMany(s => SectionBody.WalkControls(s.Controls)).OfType<Block>();
-        Assert.Contains(blocks, b => b.ContentType == ContentType.TableOfContents);
+        Assert.DoesNotContain(blocks, b => b.ContentType == ContentType.TableOfContents);
         var table = Assert.Single(SectionBody.CollectTables(invoice.Sections));
         Assert.Equal(DataSourceKind.FromParameter, table.DataSourceKind);
         Assert.Equal("LineItems", table.DataParameterKey);
+        Assert.Contains(table.Columns, c => c.Header == "Title");
+        Assert.Contains(table.Columns, c => c.Header == "Description");
         Assert.Contains(invoice.ParameterSpecs, p => p.Key == "LineItems" && p.ExampleValue != null);
+        Assert.True(string.IsNullOrEmpty(invoice.Description));
         Assert.Contains(invoice.Sections.SelectMany(s => s.Controls).OfType<Grid>(), g => g.Controls.OfType<Card>().Any());
     }
 

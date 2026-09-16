@@ -6,6 +6,7 @@ using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Config.Postgres;
 
@@ -65,7 +66,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         }
 
         entity = new() {
-            Id = definition.Id == default ? Guid.NewGuid() : definition.Id,
+            Id = definition.Id == default ? LyoGuid.CreateV7() : definition.Id,
             SubjectEntityType = definition.SubjectEntityType,
             CreatedTimestamp = definition.CreatedTimestamp == default ? DateTime.UtcNow : definition.CreatedTimestamp
         };
@@ -82,7 +83,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     public async Task<ConfigDefinitionRecord?> GetDefinitionByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigDefinitions.FindAsync([id], ct).ConfigureAwait(false);
+        var entity = await context.ConfigDefinitions.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToRecord(entity);
     }
 
@@ -92,7 +93,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigDefinitions.FirstOrDefaultAsync(x => x.SubjectEntityType == forEntityType && x.Key == key, ct).ConfigureAwait(false);
+        var entity = await context.ConfigDefinitions.AsNoTracking().FirstOrDefaultAsync(x => x.SubjectEntityType == forEntityType && x.Key == key, ct).ConfigureAwait(false);
         return entity == null ? null : ToRecord(entity);
     }
 
@@ -101,7 +102,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.ConfigDefinitions.Where(x => x.SubjectEntityType == forEntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.ConfigDefinitions.AsNoTracking().Where(x => x.SubjectEntityType == forEntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
     }
 
@@ -208,7 +209,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         }
         else {
             entity = new() {
-                Id = binding.Id == default ? Guid.NewGuid() : binding.Id,
+                Id = binding.Id == default ? LyoGuid.CreateV7() : binding.Id,
                 DefinitionId = definition.Id,
                 Key = definition.Key,
                 SubjectEntityType = binding.SubjectEntityType,
@@ -309,7 +310,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigBindings.FirstOrDefaultAsync(x => x.Id == id && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
+        var entity = await context.ConfigBindings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         return entity == null ? null : await ToBindingRecordAsync(context, entity, ct).ConfigureAwait(false);
     }
 
@@ -320,7 +321,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigBindings.FirstOrDefaultAsync(
+        var entity = await context.ConfigBindings.AsNoTracking().FirstOrDefaultAsync(
                 x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.Key == key && x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
 
@@ -333,7 +334,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.ConfigBindings
+        var entities = await context.ConfigBindings.AsNoTracking()
             .Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .OrderBy(x => x.Key)
             .ToListAsync(ct)
@@ -395,8 +396,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var definitions = await context.ConfigDefinitions.Where(x => x.SubjectEntityType == forEntity.EntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
-        var bindings = await context.ConfigBindings
+        var definitions = await context.ConfigDefinitions.AsNoTracking().Where(x => x.SubjectEntityType == forEntity.EntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
+        var bindings = await context.ConfigBindings.AsNoTracking()
             .Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .ToListAsync(ct)
             .ConfigureAwait(false);

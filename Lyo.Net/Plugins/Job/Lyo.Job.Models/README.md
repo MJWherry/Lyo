@@ -41,7 +41,7 @@ Priority dispatch, retention, misfire handling, exponential backoff, idempotency
 blackout calendars, batch fan-out, workflows, encryption markers, and audit correlation are all driven by knobs on definitions, schedules, and runs:
 
 | Concern | Where it lives |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Priority (0 to 9) | `JobDefinitionReq.Priority`, `JobRunReq.Priority` |
 | Retention | `JobDefinitionReq.RetentionDays` (per-definition override; host default in `JobMaintenanceOptions`) |
 | Misfire | `JobScheduleReq.MisfirePolicy` (`Skip` / `RunOnce`); scheduler defaults in `JobSchedulerOptions` |
@@ -49,8 +49,8 @@ blackout calendars, batch fan-out, workflows, encryption markers, and audit corr
 | Idempotency | `JobRunReq.IdempotencyKey` (unique per definition); `(JobScheduleId, ScheduledSlotUtc)` for scheduled runs |
 | Rate limiting | `JobDefinitionReq.MaxRunsPerHour` |
 | SLA | `ExpectedDurationMinutes`, `MustStartByMinutes`; run flag `JobRunRes.SlaBreached` |
-| Alerting | `AlertOnFailure`, `AlertAfterConsecutiveFailures`, `AlertWebhookUrl`; `JobAlertType` |
-| Blackout calendars | `JobBlackoutCalendarReq`, `JobBlackoutWindowReq` (weekdays, dated range, calendar month/day-of-month, or `HolidaySlug`), `JobBlackoutCalendarEvaluator`, `JobDefinitionReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (definition default for all schedules), `JobScheduleReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (per-schedule override) |
+| Alerting | `JobAlertType`; failure notification is a workflow step (`Lyo.Job.Workers.Notification`) |
+| Blackout calendars | `JobBlackoutCalendarReq`, `JobBlackoutWindowReq` (weekdays, dated range, calendar month/day-of-month, or `HolidaySlug`), `JobBlackoutCalendarEvaluator`, `JobBlackoutCalendar.ToCalendar` (places enabled windows on a `Calendar`; the window name is the title), `JobBlackoutCalendar.Suppress` (marks fires a skip window would block as muted and moves a deferred fire to the window end), `JobDefinitionReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (definition default for all schedules), `JobScheduleReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (per-schedule override) |
 | Batch jobs | `ParentJobRunId`, `BatchIndex`, `BatchTotal`; `JobCreateChildRunsReq` |
 | Workflows | `JobWorkflowReq`, `JobWorkflowStepReq`, `JobWorkflowRunReq`, … |
 | Encryption | `JobParameterReq.EncryptedValue`, `IJobParameterEncryptionService` |
@@ -69,11 +69,10 @@ blackout calendars, batch fan-out, workflows, encryption markers, and audit corr
 ## `JobDefinitionReq` defaults
 
 | Property | Default |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | `Enabled` | `true` |
 | `RetryBackoffType` | `Linear` |
-| `AlertOnFailure` | `false` |
-| `MaxRetryCount`, `RetryBackoffSeconds`, `TimeoutMinutes`, `MaxConcurrentRuns`, `CircuitBreakerThreshold`, `CircuitBreakerResetMinutes`, `Priority`, `RetentionDays`, `MaxRunsPerHour`, `ExpectedDurationMinutes`, `MustStartByMinutes`, `AlertAfterConsecutiveFailures` | `0` (disabled / unset) |
+| `MaxRetryCount`, `RetryBackoffSeconds`, `TimeoutMinutes`, `MaxConcurrentRuns`, `CircuitBreakerThreshold`, `CircuitBreakerResetMinutes`, `Priority`, `RetentionDays`, `MaxRunsPerHour`, `ExpectedDurationMinutes`, `MustStartByMinutes` | `0` (disabled / unset) |
 
 ```mermaid
 flowchart TB
@@ -105,8 +104,6 @@ Under `Request/` and `Response/`. Every lifecycle entity has a create/update req
 | Parameter | `JobParameterReq` | `JobParameterRes` |
 | Schedule | `JobScheduleReq` | `JobScheduleRes` |
 | Schedule parameter | `JobScheduleParameterReq` | `JobScheduleParameterRes` |
-| Trigger | `JobTriggerReq` | `JobTriggerRes` |
-| Trigger parameter | `JobTriggerParameterReq` | `JobTriggerParameterRes` |
 | Parallel restriction | `JobParallelRestrictionReq` | `JobParallelRestrictionRes` |
 | Calendar | `JobBlackoutCalendarReq` | `JobBlackoutCalendarRes`, `JobBlackoutWindowRes` |
 | Workflow | `JobWorkflowReq` | `JobWorkflowRes`, `JobWorkflowStepRes` |
@@ -133,7 +130,7 @@ format-aware `ToScalar<T>` path.
 
 Request DTOs can be assembled with fluent factories instead of raw initializers.
 
-- `JobDefinitionBuilder`. `New(name)`, `SetDescription`, `SetType`, `ForPythonWorker` / `ForCSharpWorker`, `AsImportInCSharp`, helpers for schedule/parameter/trigger/restriction,
+- `JobDefinitionBuilder`. `New(name)`, `SetDescription`, `SetType`, `ForPythonWorker` / `ForCSharpWorker`, `AsImportInCSharp`, helpers for schedule/parameter/restriction,
  and email parameters. `AddBlackoutWindow` / `WithBlackoutCalendar` set a definition-level default cascaded to every schedule (by id or inline). `Build()` returns
  `JobDefinitionReq`.
 - `JobScheduleBuilder`. `Weekdays`, `EveryDay`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval`, cron helpers, `WithMisfirePolicy`, `WithBlackoutCalendar`,
@@ -141,8 +138,30 @@ Request DTOs can be assembled with fluent factories instead of raw initializers.
 - `JobBlackoutCalendarBuilder`. `AddBlackoutWindow(...)` with `JobBlackoutPolicy` (`Defer` / `Skip`); `AddBlackoutHoliday(HolidayInfo, ...)` / `AddBlackoutHolidays(...)` /
  `AddFederalHolidayBlackouts()` store one window per holiday (`HolidaySlug`); `AddBlackoutCalendarDays(...)` stores month flags plus days of month. `JobBlackoutCalendarEvaluator.AdjustSlotForBlackout` matches those rules at runtime. `Build()` → `JobBlackoutCalendarReq`.
 - **`JobScheduleBuilder.WithBlackoutCalendar`.** Override on one schedule: link by `Guid`, or create inline via `Action<JobBlackoutCalendarBuilder>`.
-- **`JobWorkflowBuilder`.** Ordered steps with `DependsOnStepIds` and `JobWorkflowFailurePolicy`. `Build()` → `JobWorkflowReq`.
-- `JobRunResultBuilder`, `JobRunBuilder`, `JobTriggerBuilder`. As before; `JobRunBuilder` supports `AddEncryptedParameter`.
+- **`JobWorkflowBuilder`.** Ordered steps with `DependsOnStepIds`, `JobWorkflowFailurePolicy`, and an optional `WhereClause` condition serialized onto `JobWorkflowStepReq.ConditionJson`. `Build()` rejects a gate that reads an unknown step, or one the step does not depend on — reading a step before it runs would silently skip. `Build()` → `JobWorkflowReq`.
+- **`JobWorkflowStepCondition`.** Factory for those clauses: `When(sourceStep, resultKey, comparator, value)` for an upstream result, `WhenPath(path, comparator, value)` for any context path, and `All(...)` / `Any(...)` to nest them under AND / OR.
+- `JobRunResultBuilder`, `JobRunBuilder`. As before; `JobRunBuilder` supports `AddEncryptedParameter`.
+
+## Step conditions (`JobWorkflowConditionEvaluator`)
+
+A workflow step runs only when its `ConditionJson` gate opens. The gate is a serialized `Lyo.Query.Models.Common.WhereClause` — the same AST the query engine filters with — so a `ConditionClause` is one predicate and a `GroupClause` nests predicates under AND / OR to any depth. A null `ConditionJson` runs the step unconditionally.
+
+`JobWorkflowConditionEvaluator.Evaluate(step, context)` returns `Run` or `Skip` against the `JobContextBag` the engine builds for that step. Each `ConditionClause.Field` is a path into that bag:
+
+| Path | Reads |
+| --- | --- |
+| `Step.{name}.Result.{key}` | A result value from an upstream step's completed run |
+| `Step.{name}.Parameter.{key}` | A parameter that upstream step ran with |
+| `Step.{name}.State` | That step's run state |
+| `Input.{key}` | A workflow run input (`JobWorkflowStartReq.Inputs` over the schedule's enabled parameters, frozen at start) |
+| `Workflow.*`, `WorkflowRun.*` | Fields on the workflow and its run |
+| `Definition.*` | Fields on the job definition this step runs |
+
+The engine and the workflow editor both seed that bag through `JobContextBag.WithWorkflowStep(step, definition, upstream)`, which layers the step, its job definition, and each dependency's completed run (keyed by the dependency's step name) onto the run-level scope. One seeder means the paths a gate can read are defined in one place instead of being restated by the editor.
+
+Resolution tries the flat key, then a nested-bag path, then walks object properties by reflection, so `Workflow.Name` reaches a CLR property while `Step.Extract.Result.RowCount` reads a seeded entry. An unresolvable path is a `Skip`, not an error; so is malformed JSON. An empty `GroupClause` states nothing and therefore gates nothing, so clearing a clause in the editor does not strand the step.
+
+A step that does not open is marked `ConditionNotMet`, and every step downstream of it is skipped too.
 
 ## Enums
 
@@ -199,7 +218,6 @@ When hosting packages register `IMetrics`, these are recorded:
 | `job.scheduler.runs.created` | Runs created by scheduler |
 | `job.scheduler.runs.create.failed` | Run creation failures |
 | `job.scheduler.slot.conflicts` | Idempotent slot conflicts (23505) |
-| `job.scheduler.triggers.fired` | Trigger-driven runs |
 | `job.scheduler.retries.scheduled` | Automatic retry runs |
 | `job.scheduler.circuit_breaker.tripped` | Definitions auto-disabled |
 | `job.scheduler.misfires.caught_up` | Misfire catch-up runs created |
@@ -276,12 +294,14 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.DateAndTime` (direct, lyo)
 - `Lyo.Parameters` (direct, lyo)
+- `Lyo.Query.Models` (direct, lyo)
 - `Lyo.Schedule.Models` (direct, lyo)
 - `System.Diagnostics.DiagnosticSource` `10.0.5` (direct, microsoft, netstandard2.0)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
-- `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

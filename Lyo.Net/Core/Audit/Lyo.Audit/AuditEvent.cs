@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lyo.EntityReference.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Audit;
 
@@ -8,7 +9,7 @@ namespace Lyo.Audit;
 public record AuditEvent(EntityRef Subject, string EventType, string? Message = null, EntityRef? Actor = null, IReadOnlyDictionary<string, object?>? Metadata = null)
 {
     /// <summary>Unique id of this audit event.</summary>
-    public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid Id { get; init; } = LyoGuid.CreateV7();
 
     /// <summary>When the event took place.</summary>
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;

@@ -125,6 +125,19 @@
                 }
             }
             else {
+                @if (_currentComparison.IsFuzzyComparisonOperator()) {
+                    <MudNumericField T="double?"
+                                     @bind-Value="_currentThreshold"
+                                     Label="Threshold"
+                                     HelperText="0–1, default 0.3"
+                                     Min="0"
+                                     Max="1"
+                                     Step="0.05"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     FullWidth="true"
+                                     Class="mb-2"/>
+                }
                 @if (ShouldUseTextInput(_currentProperty, _currentComparison)) {
                     <MudTextField @bind-Value="@_currentStringValue"
                                   Label="Value"

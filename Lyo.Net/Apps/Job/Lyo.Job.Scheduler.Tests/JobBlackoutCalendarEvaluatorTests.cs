@@ -1,4 +1,5 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.DateAndTime;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Builders;
@@ -134,10 +135,10 @@ public class JobBlackoutCalendarEvaluatorTests
     public void AdjustSlotForBlackout_WhenHolidaySlugIsUnknown_ReturnsOriginalSlot()
     {
         var slot = new DateTime(2026, 12, 25, 10, 0, 0, DateTimeKind.Utc);
-        var calendarId = Guid.NewGuid();
+        var calendarId = LyoGuid.CreateV7();
         var calendar = new JobBlackoutCalendarRes(
             calendarId, "Bad", null, true,
-            [new(Guid.NewGuid(), calendarId, "Unknown", DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, HolidaySlug: "not-a-holiday")]);
+            [new(LyoGuid.CreateV7(), calendarId, "Unknown", DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, HolidaySlug: "not-a-holiday")]);
         var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
         Assert.Equal(slot, result);
     }
@@ -177,40 +178,40 @@ public class JobBlackoutCalendarEvaluatorTests
 
     private static JobBlackoutCalendarRes CreateHolidayCalendar(HolidayInfo holiday, bool includeObservedDate = false)
     {
-        var calendarId = Guid.NewGuid();
+        var calendarId = LyoGuid.CreateV7();
         return new(
             calendarId, "Holiday calendar", null, true,
             [
                 new(
-                    Guid.NewGuid(), calendarId, holiday.Name, DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, HolidaySlug: holiday.Slug,
+                    LyoGuid.CreateV7(), calendarId, holiday.Name, DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, HolidaySlug: holiday.Slug,
                     IncludeObservedDate: includeObservedDate)
             ]);
     }
 
     private static JobBlackoutCalendarRes CreateCalendarDaysCalendar(MonthFlags months, IReadOnlyList<int> days, DateTime? start = null, DateTime? end = null)
     {
-        var calendarId = Guid.NewGuid();
+        var calendarId = LyoGuid.CreateV7();
         return new(
             calendarId, "Calendar days", null, true,
             [
                 new(
-                    Guid.NewGuid(), calendarId, "Days", DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, start, end, MonthFlags: months,
+                    LyoGuid.CreateV7(), calendarId, "Days", DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, start, end, MonthFlags: months,
                     DaysOfMonth: days)
             ]);
     }
 
     private static JobBlackoutCalendarRes CreateDatedCalendar(JobBlackoutPolicy policy, DateTime dateUtc)
     {
-        var calendarId = Guid.NewGuid();
+        var calendarId = LyoGuid.CreateV7();
         return new(
             calendarId, "Dated calendar", null, true,
-            [new(Guid.NewGuid(), calendarId, "Holiday", DayFlags.EveryDay, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), policy, true, dateUtc, dateUtc)]);
+            [new(LyoGuid.CreateV7(), calendarId, "Holiday", DayFlags.EveryDay, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), policy, true, dateUtc, dateUtc)]);
     }
 
     private static JobBlackoutCalendarRes CreateCalendar(JobBlackoutPolicy policy, string start, string end)
     {
-        var calendarId = Guid.NewGuid();
+        var calendarId = LyoGuid.CreateV7();
         return new(
-            calendarId, "Test calendar", null, true, [new(Guid.NewGuid(), calendarId, "Blackout", DayFlags.EveryDay, TimeOnly.Parse(start), TimeOnly.Parse(end), policy, true)]);
+            calendarId, "Test calendar", null, true, [new(LyoGuid.CreateV7(), calendarId, "Blackout", DayFlags.EveryDay, TimeOnly.Parse(start), TimeOnly.Parse(end), policy, true)]);
     }
 }

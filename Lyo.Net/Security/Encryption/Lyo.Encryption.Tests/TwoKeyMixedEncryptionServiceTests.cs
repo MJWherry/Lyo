@@ -101,10 +101,10 @@ public class TwoKeyMixedEncryptionServiceTests
         var inputText = $"Stream encryption test with {dekAlgorithm} DEK and {kekAlgorithm} KEK";
         var input = new MemoryStream(Encoding.UTF8.GetBytes(inputText));
         using var encryptedStream = new MemoryStream();
-        await svc.EncryptToStreamAsync(input, encryptedStream, "test-key", ct: TestContext.Current.CancellationToken);
+        await svc.EncryptToStreamAsync(input, encryptedStream, "test-key", ct: TestCt);
         encryptedStream.Position = 0;
         using var decryptedStream = new MemoryStream();
-        await svc.DecryptToStreamAsync(encryptedStream, decryptedStream, "test-key", ct: TestContext.Current.CancellationToken);
+        await svc.DecryptToStreamAsync(encryptedStream, decryptedStream, "test-key", ct: TestCt);
         var decrypted = Encoding.UTF8.GetString(decryptedStream.ToArray());
         Assert.Equal(inputText, decrypted);
     }

@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.StateMachine.Seed",
+  "name": "Lyo.StateMachine.Seed",
+  "area": "Core",
+  "tagline": "EF seed of state machine definitions, instances, and transitions.",
+  "description": "EF seed of Count definitions, one instance each, and one transition. Schema state_machine.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/StateMachine/Lyo.StateMachine.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

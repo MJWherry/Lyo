@@ -39,8 +39,6 @@ public partial class JobManagement
 
     private string ScheduleRoute => $"{BaseRoute.TrimEnd('/')}/Schedule";
 
-    private string TriggerRoute => $"{BaseRoute.TrimEnd('/')}/Trigger";
-
     protected override void OnParametersSet()
     {
         // Apply the deep-link tab once so later parameter churn does not reset the user's tab.
@@ -119,8 +117,7 @@ public partial class JobManagement
         var parameters = new DialogParameters<JobDefinitionView> {
             { d => d.JobDefinition, def },
             { d => d.DefinitionRoute, DefinitionRoute },
-            { d => d.ScheduleRoute, ScheduleRoute },
-            { d => d.TriggerRoute, TriggerRoute }
+            { d => d.ScheduleRoute, ScheduleRoute }
         };
 
         var dialog = await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, LyoDialogPresets.Large);

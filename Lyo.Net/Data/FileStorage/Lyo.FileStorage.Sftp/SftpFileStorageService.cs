@@ -28,9 +28,10 @@ public sealed class SftpFileStorageService : RemoteFileStorageServiceBase
         IMetrics? metrics = null,
         IFileOperationContextAccessor? operationContextAccessor = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
-        IFileContentPolicy? contentPolicy = null)
+        IFileContentPolicy? contentPolicy = null,
+        IFileTypeSniffer? fileTypeSniffer = null)
         : base(
             options, metadataService, new SftpRemoteFileTransport(ArgumentHelpers.ThrowIfNullReturn(sftpClient)),
             (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<SftpFileStorageService>(), compressionService, twoKeyEncryptionService, metrics, operationContextAccessor,
-            auditHandlers, contentPolicy) { }
+            auditHandlers, contentPolicy, fileTypeSniffer) { }
 }

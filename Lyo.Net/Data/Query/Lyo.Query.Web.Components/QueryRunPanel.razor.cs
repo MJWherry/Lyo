@@ -24,7 +24,7 @@ public partial class QueryRunPanel : IAsyncDisposable
     private long? _lastResponseElapsedMs;
     private int? _lastResponseSizeBytes;
     private int _lastRestoreKey = int.MinValue;
-    private bool _loading;
+    private BusyKind _busy;
     private string? _requestEditorParseError;
     private int _requestEditorRenderKey;
     private string _requestEditorSearchText = string.Empty;
@@ -114,60 +114,61 @@ public partial class QueryRunPanel : IAsyncDisposable
         await RunChanged.InvokeAsync(next);
     }
 
-    private string GetRequestUri()
+    private string GetRequestUri() => TryBuildUri(GetEndpointSegment(), out var uri, out _) ? uri : "(not configured)";
+
+    private Task RunQuery() => SendAsync(GetEndpointSegment(), BusyKind.Run);
+
+    private Task ShowSql() => SendAsync("QuerySql", BusyKind.Sql);
+
+    private bool TryBuildUri(string segment, out string uri, out string? error)
     {
+        uri = "";
+        error = null;
         var baseUrl = string.IsNullOrWhiteSpace(Run.SelectedHost) ? "" : QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost).TrimEnd('/');
-        if (string.IsNullOrEmpty(baseUrl))
-            return "(not configured)";
+        if (string.IsNullOrEmpty(baseUrl)) {
+            error = "Add an API host (expand “API targets” below, or configure the gateway workbench defaults).";
+            return false;
+        }
 
         if (Run.RunMode == QueryWorkbenchRunMode.RootQuery) {
-            // Root /Query lives on the dynamic CRUD base — entity type is only in From.EntityType.
+            // Root /Query and /QuerySql live on the dynamic CRUD base — entity type is only in From.EntityType.
             var dynamicBase = NormalizeDynamicBase(Run.Route);
-            return string.IsNullOrEmpty(dynamicBase) ? $"{baseUrl}/Query" : $"{baseUrl}/{dynamicBase}/Query";
+            uri = string.IsNullOrEmpty(dynamicBase) ? $"{baseUrl}/{segment}" : $"{baseUrl}/{dynamicBase}/{segment}";
+            return true;
         }
 
         var route = Run.Route.Trim().Trim('/');
-        if (string.IsNullOrEmpty(route))
-            return "(not configured)";
+        if (string.IsNullOrEmpty(route)) {
+            error = "Pick an entity route (expand “API targets” below, or configure the gateway workbench defaults).";
+            return false;
+        }
 
-        return $"{baseUrl}/{route}/{GetEndpointSegment()}";
+        uri = $"{baseUrl}/{route}/{segment}";
+        return true;
     }
 
-    private async Task RunQuery()
+    private async Task SendAsync(string segment, BusyKind busy)
     {
         _error = null;
         _resultJson = default;
         _resultRawText = null;
-        _loading = true;
+        _busy = busy;
         _lastResponseElapsedMs = null;
         _lastResponseSizeBytes = null;
         try {
-            var stopwatch = Stopwatch.StartNew();
-            var baseUrl = string.IsNullOrWhiteSpace(Run.SelectedHost) ? "" : QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost).TrimEnd('/');
-            if (string.IsNullOrEmpty(baseUrl)) {
-                _error = "Add an API host (expand “API targets” below, or configure the gateway workbench defaults).";
-                _loading = false;
+            if (!TryBuildUri(segment, out var uri, out var error)) {
+                _error = error;
+                _busy = BusyKind.None;
                 return;
             }
 
-            string uri;
-            if (Run.RunMode == QueryWorkbenchRunMode.RootQuery) {
-                var dynamicBase = NormalizeDynamicBase(Run.Route);
-                uri = string.IsNullOrEmpty(dynamicBase) ? $"{baseUrl}/Query" : $"{baseUrl}/{dynamicBase}/Query";
-            }
-            else {
-                var route = Run.Route.Trim().Trim('/');
-                if (string.IsNullOrEmpty(route)) {
-                    _error = "Pick an entity route (expand “API targets” below, or configure the gateway workbench defaults).";
-                    _loading = false;
-                    return;
-                }
-
-                uri = $"{baseUrl}/{route}/{GetEndpointSegment()}";
-            }
-
+            var stopwatch = Stopwatch.StartNew();
             var httpClient = HttpClientFactory.CreateClient();
-            var json = JsonSerializer.Serialize(GetActiveRequestBody(), JsonOptions);
+            var body = GetActiveRequestBody();
+            // QuerySql on an entity route deserializes QueryRequestBase, which needs the $type discriminator.
+            var json = segment == "QuerySql" && body is QueryRequestBase query
+                ? JsonSerializer.Serialize(query, JsonOptions)
+                : JsonSerializer.Serialize(body, JsonOptions);
             using var request = new HttpRequestMessage(HttpMethod.Post, uri) { Content = new StringContent(json, Encoding.UTF8, FileTypeInfo.Json.MimeType) };
             ApplyAuth(request, Run);
             using var response = await httpClient.SendAsync(request);
@@ -215,7 +216,7 @@ public partial class QueryRunPanel : IAsyncDisposable
                 _error += " — " + SafeError(ex.InnerException.Message);
         }
         finally {
-            _loading = false;
+            _busy = BusyKind.None;
         }
     }
 
@@ -552,6 +553,13 @@ public partial class QueryRunPanel : IAsyncDisposable
         }
 
         return d;
+    }
+
+    private enum BusyKind
+    {
+        None,
+        Run,
+        Sql
     }
 
     private sealed class HostEndpointRow

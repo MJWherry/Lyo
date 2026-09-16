@@ -1,5 +1,7 @@
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
+using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Selenium.Configuration;
 using Lyo.Web.Automation.Selenium.Service;
 using OpenQA.Selenium;
@@ -24,19 +26,20 @@ public static class WebDriverFactory
         }
 
         return options.BrowserKind switch {
-            SeleniumBrowserKind.Chrome => CreateChrome(options, context),
-            SeleniumBrowserKind.Edge => CreateEdge(options, context),
-            SeleniumBrowserKind.Firefox => CreateFirefox(options, context),
-            var _ => CreateChrome(options, context)
+            AutomationBrowserKind.Chrome or AutomationBrowserKind.Chromium => CreateChrome(options, context),
+            AutomationBrowserKind.Edge => CreateEdge(options, context),
+            AutomationBrowserKind.Firefox => CreateFirefox(options, context),
+            var _ => throw Unsupported(options)
         };
     }
 
     private static IWebDriver CreateRemoteDriver(Uri gridUri, SeleniumBrowserOptions options, SeleniumExecutionContext? context)
     {
         DriverOptions o = options.BrowserKind switch {
-            SeleniumBrowserKind.Edge => BuildEdgeOptions(options, context),
-            SeleniumBrowserKind.Firefox => BuildFirefoxOptions(options, context),
-            var _ => BuildChromeOptions(options, context)
+            AutomationBrowserKind.Edge => BuildEdgeOptions(options, context),
+            AutomationBrowserKind.Firefox => BuildFirefoxOptions(options, context),
+            AutomationBrowserKind.Chrome or AutomationBrowserKind.Chromium => BuildChromeOptions(options, context),
+            var _ => throw Unsupported(options)
         };
 
         return new RemoteWebDriver(gridUri, o);
@@ -109,12 +112,10 @@ public static class WebDriverFactory
             Directory.CreateDirectory(ud);
         }
 
-        if (options.UserAgents.Count > 0) {
-            var ua = options.UserAgents[new Random().Next(options.UserAgents.Count)];
-            o.AddArgument(WebDriverArgumentFormatter.Format("--user-agent", ua));
-        }
+        o.AddArgument(WebDriverArgumentFormatter.Format("--user-agent", ResolveUserAgent(options)));
 
         o.AddArgument(WebDriverArgumentFormatter.Format("--window-size", $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
+        ApplyDetectedBinary(options, path => o.BinaryLocation = path);
         ApplyDownloadDirectoryChromium(o, context);
         o.SetLoggingPreference(LogType.Browser, LogLevel.All);
         if (options.EnablePerformanceLogging)
@@ -138,12 +139,10 @@ public static class WebDriverFactory
             Directory.CreateDirectory(ud);
         }
 
-        if (options.UserAgents.Count > 0) {
-            var ua = options.UserAgents[new Random().Next(options.UserAgents.Count)];
-            o.AddArgument(WebDriverArgumentFormatter.Format("--user-agent", ua));
-        }
+        o.AddArgument(WebDriverArgumentFormatter.Format("--user-agent", ResolveUserAgent(options)));
 
         o.AddArgument(WebDriverArgumentFormatter.Format("--window-size", $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
+        ApplyDetectedBinary(options, path => o.BinaryLocation = path);
         ApplyDownloadDirectoryChromium(o, context);
         o.SetLoggingPreference(LogType.Performance, LogLevel.All);
         return o;
@@ -152,6 +151,7 @@ public static class WebDriverFactory
     private static FirefoxOptions BuildFirefoxOptions(SeleniumBrowserOptions options, SeleniumExecutionContext? context)
     {
         var o = new FirefoxOptions();
+        ApplyDetectedBinary(options, path => o.BinaryLocation = path);
         if (options.Headless)
             o.AddArgument(WebDriverArgumentFormatter.Format("-headless", null));
 
@@ -171,13 +171,28 @@ public static class WebDriverFactory
             o.SetPreference("browser.helperApps.neverAsk.saveToDisk", "application/octet-stream");
         }
 
-        if (options.UserAgents.Count > 0) {
-            var ua = options.UserAgents[new Random().Next(options.UserAgents.Count)];
-            o.SetPreference("general.useragent.override", ua);
-        }
+        o.SetPreference("general.useragent.override", ResolveUserAgent(options));
 
         return o;
     }
+
+    private static string ResolveUserAgent(SeleniumBrowserOptions options)
+        => options.UserAgents.Count == 0
+            ? AutomationBrowserDetector.UserAgent(options.BrowserKind)
+            : options.UserAgents[new Random().Next(options.UserAgents.Count)];
+
+    private static void ApplyDetectedBinary(SeleniumBrowserOptions options, Action<string> setBinary)
+    {
+        if (!string.IsNullOrWhiteSpace(options.RemoteWebDriverUri))
+            return;
+
+        var path = AutomationBrowserDetector.Detect(options.BrowserKind);
+        if (path != null)
+            setBinary(path);
+    }
+
+    private static ConfigurationException Unsupported(SeleniumBrowserOptions options)
+        => new($"Selenium cannot launch {options.BrowserKind}.", nameof(SeleniumBrowserOptions.BrowserKind));
 
     private static void ApplyDownloadDirectoryChromium(ChromiumOptions o, SeleniumExecutionContext? context)
     {

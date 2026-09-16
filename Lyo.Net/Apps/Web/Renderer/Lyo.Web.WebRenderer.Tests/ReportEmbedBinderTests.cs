@@ -58,7 +58,7 @@ public sealed class ReportEmbedBinderTests
             ]
         };
 
-        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new Dictionary<string, object> { ["Report"] = report }, TestContext.Current.CancellationToken);
+        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new Dictionary<string, object> { ["Report"] = report }, TestCt);
         Assert.Contains("Hybrid", html, StringComparison.Ordinal);
         Assert.Contains("Could not resolve", html, StringComparison.Ordinal);
         Assert.DoesNotContain("Unhandled", html, StringComparison.OrdinalIgnoreCase);

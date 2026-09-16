@@ -38,4 +38,6 @@ public sealed class HomeLocationEntity
     public List<HomeItemMovementEntity> MovementsFrom { get; set; } = [];
 
     public List<HomeItemMovementEntity> MovementsTo { get; set; } = [];
+
+    public List<HomeItemEntity> AssignedItems { get; set; } = [];
 }

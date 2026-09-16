@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Enums;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -5,6 +6,7 @@ using Lyo.Health;
 using Lyo.Postgres;
 using Lyo.Tag.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Tag.Postgres;
 
@@ -62,7 +64,7 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
             return;
 
         var entity = new TagEntity {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             SubjectEntityType = forEntity.EntityType,
             SubjectEntityId = forEntityId,
             ActorEntityType = actor.EntityType,
@@ -114,7 +116,7 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
         var forEntityId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.SubjectEntityType == forEntity.EntityType && t.SubjectEntityId == forEntityId);
+        var query = context.Tags.AsNoTracking().WhereActive().WhereTenant(resolvedTenant).Where(t => t.SubjectEntityType == forEntity.EntityType && t.SubjectEntityId == forEntityId);
         if (!string.IsNullOrWhiteSpace(tagType))
             query = query.Where(t => t.TagType == tagType);
 
@@ -133,7 +135,7 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.Name == tag);
+        var query = context.Tags.AsNoTracking().WhereActive().WhereTenant(resolvedTenant).Where(t => t.Name == tag);
         if (!string.IsNullOrWhiteSpace(forEntityType))
             query = query.Where(t => t.SubjectEntityType == forEntityType);
 
@@ -150,11 +152,58 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.SubjectEntityType == forEntityType);
+        var query = context.Tags.AsNoTracking().WhereActive().WhereTenant(resolvedTenant).Where(t => t.SubjectEntityType == forEntityType);
         if (!string.IsNullOrWhiteSpace(tagType))
             query = query.Where(t => t.TagType == tagType);
 
         return await query.Select(t => t.Name).Distinct().OrderBy(t => t).ToListAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TagCount>> GetTopTagsAsync(
+        int take,
+        TagSort sortBy = TagSort.Count,
+        SortDirection direction = SortDirection.Desc,
+        string? forEntityType = null,
+        string? tagType = null,
+        string? name = null,
+        string? text = null,
+        int skip = 0,
+        Guid? tenantId = null,
+        CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNegativeOrZero(take);
+        ArgumentHelpers.ThrowIfNegative(skip);
+        ArgumentHelpers.ThrowIfNotDefined(sortBy);
+        ArgumentHelpers.ThrowIfNotDefined(direction);
+        var resolvedTenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var query = context.Tags.AsNoTracking().WhereActive().WhereTenant(resolvedTenant);
+        if (!string.IsNullOrWhiteSpace(forEntityType))
+            query = query.Where(t => t.SubjectEntityType == forEntityType);
+
+        if (!string.IsNullOrWhiteSpace(tagType))
+            query = query.Where(t => t.TagType == tagType);
+
+        if (!string.IsNullOrWhiteSpace(name))
+            query = query.Where(t => t.Name == name);
+
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            var term = text.Trim().ToLowerInvariant();
+            query = query.Where(t => t.Name.ToLower().Contains(term) || t.TagType.ToLower().Contains(term));
+        }
+
+        var grouped = query.GroupBy(t => new { t.Name, t.TagType }).Select(g => new { g.Key.Name, g.Key.TagType, Count = g.Count() });
+        var ordered = (sortBy, direction) switch {
+            (TagSort.Count, SortDirection.Desc) => grouped.OrderByDescending(t => t.Count).ThenBy(t => t.Name).ThenBy(t => t.TagType),
+            (TagSort.Count, SortDirection.Asc) => grouped.OrderBy(t => t.Count).ThenBy(t => t.Name).ThenBy(t => t.TagType),
+            (TagSort.Name, SortDirection.Desc) => grouped.OrderByDescending(t => t.Name).ThenBy(t => t.TagType),
+            _ => grouped.OrderBy(t => t.Name).ThenBy(t => t.TagType)
+        };
+
+        var rows = await ordered.Skip(skip).Take(take).ToListAsync(ct).ConfigureAwait(false);
+        return rows.Select(r => new TagCount { Name = r.Name, TagType = r.TagType, Count = r.Count }).ToArray();
     }
 
     /// <inheritdoc />

@@ -15,6 +15,7 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
     private LyoFileTree? _tree;
     private IReadOnlyList<FileTreeNode> _checked = [];
     private int _bulkCatalogCount;
+    private int _bulkPhysicalCount;
     private bool _hasCheckedFolder;
     private bool _bulkBusy;
     private bool _truncated;
@@ -37,6 +38,8 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
     }
 
     private IFileTreeSource FolderSource => _folderSource ??= new FileStorageHttpTreeSource(Host.ApiClient, Host.FilesApi);
+
+    private FileStorageBackendKind BackendKind => _folderSource?.BackendKind ?? FileStorageBackendKind.None;
 
     private async Task RefreshAsync()
     {
@@ -74,94 +77,112 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
         await RefreshAsync().ConfigureAwait(true);
     }
 
-    private bool BulkActionsEnabled => !_bulkBusy && (_bulkCatalogCount > 0 || _hasCheckedFolder);
+    private bool BulkObjectActionsEnabled => !_bulkBusy && (_bulkCatalogCount > 0 || _bulkPhysicalCount > 0 || _hasCheckedFolder);
+
+    private bool BulkCatalogActionsEnabled => !_bulkBusy && (_bulkCatalogCount > 0 || _hasCheckedFolder);
 
     private void OnCheckedChanged(IReadOnlyList<FileTreeNode> nodes)
     {
         _checked = nodes;
-        _bulkCatalogCount = CountLoadedCatalog(nodes);
+        CountLoaded(nodes, out _bulkCatalogCount, out _bulkPhysicalCount);
         _hasCheckedFolder = nodes.Any(static n => n.Entry.IsDirectory);
     }
 
     private async Task OnBulkMoveAsync()
     {
-        var ids = await ResolveCheckedCatalogIdsAsync().ConfigureAwait(true);
-        if (_actions != null)
+        var (ids, keys) = await ResolveCheckedAsync().ConfigureAwait(true);
+        if (_actions == null)
+            return;
+
+        if (ids.Count > 0)
             await _actions.BulkMoveAsync(ids).ConfigureAwait(true);
+
+        if (keys.Count > 0)
+            await _actions.MovePhysicalAsync(keys).ConfigureAwait(true);
+    }
+
+    private async Task OnBulkCopyAsync()
+    {
+        var (ids, keys) = await ResolveCheckedAsync().ConfigureAwait(true);
+        if (_actions == null)
+            return;
+
+        if (ids.Count > 0)
+            await _actions.BulkCopyAsync(ids).ConfigureAwait(true);
+
+        if (keys.Count > 0)
+            await _actions.CopyPhysicalAsync(keys).ConfigureAwait(true);
     }
 
     private async Task OnBulkRotateAsync()
     {
-        var ids = await ResolveCheckedCatalogIdsAsync().ConfigureAwait(true);
+        var (ids, keys) = await ResolveCheckedAsync().ConfigureAwait(true);
+        if (keys.Count > 0)
+            Host.SetStatus($"{keys.Count} backend-only object(s) skipped (DEK rotate needs the catalog).", Severity.Warning);
+
         if (_actions != null)
             await _actions.RotateDeksAsync(ids).ConfigureAwait(true);
     }
 
     private async Task OnBulkDownloadAsync()
     {
-        var ids = await ResolveCheckedCatalogIdsAsync().ConfigureAwait(true);
-        if (_actions != null)
+        var (ids, keys) = await ResolveCheckedAsync().ConfigureAwait(true);
+        if (_actions == null)
+            return;
+
+        if (ids.Count > 0)
             await _actions.DownloadArchiveAsync(ids).ConfigureAwait(true);
+        else if (keys.Count > 0)
+            Host.SetStatus("Zip is catalog-only; downloading backend objects one at a time.", Severity.Info);
+
+        if (keys.Count > 0)
+            await _actions.DownloadPhysicalManyAsync(keys).ConfigureAwait(true);
     }
 
     private async Task OnBulkDeleteAsync()
     {
-        var ids = await ResolveCheckedCatalogIdsAsync().ConfigureAwait(true);
-        if (_actions != null)
+        var (ids, keys) = await ResolveCheckedAsync().ConfigureAwait(true);
+        if (_actions == null)
+            return;
+
+        if (ids.Count > 0)
             await _actions.DeleteFilesAsync(ids).ConfigureAwait(true);
+
+        if (keys.Count > 0)
+            await _actions.DeletePhysicalAsync(keys).ConfigureAwait(true);
     }
 
-    private async Task<IReadOnlyList<Guid>> ResolveCheckedCatalogIdsAsync()
+    private async Task<(IReadOnlyList<Guid> CatalogIds, IReadOnlyList<string> PhysicalKeys)> ResolveCheckedAsync()
     {
         _bulkBusy = true;
         try {
             var ids = new HashSet<Guid>();
-            var skippedPhysical = 0;
+            var keys = new HashSet<string>(StringComparer.Ordinal);
             foreach (var node in _checked) {
                 if (_tree != null && node.Entry.IsDirectory)
                     await _tree.LoadAllDescendantsAsync(node).ConfigureAwait(true);
 
-                skippedPhysical += CollectCatalogIds(node, ids);
+                FileStoragePresenceUi.Collect(node, ids, keys);
             }
 
             _bulkCatalogCount = ids.Count;
-            if (skippedPhysical > 0)
-                Host.SetStatus($"{skippedPhysical} physical-only object(s) skipped (not in the catalog).", Severity.Warning);
-
-            return ids.ToList();
+            _bulkPhysicalCount = keys.Count;
+            return (ids.ToList(), keys.ToList());
         }
         finally {
             _bulkBusy = false;
         }
     }
 
-    private static int CollectCatalogIds(FileTreeNode node, HashSet<Guid> ids)
-    {
-        if (node.Entry.IsDirectory) {
-            var skipped = 0;
-            foreach (var child in node.Children)
-                skipped += CollectCatalogIds(child, ids);
-
-            return skipped;
-        }
-
-        var presence = FileStoragePresenceUi.Read(node.Entry);
-        Guid? fileId = FileStoragePresenceUi.TryFileId(node.Entry, out var parsed) ? parsed : null;
-        if (FileStoragePresenceUi.InCatalog(presence, fileId) && fileId is { } catalogId) {
-            ids.Add(catalogId);
-            return 0;
-        }
-
-        return presence == FileStoragePresence.Physical ? 1 : 0;
-    }
-
-    private static int CountLoadedCatalog(IEnumerable<FileTreeNode> nodes)
+    private static void CountLoaded(IEnumerable<FileTreeNode> nodes, out int catalog, out int physical)
     {
         var ids = new HashSet<Guid>();
+        var keys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var node in nodes)
-            CollectCatalogIds(node, ids);
+            FileStoragePresenceUi.Collect(node, ids, keys);
 
-        return ids.Count;
+        catalog = ids.Count;
+        physical = keys.Count;
     }
 
     private void CollectPending(FileStoragePathTreeNode node)

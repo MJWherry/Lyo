@@ -1,0 +1,31 @@
+---
+description: Prefer flat readable code; extract a helper only when the same nested pattern repeats
+alwaysApply: true
+---
+
+# Readable code, shallow nesting
+
+Clean code is easier to maintain, read, and hand to the next developer. Prefer a straight path over nested branches.
+
+## Flatten a pattern that already repeats
+
+When the same multi-line indented check shows up in more than one place, replace it with one named call. `ArgumentHelpers.ThrowIfNull` (and the other `ThrowIf*` helpers) is the model: a null check plus a throw becomes a single line.
+
+```csharp
+// ❌ same block copied into several methods
+if (services is null)
+    throw new ArgumentNullException(nameof(services));
+
+// ✅ one call, same meaning
+ArgumentHelpers.ThrowIfNull(services);
+```
+
+Use an existing helper before adding a new one. Name a new helper for the condition it enforces.
+
+## Leave a one-off inline
+
+A pattern that appears once stays inline. A private method or a new helper is worth it only when a second call site already exists, or is part of the same change. Do not add an abstraction in case it is reused later.
+
+## Keep the happy path shallow
+
+Guard and return or throw at the top so the rest of the method is the main path. Do not wrap the body in `if` or `try` when a guard does the same job.

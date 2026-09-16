@@ -46,5 +46,6 @@ public sealed class AzureBlobFileStorageOptions : FileStorageServiceBaseOptions
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ConnectionString);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ContainerName);
+        ValidateUploadFilters();
     }
 }

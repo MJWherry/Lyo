@@ -9,9 +9,9 @@ public sealed class JwksEndpointTests
     {
         await using var harness = await AuthenticationHandlerHarness.CreateAsync();
         await harness.IssueOpaqueAsync();
-        var response = await harness.Client.GetAsync("/.well-known/jwks.json", TestContext.Current.CancellationToken);
+        var response = await harness.Client.GetAsync("/.well-known/jwks.json", TestCt);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestCt);
         using var doc = JsonDocument.Parse(body);
         var keys = doc.RootElement.GetProperty("keys");
         Assert.Equal(JsonValueKind.Array, keys.ValueKind);

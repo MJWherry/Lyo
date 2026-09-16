@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Security.Claims;
 using Lyo.Exceptions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Client;
 
@@ -17,7 +18,7 @@ public class LyoAuthSessionStore
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(accessToken);
         ArgumentHelpers.ThrowIfNull(claims);
-        var session = new LyoAuthSession(Guid.NewGuid(), accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt, claims, DateTime.UtcNow);
+        var session = new LyoAuthSession(LyoGuid.CreateV7(), accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt, claims, DateTime.UtcNow);
         _sessions[session.SessionId] = session;
         return session;
     }

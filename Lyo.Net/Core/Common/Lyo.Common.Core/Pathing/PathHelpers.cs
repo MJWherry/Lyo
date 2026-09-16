@@ -75,20 +75,30 @@ public static class PathHelpers
         if (string.IsNullOrWhiteSpace(root) || string.IsNullOrWhiteSpace(candidate))
             return false;
 
-        var sep = GetDirectorySeparator(style);
-        var fullRootTrimmed = TrimTrailingSeparators(GetFullPath(style, root), style);
-        var fullCandidate = GetFullPath(style, candidate);
+        return IsUnderNormalizedRoot(style, TrimTrailingSeparators(GetFullPath(style, root), style), GetFullPath(style, candidate));
+    }
+
+    /// <summary>
+    /// True when <paramref name="fullCandidate" /> is equal to or under <paramref name="normalizedRoot" />. Both arguments must already be the output of
+    /// <see cref="GetFullPath" />, with the root additionally passed through <see cref="TrimTrailingSeparators" />. Callers that hold a pre-normalized root (for example an
+    /// <c>IFileSystem</c> that normalized it once in its constructor) use this to avoid re-normalizing on every operation; everyone else wants
+    /// <see cref="IsUnderRoot" />.
+    /// </summary>
+    public static bool IsUnderNormalizedRoot(PathStyle style, string normalizedRoot, string fullCandidate)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedRoot) || string.IsNullOrWhiteSpace(fullCandidate))
+            return false;
+
         var comparison = style == PathStyle.Host && OperatingSystemIsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
         // POSIX filesystem root: every absolute path sits under "/".
-        if (style == PathStyle.Posix && fullRootTrimmed is "/")
+        if (style == PathStyle.Posix && normalizedRoot is "/")
             return IsPathRooted(PathStyle.Posix, fullCandidate);
 
-        var fullRoot = fullRootTrimmed + sep;
-        if (string.Equals(TrimTrailingSeparators(fullCandidate, style), fullRootTrimmed, comparison))
+        if (string.Equals(TrimTrailingSeparators(fullCandidate, style), normalizedRoot, comparison))
             return true;
 
-        return fullCandidate.StartsWith(fullRoot, comparison);
+        return fullCandidate.StartsWith(normalizedRoot + GetDirectorySeparator(style), comparison);
     }
 
     /// <summary>Joins path segments using <paramref name="style" /> separators.</summary>

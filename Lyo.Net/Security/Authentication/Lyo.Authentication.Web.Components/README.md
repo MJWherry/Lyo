@@ -32,12 +32,12 @@ services.AddLyoAuthWebComponentsWasm(configuration);
 ## Pages
 
 | Route(s) | Component | Purpose |
-| ------------------------------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/auth/login`, `/auth/login/{*ReturnUrl}` | `LoginPage` | Provider buttons + optional username/password card. |
 | `/auth/debug` | `DebugPage` | Active session inspector: expiry, scopes, claims, decoded JWT. |
-| `/auth/profile`, `/auth/profile/{userId:guid}` | `ProfilePage` | Current user (no segment) or arbitrary user (with `{userId}`, requires `auth.users.read` scope). Edit is shown when `IApiClient` is registered. |
+| `/auth/profile`, `/auth/profile/{userId:guid}` | `ProfilePage` | Current user (no segment) or arbitrary user (with `{userId}`, requires `auth.users.read` scope). Edit is shown when `IApiClient` is registered. Grants for that user are listed when `IGrantStore` is registered. |
 | `/auth/tokens` | `TokensPage` | Mint PATs via `POST /tokens`. Lists tokens in `AuthTokenGrid` (self-service revoke; no `internal` rows) when `IApiClient` is available. |
-| `/auth/admin`, `/auth/admin/users/{userId:guid}` | `AuthAdminPanel` | Administrative users / tokens / claims / scopes / identities / audit. Token revoke keeps the row; hard-delete destroys the hash. |
+| `/auth/admin`, `/auth/admin/users/{userId:guid}` | `AuthAdminPanel` | Administrative users / tokens / claims / scopes / identities / audit / grants. Token revoke keeps the row; hard-delete destroys the hash. |
 
 Login, Debug, Profile, and Tokens are wrapped in [`LyoElementRoot`](../../../Apps/Web/Lyo.Web.Components/LyoElementRoot.razor) so each rendered root gets a deterministic DOM id. Override via `ElementId`. `AuthAdminPanel` talks to `Auth/User` (and siblings) through `IApiClient`; do not map those routes anonymous.
 
@@ -68,24 +68,32 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Api.Client` (direct, lyo)
 - `Lyo.Authentication.Models` (direct, lyo)
+- `Lyo.Authorization.Web.Components` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
 - `Lyo.Web.Components` (direct, lyo)
 - `Lyo.Web.Components.Export` (direct, lyo)
 - `Lyo.Web.Components.Export.Csv` (direct, lyo)
+- `Lyo.Web.Components.Export.Toml` (direct, lyo)
 - `Lyo.Web.Components.Export.Xlsx` (direct, lyo)
+- `Lyo.Web.Components.Export.Xml` (direct, lyo)
+- `Lyo.Web.Components.Export.Yaml` (direct, lyo)
 - `MudBlazor` `9.3` (direct, third-party)
 - `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Audit` (transitive, lyo)
+- `Lyo.Authorization` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
@@ -93,6 +101,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
@@ -111,6 +120,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

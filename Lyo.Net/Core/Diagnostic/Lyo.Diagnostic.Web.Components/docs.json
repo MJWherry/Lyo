@@ -84,7 +84,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -92,7 +92,15 @@
       ]
     },
     {
-      "name": "Lyo.Common.Metadata",
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -109,6 +117,14 @@
     },
     {
       "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -157,6 +173,14 @@
     },
     {
       "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -234,6 +258,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

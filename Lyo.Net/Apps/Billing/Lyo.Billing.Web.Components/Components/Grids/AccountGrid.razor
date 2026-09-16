@@ -1,0 +1,25 @@
+@namespace Lyo.Billing.Web.Components.Components.Grids
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="BillingAccountGrid"
+                      Route="Ledger/Accounts"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <LyoProjectedColumn Field="Code" Title="Code" QuickSearchPropertyName="Code"/>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name"/>
+        <LyoProjectedColumn Field="AccountType" Title="Type"/>
+    </Columns>
+</LyoDataGridProjected>

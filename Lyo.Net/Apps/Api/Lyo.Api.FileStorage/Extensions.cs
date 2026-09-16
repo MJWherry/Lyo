@@ -88,6 +88,24 @@ public static class Extensions
                 return Results.Ok(new FileStorageHealthResponse(health.IsHealthy, message));
             });
 
+        group.MapGet(
+            "capabilities", (IServiceProvider services) => {
+                var fileStorage = GetFileStorage(services, serviceKey);
+                var multipart = services.GetKeyedService<IMultipartUploadService>(serviceKey);
+                var keyed = services.GetKeyedService<IKeyStore>(serviceKey);
+                IKeyStore? unkeyed = null;
+                IKeyInventoryStore? inventory = null;
+                if (keyed == null) {
+                    unkeyed = services.GetService<IKeyStore>();
+                    inventory = services.GetService<IKeyInventoryStore>();
+                }
+
+                var composed = FileStorageCapabilitiesComposer.Compose(
+                    fileStorage, multipart, FileStorageCapabilitiesComposer.HasEncryptionStore(keyed, unkeyed, inventory),
+                    services.GetKeyedService<IFileStorageArchiveService>(serviceKey) != null, services.GetService<IFileDownloadAccessService>() != null);
+                return Results.Ok(composed);
+            });
+
         group.MapPost(
             "files/save", async ([FromBody] SaveFileRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
                 var fileStorage = GetFileStorage(services, serviceKey);
@@ -192,19 +210,57 @@ public static class Extensions
         group.MapGet(
             "files/physical/download", async (string physicalKey, IServiceProvider services, CancellationToken ct) => {
                 var fileStorage = GetFileStorage(services, serviceKey);
-                try {
-                    var (stream, fileName) = await FileStoragePhysicalRead.OpenAsync(fileStorage, physicalKey, ct).ConfigureAwait(false);
-                    return Results.Stream(stream, FileTypeInfo.Unknown.MimeType, fileName, enableRangeProcessing: true);
-                }
-                catch (ArgumentException ex) {
-                    throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, ex.Message));
-                }
-                catch (FileNotFoundException ex) {
-                    throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, ex.Message));
-                }
-                catch (InvalidOperationException ex) {
-                    throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, ex.Message));
-                }
+                return await RunPhysicalAsync(
+                    async () => {
+                        var (stream, fileName) = await FileStoragePhysicalRead.OpenAsync(fileStorage, physicalKey, ct).ConfigureAwait(false);
+                        return Results.Stream(stream, FileTypeInfo.Unknown.MimeType, fileName, enableRangeProcessing: true);
+                    }).ConfigureAwait(false);
+            });
+
+        group.MapDelete(
+            "files/physical", async (string physicalKey, IServiceProvider services, CancellationToken ct) => {
+                var fileStorage = GetFileStorage(services, serviceKey);
+                return await RunPhysicalAsync(
+                    async () => {
+                        await FileStoragePhysicalMutate.DeleteAsync(fileStorage, physicalKey, ct).ConfigureAwait(false);
+                        return Results.Ok(true);
+                    }).ConfigureAwait(false);
+            });
+
+        group.MapPost(
+            "files/physical/move", async ([FromBody] MovePhysicalObjectRequest request, IServiceProvider services, CancellationToken ct) => {
+                var fileStorage = GetFileStorage(services, serviceKey);
+                return await RunPhysicalAsync(
+                    async () => {
+                        var key = await FileStoragePhysicalMutate
+                            .MoveToPrefixAsync(fileStorage, request.PhysicalKey, request.DestinationPathPrefix, ct)
+                            .ConfigureAwait(false);
+                        return Results.Ok(new PhysicalObjectResult(key));
+                    }).ConfigureAwait(false);
+            });
+
+        group.MapPost(
+            "files/physical/copy", async ([FromBody] CopyPhysicalObjectRequest request, IServiceProvider services, CancellationToken ct) => {
+                var fileStorage = GetFileStorage(services, serviceKey);
+                return await RunPhysicalAsync(
+                    async () => {
+                        var key = await FileStoragePhysicalMutate
+                            .CopyToPrefixAsync(fileStorage, request.PhysicalKey, request.DestinationPathPrefix, ct)
+                            .ConfigureAwait(false);
+                        return Results.Ok(new PhysicalObjectResult(key));
+                    }).ConfigureAwait(false);
+            });
+
+        group.MapPost(
+            "files/physical/rename", async ([FromBody] RenamePhysicalObjectRequest request, IServiceProvider services, CancellationToken ct) => {
+                var fileStorage = GetFileStorage(services, serviceKey);
+                return await RunPhysicalAsync(
+                    async () => {
+                        var key = await FileStoragePhysicalMutate
+                            .RenameAsync(fileStorage, request.PhysicalKey, request.NewFileName, ct)
+                            .ConfigureAwait(false);
+                        return Results.Ok(new PhysicalObjectResult(key));
+                    }).ConfigureAwait(false);
             });
 
         group.MapGet(
@@ -216,8 +272,9 @@ public static class Extensions
                 var dtos = entries.Select(
                     static e => new FileStorageFolderEntryDto(
                         e.Name, e.IsDirectory, e.PathPrefix, e.FileId, (Lyo.Api.FileStorage.Models.FileStoragePresence)(int)e.Presence, e.OriginalFileName,
-                        e.OriginalFileSize, e.PhysicalKey)).ToList();
-                return Results.Ok(new FileStorageFolderListResponse(dtos, truncated));
+                        e.OriginalFileSize, e.PhysicalKey, e.IsCompressed, e.Compression, e.IsEncrypted, e.Encryption)).ToList();
+                var backend = (Lyo.Api.FileStorage.Models.FileStorageBackendKind)(int)FileStorageBackend.Detect(fileStorage);
+                return Results.Ok(new FileStorageFolderListResponse(dtos, truncated, backend));
             });
 
         group.MapGet(
@@ -302,6 +359,12 @@ public static class Extensions
 
                 var fileStorage = GetFileStorage(services, serviceKey);
                 return Results.Ok(await fileStorage.GetMetadataAsync(fileId, ct).ConfigureAwait(false));
+            });
+
+        group.MapGet(
+            "files/{fileId:guid}/integrity", async (Guid fileId, IServiceProvider services, CancellationToken ct) => {
+                var fileStorage = GetFileStorage(services, serviceKey);
+                return Results.Ok(await fileStorage.GetContentIntegrityAsync(fileId, ct).ConfigureAwait(false));
             });
 
         group.MapGet(
@@ -466,10 +529,27 @@ public static class Extensions
         return new() { ContentDisposition = cd, ContentType = mime };
     }
 
+    private static async Task<IResult> RunPhysicalAsync(Func<Task<IResult>> action)
+    {
+        try {
+            return await action().ConfigureAwait(false);
+        }
+        catch (ArgumentException ex) {
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, ex.Message));
+        }
+        catch (FileNotFoundException ex) {
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, ex.Message));
+        }
+        catch (InvalidOperationException ex) {
+            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, ex.Message));
+        }
+    }
+
     /// <summary>
-    /// Pipes stored bytes through the API (host decrypts and decompresses). Bucket-direct URLs exist only on <c>presigned-read</c> and access-link <c>presigned-read</c>.
+    /// Pipes stored bytes through the API (host decrypts and decompresses). A single <c>Range</c> on an uncompressed object, when the backend can slice, is
+    /// <c>206 Partial Content</c>. Compressed objects ignore <c>Range</c>. Bucket-direct URLs exist only on <c>presigned-read</c> and access-link <c>presigned-read</c>.
     /// </summary>
-    private static async Task<IResult> StreamStoredFileAsync(
+    internal static async Task<IResult> StreamStoredFileAsync(
         HttpContext http,
         IFileStorageService fileStorage,
         Guid fileId,
@@ -477,15 +557,37 @@ public static class Extensions
         bool inline,
         CancellationToken ct)
     {
-        var stream = await fileStorage.GetFileStreamAsync(fileId, ct: ct);
+        var ranged = fileStorage as FileStorageServiceBase;
+        var canServe = StoredByteRange.CanServe(metadata.IsCompressed, ranged is { SupportsPlainByteRange: true });
+        var decision = StoredByteRange.Decide(canServe, metadata.OriginalFileSize, http.Request.Headers.Range.ToString());
+        var fileName = metadata.OriginalFileName ?? metadata.SourceFileName;
+        var mime = string.IsNullOrWhiteSpace(metadata.ContentType) ? FileTypeInfo.Unknown.MimeType : metadata.ContentType;
+
+        if (decision.Kind == StoredDownloadKind.Unsatisfiable)
+            return new UnsatisfiableStoredFileResult(metadata.OriginalFileSize);
+
+        if (decision.Kind == StoredDownloadKind.Partial) {
+            var slice = await ranged!.OpenPlainByteRangeAsync(metadata, decision.Start, decision.EndInclusive, ct).ConfigureAwait(false);
+            if (slice == null)
+                throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
+
+            return new PartialStoredFileResult(slice, mime, fileName, inline, decision.Start, decision.EndInclusive, metadata.OriginalFileSize);
+        }
+
+        var stream = await fileStorage.GetFileStreamAsync(fileId, ct: ct).ConfigureAwait(false);
         if (stream == null)
             throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
 
         if (metadata.OriginalFileSize > 0)
             http.Response.ContentLength = metadata.OriginalFileSize;
 
-        var fileName = metadata.OriginalFileName ?? metadata.SourceFileName;
-        var mime = string.IsNullOrWhiteSpace(metadata.ContentType) ? FileTypeInfo.Unknown.MimeType : metadata.ContentType;
+        if (decision.AcceptRanges)
+            http.Response.Headers.AcceptRanges = "bytes";
+
+        var digest = FileContentDigest.ForDownload(http.Request.Headers.Range.Count > 0, metadata.HashAlgorithm, metadata.OriginalFileHash);
+        if (digest is not null)
+            http.Response.Headers.Append("Content-Digest", digest);
+
         if (inline) {
             http.Response.Headers.ContentDisposition = ContentDisposition.Build(fileName, inline: true);
             return Results.Stream(stream, mime, enableRangeProcessing: true);
@@ -503,7 +605,9 @@ public static class Extensions
             Charset = request.Charset,
             TenantId = request.TenantId,
             UrlExpiration = Hours(request.UrlExpirationHours),
-            Metadata = request.Metadata
+            Metadata = request.Metadata,
+            ExpectedSha256 = request.ExpectedSha256,
+            ExpectedContentMd5 = request.ExpectedContentMd5
         };
 
     private static Domain.DirectUploadCompleteRequest? ToDomain(DirectUploadCompleteRequest? request)

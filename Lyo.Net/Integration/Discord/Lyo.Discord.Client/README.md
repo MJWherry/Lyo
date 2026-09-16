@@ -56,9 +56,9 @@ handler with auto-decompression enabled.
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Api.Models` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Discord.Models` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `Microsoft.Extensions.Configuration` `10.0.5` (direct, microsoft)
@@ -75,5 +75,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)

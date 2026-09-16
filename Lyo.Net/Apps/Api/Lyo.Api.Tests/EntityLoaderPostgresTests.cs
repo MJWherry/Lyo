@@ -24,11 +24,11 @@ public class EntityLoaderPostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         var query = context.Set<JobRun>().AsQueryable();
         var withInclude = loader.LoadNestedCollections(context, query, ["JobDefinition"]);
-        var results = await withInclude.Take(5).ToArrayAsync(TestContext.Current.CancellationToken);
+        var results = await withInclude.Take(5).ToArrayAsync(TestCt);
         Assert.True(results.Length >= 1);
         foreach (var run in results)
             Assert.NotNull(run.JobDefinition);
@@ -42,12 +42,12 @@ public class EntityLoaderPostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-        var run = await context.Set<JobRun>().FindAsync([runId], TestContext.Current.CancellationToken);
+        var run = await context.Set<JobRun>().FindAsync([runId], TestCt);
         Assert.NotNull(run);
         Assert.False(context.Entry(run).Navigation("JobDefinition").IsLoaded);
-        await loader.LoadIncludes(context, run, ["JobDefinition"], TestContext.Current.CancellationToken);
+        await loader.LoadIncludes(context, run, ["JobDefinition"], TestCt);
         Assert.True(context.Entry(run).Navigation("JobDefinition").IsLoaded);
         Assert.NotNull(run.JobDefinition);
         Assert.Equal(defId, run.JobDefinition.Id);

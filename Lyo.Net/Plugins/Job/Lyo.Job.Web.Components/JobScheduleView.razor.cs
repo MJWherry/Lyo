@@ -34,9 +34,16 @@ public partial class JobScheduleView
     [Parameter]
     public JobDefinitionRes? JobDefinition { get; set; }
 
-    /// <summary>Owning job definition id, used when creating schedules and when reloading.</summary>
+    /// <summary>Owning job definition id, used when creating schedules and when reloading. Leave unset when the view hosts workflow-owned schedules.</summary>
     [Parameter]
     public Guid JobDefinitionId { get; set; }
+
+    /// <summary>
+    /// Owning workflow id, for a workflow-owned schedule. A schedule has exactly one owner — a definition or a workflow — enforced by a database check constraint, so
+    /// supplying this instead of <see cref="JobDefinitionId" /> is what makes the view create workflow schedules rather than definition schedules.
+    /// </summary>
+    [Parameter]
+    public Guid? JobWorkflowId { get; set; }
 
     /// <summary>API client used for schedule, parameter, and definition QueryConcrete calls.</summary>
     [Parameter]
@@ -334,13 +341,14 @@ public partial class JobScheduleView
 
     private async Task AddSchedule()
     {
-        if (JobDefinitionId == default)
+        if (JobDefinitionId == default && JobWorkflowId is null)
             return;
 
         try {
             var created = await ApiClient.PostAsAsync<JobScheduleReq, CreateResult<JobScheduleRes>>(
                 ScheduleRoute, new() {
-                    JobDefinitionId = JobDefinitionId,
+                    JobDefinitionId = JobWorkflowId is null ? JobDefinitionId : null,
+                    JobWorkflowId = JobWorkflowId,
                     Type = ScheduleType.SetTimes,
                     DayFlags = DayFlags.EveryDay,
                     MonthFlags = MonthFlags.EveryMonth,
@@ -382,8 +390,11 @@ public partial class JobScheduleView
     {
         var days = _edit!.Days ?? [];
         var months = _edit.Months ?? [];
+        // Carry the existing owner through unchanged. A schedule must have exactly one; rewriting a workflow-owned schedule to a definition owner would fail the check constraint.
+        var workflowId = _selected!.JobWorkflowId ?? JobWorkflowId;
         return new() {
-            JobDefinitionId = _selected!.JobDefinitionId != default ? _selected.JobDefinitionId : JobDefinitionId,
+            JobDefinitionId = workflowId is not null ? null : _selected.JobDefinitionId ?? (JobDefinitionId == default ? null : JobDefinitionId),
+            JobWorkflowId = workflowId,
             Type = _edit.Type,
             Description = string.IsNullOrWhiteSpace(_edit.Description) ? null : _edit.Description,
             Enabled = _edit.Enabled,
@@ -420,8 +431,7 @@ public partial class JobScheduleView
 
         _running = true;
         try {
-            var req = JobScheduleRun.CreateRequest(
-                _selected.JobDefinitionId != default ? _selected.JobDefinitionId : JobDefinitionId, _selected);
+            var req = JobScheduleRun.CreateRequest(_selected.JobDefinitionId ?? JobDefinitionId, _selected);
             var result = await ApiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>($"{RunRoute.TrimEnd('/')}/Create", req);
             Snackbar.Add($"Job run {result?.Data?.Id.Truncated() ?? "?"} created", Severity.Success);
         }

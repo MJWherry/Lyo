@@ -6,12 +6,26 @@ export {
   QueryBuilder,
   createDefaultQueryBuilderValue,
   activeRequestPreview,
+  QueryWorkbench,
+  QueryBuilderSettings,
+  QueryRunPanel,
+  buildRunUrl,
+  buildSqlUrl,
+  authHeaders,
+  normalizeBaseUrl,
+  normalizeRun,
+  defaultRunConfig,
+  restoreWorkbenchState,
 } from "lyo-web-components";
 export type {
   WhereClauseBuilderProps,
   ChipInputProps,
   QueryBuilderProps,
   QueryBuilderValue,
+  QueryWorkbenchProps,
+  QueryWorkbenchRunContext,
+  QueryWorkbenchRunConfig,
+  QueryWorkbenchPersistedState,
 } from "lyo-web-components";
 
 export {
@@ -20,6 +34,9 @@ export {
   defaultGroup,
   defaultQueryOptions,
   isMultiValueComparison,
+  isFuzzyComparison,
+  fuzzy,
+  notFuzzy,
   isWhereClause,
   parseConditionValue,
   toMultiValueStrings,

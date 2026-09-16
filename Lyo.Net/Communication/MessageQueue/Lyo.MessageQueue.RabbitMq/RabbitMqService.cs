@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Json;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Extensions;
 using Lyo.Common.Metadata.Records;
@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.MessageQueue.RabbitMq;
 
@@ -878,7 +879,7 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
 
     /// <summary>Publish properties for every outbound message: persistence from <see cref="RabbitMqOptions.PersistentMessages" />, a message id, and a UTC timestamp.</summary>
     private BasicProperties CreateBasicProperties()
-        => new() { Persistent = _options.PersistentMessages, MessageId = Guid.NewGuid().ToString("D"), Timestamp = new(DateTimeOffset.UtcNow.ToUnixTimeSeconds()) };
+        => new() { Persistent = _options.PersistentMessages, MessageId = LyoGuid.CreateV7().ToString("D"), Timestamp = new(DateTimeOffset.UtcNow.ToUnixTimeSeconds()) };
 
     /// <summary>Converts a management API queue object into <see cref="MessageQueueInfo" />. AMQP flags, <c>x-*</c> arguments, and rates go into AdditionalProperties.</summary>
     private static MessageQueueInfo ParseQueueInfo(JsonElement el)
@@ -1084,7 +1085,7 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
     {
         SemaphoreSlim? semaphore = null;
         var semaphoreAcquired = false;
-        var messageId = Guid.NewGuid().ToString("N").Substring(0, 8); // Short ID for logging
+        var messageId = LyoGuid.CreateV7().ToString("N").Substring(0, 8); // Short ID for logging
         try {
             // Take the semaphore when a per-queue or global processing limit is on
             if (_processingSemaphores.TryGetValue(queueName, out semaphore)) {

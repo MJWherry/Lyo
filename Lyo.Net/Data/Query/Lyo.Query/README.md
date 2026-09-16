@@ -11,7 +11,7 @@ Targets `net10.0`.
 ## Features
 
 - **AST → `IQueryable`.** `ApplyWhereClause` builds expression trees from `WhereClause` that EF (or the provider) can translate.
-- **16 comparators.** Equals / NotEquals / Contains* / StartsWith* / EndsWith* / Greater* / Less* / In / NotIn / Regex / NotRegex.
+- **18 comparators.** Equals / NotEquals / Contains* / StartsWith* / EndsWith* / Greater* / Less* / In / NotIn / Regex / NotRegex / Fuzzy / NotFuzzy.
 - **Collection paths.** `Lines.Quantity` becomes `Any(...)` on collection elements. Bare collection / `.Count` style paths compare against count.
 - **Two-phase SubClause.** `includeSubClauses: false` for the SQL root pass. Load includes then match the sub-tree in memory.
 - **Multi-key sort.** `SortByProperty` + `ApplyOrdering` using `Priority` and a stable default tie-break.
@@ -21,6 +21,7 @@ Targets `net10.0`.
 - **Contains→Regex coalesce.** Adjacent `Contains` leaves on the same string field can merge into a single `Regex` alternation.
 - **Property diffing.** `IPropertyComparisonService` for patch and update pipelines.
 - **Value coercion.** `IValueConversionService` maps JSON literals → CLR property types (suppressible when `Lyo.Api` owns conversion).
+- **QueryProject aggregates.** `AggregateQuery` groups an `IQueryable` by `Select` and projects `Count`, `CountDistinct`, `Sum`, `Average`, `Min`, and `Max`. Empty `Select` is one summary row. `Count` with no field counts rows in the group. A collection field, or a path ending in `.count`, totals that collection. Select and aggregate paths accept `[n]`, `[start:]`, `[:end]`, `[start:end]`, and `[:]` on a string or a collection.
 
 ## Examples
 
@@ -139,12 +140,22 @@ var diffs = propertyComparisonService.GetPropertyDifferences(entity, patchDto);
 
 | Package | Responsibility |
 | --- | --- |
-| **`Lyo.Query` (this)** | `WhereClause` → LINQ / matcher; sort; explain; path metadata; `ICache` for compiled trees |
+| **`Lyo.Query` (this)** | `WhereClause` → LINQ / matcher; sort; explain; path metadata; `AggregateQuery` group-by; `ICache` for compiled trees |
 | [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) | AST types, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, builders, enums |
 | [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md) | `POST …/QueryConcrete`, `/QueryProject`, root `/Query`; **query result** caching; projection SQL |
 | [`Lyo.Query.Web.Components`](../Lyo.Query.Web.Components/README.md) | Blazor query workbench |
 
 Builders and endpoint payloads are documented on Models / Api. This doc covers the runtime translator.
+
+## QueryProject aggregates
+
+`AggregateQuery` groups an `IQueryable<T>` when `ProjectionQueryReq.Aggregates` is non-empty. `Select` is the group key. An empty `Select` is one summary row over the filtered set. `WhereClause` filters rows before grouping. `SortBy` may name a select path or an aggregate output name. `Start` / `Amount` page groups, and an exact total is the number of groups.
+
+`Count` with no field is `COUNT(*)` (every row in the group). `Count` of a collection, or of a path ending in `.count`, totals that collection's elements in the group. `Count` of a scalar skips nulls and keeps duplicates. `CountDistinct` counts distinct values of a scalar field and skips nulls. `Sum` and `Average` take a numeric field; `Average` of an integral field is `double`, and `decimal` stays `decimal`. `Min` and `Max` take a scalar field. An empty ungrouped source returns one row: `Count` and `CountDistinct` are 0, a non-nullable `Sum` is 0, and a nullable `Sum` / `Average` / `Min` / `Max` is null. A grouped query over no rows returns no items.
+
+A path segment may end with `[n]`, `[start:]`, `[:end]`, `[start:end]`, or `[:]`. `start` is inclusive and `end` is exclusive. On a string the window is still a string, so it can be a group key. On a collection, entity elements order by a single `[Key]` or `Id`, and scalar elements order by their value. A one-element window is a scalar. A longer collection window is a select list and is rejected as a group key.
+
+`Lyo.Api` runs this before the entity projection. If the provider cannot translate the grouping, the call fails instead of grouping a loaded page.
 
 ## IWhereClauseService
 
@@ -173,6 +184,7 @@ Operators come from `ComparisonOperatorEnum` on each `ConditionClause`:
 | `Contains` / `NotContains` / `StartsWith` / `EndsWith` / negations | String methods when the target type supports them |
 | `In` / `NotIn` | Value may be a list or CSV string |
 | `Regex` / `NotRegex` | String regex; trivial patterns like `.*` short-circuit to `true` |
+| `Fuzzy` / `NotFuzzy` | Trigram Jaccard (`FuzzyMatch.Similarity`); optional `Threshold` (default `0.3`). Postgres emits `similarity()` via `Lyo.Query.Postgres` |
 
 **Dotted paths**
 
@@ -297,12 +309,12 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Evaluation` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
@@ -319,5 +331,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

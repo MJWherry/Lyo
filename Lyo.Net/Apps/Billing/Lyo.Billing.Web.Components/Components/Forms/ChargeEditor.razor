@@ -1,0 +1,33 @@
+@namespace Lyo.Billing.Web.Components.Components.Forms
+
+<LyoDialog Busy="@_saving" OnSave="SaveAsync" SaveDisabled="@(!_canSave)" SaveText="@(_isNew ? "Create" : "Save")">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isNew ? "New charge" : Locked ? "Billed charge" : "Edit charge")</MudText>
+    </TitleContent>
+    <ChildContent>
+        @if (Locked) {
+            <MudAlert Severity="Severity.Info" Class="mb-2">This charge is on an invoice and cannot be edited.</MudAlert>
+        }
+        <LyoForm TModel="ChargeEditModel" Model="_edit" ShowActions="false" HasChangesChanged="@(v => _formHasChanges = v)">
+            <MudGrid Spacing="2" Class="pa-1">
+                @if (!ClientId.HasValue || ClientId == Guid.Empty) {
+                    <MudItem xs="12">
+                        <ClientPicker ApiClient="ApiClient" Value="_edit.ClientId" ValueChanged="OnClientPicked"/>
+                    </MudItem>
+                }
+                <MudItem xs="12">
+                    <LyoFormInput TModel="ChargeEditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.Description)" Label="Description" AllowEditing="@(!Locked)"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <LyoFormInput TModel="ChargeEditModel" TValue="decimal" Model="_edit" PropertyExpression="@(m => m.Quantity)" Label="Quantity" AllowEditing="@(!Locked)"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <LyoFormInput TModel="ChargeEditModel" TValue="decimal" Model="_edit" PropertyExpression="@(m => m.UnitAmount)" Label="Unit amount" AllowEditing="@(!Locked)"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <LyoFormInput TModel="ChargeEditModel" TValue="string" Model="_edit" PropertyExpression="@(m => m.Currency)" Label="Currency" AllowEditing="@(!Locked)"/>
+                </MudItem>
+            </MudGrid>
+        </LyoForm>
+    </ChildContent>
+</LyoDialog>

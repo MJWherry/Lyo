@@ -1,5 +1,6 @@
 using Lyo.Authentication.Models.Records;
 using Lyo.Exceptions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Services.Users;
 
@@ -33,7 +34,7 @@ public static class UserScopeNames
                 continue;
 
             var now = DateTime.UtcNow;
-            await store.CreateAsync(new LyoUserScope(Guid.NewGuid(), userId, name, now, null), tenantId, ct).ConfigureAwait(false);
+            await store.CreateAsync(new LyoUserScope(LyoGuid.CreateV7(), userId, name, now, null), tenantId, ct).ConfigureAwait(false);
         }
     }
 

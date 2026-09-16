@@ -44,18 +44,12 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
 
     private void AddPrefixes(IReadOnlyList<string> namespacePrefixes, PackageMetadata package)
     {
-        _entries.RemoveAll(t => t.Meta.Id == package.Id);
+        var prefixes = PackageMetadataPrefixMatch.NormalizePrefixes(namespacePrefixes);
+        var claimed = new HashSet<string>(prefixes, StringComparer.Ordinal);
+        _entries.RemoveAll(t => t.Meta.Id == package.Id || claimed.Contains(t.Prefix));
         package = package with { LicenseExpressionSyntax = PackageLicenseExpression.TryParseSyntax(package.LicenseExpression) };
-        foreach (var raw in namespacePrefixes) {
-            if (string.IsNullOrWhiteSpace(raw))
-                continue;
-
-            var p = raw.Trim();
-            if (!p.EndsWith(".", StringComparison.Ordinal))
-                p += ".";
-
-            _entries.Add((p, package));
-        }
+        foreach (var prefix in prefixes)
+            _entries.Add((prefix, package));
     }
 
     private void SortEntries()

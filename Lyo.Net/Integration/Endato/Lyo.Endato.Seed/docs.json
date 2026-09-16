@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Endato.Seed",
+  "name": "Lyo.Endato.Seed",
+  "area": "Integration",
+  "tagline": "EF seed of Endato person-search and contact-enrichment queries.",
+  "description": "EF seed of one person-search query and one contact-enrichment query per count. Each has one person, one address, one email, and one phone. Schema endato.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Endato/Lyo.Endato.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

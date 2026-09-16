@@ -26,7 +26,7 @@ public sealed class LocalAtomicOutputStreamTests
     [Fact]
     public async Task RotateDeksAsync_EncryptFailsPartway_LeavesOriginalCiphertextReadable()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var encryption = CreateEncryptionService();
         using var scope = LocalFileStorageTestScope.Create(twoKeyEncryptionService: encryption);
         var payload = TestData.Create(64 * 1024);
@@ -50,7 +50,7 @@ public sealed class LocalAtomicOutputStreamTests
     [Fact]
     public async Task CreateOutputStreamAsync_FailedWrite_LeavesNoPartialFilesBehind()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var encryption = CreateEncryptionService();
         using var scope = LocalFileStorageTestScope.Create(twoKeyEncryptionService: encryption);
         var payload = TestData.Create(64 * 1024);

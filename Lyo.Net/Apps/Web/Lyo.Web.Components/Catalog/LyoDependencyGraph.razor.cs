@@ -7,7 +7,7 @@ namespace Lyo.Web.Components.Catalog;
 /// <summary>
 /// Direct dependencies of one catalog package, grouped by kind. Loads the same JSON <see cref="PackageDoc" /> uses so the graph stays aligned with the docs.
 /// </summary>
-public partial class LyoDependencyGraph
+public partial class LyoDependencyGraph : IDisposable
 {
     /// <summary>Package id whose dependencies to display.</summary>
     [Parameter]
@@ -26,36 +26,61 @@ public partial class LyoDependencyGraph
     private HttpClient Http { get; set; } = null!;
 
     [Inject]
+    private NavigationManager Navigation { get; set; } = null!;
+
+    [Inject]
     private ILogger<LyoDependencyGraph> Logger { get; set; } = null!;
+
+    private readonly CatalogLoadGate _gate = new();
 
     private CatalogPackageDoc? _doc;
     private bool _loading = true;
     private string? _error;
-    private string? _loadedId;
 
     private IEnumerable<IGrouping<string, CatalogDependency>> Grouped
         => (_doc?.Dependencies ?? []).GroupBy(dependency => string.IsNullOrWhiteSpace(dependency.Kind) ? "other" : dependency.Kind);
 
     /// <inheritdoc />
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
-        if (string.Equals(_loadedId, PackageId, StringComparison.Ordinal) && _doc is not null)
-            return;
+        var key = CatalogLoadGate.Key(CatalogBasePath, PackageId);
+        if (_gate.IsCurrentRequest(key))
+            return Task.CompletedTask;
 
+        return LoadAsync(key);
+    }
+
+    /// <inheritdoc />
+    public void Dispose() => _gate.Dispose();
+
+    private async Task LoadAsync(string key)
+    {
+        var (requestId, ct) = _gate.Begin(key);
+        var packageId = PackageId;
         _loading = true;
         _error = null;
         _doc = null;
         try {
-            var url = $"{CatalogBasePath.TrimEnd('/')}/packages/{Uri.EscapeDataString(PackageId)}.json";
-            _doc = await Http.GetFromJsonAsync<CatalogPackageDoc>(url, CatalogJson.Options);
-            _loadedId = PackageId;
+            var url = CatalogAssetUri.Resolve(Navigation, $"{CatalogBasePath.TrimEnd('/')}/packages/{Uri.EscapeDataString(packageId)}.json");
+            var doc = await Http.GetFromJsonAsync<CatalogPackageDoc>(url, CatalogJson.Options, ct);
+            if (!_gate.IsCurrent(requestId))
+                return;
+
+            _doc = doc;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+            return;
         }
         catch (Exception ex) {
-            Logger.LogWarning(ex, "Failed to load catalog dependencies for {PackageId}", PackageId);
-            _error = $"Could not load dependencies for {PackageId}.";
+            if (!_gate.IsCurrent(requestId))
+                return;
+
+            Logger.LogWarning(ex, "Failed to load catalog dependencies for {PackageId}", packageId);
+            _error = $"Could not load dependencies for {packageId}.";
         }
         finally {
-            _loading = false;
+            if (_gate.IsCurrent(requestId))
+                _loading = false;
         }
     }
 

@@ -11,6 +11,7 @@ using Lyo.Api.Services.Export;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
 using Lyo.Diff;
+using Lyo.Json;
 using Lyo.Query;
 using Lyo.Query.Services.ValueConversion;
 using Microsoft.AspNetCore.Http.Json;
@@ -74,6 +75,12 @@ public static partial class ServiceCollectionExtensions
         /// <summary>Registers the built-in JSON export format handler. CSV and XLSX require <c>Lyo.Api.Export.Csv</c> / <c>Lyo.Api.Export.Xlsx</c>.</summary>
         public IServiceCollection AddBuiltInExportFormatHandlers()
         {
+            services.TryAddSingleton<IJsonService>(static sp => {
+                var serializerOptions = sp.GetService<IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>()?.Value.SerializerOptions;
+                return serializerOptions is null ? new JsonService() : new JsonService(serializerOptions: serializerOptions);
+            });
+            services.TryAddSingleton<IJsonReader>(static sp => sp.GetRequiredService<IJsonService>().Reader);
+            services.TryAddSingleton<IJsonWriter>(static sp => sp.GetRequiredService<IJsonService>().Writer);
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IExportFormatHandler, JsonExportFormatHandler>());
             return services;
         }
@@ -101,12 +108,12 @@ public static partial class ServiceCollectionExtensions
         }
 
         /// <summary>
-        /// Registers <see cref="ICachePayloadSerializer" /> using the host <see cref="JsonOptions" /> serializer settings (fallback:
+        /// Registers <see cref="ICachePayloadSerializer" /> using the host <see cref="Microsoft.AspNetCore.Http.Json.JsonOptions" /> serializer settings (fallback:
         /// <see cref="CachePayloadSerializerRegistration.DefaultJsonOptions" />).
         /// </summary>
         private static void AddApiHostCachePayloadSerializer(IServiceCollection serviceCollection)
             => serviceCollection.AddSingleton<ICachePayloadSerializer>(static sp => {
-                var opts = sp.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions ?? CachePayloadSerializerRegistration.DefaultJsonOptions;
+                var opts = sp.GetService<IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>()?.Value.SerializerOptions ?? CachePayloadSerializerRegistration.DefaultJsonOptions;
                 return new SystemTextJsonCachePayloadSerializer(opts);
             });
     }

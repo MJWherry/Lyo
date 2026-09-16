@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Postgres\Lyo.EntityReference.Postgres.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Health\Lyo.Health\Lyo.Health.csproj"/>
+        <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Postgres\Lyo.EntityReference.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Health\Lyo.Health\Lyo.Health.csproj"/>
         <ProjectReference Include="..\Lyo.Audit\Lyo.Audit.csproj"/>
         <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>

@@ -128,6 +128,16 @@ public interface IFileStorageService : IHealth
     /// <summary>Checks backing bytes and seals metadata after a direct PUT.</summary>
     Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default);
 
+    /// <summary>
+    /// Aborts direct uploads that began more than <see cref="Models.FileStorageServiceBaseOptions.PendingDirectUploadTtl" /> ago and were never finalized: deletes any
+    /// object the client PUT, tombstones the metadata row, and audits <see cref="Audit.FileAuditEventType.DirectUploadFailed" />. Nothing calls this automatically; run it
+    /// on a schedule from the host (for example a hosted service).
+    /// </summary>
+    /// <param name="maxUploads">Most rows handled in one call. Call again while it returns this many.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>How many uploads were aborted.</returns>
+    Task<int> SweepExpiredDirectUploadsAsync(int maxUploads = 1000, CancellationToken ct = default);
+
     /// <summary>Copies to a new file id on the server (local or server-side). Backing bytes are reproduced; metadata is cloned with new identifiers.</summary>
     /// <remarks>Remote copies can sit in long SDK calls. Treat <paramref name="ct" /> as best-effort when the SDK does not forward tokens.</remarks>
     Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default);
@@ -185,6 +195,17 @@ public interface IFileStorageService : IHealth
     /// <returns>Metadata including original filename, size, hash, and encryption/compression flags.</returns>
     /// <exception cref="FileNotFoundException">Raised when the file is missing.</exception>
     Task<FileStoreResult> GetMetadataAsync(Guid fileId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the plaintext hash a client can check after download. The digest is <see cref="Lyo.FileMetadataStore.Models.FileStoreResult.OriginalFileHash" />. Wrapped
+    /// key material is not included.
+    /// </summary>
+    /// <param name="fileId">Id of the file.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Algorithm, plaintext hash, and plaintext size.</returns>
+    /// <exception cref="FileNotFoundException">Raised when the file is missing.</exception>
+    /// <exception cref="InvalidOperationException">Raised when the row has no plaintext hash.</exception>
+    Task<FileContentIntegrity> GetContentIntegrityAsync(Guid fileId, CancellationToken ct = default);
 
     /// <summary>
     /// Re-wraps DEKs that were encrypted under a given KEK version onto the current or latest KEK. Use this when rotating keys so older files pick up the newest KEK.

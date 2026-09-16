@@ -152,6 +152,18 @@
                     <MudItem xs="12" md="5">
                         <MudPaper Outlined="true" Class="pa-4" Style="height: 100%;">
                             <MudText Typo="Typo.h6" Class="mb-2">Result</MudText>
+                            @{
+                                var previewCalendar = BuildPreviewCalendar();
+                            }
+                            @if (previewCalendar is not null) {
+                                <LyoCalendar Calendar="previewCalendar"
+                                             TimeZone="_calendarZone"
+                                             TimeZoneChanged="OnCalendarZoneChanged"
+                                             Use24Hour="_use24Hour"
+                                             Use24HourChanged="OnHourCycleChanged"
+                                             VisibleMonthChanged="OnVisibleMonthChanged"
+                                             CategoryHues="CalendarHues"/>
+                            }
                             @if (_validationError != null) {
                                 <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_validationError</MudAlert>
                             }

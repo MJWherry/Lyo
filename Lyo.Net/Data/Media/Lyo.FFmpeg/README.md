@@ -4,10 +4,12 @@ CliWrap wrapper around `ffmpeg` / `ffprobe` / `ffplay` for [`Lyo.Media.Models`](
 
 ## Features
 
-- **Convert.** File-to-file transcode and compress (CRF, bitrate, preset). Pipe mode does not spool to a temp file. Audio and video facades share one runner.
+- **Convert.** File-to-file transcode and compress. `AudioConversion` and `VideoConversion` build the request. Metadata dictionaries use [`FileTagKey`](../../FileTags/Lyo.FileTags/README.md) and still emit `-metadata` during encode. Tag read and stream-copy write without a re-encode live in [`Lyo.FileTags.FFmpeg`](../../FileTags/Lyo.FileTags.FFmpeg/README.md). `FFmpegCommandBuilder` stays the raw argv escape hatch. Pipe mode does not spool to a temp file.
 - **Stream.** StartConvertAsync returns a session whose stdout is live. ForRawPcm for Discord-shaped PCM. ForStreamingVideo remuxes fragmented mp4; WebM is copy plus pipe with no movflags.
 - **Play.** ffplay for audio and video. NoDisplay defaults true so headless hosts do not open a window; video window is opt-in.
 - **Probe.** ffprobe JSON via TypeConversion. Video width/height/fps. Album art is not HasVideo.
+- **Jobs.** Extract audio, concat demuxer, GIF palette, loudnorm, libx264/libx265 bitrate two-pass, HLS/DASH playlists, and sized thumbnails. One ffmpeg process per pass.
+- **GPU.** `FFmpegOptions.Hardware` is the worker switch (`nvenc`, `qsv`, `vaapi`, `videotoolbox`). Null stays on the CPU. A request `HardwareAccel.None` forces the CPU. There is no probe that falls back when the GPU encoder is missing.
 
 ## Examples
 
@@ -86,6 +88,7 @@ If the stored mp3/mp4 is already playable, give the browser a URL. Use ForStream
     "EnableMetrics": false,
     "SuppressFfplayOutput": true,
     "ProcessOutputMode": "Suppress",
+    "Hardware": "nvenc",
     "ProcessTimeout": "00:05:00",
     "GlobalArguments": ["-hide_banner", "-loglevel", "warning"]
   }
@@ -101,6 +104,12 @@ services.AddFFmpegServicesFromConfiguration(builder.Configuration);
 ### Build a command by hand
 
 ```csharp
+var request = VideoConversion.Transcode("in.mov", "out.webm", MediaContainer.WebM, AudioEncoder.Opus, VideoEncoder.Vp9)
+    .WithAudioBitRate(MediaBitRate.K128)
+    .WithSize(1280, 720, ScaleMode.Fit)
+    .Build();
+await video.ConvertAsync(request);
+
 var cmd = FFmpegCommandBuilder.New()
     .WithDefaults(options)
     .WithInput("clip.mp3")
@@ -117,11 +126,11 @@ var cmd = FFmpegCommandBuilder.New()
 ## Public types
 
 | Type | Description |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | FFmpegAudioConverter / FFmpegVideoConverter | IAudioConverter and IVideoConverter on ffmpeg. Shared runner. Concurrent converts on one instance are two processes. |
 | FFmpegAudioProber / FFmpegVideoProber | IAudioProber and IVideoProber on ffprobe. |
 | FFmpegAudioPlayer / FFmpegVideoPlayer | IAudioPlayer and IVideoPlayer on ffplay. NoDisplay defaults true. |
-| FFmpegCommandBuilder | Fluent argv builder. Do not reuse across threads. Maps MediaContainer.Format and encoder Id onto ffmpeg flags (h264 becomes libx264). WithFormat emits -f. NoOverwrite emits -n. |
+| FFmpegCommandBuilder | Raw argv builder and escape hatch. Do not reuse across threads. Maps codec tokens onto encoder names (h264 becomes libx264, hevc becomes libx265). New flags must be listed or Emit drops them. AudioConversion and VideoConversion do not grow a raw-argument list. |
 | Extensions | AddFFmpegServices(), AddFFmpegServices(Action), AddFFmpegServices(FFmpegOptions), AddFFmpegServicesFromConfiguration. |
 
 Every AddFFmpegServices* overload registers audio and video converter, prober, and player as scoped services (TryAddScoped) and exposes them as both the concrete type and their interfaces. A Discord host can take IAudioConverter only.
@@ -131,7 +140,9 @@ Every AddFFmpegServices* overload registers audio and video converter, prober, a
 - `ffmpeg`, `ffprobe`, and (for playback) `ffplay` must be on PATH or set via FFmpegOptions. Binaries are not checked at DI time.
 - Failures use Constants.Errors (FFmpegError, FFprobeError, FfplayError, ProbeParseError).
 - ForAudio applies pcm/wav defaults. A bare AudioConversionOptions does not force pcm. Audio converts always emit -vn.
-- Set Crf or VideoBitRate, not both. CopyCodecs remuxes without re-encode. Compress is an explicit factory. When H.264 is missing, hosts can pass VideoEncoder.Mpeg4.
+- Set Crf or VideoBitRate, not both. Bitrate, sample rate, channels, CRF, and frame rate are catalog records (`MediaBitRate.K128` id `128k`). CopyCodecs remuxes without re-encode and does not pick up a host GPU.
+- `FFmpegOptions.Hardware` is inherited when the request leaves Hardware null. NVENC quality is `-rc:v vbr -cq`. QSV uses `-global_quality`. VAAPI uses `-qp` plus `format=nv12,hwupload` when VideoFilter is empty; a custom VideoFilter replaces that upload graph. VideoToolbox has no rate factor. An x264 preset on NVENC becomes `EncoderPreset.P4`. AV1 rejects x264 presets; `EncoderPreset.Svt8` is the libsvtav1 default.
+- M4A uses the ipod muxer, so `TryFromFormat("mp4")` stays Mp4. GIF runs palettegen then paletteuse and rejects pipes and StartConvert. Bitrate two-pass is libx264 or libx265 only, deletes both pass log files, and reports progress on pass 2. Concat uses the demuxer (`-f concat -safe 0` before `-i`) and still requires a matching stream layout. Loudnorm forces info log level so a warning GlobalArguments entry does not hide the measure JSON.
 - StartConvertAsync does not apply ProcessTimeout. Cancel with the token or by disposing the session.
 - IoMode.Pipe uses pipe:0/pipe:1. Muxed mp4 on a pipe needs FragmentedOutput (ForStreamingVideo default). WebM streaming is copy + pipe, no movflags. Convert*ToBytesAsync is for tiny clips.
 - KnownDuration is only for MediaProgress.Percentage. IProgress callbacks fire on the CliWrap thread; hosts that mutate UI must synchronize.
@@ -144,6 +155,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.FFmpeg.Models` (direct, lyo)
+- `Lyo.FileTags` (direct, lyo)
 - `Lyo.Media.Models` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Lyo.Result` (direct, lyo)

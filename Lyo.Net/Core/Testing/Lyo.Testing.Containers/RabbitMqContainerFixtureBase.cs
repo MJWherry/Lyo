@@ -22,6 +22,9 @@ public abstract class RabbitMqContainerFixtureBase : IAsyncLifetime
 
     public string Password => Container.Password;
 
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
+    public CancellationToken TestCt => TestContext.Current.CancellationToken;
+
     protected RabbitMqContainerFixtureBase()
         : this(null) { }
 
@@ -29,13 +32,13 @@ public abstract class RabbitMqContainerFixtureBase : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await Container.StartAsync(TestContext.Current.CancellationToken);
-        await OnContainerStartedAsync(Container, TestContext.Current.CancellationToken);
+        await Container.StartAsync(TestCt);
+        await OnContainerStartedAsync(Container, TestCt);
     }
 
     public async ValueTask DisposeAsync()
     {
-        await OnContainerDisposingAsync(TestContext.Current.CancellationToken);
+        await OnContainerDisposingAsync(TestCt);
         await Container.DisposeAsync();
     }
 

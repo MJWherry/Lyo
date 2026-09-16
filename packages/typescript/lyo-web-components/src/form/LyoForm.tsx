@@ -15,24 +15,15 @@ import CardContent from "@mui/material/CardContent";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useLyoDialog } from "../provider/LyoDialogContext.js";
+import { buildPatchRequest, propertyChange, type PatchRequest, type PropertyChange } from "./patch.js";
 
-export type PropertyChange = {
-  propertyName: string;
-  originalValue: unknown;
-  currentValue: unknown;
-  hasChanged: boolean;
-};
+export type { PatchRequest, PropertyChange };
 
 export type OperationChange = {
   id: string;
   changeType: "Create" | "Update" | "Delete";
   description: string;
   run: () => Promise<void>;
-};
-
-export type PatchRequest = {
-  keys: unknown[];
-  data: Record<string, unknown>;
 };
 
 type FormApi = {
@@ -77,17 +68,15 @@ export function LyoForm<T>({ model, children, showActions = true, onSubmit, onRe
   const hasChanges = changeCount > 0;
 
   const registerChange = useCallback((propertyName: string, originalValue: unknown, currentValue: unknown) => {
-    const hasChanged = !Object.is(originalValue, currentValue);
+    const change = propertyChange(propertyName, originalValue, currentValue);
     setChanges((prev) => {
-      if (!hasChanged) {
+      if (!change.hasChanged) {
+        if (!(propertyName in prev)) return prev;
         const next = { ...prev };
         delete next[propertyName];
         return next;
       }
-      return {
-        ...prev,
-        [propertyName]: { propertyName, originalValue, currentValue, hasChanged: true },
-      };
+      return { ...prev, [propertyName]: change };
     });
   }, []);
 
@@ -107,13 +96,7 @@ export function LyoForm<T>({ model, children, showActions = true, onSubmit, onRe
       },
       removeOperation: (id) => setOperations((o) => o.filter((x) => x.id !== id)),
       getChanges: () => changes,
-      buildPatchRequest: (key) => {
-        const entries = Object.values(changes).filter((c) => c.hasChanged);
-        if (entries.length === 0) return null;
-        const data: Record<string, unknown> = {};
-        for (const e of entries) data[e.propertyName] = e.currentValue;
-        return { keys: Array.isArray(key) ? key : [key], data };
-      },
+      buildPatchRequest: (key) => buildPatchRequest(changes, key),
       hasChanges,
       changeCount,
       reset: () => {

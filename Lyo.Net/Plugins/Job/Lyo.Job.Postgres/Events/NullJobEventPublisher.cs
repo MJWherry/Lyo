@@ -20,6 +20,8 @@ internal sealed class NullJobEventPublisher : IJobEventPublisher
 
     public Task PublishRunFinishedAsync(Guid runId, CancellationToken ct = default) => Task.CompletedTask;
 
+    public Task PublishWorkflowRunCreatedAsync(Guid workflowRunId, CancellationToken ct = default) => Task.CompletedTask;
+
     public Task PublishRunCancelledAsync(Guid runId, CancellationToken ct = default) => Task.CompletedTask;
 
     public Task PublishDefinitionUpdatedAsync(Guid definitionId, CancellationToken ct = default) => Task.CompletedTask;

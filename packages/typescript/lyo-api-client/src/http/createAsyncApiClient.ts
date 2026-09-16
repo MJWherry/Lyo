@@ -1,7 +1,7 @@
 import {withBearerToken} from "../auth/authHeaders.js";
 import {toApiClientError} from "./errors.js";
 import {entityMetadataPath, metadataPath} from "./metadata.js";
-import {buildUrl, fileNameFromDisposition, trimRoute, withIncludes} from "./request.js";
+import {buildUrl, encodeRequestBody, fileNameFromDisposition, trimRoute, withIncludes} from "./request.js";
 import type {
     ApiRequest,
     ApiResponse,
@@ -23,6 +23,7 @@ import type {
     PatchRequest,
     ProjectedQueryRes,
     QueryRes,
+    QuerySqlRes,
     UpdateRequest,
     UpdateResult,
 } from "../types/results.js";
@@ -66,6 +67,12 @@ export interface AsyncApiClient {
         baseRoute: string,
         body: TBody
     ): Promise<ApiResponse<QueryRes<TItem>>>;
+
+    /** `POST {baseRoute}/QuerySql` — SQL preview. Does not run the query. */
+    querySql<TBody = unknown>(
+        baseRoute: string,
+        body: TBody
+    ): Promise<ApiResponse<QuerySqlRes>>;
 
     /** `POST {baseRoute}/Query` (root From/Joins) */
     query<TRow = Record<string, unknown>, TBody = unknown>(
@@ -144,8 +151,7 @@ export function createAsyncApiClient(options: AsyncApiClientOptions): AsyncApiCl
                 options.token
             );
 
-            const body =
-                request.body === undefined ? undefined : JSON.stringify(request.body);
+            const body = encodeRequestBody(request.body, headers);
 
             const signal = request.signal ?? options.signal;
             const response = await transport({
@@ -206,6 +212,14 @@ export function createAsyncApiClient(options: AsyncApiClientOptions): AsyncApiCl
             return client.request<QueryRes<TItem>, TBody>({
                 method: "POST",
                 path: `${trimRoute(baseRoute)}/QueryConcrete`,
+                body,
+            });
+        },
+
+        querySql<TBody = unknown>(baseRoute: string, body: TBody): Promise<ApiResponse<QuerySqlRes>> {
+            return client.request<QuerySqlRes, TBody>({
+                method: "POST",
+                path: `${trimRoute(baseRoute)}/QuerySql`,
                 body,
             });
         },

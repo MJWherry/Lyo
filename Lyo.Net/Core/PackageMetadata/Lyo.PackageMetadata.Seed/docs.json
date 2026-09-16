@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.PackageMetadata.Seed",
+  "name": "Lyo.PackageMetadata.Seed",
+  "area": "Core",
+  "tagline": "EF seed of package metadata rows and stack prefixes.",
+  "description": "EF seed of Count NuGet package rows, each with one stack prefix. Schema package_metadata.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/PackageMetadata/Lyo.PackageMetadata.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

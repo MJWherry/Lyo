@@ -133,7 +133,7 @@ builder.Services.AddLyoFormatterValueEditor(c => c.Add("client", sample));
 
 ## Query builder UI
 
-- **Query node editor (`QueryNodeEditor/`).** Visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `LyoTypeInfo.Category` via `Extensions.GetAvailableComparisonOperators`. `In` / `NotIn` are flagged through `IsMultiValueComparisonOperator`.
+- **Query node editor (`QueryNodeEditor/`).** Visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `LyoTypeInfo.Category` via `Extensions.GetAvailableComparisonOperators`. `In` / `NotIn` are flagged through `IsMultiValueComparisonOperator`. `Fuzzy` / `NotFuzzy` expose an optional `Threshold` (0–1, default 0.3).
 - **Query request builder (`QueryRequestBuilder/`).** Form editor for a `ProjectionQueryReq`: `IncludeList`, `SelectList`, `SortByList`, `KeysList`, `ComputedFieldsList`, `StartAmountFields`, and `QueryReqForm`, plus the `QueryRequestBuilder` component that renders the live query score.
 
 ## Forms (`Form/`)
@@ -178,9 +178,9 @@ Completed chips always render the shortened display name, so truncation stays co
 - **`ParamTable/LyoParameterValueField`.** Value editor: password when encrypting at run time, Options/AllowedValues select, or `LyoTypeValueInput`. Forwards `FormatterContext` to formatter-typed values.
 - **`LyoType/LyoTypeSelect`.** Ordered catalog picker (capitalized labels, Custom… / enum FullName). List and array are a Shape control beside the type. Pass `ShowFullNameField=false` to put the CLR FullName in a parent expander.
 - **`LyoType/LyoTypeValueInput`.** JSON-backed value editor from `LyoTypeInfo.EditorKind` (Mud scalars with Guid/Uri parse errors, enum member dropdown when the CLR type is loaded, chip collections with numeric/bool/GUID guards, free-text SmartFormat templates, `JsonEditor` for JSON/binary/unknown).
-- **`LyoType/LyoTypeChip`.** Capitalized type chip colored by `LyoTypeCategory` with FullName tooltip.
+- **`LyoType/LyoTypeChip`.** Capitalized type chip. Each `LyoTypeCategory` uses a `LyoChipHue` (Regex and Xml stay warning) with a FullName tooltip.
 - **`Validation/LyoValidationWrapper`.** Wraps a field with validation message rendering.
-- **`LyoDataGrid` / `LyoDataGridProjected`.** Data grids with filtering, bulk actions, and export menu items via [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).
+- **`LyoDataGrid` / `LyoDataGridProjected`.** Data grids with filtering, bulk actions, and export menu items via [`Lyo.Web.Components.Export`](../Export/Lyo.Web.Components.Export/README.md).
 - **`JsonViewDialog` + `LyoElementRoot`.** Utility dialog and the element-id root used by every component. Optional `Path` and `Chips` render in the header (grid Dev request/response).
 - **`Dialog/LyoDialog`.** Shared popup chrome (scrollable body, save/close). Header always has a raw-JSON debug button (`DebugData`). Click opens `JsonViewDialog`. Use `LyoDialogPresets` for size.
 
@@ -206,30 +206,32 @@ Completed chips always render the shortened display name, so truncation stays co
 
 ## Internal helpers (`Extensions`)
 
-Shared visual helpers sit on internal `Extensions`: `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`, `GetAvailableComparisonOperators(LyoTypeInfo)`, and the `IsMultiValueComparisonOperator` extension on `ComparisonOperatorEnum`. Status badges and operator menus on the grid, query editor, and form call these.
+Shared visual helpers sit on internal `Extensions`: `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`, `GetAvailableComparisonOperators(LyoTypeInfo)`, and the `IsMultiValueComparisonOperator` / `IsFuzzyComparisonOperator` extensions on `ComparisonOperatorEnum`. Status badges and operator menus on the grid, query editor, and form call these.
 
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Api.Client` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.DataTable.Models` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
 - `Lyo.IO.Temp` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Parameters` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
 - `Lyo.Validation` (direct, lyo)
 - `Lyo.Web.Primitives` (direct, lyo)
 - `Blazored.LocalStorage` `4.5.0` (direct, third-party)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `MudBlazor` `9.3` (direct, third-party)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
@@ -237,13 +239,13 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
 - `AngleSharp` `1.5.0` (transitive, third-party)
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)
@@ -252,6 +254,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

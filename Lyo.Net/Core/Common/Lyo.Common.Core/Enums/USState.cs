@@ -211,5 +211,17 @@ public enum USState
 
     /// <summary>US state: Wyoming</summary>
     [Description("Wyoming")]
-    WY
+    WY,
+
+    /// <summary>USPS military mail: Armed Forces Americas (except Canada)</summary>
+    [Description("Armed Forces Americas")]
+    AA,
+
+    /// <summary>USPS military mail: Armed Forces Europe, the Middle East, Africa, and Canada</summary>
+    [Description("Armed Forces Europe")]
+    AE,
+
+    /// <summary>USPS military mail: Armed Forces Pacific</summary>
+    [Description("Armed Forces Pacific")]
+    AP
 }

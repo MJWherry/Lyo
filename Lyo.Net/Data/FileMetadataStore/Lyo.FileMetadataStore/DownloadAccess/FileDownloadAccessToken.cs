@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using Lyo.Common.Core.Conversion;
+using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Security;
 
 namespace Lyo.FileMetadataStore.DownloadAccess;
@@ -73,18 +75,5 @@ public static class FileDownloadAccessToken
 #endif
     }
 
-    private static string ToLowerHex(byte[] input)
-    {
-#if NET6_0_OR_GREATER
-        return Convert.ToHexString(input).ToLowerInvariant();
-#else
-        var chars = new char[input.Length * 2];
-        for (var i = 0; i < input.Length; i++) {
-            chars[i * 2] = "0123456789abcdef"[input[i] >> 4];
-            chars[(i * 2) + 1] = "0123456789abcdef"[input[i] & 0xF];
-        }
-
-        return new(chars);
-#endif
-    }
+    private static string ToLowerHex(byte[] input) => ByteConvert.ToHex(input, TextLetterCase.Lower);
 }

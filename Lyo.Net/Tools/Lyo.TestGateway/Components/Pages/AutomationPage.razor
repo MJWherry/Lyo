@@ -1,0 +1,9 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Automation)]
+@inherits AuthorizedPage
+
+<PageTitle>Automation plan</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <Lyo.Web.Automation.Web.Components.AutomationPlanHost Client="Client" ApiClient="ApiClient"/>
+</MudContainer>

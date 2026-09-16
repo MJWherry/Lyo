@@ -1,0 +1,60 @@
+@using System.Globalization
+@using Lyo.Diagram.Models
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+
+<MudPaper Class="pa-3" Elevation="1">
+    @if (_picture.Document.Pages[0].Cells.Count == 0 && _picture.Cyclic.Count == 0) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">No steps yet. Add one to see the graph.</MudText>
+    }
+    else {
+        <MudStack Spacing="3">
+            @if (_picture.Document.Pages[0].Cells.Count > 0) {
+                <div @ref="_viewport" class="@ViewportClass" aria-label="Workflow diagram. Drag to move, scroll to zoom."
+                     @onpointerdown="OnPointerDown" @onpointermove="OnPointerMove" @onpointerup="OnPointerUp" @onpointercancel="OnPointerUp"
+                     @onwheel="OnWheel" @onwheel:preventDefault="true" @onwheel:stopPropagation="true">
+                    <div class="workflow-graph-toolbar" @onpointerdown:stopPropagation="true">
+                        <MudIconButton Icon="@Icons.Material.Filled.ZoomOut" Size="Size.Small" aria-label="Zoom out" OnClick="@(() => ZoomAroundCenterAsync(1 / 1.25))"/>
+                        <span class="workflow-graph-zoom">@ZoomLabel</span>
+                        <MudIconButton Icon="@Icons.Material.Filled.ZoomIn" Size="Size.Small" aria-label="Zoom in" OnClick="@(() => ZoomAroundCenterAsync(1.25))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.CenterFocusWeak" Size="Size.Small" aria-label="Reset view" title="Reset view" OnClick="ResetView"/>
+                    </div>
+                    <svg class="workflow-graph-svg" width="@_picture.Document.Pages[0].PageWidth" height="@_picture.Document.Pages[0].PageHeight"
+                         viewBox="@ViewBox(_picture.Document.Pages[0])" style="transform: @Transform">
+                        @foreach (var edge in _picture.Document.Pages[0].Cells.Where(cell => cell.IsEdge)) {
+                            <polyline points="@Polyline(edge)" class="workflow-graph-edge"/>
+                            <polygon points="@Arrow(edge)" class="workflow-graph-arrow"/>
+                            @if (!string.IsNullOrWhiteSpace(edge.Value)) {
+                                <g class="workflow-graph-edge-label-group">
+                                    <title>@edge.Value</title>
+                                    <rect x="@Caption(edge).X" y="@Caption(edge).Y" width="@Caption(edge).Width" height="18" rx="3" class="workflow-graph-edge-label-bg"/>
+                                    <text x="@(Caption(edge).X + (Caption(edge).Width / 2))" y="@(Caption(edge).Y + 13)" text-anchor="middle"
+                                          class="workflow-graph-edge-label">@Caption(edge).Text</text>
+                                </g>
+                            }
+                        }
+                        @foreach (var node in _picture.Document.Pages[0].Cells.Where(cell => cell.IsVertex)) {
+                            <g class="@NodeClass(node)" role="button" tabindex="0" aria-label="@($"Select step {node.Value}")"
+                               @onpointerdown="OnNodePointerDown" @onpointerdown:stopPropagation="true"
+                               @onclick="@(() => SelectAsync(node))" @onkeydown="@((KeyboardEventArgs e) => OnNodeKeyDown(e, node))">
+                                <title>@Tooltip(node)</title>
+                                <rect x="@node.Geometry!.X" y="@node.Geometry.Y" width="@node.Geometry.Width" height="@node.Geometry.Height" rx="4"
+                                      class="workflow-graph-node-shape" stroke="@Stroke(node)" stroke-width="@(IsSelected(node) ? 2 : 1)"/>
+                                <text x="@TextX(node)" y="@TextY(node, 0.40)" text-anchor="middle" class="workflow-graph-label">@Fit(node.Value, 26)</text>
+                                <text x="@TextX(node)" y="@TextY(node, 0.72)" text-anchor="middle" class="workflow-graph-caption">@Fit(GateSummary(node), 32)</text>
+                            </g>
+                        }
+                    </svg>
+                </div>
+            }
+
+            @if (_picture.Cyclic.Count > 0) {
+                <MudAlert Severity="Severity.Error" Dense>
+                    Circular dependency between: @string.Join(", ", _picture.Cyclic). These steps can never run.
+                </MudAlert>
+            }
+        </MudStack>
+    }
+</MudPaper>

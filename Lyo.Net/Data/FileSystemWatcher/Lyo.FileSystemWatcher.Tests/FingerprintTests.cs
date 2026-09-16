@@ -30,15 +30,15 @@ public class FingerprintTests : IDisposable
         // Small file (<100MB) uses first + last bytes
         var filePath = _tempSession.GetFilePath();
         var content = "Hello World! This is a test file for fingerprinting.";
-        await File.WriteAllTextAsync(filePath, content, TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(filePath, content, TestCt);
         var fileInfo = new FileInfo(filePath);
-        var fingerprint = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
         Assert.NotNull(fingerprint);
         Assert.NotEmpty(fingerprint);
         Assert.Equal(16, fingerprint.Length); // MD5 hash is 16 bytes
 
         // Fingerprint should match for the same file
-        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
         Assert.Equal(fingerprint, fingerprint2);
     }
 
@@ -47,14 +47,14 @@ public class FingerprintTests : IDisposable
     {
         // Fingerprint should notice changes at the end of small files
         var filePath = _tempSession.GetFilePath();
-        await File.WriteAllTextAsync(filePath, "Initial content", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(filePath, "Initial content", TestCt);
         var fileInfo = new FileInfo(filePath);
-        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Append at the end of the file
-        await File.AppendAllTextAsync(filePath, " - appended", TestContext.Current.CancellationToken);
+        await File.AppendAllTextAsync(filePath, " - appended", TestCt);
         fileInfo.Refresh();
-        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Fingerprints should differ (size and last bytes changed)
         Assert.NotEqual(fingerprint1, fingerprint2);
@@ -68,13 +68,13 @@ public class FingerprintTests : IDisposable
         var size = FileSizeUnitInfo.Megabyte.ConvertToBytes(150);
         CreateFileOfSize(filePath, size);
         var fileInfo = new FileInfo(filePath);
-        var fingerprint = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
         Assert.NotNull(fingerprint);
         Assert.NotEmpty(fingerprint);
         Assert.Equal(16, fingerprint.Length); // MD5 hash is 16 bytes
 
         // Fingerprint should be stable
-        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
         Assert.Equal(fingerprint, fingerprint2);
     }
 
@@ -86,7 +86,7 @@ public class FingerprintTests : IDisposable
         var size = FileSizeUnitInfo.Megabyte.ConvertToBytes(150);
         CreateFileOfSize(filePath, size);
         var fileInfo = new FileInfo(filePath);
-        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Change the end of the file
         await using (var stream = File.OpenWrite(filePath)) {
@@ -96,7 +96,7 @@ public class FingerprintTests : IDisposable
         }
 
         fileInfo.Refresh();
-        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Fingerprints should differ (last bytes changed)
         Assert.NotEqual(fingerprint1, fingerprint2);
@@ -110,13 +110,13 @@ public class FingerprintTests : IDisposable
         var size = FileSizeUnitInfo.Gigabyte.ConvertToBytes(1.2);
         CreateFileOfSize(filePath, size);
         var fileInfo = new FileInfo(filePath);
-        var fingerprint = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
         Assert.NotNull(fingerprint);
         Assert.NotEmpty(fingerprint);
         Assert.Equal(16, fingerprint.Length); // MD5 hash is 16 bytes
 
         // Fingerprint should be stable
-        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
         Assert.Equal(fingerprint, fingerprint2);
     }
 
@@ -128,12 +128,12 @@ public class FingerprintTests : IDisposable
         var size = FileSizeUnitInfo.Gigabyte.ConvertToBytes(1.2);
         CreateFileOfSize(filePath, size);
         var fileInfo = new FileInfo(filePath);
-        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Touch the file so modification time updates
         File.SetLastWriteTime(filePath, DateTime.UtcNow.AddSeconds(1));
         fileInfo.Refresh();
-        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Fingerprints should differ (modification time changed)
         Assert.NotEqual(fingerprint1, fingerprint2);
@@ -145,12 +145,12 @@ public class FingerprintTests : IDisposable
         // Files with different sizes should produce different fingerprints
         var file1 = _tempSession.GetFilePath();
         var file2 = _tempSession.GetFilePath();
-        await File.WriteAllTextAsync(file1, "Short", TestContext.Current.CancellationToken);
-        await File.WriteAllTextAsync(file2, "Much longer content here", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file1, "Short", TestCt);
+        await File.WriteAllTextAsync(file2, "Much longer content here", TestCt);
         var info1 = new FileInfo(file1);
         var info2 = new FileInfo(file2);
-        var fingerprint1 = await Utilities.Fingerprint(file1, info1.Length, TestContext.Current.CancellationToken);
-        var fingerprint2 = await Utilities.Fingerprint(file2, info2.Length, TestContext.Current.CancellationToken);
+        var fingerprint1 = await Utilities.Fingerprint(file1, info1.Length, TestCt);
+        var fingerprint2 = await Utilities.Fingerprint(file2, info2.Length, TestCt);
         Assert.NotEqual(fingerprint1, fingerprint2);
     }
 
@@ -161,12 +161,12 @@ public class FingerprintTests : IDisposable
         var file1 = _tempSession.GetFilePath();
         var file2 = _tempSession.GetFilePath();
         var content = "Identical content for both files";
-        await File.WriteAllTextAsync(file1, content, TestContext.Current.CancellationToken);
-        await File.WriteAllTextAsync(file2, content, TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file1, content, TestCt);
+        await File.WriteAllTextAsync(file2, content, TestCt);
         var info1 = new FileInfo(file1);
         var info2 = new FileInfo(file2);
-        var fingerprint1 = await Utilities.Fingerprint(file1, info1.Length, TestContext.Current.CancellationToken);
-        var fingerprint2 = await Utilities.Fingerprint(file2, info2.Length, TestContext.Current.CancellationToken);
+        var fingerprint1 = await Utilities.Fingerprint(file1, info1.Length, TestCt);
+        var fingerprint2 = await Utilities.Fingerprint(file2, info2.Length, TestCt);
         Assert.Equal(fingerprint1, fingerprint2);
     }
 
@@ -177,7 +177,7 @@ public class FingerprintTests : IDisposable
         var filePath = _tempSession.GetFilePath();
         await File.Create(filePath).DisposeAsync();
         var fileInfo = new FileInfo(filePath);
-        var fingerprint = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
         Assert.NotNull(fingerprint);
         Assert.NotEmpty(fingerprint);
         Assert.Equal(16, fingerprint.Length);
@@ -188,14 +188,14 @@ public class FingerprintTests : IDisposable
     {
         // Appending to a text file should change the fingerprint
         var filePath = _tempSession.GetFilePath();
-        await File.WriteAllTextAsync(filePath, "Line 1\nLine 2\n", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(filePath, "Line 1\nLine 2\n", TestCt);
         var fileInfo = new FileInfo(filePath);
-        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Append a new line
-        await File.AppendAllTextAsync(filePath, "Line 3\n", TestContext.Current.CancellationToken);
+        await File.AppendAllTextAsync(filePath, "Line 3\n", TestCt);
         fileInfo.Refresh();
-        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Fingerprints should differ
         Assert.NotEqual(fingerprint1, fingerprint2);
@@ -206,14 +206,14 @@ public class FingerprintTests : IDisposable
     {
         // CSV file end-change detection
         var filePath = _tempSession.GetFilePath();
-        await File.WriteAllTextAsync(filePath, "Name,Age,City\nJohn,30,NYC\nJane,25,LA\n", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(filePath, "Name,Age,City\nJohn,30,NYC\nJane,25,LA\n", TestCt);
         var fileInfo = new FileInfo(filePath);
-        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Add a new row
-        await File.AppendAllTextAsync(filePath, "Bob,35,Chicago\n", TestContext.Current.CancellationToken);
+        await File.AppendAllTextAsync(filePath, "Bob,35,Chicago\n", TestCt);
         fileInfo.Refresh();
-        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Fingerprints should differ
         Assert.NotEqual(fingerprint1, fingerprint2);
@@ -227,7 +227,7 @@ public class FingerprintTests : IDisposable
         var size = FileSizeUnitInfo.Megabyte.ConvertToBytes(150);
         CreateFileOfSize(filePath, size);
         var fileInfo = new FileInfo(filePath);
-        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint1 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Change the middle of the file
         await using (var stream = File.OpenWrite(filePath)) {
@@ -237,7 +237,7 @@ public class FingerprintTests : IDisposable
         }
 
         fileInfo.Refresh();
-        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestContext.Current.CancellationToken);
+        var fingerprint2 = await Utilities.Fingerprint(filePath, fileInfo.Length, TestCt);
 
         // Fingerprints should differ (middle bytes changed)
         Assert.NotEqual(fingerprint1, fingerprint2);
@@ -248,7 +248,7 @@ public class FingerprintTests : IDisposable
     {
         var nonExistentPath = _tempSession.GetFilePath();
         File.Delete(nonExistentPath);
-        var fingerprint = await Utilities.Fingerprint(nonExistentPath, 100, TestContext.Current.CancellationToken);
+        var fingerprint = await Utilities.Fingerprint(nonExistentPath, 100, TestCt);
         Assert.Null(fingerprint);
     }
 
@@ -269,9 +269,9 @@ public class FingerprintTests : IDisposable
         var smallInfo = new FileInfo(smallFile);
         var mediumInfo = new FileInfo(mediumFile);
         var largeInfo = new FileInfo(largeFile);
-        var smallFp = await Utilities.Fingerprint(smallFile, smallInfo.Length, TestContext.Current.CancellationToken);
-        var mediumFp = await Utilities.Fingerprint(mediumFile, mediumInfo.Length, TestContext.Current.CancellationToken);
-        var largeFp = await Utilities.Fingerprint(largeFile, largeInfo.Length, TestContext.Current.CancellationToken);
+        var smallFp = await Utilities.Fingerprint(smallFile, smallInfo.Length, TestCt);
+        var mediumFp = await Utilities.Fingerprint(mediumFile, mediumInfo.Length, TestCt);
+        var largeFp = await Utilities.Fingerprint(largeFile, largeInfo.Length, TestCt);
         Assert.NotNull(smallFp);
         Assert.NotNull(mediumFp);
         Assert.NotNull(largeFp);
@@ -305,7 +305,7 @@ public class FingerprintTests : IDisposable
         };
 
         // Wait until the initial snapshot finishes
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestCt);
         startTime = DateTime.UtcNow;
         CreateFileOfSize(largeFilePath, size);
 
@@ -339,7 +339,7 @@ public class FingerprintTests : IDisposable
         };
 
         // Wait until the initial snapshot finishes
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestCt);
         startTime = DateTime.UtcNow;
         File.Delete(largeFilePath);
 
@@ -379,7 +379,7 @@ public class FingerprintTests : IDisposable
         watcher.FileRenamed += OnMoveOrRename;
 
         // Wait until the initial snapshot finishes
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestCt);
         startTime = DateTime.UtcNow;
         File.Move(sourcePath, destPath);
 
@@ -414,7 +414,7 @@ public class FingerprintTests : IDisposable
         };
 
         // Wait until the initial snapshot finishes
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestCt);
         startTime = DateTime.UtcNow;
         File.Move(sourcePath, destPath);
 
@@ -448,7 +448,7 @@ public class FingerprintTests : IDisposable
         };
 
         // Wait until the initial snapshot finishes
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestCt);
 
         // Touch the file so modification time changes
         startTime = DateTime.UtcNow;
@@ -478,7 +478,7 @@ public class FingerprintTests : IDisposable
         };
 
         // Wait until the initial snapshot finishes
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestCt);
         startTime = DateTime.UtcNow;
 
         // Create several large files

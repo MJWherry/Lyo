@@ -1,0 +1,54 @@
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2" Class="mt-3">
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.subtitle1">Standings</MudText>
+        <MudSpacer/>
+        <MudButton Variant="Variant.Outlined"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   Disabled="@(_boardId == null || _loading)"
+                   OnClick="LoadAsync">
+            Reload
+        </MudButton>
+        <MudButton Variant="Variant.Outlined"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.Calculate"
+                   Disabled="@(_boardId == null || _loading)"
+                   OnClick="RecalculateAsync">
+            Recalculate
+        </MudButton>
+    </MudStack>
+    @if (_boardId == null) {
+        <MudAlert Severity="Severity.Info" Dense="true">Load a board to see standings.</MudAlert>
+        return;
+    }
+    @if (_loading) {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
+    }
+    <MudTable Items="_rows" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Loading="_loading">
+        <HeaderContent>
+            <MudTh>Rank</MudTh>
+            <MudTh>Member</MudTh>
+            <MudTh>Total</MudTh>
+            <MudTh>Entries</MudTh>
+            <MudTh>Adjust</MudTh>
+            <MudTh>Last entry</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Rank">
+                <LyoChip Spec="@LyoChips.Of(context.Rank.ToString(), LeaderboardColorHelper.ForRank(context.Rank))"/>
+            </MudTd>
+            <MudTd DataLabel="Member">@(context.DisplayName ?? context.MemberId.ToString("N")[..8])</MudTd>
+            <MudTd DataLabel="Total">@context.TotalScore</MudTd>
+            <MudTd DataLabel="Entries">@context.EntryCount (@context.EntryScore)</MudTd>
+            <MudTd DataLabel="Adjust">@context.AdjustmentScore</MudTd>
+            <MudTd DataLabel="Last entry">
+                <LyoTimestamp Value="context.LastEntryAt"/>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No standings yet.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudStack>

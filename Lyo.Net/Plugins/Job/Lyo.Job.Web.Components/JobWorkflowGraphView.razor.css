@@ -1,0 +1,95 @@
+.workflow-graph-viewport {
+    position: relative;
+    height: min(48vh, 520px);
+    min-height: 320px;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    overscroll-behavior: contain;
+    background: var(--mud-palette-background);
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+}
+
+.workflow-graph-viewport.panning,
+.workflow-graph-viewport.panning * {
+    cursor: grabbing;
+}
+
+.workflow-graph-toolbar {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background: var(--mud-palette-surface);
+    border: 1px solid var(--mud-palette-lines-default);
+}
+
+.workflow-graph-zoom {
+    min-width: 3.2em;
+    text-align: center;
+    color: var(--mud-palette-text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.workflow-graph-svg {
+    display: block;
+    transform-origin: 0 0;
+    max-width: none;
+    font-family: inherit;
+}
+
+.workflow-graph-edge {
+    fill: none;
+    stroke: var(--mud-palette-lines-default);
+    stroke-width: 2;
+}
+
+.workflow-graph-arrow {
+    fill: var(--mud-palette-lines-default);
+}
+
+.workflow-graph-edge-label-group {
+    pointer-events: none;
+}
+
+.workflow-graph-edge-label-bg {
+    fill: var(--mud-palette-surface);
+    stroke: var(--mud-palette-lines-default);
+}
+
+.workflow-graph-edge-label {
+    fill: var(--mud-palette-text-primary);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.workflow-graph-node-shape {
+    fill: var(--mud-palette-surface);
+}
+
+.workflow-graph-label {
+    fill: var(--mud-palette-text-primary);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.workflow-graph-caption {
+    fill: var(--mud-palette-text-primary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.workflow-graph-node-clickable {
+    cursor: pointer;
+}

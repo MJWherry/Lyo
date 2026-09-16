@@ -11,16 +11,23 @@
     "**String and scalar extensions** (`Extensions/`). `StringExtensions` (ellipsis, truncate, null/whitespace probes), `ScalarExtensions` (`ToScalar<T>` and parsing helpers), `DictionaryExtensions` (`GetValueAs<T>`), and `StreamExtensions` (copy helpers, bounded reads).",
     "**`CollectionExtensions`.** Materialization helpers (`AsReadOnlyCollectionOrToList`, `AsListOrToList`) that skip a copy when the source is already the right shape.",
     "**HTTP primitives** (`Net/`). `LyoHttpHeaders` (`X-Api-Key`, `Authorization`, `X-Request-Id`, `X-Correlation-Id`, plus the `CorrelationIds` probe order), `LyoContentEncodings` (`deflate` / `gzip` / `zstd` / `br` / `identity`), and `ContentDisposition.Inline` / `.Attachment`, which emit RFC 5987 `filename*` alongside an ASCII `filename` so non-Latin names survive every browser.",
+    "**`UserAgentGenerator`** (`Net/`). `Generate(UserAgentFormat, version)` builds one desktop User-Agent for Chromium, Edge, Firefox, or Safari. The OS token comes from the host (`RuntimeInformation` and `Environment.OSVersion`). Callers pass format and version only.",
     "**Cryptographic random** (`Security/CryptographicRandom`). `RandomNumberGenerator`-backed int, byte, and string helpers. Other Lyo packages use this instead of `System.Random` for security-adjacent work.",
     "**Conversion surface** (`Conversion/`). The `TypeConversion` engine (`GetUnderlyingType`, `ConvertTo`, `EnumOrDefault<T>`, `EnumOrNull<T>`, `IsObjectEnumerable`), `TypeConversionException` (carrying `SourceType`, `Value`, `TargetType`), and `TypeConversionExtensions`, the reflection helpers `IsNullable()`, `IsNumericType()`, `GetCollectionElementType()`, `IsCollectionType()`, `IsObjectEnumerable()`, `GetFriendlyTypeName()`, and `TryGetAsEnumerable<T>()`.",
+    "**`ByteConvert`** (`Conversion/`). `GetBytes` / `GetString` take an `Encoding` and use UTF-8 when it is omitted, including span overloads on `netstandard2.0`. Hex has no separators. Upper hex matches `Convert.ToHexString`. `FromHex` accepts either letter case and rejects whitespace. `CharsetEncoding` buffer methods, `HexEncoding`, and `BinaryEncoding` call this.",
     "**`LyoReflection`.** Extension members on `Type`, `object`, `Expression`, `MemberInfo`, `PropertyInfo`, and `FieldInfo`: ignore-case `FindProperty` / `FindField` / `FindMethod`, dotted `GetPropertyValue` / `SetPropertyValue`, `TryGetMemberPath`, `PublicStaticFields<T>` catalog discovery, `IsScalar` / `IsSimple`, and `TryCreateInstance` / `DefaultValue`. Named so it does not clash with `System.Reflection`.",
     "**Temp and path handling** (`Pathing/`). `PathHelpers` for cross-platform joining, normalization, and traversal rejection against a `PathStyle` (`Windows` / `Posix` / `Native`), and `TempSpool` for scratch directories and files with best-effort cleanup. `TryDeleteDirectory` / `TryDelete` return `false` rather than logging, so the caller decides whether a failed cleanup is worth a log line.",
     "**`Utilities`.** File-size conversion across `FileSizeUnit` (1024-based), URI redaction for secret-looking query values, SHA256 over a buffer, path, or stream, and `GetPropertyPath` / `GetPropertyName` / `IsScalarType` wrappers over `LyoReflection`.",
     "**`Disposable`.** Base class plus lambda `IAsyncDisposable` / `IDisposable` factories.",
-    "**`HashCodeHelpers`.** `HashCode.Combine`-style helpers for `netstandard2.0`.",
+    "**Context bags.** `ContextBag<TKey>` is a single-threaded map. `new ContextBag()` ignores case; `caseSensitive: true` keeps ordinal keys. `Set` stores a value or a factory that runs on the first read. `TryGetAs<T>` and `GetRequired<T>` convert through `TypeConversion`. `CreateScope` reads the parent and writes only the child. `Freeze` locks that bag's own slots. `BindableBag` reads public properties from bound objects on lookup.",
     "**`StringValueAttribute`** (`Attributes/`). Attaches a string token to an enum field; the metadata extensions in `Lyo.Common.Metadata` read it."
   ],
   "examples": [
+    {
+      "title": "Context bag",
+      "language": "csharp",
+      "code": "using Lyo.Common.Core;\n\nvar bag = new ContextBag();\nbag.Set(\"Atk\", 10);\nbag.Set(\"Damage\", current => current.GetRequired<int>(\"Atk\") * 2);\n\nvar stats = new BindableBag();\nstats.Bind(player); // Atk is read from the object on lookup\nint atk = stats.GetRequired<int>(\"Atk\");"
+    },
     {
       "title": "Identifiers and scalars",
       "language": "csharp",

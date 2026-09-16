@@ -1,3 +1,5 @@
+using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Web.Primitives.DataGrid;
 
 /// <summary>
@@ -10,7 +12,7 @@ namespace Lyo.Web.Primitives.DataGrid;
 /// </remarks>
 public sealed class LyoViewportWatcher : IAsyncDisposable
 {
-    private readonly Guid _observerId = Guid.NewGuid();
+    private readonly Guid _observerId = LyoGuid.CreateV7();
     private IBrowserViewportService? _service;
 
     /// <summary>Latest breakpoint reported by the browser, or <see cref="Breakpoint.None" /> before the first report.</summary>

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Lyo.Diagnostic.Correlation;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Http;
+using Lyo.Common.Core.Identifiers;
 namespace Lyo.Diagnostic.AspNetCore.Correlation;
 
 /// <summary>
@@ -35,6 +36,6 @@ public sealed class HttpContextCorrelationIdResolver : ICorrelationIdResolver
         if (!string.IsNullOrWhiteSpace(activityId))
             return activityId!;
 
-        return Guid.NewGuid().ToString("N");
+        return LyoGuid.CreateV7().ToString("N");
     }
 }

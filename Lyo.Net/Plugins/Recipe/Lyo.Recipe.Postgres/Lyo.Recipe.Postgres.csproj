@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>PostgreSQL storage for Lyo.Recipe (EF Core): recipes, ingredients, categories, lines, steps, and attachments.</Description>
+        <PackageTags>recipe postgres postgresql entityframework ef cooking</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Recipe.Postgres.Tests"/>
+        <InternalsVisibleTo Include="Lyo.Recipe.Api"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Postgres\Lyo.EntityReference.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Health\Lyo.Health\Lyo.Health.csproj"/>
+        <ProjectReference Include="..\Lyo.Recipe\Lyo.Recipe.csproj"/>
+        <ProjectReference Include="..\Lyo.Recipe.Models\Lyo.Recipe.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
+    </ItemGroup>
+
+</Project>

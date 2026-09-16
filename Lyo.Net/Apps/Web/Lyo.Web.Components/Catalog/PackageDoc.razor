@@ -3,6 +3,7 @@
 @using Microsoft.Extensions.Logging
 @namespace Lyo.Web.Components.Catalog
 @inject HttpClient Http
+@inject NavigationManager Navigation
 @inject ILogger<PackageDoc> Logger
 
 @if (_loading) {

@@ -183,6 +183,35 @@ namespace Lyo.FileMetadataStore.Sqlite.Migrations
                     b.ToTable("file_metadata", (string)null);
                 });
 
+            modelBuilder.Entity("Lyo.FileMetadataStore.Models.FileRevisionEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("ParentId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("parent_id");
+
+                    b.Property<string>("StoredKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("stored_key");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("ix_file_revision_parent_id");
+
+                    b.ToTable("file_revision", (string)null);
+                });
+
             modelBuilder.Entity("Lyo.FileMetadataStore.Sqlite.Database.FileAuditEventEntity", b =>
                 {
                     b.Property<Guid>("Id")

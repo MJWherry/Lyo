@@ -1,3 +1,5 @@
+using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Exceptions.Tests;
 
 public class ExceptionThrowerTests : IDisposable
@@ -9,7 +11,7 @@ public class ExceptionThrowerTests : IDisposable
 
     public ExceptionThrowerTests()
     {
-        _tempDir = Path.Combine(Path.GetTempPath(), $"lyo-exceptions-tests-{Guid.NewGuid():N}");
+        _tempDir = Path.Combine(Path.GetTempPath(), $"lyo-exceptions-tests-{LyoGuid.CreateV7():N}");
         Directory.CreateDirectory(_tempDir);
         _tempFile = Path.Combine(_tempDir, "file.txt");
         File.WriteAllText(_tempFile, "content");

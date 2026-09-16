@@ -1,4 +1,4 @@
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Drift.Models;
 using Lyo.Drift.Models.Request;
 using Lyo.Drift.Postgres;
@@ -20,7 +20,7 @@ public sealed class DriftServiceTests
     [Fact]
     public async Task Upsert_SameKey_ReusesId()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         using var scope = _fixture.CreateScope();
         var drift = scope.ServiceProvider.GetRequiredService<DriftService>();
         var first = await drift.UpsertInstanceAsync(new() { InstanceKey = "svc-key", MachineName = "a", ProcessId = 1 }, ct);
@@ -32,7 +32,7 @@ public sealed class DriftServiceTests
     [Fact]
     public async Task SaveSnapshot_SameHash_Dedupes()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         using var scope = _fixture.CreateScope();
         var drift = scope.ServiceProvider.GetRequiredService<DriftService>();
         var instance = await drift.UpsertInstanceAsync(new() { InstanceKey = "svc-dedupe", MachineName = "a", ProcessId = 1 }, ct);
@@ -61,7 +61,7 @@ public sealed class DriftServiceTests
     [Fact]
     public async Task DiffAgainst_FileTree_UsesDtoDetectChanges()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         using var scope = _fixture.CreateScope();
         var drift = scope.ServiceProvider.GetRequiredService<DriftService>();
         var instance = await drift.UpsertInstanceAsync(new() { InstanceKey = "svc-diff", MachineName = "a", ProcessId = 1 }, ct);
@@ -96,7 +96,7 @@ public sealed class DriftServiceTests
     [Fact]
     public async Task Prune_KeepsLatestPerLineage()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         using var scope = _fixture.CreateScope();
         var drift = scope.ServiceProvider.GetRequiredService<DriftService>();
         var instance = await drift.UpsertInstanceAsync(new() { InstanceKey = "svc-prune", MachineName = "a", ProcessId = 1 }, ct);

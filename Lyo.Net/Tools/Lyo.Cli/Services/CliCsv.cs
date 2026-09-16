@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.Json;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Csv;
 using Lyo.Csv.Models;
 using Lyo.Exceptions;

@@ -27,7 +27,7 @@ public sealed class AzureBlobDownloadStreamTests
         var owner = new TrackingDisposable();
         var wrapper = new AzureBlobDownloadStream(inner, owner);
         var buffer = new byte[3];
-        _ = await wrapper.ReadAsync(buffer, TestContext.Current.CancellationToken);
+        _ = await wrapper.ReadAsync(buffer, TestCt);
         Assert.Equal([7, 8, 9], buffer);
         await wrapper.DisposeAsync();
         Assert.True(owner.Disposed);

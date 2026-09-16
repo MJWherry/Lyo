@@ -9,6 +9,7 @@ using Lyo.Drift.Models.Response;
 using Lyo.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 namespace Lyo.Drift.Tests;
 
 public sealed class DriftAgentTests
@@ -40,12 +41,12 @@ public sealed class DriftAgentTests
             };
             var agent = new DriftAgentHostedService(options, fake, sp.GetRequiredService<Lyo.Diff.ObjectGraph.IObjectGraphDiffService>(), NullLogger<DriftAgentHostedService>.Instance);
             fake.Agent = agent;
-            await agent.StartAsync(TestContext.Current.CancellationToken);
+            await agent.StartAsync(TestCt);
             await PollAssert.ThatAsync(() => fake.Snapshots.Count >= 1, TimeSpan.FromSeconds(10));
             var afterStart = fake.Snapshots.Count;
-            await File.WriteAllTextAsync(Path.Combine(dir.FullName, "hello.txt"), "hi", TestContext.Current.CancellationToken);
-            await File.WriteAllTextAsync(Path.Combine(dir.FullName, "secret.txt"), "nope", TestContext.Current.CancellationToken);
-            await File.WriteAllTextAsync(Path.Combine(dir.FullName, "skip.bin"), "bin", TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(dir.FullName, "hello.txt"), "hi", TestCt);
+            await File.WriteAllTextAsync(Path.Combine(dir.FullName, "secret.txt"), "nope", TestCt);
+            await File.WriteAllTextAsync(Path.Combine(dir.FullName, "skip.bin"), "bin", TestCt);
             await PollAssert.ThatAsync(() => fake.Snapshots.Count > afterStart, TimeSpan.FromSeconds(10));
             agent.LastScanCompletedThreadId.ShouldNotBeNull();
             fake.PostedDuringScanCompleted.ShouldBeFalse();
@@ -76,7 +77,7 @@ public sealed class DriftAgentTests
         };
         var agent = new DriftAgentHostedService(options, fake, sp.GetRequiredService<Lyo.Diff.ObjectGraph.IObjectGraphDiffService>(), NullLogger<DriftAgentHostedService>.Instance);
         fake.Agent = agent;
-        await agent.StartAsync(TestContext.Current.CancellationToken);
+        await agent.StartAsync(TestCt);
         await PollAssert.ThatAsync(() => fake.Snapshots.Any(s => s.Kind == DriftSnapshotKind.SystemInfo), TimeSpan.FromSeconds(10));
         var count = fake.SnapshotCalls.Count(c => c.Kind == DriftSnapshotKind.SystemInfo);
         agent.QueueSystemInfo();
@@ -96,7 +97,7 @@ internal sealed class FakeDriftClient : IDriftClient
     public ConcurrentQueue<(DriftSnapshotKind Kind, int ThreadId, string? Json)> SnapshotCalls { get; } = [];
 
     public Task<CreateResult<DriftInstanceRes>> UpsertInstanceAsync(DriftInstanceReq request, CancellationToken ct = default)
-        => Task.FromResult(ResultFactory.CreateSuccess(new DriftInstanceRes { Id = Guid.NewGuid(), InstanceKey = request.InstanceKey }));
+        => Task.FromResult(ResultFactory.CreateSuccess(new DriftInstanceRes { Id = LyoGuid.CreateV7(), InstanceKey = request.InstanceKey }));
 
     public Task<DriftInstanceRes> HeartbeatAsync(Guid instanceId, DriftInstanceHeartbeatReq? request = null, CancellationToken ct = default)
         => Task.FromResult(new DriftInstanceRes { Id = instanceId });
@@ -129,13 +130,13 @@ internal sealed class FakeDriftClient : IDriftClient
         }
 
         var res = new DriftSnapshotRes {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             InstanceId = request.InstanceId,
             Kind = request.Kind,
             WatchRoot = request.WatchRoot,
             TakenAtUtc = request.TakenAtUtc,
             ReceivedAtUtc = DateTime.UtcNow,
-            ContentHash = Guid.NewGuid().ToString("N"),
+            ContentHash = LyoGuid.CreateV7().ToString("N"),
             ContentHashAlgorithm = "Sha256",
             Deduped = false,
             TreeJson = request.TreeJson,
@@ -147,7 +148,7 @@ internal sealed class FakeDriftClient : IDriftClient
     }
 
     public Task<CreateResult<DriftDiffRes>> PostDiffAsync(DriftDiffReq request, CancellationToken ct = default)
-        => Task.FromResult(ResultFactory.CreateSuccess(new DriftDiffRes { Id = Guid.NewGuid(), InstanceId = request.InstanceId, ToSnapshotId = request.ToSnapshotId }));
+        => Task.FromResult(ResultFactory.CreateSuccess(new DriftDiffRes { Id = LyoGuid.CreateV7(), InstanceId = request.InstanceId, ToSnapshotId = request.ToSnapshotId }));
 
     public Task<IReadOnlyList<DriftChangeRes>> PostChangesAsync(DriftChangeBatchReq request, CancellationToken ct = default)
         => Task.FromResult<IReadOnlyList<DriftChangeRes>>([]);
@@ -159,5 +160,5 @@ internal sealed class FakeDriftClient : IDriftClient
         => Task.FromResult<DriftInstanceRes?>(new() { Id = instanceId });
 
     public Task<CreateResult<DriftDiffRes>> DiffAgainstAsync(Guid snapshotId, Guid otherId, CancellationToken ct = default)
-        => Task.FromResult(ResultFactory.CreateSuccess(new DriftDiffRes { Id = Guid.NewGuid(), FromSnapshotId = snapshotId, ToSnapshotId = otherId }));
+        => Task.FromResult(ResultFactory.CreateSuccess(new DriftDiffRes { Id = LyoGuid.CreateV7(), FromSnapshotId = snapshotId, ToSnapshotId = otherId }));
 }

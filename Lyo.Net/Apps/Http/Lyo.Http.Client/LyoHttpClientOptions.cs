@@ -7,7 +7,7 @@ namespace Lyo.Http.Client;
 /// HTTP transport settings for <see cref="LyoHttpClient" />. Vendor option types subclass this so compression, Accept-Encoding, rate limit, and
 /// <see cref="BaseUrl" /> bind the same way from configuration.
 /// </summary>
-public class LyoHttpClientOptions
+public partial class LyoHttpClientOptions
 {
     /// <summary>Default configuration section for <see cref="LyoHttpClientOptions" />.</summary>
     public const string SectionName = "LyoHttpClient";

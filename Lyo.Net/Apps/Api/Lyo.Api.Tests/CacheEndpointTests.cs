@@ -6,7 +6,7 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Services.Cache;
 using Lyo.Cache;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Core.Enums;
 using Lyo.Query.Models.Builders;
 using Microsoft.AspNetCore.Authorization;
@@ -121,8 +121,8 @@ public sealed class CacheEndpointTests
         var before = cache.Items.Count;
         var client = app.GetTestClient();
         var query = ProjectionQueryReqBuilder.New().AddSelects("Name", "Type", "Created").SetPagination(0, 25).Build();
-        var response = await client.PostAsJsonAsync("/Cache/QueryProject", query, SerializerOptions, TestContext.Current.CancellationToken);
-        var responseBody = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var response = await client.PostAsJsonAsync("/Cache/QueryProject", query, SerializerOptions, TestCt);
+        var responseBody = await response.Content.ReadAsStringAsync(TestCt);
         Assert.True(response.StatusCode == HttpStatusCode.OK, $"{response.StatusCode}: {responseBody}");
         var cacheControl = response.Headers.CacheControl?.ToString()
             ?? (response.Headers.TryGetValues("Cache-Control", out var values) ? string.Join(",", values) : "");
@@ -143,7 +143,7 @@ public sealed class CacheEndpointTests
         cache.Set("mk2", "v2", ["mt2"]);
         var client = app.GetTestClient();
         using (var deleteKey = new HttpRequestMessage(HttpMethod.Delete, "/Cache") { Content = JsonContent.Create(new DeleteRequest { Keys = [["Key", "mk1"]] }, options: SerializerOptions) }) {
-            var removeKeys = await client.SendAsync(deleteKey, TestContext.Current.CancellationToken);
+            var removeKeys = await client.SendAsync(deleteKey, TestCt);
             Assert.Equal(HttpStatusCode.OK, removeKeys.StatusCode);
         }
 
@@ -151,13 +151,13 @@ public sealed class CacheEndpointTests
         using (var deleteTag = new HttpRequestMessage(HttpMethod.Delete, "/Cache/Bulk") {
                    Content = JsonContent.Create(new List<DeleteRequest> { new() { Keys = [["Tag", "mt2"]], AllowMultiple = true } }, options: SerializerOptions)
                }) {
-            var removeTags = await client.SendAsync(deleteTag, TestContext.Current.CancellationToken);
+            var removeTags = await client.SendAsync(deleteTag, TestCt);
             Assert.Equal(HttpStatusCode.OK, removeTags.StatusCode);
         }
 
         Assert.False(cache.TryGetValue<string>("mk2", out _));
         cache.Set("mk3", "v3");
-        var clear = await client.PostAsJsonAsync("/Cache/Clear", new { }, SerializerOptions, TestContext.Current.CancellationToken);
+        var clear = await client.PostAsJsonAsync("/Cache/Clear", new { }, SerializerOptions, TestCt);
         Assert.Equal(HttpStatusCode.OK, clear.StatusCode);
         Assert.Empty(cache.Items);
     }

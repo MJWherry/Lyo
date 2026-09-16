@@ -17,7 +17,9 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             FormatterLyoType.EnsureRegistered();
-            services.AddSingleton<FormatterService>();
+            services.AddSingleton<FormatterService>(provider => provider.GetService<IFormatterExpressionEvaluator>() is { } evaluator
+                ? new FormatterService(evaluator)
+                : new FormatterService());
             services.AddSingleton<IFormatterService>(provider => provider.GetRequiredService<FormatterService>());
             services.AddParameterTemplateResolver();
             return services;
@@ -31,7 +33,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(formatterFactory);
             FormatterLyoType.EnsureRegistered();
-            services.AddSingleton<FormatterService>(provider => new(formatterFactory(provider)));
+            services.AddSingleton<FormatterService>(provider => provider.GetService<IFormatterExpressionEvaluator>() is { } evaluator
+                ? new FormatterService(formatterFactory(provider), evaluator)
+                : new FormatterService(formatterFactory(provider)));
             services.AddSingleton<IFormatterService>(provider => provider.GetRequiredService<FormatterService>());
             services.AddParameterTemplateResolver();
             return services;

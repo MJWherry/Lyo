@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Common.Core;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Exceptions;
 
 namespace Lyo.Web.Components.DataGrid;

@@ -1,20 +1,20 @@
 # Lyo.Tools.Postgres
 
-Spectre.Console TUI used for running and rolling back EF Core migrations against Lyo Postgres `DbContext`s, plus seed contributors from `Lyo.Seed`. People can be seeded through EF or `POST Person/Bulk`; Comic is EF-only. Use it to bring a fresh local database up to the latest schema or step one schema back to a specific migration.
+Spectre.Console TUI used for running and rolling back EF Core migrations against Lyo Postgres `DbContext`s, plus seed contributors from `Lyo.Seed`. People can be seeded through EF or `POST Person/Bulk`. Comic, Book, Story, and every other product Postgres context the tool can open are EF-only. Use it to bring a fresh local database up to the latest schema or step one schema back to a specific migration.
 
 ## Startup path
 
-`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, wires a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key, set in `appsettings.Development.json` or environment variables), then either runs `seed …` from argv (`SeedCli`) or hands control to `Menu.RunAsync`. Ctrl+C cancels the host. `MigrationRunner` drives EF migrations. Seed contributors (`PeopleEfSeedContributor`, `PeopleApiSeedContributor`, `ComicEfSeedContributor`) are wired through `AddLyoSeed`.
+`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, wires a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key, set in `appsettings.Development.json` or environment variables), then either runs `seed …` from argv (`SeedCli`) or hands control to `Menu.RunAsync`. Ctrl+C cancels the host. `MigrationRunner` drives EF migrations. Seed contributors are wired through `AddLyoSeed`. People has EF and API contributors. Comic, Book, and Story live in this tool. The other contributors implement `IEfSeedSource`, so the host opens their context from the connection string. Book migrate also runs `BookDbSeeder` for types, formats, and the genre tree.
 
 ## Primary menu
 
-- **Seeds.** Lists `Lyo.Seed` contributors (People EF, People API, Comic EF). Asks for count, optional random seed, Direct vs API when both are supported, optional skip-if-not-empty, replace for Comic, and API base URL (default `http://localhost:5251/`). CLI: `dotnet run --project Lyo.Tools.Postgres -- seed people --via ef --count 50`. `--skip` skips when rows exist; the default is append.
+- **Seeds.** Lists every `Lyo.Seed` contributor: People EF, People API, Comic, Book, Story, Comment, Favorite, Note, Rating, Tag, ContactUs, ShortUrl, HomeInventory, Recipe, Config, Job, Reporting, Billing, Ledger, Law, Music, Video, Algorithms, Leaderboard, Authentication, Geolocation, Validation, State machine, Package metadata, File metadata, File system watcher, Email, SMS, Twilio SMS, Discord, Endato, Drift, Audit, and Change tracker. Asks for count, optional random seed, Direct vs API when both are supported, optional skip-if-not-empty, replace for EF contributors that can clear, and API base URL (default `http://localhost:5251/`). CLI: `dotnet run --project Lyo.Tools.Postgres -- seed people --via ef --count 50`. `--skip` skips when rows exist; the default is append. People EF writes an identification per person. Book writes a series alternate title and a book alternate title. Story seeds `StorySamples.TheHeist()` plus one playthrough (count is unused). Reporting seeds `ReportDesignTemplates.Samples` and one succeeded generation each (count is unused). Job definitions, schedules, and workflows stay disabled.
 - **Migrations.** Covered below.
 - **Change connection string.** Takes a new value and updates `ConnectionStringProvider` in place. The header shows a masked preview (`first 40 chars + ****`).
 
 ## Migration actions
 
-`MigrationRunner` (see `MigrationRunner.cs`) knows 21 `DbContext`s, each paired with a Postgres schema name used for `__EFMigrationsHistory`:
+`MigrationRunner` (see `MigrationRunner.cs`) knows 25 `DbContext`s, each paired with a Postgres schema name used for `__EFMigrationsHistory`:
 
 | Label | DbContext | Schema |
 | ----------------- | ---------------------------- | ---------------- |
@@ -34,10 +34,12 @@ Spectre.Console TUI used for running and rolling back EF Core migrations against
 | Note | `NoteDbContext` | `note` |
 | People | `PeopleDbContext` | `people` |
 | Rating | `RatingDbContext` | `rating` |
+| Recipe | `RecipeDbContext` | `recipe` |
 | Reporting | `ReportingContext` | `reporting` |
 | ShortUrl | `ShortUrlDbContext` | `url` |
 | Sms | `SmsDbContext` | `sms` |
 | SmsTwilio | `TwilioSmsDbContext` | `sms` |
+| Story | `StoryDbContext` | `story` |
 | Tag | `TagDbContext` | `tag` |
 
 The menu provides **Run All (Latest)**, which calls every `RunXxxAsync` in registration order, or a context-specific submenu with four actions:
@@ -67,45 +69,91 @@ call, so the "Change Connection String" menu option takes effect immediately.
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Algorithms.Seed` (direct, lyo)
 - `Lyo.Api.Client` (direct, lyo)
 - `Lyo.Audit.Postgres` (direct, lyo)
+- `Lyo.Audit.Seed` (direct, lyo)
+- `Lyo.Authentication.Seed` (direct, lyo)
+- `Lyo.Billing.Seed` (direct, lyo)
+- `Lyo.Book` (direct, lyo)
+- `Lyo.Book.Postgres` (direct, lyo)
 - `Lyo.ChangeTracker.Postgres` (direct, lyo)
+- `Lyo.ChangeTracker.Seed` (direct, lyo)
 - `Lyo.Comic.Postgres` (direct, lyo)
 - `Lyo.Comment.Postgres` (direct, lyo)
+- `Lyo.Comment.Seed` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Config.Postgres` (direct, lyo)
+- `Lyo.Config.Seed` (direct, lyo)
 - `Lyo.ContactUs.Postgres` (direct, lyo)
+- `Lyo.ContactUs.Seed` (direct, lyo)
 - `Lyo.Discord.Postgres` (direct, lyo)
+- `Lyo.Discord.Seed` (direct, lyo)
+- `Lyo.Drift.Seed` (direct, lyo)
 - `Lyo.Email.Postgres` (direct, lyo)
+- `Lyo.Email.Seed` (direct, lyo)
 - `Lyo.Endato.Postgres` (direct, lyo)
+- `Lyo.Endato.Seed` (direct, lyo)
 - `Lyo.Favorite.Postgres` (direct, lyo)
+- `Lyo.Favorite.Seed` (direct, lyo)
 - `Lyo.FileMetadataStore.Postgres` (direct, lyo)
+- `Lyo.FileMetadataStore.Seed` (direct, lyo)
+- `Lyo.FileSystemWatcher.Seed` (direct, lyo)
 - `Lyo.Geolocation.Postgres` (direct, lyo)
+- `Lyo.Geolocation.Seed` (direct, lyo)
 - `Lyo.HomeInventory.Postgres` (direct, lyo)
+- `Lyo.HomeInventory.Seed` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
 - `Lyo.Job.Postgres` (direct, lyo)
+- `Lyo.Job.Seed` (direct, lyo)
+- `Lyo.Law.Seed` (direct, lyo)
+- `Lyo.Leaderboard.Seed` (direct, lyo)
+- `Lyo.Ledger.Seed` (direct, lyo)
+- `Lyo.Music.Seed` (direct, lyo)
 - `Lyo.Note.Postgres` (direct, lyo)
+- `Lyo.Note.Seed` (direct, lyo)
+- `Lyo.PackageMetadata.Seed` (direct, lyo)
 - `Lyo.People.Models` (direct, lyo)
 - `Lyo.People.Postgres` (direct, lyo)
 - `Lyo.Rating.Postgres` (direct, lyo)
+- `Lyo.Rating.Seed` (direct, lyo)
+- `Lyo.Recipe.Postgres` (direct, lyo)
+- `Lyo.Recipe.Seed` (direct, lyo)
 - `Lyo.Reporting.Postgres` (direct, lyo)
+- `Lyo.Reporting.Seed` (direct, lyo)
 - `Lyo.Seed` (direct, lyo)
 - `Lyo.ShortUrl.Postgres` (direct, lyo)
+- `Lyo.ShortUrl.Seed` (direct, lyo)
 - `Lyo.Sms.Postgres` (direct, lyo)
+- `Lyo.Sms.Seed` (direct, lyo)
 - `Lyo.Sms.Twilio.Postgres` (direct, lyo)
+- `Lyo.Sms.Twilio.Seed` (direct, lyo)
+- `Lyo.StateMachine.Seed` (direct, lyo)
+- `Lyo.Story` (direct, lyo)
+- `Lyo.Story.Postgres` (direct, lyo)
 - `Lyo.Tag.Postgres` (direct, lyo)
+- `Lyo.Tag.Seed` (direct, lyo)
+- `Lyo.Validation.Seed` (direct, lyo)
+- `Lyo.Video.Seed` (direct, lyo)
 - `Bogus` `35.6.5` (direct, third-party)
 - `Spectre.Console` `0.57.2` (direct, third-party)
+- `Lyo.Algorithms` (transitive, lyo)
+- `Lyo.Algorithms.Models` (transitive, lyo)
+- `Lyo.Algorithms.Postgres` (transitive, lyo)
 - `Lyo.Api` (transitive, lyo)
 - `Lyo.Api.Export` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Audit` (transitive, lyo)
+- `Lyo.Authentication` (transitive, lyo)
+- `Lyo.Authentication.Models` (transitive, lyo)
+- `Lyo.Authentication.Postgres` (transitive, lyo)
+- `Lyo.Billing` (transitive, lyo)
+- `Lyo.Billing.Postgres` (transitive, lyo)
 - `Lyo.Cache` (transitive, lyo)
 - `Lyo.ChangeTracker` (transitive, lyo)
 - `Lyo.Comic` (transitive, lyo)
 - `Lyo.Comment` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.Config` (transitive, lyo)
 - `Lyo.ContactUs` (transitive, lyo)
@@ -117,6 +165,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Diagnostic.AspNetCore` (transitive, lyo)
 - `Lyo.Diff` (transitive, lyo)
 - `Lyo.Discord.Models` (transitive, lyo)
+- `Lyo.Drift.Models` (transitive, lyo)
+- `Lyo.Drift.Postgres` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.EntityReference.Postgres` (transitive, lyo)
@@ -124,39 +174,67 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Favorite` (transitive, lyo)
 - `Lyo.FileMetadataStore` (transitive, lyo)
 - `Lyo.FileStorage` (transitive, lyo)
+- `Lyo.FileSystemWatcher` (transitive, lyo)
+- `Lyo.FileSystemWatcher.Models` (transitive, lyo)
+- `Lyo.FileSystemWatcher.Postgres` (transitive, lyo)
 - `Lyo.Formatter` (transitive, lyo)
 - `Lyo.Geolocation` (transitive, lyo)
 - `Lyo.Geolocation.Models` (transitive, lyo)
+- `Lyo.Google.Youtube.Models` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.HomeInventory` (transitive, lyo)
+- `Lyo.HomeInventory.Models` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
 - `Lyo.Job.Models` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
+- `Lyo.Law` (transitive, lyo)
+- `Lyo.Law.Models` (transitive, lyo)
+- `Lyo.Law.Postgres` (transitive, lyo)
+- `Lyo.Leaderboard` (transitive, lyo)
+- `Lyo.Leaderboard.Postgres` (transitive, lyo)
+- `Lyo.Ledger` (transitive, lyo)
+- `Lyo.Ledger.Postgres` (transitive, lyo)
 - `Lyo.Lock` (transitive, lyo)
 - `Lyo.MessageQueue` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
+- `Lyo.Music` (transitive, lyo)
+- `Lyo.Music.Postgres` (transitive, lyo)
 - `Lyo.Note` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
+- `Lyo.PackageMetadata.Postgres` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Postgres` (transitive, lyo)
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Rating` (transitive, lyo)
+- `Lyo.Recipe` (transitive, lyo)
+- `Lyo.Recipe.Models` (transitive, lyo)
 - `Lyo.Reporting.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Scheduler` (transitive, lyo)
+- `Lyo.Search.Postgres` (transitive, lyo)
 - `Lyo.ShortUrl` (transitive, lyo)
 - `Lyo.Sms` (transitive, lyo)
 - `Lyo.Sms.Models` (transitive, lyo)
 - `Lyo.Sms.Twilio` (transitive, lyo)
+- `Lyo.StateMachine` (transitive, lyo)
+- `Lyo.StateMachine.Models` (transitive, lyo)
+- `Lyo.StateMachine.Postgres` (transitive, lyo)
+- `Lyo.Story.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
+- `Lyo.SystemInformation` (transitive, lyo)
 - `Lyo.Tag` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
+- `Lyo.Validation.Postgres` (transitive, lyo)
+- `Lyo.Video` (transitive, lyo)
+- `Lyo.Video.Postgres` (transitive, lyo)
 - `Lyo.Xlsx` (transitive, lyo)
 - `Lyo.Xlsx.Models` (transitive, lyo)
 - `AngleSharp` `1.5.0` (transitive, third-party)
@@ -186,6 +264,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` (transitive, microsoft)
+- `Npgsql` `10.0.3` (transitive, third-party)
 - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)
 - `SmartFormat.NET` `3.6.1` (transitive, third-party)
 - `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)

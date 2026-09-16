@@ -6,10 +6,11 @@
     <div class="file-storage-tree-browser">
         <MudText Typo="Typo.h6">Path tree</MudText>
         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
-            Folders from FileMetadata <code>PathPrefix</code> joined to physical keys on the server
-            (<code>Store</code> / <code>Physical</code> / <code>Both</code>). Files with no prefix sit under
+            Folders from FileMetadata <code>PathPrefix</code> joined to objects on
+            <strong>@FileStoragePresenceUi.DisplayName(BackendKind)</strong>
+            (<code>Catalog</code> / backend / <code>Both</code>). Files with no prefix sit under
             <strong>@FileStoragePathTreeBuilder.RootDisplayName</strong>. Opening a folder loads that directory only.
-            New folders stay in the browser until a file is uploaded there. The Files grid stays QueryProject.
+            Search loads unloaded folders. New folders stay in the browser until a file is uploaded there. The Files grid stays QueryProject.
         </MudText>
         <div class="file-storage-tree-layout">
             <div class="file-storage-tree-col">
@@ -21,22 +22,24 @@
                              Truncated="_truncated"
                              EnableFilter="true"
                              EnableSelection="true"
+                             IconResolver="FileStorageTreeIcons.Resolve"
                              SelectedChanged="OnTreeSelectedAsync"
                              CheckedChanged="OnCheckedChanged">
                     <SelectionToolbar>
                         <MudText Typo="Typo.caption" Color="Color.Secondary">
-                            Check files or folders, then Move / Rotate DEKs / Delete / Download zip. A folder includes every loaded descendant; expand it first, or the action will load children.
+                            Check files or folders, then Move / Copy / Delete / Download. Rotate DEKs and zip need catalog rows. A folder includes every descendant; the action loads children.
                         </MudText>
                         <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@_bulkCatalogCount catalog file(s)</MudText>
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!BulkActionsEnabled)" OnClick="OnBulkMoveAsync">Move…</MudButton>
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!BulkActionsEnabled)" OnClick="OnBulkRotateAsync">Rotate DEKs…</MudButton>
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(!BulkActionsEnabled)" OnClick="OnBulkDownloadAsync">Download zip</MudButton>
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!BulkActionsEnabled)" OnClick="OnBulkDeleteAsync">Delete</MudButton>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@_bulkCatalogCount catalog, @_bulkPhysicalCount on @FileStoragePresenceUi.DisplayName(BackendKind)</MudText>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkMoveAsync">Move…</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkCopyAsync">Copy…</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!BulkCatalogActionsEnabled)" OnClick="OnBulkRotateAsync">Rotate DEKs…</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkDownloadAsync">Download</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkDeleteAsync">Delete</MudButton>
                         </MudStack>
                     </SelectionToolbar>
                     <ItemTrailing>
-                        @if (FileStoragePresenceUi.TryChip(context.Entry, out var label, out var hint, out var color, out var icon)) {
+                        @if (FileStoragePresenceUi.TryChip(context.Entry, BackendKind, out var label, out var hint, out var color, out var icon)) {
                             <MudTooltip Text="@hint">
                                 <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@color" Icon="@icon">@label</MudChip>
                             </MudTooltip>

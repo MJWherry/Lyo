@@ -24,7 +24,7 @@ public static class ReportDesignTemplates
 {
     private static readonly string JsonArrayType = LyoTypeInfo.JsonArray.FullName;
 
-    private const string SampleLineItems = """[{"item":"Widget A","qty":2,"amount":40},{"item":"Widget B","qty":1,"amount":18.5}]""";
+    private const string SampleLineItems = """[{"title":"Widget A","description":"Blue anodized","qty":"2","amount":"$40.00"},{"title":"Widget B","description":"","qty":"1","amount":"$18.50"}]""";
     private const string SampleRegionSeries = """[{"label":"North","value":12},{"label":"South","value":8},{"label":"West","value":15}]""";
 
     /// <summary>
@@ -34,7 +34,7 @@ public static class ReportDesignTemplates
     public static IReadOnlyList<ReportDesignSample> Samples { get; } = [
         new("Controls gallery", "Kitchen sink: TOC, charts, FromParameter series, page break, collapsed appendix.", ControlsGallery),
         new("Sales summary", "KPI cards plus a static category chart.", SalesSummary),
-        new("Invoice", "Bill-to, FromParameter line items, totals, page break, and signature.", Invoice),
+        new("Invoice", "Bill-to, FromParameter line items, and totals.", Invoice),
         new("Operations dashboard", "KPI cards, FromParameter bar chart, sparkline/gauge, collapsed notes.", OperationsDashboard)
     ];
 
@@ -168,32 +168,33 @@ public static class ReportDesignTemplates
             .SetFooter("Lyo Reporting")
             .Build();
 
-    /// <summary>Invoice-style composition: FromParameter line items, totals, page break, and signature.</summary>
+    /// <summary>Invoice-style composition: FromParameter line items and totals. Billing PDF overwrites address/totals/notes with live invoice values.</summary>
     public static Report<object> Invoice()
         => ReportBuilder<object>.New()
-            .SetTitle("Invoice {InvoiceNo}")
+            .SetTitle("{InvoiceNo}")
             .SetSubtitle("{Period} · {Customer}")
-            .SetDescription("Line items bind from the LineItems JSON array parameter. Preview uses the example rows without mutating the grid.")
             .SetLayout(
                 l => l.SetTheme("Formal")
                     .SetPageSize("Letter")
                     .SetOrientation("Portrait")
                     .SetAccentColor("#1e3a5f")
-                    .SetHeaderText("Invoice {InvoiceNo}")
+                    .SetHeaderText("Invoice")
                     .ShowPageNumbers())
             .AddParameter("InvoiceNo", example: "\"INV-1042\"", required: true, description: "Invoice number")
             .AddParameter("Period", example: "\"Q4 2024\"", required: true)
             .AddParameter("Customer", example: "\"Acme Corporation\"", required: true)
-            .AddParameter("LineItems", type: JsonArrayType, example: SampleLineItems, required: true, description: "JSON array of {item,qty,amount}")
+            .AddParameter("IssuedAt", example: "\"2024-12-01\"")
+            .AddParameter("DueAt", example: "\"2024-12-31\"")
+            .AddParameter("LineItems", type: JsonArrayType, example: SampleLineItems, required: true, description: "JSON array of {title,description,qty,amount}")
+            .AddParameter("Subtotal", example: "\"$58.50\"")
+            .AddParameter("Tax", example: "\"$4.68\"")
+            .AddParameter("Total", example: "\"$63.18\"")
             .AddSection(
-                "Invoice",
                 s => s.SetId("invoice")
-                    .AddTableOfContents()
                     .AddGrid(
                         g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
-                            .AddCard("Invoice", "{InvoiceNo}", emphasized: true)
-                            .AddCard("Period", "{Period}")
-                            .AddCard("Customer", "{Customer}"))
+                            .AddCard("Issued", "{IssuedAt}")
+                            .AddCard("Due", "{DueAt}"))
                     .AddAddress("Bill to", ["{Customer}", "100 Main Street", "Springfield, ST 00000"])
                     .AddTable(
                         "Line items",
@@ -201,15 +202,13 @@ public static class ReportDesignTemplates
                             .SetStriped()
                             .SetShowRowNumbers()
                             .SetFromParameter("LineItems")
-                            .AddColumn("Item", "item")
+                            .AddColumn("Title", "title")
+                            .AddColumn("Description", "description")
                             .AddColumn("Qty", "qty", alignment: "right")
                             .AddColumn("Amount", "amount", alignment: "right"))
-                    .AddTotals(["Subtotal|$58.50", "Tax|$4.68", "Total|$63.18"])
-                    .AddPageBreak()
-                    .AddCheckbox(["I agree to the terms", "Net 30 payment"], "Please confirm:")
-                    .AddNotes("Remit to the lockbox on the statement. PO must appear on the wire memo.", "Payment")
-                    .AddSignature("Authorized by", "Jordan Lee"))
-            .SetFooter("Invoice {InvoiceNo} · {Customer}")
+                    .AddTotals(["Subtotal|{Subtotal}", "Tax|{Tax}", "Total|{Total}"])
+                    .AddNotes("Remit to the lockbox on the statement. PO must appear on the wire memo.", "Payment"))
+            .SetFooter("{Customer}")
             .Build();
 
     /// <summary>Operations-style dashboard: KPI cards, FromParameter chart, sparkline/gauge, collapsed methodology.</summary>

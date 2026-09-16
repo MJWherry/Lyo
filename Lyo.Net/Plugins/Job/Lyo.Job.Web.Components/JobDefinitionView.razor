@@ -70,12 +70,6 @@
                                      ScheduleRoute="@ScheduleRoute"/>
                 </div>
             </MudTabPanel>
-            <MudTabPanel Text="Triggers">
-                <div class="pa-4">
-                    <JobTriggerView JobTriggers="JobDefinition?.JobTriggers" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient"
-                                    TriggerRoute="@TriggerRoute"/>
-                </div>
-            </MudTabPanel>
         </MudTabs>
     </ChildContent>
 </LyoDialog>

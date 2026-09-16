@@ -38,6 +38,34 @@ public sealed class SnapshotTree
         DirectoryCount = directoryCount;
     }
 
+    /// <summary>
+    /// File paths grouped by full-content hash, built on first use and reused afterwards. A diff reads this on every poll, so it is an index over the snapshot rather
+    /// than something a caller rebuilds. Treat the lists as read-only.
+    /// </summary>
+    public IReadOnlyDictionary<string, List<string>> FileHashIndex => _hashIndex ??= BuildIndex(e => e.Hash);
+
+    /// <summary>File paths grouped by sparse fingerprint. Same lifetime and read-only rule as <see cref="FileHashIndex" />.</summary>
+    public IReadOnlyDictionary<string, List<string>> FileFingerprintIndex => _fingerprintIndex ??= BuildIndex(e => e.Fingerprint);
+
+    private Dictionary<string, List<string>>? _hashIndex;
+    private Dictionary<string, List<string>>? _fingerprintIndex;
+
+    private Dictionary<string, List<string>> BuildIndex(Func<DirectorySnapshotEntry, string?> selectKey)
+    {
+        Dictionary<string, List<string>> index = new(StringComparer.Ordinal);
+        foreach (var (path, entry) in EnumerateFiles()) {
+            if (entry.Info is not FileInfo || selectKey(entry) is not { } key)
+                continue;
+
+            if (!index.TryGetValue(key, out var paths))
+                index[key] = paths = [];
+
+            paths.Add(path);
+        }
+
+        return index;
+    }
+
     /// <summary>True if <paramref name="fullPath" /> is a file or directory node in this snapshot.</summary>
     public bool ContainsPath(string fullPath)
     {
@@ -117,7 +145,7 @@ public sealed class SnapshotTree
     private IEnumerable<(string Path, DirectorySnapshotEntry Entry)> EnumerateDirectoryAndFileEntries(SnapshotDirectoryNode dir)
     {
         foreach (var sub in dir.Directories.Values) {
-            yield return (sub.FullPath, new(sub.FullPath, new DirectoryInfo(sub.FullPath)));
+            yield return (sub.FullPath, sub.Entry);
 
             foreach (var pair in EnumerateDirectoryAndFileEntries(sub))
                 yield return pair;

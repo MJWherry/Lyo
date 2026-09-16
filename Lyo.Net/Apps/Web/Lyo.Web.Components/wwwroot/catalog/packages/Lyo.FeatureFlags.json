@@ -1,0 +1,66 @@
+{
+  "id": "Lyo.FeatureFlags",
+  "name": "Lyo.FeatureFlags",
+  "area": "Core",
+  "tagline": "Named flags for apps and workers: on, off, percentage rollout, and caller rules.",
+  "description": "IFeatureFlagService.IsEnabled reads a snapshot taken at registration. An unknown name is off. AddFeatureFlags, an options instance, or AddFeatureFlagsFromConfiguration all register that service. The first registration wins. Percentage hashes the flag name with a stickiness key into a stable bucket. Rules match user, tenant, claim, and attribute. Apps pass a FeatureFlagContext. HTTP hosts use Lyo.FeatureFlags.AspNetCore.",
+  "features": [
+    "**IFeatureFlagService.** IsEnabled(name, context). Whitespace names throw. Names compare ordinal-ignore-case.",
+    "**Modes.** Off, On, Percentage, and Rules. On ignores the caller. Percentage 0 is off and 100 is on. A missing name is off.",
+    "**Stickiness.** User, Tenant, or a named attribute. StickinessKey on the context overrides that choice for a partial percentage.",
+    "**Rules.** Rules are OR. Predicates inside one rule are AND. A claim or attribute matches when any caller pair equals.",
+    "**Fluent Add.** On, Percentage, StickToTenant, StickToAttribute, WhenClaim, and When for an AND rule. The last mode call wins.",
+    "**Configuration.** Section FeatureFlags. Each Flags child is bound on its own. A bad Mode throws ConfigurationException. A missing section leaves every flag off."
+  ],
+  "examples": [
+    {
+      "title": "Registration",
+      "language": "csharp",
+      "code": "services.AddFeatureFlags(o => o\n    .Add(\"checkout\").On()\n    .Add(\"billing\").Percentage(10)\n    .Add(\"billing-tenant\").Percentage(10).StickToTenant()\n    .Add(\"admin\").WhenClaim(\"role\", \"admin\")\n    .Add(\"acme-admin\").When(r => r.Tenant(\"acme\").Claim(\"role\", \"admin\")));\n\nservices.AddFeatureFlagsFromConfiguration(configuration);\n\nvar caller = FeatureFlagContext.Create().WithUser(userId).WithTenant(tenantId).Build();\nif (flags.IsEnabled(\"billing\", caller))\n    UseNewBilling();"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/FeatureFlags/Lyo.FeatureFlags/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

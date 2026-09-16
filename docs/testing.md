@@ -2,7 +2,7 @@
 
 There are three kinds of automated checks in this repo:
 
-- **Unit/integration tests.** xUnit projects named `*.Tests`. `.Models` packages do not get a sibling `*.Models.Tests`; cover DTO logic from `Lyo.{X}.Tests` or `Lyo.{X}.Postgres.Tests`. `.Api.Host` hosts are not tested as libraries.
+- **Unit/integration tests.** xUnit projects named `*.Tests`. `.Models` packages do not get a sibling `*.Models.Tests`; cover DTO logic from `Lyo.{X}.Tests` or `Lyo.{X}.Postgres.Tests`. `.Api.Example` hosts are not tested as libraries.
 - **Micro-benchmarks.** BenchmarkDotNet projects named `*.Benchmarks`.
 - **Load tests.** k6 scripts under [`k6/`](../k6/).
 
@@ -25,7 +25,7 @@ Tests that use Testcontainers (the `*.Postgres` suites, Redis-backed locks, and 
 
 ### Seeded test data
 
-Do **not** use unseeded `new Random()`, `RandomNumberGenerator.GetBytes` / `Fill`, or other crypto RNG for test *payloads* (plaintexts, keys, nonces under test). Use [`Lyo.Testing.TestData`](../Lyo.Net/Core/Testing/Lyo.Testing/TestData.cs) (`Create` / `Fill`, `TestData.Seed`). Benchmarks use [`BenchmarkData`](../Lyo.Net/Core/Benchmark/Lyo.Benchmark/Data/BenchmarkData.cs) (`PayloadSeed` / `DeterministicBytes`). Same seed value as `TestData.Seed` and `DeterministicPayloadStream.DefaultSeed`. Distinct values need distinct seeds (for example `TestData.Seed + i`, or `TestData.Seed ^ 1` for a wrong key). Temp paths may still use `Guid.NewGuid()`.
+Do **not** use unseeded `new Random()`, `RandomNumberGenerator.GetBytes` / `Fill`, or other crypto RNG for test *payloads* (plaintexts, keys, nonces under test). Use [`Lyo.Testing.TestData`](../Lyo.Net/Core/Testing/Lyo.Testing/TestData.cs) (`Create` / `Fill`, `TestData.Seed`). Benchmarks use [`BenchmarkData`](../Lyo.Net/Core/Benchmark/Lyo.Benchmark/Data/BenchmarkData.cs) (`PayloadSeed` / `DeterministicBytes`). Same seed value as `TestData.Seed` and `DeterministicPayloadStream.DefaultSeed`. Distinct values need distinct seeds (for example `TestData.Seed + i`, or `TestData.Seed ^ 1` for a wrong key). Temp paths use `LyoGuid.CreateV7()`.
 
 ## Micro-benchmarks (host)
 

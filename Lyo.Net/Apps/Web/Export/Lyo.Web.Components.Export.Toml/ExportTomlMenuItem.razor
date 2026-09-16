@@ -1,0 +1,10 @@
+@using Lyo.Api.Models.Enums
+@using Lyo.Web.Components.DataGrid
+@namespace Lyo.Web.Components.Export.Toml
+
+@* Host must be a Parameter — MudMenu popovers do not reliably receive cascading values *@
+<MudMenuItem Icon="@Icons.Material.Filled.Article"
+             Disabled="@(ExportHost is null || !ExportHost.CanExport)"
+             OnClick="@ExportTomlAsync">
+    Export as TOML
+</MudMenuItem>

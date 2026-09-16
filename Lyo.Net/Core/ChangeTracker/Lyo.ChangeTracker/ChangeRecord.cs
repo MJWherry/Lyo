@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lyo.EntityReference.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.ChangeTracker;
 
@@ -8,7 +9,7 @@ namespace Lyo.ChangeTracker;
 public sealed record ChangeRecord(EntityRef ForEntity, IReadOnlyDictionary<string, object?> OldValues, IReadOnlyDictionary<string, object?> ChangedProperties)
 {
     /// <summary>Unique id of this change.</summary>
-    public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid Id { get; init; } = LyoGuid.CreateV7();
 
     /// <summary>When the change took place.</summary>
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;

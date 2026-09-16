@@ -18,9 +18,6 @@ public partial class JobRunDetailView
     [Inject]
     IApiClient ApiClient { get; set; } = null!;
 
-    private string AlertText
-        => JobRun?.JobDefinition?.AlertOnFailure == true ? "Alert on failure" : "No failure alert";
-
     private string ScheduleText
         => JobRun?.JobSchedule?.Description
            ?? (JobRun?.JobSchedule is { } schedule ? schedule.Type.ToString() : "—");

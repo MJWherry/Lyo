@@ -51,13 +51,19 @@ public static class ReportLayoutCss
     {
         var landscape = string.Equals(layout.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase);
         var size = layout.PageSize ?? "Auto";
-        if (string.Equals(size, "A4", StringComparison.OrdinalIgnoreCase))
-            return landscape ? "A4 landscape" : "A4 portrait";
+        var token = size.ToLowerInvariant() switch {
+            "a3" => "A3",
+            "a4" => "A4",
+            "a5" => "A5",
+            "letter" => "letter",
+            "legal" => "legal",
+            "tabloid" => "tabloid",
+            var _ => null
+        };
+        if (token is null)
+            return string.Empty;
 
-        if (string.Equals(size, "Letter", StringComparison.OrdinalIgnoreCase))
-            return landscape ? "letter landscape" : "letter portrait";
-
-        return string.Empty;
+        return landscape ? $"{token} landscape" : $"{token} portrait";
     }
 
     private static string ResolveMargin(Layout layout)

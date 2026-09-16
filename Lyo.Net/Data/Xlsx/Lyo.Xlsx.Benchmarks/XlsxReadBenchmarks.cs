@@ -2,12 +2,13 @@ using System.Text;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Xlsx.Benchmarks;
 
-/// <summary>Times XLSX parsing across sources (bytes/stream/file) and targets (dictionary vs DataTable), sync vs async.</summary>
+/// <summary>Times XLSX parsing across sources (bytes/stream/file) and targets (dictionary and DataTable), sync and async.</summary>
 [BenchmarkDescription(
-    "Parses an XLSX workbook (built from RowCount SampleRecords) via ExcelDataReader across every read surface: into a row/column dictionary and into a DataTable, from bytes, a stream, and a file, plus the async byte paths. Contrasts the dynamic dictionary target against the typed DataTable and the cost of stream/file sources vs an in-memory buffer.")]
+    "Parses an XLSX workbook (built from RowCount SampleRecords) via ExcelDataReader into a row/column dictionary and into a DataTable, from bytes, a stream, and a file, plus the async byte paths.")]
 [BenchmarkParameter("RowCount", Unit = "rows", Description = "Number of SampleRecord rows in the workbook being parsed (100 to 100,000).")]
 [BenchmarkDataShape(typeof(SampleRecord), Notes = "Flat 7-column record; columns mapped by header.")]
 [BenchmarkSla(MaxMeanMs = 10000, Standard = "XLSX parsing is heavier than CSV; reading up to 100k rows should complete within ~10s.")]
@@ -26,7 +27,7 @@ public class XlsxReadBenchmarks
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         _xlsx = new();
         _bytes = _xlsx.ExportToXlsxBytes(SampleRecord.Generate(RowCount));
-        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-read-{Guid.NewGuid():N}.xlsx");
+        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-xlsx-read-{LyoGuid.CreateV7():N}.xlsx");
         File.WriteAllBytes(_filePath, _bytes);
     }
 
@@ -60,6 +61,10 @@ public class XlsxReadBenchmarks
         using var stream = new MemoryStream(_bytes, false);
         return _xlsx.ParseXlsxStreamAsDataTable(stream).ValueOrThrow().Rows.Count;
     }
+
+    [Benchmark]
+    [BenchmarkDescription("Parse a workbook file from disk into a row/column dictionary (filesystem read).")]
+    public int ParseFileAsDictionary() => _xlsx.ParseXlsxFileAsDictionary(_filePath).Count;
 
     [Benchmark]
     [BenchmarkDescription("Parse a workbook file from disk into a DataTable and count rows (filesystem read).")]

@@ -35,7 +35,7 @@ public class JobRunParameterBackFillTests
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp, ExpressionParameter, LiteralParameter);
         var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", false), TestContext.Current.CancellationToken);
+            .CreateJobRun(new(definitionId, "test-user"), TestCt);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         var asOfDate = Assert.Single(created.Data!.JobRunParameters!, p => p.Key == "AsOfDate");
@@ -52,7 +52,7 @@ public class JobRunParameterBackFillTests
         using var sp = BuildServiceProvider(_ => "2026-08-25");
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp, ExpressionParameter);
-        var request = new JobRunReq(definitionId, "test-user", false) {
+        var request = new JobRunReq(definitionId, "test-user") {
             JobRunParameters = {
                 new() {
                     Key = "AsOfDate",
@@ -63,7 +63,7 @@ public class JobRunParameterBackFillTests
             }
         };
 
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(request, TestContext.Current.CancellationToken);
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(request, TestCt);
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         Assert.Equal("\"2020-01-01\"", Assert.Single(created.Data!.JobRunParameters!, p => p.Key == "AsOfDate").Value);
     }
@@ -76,7 +76,7 @@ public class JobRunParameterBackFillTests
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp, ExpressionParameter);
         var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", false), TestContext.Current.CancellationToken);
+            .CreateJobRun(new(definitionId, "test-user"), TestCt);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         var expected = $"\"{DateTime.UtcNow.AddDays(-1):yyyy-MM-dd}\"";
@@ -90,7 +90,7 @@ public class JobRunParameterBackFillTests
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp, ExpressionParameter);
         var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", false), TestContext.Current.CancellationToken);
+            .CreateJobRun(new(definitionId, "test-user"), TestCt);
 
         // Silently dropping the parameter would hand the worker a null date; the caller needs to know the host is missing the formatter.
         Assert.False(created.IsSuccess);
@@ -104,7 +104,7 @@ public class JobRunParameterBackFillTests
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp, ExpressionParameter);
         var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", false), TestContext.Current.CancellationToken);
+            .CreateJobRun(new(definitionId, "test-user"), TestCt);
 
         Assert.False(created.IsSuccess);
         Assert.Contains("not a valid System.DateTime", created.Error!.GetFullMessage());
@@ -164,7 +164,7 @@ public class JobRunParameterBackFillTests
         foreach (var parameter in parameters)
             db.JobParameters.Add(parameter(definitionId));
 
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return definitionId;
     }
 
@@ -172,6 +172,6 @@ public class JobRunParameterBackFillTests
     {
         using var scope = sp.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        return await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        return await factory.CreateDbContextAsync(TestCt);
     }
 }

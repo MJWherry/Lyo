@@ -1,9 +1,9 @@
-using System.Reflection;
 using System.Text.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Formatter;
+using Lyo.Job.Models.Context;
 using Lyo.Job.Models.Response;
 
 namespace Lyo.Job.Worker;
@@ -16,11 +16,9 @@ internal sealed class JobWorkerParameterFormatter
 {
     private const int MaxFormatPasses = 8;
 
-    private static readonly BindingFlags PropertyFlags = BindingFlags.Public | BindingFlags.Instance;
-
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    private readonly Dictionary<string, object?> _bag = new(StringComparer.OrdinalIgnoreCase);
+    private readonly JobContextBag _bag = new();
     private readonly IFormatterService? _formatter;
     private readonly Dictionary<string, string> _originals = new(StringComparer.OrdinalIgnoreCase);
 
@@ -30,7 +28,7 @@ internal sealed class JobWorkerParameterFormatter
         _formatter = formatter;
         Run = run;
         SnapshotOriginals(run);
-        SeedJobRun();
+        _bag.WithRun(run, Coerce);
         ReformatStringParameters();
     }
 
@@ -40,7 +38,7 @@ internal sealed class JobWorkerParameterFormatter
     public void AddContext(string name, object? value)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
-        _bag[name] = value;
+        _bag.Set(name, value);
         ReformatStringParameters();
     }
 
@@ -59,34 +57,6 @@ internal sealed class JobWorkerParameterFormatter
 
             _originals[parameter.Key] = UnwrapJsonString(parameter.Value) ?? parameter.Value;
         }
-    }
-
-    private void SeedJobRun()
-    {
-        var jobrun = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var prop in typeof(JobRunRes).GetProperties(PropertyFlags)) {
-            if (!prop.CanRead || prop.GetIndexParameters().Length > 0)
-                continue;
-            if (string.Equals(prop.Name, nameof(JobRunRes.JobRunParameters), StringComparison.Ordinal))
-                continue;
-            try {
-                jobrun[prop.Name] = prop.GetValue(Run);
-            }
-            catch {
-                // Ignore getters that throw.
-            }
-        }
-
-        jobrun["Parameters"] = BuildParametersMap();
-        _bag["jobrun"] = jobrun;
-    }
-
-    private Dictionary<string, object?> BuildParametersMap()
-    {
-        var map = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var parameter in Run.JobRunParameters ?? [])
-            map[parameter.Key] = Coerce(parameter);
-        return map;
     }
 
     private void ReformatStringParameters()
@@ -127,8 +97,7 @@ internal sealed class JobWorkerParameterFormatter
                 return;
 
             Run = Run with { JobRunParameters = list };
-            if (_bag["jobrun"] is Dictionary<string, object?> jobrun)
-                jobrun["Parameters"] = BuildParametersMap();
+            _bag.RefreshRunParameters(Run, Coerce);
         }
     }
 

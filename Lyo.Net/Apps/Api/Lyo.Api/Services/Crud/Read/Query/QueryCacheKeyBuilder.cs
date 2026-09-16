@@ -172,12 +172,29 @@ public static class QueryCacheKeyBuilder
         return keyBuilder.ToString();
     }
 
-    /// <summary>Cache key for <c>/QueryProject</c> SQL or materialized projection paths (includes select plus computed).</summary>
+    /// <summary>
+    /// Cache key for <c>/QueryProject</c>, including select, computed fields, and aggregates. The where tree is part of the key: a grouped query filters before it
+    /// aggregates, so two filters of the same select must not share a page.
+    /// </summary>
     public static string Build<TDb, TResponse>(ProjectionQueryReq queryRequest, string? defaultSortKey = null)
         where TDb : class
     {
         var baseReq = ToQueryConcreteReq(queryRequest);
-        return BuildEntityLoadWithProjectionDimensions<TDb, TResponse>(baseReq, queryRequest.Select, queryRequest.ComputedFields, defaultSortKey);
+        var key = BuildEntityLoadWithProjectionDimensions<TDb, TResponse>(baseReq, queryRequest.Select, queryRequest.ComputedFields, defaultSortKey);
+        if (queryRequest.WhereClause != null)
+            key += $":tree={WhereClauseHelpers.GetWhereClauseTreeHash(queryRequest.WhereClause)}";
+
+        return AppendAggregatesSuffix(key, queryRequest.Aggregates);
+    }
+
+    /// <summary>Appends aggregate columns so a grouped query does not share a cache entry with a row projection of the same <c>Select</c>.</summary>
+    public static string AppendAggregatesSuffix(string cacheKey, IReadOnlyList<AggregateSelect>? aggregates)
+    {
+        if (aggregates is not { Count: > 0 })
+            return cacheKey;
+
+        var body = string.Join("|", aggregates.Select(a => $"{a.Function}:{NormalizePathValue(a.Name)}:{NormalizePathValue(a.Field ?? "")}"));
+        return $"{cacheKey}:aggregates={CompactCacheSegment(body)}";
     }
 
     /// <summary>Appends QueryProject shape flags so cache entries differ when row columns differ (zip versus parallel sibling collection columns).</summary>

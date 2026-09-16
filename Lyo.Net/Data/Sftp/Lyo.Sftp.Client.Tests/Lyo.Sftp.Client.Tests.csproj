@@ -12,6 +12,7 @@
         <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
         <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\IO\Lyo.IO.FileSystem.Tests\Lyo.IO.FileSystem.Tests.csproj"/>
         <ProjectReference Include="..\Lyo.Sftp.Client\Lyo.Sftp.Client.csproj"/>
     </ItemGroup>
 

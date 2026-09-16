@@ -1,6 +1,7 @@
 using Lyo.Authentication.Models.Request;
 using Lyo.Authentication.Models.Response;
 using Lyo.Authentication.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Authentication.Tests;
 
@@ -19,7 +20,7 @@ public sealed class AuthenticationLyoMapperTests
             DisabledReason = null
         };
         var entity = _mapper.Map<UserEntity>(req);
-        entity.Id = Guid.NewGuid();
+        entity.Id = LyoGuid.CreateV7();
         entity.CreatedTimestamp = DateTime.UtcNow;
         var res = _mapper.Map<AuthUserRes>(entity);
         Assert.Equal("Ada", res.DisplayName);
@@ -49,7 +50,7 @@ public sealed class AuthenticationLyoMapperTests
     [Fact]
     public void Maps_Claim_Req()
     {
-        var req = new AuthClaimReq { UserId = Guid.NewGuid(), Type = "department", Value = "eng" };
+        var req = new AuthClaimReq { UserId = LyoGuid.CreateV7(), Type = "department", Value = "eng" };
         var entity = _mapper.Map<UserClaimEntity>(req);
         Assert.Equal("department", entity.Type);
         Assert.Equal("eng", entity.Value);
@@ -60,7 +61,7 @@ public sealed class AuthenticationLyoMapperTests
     [Fact]
     public void Maps_Scope_Req()
     {
-        var req = new AuthScopeReq { UserId = Guid.NewGuid(), Name = "people.read" };
+        var req = new AuthScopeReq { UserId = LyoGuid.CreateV7(), Name = "people.read" };
         var entity = _mapper.Map<UserScopeEntity>(req);
         Assert.Equal("people.read", entity.Name);
         var res = _mapper.Map<AuthScopeRes>(entity);

@@ -16,7 +16,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Validation\Lyo.Validation.csproj"/>
-        <ProjectReference Include="..\..\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
         <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>

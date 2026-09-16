@@ -3,6 +3,7 @@ using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Extensions;
 using Lyo.Reporting.Models.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Web;
 
@@ -17,7 +18,7 @@ public static class ReportExamples
             .SetTitle("Sales Report")
             .SetSubtitle("Quarterly Performance Summary")
             .SetDescription("This report provides an overview of sales performance for the specified period.")
-            .AddMetadata("ReportId", Guid.NewGuid())
+            .AddMetadata("ReportId", LyoGuid.CreateV7())
             .AddMetadata("GeneratedAt", DateTime.Now)
             .AddSection(
                 "Summary",

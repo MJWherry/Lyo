@@ -1,8 +1,12 @@
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
 using Lyo.Api.Export.Csv;
+using Lyo.Api.Export.Toml;
 using Lyo.Api.Export.Xlsx;
+using Lyo.Api.Export.Xml;
+using Lyo.Api.Export.Yaml;
 using Lyo.Cache;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Csv;
 using Lyo.Formatter;
 using Lyo.Job.Models.Request;
@@ -10,6 +14,9 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Xlsx;
+using Lyo.Xml;
+using Lyo.Yaml;
+using Lyo.Toml;
 using Microsoft.AspNetCore.Builder;
 
 namespace Lyo.Api.Tests;
@@ -30,14 +37,14 @@ public class ApiEndpointBuilderTests
             .AllowAnonymous()
             .WithQuery()
             .WithGet()
-            .WithCreate(ctx => ctx.Entity.Id = Guid.NewGuid())
-            .WithCreateBulk(ctx => ctx.Entity.Id = Guid.NewGuid())
+            .WithCreate(ctx => ctx.Entity.Id = LyoGuid.CreateV7())
+            .WithCreateBulk(ctx => ctx.Entity.Id = LyoGuid.CreateV7())
             .WithUpdate()
             .WithUpdateBulk()
             .WithPatch()
             .WithPatchBulk()
-            .WithUpsert(beforeCreate: ctx => ctx.Entity.Id = Guid.NewGuid())
-            .WithUpsertBulk(beforeCreate: ctx => ctx.Entity.Id = Guid.NewGuid())
+            .WithUpsert(beforeCreate: ctx => ctx.Entity.Id = LyoGuid.CreateV7())
+            .WithUpsertBulk(beforeCreate: ctx => ctx.Entity.Id = LyoGuid.CreateV7())
             .WithDelete()
             .WithDeleteBulk()
             .Build());
@@ -56,10 +63,16 @@ public class ApiEndpointBuilderTests
 
         builder.Services.AddCsvService();
         builder.Services.AddXlsxService();
+        builder.Services.AddSingleton<IYamlService>(_ => new YamlService());
+        builder.Services.AddSingleton<IXmlService>(_ => new XmlService());
+        builder.Services.AddSingleton<ITomlService>(_ => new TomlService());
         builder.Services.AddFormatterService();
         builder.Services.AddLyoApiExport<JobContext>();
         builder.Services.AddCsvExport();
         builder.Services.AddXlsxExport();
+        builder.Services.AddYamlExport();
+        builder.Services.AddXmlExport();
+        builder.Services.AddTomlExport();
         var app = builder.Build();
         var exception = Record.Exception(()
             => app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")
@@ -81,15 +94,21 @@ public class ApiEndpointBuilderTests
 
         builder.Services.AddCsvService();
         builder.Services.AddXlsxService();
+        builder.Services.AddSingleton<IYamlService>(_ => new YamlService());
+        builder.Services.AddSingleton<IXmlService>(_ => new XmlService());
+        builder.Services.AddSingleton<ITomlService>(_ => new TomlService());
         builder.Services.AddFormatterService();
         builder.Services.AddLyoApiExport<JobContext>();
         builder.Services.AddCsvExport();
         builder.Services.AddXlsxExport();
+        builder.Services.AddYamlExport();
+        builder.Services.AddXmlExport();
+        builder.Services.AddTomlExport();
         var app = builder.Build();
         var exception = Record.Exception(()
             => app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")
                 .AllowAnonymous()
-                .WithCrud(ApiFeatureSet.CoreAll, new() { BeforeCreate = ctx => ctx.Entity.Id = Guid.NewGuid() })
+                .WithCrud(ApiFeatureSet.CoreAll, new() { BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateV7() })
                 .Build());
 
         Assert.Null(exception);

@@ -96,7 +96,7 @@ public class AesGcmRsaTests : IDisposable, IAsyncDisposable
     [InlineData(5000)]
     public async Task Hybrid_Stream_Roundtrip_AcrossChunkBoundaries(int size)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var (pub, priv) = GeneratePemFiles();
         using var svc = new AesGcmRsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
         var plaintext = TestData.Create(size);

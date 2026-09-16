@@ -1,7 +1,7 @@
 using Lyo.Parameters;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Enums;

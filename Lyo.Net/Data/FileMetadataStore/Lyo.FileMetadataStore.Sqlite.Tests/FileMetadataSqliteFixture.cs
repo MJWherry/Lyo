@@ -3,6 +3,7 @@ using Lyo.Lock;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileMetadataStore.Sqlite.Tests;
 
@@ -12,9 +13,12 @@ public sealed class FileMetadataSqliteFixture : IAsyncLifetime
 
     public IServiceProvider ServiceProvider { get; private set; } = null!;
 
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
+    public CancellationToken TestCt => TestContext.Current.CancellationToken;
+
     public async ValueTask InitializeAsync()
     {
-        _dbPath = Path.Combine(Path.GetTempPath(), $"lyo-filemetadata-sqlite-{Guid.NewGuid():N}.db");
+        _dbPath = Path.Combine(Path.GetTempPath(), $"lyo-filemetadata-sqlite-{LyoGuid.CreateV7():N}.db");
         var connectionString = $"Data Source={_dbPath}";
         var services = new ServiceCollection();
         services.AddLogging(b => {
@@ -28,7 +32,7 @@ public sealed class FileMetadataSqliteFixture : IAsyncLifetime
         ServiceProvider = services.BuildServiceProvider();
         using var scope = ServiceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<SqliteFileMetadataStoreDbContext>();
-        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
+        await context.Database.MigrateAsync(TestCt);
     }
 
     public ValueTask DisposeAsync()

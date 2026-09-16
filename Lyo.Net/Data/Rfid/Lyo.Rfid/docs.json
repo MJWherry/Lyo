@@ -1,0 +1,76 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Rfid",
+  "name": "Lyo.Rfid",
+  "area": "Data",
+  "tagline": "ISO 15693 block read/write, frames, and a transceiver port.",
+  "description": "Read and write ISO 15693 blocks through `IRfidTag`. `MemoryRfidTag` keeps the blocks in a buffer for tests and dumps. `Iso15693Tag.OpenAsync` inventories one tag on `IIso15693Transceiver` and takes the block size from GET SYSTEM INFORMATION. `Iso15693Crc` is the ISO 15693 CRC-16 (poly 0x8408, init 0xFFFF, least-significant byte first). A PN5180-class reader implements the transceiver. Type 2 NFC readers do not speak this protocol.",
+  "features": [
+    "**Blocks.** `ReadBlocksAsync` and `WriteBlockAsync` move whole blocks. A write that is not `BlockSize` bytes throws.",
+    "**Memory size.** `OpenAsync` reads the 2-byte GET SYSTEM INFORMATION field. Block count is the first byte plus one (at most 256). Block size is the low 5 bits of the second byte plus one.",
+    "**Transceiver.** One call carries the whole frame, CRC included. The caller builds the command; the reader only moves bytes.",
+    "**CRC.** `Iso15693Crc.Append` adds the two CRC bytes. `Verify` throws `RfidException` when they do not match."
+  ],
+  "examples": [
+    {
+      "title": "Write and read a block on an in-memory tag",
+      "language": "csharp",
+      "code": "var tag = new MemoryRfidTag(blockSize: 4, blockCount: 8, \"E004035012345678\");\nvar written = new byte[] { 9, 8, 7, 6 };\nawait tag.WriteBlockAsync(1, written, cancellationToken);\nvar read = await tag.ReadBlocksAsync(0, 2, cancellationToken);\n// read[4..8] is 09 08 07 06"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Rfid/Lyo.Rfid/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

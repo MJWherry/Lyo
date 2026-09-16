@@ -1,0 +1,26 @@
+@using Lyo.Leaderboard.Api.Client
+@using Lyo.Leaderboard.Web.Components
+@inject ILeaderboardApiClient Client
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h5">Leaderboard workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Calls TestApi anonymously as the workbench owner. Seed a fishing derby (three properties), invite with QR, redeem as guest, submit a pending catch, approve, then adjust.
+            </MudText>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Science"
+                       Disabled="@_seeding"
+                       OnClick="SeedFishingAsync">
+                Seed fishing derby
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    <LeaderboardManagement @key="_managementKey"
+                           Client="Client"
+                           InitialBoardId="_boardId"/>
+</MudStack>

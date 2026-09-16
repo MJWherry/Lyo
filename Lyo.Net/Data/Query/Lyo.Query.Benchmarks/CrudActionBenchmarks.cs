@@ -15,6 +15,7 @@ using Lyo.Query.Models.Common.Request;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Query.Benchmarks;
 
@@ -91,7 +92,7 @@ public class CrudActionBenchmarks
             Enabled = true
         };
 
-        var result = await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(req, ctx => ctx.Entity.Id = Guid.NewGuid());
+        var result = await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(req, ctx => ctx.Entity.Id = LyoGuid.CreateV7());
         return result.Data!.Id;
     }
 
@@ -121,7 +122,7 @@ public class CrudActionBenchmarks
     [BenchmarkDescription("Patch one property of a single seeded JobDefinition by key.")]
     public async Task<bool> Patch()
     {
-        var request = new PatchRequest(new[] { new object[] { _seedId } }) { Properties = { ["Description"] = $"patched-{Guid.NewGuid():N}" } };
+        var request = new PatchRequest(new[] { new object[] { _seedId } }) { Properties = { ["Description"] = $"patched-{LyoGuid.CreateV7():N}" } };
         var result = await _patch.PatchAsync<JobDefinition, JobDefinitionRes>(request);
         return result.IsSuccess;
     }
@@ -131,13 +132,13 @@ public class CrudActionBenchmarks
     public async Task<bool> Create()
     {
         var req = new JobDefinitionReq {
-            Name = $"Created-{Guid.NewGuid():N}",
+            Name = $"Created-{LyoGuid.CreateV7():N}",
             Type = "Test",
             WorkerType = "csharp",
             Enabled = true
         };
 
-        var result = await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(req, ctx => ctx.Entity.Id = Guid.NewGuid());
+        var result = await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(req, ctx => ctx.Entity.Id = LyoGuid.CreateV7());
         return result.IsSuccess;
     }
 
@@ -145,7 +146,7 @@ public class CrudActionBenchmarks
     [BenchmarkDescription("Create then immediately delete a JobDefinition (insert + delete round-trip).")]
     public async Task<bool> CreateThenDelete()
     {
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         var req = new JobDefinitionReq {
             Name = $"Temp-{id:N}",
             Type = "Test",

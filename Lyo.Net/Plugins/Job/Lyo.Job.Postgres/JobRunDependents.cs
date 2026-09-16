@@ -5,7 +5,7 @@ using Lyo.Exceptions;
 namespace Lyo.Job.Postgres;
 
 /// <summary>
-/// Shared primitives that make a <see cref="JobRun" /> deletable. A run is referenced by three child collections and by three self-referencing FKs on other runs. PostgreSQL is
+/// Shared primitives that make a <see cref="JobRun" /> deletable. A run is referenced by three child collections and by two self-referencing FKs on other runs. PostgreSQL is
 /// mapped with restrict / <c>ClientSetNull</c> semantics, so every delete path (definition cascade, single-run delete endpoint, retention purge) has to detach and remove
 /// the same graph.
 /// Call <see cref="IncludeDependents" /> when loading the runs, then <see cref="Remove" /> per run before <c>RemoveRange</c> on the runs themselves.
@@ -13,7 +13,7 @@ namespace Lyo.Job.Postgres;
 /// </summary>
 public static class JobRunDependents
 {
-    /// <summary>Loads the child collections and inverse navigations <see cref="Remove" /> needs, as a split query so the six collections do not multiply rows together.</summary>
+    /// <summary>Loads the child collections and inverse navigations <see cref="Remove" /> needs, as a split query so the five collections do not multiply rows together.</summary>
     /// <param name="query">Run query to expand.</param>
     public static IQueryable<JobRun> IncludeDependents(IQueryable<JobRun> query)
     {
@@ -22,7 +22,6 @@ public static class JobRunDependents
             .Include(r => r.JobRunParameters)
             .Include(r => r.JobRunResults)
             .Include(r => r.InverseReRanFromJobRun)
-            .Include(r => r.InverseTriggeredByJobRun)
             .Include(r => r.InverseParentJobRun)
             .AsSplitQuery();
     }
@@ -34,9 +33,6 @@ public static class JobRunDependents
         ArgumentHelpers.ThrowIfNull(run);
         foreach (var child in run.InverseReRanFromJobRun)
             child.ReRanFromJobRunId = null;
-
-        foreach (var child in run.InverseTriggeredByJobRun)
-            child.TriggeredByJobRunId = null;
 
         foreach (var child in run.InverseParentJobRun)
             child.ParentJobRunId = null;

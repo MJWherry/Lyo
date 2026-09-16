@@ -120,4 +120,4 @@ public interface IProjectionService
 public sealed record ProjectedFieldSpec(string RequestedPath, string NormalizedPath, string[] NormalizedParts);
 
 /// <summary>Filter condition used for projection-level filtering.</summary>
-public sealed record ProjectedFilterCondition(string NormalizedField, ComparisonOperatorEnum Comparison, object? Value);
+public sealed record ProjectedFilterCondition(string NormalizedField, ComparisonOperatorEnum Comparison, object? Value, double? Threshold = null);

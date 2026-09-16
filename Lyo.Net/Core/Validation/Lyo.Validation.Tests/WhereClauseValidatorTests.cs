@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Lyo.Cache;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
@@ -73,9 +73,9 @@ public class WhereClauseValidatorTests
     public async Task GetAsync_LoadsFromStore_AndValidates()
     {
         var store = new InMemoryValidationSchemaStore();
-        await store.SaveAsync(SignupSchema(), TestContext.Current.CancellationToken);
+        await store.SaveAsync(SignupSchema(), TestCt);
         var compiler = new ValidationSchemaCompiler(store, CreateEvaluator());
-        var validator = await compiler.GetAsync<CreateUserRequest>("signup.v2", TestContext.Current.CancellationToken);
+        var validator = await compiler.GetAsync<CreateUserRequest>("signup.v2", TestCt);
         var result = validator.Validate(new() { Email = "matt@example.com", Role = "User", Status = "Active" });
         Assert.True(result.IsSuccess);
     }
@@ -98,7 +98,7 @@ public class WhereClauseValidatorTests
     public async Task IncludeStore_LoadsSchema()
     {
         var store = new InMemoryValidationSchemaStore();
-        await store.SaveAsync(SignupSchema(), TestContext.Current.CancellationToken);
+        await store.SaveAsync(SignupSchema(), TestCt);
         var validator = ValidatorBuilder<CreateUserRequest>.Create().IncludeStore(store, "signup.v2", CreateEvaluator()).Build();
         var result = validator.Validate(new() { Email = "x", Role = "User", Status = "Active" });
         Assert.False(result.IsSuccess);
@@ -127,15 +127,15 @@ public class WhereClauseValidatorTests
     public async Task InMemoryStore_ListGetDelete()
     {
         var store = new InMemoryValidationSchemaStore();
-        await store.SaveAsync(SignupSchema(), TestContext.Current.CancellationToken);
+        await store.SaveAsync(SignupSchema(), TestCt);
         await store.SaveAsync(
             new ValidationSchema { Key = "other", TargetTypeName = "Other", Constraints = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "A") },
-            TestContext.Current.CancellationToken);
-        var listed = await store.ListAsync(nameof(CreateUserRequest), TestContext.Current.CancellationToken);
+            TestCt);
+        var listed = await store.ListAsync(nameof(CreateUserRequest), TestCt);
         Assert.Single(listed);
-        Assert.NotNull(await store.GetAsync("signup.v2", TestContext.Current.CancellationToken));
-        Assert.True(await store.DeleteAsync("signup.v2", TestContext.Current.CancellationToken));
-        Assert.Null(await store.GetAsync("signup.v2", TestContext.Current.CancellationToken));
+        Assert.NotNull(await store.GetAsync("signup.v2", TestCt));
+        Assert.True(await store.DeleteAsync("signup.v2", TestCt));
+        Assert.Null(await store.GetAsync("signup.v2", TestCt));
     }
 
     [Fact]

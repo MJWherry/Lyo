@@ -1,6 +1,6 @@
 # Lyo.Web.Automation.Selenium
 
-Selenium WebDriver backend for the `Lyo.Web.Automation` abstractions: launch Chrome / Edge / Firefox / Safari (plus Selenium Grid), isolate sessions, and cover polling, tab/frame/dialog/keyboard helpers, typed element controls, automation plans, and DI registration.
+Selenium WebDriver backend for the `Lyo.Web.Automation` abstractions: launch Chrome / Chromium / Edge / Firefox (plus Selenium Grid), isolate sessions, and cover polling, tab/frame/dialog/keyboard helpers, typed element controls, automation plans, and DI registration.
 
 ## Examples
 
@@ -38,10 +38,10 @@ Application-wide defaults live on [`SeleniumBrowserOptions`](Configuration/Selen
 
 | Property | Default | Notes |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BrowserKind` | `Chrome` | `SeleniumBrowserKind`: `Chrome`, `Edge`, `Firefox`, `Safari`. |
+| `BrowserKind` | `Chrome` | `AutomationBrowserKind`: `Chrome`, `Chromium`, `Edge`, `Firefox`. Chromium uses ChromeDriver. WebKit is rejected. A detected install path is the local browser binary. |
 | `Headless` | `false` | Headless mode where the engine allows it. |
 | `RemoteWebDriverUri` | `null` | When set, drives `RemoteWebDriver` against a standalone server / Selenium Grid. |
-| `UserAgents` | 4 desktop UAs | Cycled for stealth. |
+| `UserAgents` | empty | An empty list is generated for `BrowserKind` on this host. A list the host sets is cycled at launch. |
 | `WebDriverArguments` | `disable-infobars`, `disable-extensions`, `disable-dev-shm-usage`, `no-sandbox` | Use `AddArgument(key, value?)` to append `key=value` (or bare key) entries. `disable-gpu` is omitted: it forces SwiftShader, a bot-detection tell. |
 | `StartupScripts` | `[]` | JS injected via CDP `Page.addScriptToEvaluateOnNewDocument` (Edge/Chrome only). Bypass bot-detection traps. |
 | `EnablePerformanceLogging` | `true` | Required for CDP-based network observation in `IWebAutomationNavigator.NavigateAsync`. Disable on sites that detect CDP, then provide a JS interception script in `StartupScripts`. |
@@ -67,7 +67,7 @@ Wrappers over `IWebElement` for typed interactions: `WebElementControl` (base), 
 
 ## WebDriver and automation ([`WebDriver/`](WebDriver), [`Automation/ElementLocatorMapping.cs`](Automation/ElementLocatorMapping.cs))
 
-Driver-factory helpers (Edge / Chrome / Safari / Firefox + Remote) and the locator mapping that lets `Lyo.Web.Automation` JSON automation plans target Selenium-style locators.
+Driver-factory helpers (Chrome / Chromium / Edge / Firefox + Remote) and the locator mapping that lets `Lyo.Web.Automation` JSON automation plans target Selenium-style locators.
 
 ## DI registration ([`Service/Extensions.cs`](Service/Extensions.cs))
 

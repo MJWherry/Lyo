@@ -4,6 +4,7 @@ using Lyo.Job.Client;
 using Lyo.Job.Models;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 namespace Lyo.Job.Tests;
 
 /// <summary>
@@ -17,7 +18,7 @@ public class MqJobEventPublisherCancelFanoutTests
     {
         var mq = new RoutingFakeMqService();
         var publisher = CreatePublisher(mq);
-        await publisher.SubscribeToRunCancellationsAsync("cs", _ => Task.CompletedTask, TestContext.Current.CancellationToken);
+        await publisher.SubscribeToRunCancellationsAsync("cs", _ => Task.CompletedTask, TestCt);
         var queue = Assert.Single(mq.CreatedQueues);
         Assert.StartsWith(Constants.Mq.QueueGetJobRunCancel("cs") + ".", queue.Name, StringComparison.Ordinal);
         Assert.True(queue.Exclusive);
@@ -37,7 +38,7 @@ public class MqJobEventPublisherCancelFanoutTests
     {
         var mq = new RoutingFakeMqService();
         var publisher = CreatePublisher(mq);
-        await publisher.SubscribeToRunCancellationsAsync("cs", _ => Task.CompletedTask, TestContext.Current.CancellationToken, "abc123");
+        await publisher.SubscribeToRunCancellationsAsync("cs", _ => Task.CompletedTask, TestCt, "abc123");
         Assert.Equal(Constants.Mq.QueueGetJobRunCancelInstance("cs", "abc123"), Assert.Single(mq.CreatedQueues).Name);
     }
 
@@ -54,18 +55,18 @@ public class MqJobEventPublisherCancelFanoutTests
             "cs", runId => {
                 receivedByInstanceA.Add(runId);
                 return Task.CompletedTask;
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         await publisher.SubscribeToRunCancellationsAsync(
             "cs", runId => {
                 receivedByInstanceB.Add(runId);
                 return Task.CompletedTask;
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         Assert.Equal(2, mq.CreatedQueues.Count);
         Assert.Equal(2, mq.CreatedQueues.Select(q => q.Name).Distinct().Count());
-        var runId = Guid.NewGuid();
-        await publisher.PublishRunCancelledAsync(runId, TestContext.Current.CancellationToken);
+        var runId = LyoGuid.CreateV7();
+        await publisher.PublishRunCancelledAsync(runId, TestCt);
         Assert.Equal(runId, Assert.Single(receivedByInstanceA));
         Assert.Equal(runId, Assert.Single(receivedByInstanceB));
     }

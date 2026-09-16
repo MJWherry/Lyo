@@ -3,9 +3,9 @@ using Lyo.Job.Models.Request;
 
 namespace Lyo.Job.Models.Builders;
 
-public class JobRunBuilder(Guid jobDefinitionId, string createdBy, bool allowTriggers = true, Guid? triggerId = null, Guid? scheduleId = null)
+public class JobRunBuilder(Guid jobDefinitionId, string createdBy, Guid? scheduleId = null)
 {
-    private readonly JobRunReq _request = new(jobDefinitionId, createdBy, allowTriggers, triggerId, scheduleId);
+    private readonly JobRunReq _request = new(jobDefinitionId, createdBy, scheduleId);
 
     public JobRunBuilder AddParameter(string key, string? value = null, string? description = null)
     {

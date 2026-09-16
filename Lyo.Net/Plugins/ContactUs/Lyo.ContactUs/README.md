@@ -48,17 +48,22 @@ else
 ## `IContactUsService`
 
 - `Task<ContactUsSubmitResult> SubmitAsync(ContactUsRequest request, CancellationToken ct = default)`
+- `Task<ContactSubmission?> GetByIdAsync(Guid id, CancellationToken ct = default)` — null when no row has that id. `Guid.Empty` throws.
+- `Task<IReadOnlyList<ContactSubmission>> ListAsync(CancellationToken ct = default)` — every submission, newest `CreatedTimestamp` first.
 - `Task<bool> TestConnectionAsync(CancellationToken ct = default)`
 
 ## `ContactUsServiceBase`
 
 - `ValidateRequest(ContactUsRequest)` (virtual; the default checks `Name` / `Email` (≤ 320 chars) / `Subject` / `Message` and clamps message length to `Options.MinMessageLength` … `Options.MaxMessageLength`).
 - `SubmitCoreAsync(ContactUsRequest, CancellationToken)` (abstract; this is where the row is actually persisted).
+- `GetByIdAsync(Guid, CancellationToken)` rejects `Guid.Empty`, then calls abstract `GetByIdCoreAsync`.
+- `ListAsync(CancellationToken)` calls abstract `ListCoreAsync` (newest `CreatedTimestamp` first).
 - `TestConnectionAsync(CancellationToken)` (abstract; probe the backend).
 
 ## Request and result models (`Lyo.ContactUs.Models`)
 
 - `ContactUsRequest` *(record)*: `Name` (req, ≤ 200), `Email` (req, ≤ 320, `[EmailAddress]`), `Subject` (req, ≤ 500), `Message` (req, ≤ 10 000), optional `Phone` (≤ 50), optional `Company` (≤ 200).
+- `ContactSubmission` *(record)*: stored row returned by `GetByIdAsync` / `ListAsync`. `Id`, `Name`, `Email`, `Subject`, `Message`, optional `Phone`, optional `Company`, `CreatedTimestamp` (UTC).
 - `ContactUsServiceOptions`: `SectionName = "ContactUsOptions"`, `MaxMessageLength` (default `10000`), `MinMessageLength` (default `10`), `EnableMetrics` (default `false`).
 - `ContactUsSubmitResult` *(derives from `Lyo.Result.Result<Guid?>`)*: `SubmissionId`, `Message`, plus `FromSuccess` / `FromException` / `FromError` factories.
 

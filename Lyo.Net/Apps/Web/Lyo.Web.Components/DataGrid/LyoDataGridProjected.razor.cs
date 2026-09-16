@@ -36,6 +36,7 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
     private readonly CancellationTokenSource _cts = new();
     private readonly bool _hideable = true;
     private readonly TaskCompletionSource _restoreGate = new(TaskCreationOptions.RunContinuationsAsynchronously); // MudDataGrid loads in its first AfterRender; wait so sorts/page restore win.
+    private bool _disposed;
     private bool _autoRefreshActive;
     private bool _autoRefreshEnabled;
     private Timer? _autoRefreshTimer;
@@ -284,11 +285,14 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
 
     public void Dispose()
     {
+        if (_disposed)
+            return;
+        _disposed = true;
         _visibilityReloadTimer?.Dispose();
         _autoRefreshTimer?.Dispose();
         _restoreGate.TrySetCanceled();
         _cts.Cancel();
-        _cts.Dispose();
+        // Do not Dispose the CTS: parents can keep an @ref and call RefreshData after this instance is removed from the tree.
         _ = _viewport.DisposeAsync();
     }
 
@@ -613,10 +617,16 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
 
     private async Task<GridData<object?>> LoadServerData(GridState<object?> state, CancellationToken ct)
     {
+        if (_disposed)
+            return new() { Items = [], TotalItems = 0 };
+
         try {
             await _restoreGate.Task.WaitAsync(ct);
         }
         catch (OperationCanceledException) {
+            return new() { Items = [], TotalItems = 0 };
+        }
+        catch (ObjectDisposedException) {
             return new() { Items = [], TotalItems = 0 };
         }
 
@@ -624,9 +634,9 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
         var loadEpoch = Interlocked.Increment(ref _loadEpoch);
         _loading = true;
         QueryError = null;
-        await InvokeAsync(StateHasChanged);
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, ct);
         try {
+            await InvokeAsync(StateHasChanged);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, ct);
             var pageSize = _dataGrid is { RowsPerPage: > 0 } ? _dataGrid.RowsPerPage : state.PageSize;
             var offset = (_dataGrid?.CurrentPage ?? state.Page) * pageSize;
             var queryBuilder = GetQuery(offset, pageSize);
@@ -657,6 +667,9 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
         catch (OperationCanceledException) {
             return new() { Items = [], TotalItems = 0 };
         }
+        catch (ObjectDisposedException) {
+            return new() { Items = [], TotalItems = 0 };
+        }
         catch (Exception ex) {
             Logger.LogError(ex, "Error running query");
             QueryError = DataGridQueryError.FromException(ex);
@@ -666,11 +679,13 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
         finally {
             if (loadEpoch == _loadEpoch)
                 _loading = false;
-            await InvokeAsync(StateHasChanged);
-            if (_toolbar is not null && (_toolbar.SearchHadFocus || _refocusSearchAfterLoad)) {
-                _refocusSearchAfterLoad = false;
-                await Task.Delay(50);
-                await _toolbar.FocusSearchAsync();
+            if (!_disposed) {
+                await InvokeAsync(StateHasChanged);
+                if (_toolbar is not null && (_toolbar.SearchHadFocus || _refocusSearchAfterLoad)) {
+                    _refocusSearchAfterLoad = false;
+                    await Task.Delay(50);
+                    await _toolbar.FocusSearchAsync();
+                }
             }
         }
     }
@@ -745,8 +760,15 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
 
     public async Task RefreshData()
     {
-        if (_dataGrid is not null)
+        if (_disposed || _dataGrid is null)
+            return;
+        try {
             await _dataGrid.ReloadServerData();
+        }
+        catch (ObjectDisposedException) {
+        }
+        catch (OperationCanceledException) {
+        }
     }
 
     private async Task OnSearchDebounced(string value)
@@ -810,7 +832,7 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
 
     private void StartAutoRefresh()
     {
-        if (_autoRefreshActive || _cts.Token.IsCancellationRequested || !_autoRefreshEnabled)
+        if (_disposed || _autoRefreshActive || _cts.Token.IsCancellationRequested || !_autoRefreshEnabled)
             return;
 
         _autoRefreshActive = true;

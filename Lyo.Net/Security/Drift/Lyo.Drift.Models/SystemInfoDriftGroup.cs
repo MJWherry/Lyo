@@ -33,6 +33,12 @@ public enum SystemInfoDriftGroup
     /// <summary>Connected monitors (identity fields; refresh rate is omitted).</summary>
     Monitors,
 
+    /// <summary>Audio endpoints (name, kind, form factor, default). Volume is never projected.</summary>
+    AudioDevices,
+
+    /// <summary>Installed printers (name, driver, port, default). Status is never projected.</summary>
+    Printers,
+
     /// <summary>Culture, UI culture, and time-zone id. UTC offset is omitted because it flaps with DST.</summary>
     Locale
 }

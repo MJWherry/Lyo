@@ -110,6 +110,7 @@ public static class Extensions
             services.AddJobDbContextFactory(options);
             services.AddLyoCrudServices<JobContext>();
             services.AddScoped<JobService>();
+            services.AddScoped<JobWorkflowService>();
             services.TryAddSingleton<JobLyoMapper>();
             services.TryAddSingleton<ILyoMapper>(sp => sp.GetRequiredService<JobLyoMapper>());
             // Register a no-op publisher so JobService can be resolved without a message-queue transport.

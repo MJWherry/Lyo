@@ -1,3 +1,4 @@
+using Lyo.Exceptions.Models;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Selenium.Browser;
 using Lyo.Web.Automation.Selenium.Service;
@@ -14,15 +15,11 @@ public class SeleniumBrowserOptions
 {
     public const string SectionName = "SeleniumBrowserOptions";
 
-    public List<string> UserAgents { get; set; } = [
-        "Mozilla/5.0 (X11; Windows; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.114 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246",
-        "Mozilla/5.0 (X11; CrOS x86_64 8172.45.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.64 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36"
-    ];
+    /// <summary>User-Agent pool. One entry is chosen at launch. An empty list is generated for <see cref="BrowserKind" /> on this host.</summary>
+    public List<string> UserAgents { get; set; } = [];
 
-    /// <summary>Which browser engine to drive locally or on a remote grid.</summary>
-    public SeleniumBrowserKind BrowserKind { get; set; } = SeleniumBrowserKind.Chrome;
+    /// <summary>Which browser to drive locally or on a remote grid. Chrome and Chromium use ChromeDriver. WebKit is rejected by <see cref="Validate" />.</summary>
+    public AutomationBrowserKind BrowserKind { get; set; } = AutomationBrowserKind.Chrome;
 
     /// <summary>If true, starts the browser in headless mode (where supported).</summary>
     public bool Headless { get; set; }
@@ -116,6 +113,13 @@ public class SeleniumBrowserOptions
     {
         WebDriverArguments.Add(WebDriverArgumentFormatter.Format(key, value));
         return this;
+    }
+
+    /// <summary>Rejects <see cref="AutomationBrowserKind.WebKit" />. Call at registration so an unsupported driver fails before launch.</summary>
+    public void Validate()
+    {
+        if (BrowserKind == AutomationBrowserKind.WebKit)
+            throw new ConfigurationException("Selenium cannot launch WebKit.", nameof(BrowserKind));
     }
 
     /// <summary>Applies <see cref="RandomizeViewportOnSessionStart" />. Call once before creating the WebDriver so <c>--window-size</c> matches.</summary>

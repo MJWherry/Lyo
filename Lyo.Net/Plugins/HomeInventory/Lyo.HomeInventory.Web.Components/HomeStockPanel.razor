@@ -1,0 +1,21 @@
+<MudStack Spacing="1">
+    <MudText Typo="Typo.subtitle2">Stock</MudText>
+    @foreach (var row in _stock) {
+        <MudText Typo="Typo.caption">@LocationName(row.LocationId): @row.QuantityOnHand on hand</MudText>
+    }
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start">
+        <MudSelect T="Guid" @bind-Value="_locationId" Label="Location" Dense="true" Margin="Margin.Dense">
+            @foreach (var loc in Locations) {
+                <MudSelectItem Value="@loc.Id">@loc.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudNumericField T="decimal" @bind-Value="_delta" Label="Delta" Margin="Margin.Dense"/>
+        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Class="mt-1" OnClick="Adjust" Disabled="@(_locationId == Guid.Empty)">Adjust</MudButton>
+        <MudSelect T="Guid" @bind-Value="_toLocationId" Label="Transfer to" Dense="true" Margin="Margin.Dense">
+            @foreach (var loc in Locations) {
+                <MudSelectItem Value="@loc.Id">@loc.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudButton Size="Size.Small" Variant="Variant.Outlined" Class="mt-1" OnClick="Transfer" Disabled="@(_locationId == Guid.Empty || _toLocationId == Guid.Empty)">Transfer</MudButton>
+    </MudStack>
+</MudStack>

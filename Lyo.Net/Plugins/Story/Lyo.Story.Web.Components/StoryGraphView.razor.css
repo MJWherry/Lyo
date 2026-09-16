@@ -1,0 +1,39 @@
+.story-graph-scroll {
+    overflow: auto;
+    padding-bottom: 4px;
+}
+
+.story-graph-svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.story-graph-edge {
+    fill: none;
+    stroke: var(--mud-palette-lines-default);
+    stroke-width: 2;
+}
+
+.story-graph-arrow {
+    fill: var(--mud-palette-lines-default);
+}
+
+.story-graph-node-shape {
+    fill: var(--mud-palette-surface);
+}
+
+.story-graph-label {
+    fill: var(--mud-palette-text-primary);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.story-graph-caption {
+    fill: var(--mud-palette-text-secondary);
+    font-size: 11px;
+}
+
+.story-graph-node-clickable {
+    cursor: pointer;
+}

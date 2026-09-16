@@ -162,6 +162,18 @@
                 </MudItem>
             </MudGrid>
 
+            @if (conditionNode.Comparison.IsFuzzyComparisonOperator()) {
+                <MudNumericField T="double?"
+                                 Value="@conditionNode.Threshold"
+                                 ValueChanged="@OnThresholdChanged"
+                                 Label="Fuzzy threshold (0–1, default 0.3)"
+                                 Min="0"
+                                 Max="1"
+                                 Step="0.05"
+                                 Variant="Variant.Outlined"
+                                 Margin="Margin.Dense"/>
+            }
+
             @* Value Input *@
             <MudText Typo="Typo.subtitle2">Value</MudText>
 

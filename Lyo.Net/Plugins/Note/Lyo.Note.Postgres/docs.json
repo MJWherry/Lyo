@@ -118,6 +118,14 @@
       ]
     },
     {
+      "name": "Lyo.Search.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Microsoft.EntityFrameworkCore",
       "kind": "package",
       "version": "10.0.5",
@@ -128,6 +136,15 @@
     },
     {
       "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

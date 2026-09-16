@@ -2,9 +2,12 @@ using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Health;
+using Lyo.HomeInventory.Models;
+using Lyo.HomeInventory.Models.Enums;
 using Lyo.HomeInventory.Postgres.Database;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.HomeInventory.Postgres;
 
@@ -54,7 +57,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
 
         var entity = new HomeItemEntity();
         CopyToEntity(item, entity);
-        entity.Id = item.Id == Guid.Empty ? Guid.NewGuid() : item.Id;
+        entity.Id = item.Id == Guid.Empty ? LyoGuid.CreateV7() : item.Id;
         entity.TenantId = resolvedTenant;
         if (entity.CreatedTimestamp == default)
             entity.CreatedTimestamp = DateTime.UtcNow;
@@ -73,27 +76,13 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
     }
 
     /// <inheritdoc />
-    public async Task<HomeItemRecord?> GetItemBySkuAsync(string sku, Guid? tenantId, CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sku);
-        var trimmed = sku.Trim();
-        var lower = trimmed.ToLowerInvariant();
-        var resolvedTenant = ResolveTenant(tenantId);
-        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Items.AsNoTracking()
-            .FirstOrDefaultAsync(i => i.Sku != null && i.Sku.ToLower() == lower && i.TenantId == resolvedTenant, ct)
-            .ConfigureAwait(false);
-
-        return entity == null ? null : ToItemRecord(entity);
-    }
-
-    /// <inheritdoc />
     public async Task DeleteItemAsync(Guid id, Guid? tenantId, CancellationToken ct = default)
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.Items.FirstOrDefaultAsync(i => i.Id == id && i.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         if (entity != null) {
+            await RemoveAttachmentsAsync(context, HomeInventoryEntityTypes.Item, id, resolvedTenant, ct).ConfigureAwait(false);
             context.Items.Remove(entity);
             await context.SaveChangesAsync(ct).ConfigureAwait(false);
         }
@@ -121,7 +110,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         }
 
         var entity = new HomeCategoryEntity {
-            Id = category.Id == Guid.Empty ? Guid.NewGuid() : category.Id,
+            Id = category.Id == Guid.Empty ? LyoGuid.CreateV7() : category.Id,
             ParentCategoryId = category.ParentCategoryId,
             Name = category.Name,
             Slug = category.Slug,
@@ -173,6 +162,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
 
         var entity = await context.Categories.FirstOrDefaultAsync(c => c.Id == id && c.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         if (entity != null) {
+            await RemoveAttachmentsAsync(context, HomeInventoryEntityTypes.Category, id, resolvedTenant, ct).ConfigureAwait(false);
             context.Categories.Remove(entity);
             await context.SaveChangesAsync(ct).ConfigureAwait(false);
         }
@@ -200,7 +190,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         }
 
         var entity = new HomeLocationEntity {
-            Id = location.Id == Guid.Empty ? Guid.NewGuid() : location.Id,
+            Id = location.Id == Guid.Empty ? LyoGuid.CreateV7() : location.Id,
             ParentLocationId = location.ParentLocationId,
             Name = location.Name,
             Code = location.Code,
@@ -253,6 +243,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
 
         var entity = await context.Locations.FirstOrDefaultAsync(l => l.Id == id && l.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         if (entity != null) {
+            await RemoveAttachmentsAsync(context, HomeInventoryEntityTypes.Location, id, resolvedTenant, ct).ConfigureAwait(false);
             context.Locations.Remove(entity);
             await context.SaveChangesAsync(ct).ConfigureAwait(false);
         }
@@ -322,7 +313,6 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         decimal quantityDelta,
         HomeItemMovementType movementType,
         string? referenceNumber,
-        string? notes,
         EntityRef? createdBy,
         Guid? tenantId,
         CancellationToken ct = default)
@@ -357,8 +347,8 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         var magnitude = Math.Abs(quantityDelta);
         context.Movements.Add(
             quantityDelta >= 0
-                ? CreateMovementEntity(itemId, movementType, magnitude, null, locationId, referenceNumber, notes, createdBy, resolvedTenant)
-                : CreateMovementEntity(itemId, movementType, magnitude, locationId, null, referenceNumber, notes, createdBy, resolvedTenant));
+                ? CreateMovementEntity(itemId, movementType, magnitude, null, locationId, referenceNumber, createdBy, resolvedTenant)
+                : CreateMovementEntity(itemId, movementType, magnitude, locationId, null, referenceNumber, createdBy, resolvedTenant));
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         await tx.CommitAsync(ct).ConfigureAwait(false);
@@ -371,7 +361,6 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         Guid toLocationId,
         decimal quantity,
         string? referenceNumber,
-        string? notes,
         EntityRef? createdBy,
         Guid? tenantId,
         CancellationToken ct = default)
@@ -406,7 +395,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         }
 
         context.Movements.Add(
-            CreateMovementEntity(itemId, HomeItemMovementType.StockTransfer, quantity, fromLocationId, toLocationId, referenceNumber, notes, createdBy, resolvedTenant));
+            CreateMovementEntity(itemId, HomeItemMovementType.StockTransfer, quantity, fromLocationId, toLocationId, referenceNumber, createdBy, resolvedTenant));
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         await tx.CommitAsync(ct).ConfigureAwait(false);
@@ -422,7 +411,81 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         return list.Select(ToMovementRecord).ToList();
     }
 
+    /// <inheritdoc />
+    public async Task SaveAttachmentAsync(HomeAttachmentRecord attachment, Guid? tenantId, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(attachment);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(attachment.EntityType, nameof(attachment.EntityType));
+        OperationHelpers.ThrowIf(attachment.EntityId == Guid.Empty, "Attachment entity id is required.");
+        OperationHelpers.ThrowIf(attachment.FileId == Guid.Empty, "Attachment file id is required.");
+        var resolvedTenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        if (attachment.Id != Guid.Empty) {
+            var existing = await context.Attachments.FirstOrDefaultAsync(a => a.Id == attachment.Id && a.TenantId == resolvedTenant, ct).ConfigureAwait(false);
+            if (existing != null) {
+                CopyToEntity(attachment, existing);
+                existing.TenantId = resolvedTenant;
+                await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                return;
+            }
+        }
+
+        var entity = new HomeAttachmentEntity();
+        CopyToEntity(attachment, entity);
+        entity.Id = attachment.Id == Guid.Empty ? LyoGuid.CreateV7() : attachment.Id;
+        entity.TenantId = resolvedTenant;
+        if (entity.CreatedTimestamp == default)
+            entity.CreatedTimestamp = DateTime.UtcNow;
+
+        context.Attachments.Add(entity);
+        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<HomeAttachmentRecord?> GetAttachmentByIdAsync(Guid id, Guid? tenantId, CancellationToken ct = default)
+    {
+        var resolvedTenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entity = await context.Attachments.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id && a.TenantId == resolvedTenant, ct).ConfigureAwait(false);
+        return entity == null ? null : ToAttachmentRecord(entity);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<HomeAttachmentRecord>> ListAttachmentsAsync(string entityType, Guid entityId, Guid? tenantId, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(entityType);
+        var resolvedTenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var list = await context.Attachments.AsNoTracking()
+            .Where(a => a.EntityType == entityType && a.EntityId == entityId && a.TenantId == resolvedTenant)
+            .OrderBy(a => a.SortOrder)
+            .ThenBy(a => a.CreatedTimestamp)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        return list.Select(ToAttachmentRecord).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteAttachmentAsync(Guid id, Guid? tenantId, CancellationToken ct = default)
+    {
+        var resolvedTenant = ResolveTenant(tenantId);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entity = await context.Attachments.FirstOrDefaultAsync(a => a.Id == id && a.TenantId == resolvedTenant, ct).ConfigureAwait(false);
+        if (entity != null) {
+            context.Attachments.Remove(entity);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+    }
+
     private Guid? ResolveTenant(Guid? tenantId) => TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
+
+    private static async Task RemoveAttachmentsAsync(HomeInventoryDbContext context, string entityType, Guid entityId, Guid? tenantId, CancellationToken ct)
+    {
+        var rows = await context.Attachments.Where(a => a.EntityType == entityType && a.EntityId == entityId && a.TenantId == tenantId).ToListAsync(ct).ConfigureAwait(false);
+        if (rows.Count > 0)
+            context.Attachments.RemoveRange(rows);
+    }
 
     private static HomeItemMovementEntity CreateMovementEntity(
         Guid itemId,
@@ -431,18 +494,16 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         Guid? fromLocationId,
         Guid? toLocationId,
         string? referenceNumber,
-        string? notes,
         EntityRef? createdBy,
         Guid? tenantId)
         => new() {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             ItemId = itemId,
             MovementType = (int)type,
             Quantity = quantity,
             FromLocationId = fromLocationId,
             ToLocationId = toLocationId,
             ReferenceNumber = referenceNumber,
-            Notes = notes,
             CreatedByEntityType = createdBy?.EntityType,
             CreatedByEntityId = createdBy?.EntityId,
             TenantId = tenantId,
@@ -455,41 +516,12 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         e.OwnerEntityId = item.OwnerEntityId;
         e.CategoryId = item.CategoryId;
         e.ParentItemId = item.ParentItemId;
+        e.LocationId = item.LocationId;
         e.Name = item.Name;
         e.Description = item.Description;
-        e.Notes = item.Notes;
         e.Status = (int)item.Status;
         e.Condition = (int)item.Condition;
-        e.Sku = item.Sku;
-        e.PurchaseOrderNumber = item.PurchaseOrderNumber;
-        e.SalesOrderNumber = item.SalesOrderNumber;
-        e.Manufacturer = item.Manufacturer;
-        e.ManufacturerPartNumber = item.ManufacturerPartNumber;
-        e.Seller = item.Seller;
-        e.VendorSku = item.VendorSku;
-        e.Upc = item.Upc;
-        e.Ean = item.Ean;
-        e.Isbn = item.Isbn;
-        e.ModelNumber = item.ModelNumber;
-        e.Color = item.Color;
-        e.SerialNumber = item.SerialNumber;
-        e.Imei = item.Imei;
-        e.EthernetMacAddress = item.EthernetMacAddress;
-        e.WifiMacAddress = item.WifiMacAddress;
-        e.BluetoothMacAddress = item.BluetoothMacAddress;
-        e.Msrp = item.Msrp;
-        e.Cost = item.Cost;
-        e.Currency = item.Currency;
-        e.WeightGrams = item.WeightGrams;
-        e.LengthMm = item.LengthMm;
-        e.WidthMm = item.WidthMm;
-        e.HeightMm = item.HeightMm;
-        e.AcquiredDate = item.AcquiredDate;
-        e.WarrantyExpires = item.WarrantyExpires;
-        e.CountryOfOrigin = item.CountryOfOrigin;
-        e.LotNumber = item.LotNumber;
-        e.BatchNumber = item.BatchNumber;
-        e.CustomAttributesJson = item.CustomAttributesJson;
+        e.ProductKeysJson = HomeProductKeyJson.Serialize(item.ProductKeys);
     }
 
     private static HomeItemRecord ToItemRecord(HomeItemEntity e)
@@ -499,41 +531,12 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
             OwnerEntityId = e.OwnerEntityId,
             CategoryId = e.CategoryId,
             ParentItemId = e.ParentItemId,
+            LocationId = e.LocationId,
             Name = e.Name,
             Description = e.Description,
-            Notes = e.Notes,
             Status = (HomeItemStatus)e.Status,
             Condition = (HomeItemCondition)e.Condition,
-            Sku = e.Sku,
-            PurchaseOrderNumber = e.PurchaseOrderNumber,
-            SalesOrderNumber = e.SalesOrderNumber,
-            Manufacturer = e.Manufacturer,
-            ManufacturerPartNumber = e.ManufacturerPartNumber,
-            Seller = e.Seller,
-            VendorSku = e.VendorSku,
-            Upc = e.Upc,
-            Ean = e.Ean,
-            Isbn = e.Isbn,
-            ModelNumber = e.ModelNumber,
-            Color = e.Color,
-            SerialNumber = e.SerialNumber,
-            Imei = e.Imei,
-            EthernetMacAddress = e.EthernetMacAddress,
-            WifiMacAddress = e.WifiMacAddress,
-            BluetoothMacAddress = e.BluetoothMacAddress,
-            Msrp = e.Msrp,
-            Cost = e.Cost,
-            Currency = e.Currency,
-            WeightGrams = e.WeightGrams,
-            LengthMm = e.LengthMm,
-            WidthMm = e.WidthMm,
-            HeightMm = e.HeightMm,
-            AcquiredDate = e.AcquiredDate,
-            WarrantyExpires = e.WarrantyExpires,
-            CountryOfOrigin = e.CountryOfOrigin,
-            LotNumber = e.LotNumber,
-            BatchNumber = e.BatchNumber,
-            CustomAttributesJson = e.CustomAttributesJson,
+            ProductKeys = HomeProductKeyJson.Deserialize(e.ProductKeysJson),
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp
         };
@@ -581,9 +584,33 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
             FromLocationId = e.FromLocationId,
             ToLocationId = e.ToLocationId,
             ReferenceNumber = e.ReferenceNumber,
-            Notes = e.Notes,
             CreatedByEntityType = e.CreatedByEntityType,
             CreatedByEntityId = e.CreatedByEntityId,
             CreatedTimestamp = e.CreatedTimestamp
+        };
+
+    private static void CopyToEntity(HomeAttachmentRecord attachment, HomeAttachmentEntity e)
+    {
+        e.EntityType = attachment.EntityType;
+        e.EntityId = attachment.EntityId;
+        e.FileId = attachment.FileId;
+        e.Role = (int)attachment.Role;
+        e.Caption = attachment.Caption;
+        e.SortOrder = attachment.SortOrder;
+        e.IsPrimary = attachment.IsPrimary;
+    }
+
+    private static HomeAttachmentRecord ToAttachmentRecord(HomeAttachmentEntity e)
+        => new() {
+            Id = e.Id,
+            EntityType = e.EntityType,
+            EntityId = e.EntityId,
+            FileId = e.FileId,
+            Role = (HomeAttachmentRole)e.Role,
+            Caption = e.Caption,
+            SortOrder = e.SortOrder,
+            IsPrimary = e.IsPrimary,
+            CreatedTimestamp = e.CreatedTimestamp,
+            UpdatedTimestamp = e.UpdatedTimestamp
         };
 }

@@ -7,6 +7,7 @@ using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
@@ -62,7 +63,7 @@ public sealed class PostgresUserScopeStore : IUserScopeStore
 
         var entity = ToEntity(scope);
         if (entity.Id == Guid.Empty)
-            entity.Id = Guid.NewGuid();
+            entity.Id = LyoGuid.CreateV7();
 
         entity.TenantId = resolvedTenant;
         if (entity.CreatedTimestamp == default)

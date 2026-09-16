@@ -93,7 +93,7 @@
         ],
         [
           "FileStorageColorHelper",
-          "MudBlazor chip colors for file-type, encryption-algorithm, and compression-algorithm cells."
+          "Identity chips for each file type, encryption algorithm, and compression algorithm. Each kind uses a `LyoChipHue` so the fill shifts with the light and dark theme."
         ]
       ]
     },
@@ -162,6 +162,14 @@
     },
     {
       "name": "Lyo.Api.FileStorage.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -273,7 +281,31 @@
       ]
     },
     {
+      "name": "Lyo.Web.Components.Export.Toml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Web.Components.Export.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Xml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Yaml",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -314,22 +346,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
@@ -362,6 +378,14 @@
       ]
     },
     {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
@@ -371,6 +395,14 @@
     },
     {
       "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -419,6 +451,14 @@
     },
     {
       "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
       "kind": "lyo",
       "tags": [
         "transitive",

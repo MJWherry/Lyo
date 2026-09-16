@@ -40,7 +40,7 @@ curl -sSI "http://localhost:5088/api/config/gateway/prod-west?version=A1B2C3D4..
 
 ## Embed the host (DI + middleware pipeline)
 
-`Lyo.Config.Api` can run standalone (see [`Lyo.Config.Api.Host`](../Lyo.Config.Api.Host/README.md)) or be embedded into another host that already owns the WebApplication pipeline. Two extensions plus one middleware, all in `Lyo.Config.Api`, are the registration surface:
+`Lyo.Config.Api` can run as an example host (see [`Lyo.Config.Api.Example`](../../../Examples/Lyo.Config.Api.Example/README.md)) or be embedded into another host that already owns the WebApplication pipeline. Two extensions plus one middleware, all in `Lyo.Config.Api`, are the registration surface:
 
 | Member | Defined in | Purpose |
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -195,7 +195,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.KeyStore` (direct, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
@@ -207,6 +206,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Formatter` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
@@ -214,6 +214,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
@@ -242,5 +243,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

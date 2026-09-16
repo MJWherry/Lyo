@@ -1,0 +1,695 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.FileManager.App",
+  "name": "Lyo.FileManager.App",
+  "area": "Apps",
+  "tagline": "lyo-files desktop window for a FileStorage server or a local folder.",
+  "description": "Avalonia window named `lyo-files`. Menus hold the server, file, edit, and key actions. A tab is a key store and a file store. The toolbar is the key store picker, the server picker, Connect, Up, a breadcrumb, and the frequent buttons. Connect opens that pair. The file list stays in the center and follows the selected connection. Tree, metadata, and log dock to the left, right, or bottom, resize, and hide. Drag a title bar to another edge. The log starts on the bottom. Quick search filters the loaded tree, and another box filters the open folder. The file grid sorts and resizes columns. Query uses that grid with a prefix column. Drag a file onto the list to upload it. Double-click a file to open it, or a folder to enter it. Copy and move open a dialog with a local prefix or another open connection. Servers, key stores, and the layout persist under `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\\Lyo\\file-manager.json`. Session logic lives in `Lyo.FileManager`.",
+  "features": [
+    "**Add a server.** A blank name, file folder, or base URL stays in the dialog with the error. Local asks for a file folder, then the catalog folder and filename. Those default to a SQLite file beside the folder. Postgres asks for a connection string instead. S3 asks for a bucket and a catalog. Azure Blob asks for a storage connection string, a container, and a catalog. FTP asks for host, username, password, and a catalog. SFTP also asks for a host-key fingerprint, or a private key instead of a password. The key store is chosen on the toolbar.",
+    "**Key stores.** Key stores opens a window for the saved list. Add, rename, and remove stores. Load reads a key file: `{ \"keys\": [ { \"keyId\", \"version\", \"current\", \"key\", \"metadata\" } ] }`. `key` is the key bytes, including the salt in metadata. Each store is local keys, with a passphrase and key versions, or AWS Secrets Manager. The toolbar lists `(None)` and every saved name, in front of the server picker. Connect uses that choice. A remote server ignores it. Each open pair is a tab named for the key store and the server. Choosing one shows that pair and does not reconnect. The same server can stay open with another key store.",
+    "**Dock.** Tree starts on the left, metadata on the right, and the log along the bottom. Each can move to another edge, resize, or hide. Reset layout restores the default. Sizes and edges are saved with the servers.",
+    "**Tree, list, and query.** The tree loads a folder when it is expanded. Search filters loaded names. The grid supports extended selection. Query runs name and prefix filters in the same grid. The metadata pane lists the selected file.",
+    "**Connections.** The tab strip lists open connections. Choosing a tab shows that store. Closing a tab disconnects it. The server list stays in the picker.",
+    "**Copy and move.** Copy and move open a dialog with two tabs. Local asks for a destination prefix on this connection. Other connection copies or moves the selection onto another open in-process store, into the target folder you type. Typing suggests existing directories. Dropping the selection on another connection tab opens that move dialog with the tab selected. Copy leaves the source. Move removes it after the hashes match. Preserve keys is the default. New key and existing key are for a store that cannot copy ciphertext, such as FTP or SFTP.",
+    "**Transfers.** Upload can compress, encrypt, and pick a key id from the connected key store. Encrypt with no key store and no key id is rejected. Dropped files upload into the current prefix."
+  ],
+  "examples": [
+    {
+      "title": "Run the window",
+      "language": "text",
+      "code": "dotnet run --project Lyo.Net/Apps/FileManager/Lyo.FileManager.App"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/FileManager/Lyo.FileManager.App/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Avalonia.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileManager",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Avalonia",
+      "kind": "package",
+      "version": "12.1.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Avalonia.Controls.DataGrid",
+      "kind": "package",
+      "version": "12.1.2",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Avalonia.Desktop",
+      "kind": "package",
+      "version": "12.1.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Avalonia.Fonts.Inter",
+      "kind": "package",
+      "version": "12.1.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Avalonia.Themes.Fluent",
+      "kind": "package",
+      "version": "12.1.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Api.FileStorage.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Desktop",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Encryption.AesSiv",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileMetadataStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileMetadataStore.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileMetadataStore.Sqlite",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileStorage",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileStorage.AzureBlob",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileStorage.Ftp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileStorage.S3",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileStorage.Sftp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ftp.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.KeyStore.Aws",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Lock",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Sftp.Client",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Sqlite",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "AWSSDK.Core",
+      "kind": "package",
+      "version": "4.0.100.4",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "AWSSDK.S3",
+      "kind": "package",
+      "version": "4.0.101",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "AWSSDK.SecretsManager",
+      "kind": "package",
+      "version": "4.0.100.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "AngleSharp",
+      "kind": "package",
+      "version": "1.5.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Azure.Storage.Blobs",
+      "kind": "package",
+      "version": "12.29.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "kind": "package",
+      "version": "2.6.2",
+      "tags": [
+        "transitive",
+        "third-party",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Dorssel.Security.Cryptography.AesExtra",
+      "kind": "package",
+      "version": "2.0.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "EasyCompressor",
+      "kind": "package",
+      "version": "2.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "FluentFTP",
+      "kind": "package",
+      "version": "54.2.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Konscious.Security.Cryptography.Argon2",
+      "kind": "package",
+      "version": "1.3.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Sqlite",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Http",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options.DataAnnotations",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SSH.NET",
+      "kind": "package",
+      "version": "2025.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Buffers",
+      "kind": "package",
+      "version": "4.6.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.IO.Hashing",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "net10.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Threading.RateLimiting",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Threading.Tasks.Extensions",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

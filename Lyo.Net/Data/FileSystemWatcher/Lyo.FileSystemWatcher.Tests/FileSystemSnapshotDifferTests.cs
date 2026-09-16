@@ -10,7 +10,7 @@ public class FileSystemSnapshotDifferTests
     {
         var oldTree = Tree("root", File("a.txt", 1, "h1"));
         var newTree = Tree("root", File("a.txt", 1, "h1"), File("b.txt", 2, "h2"));
-        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestContext.Current.CancellationToken);
+        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestCt);
         var created = changes.Single(c => !c.IsDirectory);
         created.ChangeType.ShouldBe(FileSystemChangeKind.Created);
         created.NewPath.ShouldBe("b.txt");
@@ -22,7 +22,7 @@ public class FileSystemSnapshotDifferTests
     {
         var oldTree = Tree("root", File("a.txt", 1, "h1"));
         var newTree = Tree("root");
-        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestContext.Current.CancellationToken);
+        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestCt);
         var deleted = changes.Single(c => !c.IsDirectory);
         deleted.ChangeType.ShouldBe(FileSystemChangeKind.Deleted);
         deleted.OldPath.ShouldBe("a.txt");
@@ -33,7 +33,7 @@ public class FileSystemSnapshotDifferTests
     {
         var oldTree = Tree("root", File("a.txt", 1, "h1", "fp1"));
         var newTree = Tree("root", File("a.txt", 2, "h2", "fp2"));
-        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestContext.Current.CancellationToken);
+        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestCt);
         changes.Single().ChangeType.ShouldBe(FileSystemChangeKind.Changed);
     }
 
@@ -42,7 +42,7 @@ public class FileSystemSnapshotDifferTests
     {
         var oldTree = Tree("root", File("a.txt", 10, "same-hash"));
         var newTree = Tree("root", File("b.txt", 10, "same-hash"));
-        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestContext.Current.CancellationToken);
+        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestCt);
         var renamed = changes.Single(c => !c.IsDirectory);
         renamed.ChangeType.ShouldBe(FileSystemChangeKind.Renamed);
         renamed.OldPath.ShouldBe("a.txt");
@@ -56,7 +56,7 @@ public class FileSystemSnapshotDifferTests
         AddDir(oldTree, "dir2");
         var newTree = Tree("root", File("dir2/a.txt", 10, "same-hash"));
         AddDir(newTree, "dir1");
-        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestContext.Current.CancellationToken);
+        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, newTree, ct: TestCt);
         var moved = changes.Single(c => !c.IsDirectory);
         moved.ChangeType.ShouldBe(FileSystemChangeKind.Moved);
         moved.OldPath.ShouldBe("dir1/a.txt");
@@ -71,7 +71,7 @@ public class FileSystemSnapshotDifferTests
         var json = System.Text.Json.JsonSerializer.Serialize(newTree);
         var restored = System.Text.Json.JsonSerializer.Deserialize<FileSystemSnapshotTreeDto>(json);
         restored.ShouldNotBeNull();
-        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, restored!, ct: TestContext.Current.CancellationToken);
+        var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, restored!, ct: TestCt);
         changes.Single(c => !c.IsDirectory).ChangeType.ShouldBe(FileSystemChangeKind.Created);
     }
 

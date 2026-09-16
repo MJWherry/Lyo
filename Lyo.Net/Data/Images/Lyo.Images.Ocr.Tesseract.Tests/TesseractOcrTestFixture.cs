@@ -22,6 +22,9 @@ public sealed class TesseractOcrTestFixture : IDisposable
 
     public IServiceProvider Services => _services;
 
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
+    public CancellationToken TestCt => TestContext.Current.CancellationToken;
+
     public bool RunNativeIntegration
         => (Configuration.GetSection("OcrTesseractTests").Get<OcrTesseractTestsOptions>()?.RunIntegration ?? false) || string.Equals(
             Environment.GetEnvironmentVariable(RunIntegrationEnvVar), "1", StringComparison.Ordinal);

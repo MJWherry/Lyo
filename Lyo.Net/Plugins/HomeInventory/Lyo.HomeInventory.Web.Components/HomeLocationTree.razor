@@ -1,0 +1,50 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<div class="home-location-tree-browser">
+    <div class="home-location-tree-layout">
+        <MudPaper Class="pa-2" Outlined="true">
+            <MudText Typo="Typo.subtitle1">Rooms</MudText>
+            <MudTreeView T="HomeLocationRes"
+                         Items="_nodes"
+                         Dense="true"
+                         Hover="true"
+                         SelectedValue="_selected"
+                         SelectedValueChanged="OnSelectedAsync">
+                <ItemTemplate>
+                    <MudTreeViewItem @bind-Expanded="@context.Expanded" Items="@context.Children" Value="@context.Value">
+                        <BodyContent Context="body">
+                            <MudText Class="cursor-pointer" @onclick="@(() => OnSelectedAsync(context.Value))">@context.Value?.Name</MudText>
+                        </BodyContent>
+                    </MudTreeViewItem>
+                </ItemTemplate>
+            </MudTreeView>
+        </MudPaper>
+        <MudPaper Class="pa-2" Outlined="true">
+            @if (_selected is null) {
+                <MudText Typo="Typo.subtitle1">House</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Select a room, or add a top-level room.</MudText>
+            }
+            else {
+                <MudText Typo="Typo.subtitle1">@_selected.Name</MudText>
+            }
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Class="mt-2">
+                <MudTextField @bind-Value="_draftName" Label="Room name" Margin="Margin.Dense"/>
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Class="mt-1" OnClick="AddRoom" Disabled="@string.IsNullOrWhiteSpace(_draftName)">Add</MudButton>
+            </MudStack>
+            @if (_selected is not null) {
+                <MudText Typo="Typo.subtitle2" Class="mt-3">Items</MudText>
+                @if (_items.Count == 0) {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">No items in this room.</MudText>
+                }
+                else {
+                    <MudList T="HomeItemRes" Dense="true">
+                        @foreach (var item in _items) {
+                            <MudListItem T="HomeItemRes" OnClick="@(() => OpenItem(item))">@item.Name</MudListItem>
+                        }
+                    </MudList>
+                }
+            }
+        </MudPaper>
+    </div>
+</div>

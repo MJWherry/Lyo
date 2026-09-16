@@ -11,4 +11,7 @@ public interface IJobClient
 
     /// <summary>Worker instance register and heartbeat calls.</summary>
     JobWorkerInstanceClient WorkerInstances { get; }
+
+    /// <summary>Workflow start and workflow-run read calls.</summary>
+    JobWorkflowClient Workflows { get; }
 }

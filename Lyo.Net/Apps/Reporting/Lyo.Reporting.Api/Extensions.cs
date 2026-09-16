@@ -84,8 +84,9 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Maps Definition CRUD (plus Export), Definition Parameter CRUD, Generation query/get/delete, Generate, Rerun, and Download when
-    /// <see cref="ReportingApiOptions.DownloadStreamFactory" /> is set. Call after <c>AddPostgresReportingManagement</c> and <see cref="AddLyoApiReporting" />.
+    /// Maps Definition CRUD (plus Export), Definition Parameter CRUD, Generation query/get/delete, Generate, Rerun, Download when
+    /// <see cref="ReportingApiOptions.DownloadStreamFactory" /> is set, and invoice PDF (<c>GET /Reporting/Invoices/{id}/pdf</c>) when <c>IBillingStore</c> is registered.
+    /// Call after <c>AddPostgresReportingManagement</c> and <see cref="AddLyoApiReporting" />.
     /// </summary>
     public static WebApplication BuildReportingGroup(this WebApplication app, ReportingApiOptions? options = null)
     {
@@ -263,6 +264,7 @@ public static class Extensions
             download.ApplyEndpointAuth(options.DownloadAuth);
         }
 
+        app.MapBillingInvoicePdf(options);
         return app;
     }
 

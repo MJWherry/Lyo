@@ -1,0 +1,94 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Diagram",
+  "name": "Lyo.Diagram",
+  "area": "Core",
+  "tagline": "Build a diagram from pages and cells, and read or write it as a draw.io mxfile.",
+  "description": "Turns a [`DiagramDocument`](../Lyo.Diagram.Models/README.md) into a diagrams.net file and back. `DiagramBuilder` adds rectangle, rounded, ellipse, and diamond shapes plus an orthogonal connector. Any other draw.io style string can be passed through.\n\n`DiagramDrawIo.Export` writes an uncompressed `<mxfile>` that diagrams.net opens directly. `DiagramDrawIo.Import` reads that file and the compressed form diagrams.net saves by default (base64 of raw DEFLATE of `encodeURIComponent` applied to the `mxGraphModel` XML). Import assigns a new document id. The name comes from the `mxfile` `name` attribute, otherwise the first page name.\n\n`InMemoryDiagramStore` implements `IDiagramStore` for hosts that do not open PostgreSQL. Persist with [`Lyo.Diagram.Postgres`](../Lyo.Diagram.Postgres/README.md).",
+  "features": [
+    "**Builder.** `DiagramBuilder` / `DiagramPageBuilder` with `DiagramShapeKind` presets, a raw style overload, `Size` for the page, and `Connect` waypoints plus anchors.",
+    "**draw.io.** Uncompressed export and import of uncompressed or compressed mxfiles, including pages, labels, styles, geometry, waypoints, parents, and edge endpoints.",
+    "**Memory store.** `InMemoryDiagramStore` upserts by id and lists summaries without requiring the caller to read cells."
+  ],
+  "examples": [
+    {
+      "title": "Build a page and export it",
+      "language": "csharp",
+      "code": "var diagram = new DiagramBuilder(\"Checkout\")\n    .Page(\"flow\", \"Flow\", page =>\n    {\n        page.Shape(\"start\", \"Start\", 40, 40, 120, 60, DiagramShapeKind.Rectangle);\n        page.Shape(\"end\", \"End\", 40, 180, 120, 60, DiagramShapeKind.Ellipse);\n        page.Connect(\"go\", \"start\", \"end\", \"next\");\n    })\n    .Build();\n\nvar xml = DiagramDrawIo.Export(diagram);\nvar loaded = DiagramDrawIo.Import(xml);"
+    },
+    {
+      "title": "In-memory store",
+      "language": "csharp",
+      "code": "IDiagramStore store = new InMemoryDiagramStore();\nawait store.SaveAsync(diagram, ct);\nvar summary = (await store.ListAsync(ct)).Single(item => item.Id == diagram.Id);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "What round-trips",
+      "text": "Pages, labels, style strings, bounds, relative edge geometry, waypoints, source and target points, parent links, and edge endpoints. Export always emits the draw.io root cells (`id=\"0\"` and `id=\"1\"`). Import drops them. Editor viewport (`dx` / `dy`) and embedded image binaries are left out."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Diagram/Lyo.Diagram/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Diagram.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

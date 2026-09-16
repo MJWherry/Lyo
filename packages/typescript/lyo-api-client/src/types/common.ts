@@ -1,4 +1,4 @@
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+export type HttpMethod = "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export interface ApiRequest<TBody = unknown> {
     method: HttpMethod;
@@ -24,7 +24,7 @@ export interface ApiResponse<TData = unknown> {
 export type TransportRequest = {
     method: HttpMethod;
     url: string;
-    body?: string;
+    body?: string | FormData | Blob;
     headers: Record<string, string>;
     signal?: AbortSignal;
     responseType?: "json" | "blob";

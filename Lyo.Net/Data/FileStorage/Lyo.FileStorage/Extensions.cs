@@ -7,6 +7,7 @@ using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
+using Lyo.FileStorage.Policy;
 using Lyo.IO.Temp;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
@@ -188,7 +189,9 @@ public static class Extensions
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(encryptionServiceKeyName);
                         var metadataService = configureMetadataStore(provider);
                         var metrics = options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                        return new(options, loggerFactory, compressionService, encryptionService, metadataService, metrics);
+                        return new(
+                            options, loggerFactory, compressionService, encryptionService, metadataService, metrics,
+                            fileTypeSniffer: provider.GetService<IFileTypeSniffer>());
                     });
 
                 services.AddKeyedScoped<IFileStorageService>(keyName, (provider, _) => provider.GetRequiredKeyedService<LocalFileStorageService>(keyName));
@@ -235,7 +238,9 @@ public static class Extensions
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(keyName);
                         var metadataService = configureMetadataStore(provider);
                         var metrics = options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                        return new(options, loggerFactory, compressionService, encryptionService, metadataService, metrics);
+                        return new(
+                            options, loggerFactory, compressionService, encryptionService, metadataService, metrics,
+                            fileTypeSniffer: provider.GetService<IFileTypeSniffer>());
                     });
 
                 services.AddKeyedScoped<IFileStorageService>(keyName, (provider, _) => provider.GetRequiredKeyedService<LocalFileStorageService>(keyName));
@@ -278,7 +283,9 @@ public static class Extensions
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(encryptionServiceKeyName);
                         var metadataService = configureMetadataStore(provider);
                         var metrics = options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                        return new(options, loggerFactory, compressionService, encryptionService, metadataService, metrics);
+                        return new(
+                            options, loggerFactory, compressionService, encryptionService, metadataService, metrics,
+                            fileTypeSniffer: provider.GetService<IFileTypeSniffer>());
                     });
 
                 services.AddKeyedScoped<IFileStorageService>(keyName, (provider, _) => provider.GetRequiredKeyedService<LocalFileStorageService>(keyName));
@@ -323,7 +330,9 @@ public static class Extensions
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(keyName);
                         var metadataService = configureMetadataStore(provider);
                         var metrics = options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                        return new(options, loggerFactory, compressionService, encryptionService, metadataService, metrics);
+                        return new(
+                            options, loggerFactory, compressionService, encryptionService, metadataService, metrics,
+                            fileTypeSniffer: provider.GetService<IFileTypeSniffer>());
                     });
 
                 services.AddKeyedScoped<IFileStorageService>(keyName, (provider, _) => provider.GetRequiredKeyedService<LocalFileStorageService>(keyName));

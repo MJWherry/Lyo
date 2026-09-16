@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Lyo.Common.Json.JsonConverters;
+using Lyo.Json.JsonConverters;
 using Lyo.Exceptions;
 using Lyo.Reporting.Models.Models;
 

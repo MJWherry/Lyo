@@ -1,8 +1,10 @@
+using System.Collections.Concurrent;
 using Lyo.Common.Core.Pathing;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Text.Json;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
 using Lyo.Compression.Models;
@@ -51,6 +53,7 @@ public abstract class FileStorageServiceBase
     private readonly PlainDirectUploadCoordinator _plainDirectUpload;
 
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
+    private readonly IFileTypeSniffer _fileTypeSniffer;
     protected readonly ICompressionService? CompressionService;
     protected readonly IFileContentPolicy ContentPolicy;
     protected readonly ILogger Logger;
@@ -62,6 +65,10 @@ public abstract class FileStorageServiceBase
     protected readonly IFileOperationContextAccessor OperationContextAccessor;
     protected readonly FileStorageServiceBaseOptions Options;
     protected readonly ITwoKeyEncryptionService? TwoKeyEncryptionService;
+    private readonly ConcurrentDictionary<Guid, EncryptedStreamLayout> _encryptedRangeLayouts = new();
+
+    /// <summary>Start offset of the last backend range read. Tests use this to prove a seek did not start at byte 0.</summary>
+    internal long? PlainByteRangeReadStart { get; private set; }
 
     protected bool Disposed;
 
@@ -78,6 +85,7 @@ public abstract class FileStorageServiceBase
     /// <param name="operationContextAccessor">Optional ambient tenant/actor lookup for auditing.</param>
     /// <param name="auditHandlers">Optional handlers fed through the publication pipeline beside <see cref="FileAuditOccurred" />.</param>
     /// <param name="contentPolicy">Optional content policy. Starts as <see cref="DefaultFileContentPolicy" />.</param>
+    /// <param name="fileTypeSniffer">Optional header sniffer. Starts as <see cref="MagicFileTypeSniffer" />.</param>
     protected FileStorageServiceBase(
         FileStorageServiceBaseOptions options,
         IFileMetadataStore metadataService,
@@ -87,10 +95,12 @@ public abstract class FileStorageServiceBase
         IMetrics? metrics = null,
         IFileOperationContextAccessor? operationContextAccessor = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
-        IFileContentPolicy? contentPolicy = null)
+        IFileContentPolicy? contentPolicy = null,
+        IFileTypeSniffer? fileTypeSniffer = null)
     {
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNull(metadataService);
+        options.ValidateUploadFilters();
         Options = options;
         MetadataService = metadataService;
         Logger = logger ?? NullLogger.Instance;
@@ -99,11 +109,14 @@ public abstract class FileStorageServiceBase
         Metrics = metrics ?? NullMetrics.Instance;
         OperationContextAccessor = operationContextAccessor ?? NullFileOperationContextAccessor.Instance;
         _auditHandlers = auditHandlers == null ? [] : auditHandlers.ToList();
+        _fileTypeSniffer = fileTypeSniffer ?? new MagicFileTypeSniffer();
         ContentPolicy = contentPolicy ?? new DefaultFileContentPolicy(options);
         MetricNames = CreateMetricNamesDictionary();
         _streamingPipelines = new(this, CompressionService, TwoKeyEncryptionService, Options, Logger, CopyToBufferSizeBytes);
         _dekOperations = new(MetadataService, TwoKeyEncryptionService, OperationContextAccessor, Logger, Options, this, this, CopyToBufferSizeBytes);
-        _plainDirectUpload = new(ContentPolicy, MetadataService, OperationContextAccessor, Options, Logger, this, this, this, this, CopyToBufferSizeBytes);
+        _plainDirectUpload = new(
+            ContentPolicy, MetadataService, OperationContextAccessor, Options, Logger, this, this, this, this, _fileTypeSniffer, CopyToBufferSizeBytes,
+            this as IDirectUploadVerification);
     }
 
     /// <summary>Connectivity-only probe that implementations call when options use lightweight health-check mode.</summary>
@@ -112,8 +125,14 @@ public abstract class FileStorageServiceBase
     /// <inheritdoc />
     public virtual void Dispose()
     {
-        if (!Disposed)
-            Disposed = true;
+        if (Disposed)
+            return;
+
+        foreach (var layout in _encryptedRangeLayouts.Values)
+            layout.Dispose();
+
+        _encryptedRangeLayouts.Clear();
+        Disposed = true;
     }
 
     public virtual string HealthCheckName => "filestorage";
@@ -133,7 +152,7 @@ public abstract class FileStorageServiceBase
             return await CheckHealthLightweightAsync(ct).ConfigureAwait(false);
 
         var sw = Stopwatch.StartNew();
-        var fileId = Guid.NewGuid();
+        var fileId =LyoGuid.CreateV7();
         const string healthPrefix = ".lyo-health";
         try {
             var probeData = fileId.ToByteArray();
@@ -225,6 +244,13 @@ public abstract class FileStorageServiceBase
     protected void RaiseFileRenamed(Guid fileId, FileStoreSnapshot snapshot, string? previousOriginalFileName)
         => FileRenamed?.Invoke(this, new(fileId, snapshot, previousOriginalFileName));
 
+    /// <summary>
+    /// Reports presigned read, direct upload, copy, move, and physical listing for this backend. The base reports presign, direct upload, copy, and move unsupported.
+    /// Physical listing is reported when this instance implements <see cref="IFileStoragePhysical" />. Hosts add multipart, encryption, archive, and access-link flags separately.
+    /// </summary>
+    public virtual FileStorageCapabilities GetCapabilities()
+        => new(false, false, false, false, this is IFileStoragePhysical);
+
     public virtual Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default)
         => GetPreSignedReadUrlAsync(fileId, expiration, pathPrefix, null, ct);
 
@@ -237,6 +263,10 @@ public abstract class FileStorageServiceBase
 
     public virtual Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
         => Task.FromException<FileStoreResult>(new NotSupportedException("Direct uploads are not supported by this backend."));
+
+    /// <inheritdoc />
+    public Task<int> SweepExpiredDirectUploadsAsync(int maxUploads = 1000, CancellationToken ct = default)
+        => _plainDirectUpload.SweepExpiredDirectUploadsAsync(maxUploads, ct);
 
     public virtual Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default)
         => Task.FromException<FileStoreResult>(new NotSupportedException("Server-side copies are not supported by this backend."));
@@ -256,6 +286,11 @@ public abstract class FileStorageServiceBase
             return meta;
 
         try {
+            FileNamePatternFilter.ThrowIfRejected(Options, request.OriginalFileName);
+            // Ciphertext and compressed bytes are not the original header. Those payloads were checked before the transform on save.
+            if (FileUploadGuards.RequiresHeaderInspection(Options) && !meta.IsEncrypted && !meta.IsCompressed)
+                await EnforceStoredHeaderAsync(fileId, meta.PathPrefix, request.OriginalFileName, meta.ContentType, ct).ConfigureAwait(false);
+
             var renamed = await RecordRenameMetadataAsync(meta, request.OriginalFileName, ct).ConfigureAwait(false);
             RaiseFileRenamed(fileId, FileStoreSnapshot.From(renamed), meta.OriginalFileName);
             return renamed;
@@ -273,6 +308,19 @@ public abstract class FileStorageServiceBase
 
     /// <summary>Disposes a stream with <see cref="Stream.DisposeAsync" /> when that API exists; otherwise disposes synchronously.</summary>
     internal static Task DisposeStreamAsync(Stream? stream) => FileStorageStreamingPipelines.DisposeStreamAsync(stream);
+
+    /// <summary>Reads the stored plaintext header and applies signature and sniffed-type rules for a new name.</summary>
+    private async Task EnforceStoredHeaderAsync(Guid fileId, string? pathPrefix, string? originalFileName, string? contentType, CancellationToken ct)
+    {
+        var raw = await ReadFromStorageAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
+        if (raw == null)
+            throw new FilePolicyRejectedException($"Stored bytes for {fileId} are not available to verify the file header.");
+
+        using (raw) {
+            var header = await FileHeaderInspection.ReadPrefixAsync(raw, ct).ConfigureAwait(false);
+            FileUploadGuards.EnforceHeader(Options, _fileTypeSniffer, header, originalFileName, contentType);
+        }
+    }
 
     /// <summary>Returns <paramref name="explicitTenantId" /> when set; otherwise takes tenant from operation context.</summary>
     protected string? ResolveTenantId(string? explicitTenantId) => explicitTenantId ?? OperationContextAccessor.Current?.TenantId;
@@ -326,6 +374,26 @@ public abstract class FileStorageServiceBase
 
     /// <summary>Reads raw storage bytes for the file. Implementations return <see langword="null" /> when the blob is missing.</summary>
     protected abstract Task<Stream?> ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct);
+
+    /// <summary>
+    /// True when this backend can read a byte slice of a stored object without downloading the preceding bytes. FTP and SFTP stay false. Local disk, S3, and Azure Blob
+    /// override this.
+    /// </summary>
+    public virtual bool SupportsPlainByteRange => false;
+
+    /// <summary>
+    /// Opens the stored object at <paramref name="startInclusive" /> through <paramref name="endInclusive" /> using <paramref name="metadata" /> for the object
+    /// name, so the read does not look up metadata or probe extensions again. The default calls <see cref="ReadPlainByteRangeAsync(Guid, string?, long, long, CancellationToken)" />.
+    /// </summary>
+    protected virtual Task<Stream?> ReadPlainByteRangeAsync(FileStoreResult metadata, long startInclusive, long endInclusive, CancellationToken ct)
+        => ReadPlainByteRangeAsync(metadata.Id, metadata.PathPrefix, startInclusive, endInclusive, ct);
+
+    /// <summary>
+    /// Opens the stored object at <paramref name="startInclusive" /> through <paramref name="endInclusive" />. The base returns null. Backends that set
+    /// <see cref="SupportsPlainByteRange" /> return a stream positioned at the start, or null when the object is missing. The caller caps a plain read.
+    /// </summary>
+    protected virtual Task<Stream?> ReadPlainByteRangeAsync(Guid fileId, string? pathPrefix, long startInclusive, long endInclusive, CancellationToken ct)
+        => Task.FromResult<Stream?>(null);
 
     /// <summary>Removes the backing object referenced by metadata and reports whether an object was removed.</summary>
     protected abstract Task<bool> DeleteFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct);
@@ -429,6 +497,8 @@ public abstract class FileStorageServiceBase
 
     Task<Stream?> IFileStoragePhysicalIO.ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct) => ReadFromStorageAsync(fileId, pathPrefix, ct);
 
+    Task<bool> IFileStoragePhysicalIO.DeleteFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct) => DeleteFromStorageAsync(fileId, pathPrefix, ct);
+
     Task<Stream> IFileStoragePhysicalIO.CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
         => CreateOutputStreamAsync(fileId, extension, pathPrefix, ct);
 
@@ -525,7 +595,7 @@ public abstract class FileStorageServiceBase
                 .ConfigureAwait(false);
 
             var availability = Options.DefaultAvailability;
-            var fileId = Guid.NewGuid();
+            var fileId = LyoGuid.CreateV7();
             createdFileId = fileId;
             var timestamp = DateTime.UtcNow;
 
@@ -534,6 +604,12 @@ public abstract class FileStorageServiceBase
 
             // Open the file for the streaming pipeline
             using var inputStream = File.OpenRead(filePath);
+            if (FileUploadGuards.RequiresHeaderInspection(Options)) {
+                var header = await FileHeaderInspection.ReadPrefixAsync(inputStream, ct).ConfigureAwait(false);
+                inputStream.Position = 0;
+                FileUploadGuards.EnforceHeader(Options, _fileTypeSniffer, header, actualOriginalFileName, resolvedContentType);
+            }
+
             // Run the streaming save pipeline
             var result = await ProcessAndSaveStreamAsync(
                     inputStream, fileId, actualOriginalFileName, originalSize, compress, encrypt, keyId, normalizedPathPrefix, timestamp, effectiveChunkSize, contentType,
@@ -602,18 +678,33 @@ public abstract class FileStorageServiceBase
                     }, ct)
                 .ConfigureAwait(false);
 
-            ValidatePathPrefix(pathPrefix);
-            var normalizedPathPrefix = NormalizePathPrefix(pathPrefix);
-            var id = fileId ?? Guid.NewGuid();
-            createdFileId = id;
-            var timestamp = DateTime.UtcNow;
-            var effectiveChunkSize = chunkSize ?? StreamChunkSizeHelper.DetermineChunkSize(declaredLength);
+            var body = input;
+            IDisposable? headerReplay = null;
+            FileStoreResult result;
+            try {
+                if (FileUploadGuards.RequiresHeaderInspection(Options)) {
+                    var peeked = await FileHeaderInspection.PeekAsync(input, ct).ConfigureAwait(false);
+                    headerReplay = peeked.Owned;
+                    FileUploadGuards.EnforceHeader(Options, _fileTypeSniffer, peeked.Header, originalFileName, resolvedContentType);
+                    body = peeked.Stream;
+                }
 
-            var availability = availabilityOverride ?? Options.DefaultAvailability;
-            var result = await ProcessAndSaveStreamAsync(
-                    input, id, originalFileName ?? id.ToString(), declaredLength, compress, encrypt, keyId, normalizedPathPrefix, timestamp, effectiveChunkSize, contentType,
-                    resolvedCharset, resolvedTenant, availability, metadata, ct)
-                .ConfigureAwait(false);
+                ValidatePathPrefix(pathPrefix);
+                var normalizedPathPrefix = NormalizePathPrefix(pathPrefix);
+                var id = fileId ?? LyoGuid.CreateV7();
+                createdFileId = id;
+                var timestamp = DateTime.UtcNow;
+                var effectiveChunkSize = chunkSize ?? StreamChunkSizeHelper.DetermineChunkSize(declaredLength);
+
+                var availability = availabilityOverride ?? Options.DefaultAvailability;
+                result = await ProcessAndSaveStreamAsync(
+                        body, id, originalFileName ?? id.ToString(), declaredLength, compress, encrypt, keyId, normalizedPathPrefix, timestamp, effectiveChunkSize, contentType,
+                        resolvedCharset, resolvedTenant, availability, metadata, ct)
+                    .ConfigureAwait(false);
+            }
+            finally {
+                headerReplay?.Dispose();
+            }
 
             sw.Stop();
             Metrics.IncrementCounter(MetricNames[nameof(Constants.Metrics.SaveSuccess)]);
@@ -704,11 +795,11 @@ public abstract class FileStorageServiceBase
         string? dataEncryptionKeyVersion = null;
         byte[]? keyEncryptionKeySalt = null;
         byte? dekKeyMaterialBytes = null;
-        var sourceFileName = fileId.ToString();
         var fileExtension = "";
         long finalSize;
         byte[]? sourceFileHash;
-        byte[]? originalHash;
+        // Stays null through the single-pass branch until the stage that drains the plaintext finishes the hash.
+        byte[]? originalHash = null;
 
         // originalSize is only the caller's declaration. Policy was checked against it, but nothing has read the payload yet. Bound and count the real bytes so an understated
         // length cannot slip past MaxUploadSizeBytes and so metadata records what was actually stored.
@@ -736,7 +827,6 @@ public abstract class FileStorageServiceBase
                 pipelineOutputStream = null;
                 originalHash = pipelineResult.OriginalHash;
                 fileExtension = pipelineResult.FileExtension;
-                sourceFileName = pipelineResult.SourceFileName;
                 compressedSize = pipelineResult.CompressedSize;
                 compressedHash = pipelineResult.CompressedHash;
                 compressionAlgorithm = pipelineResult.CompressionAlgorithm;
@@ -753,7 +843,7 @@ public abstract class FileStorageServiceBase
                 finalSize = await GetStorageSizeAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
                 var actualSize = ResolveActualOriginalSize(fileId, originalSize, boundedInput.BytesRead);
                 var stored = new FileStoreResult(
-                    fileId, originalFileName, actualSize, originalHash!, sourceFileName, finalSize, sourceFileHash!, compress, compressionAlgorithm, compressedSize,
+                    fileId, originalFileName, actualSize, originalHash!, pipelineResult.SourceFileName, finalSize, sourceFileHash!, compress, compressionAlgorithm, compressedSize,
                     compressedHash, encrypt, dataEncryptionKeyAlgorithm, keyEncryptionKeyAlgorithm, encryptedSize, encryptedHash, encryptedDataEncryptionKey, dataEncryptionKeyId,
                     dataEncryptionKeyVersion, keyEncryptionKeySalt, timestamp, normalizedPathPrefix, Options.HashAlgorithm, contentType, charset, tenantId, availability,
                     dekKeyMaterialBytes, Metadata: metadata);
@@ -769,13 +859,20 @@ public abstract class FileStorageServiceBase
         }
 
         var outputStream = await CreateOutputStreamAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
+
+        // Non-null only on the single-pass path, where the plaintext hash is finished by whichever stage below drains it.
+        HashingStream? undrainedPlaintext = null;
         try {
             // Hash the original first; duplicate detection needs it
             var hashAlg = Options.HashAlgorithm;
             using var originalHashAlgo = hashAlg.Create();
 
+            // Staging exists so the plaintext hash is known before anything is committed, and only duplicate detection needs that.
+            // With detection off the payload streams straight into the backend instead of being buffered and then copied a second time.
+            // compress && encrypt never reaches here with detection off; the pipe path above owns that pairing.
+            using var intermediateStream = Options.EnableDuplicateDetection ? CreateSequentialStagingStream(originalSize, compress) : null;
+
             // Compression pass
-            using var intermediateStream = CreateSequentialStagingStream(originalSize, compress);
             if (compress) {
                 OperationHelpers.ThrowIfNull(selectedCompressAlgorithm, "Compression was requested but no compression algorithm was resolved.");
                 OperationHelpers.ThrowIfNull(
@@ -783,33 +880,42 @@ public abstract class FileStorageServiceBase
 
                 using var inputHashStream = new HashingStream(processingStream, originalHashAlgo);
                 using var compressedHashAlgo = hashAlg.Create();
-                using var compressedHashStream = new HashingStream(intermediateStream, compressedHashAlgo);
+                using var compressedCounter = new CountingStream(intermediateStream ?? outputStream);
+                using var compressedHashStream = new HashingStream(compressedCounter, compressedHashAlgo);
                 await CompressionService.Resolver.CompressAsync(inputHashStream, compressedHashStream, selectedCompressAlgorithm, chunkSize, ct: ct).ConfigureAwait(false);
                 await compressedHashStream.FlushAsync(ct).ConfigureAwait(false);
                 await inputHashStream.FlushAsync(ct).ConfigureAwait(false);
-                compressedSize = intermediateStream.Length;
+                compressedSize = compressedCounter.BytesWritten;
                 compressedHash = compressedHashStream.GetHash();
                 originalHash = inputHashStream.GetHash();
                 fileExtension = selectedCompressAlgorithm.Extension;
-                sourceFileName += fileExtension;
                 compressionAlgorithm = selectedCompressAlgorithm;
-                processingStream = intermediateStream;
-                processingStream.Position = 0;
+
+                // Without staging the compressed bytes already landed in storage, so nothing is left for the stage below to forward.
+                processingStream = intermediateStream ?? Stream.Null;
                 Logger.LogDebug("Compressed file {FileId}: {OriginalSize} -> {CompressedSize} bytes", fileId, originalSize, compressedSize);
             }
-            else {
+            else if (intermediateStream != null) {
                 // No compression: hash the original while copying to the intermediate
                 using var outputHashStream = new HashingStream(intermediateStream, originalHashAlgo);
                 await processingStream.CopyToAsync(outputHashStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
                 await outputHashStream.FlushAsync(ct).ConfigureAwait(false);
                 originalHash = outputHashStream.GetHash();
                 processingStream = intermediateStream;
-                processingStream.Position = 0;
             }
+            else {
+                // Single pass, no compression: hash the plaintext as the stage below pulls it through.
+                undrainedPlaintext = new HashingStream(processingStream, originalHashAlgo);
+                processingStream = undrainedPlaintext;
+            }
+
+            if (intermediateStream != null)
+                processingStream.Position = 0;
 
             // Duplicate check only after the hash is known
             if (Options.EnableDuplicateDetection) {
-                var existingMetadata = await MetadataService.FindByHashAsync(originalHash, ct).ConfigureAwait(false);
+                // Detection on means staging ran, so the hash is already settled here.
+                var existingMetadata = await MetadataService.FindByHashAsync(originalHash!, ct).ConfigureAwait(false);
                 if (existingMetadata != null) {
                     var duplicateResult = await HandleDuplicateAsync(
                             existingMetadata, fileId, originalSize, normalizedPathPrefix, compress, encrypt, keyId, selectedCompressAlgorithm, ct)
@@ -841,6 +947,7 @@ public abstract class FileStorageServiceBase
                 await encryptedHashStream.FlushAsync(ct).ConfigureAwait(false);
                 await outputStream.FlushAsync(ct).ConfigureAwait(false);
                 encryptedHash = encryptedHashStream.GetHash();
+                originalHash ??= undrainedPlaintext!.GetHash();
                 await DisposeStreamAsync(outputStream).ConfigureAwait(false);
                 outputStream = null; // Prevent double disposal
                 fileExtension = TwoKeyEncryptionService.FileExtension;
@@ -857,15 +964,14 @@ public abstract class FileStorageServiceBase
                 encryptedSize = await GetStorageSizeAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
                 dataEncryptionKeyAlgorithm = EncryptionServiceExtensions.DetermineDekAlgorithm(TwoKeyEncryptionService);
                 keyEncryptionKeyAlgorithm = EncryptionServiceExtensions.DetermineKekAlgorithm(TwoKeyEncryptionService);
-                sourceFileName = fileId + fileExtension;
                 sourceFileHash = encryptedHash;
                 Logger.LogDebug("Encrypted file {FileId} using two-key encryption: {Size} bytes, KeyVersion: {KeyVersion}", fileId, encryptedSize, dataEncryptionKeyVersion);
             }
             else {
-                // No encryption: write straight to output
-                processingStream.Position = 0;
+                // No encryption: write straight to output. On the single-pass compress path the bytes are already there and this copies nothing.
                 await processingStream.CopyToAsync(outputStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
                 await outputStream.FlushAsync(ct).ConfigureAwait(false);
+                originalHash ??= undrainedPlaintext!.GetHash();
                 await DisposeStreamAsync(outputStream).ConfigureAwait(false);
                 outputStream = null; // Prevent double disposal
                 sourceFileHash = compress ? compressedHash : originalHash;
@@ -876,6 +982,9 @@ public abstract class FileStorageServiceBase
             // originalHash was captured during the compression / pass-through stage above. Do not rewind inputStream:
             // it may not be seekable (S3 GetObject / Blob OpenRead streams used by multipart complete, for example).
             var actualOriginalSize = ResolveActualOriginalSize(fileId, originalSize, boundedInput.BytesRead);
+
+            // Derived last so it always names the id the bytes actually landed under. The Overwrite duplicate strategy swaps fileId mid-method.
+            var sourceFileName = fileId + fileExtension;
             var stored = new FileStoreResult(
                 fileId, originalFileName, actualOriginalSize, originalHash, sourceFileName, finalSize, sourceFileHash ?? originalHash, compress, compressionAlgorithm,
                 compressedSize, compressedHash, encrypt, dataEncryptionKeyAlgorithm, keyEncryptionKeyAlgorithm, encryptedSize, encryptedHash, encryptedDataEncryptionKey,
@@ -888,6 +997,7 @@ public abstract class FileStorageServiceBase
             return stored;
         }
         finally {
+            undrainedPlaintext?.Dispose();
             if (outputStream != null)
                 await DisposeStreamAsync(outputStream).ConfigureAwait(false);
         }
@@ -914,11 +1024,10 @@ public abstract class FileStorageServiceBase
         const long compressStagingThresholdBytes = 16L * 1024 * 1024;
         var useTempFile = originalSize > largePlainThresholdBytes || (compress && originalSize > compressStagingThresholdBytes);
         if (!useTempFile) {
-            if (originalSize <= 0)
-                return new MemoryStream();
-
-            var cap = (int)Math.Min(originalSize, int.MaxValue);
-            return new MemoryStream(cap);
+            // originalSize is caller-declared and unverified, so it only picks the spool shape and never the up-front buffer. MemoryStream doubles as it fills, so an
+            // overstated length costs a few extra growths rather than a buffer the payload never needs.
+            const long maxInitialCapacityBytes = 1024 * 1024;
+            return new MemoryStream((int)Math.Max(0, Math.Min(originalSize, maxInitialCapacityBytes)));
         }
 
         return TempSpool.CreateStream(TempSpool.CreatePath("fs-staging"));
@@ -996,91 +1105,30 @@ public abstract class FileStorageServiceBase
             return [];
         }
 
-        var processingStream = storageStream;
+        // Decode through the same pipeline GetFileStreamAsync uses, so encrypted and compressed payloads stay bounded by pipe backpressure instead of being staged in a
+        // MemoryStream per transform. HashVerifyingReadStream checks integrity inline, which also removes the second linear pass over the payload.
+        Stream decoded = storageStream;
+        if (metadata.IsEncrypted || metadata.IsCompressed) {
+            int? chunkSize = metadata.CompressedFileSize.HasValue ? StreamChunkSizeHelper.DetermineChunkSize(metadata.CompressedFileSize.Value) : null;
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            var pipePlain = new Pipe();
+            var pipelineTask = _streamingPipelines.RunStreamingDecodePipelineAsync(
+                storageStream, metadata, pipePlain.Writer, chunkSize, compressionAlgorithmOverride, linkedCts.Token);
 
-        // Decryption pass
-        MemoryStream? bufferedStream = null;
+            decoded = new PipelineFileReadStream(pipePlain.Reader.AsStream(), pipelineTask, linkedCts);
+            if (Options.MaxDecompressedFileSize is { } maxDecompressedBytes)
+                decoded = new MaxDecompressedBytesReadStream(decoded, maxDecompressedBytes, fileId);
+        }
+
+        var hashAlg = metadata.HashAlgorithm ?? HashAlgorithm.Sha256;
+        var verifying = new HashVerifyingReadStream(decoded, hashAlg.Create(), metadata.OriginalFileHash, Options.ThrowOnHashMismatch, Logger, fileId);
         try {
-            if (metadata.IsEncrypted) {
-                OperationHelpers.ThrowIfNull(
-                    TwoKeyEncryptionService,
-                    $"File {fileId} is encrypted but no encryption service is configured. Provide an ITwoKeyEncryptionService instance when creating FileStorageService to decrypt encrypted files.");
-
-                // Buffer streams that cannot seek
-                if (!processingStream.CanSeek) {
-                    bufferedStream = new();
-                    await processingStream.CopyToAsync(bufferedStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
-                    bufferedStream.Position = 0;
-                    processingStream = bufferedStream;
-                }
-                else
-                    processingStream.Position = 0;
-
-                var decryptedStream = new MemoryStream();
-                // Pass null for keyId so the key is read from the stream header
-                await TwoKeyEncryptionService.DecryptToStreamAsync(processingStream, decryptedStream, null, null, ct).ConfigureAwait(false);
-                decryptedStream.Position = 0;
-                processingStream = decryptedStream;
-                if (bufferedStream != null) {
-                    await DisposeStreamAsync(bufferedStream).ConfigureAwait(false);
-                    bufferedStream = null;
-                }
-
-                Logger.LogDebug("Decrypted file {FileId} using two-key encryption (keyId and keyVersion read from stream header)", fileId);
-            }
+            data = await ReadAllBytesAsync(verifying, metadata.OriginalFileSize, ct).ConfigureAwait(false);
         }
         finally {
-            bufferedStream?.Dispose();
-        }
-
-        // Decompression pass
-        if (metadata.IsCompressed) {
-            OperationHelpers.ThrowIfNull(
-                CompressionService,
-                $"File {fileId} is compressed but no compression service is configured. " +
-                "Provide an ICompressionService when creating FileStorageService to decompress compressed files.");
-
-            var decompressAlgorithm = FileStorageCompression.ResolveDecompressionAlgorithm(
-                metadata, compressionAlgorithmOverride, Options.DecompressionAlgorithmOverride, CompressionService, Logger, fileId);
-
-            int? chunkSize = metadata.CompressedFileSize.HasValue ? StreamChunkSizeHelper.DetermineChunkSize(metadata.CompressedFileSize.Value) : null;
-            var decompressedStream = new MemoryStream();
-            if (Options.MaxDecompressedFileSize is { } maxDecompressedBytes) {
-                // Bound during decompression, not after, so a malicious payload cannot exhaust memory before the size check.
-                var bounded = new MaxBytesWriteStream(decompressedStream, maxDecompressedBytes, fileId);
-                await CompressionService.Resolver.DecompressAsync(processingStream, bounded, decompressAlgorithm, chunkSize, ct).ConfigureAwait(false);
-            }
-            else
-                await CompressionService.Resolver.DecompressAsync(processingStream, decompressedStream, decompressAlgorithm, chunkSize, ct).ConfigureAwait(false);
-
-            decompressedStream.Position = 0;
-            processingStream = decompressedStream;
-            Logger.LogDebug("Decompressed file {FileId}: {CompressedSize} -> {DecompressedSize} bytes", fileId, metadata.CompressedFileSize, decompressedStream.Length);
-        }
-
-        // Materialize the byte[] in one pass while hashing, so we skip a second linear scan of the payload.
-        var hashAlg = metadata.HashAlgorithm ?? HashAlgorithm.Sha256;
-        byte[] computedHash;
-        if (processingStream is MemoryStream ms) {
-            data = ms.ToArray();
-            computedHash = ComputeHash(data, hashAlg);
-        }
-        else {
-            var capacity = metadata.OriginalFileSize > 0 ? (int)Math.Min(metadata.OriginalFileSize, int.MaxValue) : 0;
-            using var resultStream = capacity > 0 ? new MemoryStream(capacity) : new MemoryStream();
-            using (var hashing = new HashingStream(resultStream, hashAlg.Create())) {
-                await processingStream.CopyToAsync(hashing, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
-                computedHash = hashing.GetHash();
-            }
-
-            data = resultStream.ToArray();
-        }
-
-        if (!ByteArraysEqual(computedHash, metadata.OriginalFileHash)) {
-            if (Options.ThrowOnHashMismatch)
-                throw new InvalidDataException($"Hash mismatch for file {fileId}. File may be corrupted.");
-
-            Logger.LogWarning("Hash mismatch for file {FileId}. File may be corrupted.", fileId);
+            // Disposal is what runs the integrity check, so it has to finish before the success signals below. It only throws once the stream reached EOF, which means a
+            // failed read above can never be masked by a mismatch raised here.
+            await DisposeStreamAsync(verifying).ConfigureAwait(false);
         }
 
         sw.Stop();
@@ -1098,6 +1146,246 @@ public abstract class FileStorageServiceBase
             .ConfigureAwait(false);
 
         return data;
+    }
+
+    /// <summary>
+    /// Drains <paramref name="source" /> into a single array sized from <paramref name="expectedLength" />, so a payload that matches its metadata costs one allocation.
+    /// Always reads through to EOF: a hash-verifying source only checks integrity once the stream is fully drained. Tampered objects that are shorter or longer than the
+    /// recorded length still come back in full, which is what makes the mismatch visible to the caller.
+    /// </summary>
+    private static async Task<byte[]> ReadAllBytesAsync(Stream source, long expectedLength, CancellationToken ct)
+    {
+        if (expectedLength <= 0 || expectedLength > int.MaxValue) {
+            using var growable = new MemoryStream();
+            await source.CopyToAsync(growable, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
+            return growable.ToArray();
+        }
+
+        var buffer = new byte[(int)expectedLength];
+        var filled = 0;
+        while (filled < buffer.Length) {
+            var read = await source.ReadAsync(buffer, filled, buffer.Length - filled, ct).ConfigureAwait(false);
+            if (read == 0)
+                break;
+
+            filled += read;
+        }
+
+        if (filled < buffer.Length)
+            return buffer.AsSpan(0, filled).ToArray();
+
+        // Metadata says the payload ends here. Confirm it does, which is also what takes the source to EOF and arms its integrity check.
+        var probe = new byte[1];
+        if (await source.ReadAsync(probe, 0, 1, ct).ConfigureAwait(false) == 0)
+            return buffer;
+
+        using var spill = new MemoryStream();
+        await spill.WriteAsync(buffer, 0, buffer.Length, ct).ConfigureAwait(false);
+        await spill.WriteAsync(probe, 0, 1, ct).ConfigureAwait(false);
+        await source.CopyToAsync(spill, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
+        return spill.ToArray();
+    }
+
+    /// <summary>
+    /// Opens a byte slice of an uncompressed object. Returns null when <see cref="SupportsPlainByteRange" /> is false, or when the object is missing and
+    /// <see cref="FileStorageServiceBaseOptions.ThrowOnFileNotFound" /> is false. Encrypted objects are decrypted from the chunk that holds
+    /// <paramref name="startInclusive" />. Compressed objects throw. The slice is not hash-verified. The caller disposes the stream.
+    /// </summary>
+    /// <param name="fileId">Id of the file to read.</param>
+    /// <param name="pathPrefix">Prefix stored on the file. Null uses the prefix on metadata.</param>
+    /// <param name="startInclusive">First plaintext byte, zero-based.</param>
+    /// <param name="endInclusive">Last plaintext byte, inclusive.</param>
+    /// <param name="ct">Cancellation token.</param>
+    public Task<Stream?> OpenPlainByteRangeAsync(Guid fileId, string? pathPrefix, long startInclusive, long endInclusive, CancellationToken ct = default)
+        => OpenPlainByteRangeAsync(fileId, pathPrefix, metadata: null, startInclusive, endInclusive, ct);
+
+    /// <summary>
+    /// Opens a byte slice using metadata the caller already loaded. Does not read metadata again. Same rules as
+    /// <see cref="OpenPlainByteRangeAsync(Guid, string?, long, long, CancellationToken)" />.
+    /// </summary>
+    /// <param name="metadata">Stored file row, including encryption flags and <see cref="FileStoreResult.SourceFileName" />.</param>
+    /// <param name="startInclusive">First plaintext byte, zero-based.</param>
+    /// <param name="endInclusive">Last plaintext byte, inclusive.</param>
+    /// <param name="ct">Cancellation token.</param>
+    public Task<Stream?> OpenPlainByteRangeAsync(FileStoreResult metadata, long startInclusive, long endInclusive, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(metadata);
+        return OpenPlainByteRangeAsync(metadata.Id, metadata.PathPrefix, metadata, startInclusive, endInclusive, ct);
+    }
+
+    private async Task<Stream?> OpenPlainByteRangeAsync(Guid fileId, string? pathPrefix, FileStoreResult? metadata, long startInclusive, long endInclusive, CancellationToken ct)
+    {
+        if (!SupportsPlainByteRange)
+            return null;
+
+        ArgumentHelpers.ThrowIfNegative(startInclusive);
+        ArgumentHelpers.ThrowIfLessThan(endInclusive, startInclusive);
+        using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.GetDuration)]);
+        var sw = Stopwatch.StartNew();
+        if (metadata == null) {
+            try {
+                metadata = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+            }
+            catch (FileNotFoundException) when (!Options.ThrowOnFileNotFound) {
+                sw.Stop();
+                return null;
+            }
+
+            OperationHelpers.ThrowIfNull(metadata, $"Metadata for file {fileId} was not found. The file may have been deleted or the metadata store may be unavailable.");
+        }
+
+        if (pathPrefix != null)
+            metadata = metadata with { PathPrefix = pathPrefix };
+
+        if (metadata.IsCompressed)
+            throw new InvalidOperationException($"File {fileId} is compressed. Byte-range reads are only valid for uncompressed objects.");
+
+        try {
+            EnsureReadableAvailability(metadata);
+        }
+        catch (FileNotAvailableException) {
+            await RaiseFileAuditAsync(
+                    new(
+                        FileAuditEventType.Read, DateTime.UtcNow, fileId, metadata.TenantId, OperationContextAccessor.Current?.ActorId, metadata.DataEncryptionKeyId,
+                        metadata.DataEncryptionKeyVersion, FileAuditOutcome.Failure, "File not available for read"), ct)
+                .ConfigureAwait(false);
+
+            throw;
+        }
+
+        Stream? stream;
+        if (metadata.IsEncrypted)
+            stream = await OpenEncryptedPlainByteRangeAsync(metadata, startInclusive, endInclusive, ct).ConfigureAwait(false);
+        else {
+            var storageStream = await ReadStoredRangeAsync(metadata, startInclusive, endInclusive, ct).ConfigureAwait(false);
+            stream = storageStream == null ? null : new BoundedReadStream(storageStream, endInclusive - startInclusive + 1);
+        }
+
+        if (stream == null) {
+            sw.Stop();
+            if (Options.ThrowOnFileNotFound)
+                throw new FileNotFoundException($"File with ID {fileId} not found", fileId.ToString());
+
+            Logger.LogDebug("File storage stream not found for {FileId}, returning null", fileId);
+            return null;
+        }
+
+        sw.Stop();
+        Logger.LogInformation("Streaming plain byte range {Start}-{End} of file {FileId}", startInclusive, endInclusive, fileId);
+        Metrics.IncrementCounter(MetricNames[nameof(Constants.Metrics.GetSuccess)]);
+        RaiseReadAuditInBackground(metadata);
+        FileRetrieved?.Invoke(this, new(fileId, metadata.OriginalFileSize, metadata.IsCompressed, metadata.IsEncrypted));
+        return stream;
+    }
+
+    private async Task<Stream?> OpenEncryptedPlainByteRangeAsync(FileStoreResult metadata, long startInclusive, long endInclusive, CancellationToken ct)
+    {
+        OperationHelpers.ThrowIfNull(
+            TwoKeyEncryptionService,
+            $"File {metadata.Id} is encrypted but no encryption service is configured. Provide an ITwoKeyEncryptionService instance when creating FileStorageService.");
+
+        var layout = await GetEncryptedLayoutAsync(metadata, ct).ConfigureAwait(false);
+        var length = endInclusive - startInclusive + 1;
+        var chunkIndex = startInclusive / layout.ChunkSize;
+        var skip = (int)(startInclusive % layout.ChunkSize);
+        var cipherStart = layout.HeaderLength + chunkIndex * (long)layout.FrameSize;
+        var encryptedSize = metadata.EncryptedFileSize ?? 0;
+        if (encryptedSize <= 0 || cipherStart >= encryptedSize)
+            throw new InvalidDataException($"File {metadata.Id} has no ciphertext at plaintext offset {startInclusive}.");
+
+        var cipher = await ReadStoredRangeAsync(metadata, cipherStart, encryptedSize - 1, ct).ConfigureAwait(false);
+        if (cipher == null)
+            return null;
+
+        var pipe = new Pipe();
+        var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var task = DecryptRangeIntoAsync(cipher, pipe.Writer, layout, chunkIndex, skip, length, linked.Token);
+        return new PipelineFileReadStream(new BoundedReadStream(pipe.Reader.AsStream(), length), task, linked);
+    }
+
+    private async Task<EncryptedStreamLayout> GetEncryptedLayoutAsync(FileStoreResult metadata, CancellationToken ct)
+    {
+        if (_encryptedRangeLayouts.TryGetValue(metadata.Id, out var cached))
+            return cached;
+
+        var encryptedSize = metadata.EncryptedFileSize ?? 0;
+        if (encryptedSize <= 0)
+            throw new InvalidDataException($"File {metadata.Id} has no encrypted size, so a byte range cannot be mapped onto ciphertext.");
+
+        var prefixEnd = Math.Min(encryptedSize, 64 * 1024) - 1;
+        var prefix = await ReadStoredRangeAsync(metadata, 0, prefixEnd, ct).ConfigureAwait(false);
+        if (prefix == null)
+            throw new FileNotFoundException($"File with ID {metadata.Id} not found", metadata.Id.ToString());
+
+        EncryptedStreamLayout layout;
+        try {
+            layout = await TwoKeyEncryptionService!.ReadEncryptedStreamLayoutAsync(prefix, ct).ConfigureAwait(false);
+        }
+        finally {
+            prefix.Dispose();
+        }
+
+        var stored = _encryptedRangeLayouts.GetOrAdd(metadata.Id, layout);
+        if (!ReferenceEquals(stored, layout))
+            layout.Dispose();
+
+        return stored;
+    }
+
+    private async Task DecryptRangeIntoAsync(
+        Stream cipher,
+        PipeWriter writer,
+        EncryptedStreamLayout layout,
+        long chunkIndex,
+        int skip,
+        long length,
+        CancellationToken ct)
+    {
+        var plainOut = writer.AsStream(leaveOpen: true);
+        try {
+            try {
+                await TwoKeyEncryptionService!.DecryptFromChunkAsync(layout.Header, cipher, plainOut, chunkIndex, skip, length, layout.Dek, ct).ConfigureAwait(false);
+            }
+            finally {
+                cipher.Dispose();
+            }
+
+            await writer.CompleteAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            try {
+                await writer.CompleteAsync(ex).ConfigureAwait(false);
+            }
+            catch (InvalidOperationException) {
+                // The writer was already completed.
+            }
+
+            if (ex is not OperationCanceledException)
+                throw;
+        }
+        finally {
+            plainOut.Dispose();
+        }
+    }
+
+    private async Task<Stream?> ReadStoredRangeAsync(FileStoreResult metadata, long startInclusive, long endInclusive, CancellationToken ct)
+    {
+        PlainByteRangeReadStart = startInclusive;
+        return await ReadPlainByteRangeAsync(metadata, startInclusive, endInclusive, ct).ConfigureAwait(false);
+    }
+
+    private void RaiseReadAuditInBackground(FileStoreResult metadata)
+    {
+        var task = RaiseFileAuditAsync(
+            new(
+                FileAuditEventType.Read, DateTime.UtcNow, metadata.Id, metadata.TenantId, OperationContextAccessor.Current?.ActorId, metadata.DataEncryptionKeyId,
+                metadata.DataEncryptionKeyVersion, FileAuditOutcome.Success),
+            CancellationToken.None);
+        _ = task.ContinueWith(
+            t => Logger.LogWarning(t.Exception, "File read audit failed for {FileId}", metadata.Id),
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted,
+            TaskScheduler.Default);
     }
 
     /// <inheritdoc />
@@ -1270,6 +1558,13 @@ public abstract class FileStorageServiceBase
         return metadata;
     }
 
+    /// <inheritdoc />
+    public virtual async Task<FileContentIntegrity> GetContentIntegrityAsync(Guid fileId, CancellationToken ct = default)
+    {
+        var metadata = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+        return FileContentIntegrity.From(metadata);
+    }
+
     /// <summary>Raises <see cref="FileNotAvailableException" /> when metadata says the payload is not readable under the current policy.</summary>
     protected void EnsureReadableAvailability(FileStoreResult metadata)
     {
@@ -1358,8 +1653,13 @@ public abstract class FileStorageServiceBase
 #region DirectUpload.Copy
 
     /// <inheritdoc cref="PlainDirectUploadCoordinator.PersistPendingPlainDirectUploadMetadataAsync" />
-    protected Task<FileStoreResult> PersistPendingPlainDirectUploadMetadataAsync(Guid fileId, DirectUploadBeginRequest request, string normalizedPathPrefix, CancellationToken ct)
-        => _plainDirectUpload.PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalizedPathPrefix, ct);
+    protected Task<FileStoreResult> PersistPendingPlainDirectUploadMetadataAsync(
+        Guid fileId,
+        DirectUploadBeginRequest request,
+        string normalizedPathPrefix,
+        CancellationToken ct,
+        HashAlgorithm? verifiedChecksumAlgorithm = null)
+        => _plainDirectUpload.PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalizedPathPrefix, ct, verifiedChecksumAlgorithm);
 
     /// <inheritdoc cref="PlainDirectUploadCoordinator.FinalizePendingPlainDirectUploadCoreAsync" />
     protected Task<FileStoreResult> FinalizePendingPlainDirectUploadCoreAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest, CancellationToken ct)

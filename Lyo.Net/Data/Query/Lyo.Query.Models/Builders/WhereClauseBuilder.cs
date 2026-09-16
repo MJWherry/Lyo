@@ -201,6 +201,20 @@ public class WhereClauseBuilder
         return this;
     }
 
+    /// <summary>Adds a trigram-similarity condition. <paramref name="threshold"/> omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold"/>.</summary>
+    public WhereClauseBuilder Fuzzy(string field, object? value, double? threshold = null, string? description = null)
+    {
+        _children.Add(new ConditionClause(field, ComparisonOperatorEnum.Fuzzy, value, description, threshold));
+        return this;
+    }
+
+    /// <summary>Adds the negation of <see cref="Fuzzy"/>. <paramref name="threshold"/> omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold"/>.</summary>
+    public WhereClauseBuilder NotFuzzy(string field, object? value, double? threshold = null, string? description = null)
+    {
+        _children.Add(new ConditionClause(field, ComparisonOperatorEnum.NotFuzzy, value, description, threshold));
+        return this;
+    }
+
     /// <summary>Adds an arbitrary pre-built clause node as a sibling under this builder's top-level group.</summary>
     public WhereClauseBuilder Add(WhereClause node)
     {
@@ -344,7 +358,8 @@ public class WhereClauseBuilder
         return node;
     }
 
-    public static ConditionClause Condition(string field, ComparisonOperatorEnum op, object? value, string? description = null) => new(field, op, value, description);
+    public static ConditionClause Condition(string field, ComparisonOperatorEnum op, object? value, string? description = null, double? threshold = null)
+        => new(field, op, value, description, threshold);
 
     /// <summary>Builds a ConditionClause with an optional SubQuery for two-phase execution (root in DB, subquery in memory).</summary>
     public static ConditionClause ConditionWithSubClause(string field, ComparisonOperatorEnum op, object? value, WhereClause subQuery, string? description = null)
@@ -521,6 +536,18 @@ public class WhereClauseBuilder
         {
             var path = PathFrom(selector);
             parent.NotRegex(path, pattern);
+            return this;
+        }
+
+        public WhereClauseBuilderFor<T> Fuzzy(Expression<Func<T, string>> selector, string value, double? threshold = null)
+        {
+            parent.Fuzzy(PathFrom(selector), value, threshold);
+            return this;
+        }
+
+        public WhereClauseBuilderFor<T> NotFuzzy(Expression<Func<T, string>> selector, string value, double? threshold = null)
+        {
+            parent.NotFuzzy(PathFrom(selector), value, threshold);
             return this;
         }
 

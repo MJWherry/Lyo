@@ -35,7 +35,7 @@ public sealed class FileStorageStreamingPipelinesFailureTests
     [Fact]
     public async Task SaveFromStreamAsync_CompressEncrypt_EncryptStageFails_Throws_InsteadOfDeadlocking()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         using var scope = LocalFileStorageTestScope.Create(compressionService: CreateCompressionService(), twoKeyEncryptionService: CreateEncryptionService());
 
         // The encrypt stage faults on the unknown key before it consumes the pipe, while the compress stage still wants to
@@ -51,7 +51,7 @@ public sealed class FileStorageStreamingPipelinesFailureTests
     [Fact]
     public async Task GetFileStreamAsync_DecryptDecompress_DecompressStageFails_SurfacesFaultToConsumer()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var encryption = CreateEncryptionService();
 
         // Incompressible payload so the compressed body stays large enough for the read-side guard to fire mid-stream.

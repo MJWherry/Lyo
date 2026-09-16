@@ -179,6 +179,13 @@
                             </LyoResponsiveTable>
                         }
                     </div>
+
+                    @if (GrantStore is not null) {
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Grants</MudText>
+                            <GrantPanel Subject="@user.Id.ToString("D")" AllowEdit="false"/>
+                        </div>
+                    }
                 </MudStack>
             </MudPaper>
         }

@@ -2,9 +2,14 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <Description>PostgreSQL storage for Lyo.HomeInventory (EF Core): household items, rooms/locations, quantities, and change history.</Description>
+        <Description>PostgreSQL storage for Lyo.HomeInventory (EF Core): household items, rooms/locations, quantities, attachments, and change history.</Description>
         <PackageTags>home-inventory postgres postgresql entityframework ef household</PackageTags>
     </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.HomeInventory.Postgres.Tests"/>
+        <InternalsVisibleTo Include="Lyo.HomeInventory.Api"/>
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
@@ -16,9 +21,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Postgres\Lyo.EntityReference.Postgres.csproj"/>
         <ProjectReference Include="..\..\..\Core\Health\Lyo.Health\Lyo.Health.csproj"/>
         <ProjectReference Include="..\Lyo.HomeInventory\Lyo.HomeInventory.csproj"/>
+        <ProjectReference Include="..\Lyo.HomeInventory.Models\Lyo.HomeInventory.Models.csproj"/>
         <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>

@@ -4,6 +4,9 @@
 @using Lyo.Query.Models.Enums
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Yaml
+@using Lyo.Web.Components.Export.Xml
+@using Lyo.Web.Components.Export.Toml
 @using Lyo.Web.Components.Export.Xlsx
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -19,6 +22,9 @@
         <LyoDataGridExportMenu Host="context">
             <ExportCsvMenuItem Host="context"/>
             <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
             <ExportXlsxMenuItem Host="context"/>
         </LyoDataGridExportMenu>
     </BulkExportControls>

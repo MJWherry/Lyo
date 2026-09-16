@@ -19,7 +19,7 @@ public sealed class LyoApiCompressionMiddlewareTests
         await using var app = await StartAppAsync();
         using var response = await SendAsync(app, "/csv");
         AssertCompressed(response);
-        var body = DecompressBrotli(await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
+        var body = DecompressBrotli(await response.Content.ReadAsByteArrayAsync(TestCt));
         Assert.Equal(Payload, Encoding.UTF8.GetString(body));
     }
 
@@ -64,7 +64,7 @@ public sealed class LyoApiCompressionMiddlewareTests
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, path);
         request.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("br"));
-        var response = await app.GetTestClient().SendAsync(request, TestContext.Current.CancellationToken);
+        var response = await app.GetTestClient().SendAsync(request, TestCt);
         response.EnsureSuccessStatusCode();
         return response;
     }

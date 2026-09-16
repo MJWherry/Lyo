@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using Lyo.IO.Temp.Enums;
 using Lyo.IO.Temp.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.IO.Temp.Tests;
 
@@ -12,7 +13,7 @@ public sealed class IOTempSessionTests : IDisposable
     public void Dispose() => _service.Dispose();
 
     private static IOTempServiceOptions TestOptions()
-        => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-session-tests"), DirectoryName = Guid.NewGuid().ToString("N") };
+        => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-session-tests"), DirectoryName = LyoGuid.CreateV7().ToString("N") };
 
     [Fact]
     public void Dispose_Cleans_UpDirectory()
@@ -88,9 +89,9 @@ public sealed class IOTempSessionTests : IDisposable
     public async Task CreateFileAsync_Writes_Content()
     {
         await using var session = _service.CreateSession();
-        var path = await session.CreateFileAsync("Async content", TestContext.Current.CancellationToken);
+        var path = await session.CreateFileAsync("Async content", TestCt);
         Assert.True(File.Exists(path));
-        Assert.Equal("Async content", await File.ReadAllTextAsync(path, TestContext.Current.CancellationToken));
+        Assert.Equal("Async content", await File.ReadAllTextAsync(path, TestCt));
     }
 
     [Fact]
@@ -271,7 +272,7 @@ public sealed class IOTempSessionTests : IDisposable
     public void CopyFrom_Directory_CopiesAllFilesIntoSession()
     {
         using var session = _service.CreateSession();
-        var srcDir = Path.Combine(Path.GetTempPath(), "lyo-copy-src-" + Guid.NewGuid().ToString("N"));
+        var srcDir = Path.Combine(Path.GetTempPath(), "lyo-copy-src-" + LyoGuid.CreateV7().ToString("N"));
         try {
             Directory.CreateDirectory(srcDir);
             File.WriteAllText(Path.Combine(srcDir, "a.txt"), "aaa");
@@ -334,7 +335,7 @@ public sealed class IOTempSessionTests : IDisposable
     {
         using var session = _service.CreateSession();
         var path = session.CreateFile("hello");
-        await session.AppendToFileAsync(path, Encoding.UTF8.GetBytes(" world").AsMemory(), TestContext.Current.CancellationToken);
+        await session.AppendToFileAsync(path, Encoding.UTF8.GetBytes(" world").AsMemory(), TestCt);
         Assert.Equal("hello world", File.ReadAllText(path));
     }
 
@@ -343,7 +344,7 @@ public sealed class IOTempSessionTests : IDisposable
     {
         using var session = _service.CreateSession();
         var path = session.CreateFile("line1\n");
-        await session.AppendToFileAsync(path, "line2\n", TestContext.Current.CancellationToken);
+        await session.AppendToFileAsync(path, "line2\n", TestCt);
         Assert.Equal("line1\nline2\n", File.ReadAllText(path));
     }
 
@@ -354,7 +355,7 @@ public sealed class IOTempSessionTests : IDisposable
         var src = Path.GetTempFileName();
         try {
             File.WriteAllText(src, "async copy content");
-            var dest = await session.CopyFromAsync(src, TestContext.Current.CancellationToken);
+            var dest = await session.CopyFromAsync(src, TestCt);
             Assert.True(File.Exists(dest));
             Assert.Equal("async copy content", File.ReadAllText(dest));
         }
@@ -367,12 +368,12 @@ public sealed class IOTempSessionTests : IDisposable
     public async Task CopyFromAsync_Directory_CopiesAllFiles()
     {
         using var session = _service.CreateSession();
-        var srcDir = Path.Combine(Path.GetTempPath(), "copy-async-src-" + Guid.NewGuid().ToString("N"));
+        var srcDir = Path.Combine(Path.GetTempPath(), "copy-async-src-" + LyoGuid.CreateV7().ToString("N"));
         try {
             Directory.CreateDirectory(srcDir);
             File.WriteAllText(Path.Combine(srcDir, "a.txt"), "aaa");
             File.WriteAllText(Path.Combine(srcDir, "b.txt"), "bbb");
-            var dest = await session.CopyFromAsync(srcDir, TestContext.Current.CancellationToken);
+            var dest = await session.CopyFromAsync(srcDir, TestCt);
             Assert.True(Directory.Exists(dest));
             Assert.Equal(2, Directory.GetFiles(dest).Length);
         }
@@ -426,7 +427,7 @@ public sealed class IOTempSessionTests : IDisposable
         using var session = _service.CreateSession();
         var src = Path.GetTempFileName();
         File.WriteAllText(src, "async move");
-        var dest = await session.MoveFromAsync(src, TestContext.Current.CancellationToken);
+        var dest = await session.MoveFromAsync(src, TestCt);
         Assert.True(File.Exists(dest));
         Assert.False(File.Exists(src));
     }
@@ -482,7 +483,7 @@ public sealed class IOTempSessionTests : IDisposable
     {
         using var session = _service.CreateSession();
         var path = session.CreateFile("original");
-        await session.WriteFileAsync(path, "replaced", TestContext.Current.CancellationToken);
+        await session.WriteFileAsync(path, "replaced", TestCt);
         Assert.Equal("replaced", File.ReadAllText(path, Encoding.UTF8));
     }
 
@@ -491,7 +492,7 @@ public sealed class IOTempSessionTests : IDisposable
     {
         using var session = _service.CreateSession();
         var path = session.CreateFile("original");
-        await session.WriteFileAsync(path, Encoding.UTF8.GetBytes("bytes").AsMemory(), TestContext.Current.CancellationToken);
+        await session.WriteFileAsync(path, Encoding.UTF8.GetBytes("bytes").AsMemory(), TestCt);
         Assert.Equal("bytes", File.ReadAllText(path, Encoding.UTF8));
     }
 
@@ -661,7 +662,7 @@ public sealed class IOTempSessionTests : IDisposable
         var path = session.CreateFile("orig");
         string? raised = null;
         session.FileWritten += p => raised = p;
-        await session.WriteFileAsync(path, "replaced", TestContext.Current.CancellationToken);
+        await session.WriteFileAsync(path, "replaced", TestCt);
         Assert.Equal(path, raised);
     }
 
@@ -683,7 +684,7 @@ public sealed class IOTempSessionTests : IDisposable
         var path = session.CreateFile("start");
         string? raised = null;
         session.FileAppended += p => raised = p;
-        await session.AppendToFileAsync(path, "-end", TestContext.Current.CancellationToken);
+        await session.AppendToFileAsync(path, "-end", TestCt);
         Assert.Equal(path, raised);
     }
 

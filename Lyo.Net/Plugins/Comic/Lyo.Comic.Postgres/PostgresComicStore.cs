@@ -3,6 +3,7 @@ using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Comic.Postgres;
 
@@ -42,7 +43,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
                 ctx.AlternateTitles.Add(ToAlternateTitleEntity(alt, existing.Id));
         }
         else {
-            var id = series.Id == Guid.Empty ? Guid.NewGuid() : series.Id;
+            var id = series.Id == Guid.Empty ? LyoGuid.CreateV7() : series.Id;
             var entity = ToSeriesEntity(series, id);
             ctx.Series.Add(entity);
             foreach (var alt in series.AlternateTitles)
@@ -56,7 +57,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<ComicSeries?> GetSeriesByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await ctx.Series.Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Id == id, ct).ConfigureAwait(false);
+        var entity = await ctx.Series.AsNoTracking().Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToSeries(entity);
     }
 
@@ -65,7 +66,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(slug);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await ctx.Series.Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Slug == slug, ct).ConfigureAwait(false);
+        var entity = await ctx.Series.AsNoTracking().Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Slug == slug, ct).ConfigureAwait(false);
         return entity == null ? null : ToSeries(entity);
     }
 
@@ -74,7 +75,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(query);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var q = ctx.Series.Include(s => s.AlternateTitles).AsQueryable();
+        var q = ctx.Series.AsNoTracking().Include(s => s.AlternateTitles).AsQueryable();
         if (!string.IsNullOrWhiteSpace(query.TitleContains)) {
             var needle = query.TitleContains.ToLower();
             q = q.Where(s => s.Title.ToLower().Contains(needle) || s.AlternateTitles.Any(a => a.Title.ToLower().Contains(needle)));
@@ -129,7 +130,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             }
         }
 
-        ctx.Volumes.Add(ToVolumeEntity(volume, volume.Id == Guid.Empty ? Guid.NewGuid() : volume.Id));
+        ctx.Volumes.Add(ToVolumeEntity(volume, volume.Id == Guid.Empty ? LyoGuid.CreateV7() : volume.Id));
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -137,7 +138,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<ComicVolume?> GetVolumeByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await ctx.Volumes.FindAsync([id], ct).ConfigureAwait(false);
+        var entity = await ctx.Volumes.AsNoTracking().FirstOrDefaultAsync(v => v.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToVolume(entity);
     }
 
@@ -145,7 +146,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<IReadOnlyList<ComicVolume>> GetVolumesBySeriesAsync(Guid seriesId, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await ctx.Volumes.Where(v => v.SeriesId == seriesId).OrderBy(v => v.VolumeNumber).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await ctx.Volumes.AsNoTracking().Where(v => v.SeriesId == seriesId).OrderBy(v => v.VolumeNumber).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToVolume).ToList();
     }
 
@@ -182,7 +183,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             }
         }
 
-        ctx.Chapters.Add(ToChapterEntity(chapter, chapter.Id == Guid.Empty ? Guid.NewGuid() : chapter.Id));
+        ctx.Chapters.Add(ToChapterEntity(chapter, chapter.Id == Guid.Empty ? LyoGuid.CreateV7() : chapter.Id));
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -190,7 +191,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<ComicChapter?> GetChapterByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await ctx.Chapters.FindAsync([id], ct).ConfigureAwait(false);
+        var entity = await ctx.Chapters.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToChapter(entity);
     }
 
@@ -198,7 +199,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<IReadOnlyList<ComicChapter>> GetChaptersBySeriesAsync(Guid seriesId, string? language = null, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var q = ctx.Chapters.Where(c => c.SeriesId == seriesId);
+        var q = ctx.Chapters.AsNoTracking().Where(c => c.SeriesId == seriesId);
         if (!string.IsNullOrWhiteSpace(language))
             q = q.Where(c => c.Language == language);
 
@@ -210,7 +211,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<IReadOnlyList<ComicChapter>> GetChaptersByVolumeAsync(Guid volumeId, string? language = null, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var q = ctx.Chapters.Where(c => c.VolumeId == volumeId);
+        var q = ctx.Chapters.AsNoTracking().Where(c => c.VolumeId == volumeId);
         if (!string.IsNullOrWhiteSpace(language))
             q = q.Where(c => c.Language == language);
 
@@ -247,7 +248,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             }
         }
 
-        ctx.Pages.Add(ToPageEntity(page, page.Id == Guid.Empty ? Guid.NewGuid() : page.Id));
+        ctx.Pages.Add(ToPageEntity(page, page.Id == Guid.Empty ? LyoGuid.CreateV7() : page.Id));
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -255,7 +256,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<ComicPage?> GetPageByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await ctx.Pages.FindAsync([id], ct).ConfigureAwait(false);
+        var entity = await ctx.Pages.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToPage(entity);
     }
 
@@ -263,7 +264,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<IReadOnlyList<ComicPage>> GetPagesByChapterAsync(Guid chapterId, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await ctx.Pages.Where(p => p.ChapterId == chapterId).OrderBy(p => p.PageNumber).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await ctx.Pages.AsNoTracking().Where(p => p.ChapterId == chapterId).OrderBy(p => p.PageNumber).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToPage).ToList();
     }
 
@@ -296,7 +297,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             }
         }
 
-        ctx.Characters.Add(ToCharacterEntity(character, character.Id == Guid.Empty ? Guid.NewGuid() : character.Id));
+        ctx.Characters.Add(ToCharacterEntity(character, character.Id == Guid.Empty ? LyoGuid.CreateV7() : character.Id));
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -304,7 +305,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<ComicCharacter?> GetCharacterByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await ctx.Characters.FindAsync([id], ct).ConfigureAwait(false);
+        var entity = await ctx.Characters.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToCharacter(entity);
     }
 
@@ -312,7 +313,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<IReadOnlyList<ComicCharacter>> GetCharactersBySeriesAsync(Guid seriesId, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await ctx.Characters.Where(c => c.SeriesId == seriesId).OrderBy(c => c.Name).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await ctx.Characters.AsNoTracking().Where(c => c.SeriesId == seriesId).OrderBy(c => c.Name).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToCharacter).ToList();
     }
 
@@ -355,7 +356,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
 
     private static AlternateTitleEntity ToAlternateTitleEntity(ComicAlternateTitle r, Guid seriesId)
         => new() {
-            Id = r.Id == Guid.Empty ? Guid.NewGuid() : r.Id,
+            Id = r.Id == Guid.Empty ? LyoGuid.CreateV7() : r.Id,
             SeriesId = seriesId,
             Title = r.Title,
             Language = r.Language

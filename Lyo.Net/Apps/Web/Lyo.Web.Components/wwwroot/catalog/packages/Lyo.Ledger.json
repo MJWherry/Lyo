@@ -1,0 +1,90 @@
+{
+  "id": "Lyo.Ledger",
+  "name": "Lyo.Ledger",
+  "area": "Plugins",
+  "tagline": "Double-entry ledger contracts: chart of accounts, journals, post/void, and client AR balance.",
+  "description": "Double-entry books used by Billing. `ILedgerStore` posts balanced journals and voids by writing a reversing journal. Posted rows are immutable. `GetClientArBalance` reads posted AR lines (account 1100) and excludes reversing journals, not a column on the client.",
+  "features": [
+    "Seeded CoA codes on `LedgerAccountCodes`: 1000 Cash, 1100 AR, 2200 Tax payable, 4000 Revenue.",
+    "`PostJournalAsync` requires debit total = credit total, then freezes the journal.",
+    "`VoidJournalAsync` posts a reversing journal. Posted rows are never deleted."
+  ],
+  "examples": [
+    {
+      "title": "Post a balanced journal",
+      "language": "csharp",
+      "code": "await ledger.EnsureChartOfAccountsAsync(tenantId, ct);\nvar ar = await ledger.GetAccountByCodeAsync(LedgerAccountCodes.AccountsReceivable, tenantId, ct);\nvar revenue = await ledger.GetAccountByCodeAsync(LedgerAccountCodes.Revenue, tenantId, ct);\nawait ledger.PostJournalAsync(new LedgerJournalRecord { Memo = \"Issue INV-1\" }, [\n    new() { AccountId = ar.Id, Debit = 1500m, ClientId = clientId },\n    new() { AccountId = revenue.Id, Credit = 1500m }\n], tenantId, ct);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "See also",
+      "items": [
+        "[`Lyo.Ledger.Postgres`](../Lyo.Ledger.Postgres/README.md). EF Core schema (`ledger`)."
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Ledger/Lyo.Ledger/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

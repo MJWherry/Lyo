@@ -1,7 +1,7 @@
 import {withBearerToken} from "../auth/authHeaders.js";
 import {toApiClientError} from "./errors.js";
 import {entityMetadataPath, metadataPath} from "./metadata.js";
-import {buildUrl, trimRoute, withIncludes} from "./request.js";
+import {buildUrl, encodeRequestBody, trimRoute, withIncludes} from "./request.js";
 import type {ApiClientOptions, ApiRequest, ApiResponse} from "../types/common.js";
 import type {
     CrudMetadataResponse,
@@ -58,8 +58,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
                 options.token
             );
 
-            const body =
-                request.body === undefined ? undefined : JSON.stringify(request.body);
+            const body = encodeRequestBody(request.body, headers);
 
             const response = options.transport({
                 method: request.method,
@@ -67,6 +66,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
                 body,
                 headers,
                 ...(request.signal ? {signal: request.signal} : {}),
+                ...(request.responseType ? {responseType: request.responseType} : {}),
             });
 
             if (!response.ok) {

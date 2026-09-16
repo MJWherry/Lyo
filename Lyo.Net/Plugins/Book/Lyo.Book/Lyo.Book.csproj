@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Domain contracts for a library catalog: books, series, genres, types, formats, identifiers, contributors, chapters, and searchable pages.</Description>
+        <PackageTags>book library catalog isbn genre chapter</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Book.Postgres.Tests"/>
+    </ItemGroup>
+
+</Project>

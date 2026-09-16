@@ -4,7 +4,7 @@
   "name": "Lyo.Drift.Api",
   "area": "Apps",
   "tagline": "HTTP mapping for the Lyo Drift collector API (`BuildDriftGroup`).",
-  "description": "Maps instance upsert, heartbeat/stop, snapshot/diff/change ingest, Query/Get, and DiffAgainst. Register the store with `AddPostgresDriftManagement` from `Lyo.Drift.Postgres` first. Standalone host: `Lyo.Drift.Api.Host`.",
+  "description": "Maps instance upsert, heartbeat/stop, snapshot/diff/change ingest, Query/Get, and DiffAgainst. Register the store with `AddPostgresDriftManagement` from `Lyo.Drift.Postgres` first. Example host: `Lyo.Drift.Api.Example`.",
   "features": [
     "`BuildDriftGroup` maps ingest and query routes for instances, snapshots, diffs, and changes."
   ],
@@ -61,14 +61,6 @@
     },
     {
       "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -172,6 +164,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
@@ -229,6 +229,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -496,6 +504,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

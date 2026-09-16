@@ -9,13 +9,16 @@ public class PlaywrightBrowserOptions
 {
     public const string SectionName = "PlaywrightBrowserOptions";
 
-    /// <summary>Which Playwright browser engine to launch.</summary>
-    public PlaywrightBrowserKind BrowserKind { get; set; } = PlaywrightBrowserKind.Chromium;
+    /// <summary>Which browser to launch. Chrome and Edge use the Chromium browser type with channel <c>chrome</c> or <c>msedge</c> when <see cref="Channel" /> is empty.</summary>
+    public AutomationBrowserKind BrowserKind { get; set; } = AutomationBrowserKind.Chromium;
 
     /// <summary>If true, launches headless (where supported).</summary>
     public bool Headless { get; set; }
 
-    /// <summary>Optional Playwright channel (<c>chrome</c>, <c>msedge</c>). Applied only when <see cref="BrowserKind" /> is <see cref="PlaywrightBrowserKind.Chromium" />.</summary>
+    /// <summary>
+    /// Optional Playwright channel (<c>chrome</c>, <c>msedge</c>). Applied for Chrome, Chromium, and Edge. When empty, Chrome uses <c>chrome</c> and Edge uses <c>msedge</c>.
+    /// Ignored for Firefox and WebKit.
+    /// </summary>
     public string? Channel { get; set; }
 
     /// <summary>HTTP proxy for the browser context (same exit as Flared when handing off <c>cf_clearance</c>).</summary>
@@ -55,15 +58,14 @@ public class PlaywrightBrowserOptions
     /// Extra launch arguments (Chromium/Edge). Each entry must start with <c>-</c>; Playwright rejects bare tokens (it treats them as an initial page URL). Do not add
     /// <c>--disable-gpu</c> unless you need software GL: that flag forces SwiftShader (<c>SwiftShader Device (Subzero)</c>), which bot-detection sites flag. Docker hosts without a
     /// GPU still use SwiftShader even without the flag; do not spoof <c>WEBGL_UNMASKED_RENDERER</c>. <see cref="ResolveLaunchArguments" /> omits these defaults (and
-    /// <c>--window-size</c>) when <see cref="BrowserKind" /> is not Chromium.
+    /// <c>--window-size</c>) when <see cref="BrowserKind" /> is Firefox or WebKit.
     /// </summary>
     public List<string> LaunchArguments { get; set; } = [.. ChromiumDefaultLaunchArguments];
 
-    /// <summary>Default Chromium User-Agent. Firefox/WebKit skip this pool and use the engine UA unless the host replaces <see cref="UserAgents" />.</summary>
-    public const string DefaultChromiumUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-
-    /// <summary>User-Agent pool. Playwright uses the first entry. Firefox/WebKit omit a context UA when this is still the Chromium default.</summary>
-    public List<string> UserAgents { get; set; } = [DefaultChromiumUserAgent];
+    /// <summary>
+    /// User-Agent pool. Playwright uses the first entry. An empty list means <see cref="AutomationBrowserDetector.UserAgent" /> for <see cref="BrowserKind" />.
+    /// </summary>
+    public List<string> UserAgents { get; set; } = [];
 
     /// <summary>Viewport width in CSS pixels (<c>window.innerWidth</c>).</summary>
     public int ViewportWidth { get; set; } = 1920;
@@ -154,7 +156,7 @@ public class PlaywrightBrowserOptions
     public IReadOnlyList<string> ResolveLaunchArguments()
     {
         List<string> args;
-        if (BrowserKind != PlaywrightBrowserKind.Chromium) {
+        if (!UsesChromiumLaunchProfile()) {
             args = [];
             foreach (var arg in LaunchArguments) {
                 if (!IsChromiumBuiltinLaunchArg(arg))
@@ -181,20 +183,12 @@ public class PlaywrightBrowserOptions
         return args;
     }
 
-    /// <summary>User-Agent for a new context, or <see langword="null" /> to keep the engine default (Firefox/WebKit with the Chromium default pool).</summary>
-    public string? ResolveContextUserAgent()
-    {
-        if (UserAgents.Count == 0)
-            return null;
+    /// <summary>User-Agent for a new context. An empty <see cref="UserAgents" /> list is generated for <see cref="BrowserKind" /> on this host.</summary>
+    public string ResolveContextUserAgent()
+        => UserAgents.Count == 0 ? AutomationBrowserDetector.UserAgent(BrowserKind) : UserAgents[0];
 
-        if (BrowserKind != PlaywrightBrowserKind.Chromium && IsDefaultChromiumUserAgentPool())
-            return null;
-
-        return UserAgents[0];
-    }
-
-    private bool IsDefaultChromiumUserAgentPool()
-        => UserAgents.Count == 1 && string.Equals(UserAgents[0], DefaultChromiumUserAgent, StringComparison.Ordinal);
+    private bool UsesChromiumLaunchProfile()
+        => BrowserKind is AutomationBrowserKind.Chrome or AutomationBrowserKind.Chromium or AutomationBrowserKind.Edge;
 
     private static void EnsureLaunchArgIsFlag(string arg)
     {

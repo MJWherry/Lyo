@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using Lyo.Common.Core.Conversion;
 using Lyo.Common.Metadata.Records;
 using Lyo.FileMetadataStore.Models;
 using Microsoft.AspNetCore.Components;
@@ -51,7 +52,7 @@ public partial class FileStoreMetadataTable
         if (bytes == null || bytes.Length == 0)
             return "-";
 
-        return Convert.ToHexString(bytes);
+        return ByteConvert.ToHex(bytes);
     }
 
     private static string FormatMetadata(JsonElement? metadata)

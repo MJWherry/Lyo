@@ -14,7 +14,7 @@ public class PcmFrameReaderTests
         payload[frameSize] = 2;
         var reader = new PcmFrameReader(new MemoryStream(payload, writable: false));
         var frames = new List<byte[]>();
-        await foreach (var frame in reader.ReadFramesAsync(TestContext.Current.CancellationToken))
+        await foreach (var frame in reader.ReadFramesAsync(TestCt))
             frames.Add(frame);
 
         Assert.Equal(2, frames.Count);
@@ -30,7 +30,7 @@ public class PcmFrameReaderTests
         var payload = new byte[frameSize + 10];
         var reader = new PcmFrameReader(new MemoryStream(payload, writable: false), 8000, 1, TimeSpan.FromMilliseconds(20));
         var frames = new List<byte[]>();
-        await foreach (var frame in reader.ReadFramesAsync(TestContext.Current.CancellationToken))
+        await foreach (var frame in reader.ReadFramesAsync(TestCt))
             frames.Add(frame);
 
         Assert.Equal(2, frames.Count);

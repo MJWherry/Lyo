@@ -19,7 +19,9 @@ using Lyo.Common.Core;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
+using Lyo.Api.Services.Crud.Read.Query.Sql;
 using Lyo.Query.Models.Common.Request;
+using Lyo.Query.Sql;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -954,7 +956,67 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
 
         ApplyAuthorization(projectedRouteBuilder, _queryConfig.Auth);
+        BuildQuerySql();
     }
+
+    private void BuildQuerySql()
+    {
+        var routeBuilder = app.MapPost(
+                $"{baseRoute}/QuerySql", async (
+                    [FromBody] QueryRequestBase queryRequest, [FromServices] IDbContextFactory<TDbContext> contextFactory, HttpContext httpContext,
+                    CancellationToken ct = default) => {
+                    await using var context = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+                    var entityType = context.Model.FindEntityType(typeof(TDbEntity));
+                    OperationHelpers.ThrowIfNull(entityType, $"Entity type {typeof(TDbEntity).Name} not found in model.");
+                    try {
+                        QuerySqlRes result = queryRequest switch {
+                            QueryConcreteReq concrete => TranslateConcrete(concrete, entityType, httpContext),
+                            ProjectionQueryReq projected => TranslateProjected(projected, entityType, httpContext),
+                            _ => throw new SqlTranslationException("Root queries use the context QuerySql route.")
+                        };
+                        return Results.Ok(result);
+                    }
+                    catch (SqlTranslationException ex) {
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, SqlProblem(ex));
+                    }
+                })
+            .WithName($"QuerySql{Regex.Replace(typeof(TResponse).Name, "Res$", "")}")
+            .WithTags(Regex.Replace(typeof(TResponse).Name, "Res$", ""))
+            .Produces<QuerySqlRes>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
+
+        ApplyAuthorization(routeBuilder, _queryConfig!.Auth);
+    }
+
+    private QuerySqlRes TranslateConcrete(QueryConcreteReq queryRequest, Microsoft.EntityFrameworkCore.Metadata.IEntityType entityType, HttpContext httpContext)
+    {
+        var queryPolicyErrors = ValidateQueryPolicy(queryRequest, _queryConfig!);
+        if (queryPolicyErrors.Count > 0)
+            throw ApiErrorException.From(PolicyProblem(httpContext, queryPolicyErrors));
+
+        return QuerySqlPreview.Translate(queryRequest, entityType);
+    }
+
+    private QuerySqlRes TranslateProjected(ProjectionQueryReq queryRequest, Microsoft.EntityFrameworkCore.Metadata.IEntityType entityType, HttpContext httpContext)
+    {
+        var queryPolicyErrors = ValidateProjectedQueryPolicy(queryRequest, _queryConfig!);
+        if (queryPolicyErrors.Count > 0)
+            throw ApiErrorException.From(PolicyProblem(httpContext, queryPolicyErrors));
+
+        return QuerySqlPreview.Translate(queryRequest, entityType);
+    }
+
+    private static LyoProblemDetails PolicyProblem(HttpContext httpContext, List<ApiError> errors)
+        => ApiErrorResponseFactory.CreateForError(
+            httpContext,
+            LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithMessage("Invalid query.").WithStatus(400).AddErrors(errors).Build());
+
+    private static LyoProblemDetails SqlProblem(SqlTranslationException ex)
+        => LyoProblemDetailsBuilder.CreateWithActivity()
+            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+            .WithStatus(400)
+            .WithMessage(ex.Message)
+            .Build();
 
     private static QueryPolicy ToPolicy(QueryConfig<TDbEntity> queryConfig)
         => new() {

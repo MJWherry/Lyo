@@ -4,7 +4,7 @@ Contract library for Drift. Agents and the API share instance upsert payloads, f
 
 ## Features
 
-- **Identity default.** SystemInfoDriftProjection.From omits env vars, NIC addresses, monitors, locale, uptime, free disk, and process lifetime unless named groups are passed.
+- **Identity default.** SystemInfoDriftProjection.From omits env vars, NIC addresses, monitors, audio devices, printers, locale, uptime, free disk, and process lifetime unless named groups are passed.
 - **DTO diffs.** ObjectGraphDifferenceDto stores JSON leaves, not object?.
 - **Routes.** Constants.Rest.Drift names Instance, Snapshot, Diff, and Change ingest paths.
 

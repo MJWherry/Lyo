@@ -1,0 +1,34 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="IngredientGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <LeftControls>
+        <MudButton OnClick="@OpenCreate"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Size="Size.Small"
+                   Variant="Variant.Outlined">
+            Add ingredient
+        </MudButton>
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit ingredient" OnClick="@(() => OpenIngredient(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name"/>
+        <LyoProjectedColumn Field="Slug" Title="Slug"/>
+        <LyoProjectedColumn Field="DefaultUnit" Title="Unit"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenIngredient(item))">Edit</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

@@ -402,4 +402,11 @@ public interface ICsvService
     /// <summary>Splits CSV bytes into multiple CSV payloads with at most <paramref name="rowsPerFile" /> data rows each.</summary>
     Task<IReadOnlyList<byte[]>> SplitCsvBytesAsync(byte[] csvBytes, int rowsPerFile, CancellationToken ct = default);
 #endif
+
+    /// <summary>
+    /// Parses <paramref name="csv" /> into good rows and per-row errors. A bad cell omits that row. <see cref="CsvParseError.RowNumber" /> is the 1-based file row. An empty
+    /// document fails. A header with no data rows succeeds with zero rows.
+    /// </summary>
+    /// <typeparam name="T">Mapped row type.</typeparam>
+    CsvParseResult<T> ParseStringAsResult<T>(string csv);
 }

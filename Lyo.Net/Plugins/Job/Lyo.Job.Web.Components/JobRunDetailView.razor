@@ -106,10 +106,6 @@
                             <LyoChip Variant="Variant.Outlined" Label="@($"Priority {JobRun?.Priority ?? 0}")"/>
                             <LyoChip Variant="Variant.Outlined" Color="@(JobRun?.SlaBreached == true ? Color.Error : Color.Success)"
                                      Label="@(JobRun?.SlaBreached == true ? "SLA breached" : "SLA ok")"/>
-                            <LyoChip Variant="Variant.Outlined" Label="@AlertText"/>
-                            @if (JobRun?.AllowTriggers == true) {
-                                <LyoChip Variant="Variant.Outlined" Label="Triggers allowed"/>
-                            }
                             @if (JobRun?.ParentJobRunId is { } parentId) {
                                 <LyoChip Variant="Variant.Outlined" Label="@($"Batch {(JobRun.BatchIndex is { } i ? $"{i + 1}" : "?")} / {JobRun.BatchTotal?.ToString() ?? "?"}")"/>
                                 <span class="job-run-parent-id"><LyoIdField Compact="true" Value="@parentId"/></span>

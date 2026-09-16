@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Leaderboard.Seed",
+  "name": "Lyo.Leaderboard.Seed",
+  "area": "Plugins",
+  "tagline": "EF seed of leaderboard boards, members, entries, and standings.",
+  "description": "EF seed of Count fishing boards with fish, weight, and length properties, three members, one invite, two verified entries, one adjustment, and a standing per member. Schema leaderboard.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Leaderboard/Lyo.Leaderboard.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

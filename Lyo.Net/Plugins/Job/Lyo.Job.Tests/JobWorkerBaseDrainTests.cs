@@ -13,6 +13,7 @@ using Lyo.Job.Tests.Postgres;
 using Lyo.Job.Worker;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -28,16 +29,16 @@ public class JobWorkerBaseDrainTests
         var mq = new FakeMqService();
         var api = new GatedJobApiClient();
         var worker = new GatedJobWorker(mq, new JobClient(api), new FakeJobEventPublisher());
-        await worker.StartAsync(TestContext.Current.CancellationToken);
+        await worker.StartAsync(TestCt);
         Assert.Equal(1, api.RegisterCount);
 
         var handler = mq.GetHandler(Constants.Mq.QueueGetJobRunCreated("cs"));
         Assert.NotNull(handler);
-        var delivery = Task.Run(() => handler!(Envelope(api.RunId)), TestContext.Current.CancellationToken);
-        await WaitUntilAsync(() => worker.ExecutionStarted, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var delivery = Task.Run(() => handler!(Envelope(api.RunId)), TestCt);
+        await WaitUntilAsync(() => worker.ExecutionStarted, TimeSpan.FromSeconds(5), TestCt);
 
         var stopping = worker.StopAsync(CancellationToken.None);
-        await Task.Delay(250, TestContext.Current.CancellationToken);
+        await Task.Delay(250, TestCt);
         Assert.False(stopping.IsCompleted);
         Assert.Equal(0, api.DeregisterCount);
 
@@ -54,8 +55,8 @@ public class JobWorkerBaseDrainTests
         var mq = new FakeMqService();
         var api = new GatedJobApiClient();
         var worker = new GatedJobWorker(mq, new JobClient(api), new FakeJobEventPublisher());
-        await worker.StartAsync(TestContext.Current.CancellationToken);
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StartAsync(TestCt);
+        await worker.StopAsync(TestCt);
         Assert.Equal(1, api.DeregisterCount);
         Assert.False(worker.IsRunning);
     }
@@ -98,7 +99,7 @@ public class JobWorkerBaseDrainTests
     /// <summary>API client stub covering worker registration/deregistration plus the run lifecycle routes the drain path touches.</summary>
     private sealed class GatedJobApiClient : StubApiClient
     {
-        public Guid RunId { get; } = Guid.NewGuid();
+        public Guid RunId { get; } = LyoGuid.CreateV7();
 
         public int RegisterCount { get; private set; }
 
@@ -130,7 +131,7 @@ public class JobWorkerBaseDrainTests
                 var created = new CreateResult<JobWorkerInstanceRes>(
                     true,
                     new() {
-                        Id = Guid.NewGuid(),
+                        Id = LyoGuid.CreateV7(),
                         WorkerType = "cs",
                         MachineName = "host",
                         ProcessId = 1,
@@ -166,8 +167,8 @@ public class JobWorkerBaseDrainTests
                 Id = RunId,
                 State = state,
                 CreatedTimestamp = DateTime.UtcNow,
-                JobDefinitionId = Guid.NewGuid(),
-                JobDefinition = new(Guid.NewGuid(), "TestDef", null, "Test", "cs", true, null, null, null, null),
+                JobDefinitionId = LyoGuid.CreateV7(),
+                JobDefinition = new(LyoGuid.CreateV7(), "TestDef", null, "Test", "cs", true, null, null, null),
                 JobRunParameters = []
             };
     }

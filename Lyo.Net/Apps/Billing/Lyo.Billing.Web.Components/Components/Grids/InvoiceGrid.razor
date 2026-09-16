@@ -1,0 +1,91 @@
+@namespace Lyo.Billing.Web.Components.Components.Grids
+@using Microsoft.JSInterop
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IBillingClient Billing
+@inject IJSRuntime Js
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="BillingInvoiceGrid"
+                      Route="Billing/Invoices"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="ApplyQuery"
+                      Features="@(LyoDataGridFeatureFlags.All & ~LyoDataGridFeatureFlags.BulkDelete & ~LyoDataGridFeatureFlags.BulkPatch)">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <BulkMenuItems>
+        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf" OnClick="BulkPdfAsync">PDF</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Block" OnClick="BulkVoidAsync">Void</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="BulkDeleteDraftsAsync">Delete drafts</MudMenuItem>
+    </BulkMenuItems>
+    <LeftControls>
+        @if (OnCompose.HasDelegate) {
+            <MudButton OnClick="@(() => OnCompose.InvokeAsync())" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary">
+                New invoice
+            </MudButton>
+        }
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudStack Row Spacing="0">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="Open invoice"
+                                   OnClick="@(() => OpenAsync(cell.Item))"/>
+                    @if (IsDraft(cell.Item)) {
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete draft"
+                                       OnClick="@(() => DeleteDraftAsync(cell.Item))"/>
+                    }
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Number" Title="Number" QuickSearchPropertyName="Number"/>
+        <LyoIdColumn T="object?" TRes="ClientLookup" Field="ClientId" Route="Billing/Clients" Title="Client"
+                     Select="@(new[] { "DisplayName" })" HeaderStyle="width: 180px;" Context="client">
+            @(client?.DisplayName)
+        </LyoIdColumn>
+        <LyoProjectedColumn Field="Status" Title="Status" Align="Align.Center" HeaderStyle="width: 130px;">
+            <CellContent Context="item">
+                @{
+                    var statusText = ProjectedValueHelper.GetDisplayValue(item, "Status");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<InvoiceStatus>(statusText, BillingColorHelper.ForInvoiceStatus))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Total" Title="Total" Align="Align.Right">
+            <CellContent Context="item">
+                @BillingMoney.Format(ProjectedValueHelper.GetValue(item, "Total"), ProjectedValueHelper.GetDisplayValue(item, "Currency"))
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="AmountPaid" Title="Paid" Align="Align.Right">
+            <CellContent Context="item">
+                @BillingMoney.Format(ProjectedValueHelper.GetValue(item, "AmountPaid"), ProjectedValueHelper.GetDisplayValue(item, "Currency"))
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="IssuedAt" Title="Issued" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="DueAt" Title="Due" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => OpenAsync(item))">Open</MudMenuItem>
+        @if (CanPdf(item)) {
+            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf" Href="@PdfHref(item)" Target="_blank">PDF</MudMenuItem>
+        }
+        @if (CanVoid(item)) {
+            <MudMenuItem Icon="@Icons.Material.Filled.Block" OnClick="@(() => VoidAsync(item))">Void</MudMenuItem>
+        }
+        @if (IsDraft(item)) {
+            <MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteDraftAsync(item))">Delete draft</MudMenuItem>
+        }
+    </RowMenuControls>
+</LyoDataGridProjected>

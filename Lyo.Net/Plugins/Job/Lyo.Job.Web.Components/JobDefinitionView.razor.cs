@@ -16,9 +16,6 @@ public partial class JobDefinitionView
     [Parameter]
     public string ScheduleRoute { get; set; } = "";
 
-    [Parameter]
-    public string TriggerRoute { get; set; } = "";
-
     [Inject]
     IApiClient ApiClient { get; set; } = null!;
 

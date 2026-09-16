@@ -36,6 +36,7 @@
     </PropertyGroup>
     <ItemGroup Condition="'$(MSBuildProjectName)' != '' and $(MSBuildProjectName.EndsWith('.Tests'))">
         <Using Include="Xunit"/>
+        <Using Include="Lyo.Testing.TestCancellation" Static="true"/>
         <PackageReference Include="coverlet.collector">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

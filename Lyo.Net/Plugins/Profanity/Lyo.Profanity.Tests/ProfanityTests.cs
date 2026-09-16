@@ -1,5 +1,6 @@
 using Lyo.Profanity.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Profanity.Tests;
 
@@ -20,7 +21,7 @@ public sealed class ProfanityTests
     {
         var options = new FileProfanityFilterOptions { AdditionalWords = ["badword", "naughty"] };
         var service = new FileProfanityFilterService(options);
-        var result = service.Filter("This is badword and naughty text", TestContext.Current.CancellationToken);
+        var result = service.Filter("This is badword and naughty text", TestCt);
         Assert.True(result.HasProfanity);
         Assert.Equal("This is ******* and ******* text", result.FilteredText);
         Assert.Equal(2, result.Matches.Count);
@@ -31,7 +32,7 @@ public sealed class ProfanityTests
     {
         var options = new FileProfanityFilterOptions { AdditionalWords = ["badword"] };
         var service = new FileProfanityFilterService(options);
-        var result = service.Filter("Clean text here", TestContext.Current.CancellationToken);
+        var result = service.Filter("Clean text here", TestCt);
         Assert.False(result.HasProfanity);
         Assert.Equal("Clean text here", result.FilteredText);
         Assert.Empty(result.Matches);
@@ -42,7 +43,7 @@ public sealed class ProfanityTests
     {
         var options = new FileProfanityFilterOptions { AdditionalWords = ["badword"] };
         var service = new FileProfanityFilterService(options);
-        var result = await service.FilterAsync("Some badword here", TestContext.Current.CancellationToken);
+        var result = await service.FilterAsync("Some badword here", TestCt);
         Assert.True(result.HasProfanity);
         Assert.Equal("Some ******* here", result.FilteredText);
     }
@@ -52,7 +53,7 @@ public sealed class ProfanityTests
     {
         var options = new FileProfanityFilterOptions { AdditionalWords = ["badword"] };
         var service = new FileProfanityFilterService(options);
-        Assert.True(service.ContainsProfanity("This has badword in it", TestContext.Current.CancellationToken));
+        Assert.True(service.ContainsProfanity("This has badword in it", TestCt));
     }
 
     [Fact]
@@ -60,7 +61,7 @@ public sealed class ProfanityTests
     {
         var options = new FileProfanityFilterOptions { AdditionalWords = ["badword"] };
         var service = new FileProfanityFilterService(options);
-        Assert.False(service.ContainsProfanity("Clean content", TestContext.Current.CancellationToken));
+        Assert.False(service.ContainsProfanity("Clean content", TestCt));
     }
 
     [Fact]
@@ -68,7 +69,7 @@ public sealed class ProfanityTests
     {
         var options = new FileProfanityFilterOptions { AdditionalWords = ["naughty"] };
         var service = new FileProfanityFilterService(options);
-        Assert.True(await service.ContainsProfanityAsync("Something naughty", TestContext.Current.CancellationToken));
+        Assert.True(await service.ContainsProfanityAsync("Something naughty", TestCt));
     }
 
     [Fact]
@@ -76,7 +77,7 @@ public sealed class ProfanityTests
     {
         var options = new FileProfanityFilterOptions { AdditionalWords = ["ass", "class"], ExcludedWords = ["class"] };
         var service = new FileProfanityFilterService(options);
-        var result = service.Filter("In class we learn about ass", TestContext.Current.CancellationToken);
+        var result = service.Filter("In class we learn about ass", TestCt);
         Assert.True(result.HasProfanity);
         Assert.Equal("In class we learn about ***", result.FilteredText);
     }
@@ -86,10 +87,10 @@ public sealed class ProfanityTests
     {
         var options = new FileProfanityFilterOptions { AdditionalWords = ["badword"] };
         var service = new FileProfanityFilterService(options);
-        var nullResult = service.Filter(null, TestContext.Current.CancellationToken);
+        var nullResult = service.Filter(null, TestCt);
         Assert.False(nullResult.HasProfanity);
         Assert.Equal(string.Empty, nullResult.FilteredText);
-        var emptyResult = service.Filter("", TestContext.Current.CancellationToken);
+        var emptyResult = service.Filter("", TestCt);
         Assert.False(emptyResult.HasProfanity);
         Assert.Equal("", emptyResult.FilteredText);
     }
@@ -99,7 +100,7 @@ public sealed class ProfanityTests
     {
         var options = new FileProfanityFilterOptions { AdditionalWords = ["badword"], ReplacementStrategy = ProfanityReplacementStrategy.ReplaceWithWord, ReplacementWord = "***" };
         var service = new FileProfanityFilterService(options);
-        var result = service.Filter("Text with badword", TestContext.Current.CancellationToken);
+        var result = service.Filter("Text with badword", TestCt);
         Assert.True(result.HasProfanity);
         Assert.Equal("Text with ***", result.FilteredText);
     }
@@ -107,13 +108,13 @@ public sealed class ProfanityTests
     [Fact]
     public void Filter_Loads_From_Temp_File()
     {
-        var tempFile = Path.Combine(Path.GetTempPath(), "lyo_profanity_test_" + Guid.NewGuid().ToString("N") + ".json");
+        var tempFile = Path.Combine(Path.GetTempPath(), "lyo_profanity_test_" + LyoGuid.CreateV7().ToString("N") + ".json");
         try {
             File.WriteAllText(tempFile, "fileword1\nfileword2");
             Assert.True(File.Exists(tempFile));
             var options = new FileProfanityFilterOptions { WordsFilePath = tempFile };
             var service = new FileProfanityFilterService(options);
-            var result = service.Filter("Contains fileword1 and fileword2", TestContext.Current.CancellationToken);
+            var result = service.Filter("Contains fileword1 and fileword2", TestCt);
             Assert.True(result.HasProfanity);
             Assert.Equal("Contains ********* and *********", result.FilteredText);
         }
@@ -126,16 +127,16 @@ public sealed class ProfanityTests
     [Fact]
     public void RefreshWords_Reloads_From_File_When_AllowRefresh_True()
     {
-        var tempFile = Path.Combine(Path.GetTempPath(), "lyo_profanity_refresh_" + Guid.NewGuid().ToString("N") + ".json");
+        var tempFile = Path.Combine(Path.GetTempPath(), "lyo_profanity_refresh_" + LyoGuid.CreateV7().ToString("N") + ".json");
         try {
             File.WriteAllText(tempFile, "oldword");
             var options = new FileProfanityFilterOptions { WordsFilePath = tempFile, AllowRefresh = true };
             var service = new FileProfanityFilterService(options);
-            Assert.True(service.ContainsProfanity("Has oldword", TestContext.Current.CancellationToken));
+            Assert.True(service.ContainsProfanity("Has oldword", TestCt));
             File.WriteAllText(tempFile, "newword");
-            service.RefreshWords(TestContext.Current.CancellationToken);
-            Assert.False(service.ContainsProfanity("Has oldword", TestContext.Current.CancellationToken));
-            Assert.True(service.ContainsProfanity("Has newword", TestContext.Current.CancellationToken));
+            service.RefreshWords(TestCt);
+            Assert.False(service.ContainsProfanity("Has oldword", TestCt));
+            Assert.True(service.ContainsProfanity("Has newword", TestCt));
         }
         finally {
             if (File.Exists(tempFile))

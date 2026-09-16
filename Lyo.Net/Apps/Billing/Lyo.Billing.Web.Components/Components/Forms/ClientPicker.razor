@@ -1,0 +1,11 @@
+@namespace Lyo.Billing.Web.Components.Components.Forms
+
+<MudAutocomplete T="ClientLookup"
+                 Label="Client"
+                 Value="_value"
+                 ValueChanged="OnChanged"
+                 SearchFunc="SearchAsync"
+                 ToStringFunc="@(c => c?.DisplayName)"
+                 Dense="true"
+                 ResetValueOnEmptyText="true"
+                 Immediate="true"/>

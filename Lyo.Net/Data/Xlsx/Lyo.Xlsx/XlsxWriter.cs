@@ -3,6 +3,9 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using ClosedXML.Excel;
 using ClosedXML.Graphics;
+using Lyo.Common.Core;
+using Lyo.Common.Core.Attributes;
+using Lyo.Common.Core.Enums;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
 using Lyo.Xlsx.Models;
@@ -15,6 +18,7 @@ namespace Lyo.Xlsx;
 internal sealed class XlsxWriter : IXlsxWriter
 {
     private readonly ILogger _logger;
+    private readonly XlsxOptions _options;
 
     static XlsxWriter()
     {
@@ -23,7 +27,11 @@ internal sealed class XlsxWriter : IXlsxWriter
             LoadOptions.DefaultGraphicEngine = new DefaultGraphicEngine("DejaVu Sans");
     }
 
-    internal XlsxWriter(ILogger logger) => _logger = logger;
+    internal XlsxWriter(ILogger logger, XlsxOptions options)
+    {
+        _logger = logger;
+        _options = options;
+    }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.ExportToXlsx``1(System.Collections.Generic.IEnumerable{``0},System.String,System.String)' />
     public void ExportToXlsx<T>(IEnumerable<T> data, string xlsxFilePath, string? worksheetName = null)
@@ -31,7 +39,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting {XlsxExportType} to {XlsxExportPath}", typeof(T).FullName, xlsxFilePath);
-        var properties = ReadableProperties<T>();
+        var properties = OrderedProperties<T>();
         WriteToFile(xlsxFilePath, (writer, ct) => writer.WriteSheet(worksheetName ?? "Sheet1", HeaderNames(properties), RowsFromProperties(data, properties), ct));
     }
 
@@ -42,7 +50,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx stream", typeof(T).FullName);
-        var properties = ReadableProperties<T>();
+        var properties = OrderedProperties<T>();
         WriteToStream(xlsxStream, (writer, ct) => writer.WriteSheet(worksheetName ?? "Sheet1", HeaderNames(properties), RowsFromProperties(data, properties), ct));
     }
 
@@ -51,7 +59,7 @@ internal sealed class XlsxWriter : IXlsxWriter
     {
         ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx bytes", typeof(T).FullName);
-        var properties = ReadableProperties<T>();
+        var properties = OrderedProperties<T>();
         return WriteToBytes((writer, ct) => writer.WriteSheet(worksheetName ?? "Sheet1", HeaderNames(properties), RowsFromProperties(data, properties), ct));
     }
 
@@ -159,7 +167,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting data table to {XlsxExportPath}", xlsxFilePath);
-        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable);
+        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable, _options.Order, _options.OrderNames);
         WriteToFile(xlsxFilePath, (writer, ct) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, footer, footerFormats, ct));
     }
 
@@ -170,7 +178,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting data table to xlsx stream");
-        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable);
+        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable, _options.Order, _options.OrderNames);
         WriteToStream(xlsxStream, (writer, ct) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, footer, footerFormats, ct));
     }
 
@@ -178,7 +186,7 @@ internal sealed class XlsxWriter : IXlsxWriter
     public byte[] ExportToXlsxBytesFromDataTable(DataTable.Models.DataTable dataTable)
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
-        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable);
+        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable, _options.Order, _options.OrderNames);
         return WriteToBytes((writer, ct) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, footer, footerFormats, ct));
     }
 
@@ -188,7 +196,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Opening xlsx document writing session on stream");
-        return new XlsxDocumentWriter(xlsxStream, _logger);
+        return new XlsxDocumentWriter(xlsxStream, _logger, _options);
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.CreateDocumentWriter(System.String)' />
@@ -198,7 +206,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         _logger.LogDebug("Opening xlsx document writing session on {XlsxExportPath}", xlsxFilePath);
         var fileStream = File.Create(xlsxFilePath);
         try {
-            return new XlsxDocumentWriter(fileStream, _logger, true);
+            return new XlsxDocumentWriter(fileStream, _logger, _options, true);
         }
         catch {
             fileStream.Dispose();
@@ -225,14 +233,28 @@ internal sealed class XlsxWriter : IXlsxWriter
         return memoryStream.ToArray();
     }
 
-    private static void WriteSheets<T>(OpenXmlStreamWriter writer, IReadOnlyDictionary<string, IEnumerable<T>> dataSets, CancellationToken ct)
+    private void WriteSheets<T>(OpenXmlStreamWriter writer, IReadOnlyDictionary<string, IEnumerable<T>> dataSets, CancellationToken ct)
     {
-        var properties = ReadableProperties<T>();
+        var properties = OrderedProperties<T>();
         var headers = HeaderNames(properties);
         foreach (var dataSet in dataSets) {
             ct.ThrowIfCancellationRequested();
             writer.WriteSheet(dataSet.Key, headers, RowsFromProperties(dataSet.Value, properties), ct);
         }
+    }
+
+    private IReadOnlyList<PropertyInfo> OrderedProperties<T>()
+    {
+        var properties = ReadableProperties<T>();
+        if (_options.Order == MemberOrder.Defined || properties.Count <= 1)
+            return properties;
+
+        return MemberOrderSort.Sort(
+            properties,
+            static property => property.Name,
+            static property => property.GetCustomAttribute<MemberOrderAttribute>()?.Order,
+            _options.Order,
+            _options.OrderNames);
     }
 
     internal static IReadOnlyList<PropertyInfo> ReadableProperties<T>() => typeof(T).GetProperties().Where(p => p.CanRead).ToList();
@@ -315,18 +337,27 @@ internal sealed class XlsxWriter : IXlsxWriter
         return (headers, rows, footer);
     }
 
-    internal static (List<string> Headers, List<XlsxCell[]> Rows, List<DataTableCellFormat?>? HeaderFormats, XlsxCell[]? Footer, List<DataTableCellFormat?>? FooterFormats)
-        BuildFromDataTable(DataTable.Models.DataTable dataTable)
+    internal static (
+        List<string> Headers,
+        List<XlsxCell[]> Rows,
+        List<DataTableCellFormat?>? HeaderFormats,
+        XlsxCell[]? Footer,
+        List<DataTableCellFormat?>? FooterFormats) BuildFromDataTable(
+        DataTable.Models.DataTable dataTable,
+        MemberOrder order = MemberOrder.Defined,
+        IReadOnlyList<string>? orderNames = null)
     {
         var maxCol = dataTable.MaxColumn >= 0 ? dataTable.MaxColumn + 1 : 0;
+        var columns = DataTableColumnOrder(dataTable, maxCol, order, orderNames ?? []);
         var orderedHeaders = dataTable.Headers.OrderBy(kv => kv.Key).ToList();
         var headers = new List<string>(maxCol);
         var hasFormats = dataTable.HasFormats;
         var headerFormats = hasFormats ? new List<DataTableCellFormat?>(maxCol) : null;
         for (var c = 0; c < maxCol; c++) {
-            var header = orderedHeaders.FirstOrDefault(h => h.Key == c).Value;
+            var source = columns[c];
+            var header = orderedHeaders.FirstOrDefault(h => h.Key == source).Value;
             headers.Add(header?.DisplayValue ?? "");
-            headerFormats?.Add(dataTable.GetFormat(-1, c));
+            headerFormats?.Add(dataTable.GetFormat(-1, source));
         }
 
         var rows = new List<XlsxCell[]>();
@@ -334,13 +365,14 @@ internal sealed class XlsxWriter : IXlsxWriter
             var row = dataTable.Rows[rowIndex];
             var cells = new XlsxCell[maxCol];
             for (var c = 0; c < maxCol; c++) {
-                var cell = row.Cells.TryGetValue(c, out var cellValue) ? cellValue : null;
+                var source = columns[c];
+                var cell = row.Cells.TryGetValue(source, out var cellValue) ? cellValue : null;
                 var xlsxCell = XlsxCell.Text(cell?.DisplayValue ?? "");
                 if (cell != null && (cell.ColSpan > 1 || cell.RowSpan > 1))
                     xlsxCell = xlsxCell.WithSpan(cell.ColSpan, cell.RowSpan);
 
                 if (hasFormats) {
-                    var format = dataTable.GetFormat(rowIndex, c);
+                    var format = dataTable.GetFormat(rowIndex, source);
                     if (format != null)
                         xlsxCell = xlsxCell.WithFormat(format);
                 }
@@ -358,13 +390,14 @@ internal sealed class XlsxWriter : IXlsxWriter
             footer = new XlsxCell[maxCol];
             footerFormats = hasFormats ? new List<DataTableCellFormat?>(maxCol) : null;
             for (var c = 0; c < maxCol; c++) {
-                var footerCell = orderedFooters.FirstOrDefault(f => f.Key == c).Value;
+                var source = columns[c];
+                var footerCell = orderedFooters.FirstOrDefault(f => f.Key == source).Value;
                 var xlsxCell = XlsxCell.Text(footerCell?.DisplayValue ?? "");
                 if (footerCell != null && (footerCell.ColSpan > 1 || footerCell.RowSpan > 1))
                     xlsxCell = xlsxCell.WithSpan(footerCell.ColSpan, footerCell.RowSpan);
 
                 if (hasFormats) {
-                    var format = dataTable.GetFormat(-2, c);
+                    var format = dataTable.GetFormat(-2, source);
                     footerFormats!.Add(format);
                     if (format != null)
                         xlsxCell = xlsxCell.WithFormat(format);
@@ -377,6 +410,24 @@ internal sealed class XlsxWriter : IXlsxWriter
         return (headers, rows, headerFormats, footer, footerFormats);
     }
 
+    private static int[] DataTableColumnOrder(DataTable.Models.DataTable dataTable, int maxCol, MemberOrder order, IReadOnlyList<string> orderNames)
+    {
+        var indexes = new int[maxCol];
+        var names = new string[maxCol];
+        for (var i = 0; i < maxCol; i++)
+            indexes[i] = i;
+
+        foreach (var header in dataTable.Headers) {
+            if (header.Key >= 0 && header.Key < maxCol)
+                names[header.Key] = header.Value.DisplayValue ?? "";
+        }
+
+        if (order == MemberOrder.Defined || maxCol <= 1)
+            return indexes;
+
+        return MemberOrderSort.Sort(indexes, index => names[index] ?? "", static _ => (int?)null, order, orderNames).ToArray();
+    }
+
 #if !NETSTANDARD2_0
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxWriter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.String,System.String,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxAsync<T>(IEnumerable<T> data, string xlsxFilePath, string? worksheetName = null, CancellationToken ct = default)
@@ -384,7 +435,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         ArgumentHelpers.ThrowIfNull(data);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting {XlsxExportType} to {XlsxExportPath}", typeof(T).FullName, xlsxFilePath);
-        var properties = ReadableProperties<T>();
+        var properties = OrderedProperties<T>();
         var headers = HeaderNames(properties);
         await GuardAsync(() => RunToFileAsync(
                 xlsxFilePath, (writer, token) => writer.WriteSheet(worksheetName ?? "Sheet1", headers, RowsFromProperties(data, properties), token), ct))
@@ -399,7 +450,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx stream", typeof(T).FullName);
-        var properties = ReadableProperties<T>();
+        var properties = OrderedProperties<T>();
         var headers = HeaderNames(properties);
         await GuardAsync(() => RunToStreamAsync(
                 xlsxStream, (writer, token) => writer.WriteSheet(worksheetName ?? "Sheet1", headers, RowsFromProperties(data, properties), token), ct))
@@ -411,7 +462,7 @@ internal sealed class XlsxWriter : IXlsxWriter
     {
         ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx bytes", typeof(T).FullName);
-        var properties = ReadableProperties<T>();
+        var properties = OrderedProperties<T>();
         var headers = HeaderNames(properties);
         return await GuardAsync(() => RunToBytesAsync((writer, token) => writer.WriteSheet(worksheetName ?? "Sheet1", headers, RowsFromProperties(data, properties), token), ct))
             .ConfigureAwait(false);
@@ -602,7 +653,7 @@ internal sealed class XlsxWriter : IXlsxWriter
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
-        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable);
+        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable, _options.Order, _options.OrderNames);
         await GuardAsync(() => RunToFileAsync(xlsxFilePath, (writer, token) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, footer, footerFormats, token), ct))
             .ConfigureAwait(false);
     }
@@ -612,7 +663,7 @@ internal sealed class XlsxWriter : IXlsxWriter
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
         ArgumentHelpers.ThrowIfNull(xlsxStream);
-        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable);
+        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable, _options.Order, _options.OrderNames);
         await GuardAsync(() => RunToStreamAsync(xlsxStream, (writer, token) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, footer, footerFormats, token), ct))
             .ConfigureAwait(false);
     }
@@ -621,7 +672,7 @@ internal sealed class XlsxWriter : IXlsxWriter
     public async Task<byte[]> ExportToXlsxBytesFromDataTableAsync(DataTable.Models.DataTable dataTable, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(dataTable);
-        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable);
+        var (headers, rows, headerFormats, footer, footerFormats) = BuildFromDataTable(dataTable, _options.Order, _options.OrderNames);
         return await GuardAsync(() => RunToBytesAsync((writer, token) => writer.WriteSheet("Sheet1", headers, rows, headerFormats, footer, footerFormats, token), ct))
             .ConfigureAwait(false);
     }

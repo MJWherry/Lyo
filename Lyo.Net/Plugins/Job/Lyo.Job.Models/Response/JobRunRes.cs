@@ -30,12 +30,6 @@ public sealed record JobRunRes
 
     public JobScheduleRes? JobSchedule { get; init; }
 
-    public bool AllowTriggers { get; init; }
-
-    public Guid? JobTriggerId { get; init; }
-
-    public JobTriggerRes? JobTrigger { get; init; }
-
     public IReadOnlyList<JobRunResultRes>? JobRunResults { get; init; }
 
     public Guid JobDefinitionId { get; init; }

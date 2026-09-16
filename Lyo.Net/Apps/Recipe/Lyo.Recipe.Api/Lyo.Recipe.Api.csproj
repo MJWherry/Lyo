@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>HTTP API surface for Lyo Recipe: categories, ingredients, recipes, lines, steps, attachments, notes, and tags.</Description>
+        <PackageTags>api recipe aspnetcore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Recipe\Lyo.Recipe\Lyo.Recipe.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Recipe\Lyo.Recipe.Models\Lyo.Recipe.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Recipe\Lyo.Recipe.Postgres\Lyo.Recipe.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Recipe\Lyo.Recipe.FileStorage\Lyo.Recipe.FileStorage.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Note\Lyo.Note\Lyo.Note.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Note\Lyo.Note.Postgres\Lyo.Note.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Tag\Lyo.Tag\Lyo.Tag.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -21,7 +21,7 @@ public sealed class LyoHttpClientHookTests
             OnResponseObserved = (_, _) => { order.Add("res"); return Task.CompletedTask; }
         };
         using var client = new LyoHttpClient(new HttpClient(inner) { BaseAddress = new("https://example.test/") }, hooks: hooks);
-        await client.GetAsAsync<StubDto>("/x", ct: TestContext.Current.CancellationToken);
+        await client.GetAsAsync<StubDto>("/x", ct: TestCt);
         Assert.Equal(["before", "req", "after", "res"], order);
     }
 

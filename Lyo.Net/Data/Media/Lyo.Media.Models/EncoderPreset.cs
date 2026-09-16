@@ -37,14 +37,44 @@ public sealed record EncoderPreset
     /// <summary><c>veryslow</c>.</summary>
     public static readonly EncoderPreset Veryslow = Create("Veryslow", "veryslow");
 
+    /// <summary>NVENC preset <c>p1</c>.</summary>
+    public static readonly EncoderPreset P1 = Create("P1", "p1");
+
+    /// <summary>NVENC preset <c>p2</c>.</summary>
+    public static readonly EncoderPreset P2 = Create("P2", "p2");
+
+    /// <summary>NVENC preset <c>p3</c>.</summary>
+    public static readonly EncoderPreset P3 = Create("P3", "p3");
+
+    /// <summary>NVENC preset <c>p4</c>.</summary>
+    public static readonly EncoderPreset P4 = Create("P4", "p4");
+
+    /// <summary>NVENC preset <c>p5</c>.</summary>
+    public static readonly EncoderPreset P5 = Create("P5", "p5");
+
+    /// <summary>NVENC preset <c>p6</c>.</summary>
+    public static readonly EncoderPreset P6 = Create("P6", "p6");
+
+    /// <summary>NVENC preset <c>p7</c>.</summary>
+    public static readonly EncoderPreset P7 = Create("P7", "p7");
+
+    /// <summary>libsvtav1 preset <c>8</c>.</summary>
+    public static readonly EncoderPreset Svt8 = Create("Svt8", "8");
+
     /// <summary>Every built-in preset. Touching this list registers the static instances for lookup.</summary>
-    public static IReadOnlyList<EncoderPreset> BuiltIns { get; } = [Ultrafast, Superfast, Veryfast, Faster, Fast, Medium, Slow, Slower, Veryslow];
+    public static IReadOnlyList<EncoderPreset> BuiltIns { get; } = [
+        Ultrafast, Superfast, Veryfast, Faster, Fast, Medium, Slow, Slower, Veryslow, P1, P2, P3, P4, P5, P6, P7, Svt8
+    ];
 
     /// <summary>Stable display name (e.g. <c>Medium</c>).</summary>
     public string Name { get; }
 
     /// <summary>Canonical preset id (e.g. <c>medium</c>). Backends use this as the preset name.</summary>
     public string Id { get; }
+
+    /// <summary>True for the x264 family (<c>ultrafast</c> through <c>veryslow</c>).</summary>
+    public bool IsX264
+        => Id is "ultrafast" or "superfast" or "veryfast" or "faster" or "fast" or "medium" or "slow" or "slower" or "veryslow";
 
     private EncoderPreset(string name, string id)
     {

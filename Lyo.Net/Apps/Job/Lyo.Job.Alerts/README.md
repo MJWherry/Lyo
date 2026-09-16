@@ -42,8 +42,8 @@ services.AddJobAlerts(o => {
 ## Alert kinds (`JobAlertType`)
 
 | Type | Usually produced by |
-| ----------------------- | ----------------------------------------------------------------- |
-| `Failure` | After consecutive failures the scheduler fires (`AlertOnFailure`) |
+| ----------------------- | ------------------------------------------------------------- |
+| `Failure` | A workflow step run fails (`JobWorkflowEngine`) |
 | `CircuitBreakerTripped` | The scheduler turns the definition off |
 | `DeadJob` | Maintenance timeout (heartbeat missing) |
 | `SlaBreach` | SLA checks in `JobService` start/finish; maintenance SLA scan |
@@ -93,11 +93,12 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)
 - `Lyo.Api.Models` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
@@ -107,4 +108,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.Diagnostics.DiagnosticSource` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

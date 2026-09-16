@@ -35,10 +35,23 @@ export interface ComputedField {
     Template: string;
 }
 
+export type AggregateFunction = "Count" | "Sum" | "Average" | "Min" | "Max" | "CountDistinct";
+
+/** One aggregate column. When present on a projection, `Select` is the group key. `Field` is unused by `Count`. */
+export interface AggregateSelect {
+    Function: AggregateFunction;
+    Name: string;
+    /** Source path. Optional for `Count`: omit it to count rows in the group. A collection, or a path ending in `.count`, totals that collection. A scalar counts non-null values. Required for every other function. */
+    Field?: string | null;
+}
+
 export interface ProjectionQueryReq extends QueryRequestBase {
     Options: QueryRequestOptions;
+    /** Paths to project. A segment may end with `[n]`, `[start:]`, `[:end]`, `[start:end]`, or `[:]`. When `Aggregates` is set, this is the group key. */
     Select: string[];
     ComputedFields?: ComputedField[];
+    /** When set, one row per distinct `Select`. Empty `Select` is one summary row. */
+    Aggregates?: AggregateSelect[];
 }
 
 export interface JoinOn {
@@ -68,6 +81,7 @@ export interface QueryReq extends QueryRequestBase {
     Options: QueryRequestOptions;
     From: FromClause;
     Joins?: JoinClause[];
+    /** `alias.property` paths. A window is not valid on a root query select. */
     Select: string[];
     ComputedFields?: ComputedField[];
 }

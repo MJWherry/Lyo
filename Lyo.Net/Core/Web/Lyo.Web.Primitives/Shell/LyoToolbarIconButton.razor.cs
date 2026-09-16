@@ -37,8 +37,8 @@ public partial class LyoToolbarIconButton
     [Parameter(CaptureUnmatchedValues = true)]
     public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
-    [CascadingParameter]
-    private LyoToolbar? Owner { get; set; }
+    [CascadingParameter(Name = LyoToolbarLayout.DisabledCascadeName)]
+    private bool OwnerDisabled { get; set; }
 
-    private bool IsDisabled => LyoToolbarLayout.IsDisabled(Disabled, Owner?.Disabled ?? false);
+    private bool IsDisabled => LyoToolbarLayout.IsDisabled(Disabled, OwnerDisabled);
 }

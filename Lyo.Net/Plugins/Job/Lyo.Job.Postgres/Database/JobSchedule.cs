@@ -3,11 +3,19 @@ using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Postgres.Database;
 
+/// <summary>
+/// One recurrence rule. It fires exactly one owner: a job definition or a workflow, never both and never neither. A database CHECK enforces that, and
+/// <see cref="JobScheduleWriteValidator" /> reports it as a validation error before the write reaches Postgres.
+/// </summary>
 public class JobSchedule
 {
     public Guid Id { get; set; }
 
-    public Guid JobDefinitionId { get; set; }
+    /// <summary>Definition this schedule fires. Null when the schedule is workflow-owned.</summary>
+    public Guid? JobDefinitionId { get; set; }
+
+    /// <summary>Workflow this schedule starts. Null when the schedule is definition-owned.</summary>
+    public Guid? JobWorkflowId { get; set; }
 
     [MaxLength(3000)]
     public string? Description { get; set; }
@@ -62,7 +70,9 @@ public class JobSchedule
 
     public DateTime? UpdatedTimestamp { get; set; }
 
-    public virtual JobDefinition JobDefinition { get; set; } = null!;
+    public virtual JobDefinition? JobDefinition { get; set; }
+
+    public virtual JobWorkflow? JobWorkflow { get; set; }
 
     public virtual JobBlackoutCalendar? JobBlackoutCalendar { get; set; }
 

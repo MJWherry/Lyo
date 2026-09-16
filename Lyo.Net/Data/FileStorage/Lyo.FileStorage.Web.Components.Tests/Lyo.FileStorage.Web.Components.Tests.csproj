@@ -9,4 +9,8 @@
         <ProjectReference Include="..\Lyo.FileStorage.Web.Components\Lyo.FileStorage.Web.Components.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
 </Project>

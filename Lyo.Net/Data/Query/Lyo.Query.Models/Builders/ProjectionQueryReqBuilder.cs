@@ -84,6 +84,44 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
         return this;
     }
 
+    /// <summary>Adds a <see cref="AggregateFunction.Count" /> of the rows in each group. <paramref name="name" /> is the output key (default <c>Count</c>).</summary>
+    public ProjectionQueryReqBuilder AddCount(string name = "Count") => AddAggregate(AggregateFunction.Count, name, null);
+
+    /// <summary>
+    /// Adds a <see cref="AggregateFunction.Count" /> of <paramref name="field" />. A collection, or a path ending in <c>.count</c>, totals the elements in the group. A scalar skips
+    /// nulls and keeps duplicates. <paramref name="name" /> is the output key. <see cref="Select" /> is the group key.
+    /// </summary>
+    public ProjectionQueryReqBuilder AddCount(string name, string field)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(field);
+        return AddAggregate(AggregateFunction.Count, name, field);
+    }
+
+    /// <summary>Adds a <see cref="AggregateFunction.Sum" /> of <paramref name="field" />. <see cref="Select" /> is the group key.</summary>
+    public ProjectionQueryReqBuilder AddSum(string name, string field) => AddAggregate(AggregateFunction.Sum, name, field);
+
+    /// <summary>Adds a <see cref="AggregateFunction.Average" /> of <paramref name="field" />. <see cref="Select" /> is the group key.</summary>
+    public ProjectionQueryReqBuilder AddAverage(string name, string field) => AddAggregate(AggregateFunction.Average, name, field);
+
+    /// <summary>Adds a <see cref="AggregateFunction.Min" /> of <paramref name="field" />. <see cref="Select" /> is the group key.</summary>
+    public ProjectionQueryReqBuilder AddMin(string name, string field) => AddAggregate(AggregateFunction.Min, name, field);
+
+    /// <summary>Adds a <see cref="AggregateFunction.Max" /> of <paramref name="field" />. <see cref="Select" /> is the group key.</summary>
+    public ProjectionQueryReqBuilder AddMax(string name, string field) => AddAggregate(AggregateFunction.Max, name, field);
+
+    /// <summary>Adds a <see cref="AggregateFunction.CountDistinct" /> of <paramref name="field" />. Nulls are skipped. <see cref="Select" /> is the group key.</summary>
+    public ProjectionQueryReqBuilder AddCountDistinct(string name, string field) => AddAggregate(AggregateFunction.CountDistinct, name, field);
+
+    private ProjectionQueryReqBuilder AddAggregate(AggregateFunction function, string name, string? field)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        if (function != AggregateFunction.Count)
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(field);
+
+        _query.Aggregates.Add(new(function, name.Trim(), field?.Trim()));
+        return this;
+    }
+
     /// <inheritdoc cref="QueryConcreteReqBuilder.AddWhere(WhereClause)" path="/summary" />
     public ProjectionQueryReqBuilder AddWhere(WhereClause whereClause)
     {

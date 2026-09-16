@@ -1,6 +1,9 @@
+using Lyo.EntityReference.Models;
+
 namespace Lyo.HomeInventory;
 
 /// <summary>grouping (e.g. Networking, Kitchen appliances, TVs). Present only when supplied.</summary>
+[EntityRefLogicalType(Models.HomeInventoryEntityTypes.Category)]
 public sealed class HomeCategoryRecord
 {
     public Guid Id { get; set; }

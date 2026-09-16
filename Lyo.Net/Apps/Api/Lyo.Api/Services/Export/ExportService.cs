@@ -281,6 +281,9 @@ public class ExportService<TContext>(
         var addonHint = format switch {
             ExportFormat.Csv => "AddCsvExport()",
             ExportFormat.Xlsx => "AddXlsxExport()",
+            ExportFormat.Yaml => "AddYamlExport()",
+            ExportFormat.Xml => "AddXmlExport()",
+            ExportFormat.Toml => "AddTomlExport()",
             var _ => "register an IExportFormatHandler"
         };
 

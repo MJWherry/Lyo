@@ -26,20 +26,20 @@ public static class DriftColorHelper
             var _ => Icons.Material.Filled.Help
         };
 
-    /// <summary>Color for a stored snapshot kind.</summary>
-    public static Color ForSnapshotKind(DriftSnapshotKind kind)
+    /// <summary>Identity hue for a stored snapshot kind.</summary>
+    public static LyoChipHue? ForSnapshotKind(DriftSnapshotKind kind)
         => kind switch {
-            DriftSnapshotKind.FileTree => Color.Info,
-            DriftSnapshotKind.SystemInfo => Color.Primary,
-            var _ => Color.Default
+            DriftSnapshotKind.FileTree => LyoChipHue.Teal,
+            DriftSnapshotKind.SystemInfo => LyoChipHue.Indigo,
+            var _ => null
         };
 
-    /// <summary>Color for who computed a stored diff.</summary>
-    public static Color ForDiffSource(DriftDiffSource source)
+    /// <summary>Identity hue for who computed a stored diff.</summary>
+    public static LyoChipHue? ForDiffSource(DriftDiffSource source)
         => source switch {
-            DriftDiffSource.Agent => Color.Info,
-            DriftDiffSource.Server => Color.Primary,
-            var _ => Color.Default
+            DriftDiffSource.Agent => LyoChipHue.Cyan,
+            DriftDiffSource.Server => LyoChipHue.Violet,
+            var _ => null
         };
 
     /// <summary>Color for a persistable file-system change kind.</summary>

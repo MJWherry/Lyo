@@ -1,6 +1,6 @@
 # Lyo.Job.Api
 
-Maps job definition CRUD, run lifecycle, stats, next-runs, and scheduler batch routes. Register the store with `AddPostgresJobManagement` from `Lyo.Job.Postgres` first, then call `BuildJobGroup`. Standalone host: `Lyo.Job.Api.Host`.
+Maps job definition CRUD, run lifecycle, stats, next-runs, and scheduler batch routes. Register the store with `AddPostgresJobManagement` from `Lyo.Job.Postgres` first, then call `BuildJobGroup`. Example host: `Lyo.Job.Api.Example`.
 
 ## Features
 
@@ -26,7 +26,6 @@ Tag `"Job"`. Definitions get CRUD + export; runs expose Query/Get/Delete/DeleteB
 | `Job/Definition` | `JobDefinition` | Version bump + audit on update |
 | `Job/Definition/Parameter` | `JobParameter` | Encryption on write |
 | `Job/Schedule` | `JobSchedule` | Misfire policy, calendar link, cron |
-| `Job/Triggers` | `JobTrigger` | |
 | `Job/BlackoutCalendar`, `Job/BlackoutCalendar/Window` | Blackout calendars | |
 | `Job/Workflow`, `Job/Workflow/Step`, `Job/Workflow/Run`, … | Workflows | |
 | `Job/WorkerInstance` | Worker registry | Created by workers |
@@ -52,7 +51,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Job.Postgres` (direct, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Audit` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
@@ -64,6 +62,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Formatter` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.MessageQueue` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
@@ -73,6 +72,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Scheduler` (transitive, lyo)
@@ -104,5 +104,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Diagnostics.DiagnosticSource` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

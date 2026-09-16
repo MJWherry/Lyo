@@ -139,6 +139,8 @@ internal static class FormatterTemplateScanner
     {
         if (ContainsThis(inner) || StartsWithKnownType(inner) || ContainsKnownType(inner) || ContainsLinq(inner))
             return true;
+        if (inner.IndexOf("Algo(", StringComparison.Ordinal) >= 0 || inner.IndexOf("score(", StringComparison.Ordinal) >= 0)
+            return true;
         if (ContainsOperator(inner, "==") || ContainsOperator(inner, "!=") || ContainsOperator(inner, ">=") || ContainsOperator(inner, "<="))
             return true;
         if (HasComparison(inner) || HasBinaryArithmetic(inner) || inner.Contains('['))

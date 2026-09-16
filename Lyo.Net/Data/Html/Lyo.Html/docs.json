@@ -1,0 +1,43 @@
+{
+  "id": "Lyo.Html",
+  "name": "Lyo.Html",
+  "area": "Data",
+  "tagline": "HTML visible text and allowlist sanitizing.",
+  "description": "Parses HTML with AngleSharp. Visible text skips script and style. Sanitize keeps a small set of elements and http, https, and mailto links.",
+  "features": [
+    "VisibleText omits script and style.",
+    "Sanitize drops script, event handlers, and javascript URLs."
+  ],
+  "examples": [
+    {
+      "title": "Visible text",
+      "language": "csharp",
+      "code": "var text = new HtmlService().VisibleText(\"<p>Hello</p><script>secret</script>\");"
+    }
+  ],
+  "readmePath": "README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "AngleSharp",
+      "kind": "package",
+      "version": "1.5.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ],
+  "sections": []
+}

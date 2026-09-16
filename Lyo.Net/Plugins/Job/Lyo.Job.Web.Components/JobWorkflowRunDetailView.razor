@@ -1,0 +1,57 @@
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <MudText Typo="Typo.h6">@(Run?.JobWorkflow?.Name ?? "Workflow run")</MudText>
+                @if (Run is { } run) {
+                    <LyoChip Spec="@(LyoChips.FromEnum<JobWorkflowRunState>(run.State.ToString(), JobColorHelper.ForWorkflowRunState, JobColorHelper.WorkflowRunStateIcon))"/>
+                    @if (run.ScheduledSlotUtc is { } slot) {
+                        <LyoChip Label="@($"Slot {slot:u}")"/>
+                    }
+                }
+            </MudStack>
+
+            <MudStack Row Spacing="4" Wrap="Wrap.Wrap">
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.overline" Class="mud-text-secondary">Started</MudText>
+                    <LyoTimestamp Value="@Run?.StartedTimestamp" Kind="LyoTimestampKind.Absolute"/>
+                </MudStack>
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.overline" Class="mud-text-secondary">Finished</MudText>
+                    <LyoTimestamp Value="@Run?.FinishedTimestamp" Kind="LyoTimestampKind.Absolute"/>
+                </MudStack>
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.overline" Class="mud-text-secondary">Duration</MudText>
+                    <MudText Typo="Typo.body2">@JobColorHelper.FormatDurationFromDates(Run?.StartedTimestamp, Run?.FinishedTimestamp)</MudText>
+                </MudStack>
+            </MudStack>
+
+            <JobWorkflowGraphView Steps="@GraphSteps" StepStates="@StepStates"/>
+
+            <MudTable Items="@OrderedRunSteps" Dense Hover Breakpoint="Breakpoint.Sm" T="JobWorkflowRunStepRes">
+                <HeaderContent>
+                    <MudTh>Step</MudTh>
+                    <MudTh>State</MudTh>
+                    <MudTh>Job run</MudTh>
+                    <MudTh/>
+                </HeaderContent>
+                <RowTemplate Context="runStep">
+                    <MudTd DataLabel="Step">@StepName(runStep)</MudTd>
+                    <MudTd DataLabel="State">
+                        <LyoChip Spec="@(LyoChips.FromEnum<JobWorkflowStepState>(runStep.State.ToString(), JobColorHelper.ForWorkflowStepState, JobColorHelper.WorkflowStepStateIcon))"/>
+                    </MudTd>
+                    <MudTd DataLabel="Job run">@(runStep.JobRunId?.ToString()[..8] ?? "—")</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Disabled="@(runStep.JobRunId is null)"
+                                       title="View job run" aria-label="View job run for this step" OnClick="@(() => ViewJobRunAsync(runStep))"/>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Close())">Close</MudButton>
+    </DialogActions>
+</MudDialog>

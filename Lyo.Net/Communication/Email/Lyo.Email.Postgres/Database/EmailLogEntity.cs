@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Email.Postgres.Database;
 
@@ -7,7 +8,7 @@ public class EmailLogEntity
 {
     /// <summary>Primary key.</summary>
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = LyoGuid.CreateV7();
 
     /// <summary>Whether this row is outbound (sent) or inbound (received). Defaults to outbound.</summary>
     public EmailDirection Direction { get; set; } = EmailDirection.Outbound;

@@ -1,0 +1,55 @@
+@namespace Lyo.Billing.Web.Components.Components.Grids
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+@if (ClientId is { } clientId && clientId != Guid.Empty) {
+    <MudStack Spacing="2">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
+            <MudTextField @bind-Value="_email" Label="Email" Class="flex-grow-1"/>
+            <MudSelect T="BillingEmailUsage" @bind-Value="_usage" Label="Usage" Style="max-width: 8rem;">
+                @foreach (var usage in Enum.GetValues<BillingEmailUsage>()) {
+                    <MudSelectItem Value="@usage">@usage</MudSelectItem>
+                }
+            </MudSelect>
+            <MudCheckBox @bind-Value="_isPrimary" Label="Primary"/>
+            <MudButton Variant="Variant.Outlined" Disabled="@(_busy || string.IsNullOrWhiteSpace(_email))" OnClick="AddLiteAsync">Add</MudButton>
+        </MudStack>
+        <LyoDataGridProjected @ref="_dataGrid"
+                              ApiClient="ApiClient"
+                              GridKey="@GridKey"
+                              Route="Billing/Emails"
+                              KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                              FilterPropertyDefinitions="@_propertyDefinitions"
+                              BeforeQuery="ApplyQuery"
+                              Features="@(LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable)">
+            <Columns>
+                <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                                HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                                CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+                    <CellTemplate Context="cell">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Detach"
+                                       OnClick="@(() => DetachAsync(cell.Item))"/>
+                    </CellTemplate>
+                </TemplateColumn>
+                <LyoProjectedColumn Field="SubjectEntityType" Title="Type" HeaderStyle="width: 140px;"/>
+                <LyoIdColumn T="object?" TRes="PersonEmailLookup" Field="SubjectEntityId" Route="PersonEmail" Title="Email"
+                             Select="@(new[] { "Address" })" HeaderStyle="width: 200px;" Context="email">
+                    @(email?.Address)
+                </LyoIdColumn>
+                <LyoIdColumn T="object?" TRes="BillingEmailLookup" Field="SubjectEntityId" Route="Billing/EmailAddresses" Title="Billing email"
+                             Select="@(new[] { "Email" })" HeaderStyle="width: 200px;" Context="email">
+                    @(email?.Email)
+                </LyoIdColumn>
+                <LyoProjectedColumn Field="Usage" Title="Usage" Align="Align.Center" HeaderStyle="width: 110px;">
+                    <CellContent Context="item">
+                        <LyoChip Spec="@(LyoChips.FromEnum<BillingEmailUsage>(ProjectedValueHelper.GetDisplayValue(item, "Usage"), _ => Color.Default))"/>
+                    </CellContent>
+                </LyoProjectedColumn>
+                <LyoProjectedColumn Field="IsPrimary" Title="Primary"/>
+            </Columns>
+        </LyoDataGridProjected>
+    </MudStack>
+}
+else {
+    <MudText Typo="Typo.caption" Color="Color.Secondary">Save the client before adding emails.</MudText>
+}

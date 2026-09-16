@@ -13,6 +13,8 @@ public class ClientStore(ILocalStorageService sessionStorage) : ILyoLayoutPrefer
     private const string PageNameKey = "pagename";
     private const string GridStatePrefix = "grid_state_";
     private const string QueryWorkbenchStateKey = "query_workbench_state_v1";
+    private const string WorkflowWorkbenchStateKey = "workflow_workbench_state_v1";
+    private const string StoryBuilderStateKey = "story_builder_state_v1";
     private const string ParameterLayoutKey = "pref_param_layout";
     private const string DataGridLayoutKey = "pref_grid_layout";
 
@@ -45,6 +47,22 @@ public class ClientStore(ILocalStorageService sessionStorage) : ILyoLayoutPrefer
     public async Task<string?> GetQueryWorkbenchStateAsync() => await sessionStorage.GetItemAsync<string?>(QueryWorkbenchStateKey);
 
     public async Task RemoveQueryWorkbenchStateAsync() => await sessionStorage.RemoveItemAsync(QueryWorkbenchStateKey);
+
+    /// <summary>Persists the in-progress workflow being authored, so a page reload does not discard an unsaved DAG.</summary>
+    public async Task SetWorkflowWorkbenchStateAsync(string json) => await sessionStorage.SetItemAsync(WorkflowWorkbenchStateKey, json);
+
+    public async Task<string?> GetWorkflowWorkbenchStateAsync() => await sessionStorage.GetItemAsync<string?>(WorkflowWorkbenchStateKey);
+
+    public async Task RemoveWorkflowWorkbenchStateAsync() => await sessionStorage.RemoveItemAsync(WorkflowWorkbenchStateKey);
+
+    /// <summary>Persists the in-progress story graph, so a page reload does not discard an unsaved draft.</summary>
+    public async Task SetStoryBuilderStateAsync(string json) => await sessionStorage.SetItemAsync(StoryBuilderStateKey, json);
+
+    /// <summary>The story graph JSON last written by <see cref="SetStoryBuilderStateAsync" />, or null.</summary>
+    public async Task<string?> GetStoryBuilderStateAsync() => await sessionStorage.GetItemAsync<string?>(StoryBuilderStateKey);
+
+    /// <summary>Clears the persisted story graph.</summary>
+    public async Task RemoveStoryBuilderStateAsync() => await sessionStorage.RemoveItemAsync(StoryBuilderStateKey);
 
     public async Task SetParameterLayoutAsync(LyoParameterLayout layout) => await sessionStorage.SetItemAsync(ParameterLayoutKey, layout);
 

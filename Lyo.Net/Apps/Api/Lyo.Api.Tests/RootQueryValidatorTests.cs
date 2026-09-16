@@ -5,6 +5,7 @@ using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Microsoft.EntityFrameworkCore;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests;
 
@@ -12,7 +13,7 @@ public sealed class RootQueryValidatorTests
 {
     private static RootQueryEntityRegistry CreateRegistry()
     {
-        var options = new DbContextOptionsBuilder<TestDbContext>().UseSqlite($"DataSource=file:rootquery-{Guid.NewGuid():N}?mode=memory&cache=shared").Options;
+        var options = new DbContextOptionsBuilder<TestDbContext>().UseSqlite($"DataSource=file:rootquery-{LyoGuid.CreateV7():N}?mode=memory&cache=shared").Options;
         using var ctx = new TestDbContext(options);
         ctx.Database.OpenConnection();
         ctx.Database.EnsureCreated();

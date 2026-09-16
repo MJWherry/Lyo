@@ -33,7 +33,7 @@ public class JobRunScheduleParameterOverrideTests
         using var scope = sp.CreateScope();
         var (definitionId, scheduleId) = await CreateDefinitionWithScheduleAsync(sp, definitionValue: "200", scheduleValue: "50", scheduleEnabled: true);
         var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", false, scheduleId: scheduleId), TestContext.Current.CancellationToken);
+            .CreateJobRun(new(definitionId, "test-user", scheduleId: scheduleId), TestCt);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         Assert.Equal(scheduleId, created.Data!.JobScheduleId);
@@ -46,13 +46,13 @@ public class JobRunScheduleParameterOverrideTests
         using var sp = BuildServiceProvider();
         using var scope = sp.CreateScope();
         var (definitionId, scheduleId) = await CreateDefinitionWithScheduleAsync(sp, definitionValue: "200", scheduleValue: "50", scheduleEnabled: true);
-        var request = new JobRunReq(definitionId, "test-user", false, scheduleId: scheduleId) {
+        var request = new JobRunReq(definitionId, "test-user", scheduleId: scheduleId) {
             JobRunParameters = {
                 new() { Key = "PageSize", Type = LyoTypeInfo.Int.FullName, Value = "99", Enabled = true }
             }
         };
 
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(request, TestContext.Current.CancellationToken);
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(request, TestCt);
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         Assert.Equal("99", Assert.Single(created.Data!.JobRunParameters!, p => p.Key == "PageSize").Value);
     }
@@ -64,7 +64,7 @@ public class JobRunScheduleParameterOverrideTests
         using var scope = sp.CreateScope();
         var (definitionId, scheduleId) = await CreateDefinitionWithScheduleAsync(sp, definitionValue: "200", scheduleValue: "50", scheduleEnabled: false);
         var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", false, scheduleId: scheduleId), TestContext.Current.CancellationToken);
+            .CreateJobRun(new(definitionId, "test-user", scheduleId: scheduleId), TestCt);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         Assert.Equal("200", Assert.Single(created.Data!.JobRunParameters!, p => p.Key == "PageSize").Value);
@@ -77,7 +77,7 @@ public class JobRunScheduleParameterOverrideTests
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp);
         var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", false, scheduleId: LyoGuid.CreateCombPostgres()), TestContext.Current.CancellationToken);
+            .CreateJobRun(new(definitionId, "test-user", scheduleId: LyoGuid.CreateCombPostgres()), TestCt);
 
         Assert.False(created.IsSuccess);
         Assert.Contains("was not found", created.Error!.GetFullMessage());
@@ -91,7 +91,7 @@ public class JobRunScheduleParameterOverrideTests
         var definitionId = await CreateDefinitionAsync(sp);
         var other = await CreateDefinitionWithScheduleAsync(sp, definitionValue: "200", scheduleValue: "50", scheduleEnabled: true);
         var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", false, scheduleId: other.ScheduleId), TestContext.Current.CancellationToken);
+            .CreateJobRun(new(definitionId, "test-user", scheduleId: other.ScheduleId), TestCt);
 
         Assert.False(created.IsSuccess);
         Assert.Contains("does not belong", created.Error!.GetFullMessage());
@@ -131,7 +131,7 @@ public class JobRunScheduleParameterOverrideTests
                 Value = "200",
                 CreatedTimestamp = DateTime.UtcNow
             });
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return definitionId;
     }
 
@@ -180,7 +180,7 @@ public class JobRunScheduleParameterOverrideTests
                 Enabled = scheduleEnabled,
                 CreatedTimestamp = DateTime.UtcNow
             });
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return (definitionId, scheduleId);
     }
 
@@ -188,6 +188,6 @@ public class JobRunScheduleParameterOverrideTests
     {
         using var scope = sp.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        return await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        return await factory.CreateDbContextAsync(TestCt);
     }
 }

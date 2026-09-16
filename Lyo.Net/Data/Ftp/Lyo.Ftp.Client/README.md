@@ -7,7 +7,7 @@ FluentFTP wrapper for FTP/FTPS used by Lyo hosts and storage adapters (`Lyo.File
 - **Async.** Hosts and adapters should call `*Async`. Sync wrappers wait on the async implementation. No `Task.Run`.
 - **Pooled leases.** Up to `MaxPooledClients` FluentFTP clients at once. Each client serializes work across awaits with a `SemaphoreSlim`.
 - **Concurrent callers.** Parallelism stops at the pool size. A single leased stream is not thread-safe.
-- **IFileSystem.** `FtpFileSystem` wraps `IFtpClient`. Register with `AddFtpFileSystem`.
+- **IFileSystem.** `FtpFileSystem` wraps `IFtpClient` and is held to the shared `IFileSystemContractTests` suite from `Lyo.IO.FileSystem.Tests`. It reports `Append` but not `MoveDirectory`, because FTP servers do not reliably rename a directory; a directory move throws `NotSupportedException`. Register with `AddFtpFileSystem`.
 - **Path jail.** Paths stay under `RootRemoteDirectory` with `PathStyle.Posix`.
 - **FTPS.** `FtpEncryptionMode` (`None` / `Explicit` / `Implicit`) plus `FtpTlsPolicy` (`ValidateCertificate` / `AcceptAny`).
 - **Logging and metrics.** `ILogger` and `IMetrics` (`ftp.connect`, `ftp.operation`, `ftp.bytes`, `ftp.pool`, `ftp.errors`). Turning `EnableMetrics` off uses `NullMetrics`.

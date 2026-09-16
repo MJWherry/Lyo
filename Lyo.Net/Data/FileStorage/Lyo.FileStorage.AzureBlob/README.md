@@ -2,7 +2,7 @@
 
 Azure.Storage.Blobs [`IFileStorageService`](../Lyo.FileStorage/README.md) for Azure Blob Storage. The package id and namespace Lyo.FileStorage.AzureBlob match the blob abstraction. Configuration and types use Blob* naming, with a legacy AzureFileStorageOptions appsettings subsection for migration.
 
-Also exposes `AzureBlobFileSystem` (`IFileSystem`) for the raw blob-name tree (`GetBlobsByHierarchy`). That is not the FileStorage metadata tree.
+Also exposes `AzureBlobFileSystem` (`IFileSystem`) for the raw blob-name tree (`GetBlobsByHierarchy`). That is not the FileStorage metadata tree. Blob storage has no directories, so an otherwise empty directory is kept visible by a zero-byte `.lyo-dir` child blob.
 
 Architecture, duplicate handling, and threat-model context for storage live in Lyo.FileStorage. This README is the assembly plus Azure-specific options.
 

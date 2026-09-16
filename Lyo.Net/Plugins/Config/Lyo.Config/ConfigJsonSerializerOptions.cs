@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Lyo.Common.Json;
+using Lyo.Json;
 
 namespace Lyo.Config;
 

@@ -1,5 +1,7 @@
 using Lyo.Exceptions;
 using Lyo.Postgres;
+using Lyo.ShortUrl;
+using Lyo.ShortUrl.Models;
 using Lyo.ShortUrl.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -60,6 +62,46 @@ public static class Extensions
             services.AddPostgresDbContextFactory<ShortUrlDbContext, PostgresShortUrlOptions>(options);
 
             return services;
+        }
+
+        /// <summary>Registers the Postgres short-URL store and <see cref="PostgresShortUrlService" />.</summary>
+        public IServiceCollection AddPostgresShortUrlService(Action<PostgresShortUrlOptions> configureDb, Action<ShortUrlServiceOptions>? configureService = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configureDb);
+            var db = new PostgresShortUrlOptions();
+            configureDb(db);
+            services.AddShortUrlDbContextFactory(db);
+            var serviceOptions = new ShortUrlServiceOptions();
+            configureService?.Invoke(serviceOptions);
+            serviceOptions.Validate();
+            services.AddSingleton(serviceOptions);
+            services.AddShortUrlGenerator();
+            services.AddSingleton<IShortUrlService, PostgresShortUrlService>();
+            return services;
+        }
+
+        /// <summary>Registers the Postgres short-URL service from <see cref="PostgresShortUrlOptions.SectionName" /> and <see cref="ShortUrlServiceOptions.SectionName" />.</summary>
+        public IServiceCollection AddPostgresShortUrlServiceFromConfiguration(IConfiguration configuration)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            var db = new PostgresShortUrlOptions();
+            configuration.GetSection(PostgresShortUrlOptions.SectionName).Bind(db);
+            var serviceOptions = new ShortUrlServiceOptions();
+            configuration.GetSection(ShortUrlServiceOptions.SectionName).Bind(serviceOptions);
+            return services.AddPostgresShortUrlService(o => {
+                o.ConnectionString = db.ConnectionString;
+                o.EnableAutoMigrations = db.EnableAutoMigrations;
+            }, s => {
+                s.BaseUrl = serviceOptions.BaseUrl;
+                s.DefaultExpirationDays = serviceOptions.DefaultExpirationDays;
+                s.MaxAliasLength = serviceOptions.MaxAliasLength;
+                s.MinAliasLength = serviceOptions.MinAliasLength;
+                s.AllowCustomAliases = serviceOptions.AllowCustomAliases;
+                s.EnableMetrics = serviceOptions.EnableMetrics;
+                s.EnforceHttps = serviceOptions.EnforceHttps;
+            });
         }
     }
 }

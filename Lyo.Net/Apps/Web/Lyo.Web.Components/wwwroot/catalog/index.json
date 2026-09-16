@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-11T02:46:25.659473+00:00",
-  "packageCount": 259,
+  "generatedAt": "2026-10-07T00:31:52.491800+00:00",
+  "packageCount": 394,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -395,17 +395,6 @@
       ]
     },
     {
-      "id": "Lyo.Common.Json",
-      "area": "Core",
-      "topic": "Lyo.Common",
-      "name": "Lyo.Common.Json",
-      "tagline": "`LyoJsonSerializerOptions` — the HTTP JSON contract every Lyo API and first-party client shares — plus opt-in converters for upstreams that quote their scalars.",
-      "targetFrameworks": [
-        "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
       "id": "Lyo.Common.Metadata",
       "area": "Core",
       "topic": "Lyo.Common",
@@ -665,27 +654,6 @@
       ]
     },
     {
-      "id": "Lyo.People.Models",
-      "area": "Core",
-      "topic": "Lyo.People",
-      "name": "Lyo.People.Models",
-      "tagline": "People-domain records: `Person`, contact, employment, identification, and relationships.",
-      "targetFrameworks": [
-        "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.People.Postgres",
-      "area": "Core",
-      "topic": "Lyo.People",
-      "name": "Lyo.People.Postgres",
-      "tagline": "EF Core persistence of Lyo.People.Models in PostgreSQL.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
       "id": "Lyo.Privacy",
       "area": "Core",
       "topic": "Lyo.Privacy",
@@ -793,6 +761,38 @@
       ]
     },
     {
+      "id": "Lyo.StateMachine",
+      "area": "Core",
+      "topic": "Lyo.StateMachine",
+      "name": "Lyo.StateMachine",
+      "tagline": "Strongly typed, reusable state machine for games, jobs, and workers: typed payloads, guards, hooks, hierarchical states, timers, versioned snapshots, data-driven definitions, and diagram export.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.StateMachine.Models",
+      "area": "Core",
+      "topic": "Lyo.StateMachine",
+      "name": "Lyo.StateMachine.Models",
+      "tagline": "Contracts for Lyo state machines: versioned snapshots, transition results and records, store and query interfaces, and data-driven definition documents.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.StateMachine.Postgres",
+      "area": "Core",
+      "topic": "Lyo.StateMachine",
+      "name": "Lyo.StateMachine.Postgres",
+      "tagline": "PostgreSQL storage for Lyo state machines: instances with optimistic concurrency, data, timers, history, and queries, plus versioned definition documents.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Streams",
       "area": "Core",
       "topic": "Lyo.Streams",
@@ -808,7 +808,7 @@
       "area": "Core",
       "topic": "Lyo.SystemInformation",
       "name": "Lyo.SystemInformation",
-      "tagline": "Inventory of the host machine — hardware, software, drives, network interfaces, and monitors (including EDID parsing) — plus structured logging of that snapshot.",
+      "tagline": "Inventory of the host machine — hardware, software, drives, network interfaces, monitors (including EDID parsing), audio devices, and printers — plus structured logging of that snapshot.",
       "targetFrameworks": [
         "netstandard2.0",
         "net10.0"
@@ -883,6 +883,48 @@
       "topic": "Lyo.Web",
       "name": "Lyo.Web.Primitives",
       "tagline": "Shared MudBlazor UI primitives for every Lyo component package, with no query, data-grid, or API dependencies.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Algorithms",
+      "area": "Data",
+      "topic": "Lyo.Algorithms",
+      "name": "Lyo.Algorithms",
+      "tagline": "Keyed algorithm registry: frozen startup C# plus a versioned expression and scorer catalog.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Algorithms.Models",
+      "area": "Data",
+      "topic": "Lyo.Algorithms",
+      "name": "Lyo.Algorithms.Models",
+      "tagline": "Request and response DTOs, `AlgorithmKind`, and route constants for the Algorithms catalog.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Algorithms.Postgres",
+      "area": "Data",
+      "topic": "Lyo.Algorithms",
+      "name": "Lyo.Algorithms.Postgres",
+      "tagline": "PostgreSQL catalog for Lyo.Algorithms. Schema algorithms, append-only revisions, labels.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Algorithms.Sqlite",
+      "area": "Data",
+      "topic": "Lyo.Algorithms",
+      "name": "Lyo.Algorithms.Sqlite",
+      "tagline": "SQLite catalog for Lyo.Algorithms. Same store contract as Postgres, for a single writer.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1049,6 +1091,17 @@
       ]
     },
     {
+      "id": "Lyo.Docx",
+      "area": "Data",
+      "topic": "Lyo.Docx",
+      "name": "Lyo.Docx",
+      "tagline": "Read Word documents and fill {Token} placeholders.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.FFmpeg",
       "area": "Data",
       "topic": "Lyo.FFmpeg",
@@ -1204,6 +1257,17 @@
       ]
     },
     {
+      "id": "Lyo.Formatter.Algorithms",
+      "area": "Data",
+      "topic": "Lyo.Formatter",
+      "name": "Lyo.Formatter.Algorithms",
+      "tagline": "Optional formatter addon that runs Algo(\"key\") through Lyo.Algorithms.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Formatter.Web.Components",
       "area": "Data",
       "topic": "Lyo.Formatter",
@@ -1225,6 +1289,17 @@
       ]
     },
     {
+      "id": "Lyo.Html",
+      "area": "Data",
+      "topic": "Lyo.Html",
+      "name": "Lyo.Html",
+      "tagline": "HTML visible text and allowlist sanitizing.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.IO.FileSystem",
       "area": "Data",
       "topic": "Lyo.IO",
@@ -1232,6 +1307,16 @@
       "tagline": "Path-rooted virtual file system: one contract for local disk, memory, SFTP, FTP, S3, and Azure Blob.",
       "targetFrameworks": [
         "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.IO.FileSystem.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.IO",
+      "name": "Lyo.IO.FileSystem.Web.Components",
+      "tagline": "Blazor folder tree over `IFileTreeSource` (local `IFileSystem` or HTTP).",
+      "targetFrameworks": [
         "net10.0"
       ]
     },
@@ -1307,11 +1392,43 @@
       ]
     },
     {
+      "id": "Lyo.Json",
+      "area": "Data",
+      "topic": "Lyo.Json",
+      "name": "Lyo.Json",
+      "tagline": "The Lyo HTTP JSON contract and typed JSON parse and export.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Media.Models",
       "area": "Data",
       "topic": "Lyo.Media",
       "name": "Lyo.Media.Models",
       "tagline": "Sibling IAudio* and IVideo* contracts, encoder catalogs, and conversion/play/probe records. Images stay IImageService.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Nfc",
+      "area": "Data",
+      "topic": "Lyo.Nfc",
+      "name": "Lyo.Nfc",
+      "tagline": "Type 2 NFC pages and NDEF.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Nfc.Pcsc",
+      "area": "Data",
+      "topic": "Lyo.Nfc",
+      "name": "Lyo.Nfc.Pcsc",
+      "tagline": "PC/SC driver for Type 2 NFC pages.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1441,11 +1558,63 @@
       ]
     },
     {
+      "id": "Lyo.Query.Postgres",
+      "area": "Data",
+      "topic": "Lyo.Query",
+      "name": "Lyo.Query.Postgres",
+      "tagline": "Translate Lyo.Query Fuzzy operators to Postgres pg_trgm similarity() on IQueryable.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Query.Sql",
+      "area": "Data",
+      "topic": "Lyo.Query",
+      "name": "Lyo.Query.Sql",
+      "tagline": "Prints concrete, projection, and root query requests as parameterized Postgres SQL. No IQueryable and no EF query pipeline.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Query.Web.Components",
       "area": "Data",
       "topic": "Lyo.Query",
       "name": "Lyo.Query.Web.Components",
       "tagline": "Blazor / MudBlazor UI that edits and runs `Lyo.Query.Models` requests against any Lyo.Api host.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Rfid",
+      "area": "Data",
+      "topic": "Lyo.Rfid",
+      "name": "Lyo.Rfid",
+      "tagline": "ISO 15693 block read/write, frames, and a transceiver port.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Rfid.Tonie",
+      "area": "Data",
+      "topic": "Lyo.Rfid",
+      "name": "Lyo.Rfid.Tonie",
+      "tagline": "Tonie SLIX-L content path, privacy XOR, and custom-tag frames.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Search.Postgres",
+      "area": "Data",
+      "topic": "Lyo.Search",
+      "name": "Lyo.Search.Postgres",
+      "tagline": "Shared Postgres full-text column.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1482,6 +1651,17 @@
       ]
     },
     {
+      "id": "Lyo.Toml",
+      "area": "Data",
+      "topic": "Lyo.Toml",
+      "name": "Lyo.Toml",
+      "tagline": "Typed TOML parse and export, and conversion to and from JSON, over Tomlyn.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Xlsx",
       "area": "Data",
       "topic": "Lyo.Xlsx",
@@ -1500,6 +1680,80 @@
       "tagline": "XLSX stack contracts and value types. Depend on `IXlsxService` / `IXlsxReader` / `IXlsxWriter` here; `Lyo.Xlsx` is the ClosedXML implementation.",
       "targetFrameworks": [
         "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Xml",
+      "area": "Data",
+      "topic": "Lyo.Xml",
+      "name": "Lyo.Xml",
+      "tagline": "Typed XML parse and export, and conversion to and from JSON, over System.Xml.Linq.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Yaml",
+      "area": "Data",
+      "topic": "Lyo.Yaml",
+      "name": "Lyo.Yaml",
+      "tagline": "Typed YAML parse and export, and conversion to and from JSON, over YamlDotNet.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Billing",
+      "area": "Plugins",
+      "topic": "Lyo.Billing",
+      "name": "Lyo.Billing",
+      "tagline": "Professional-services invoicing: charges, draft→issued invoices, and payments that post double-entry journals.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Billing.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Billing",
+      "name": "Lyo.Billing.Postgres",
+      "tagline": "EF Core implementation of `IBillingStore` in PostgreSQL schema `billing`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Billing.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Billing",
+      "name": "Lyo.Billing.Seed",
+      "tagline": "EF seed of billing clients, contact payloads, a biller profile, and draft plus issued invoices.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Book",
+      "area": "Plugins",
+      "topic": "Lyo.Book",
+      "name": "Lyo.Book",
+      "tagline": "Domain contracts for a library catalog: `Book`, optional `BookSeries`, first-class genres/types/formats/identifiers/contributors, chapters, searchable pages, and `IBookStore`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Book.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Book",
+      "name": "Lyo.Book.Postgres",
+      "tagline": "PostgreSQL and EF Core implementation of `Lyo.Book.IBookStore` (`PostgresBookStore`) via `BookDbContext` and `PostgresBookOptions`.",
+      "targetFrameworks": [
         "net10.0"
       ]
     },
@@ -1556,6 +1810,16 @@
       ]
     },
     {
+      "id": "Lyo.Comment.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Comment",
+      "name": "Lyo.Comment.Seed",
+      "tagline": "EF seed of comments and one like reaction each on a fixed seed subject.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Config",
       "area": "Plugins",
       "topic": "Lyo.Config",
@@ -1572,6 +1836,16 @@
       "topic": "Lyo.Config",
       "name": "Lyo.Config.Postgres",
       "tagline": "PostgreSQL and EF Core implementation of `Lyo.Config.IConfigStore` for typed configuration definitions and per-entity bindings.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Config.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config.Seed",
+      "tagline": "EF seed of plaintext config definitions, bindings, and revision 1 of each.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1608,6 +1882,16 @@
       ]
     },
     {
+      "id": "Lyo.ContactUs.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.ContactUs",
+      "name": "Lyo.ContactUs.Seed",
+      "tagline": "EF seed of contact-form submissions.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Favorite",
       "area": "Plugins",
       "topic": "Lyo.Favorite",
@@ -1629,6 +1913,16 @@
       ]
     },
     {
+      "id": "Lyo.Favorite.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Favorite",
+      "name": "Lyo.Favorite.Seed",
+      "tagline": "EF seed of favorites on a fixed seed subject.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.HomeInventory",
       "area": "Plugins",
       "topic": "Lyo.HomeInventory",
@@ -1640,11 +1934,53 @@
       ]
     },
     {
+      "id": "Lyo.HomeInventory.FileStorage",
+      "area": "Plugins",
+      "topic": "Lyo.HomeInventory",
+      "name": "Lyo.HomeInventory.FileStorage",
+      "tagline": "Optional FileStorage helper that stores inventory photos and documents and writes attachment rows.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.HomeInventory.Models",
+      "area": "Plugins",
+      "topic": "Lyo.HomeInventory",
+      "name": "Lyo.HomeInventory.Models",
+      "tagline": "Shared request/response DTOs, enums, and route constants for HomeInventory HTTP and Blazor clients.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.HomeInventory.Postgres",
       "area": "Plugins",
       "topic": "Lyo.HomeInventory",
       "name": "Lyo.HomeInventory.Postgres",
       "tagline": "EF Core implementation of `IHomeInventoryStore` backed by PostgreSQL.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.HomeInventory.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.HomeInventory",
+      "name": "Lyo.HomeInventory.Seed",
+      "tagline": "EF seed of a home-inventory category, location, items, stock, movements, and attachments.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.HomeInventory.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.HomeInventory",
+      "name": "Lyo.HomeInventory.Web.Components",
+      "tagline": "Blazor / MudBlazor workbench for household inventory.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1671,11 +2007,156 @@
       ]
     },
     {
+      "id": "Lyo.Job.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Seed",
+      "tagline": "EF seed of disabled job definitions, historical succeeded runs, and one disabled workflow.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Job.Web.Components",
       "area": "Plugins",
       "topic": "Lyo.Job",
       "name": "Lyo.Job.Web.Components",
       "tagline": "Blazor / MudBlazor dashboard for the Lyo job stack. Drop `JobManagement` on a host page for Statistics, Definitions, Schedules, Runs (progress and SLA breach), worker registry, and workflow views.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Law",
+      "area": "Plugins",
+      "topic": "Lyo.Law",
+      "name": "Lyo.Law",
+      "tagline": "Store contract for US state statutes.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Law.Models",
+      "area": "Plugins",
+      "topic": "Lyo.Law",
+      "name": "Lyo.Law.Models",
+      "tagline": "Request and response types, enums, and route constants for state statutes.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Law.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Law",
+      "name": "Lyo.Law.Postgres",
+      "tagline": "PostgreSQL storage for US state statutes.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Law.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.Law",
+      "name": "Lyo.Law.Web.Components",
+      "tagline": "Blazor grid and reader for state statute nodes.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Leaderboard",
+      "area": "Plugins",
+      "topic": "Lyo.Leaderboard",
+      "name": "Lyo.Leaderboard",
+      "tagline": "Boards, membership, invites, entries, and standings.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Leaderboard.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Leaderboard",
+      "name": "Lyo.Leaderboard.Postgres",
+      "tagline": "PostgreSQL store for leaderboard boards, members, entries, and standings.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Leaderboard.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.Leaderboard",
+      "name": "Lyo.Leaderboard.Web.Components",
+      "tagline": "Blazor board, standings, submit, verify, and invite UI.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Ledger",
+      "area": "Plugins",
+      "topic": "Lyo.Ledger",
+      "name": "Lyo.Ledger",
+      "tagline": "Double-entry ledger contracts: chart of accounts, journals, post/void, and client AR balance.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Ledger.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Ledger",
+      "name": "Lyo.Ledger.Postgres",
+      "tagline": "EF Core implementation of `ILedgerStore` in PostgreSQL schema `ledger`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Ledger.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Ledger",
+      "name": "Lyo.Ledger.Seed",
+      "tagline": "EF seed of a cash account, a revenue account, and balanced journals.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Music",
+      "area": "Plugins",
+      "topic": "Lyo.Music",
+      "name": "Lyo.Music",
+      "tagline": "Domain contracts for a music catalog: releases, release groups, tracks, credits, identifiers, and `IMusicStore`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Music.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Music",
+      "name": "Lyo.Music.Postgres",
+      "tagline": "PostgreSQL and EF Core implementation of `Lyo.Music.IMusicStore` via `MusicDbContext` and `PostgresMusicOptions`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Music.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.Music",
+      "name": "Lyo.Music.Web.Components",
+      "tagline": "Blazor search and detail for music releases.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1697,6 +2178,37 @@
       "topic": "Lyo.Note",
       "name": "Lyo.Note.Postgres",
       "tagline": "Entity Framework Core store for `Lyo.Note` on PostgreSQL. Rows live in `note.note` (`PostgresNoteOptions.Schema = \"note\"`), and the package includes migrations.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Note.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Note",
+      "name": "Lyo.Note.Seed",
+      "tagline": "EF seed of notes on a fixed seed subject.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.People.Models",
+      "area": "Plugins",
+      "topic": "Lyo.People",
+      "name": "Lyo.People.Models",
+      "tagline": "People-domain records: `Person`, contact, employment, identification, and relationships.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.People.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.People",
+      "name": "Lyo.People.Postgres",
+      "tagline": "EF Core persistence of Lyo.People.Models in PostgreSQL.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1734,6 +2246,79 @@
       ]
     },
     {
+      "id": "Lyo.Rating.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Rating",
+      "name": "Lyo.Rating.Seed",
+      "tagline": "EF seed of ratings and one like reaction each on a fixed seed subject.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Recipe",
+      "area": "Plugins",
+      "topic": "Lyo.Recipe",
+      "name": "Lyo.Recipe",
+      "tagline": "Domain contracts for a household recipe catalog. Persistence facade is `IRecipeStore`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Recipe.FileStorage",
+      "area": "Plugins",
+      "topic": "Lyo.Recipe",
+      "name": "Lyo.Recipe.FileStorage",
+      "tagline": "Saves FileStorage bytes and writes a Recipe attachment row.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Recipe.Models",
+      "area": "Plugins",
+      "topic": "Lyo.Recipe",
+      "name": "Lyo.Recipe.Models",
+      "tagline": "Shared request/response DTOs, enums, and route constants for Recipe HTTP and Blazor clients.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Recipe.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Recipe",
+      "name": "Lyo.Recipe.Postgres",
+      "tagline": "PostgreSQL and EF Core implementation of `Lyo.Recipe.IRecipeStore` via `RecipeDbContext` and `PostgresRecipeOptions`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Recipe.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Recipe",
+      "name": "Lyo.Recipe.Seed",
+      "tagline": "EF seed of a recipe category, ingredients, recipes, lines, steps, links, and attachments.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Recipe.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.Recipe",
+      "name": "Lyo.Recipe.Web.Components",
+      "tagline": "Blazor / MudBlazor workbench for household recipes.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Reporting.Models",
       "area": "Plugins",
       "topic": "Lyo.Reporting",
@@ -1750,6 +2335,16 @@
       "topic": "Lyo.Reporting",
       "name": "Lyo.Reporting.Postgres",
       "tagline": "PostgreSQL schema (`reporting`), EF migrations, CSV/XLSX/JSON renderers, the `ReportService` generation pipeline, and `ReportRetentionService` cleanup.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Reporting.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Reporting",
+      "name": "Lyo.Reporting.Seed",
+      "tagline": "EF seed of the report design sample definitions and one succeeded generation each.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1796,6 +2391,37 @@
       ]
     },
     {
+      "id": "Lyo.ShortUrl.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.ShortUrl",
+      "name": "Lyo.ShortUrl.Seed",
+      "tagline": "EF seed of short URLs and one click each.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Story",
+      "area": "Plugins",
+      "topic": "Lyo.Story",
+      "name": "Lyo.Story",
+      "tagline": "Play-graph contracts for interactive stories and quests: nodes, choices, named actions, trigger/condition/response rules, optional presentation, and `IStoryStore`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Story.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Story",
+      "name": "Lyo.Story.Postgres",
+      "tagline": "PostgreSQL and EF Core implementation of `Lyo.Story.IStoryStore` (`PostgresStoryStore`) via `StoryDbContext` and `PostgresStoryOptions`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Tag",
       "area": "Plugins",
       "topic": "Lyo.Tag",
@@ -1812,6 +2438,47 @@
       "topic": "Lyo.Tag",
       "name": "Lyo.Tag.Postgres",
       "tagline": "Entity Framework Core store for `Lyo.Tag` on PostgreSQL. Rows live in `tag.tag` (`PostgresTagOptions.Schema = \"tag\"`), and the package includes migrations.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Tag.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Tag",
+      "name": "Lyo.Tag.Seed",
+      "tagline": "EF seed of tags on a fixed seed subject.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Video",
+      "area": "Plugins",
+      "topic": "Lyo.Video",
+      "name": "Lyo.Video",
+      "tagline": "Domain contracts for movies and television: titles, seasons, episodes, credits, and `IVideoStore`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Video.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Video",
+      "name": "Lyo.Video.Postgres",
+      "tagline": "PostgreSQL and EF Core implementation of `Lyo.Video.IVideoStore`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Video.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.Video",
+      "name": "Lyo.Video.Web.Components",
+      "tagline": "Blazor search and detail for movies and series.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -1913,11 +2580,54 @@
       ]
     },
     {
+      "id": "Lyo.Google.Youtube.Client",
+      "area": "Integration",
+      "topic": "Lyo.Google",
+      "name": "Lyo.Google.Youtube.Client",
+      "tagline": "YouTube Data API client. Returns `Lyo.Google.Youtube.Models` DTOs.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Google.Youtube.Models",
+      "area": "Integration",
+      "topic": "Lyo.Google",
+      "name": "Lyo.Google.Youtube.Models",
+      "tagline": "YouTube Data API DTOs and the catalog link `YoutubeVideoLink`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Typecast.Client",
       "area": "Integration",
       "topic": "Lyo.Typecast",
       "name": "Lyo.Typecast.Client",
       "tagline": "HTTP client for Typecast TTS and voice catalog work. `TypecastClient` subclasses `Lyo.Api.Client.ApiClient`, sets `X-API-KEY` from `TypecastClientOptions`, and surfaces two…",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Algorithms.Api",
+      "area": "Apps",
+      "topic": "Lyo.Algorithms",
+      "name": "Lyo.Algorithms.Api",
+      "tagline": "HTTP mapping for the Lyo algorithm catalog (`BuildAlgorithmsGroup`).",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Algorithms.Client",
+      "area": "Apps",
+      "topic": "Lyo.Algorithms",
+      "name": "Lyo.Algorithms.Client",
+      "tagline": "Typed HTTP client for the Lyo algorithm catalog API.",
       "targetFrameworks": [
         "netstandard2.0",
         "net10.0"
@@ -1975,11 +2685,41 @@
       ]
     },
     {
+      "id": "Lyo.Api.Export.Toml",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Export.Toml",
+      "tagline": "Toml format handler for Lyo.Api export.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Api.Export.Xlsx",
       "area": "Apps",
       "topic": "Lyo.Api",
       "name": "Lyo.Api.Export.Xlsx",
       "tagline": "XLSX format handler for Lyo.Api export.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Export.Xml",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Export.Xml",
+      "tagline": "Xml format handler for Lyo.Api export.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Export.Yaml",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Export.Yaml",
+      "tagline": "Yaml format handler for Lyo.Api export.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -2006,6 +2746,66 @@
       ]
     },
     {
+      "id": "Lyo.Api.Import",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Import",
+      "tagline": "Import API. JSON is built in. The endpoint returns rows and does not write a store.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Import.Csv",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Import.Csv",
+      "tagline": "CSV handler for Lyo.Api.Import.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Import.Toml",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Import.Toml",
+      "tagline": "Toml handler for Lyo.Api.Import.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Import.Xlsx",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Import.Xlsx",
+      "tagline": "XLSX handler for Lyo.Api.Import.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Import.Xml",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Import.Xml",
+      "tagline": "Xml handler for Lyo.Api.Import.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Api.Import.Yaml",
+      "area": "Apps",
+      "topic": "Lyo.Api",
+      "name": "Lyo.Api.Import.Yaml",
+      "tagline": "Yaml handler for Lyo.Api.Import.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Api.Models",
       "area": "Apps",
       "topic": "Lyo.Api",
@@ -2027,21 +2827,52 @@
       ]
     },
     {
-      "id": "Lyo.Comic.Api",
+      "id": "Lyo.Avalonia.Components",
       "area": "Apps",
-      "topic": "Lyo.Comic",
-      "name": "Lyo.Comic.Api",
-      "tagline": "HTTP mapping for the Lyo Comic API (`BuildComicGroup`).",
+      "topic": "Lyo.Avalonia",
+      "name": "Lyo.Avalonia.Components",
+      "tagline": "Shared Avalonia controls for Lyo desktop apps.",
       "targetFrameworks": [
         "net10.0"
       ]
     },
     {
-      "id": "Lyo.Comic.Api.Host",
+      "id": "Lyo.Billing.Api",
+      "area": "Apps",
+      "topic": "Lyo.Billing",
+      "name": "Lyo.Billing.Api",
+      "tagline": "HTTP mapping for the Lyo Billing API (`BuildBillingGroup`). No PDF.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Billing.Client",
+      "area": "Apps",
+      "topic": "Lyo.Billing",
+      "name": "Lyo.Billing.Client",
+      "tagline": "Typed HTTP client targeting the Lyo Billing API (`netstandard2.0;net10.0`).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Billing.Web.Components",
+      "area": "Apps",
+      "topic": "Lyo.Billing",
+      "name": "Lyo.Billing.Web.Components",
+      "tagline": "Reusable Blazor billing dashboard: clients, charges, invoices, payments, and ledger.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comic.Api",
       "area": "Apps",
       "topic": "Lyo.Comic",
-      "name": "Lyo.Comic.Api.Host",
-      "tagline": "Standalone ASP.NET host for the Lyo Comic API.",
+      "name": "Lyo.Comic.Api",
+      "tagline": "HTTP mapping for the Lyo Comic API (`BuildComicGroup`).",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -2068,16 +2899,6 @@
       ]
     },
     {
-      "id": "Lyo.Config.Api.Host",
-      "area": "Apps",
-      "topic": "Lyo.Config",
-      "name": "Lyo.Config.Api.Host",
-      "tagline": "ASP.NET host that runs `Lyo.Config.Api` on its own.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
       "id": "Lyo.Config.Api.Hosting",
       "area": "Apps",
       "topic": "Lyo.Config",
@@ -2096,6 +2917,16 @@
       "tagline": "Config HTTP API contracts: `ConfigResolveOutcome`, `ConfigResolveConditionalResult`, and `HttpStatusDescriptor`.",
       "targetFrameworks": [
         "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Desktop",
+      "area": "Apps",
+      "topic": "Lyo.Desktop",
+      "name": "Lyo.Desktop",
+      "tagline": "Hotkeys, clipboard, windows, and input for Linux and Windows desktop apps.",
+      "targetFrameworks": [
         "net10.0"
       ]
     },
@@ -2120,16 +2951,6 @@
       ]
     },
     {
-      "id": "Lyo.Drift.Api.Host",
-      "area": "Apps",
-      "topic": "Lyo.Drift",
-      "name": "Lyo.Drift.Api.Host",
-      "tagline": "Standalone ASP.NET host for the Lyo Drift collector API.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
       "id": "Lyo.Drift.Client",
       "area": "Apps",
       "topic": "Lyo.Drift",
@@ -2141,21 +2962,31 @@
       ]
     },
     {
-      "id": "Lyo.HomeInventory.Api",
+      "id": "Lyo.FileManager",
       "area": "Apps",
-      "topic": "Lyo.HomeInventory",
-      "name": "Lyo.HomeInventory.Api",
-      "tagline": "HTTP mapping for the Lyo HomeInventory API (`BuildHomeInventoryGroup`).",
+      "topic": "Lyo.FileManager",
+      "name": "Lyo.FileManager",
+      "tagline": "Session for a remote FileStorage API or a local disk folder.",
       "targetFrameworks": [
         "net10.0"
       ]
     },
     {
-      "id": "Lyo.HomeInventory.Api.Host",
+      "id": "Lyo.FileManager.App",
+      "area": "Apps",
+      "topic": "Lyo.FileManager",
+      "name": "Lyo.FileManager.App",
+      "tagline": "lyo-files desktop window for a FileStorage server or a local folder.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.HomeInventory.Api",
       "area": "Apps",
       "topic": "Lyo.HomeInventory",
-      "name": "Lyo.HomeInventory.Api.Host",
-      "tagline": "Standalone ASP.NET host for the Lyo HomeInventory API.",
+      "name": "Lyo.HomeInventory.Api",
+      "tagline": "HTTP mapping for the Lyo HomeInventory API (`BuildHomeInventoryGroup`).",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -2203,16 +3034,6 @@
       ]
     },
     {
-      "id": "Lyo.Job.Api.Host",
-      "area": "Apps",
-      "topic": "Lyo.Job",
-      "name": "Lyo.Job.Api.Host",
-      "tagline": "Standalone ASP.NET host for the Lyo Job API.",
-      "targetFrameworks": [
-        "net10.0"
-      ]
-    },
-    {
       "id": "Lyo.Job.Client",
       "area": "Apps",
       "topic": "Lyo.Job",
@@ -2244,21 +3065,106 @@
       ]
     },
     {
-      "id": "Lyo.Reporting.Api",
+      "id": "Lyo.Law.Api",
       "area": "Apps",
-      "topic": "Lyo.Reporting",
-      "name": "Lyo.Reporting.Api",
-      "tagline": "Authenticated HTTP endpoints for Lyo Reporting. Postgres stays service-only (`ReportService` + EF). `BuildReportingGroup` lives in this package.",
+      "topic": "Lyo.Law",
+      "name": "Lyo.Law.Api",
+      "tagline": "HTTP mapping for state statutes (`BuildLawGroup`).",
       "targetFrameworks": [
         "net10.0"
       ]
     },
     {
-      "id": "Lyo.Reporting.Api.Host",
+      "id": "Lyo.Law.Client",
+      "area": "Apps",
+      "topic": "Lyo.Law",
+      "name": "Lyo.Law.Client",
+      "tagline": "Typed HTTP client for Law upsert and lookup routes.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Leaderboard.Api",
+      "area": "Apps",
+      "topic": "Lyo.Leaderboard",
+      "name": "Lyo.Leaderboard.Api",
+      "tagline": "HTTP API for boards, properties, invites, entries, and standings.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Leaderboard.Api.Client",
+      "area": "Apps",
+      "topic": "Lyo.Leaderboard",
+      "name": "Lyo.Leaderboard.Api.Client",
+      "tagline": "Typed HTTP client for the Leaderboard API.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Leaderboard.Api.Models",
+      "area": "Apps",
+      "topic": "Lyo.Leaderboard",
+      "name": "Lyo.Leaderboard.Api.Models",
+      "tagline": "Request bodies for the Leaderboard HTTP API.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Ledger.Api",
+      "area": "Apps",
+      "topic": "Lyo.Ledger",
+      "name": "Lyo.Ledger.Api",
+      "tagline": "HTTP mapping for the Lyo Ledger API (`BuildLedgerGroup`).",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Payments",
+      "area": "Apps",
+      "topic": "Lyo.Payments",
+      "name": "Lyo.Payments",
+      "tagline": "Payment collector contracts plus an internal workbench implementation (no Stripe).",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Recipe.Api",
+      "area": "Apps",
+      "topic": "Lyo.Recipe",
+      "name": "Lyo.Recipe.Api",
+      "tagline": "HTTP mapping for the Lyo Recipe API (`BuildRecipeGroup`).",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Recipe.Client",
+      "area": "Apps",
+      "topic": "Lyo.Recipe",
+      "name": "Lyo.Recipe.Client",
+      "tagline": "Typed HTTP client for extra Recipe routes.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Reporting.Api",
       "area": "Apps",
       "topic": "Lyo.Reporting",
-      "name": "Lyo.Reporting.Api.Host",
-      "tagline": "Standalone ASP.NET host for the Lyo Reporting API.",
+      "name": "Lyo.Reporting.Api",
+      "tagline": "Authenticated HTTP endpoints for Lyo Reporting. Postgres stays service-only (`ReportService` + EF). `BuildReportingGroup` lives in this package.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -2275,11 +3181,62 @@
       ]
     },
     {
+      "id": "Lyo.Screenshot",
+      "area": "Apps",
+      "topic": "Lyo.Screenshot",
+      "name": "Lyo.Screenshot",
+      "tagline": "Still PNG, looping GIF, and scrolling receipt stitch from desktop frames.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Screenshot.App",
+      "area": "Apps",
+      "topic": "Lyo.Screenshot",
+      "name": "Lyo.Screenshot.App",
+      "tagline": "lyo-shot desktop window for a still, a GIF, or a scrolling receipt.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Story.Api",
+      "area": "Apps",
+      "topic": "Lyo.Story",
+      "name": "Lyo.Story.Api",
+      "tagline": "HTTP mapping for the Lyo Story API (`BuildStoryGroup`).",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Web.Automation",
       "area": "Apps",
       "topic": "Lyo.Web",
       "name": "Lyo.Web.Automation",
       "tagline": "Browser-automation models shared across runners: locators, JSON plans, a session abstraction, and plan execution. Playwright and Selenium types stay out of this package.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Automation.Api",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Automation.Api",
+      "tagline": "HTTP API that starts an automation plan on a host-supplied browser session and serves the run log and viewport snapshots.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Automation.Client",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Automation.Client",
+      "tagline": "Typed HTTP client for automation plans and runs. The browser stays on the API host.",
       "targetFrameworks": [
         "netstandard2.0",
         "net10.0"
@@ -2297,13 +3254,34 @@
       ]
     },
     {
+      "id": "Lyo.Web.Automation.PuppeteerSharp",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Automation.PuppeteerSharp",
+      "tagline": "PuppeteerSharp backend for `Lyo.Web.Automation`: Chrome, Chromium, Edge, and Firefox sessions, tabs, frames, and the same JSON plans as Playwright and Selenium.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Web.Automation.Selenium",
       "area": "Apps",
       "topic": "Lyo.Web",
       "name": "Lyo.Web.Automation.Selenium",
-      "tagline": "Selenium WebDriver backend for the `Lyo.Web.Automation` abstractions: launch Chrome / Edge / Firefox / Safari (plus Selenium Grid), isolate sessions, and cover polling, tabs, frames, and plans.",
+      "tagline": "Selenium WebDriver backend for the `Lyo.Web.Automation` abstractions: launch Chrome / Chromium / Edge / Firefox (plus Selenium Grid), isolate sessions, and cover polling, tabs, frames, and plans.",
       "targetFrameworks": [
         "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Automation.Web.Components",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Automation.Web.Components",
+      "tagline": "MudBlazor plan library and editor that talk to the automation API.",
+      "targetFrameworks": [
         "net10.0"
       ]
     },
@@ -2338,11 +3316,101 @@
       ]
     },
     {
+      "id": "Lyo.Web.Components.Export.Toml",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Export.Toml",
+      "tagline": "TOML export menu item for Lyo data grids.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Web.Components.Export.Xlsx",
       "area": "Apps",
       "topic": "Lyo.Web",
       "name": "Lyo.Web.Components.Export.Xlsx",
       "tagline": "XLSX export menu item for Lyo data grids.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Export.Xml",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Export.Xml",
+      "tagline": "XML export menu item for Lyo data grids.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Export.Yaml",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Export.Yaml",
+      "tagline": "YAML export menu item for Lyo data grids.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Import",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Import",
+      "tagline": "Import preview for JSON rows.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Import.Csv",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Import.Csv",
+      "tagline": "CSV import menu item.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Import.Toml",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Import.Toml",
+      "tagline": "TOML import menu item.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Import.Xlsx",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Import.Xlsx",
+      "tagline": "XLSX import menu item.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Import.Xml",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Import.Xml",
+      "tagline": "XML import menu item.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.Components.Import.Yaml",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.Components.Import.Yaml",
+      "tagline": "YAML import menu item.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -2362,8 +3430,19 @@
       "area": "Apps",
       "topic": "Lyo.Web",
       "name": "Lyo.Web.WebRenderer",
-      "tagline": "Server-side Razor rendering and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by **PuppeteerSharp** against a…",
+      "tagline": "Server-side Razor rendering and HTML capture to PDF, PNG, JPEG, or WebP through one shared Chromium process.",
       "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Web.WebRenderer.Models",
+      "area": "Apps",
+      "topic": "Lyo.Web",
+      "name": "Lyo.Web.WebRenderer.Models",
+      "tagline": "Serializable HTML capture request and response. No Blazor and no browser.",
+      "targetFrameworks": [
+        "netstandard2.0",
         "net10.0"
       ]
     },
@@ -2619,11 +3698,71 @@
       ]
     },
     {
+      "id": "Lyo.Billing.Api.Example",
+      "area": "Examples",
+      "topic": "Lyo.Billing",
+      "name": "Lyo.Billing.Api.Example",
+      "tagline": "Example ASP.NET host for the Lyo Billing API (Ledger + Billing).",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Comic.Api.Example",
+      "area": "Examples",
+      "topic": "Lyo.Comic",
+      "name": "Lyo.Comic.Api.Example",
+      "tagline": "Example ASP.NET host for the Lyo Comic API.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Config.Api.Example",
+      "area": "Examples",
+      "topic": "Lyo.Config",
+      "name": "Lyo.Config.Api.Example",
+      "tagline": "Example ASP.NET host that runs `Lyo.Config.Api` on its own.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Drift.Agent.Example",
       "area": "Examples",
       "topic": "Lyo.Drift",
       "name": "Lyo.Drift.Agent.Example",
       "tagline": "Sample Drift agent host.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Drift.Api.Example",
+      "area": "Examples",
+      "topic": "Lyo.Drift",
+      "name": "Lyo.Drift.Api.Example",
+      "tagline": "Example ASP.NET host for the Lyo Drift collector API.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.HomeInventory.Api.Example",
+      "area": "Examples",
+      "topic": "Lyo.HomeInventory",
+      "name": "Lyo.HomeInventory.Api.Example",
+      "tagline": "Example ASP.NET host for the Lyo HomeInventory API.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Job.Api.Example",
+      "area": "Examples",
+      "topic": "Lyo.Job",
+      "name": "Lyo.Job.Api.Example",
+      "tagline": "Example ASP.NET host for the Lyo Job API.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -2649,6 +3788,36 @@
       ]
     },
     {
+      "id": "Lyo.Leaderboard.Api.Host",
+      "area": "Examples",
+      "topic": "Lyo.Leaderboard",
+      "name": "Lyo.Leaderboard.Api.Host",
+      "tagline": "Standalone host for the Leaderboard API.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Ledger.Api.Example",
+      "area": "Examples",
+      "topic": "Lyo.Ledger",
+      "name": "Lyo.Ledger.Api.Example",
+      "tagline": "Example ASP.NET host for the Lyo Ledger API.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Reporting.Api.Example",
+      "area": "Examples",
+      "topic": "Lyo.Reporting",
+      "name": "Lyo.Reporting.Api.Example",
+      "tagline": "Example ASP.NET host for the Lyo Reporting API.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
       "id": "Lyo.Reporting.Business.Example",
       "area": "Examples",
       "topic": "Lyo.Reporting",
@@ -2663,7 +3832,7 @@
       "area": "Tools",
       "topic": "Lyo.Cli",
       "name": "Lyo.Cli",
-      "tagline": "Installable `lyo` CLI that covers encryption, encoding, compression, hashing, IDs, query build/exec, and CSV/XLSX.",
+      "tagline": "Installable `lyo` CLI that covers encryption, encoding, compression, hashing, IDs, query build/exec, CSV/XLSX, JSON/YAML/XML/TOML, NFC, and RFID.",
       "targetFrameworks": [
         "net10.0"
       ]
@@ -2709,11 +3878,241 @@
       ]
     },
     {
-      "id": "Lyo.IO.FileSystem.Web.Components",
+      "id": "Lyo.Diagram",
+      "area": "Core",
+      "topic": "Lyo.Diagram",
+      "name": "Lyo.Diagram",
+      "tagline": "Build a diagram from pages and cells, and read or write it as a draw.io mxfile.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Diagram.Models",
+      "area": "Core",
+      "topic": "Lyo.Diagram",
+      "name": "Lyo.Diagram.Models",
+      "tagline": "Diagram contracts: a named document of pages and cells, plus the store that saves it.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Diagram.Postgres",
+      "area": "Core",
+      "topic": "Lyo.Diagram",
+      "name": "Lyo.Diagram.Postgres",
+      "tagline": "PostgreSQL store for diagram documents. Pages and cells are JSONB behind IDiagramStore.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Story.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.Story",
+      "name": "Lyo.Story.Web.Components",
+      "tagline": "Blazor story builder for the Lyo Story API: library, computed play graph, and playthrough.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileTags",
       "area": "Data",
-      "topic": "Lyo.IO",
-      "name": "Lyo.IO.FileSystem.Web.Components",
-      "tagline": "Blazor folder tree over `IFileTreeSource` (local `IFileSystem` or HTTP).",
+      "topic": "Lyo.FileTags",
+      "name": "Lyo.FileTags",
+      "tagline": "Shared file tag catalog and a first-match dispatcher for audio, video, and pictures.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileTags.FFmpeg",
+      "area": "Data",
+      "topic": "Lyo.FileTags",
+      "name": "Lyo.FileTags.FFmpeg",
+      "tagline": "ffprobe read and stream-copy write for audio and video tags.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FileTags.Images",
+      "area": "Data",
+      "topic": "Lyo.FileTags",
+      "name": "Lyo.FileTags.Images",
+      "tagline": "EXIF read and write for picture tags.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Outbox.Dispatcher",
+      "area": "Communication",
+      "topic": "Lyo.Outbox",
+      "name": "Lyo.Outbox.Dispatcher",
+      "tagline": "Publishes due outbox rows through IMqService. Delivery is at-least-once.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Idempotency",
+      "area": "Core",
+      "topic": "Lyo.Idempotency",
+      "name": "Lyo.Idempotency",
+      "tagline": "Shared idempotency store. The same scope, key, and request hash replays the stored result. A different hash does not run the work again.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Idempotency.AspNetCore",
+      "area": "Core",
+      "topic": "Lyo.Idempotency",
+      "name": "Lyo.Idempotency.AspNetCore",
+      "tagline": "Idempotency middleware for controllers and minimal APIs. Place it after UseRouting.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Idempotency.Postgres",
+      "area": "Core",
+      "topic": "Lyo.Idempotency",
+      "name": "Lyo.Idempotency.Postgres",
+      "tagline": "PostgreSQL idempotency store. Schema idempotency, table entry. API claims and outbox rows share one unique index.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Outbox",
+      "area": "Core",
+      "topic": "Lyo.Outbox",
+      "name": "Lyo.Outbox",
+      "tagline": "Outbox contract. Enqueue records a message on the caller's transaction. Publishing is a separate dispatcher.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Outbox.Postgres",
+      "area": "Core",
+      "topic": "Lyo.Outbox",
+      "name": "Lyo.Outbox.Postgres",
+      "tagline": "Postgres outbox. Enqueue writes kind=outbox through the shared idempotency store on the caller's transaction.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authorization",
+      "area": "Security",
+      "topic": "Lyo.Authorization",
+      "name": "Lyo.Authorization",
+      "tagline": "Resource grants. A check asks whether a subject may perform an action on a resource.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authorization.AspNetCore",
+      "area": "Security",
+      "topic": "Lyo.Authorization",
+      "name": "Lyo.Authorization.AspNetCore",
+      "tagline": "RequireGrant for controllers and minimal APIs, beside the existing scope and role checks.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authorization.Postgres",
+      "area": "Security",
+      "topic": "Lyo.Authorization",
+      "name": "Lyo.Authorization.Postgres",
+      "tagline": "PostgreSQL grant store. Schema authorization, table grant.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authorization.Web.Components",
+      "area": "Security",
+      "topic": "Lyo.Authorization",
+      "name": "Lyo.Authorization.Web.Components",
+      "tagline": "In-process Blazor grant list, editor, and check form.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.RequestSigning",
+      "area": "Security",
+      "topic": "Lyo.RequestSigning",
+      "name": "Lyo.RequestSigning",
+      "tagline": "Timestamped HMAC request signatures. The HMAC key comes from configuration.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.RequestSigning.AspNetCore",
+      "area": "Security",
+      "topic": "Lyo.RequestSigning",
+      "name": "Lyo.RequestSigning.AspNetCore",
+      "tagline": "ASP.NET Core middleware that checks a timestamped HMAC request signature.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.RateLimit",
+      "area": "Core",
+      "topic": "Lyo.RateLimit",
+      "name": "Lyo.RateLimit",
+      "tagline": "In-memory quota store: fixed window, sliding window, and token bucket for one process.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.RateLimit.Redis",
+      "area": "Core",
+      "topic": "Lyo.RateLimit",
+      "name": "Lyo.RateLimit.Redis",
+      "tagline": "Redis-backed quotas with the same fixed, sliding, and token-bucket rules as the in-memory store.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FeatureFlags",
+      "area": "Core",
+      "topic": "Lyo.FeatureFlags",
+      "name": "Lyo.FeatureFlags",
+      "tagline": "Named flags for apps and workers: on, off, percentage rollout, and caller rules.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FeatureFlags.AspNetCore",
+      "area": "Core",
+      "topic": "Lyo.FeatureFlags",
+      "name": "Lyo.FeatureFlags.AspNetCore",
+      "tagline": "RequireFeature returns 404 when a flag is off.",
       "targetFrameworks": [
         "net10.0"
       ]

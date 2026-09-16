@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Parameters;
 using Lyo.Common.Metadata.Records;
 using Lyo.Formatter;
@@ -157,7 +158,7 @@ public class JobWorkerParameterFormatTests
     private static TestJobWorker CreateWorker(FormatApiClient api) => CreateWorker(api, new FormatterService(() => Frozen));
 
     private static JobRunParameterRes Param(string key, LyoTypeInfo type, string value)
-        => new(Guid.NewGuid(), Guid.NewGuid(), key, type.FullName, value, null, null, true);
+        => new(LyoGuid.CreateV7(), LyoGuid.CreateV7(), key, type.FullName, value, null, null, true);
 
     private sealed class TestJobWorker(IMqService mq, IJobClient jobClient, IJobEventPublisher events)
         : JobWorkerBase(mq, jobClient, events, "cs", NullLogger.Instance)
@@ -171,13 +172,13 @@ public class JobWorkerParameterFormatTests
         public Task<Result<Unit>> InvokeDoWorkAsync(Guid runId, Func<IJobWorkerContext, Task> execute)
         {
             _execute = execute;
-            return DoWorkAsync(runId, TestContext.Current.CancellationToken);
+            return DoWorkAsync(runId, TestCt);
         }
     }
 
     private sealed class FormatApiClient(params JobRunParameterRes[] parameters) : StubApiClient
     {
-        public Guid RunId { get; } = Guid.NewGuid();
+        public Guid RunId { get; } = LyoGuid.CreateV7();
 
         public override Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             where TResult : default
@@ -205,8 +206,8 @@ public class JobWorkerParameterFormatTests
                 Id = RunId,
                 State = state,
                 CreatedTimestamp = DateTime.UtcNow,
-                JobDefinitionId = Guid.NewGuid(),
-                JobDefinition = new(Guid.NewGuid(), "TestDef", null, "Test", "cs", true, null, null, null, null),
+                JobDefinitionId = LyoGuid.CreateV7(),
+                JobDefinition = new(LyoGuid.CreateV7(), "TestDef", null, "Test", "cs", true, null, null, null),
                 JobRunParameters = parameters.Select(p => p with { JobRunId = RunId }).ToList()
             };
     }

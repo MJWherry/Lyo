@@ -15,10 +15,25 @@ models in `Lyo.Api` or `Lyo.Api.Models`), update **all three clients** in the sa
    `packages/typescript/lyo-person-api-client` (Person endpoints, builders, response guards),
    `packages/typescript/lyo-job-api-client` (Job endpoints),
    `packages/typescript/lyo-reporting-api-client` (Reporting endpoints),
+   `packages/typescript/lyo-automation-api-client`,
+   `packages/typescript/lyo-import-api-client`,
+   `packages/typescript/lyo-auth-api-client`,
+   `packages/typescript/lyo-config-api-client`,
+   `packages/typescript/lyo-recipe-api-client`,
+   `packages/typescript/lyo-file-storage-api-client`,
    `packages/typescript/lyo-query-components` when the where-builder UI contract changes,
    `packages/typescript/lyo-job-components` / `lyo-reporting-components` when Job/Reporting UI contracts change
-3. **Python** — `packages/python/lyo-api-client` (`lyo_api_client` core,
-   `lyo_person_api_client`, `lyo_job_api_client`, `lyo_reporting_api_client`)
+3. **Python** — one directory per package, same as TypeScript:
+   `packages/python/lyo-api-client`,
+   `packages/python/lyo-person-api-client`,
+   `packages/python/lyo-job-api-client`,
+   `packages/python/lyo-reporting-api-client`,
+   `packages/python/lyo-automation-api-client`,
+   `packages/python/lyo-import-api-client`,
+   `packages/python/lyo-auth-api-client`,
+   `packages/python/lyo-config-api-client`,
+   `packages/python/lyo-recipe-api-client`,
+   `packages/python/lyo-file-storage-api-client`
 
 ## What "in sync" means
 
@@ -33,7 +48,10 @@ models in `Lyo.Api` or `Lyo.Api.Models`), update **all three clients** in the sa
 ## Verify
 
 - TS: `npm run build` in `lyo-api-client`, `lyo-query`, `lyo-query-components`, `lyo-web-components`,
-  `lyo-person-api-client`, `lyo-job-api-client`, and `lyo-reporting-api-client`.
-- Python: `pytest` in `packages/python/lyo-api-client` (tests assert TS/Python payload parity,
-  so update the expected payloads in `tests/test_builders.py` alongside contract changes).
+  `lyo-person-api-client`, `lyo-job-api-client`, `lyo-reporting-api-client`,
+  `lyo-automation-api-client`, `lyo-import-api-client`, `lyo-auth-api-client`,
+  `lyo-config-api-client`, `lyo-recipe-api-client`, and `lyo-file-storage-api-client`.
+- Python: `pytest` in each `packages/python/lyo-*-api-client` directory (Person builder tests
+  assert TS/Python payload parity, so update `lyo-person-api-client/tests/test_builders.py`
+  alongside contract changes).
 - If a client can't be updated in the same change, say so explicitly rather than skipping it silently.

@@ -11,15 +11,9 @@ public sealed class JobRunReq
 
     public Guid? JobScheduleId { get; set; }
 
-    public Guid? JobTriggerId { get; set; }
-
-    public Guid? TriggeredByJobRunId { get; set; }
-
     public Guid? ReRanFromJobRunId { get; set; }
 
     public string CreatedBy { get; set; } = null!;
-
-    public bool AllowTriggers { get; set; }
 
     public JobRunResult? Result { get; set; }
 
@@ -65,15 +59,13 @@ public sealed class JobRunReq
     // No update or delete: a run should not be changed after it is created from the definition
     public JobRunReq() { }
 
-    public JobRunReq(Guid definitionId, string createdBy, bool allowTriggers, Guid? triggerId = null, Guid? scheduleId = null)
+    public JobRunReq(Guid definitionId, string createdBy, Guid? scheduleId = null)
     {
         JobDefinitionId = definitionId;
         CreatedBy = createdBy;
-        AllowTriggers = allowTriggers;
-        JobTriggerId = triggerId;
         JobScheduleId = scheduleId;
     }
 
     public override string ToString()
-        => $"Definition={JobDefinitionId.Truncated()}{(JobScheduleId.HasValue ? $" Schedule={JobScheduleId.Truncated()}" : "")}{(JobTriggerId.HasValue ? $" Triggers={JobTriggerId.Truncated()}" : "")} Created By={CreatedBy}, Triggering={AllowTriggers} Parameters: {JobRunParameters.Count}";
+        => $"Definition={JobDefinitionId.Truncated()}{(JobScheduleId.HasValue ? $" Schedule={JobScheduleId.Truncated()}" : "")} Created By={CreatedBy}, Parameters: {JobRunParameters.Count}";
 }

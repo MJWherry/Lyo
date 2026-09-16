@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\Core\Common\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
         <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Web.Components\Lyo.Email.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue.RabbitMq.Web.Components\Lyo.MessageQueue.RabbitMq.Web.Components.csproj"/>
@@ -23,7 +23,7 @@
         <ProjectReference Include="..\..\Communication\Translation\Lyo.Translation.Aws\Lyo.Translation.Aws.csproj"/>
         <ProjectReference Include="..\..\Communication\Translation\Lyo.Translation.Web.Components\Lyo.Translation.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
-        <ProjectReference Include="..\..\Core\People\Lyo.People.Models\Lyo.People.Models.csproj"/>
+        <ProjectReference Include="..\..\Plugins\People\Lyo.People.Models\Lyo.People.Models.csproj"/>
         <ProjectReference Include="..\..\Data\Images\Lyo.Images.Web.Components\Lyo.Images.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage.Web.Components\Lyo.FileStorage.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf.Web.Components\Lyo.Pdf.Web.Components.csproj"/>
@@ -36,8 +36,18 @@
         <ProjectReference Include="..\..\Apps\Config\Lyo.Config.Api.Client\Lyo.Config.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Data\Seed\Lyo.Seed\Lyo.Seed.csproj"/>
         <ProjectReference Include="..\..\Plugins\Config\Lyo.Config.Web.Components\Lyo.Config.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Apps\Billing\Lyo.Billing.Web.Components\Lyo.Billing.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Leaderboard\Lyo.Leaderboard.Web.Components\Lyo.Leaderboard.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Apps\Leaderboard\Lyo.Leaderboard.Api.Client\Lyo.Leaderboard.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\Apps\Billing\Lyo.Billing.Client\Lyo.Billing.Client.csproj"/>
+        <ProjectReference Include="..\..\Apps\Payments\Lyo.Payments\Lyo.Payments.csproj"/>
         <ProjectReference Include="..\..\Plugins\Tag\Lyo.Tag\Lyo.Tag.csproj"/>
         <ProjectReference Include="..\..\Plugins\Job\Lyo.Job.Web.Components\Lyo.Job.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Plugins\HomeInventory\Lyo.HomeInventory.Web.Components\Lyo.HomeInventory.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Recipe\Lyo.Recipe.Web.Components\Lyo.Recipe.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Apps\Recipe\Lyo.Recipe.Client\Lyo.Recipe.Client.csproj"/>
+        <ProjectReference Include="..\..\Apps\Story\Lyo.Story.Client\Lyo.Story.Client.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Story\Lyo.Story.Web.Components\Lyo.Story.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Security\Drift\Lyo.Drift.Web.Components\Lyo.Drift.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Plugins\Reporting\Lyo.Reporting.Models\Lyo.Reporting.Models.csproj"/>
         <ProjectReference Include="..\..\Plugins\Reporting\Lyo.Reporting.Web.Components\Lyo.Reporting.Web.Components.csproj"/>
@@ -56,6 +66,8 @@
         <ProjectReference Include="..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Client\Lyo.Authentication.Client.csproj"/>
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Web.Components\Lyo.Authentication.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Security\Authorization\Lyo.Authorization.AspNetCore\Lyo.Authorization.AspNetCore.csproj"/>
+        <ProjectReference Include="..\..\Security\Authorization\Lyo.Authorization.Web.Components\Lyo.Authorization.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.BZip2\Lyo.Compression.BZip2.csproj"/>
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.Lz4\Lyo.Compression.Lz4.csproj"/>
@@ -85,10 +97,15 @@
         <ProjectReference Include="..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
         <ProjectReference Include="..\..\Communication\Speech\Lyo.Tts.Typecast\Lyo.Tts.Typecast.csproj"/>
         <ProjectReference Include="..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Apps\Web\Automation\Lyo.Web.Automation.Web.Components\Lyo.Web.Automation.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Apps\Web\Automation\Lyo.Web.Automation.Client\Lyo.Web.Automation.Client.csproj"/>
         <ProjectReference Include="..\..\Apps\Web\Lyo.Web.Host\Lyo.Web.Host.csproj"/>
-        <ProjectReference Include="..\..\Apps\Web\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
-        <ProjectReference Include="..\..\Apps\Web\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>
-        <ProjectReference Include="..\..\Apps\Web\Lyo.Web.Components.Export.Xlsx\Lyo.Web.Components.Export.Xlsx.csproj"/>
+        <ProjectReference Include="..\..\Apps\Web\Export\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
+        <ProjectReference Include="..\..\Apps\Web\Export\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>
+        <ProjectReference Include="..\..\Apps\Web\Export\Lyo.Web.Components.Export.Yaml\Lyo.Web.Components.Export.Yaml.csproj"/>
+        <ProjectReference Include="..\..\Apps\Web\Export\Lyo.Web.Components.Export.Xml\Lyo.Web.Components.Export.Xml.csproj"/>
+        <ProjectReference Include="..\..\Apps\Web\Export\Lyo.Web.Components.Export.Toml\Lyo.Web.Components.Export.Toml.csproj"/>
+        <ProjectReference Include="..\..\Apps\Web\Export\Lyo.Web.Components.Export.Xlsx\Lyo.Web.Components.Export.Xlsx.csproj"/>
         <ProjectReference Include="..\..\Apps\Web\Renderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
         <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
     </ItemGroup>

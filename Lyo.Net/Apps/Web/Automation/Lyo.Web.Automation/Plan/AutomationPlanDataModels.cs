@@ -37,6 +37,15 @@ public sealed class AutomationPlanRuntimeOptions
     /// <summary>Optional base URL used when resolving relative links extracted from pages.</summary>
     public Uri? LinkResolutionBaseUri { get; init; }
 
+    /// <summary>Zero-based index of the first step to execute. Earlier steps are reported <see cref="Lyo.Web.Automation.Models.Enums.AutomationPlanStepOutcome.Skipped" /> and do not run.</summary>
+    public int StartStepIndex { get; init; }
+
+    /// <summary>Inclusive zero-based index of the last step to execute. Later steps are not started. Null runs through the end.</summary>
+    public int? EndStepIndex { get; init; }
+
+    /// <summary>When set, the runner waits here before each step while <see cref="AutomationPlanRunGate.Pause" /> is held.</summary>
+    public AutomationPlanRunGate? Gate { get; init; }
+
     /// <inheritdoc />
     public override string ToString()
         => $"downloadPrefix={DownloadFileNamePrefix}, planTimeout={PlanTimeout}, defaultStepTimeout={DefaultStepTimeout}, hooks={(Hooks != null ? "set" : "null")}, instrumentation={(Instrumentation != null ? "set" : "null")}, planRunDirectory={(PlanRunDirectory != null ? "set" : "null")}, formatter={(Formatter != null ? "set" : "null")}, linkBase={(LinkResolutionBaseUri != null ? LinkResolutionBaseUri.ToString() : "null")}";

@@ -29,7 +29,7 @@ public class EncryptionConcurrencyTests
     [InlineData("chacha")]
     public async Task SingleShot_ParallelEncrypts_SingletonService_ProduceUniqueNoncesAndRoundtrip(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         const string keyId = "concurrent-single";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "concurrent-single-password");
@@ -52,7 +52,7 @@ public class EncryptionConcurrencyTests
     [InlineData("chacha")]
     public async Task SingleShot_ParallelEncrypts_TransientServices_ProduceUniqueNoncesAndRoundtrip(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         const string keyId = "concurrent-transient";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "concurrent-transient-password");
@@ -77,7 +77,7 @@ public class EncryptionConcurrencyTests
     [InlineData("chacha")]
     public async Task Streaming_ParallelEncrypts_SingletonService_ProduceGloballyUniqueNoncesAndRoundtrip(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         const string keyId = "concurrent-stream";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "concurrent-stream-password");
@@ -109,7 +109,7 @@ public class EncryptionConcurrencyTests
     [InlineData("chacha")]
     public async Task Mixed_ParallelSingleShotAndStreaming_ProduceGloballyUniqueNonces(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         const string keyId = "concurrent-mixed";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "concurrent-mixed-password");

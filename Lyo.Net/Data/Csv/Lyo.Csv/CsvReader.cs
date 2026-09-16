@@ -14,24 +14,25 @@ namespace Lyo.Csv;
 
 internal sealed class CsvReader : ICsvReader
 {
-    private readonly Func<CsvOptions> _getOptions;
-    private readonly Func<DataTablePoolingOptions> _getPooling;
+    private readonly CallSnapshot<CsvOptions> _calls;
     private readonly ILogger _logger;
 
-    private CsvOptions Options => _getOptions();
+    private CsvOptions Options => _calls.Current;
 
-    private DataTablePoolingOptions Pooling => _getPooling();
+    private DataTablePoolingOptions Pooling => Options.Pooling;
 
-    internal CsvReader(Func<CsvOptions> getOptions, ILogger logger, Func<DataTablePoolingOptions>? getPooling = null)
+    internal CsvReader(Func<CsvOptions> getOptions, ILogger logger)
     {
-        _getOptions = getOptions;
+        _calls = new(getOptions, static options => options.Clone());
         _logger = logger;
-        _getPooling = getPooling ?? CsvOptions.CreateDefaultPooling;
     }
+
+    private IDisposable BeginCall() => _calls.Enter();
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFile``1(System.String)' />
     public IEnumerable<T> ParseFile<T>(string csvFilePath)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as {ParsingType}", csvFilePath, typeof(T).FullName);
@@ -43,6 +44,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStream``1(System.IO.Stream)' />
     public IEnumerable<T> ParseStream<T>(Stream csvStream)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -55,6 +57,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsDictionary(System.String)' />
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseFileAsDictionary(string csvFilePath)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as dictionary", csvFilePath);
@@ -66,6 +69,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamAsDictionary(System.IO.Stream)' />
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseStreamAsDictionary(Stream csvStream)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -78,6 +82,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsDataTable(System.String,System.Nullable{System.Boolean},System.Boolean)' />
     public Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null, bool hasFooterRow = false)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as DataTable", csvFilePath);
@@ -89,6 +94,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamAsDataTable(System.IO.Stream,System.Nullable{System.Boolean},System.Boolean)' />
     public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null, bool hasFooterRow = false)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -101,14 +107,47 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsDataTable(System.Byte[],System.Nullable{System.Boolean},System.Boolean)' />
     public Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null, bool hasFooterRow = false)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return ParseStreamAsDataTable(ms, hasHeaderRow, hasFooterRow);
     }
 
+    /// <inheritdoc cref="ICsvReader.ParseStringAsResult{T}" />
+    public CsvParseResult<T> ParseStringAsResult<T>(string csv)
+    {
+        using var scope = BeginCall();
+        if (string.IsNullOrWhiteSpace(csv))
+            return CsvParseResult<T>.FromError("CSV is empty.", "csv_empty");
+
+        var options = Options;
+        using var reader = new StringReader(csv);
+        using var text = new CsvTextReader(reader, options);
+        var headerRow = text.ReadRow();
+        if (headerRow is null)
+            return CsvParseResult<T>.FromError("CSV is empty.", "csv_empty");
+
+        var headers = headerRow.ToArray();
+        var rows = new List<T>();
+        var errors = new List<CsvParseError>();
+        var fileRow = 1;
+        while (text.ReadRow() is { } fields) {
+            fileRow++;
+            try {
+                rows.Add(CsvTypeBinder.CreateAndBind<T>(headers, fields, options.Culture));
+            }
+            catch (Exception ex) {
+                errors.Add(new() { RowNumber = fileRow, RawRecord = text.RawRecord, Exception = ex });
+            }
+        }
+
+        return CsvParseResult<T>.FromSuccess(rows, rowCount: rows.Count, parseErrors: errors.Count == 0 ? null : errors);
+    }
+
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytes``1(System.Byte[])' />
     public IEnumerable<T> ParseBytes<T>(byte[] csvBytes)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return ParseStream<T>(ms);
@@ -117,6 +156,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsDictionary(System.Byte[])' />
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseBytesAsDictionary(byte[] csvBytes)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return ParseStreamAsDictionary(ms);
@@ -244,6 +284,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsync``1(System.String,System.Threading.CancellationToken)' />
     public async Task<List<T>> ParseFileAsync<T>(string csvFilePath, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as {ParsingType}", csvFilePath, typeof(T).FullName);
@@ -254,6 +295,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamAsync``1(System.IO.Stream,System.Threading.CancellationToken)' />
     public async Task<List<T>> ParseStreamAsync<T>(Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -286,6 +328,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileAsDictionaryAsync(System.String,System.Threading.CancellationToken)' />
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseFileAsDictionaryAsync(string csvFilePath, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as dictionary", csvFilePath);
@@ -296,6 +339,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamAsDictionaryAsync(System.IO.Stream,System.Threading.CancellationToken)' />
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseStreamAsDictionaryAsync(Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -312,6 +356,7 @@ internal sealed class CsvReader : ICsvReader
         bool hasFooterRow = false,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as DataTable", csvFilePath);
@@ -326,6 +371,7 @@ internal sealed class CsvReader : ICsvReader
         bool hasFooterRow = false,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -344,6 +390,7 @@ internal sealed class CsvReader : ICsvReader
         bool hasFooterRow = false,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return await ParseStreamAsDataTableAsync(ms, hasHeaderRow, hasFooterRow, ct).ConfigureAwait(false);
@@ -352,6 +399,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsync``1(System.Byte[],System.Threading.CancellationToken)' />
     public async Task<List<T>> ParseBytesAsync<T>(byte[] csvBytes, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return await ParseStreamAsync<T>(ms, ct).ConfigureAwait(false);
@@ -360,6 +408,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseBytesAsDictionaryAsync(System.Byte[],System.Threading.CancellationToken)' />
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseBytesAsDictionaryAsync(byte[] csvBytes, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return await ParseStreamAsDictionaryAsync(ms, ct).ConfigureAwait(false);
@@ -393,6 +442,7 @@ internal sealed class CsvReader : ICsvReader
     public async IAsyncEnumerable<T> ParseFileStreamingAsync<T>(string csvFilePath, CsvParseOptions? options = null, CancellationToken ct = default)
 #endif
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
@@ -408,6 +458,7 @@ internal sealed class CsvReader : ICsvReader
     public async IAsyncEnumerable<T> ParseStreamStreamingAsync<T>(Stream csvStream, CsvParseOptions? options = null, CancellationToken ct = default)
 #endif
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -474,6 +525,7 @@ internal sealed class CsvReader : ICsvReader
     public async IAsyncEnumerable<IReadOnlyList<string>> ParseFileRowsStreamingAsync(string csvFilePath, CancellationToken ct = default)
 #endif
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
@@ -489,6 +541,7 @@ internal sealed class CsvReader : ICsvReader
     public async IAsyncEnumerable<IReadOnlyList<string>> ParseStreamRowsStreamingAsync(Stream csvStream, CancellationToken ct = default)
 #endif
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -502,6 +555,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFileWithOptionsAsync``1(System.String,Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public async Task<List<T>> ParseFileWithOptionsAsync<T>(string csvFilePath, CsvParseOptions? options, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
@@ -511,6 +565,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamWithOptionsAsync``1(System.IO.Stream,Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public async Task<List<T>> ParseStreamWithOptionsAsync<T>(Stream csvStream, CsvParseOptions? options, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -564,6 +619,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.GetStatisticsAsync(System.String,System.Threading.CancellationToken)' />
     public async Task<CsvStatistics> GetStatisticsAsync(string csvFilePath, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         var fileInfo = new FileInfo(csvFilePath);
@@ -576,6 +632,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.GetStatisticsAsync(System.IO.Stream,System.Threading.CancellationToken)' />
     public async Task<CsvStatistics> GetStatisticsAsync(Stream csvStream, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
@@ -648,6 +705,7 @@ internal sealed class CsvReader : ICsvReader
         CsvParseOptions? options = null,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         ArgumentHelpers.ThrowIfNegativeOrZero(chunkSize);
@@ -664,6 +722,7 @@ internal sealed class CsvReader : ICsvReader
         CsvParseOptions? options = null,
         CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         ArgumentHelpers.ThrowIfNull(processChunk);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
@@ -685,6 +744,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ValidateAsync(System.String,Lyo.Csv.Models.CsvSchema,System.Threading.CancellationToken)' />
     public async Task<ValidationResult> ValidateAsync(string csvFilePath, CsvSchema schema, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
@@ -694,6 +754,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ValidateAsync(System.IO.Stream,Lyo.Csv.Models.CsvSchema,System.Threading.CancellationToken)' />
     public async Task<ValidationResult> ValidateAsync(Stream csvStream, CsvSchema schema, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         ArgumentHelpers.ThrowIfNull(schema);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
@@ -764,6 +825,7 @@ internal sealed class CsvReader : ICsvReader
     ///     cref='M:Lyo.Csv.Models.ICsvReader.ParseFileWithMappingAsync``1(System.String,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public async Task<List<T>> ParseFileWithMappingAsync<T>(string csvFilePath, List<ColumnMapping> columnMappings, CsvParseOptions? options = null, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
         ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         ArgumentHelpers.ThrowIfNullOrEmpty(columnMappings);
@@ -775,6 +837,7 @@ internal sealed class CsvReader : ICsvReader
     ///     cref='M:Lyo.Csv.Models.ICsvReader.ParseStreamWithMappingAsync``1(System.IO.Stream,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public async Task<List<T>> ParseStreamWithMappingAsync<T>(Stream csvStream, List<ColumnMapping> columnMappings, CsvParseOptions? options = null, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         ArgumentHelpers.ThrowIfNullOrEmpty(columnMappings);
@@ -857,6 +920,7 @@ internal sealed class CsvReader : ICsvReader
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.CompareFilesAsync(System.String,System.String,System.String,System.Threading.CancellationToken)' />
     public async Task<CsvComparisonResult> CompareFilesAsync(string file1, string file2, string? keyColumn = null, CancellationToken ct = default)
     {
+        using var scope = BeginCall();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(file1);
         ArgumentHelpers.ThrowIfFileNotFound(file1);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(file2);

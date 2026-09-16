@@ -22,7 +22,7 @@ public sealed class SqliteFileMetadataStoreTests(FileMetadataSqliteFixture fixtu
         Assert.NotNull(Services);
         using var scope = Services.CreateScope();
         var store = (SqliteFileMetadataStore)CreateStore(scope);
-        var result = await store.CheckHealthAsync(TestContext.Current.CancellationToken);
+        var result = await store.CheckHealthAsync(TestCt);
         Assert.True(result.IsHealthy);
     }
 }

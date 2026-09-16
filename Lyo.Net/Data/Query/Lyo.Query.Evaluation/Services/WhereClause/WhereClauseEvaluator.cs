@@ -11,6 +11,7 @@ using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Parameters;
+using Lyo.Query;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
@@ -27,7 +28,9 @@ internal enum ComparisonType
     OneOf,
     NotOneOf,
     Regex,
-    NotRegex
+    NotRegex,
+    Fuzzy,
+    NotFuzzy
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
@@ -172,8 +175,11 @@ public class WhereClauseEvaluator : IWhereClauseService
         using var timer = _metrics.StartTimer(Constants.Metrics.ApplyWhereClauseDuration, EntityTypeTag<TEntity>.Tags);
         try {
             var expression = GetEfPredicate<TEntity>(queryNode, includeSubClauses);
-            if (expression != null && source.Provider is EnumerableQuery)
-                expression = (Expression<Func<TEntity, bool>>)InMemoryEvaluationRewriter.Instance.Visit(expression);
+            if (expression != null) {
+                expression = RewriteQueryablePredicate(expression, source.Provider);
+                if (source.Provider is EnumerableQuery)
+                    expression = (Expression<Func<TEntity, bool>>)InMemoryEvaluationRewriter.Instance.Visit(expression);
+            }
 
             var result = expression != null ? source.Where(expression) : source;
             _metrics.IncrementCounter(Constants.Metrics.ApplyWhereClauseSuccess, 1, EntityTypeTag<TEntity>.Tags);
@@ -184,6 +190,17 @@ public class WhereClauseEvaluator : IWhereClauseService
             throw;
         }
     }
+
+    /// <summary>
+    /// Last chance to reshape the cached predicate for a specific <see cref="IQueryProvider" />. The default returns <paramref name="expression" /> unchanged. Postgres
+    /// rewrites <see cref="FuzzyMatch.Similarity" /> to <c>EF.Functions.TrigramsSimilarity</c> so Npgsql can emit SQL <c>similarity()</c>.
+    /// </summary>
+    /// <typeparam name="TEntity">Entity type.</typeparam>
+    /// <param name="expression">Predicate produced by <see cref="GetEfPredicate{TEntity}" />.</param>
+    /// <param name="provider">LINQ provider that will run the predicate.</param>
+    /// <returns>The predicate to pass to <c>Queryable.Where</c>.</returns>
+    protected virtual Expression<Func<TEntity, bool>> RewriteQueryablePredicate<TEntity>(Expression<Func<TEntity, bool>> expression, IQueryProvider provider)
+        => expression;
 
     /// <inheritdoc />
     public virtual IQueryable<TEntity> SortByProperty<TEntity>(IQueryable<TEntity> source, string propertyName, SortDirection? direction = null)
@@ -525,13 +542,15 @@ public class WhereClauseEvaluator : IWhereClauseService
     /// <param name="propertyType">CLR type of the compared property.</param>
     /// <param name="target">Expression producing the property value.</param>
     /// <param name="parameter">Lambda parameter the comparison is built against.</param>
+    /// <param name="threshold">Optional Fuzzy / NotFuzzy cutoff; omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold"/>.</param>
     private Expression BuildLeafComparison(
         ComparisonOperatorEnum comparison,
         object? rawValue,
         string fieldName,
         Type propertyType,
         Expression target,
-        ParameterExpression parameter)
+        ParameterExpression parameter,
+        double? threshold = null)
     {
         ValidateNullComparison(comparison, propertyType, rawValue, fieldName);
         var parseType = GetFilterValueParseType(propertyType, comparison);
@@ -540,7 +559,7 @@ public class WhereClauseEvaluator : IWhereClauseService
             return Expression.Constant(true);
 
         var valueExpr = GetRhsConstantExpression(parsedSingle, parseType, target, comparison);
-        return BuildComparisonExpressionCached(comparison, propertyType, target, valueExpr, parsedMultiple, parameter);
+        return BuildComparisonExpressionCached(comparison, propertyType, target, valueExpr, parsedMultiple, parameter, threshold);
     }
 
     private static bool IsTrivialRegex(string? pattern)
@@ -609,18 +628,19 @@ public class WhereClauseEvaluator : IWhereClauseService
             var elementType = pathMetadata.CollectionElementType ?? SharedEntityMetadataCache.GetCollectionElementType(collectionExpr.Type);
             var countMethod = GetEnumerableCountMethod(elementType);
             var countExpression = Expression.Call(countMethod, collectionExpr);
-            return BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, typeof(int), countExpression, parameter);
+            return BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, typeof(int), countExpression, parameter, condition.Threshold);
         }
 
         if (pathMetadata.CollectionPropertyIndex != null) {
             var (collectionExpr, elementParam, elementPropExpr, elementType) = BuildCollectionElementAccess(pathMetadata, parameter);
-            var comparisonElement = BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, pathMetadata.FinalType, elementPropExpr, elementParam);
+            var comparisonElement = BuildLeafComparison(
+                condition.Comparison, condition.Value, condition.Field, pathMetadata.FinalType, elementPropExpr, elementParam, condition.Threshold);
             return BuildAnyCall(collectionExpr, elementType, comparisonElement, elementParam);
         }
 
         var property = GetPropertyExpression<TEntity>(condition.Field, parameter);
         var (targetExpression, propertyType) = AdjustForCollectionCached(property);
-        var conditionExpr = BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, propertyType, targetExpression, parameter);
+        var conditionExpr = BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, propertyType, targetExpression, parameter, condition.Threshold);
         if (includeSubClauses && condition.SubClause != null)
             return Expression.AndAlso(conditionExpr, BuildWhereClauseExpression<TEntity>(condition.SubClause, parameter, includeSubClauses, depth + 1));
 
@@ -677,7 +697,7 @@ public class WhereClauseEvaluator : IWhereClauseService
                     var (collectionExpr, elementParam, elementPropExpr, elementType) = BuildCollectionElementAccess(meta, parameter);
                     Expression? innerOr = null;
                     foreach (var cond in nodes) {
-                        var compExpr = BuildLeafComparison(cond.Comparison, cond.Value, cond.Field, meta.FinalType, elementPropExpr, elementParam);
+                        var compExpr = BuildLeafComparison(cond.Comparison, cond.Value, cond.Field, meta.FinalType, elementPropExpr, elementParam, cond.Threshold);
                         innerOr = innerOr == null ? compExpr : Expression.OrElse(innerOr, compExpr);
                     }
 
@@ -738,7 +758,8 @@ public class WhereClauseEvaluator : IWhereClauseService
         Expression target,
         Expression value,
         IEnumerable? values,
-        ParameterExpression parameter)
+        ParameterExpression parameter,
+        double? threshold)
     {
         var cacheKey = $"{MetadataCacheKeys.ComparisonMetadataPrefix}{comparison}_{propertyType.FullName}";
         var metadata = SharedEntityMetadataCache.GetOrAddComparisonMetadata(cacheKey, () => CreateComparisonMetadata(comparison, propertyType));
@@ -750,6 +771,8 @@ public class WhereClauseEvaluator : IWhereClauseService
             ComparisonType.NotOneOf => BuildOneOfExpressionCached(propertyType, target, values, true),
             ComparisonType.Regex => BuildRegexComparison(target, value, false),
             ComparisonType.NotRegex => BuildRegexComparison(target, value, true),
+            ComparisonType.Fuzzy => BuildFuzzyComparison(target, value, ResolveFuzzyThreshold(threshold), false),
+            ComparisonType.NotFuzzy => BuildFuzzyComparison(target, value, ResolveFuzzyThreshold(threshold), true),
             var _ => throw new InvalidQueryException($"Comparison '{comparison}' is not supported for type '{propertyType.Name}'")
         };
     }
@@ -803,6 +826,30 @@ public class WhereClauseEvaluator : IWhereClauseService
         var call = Expression.Call(RegexIsMatchMethod, targetAsString, value);
         var combined = Expression.AndAlso(notNull, call);
         return negate ? Expression.Not(combined) : combined;
+    }
+
+    /// <summary>
+    /// Emits <see cref="FuzzyMatch.Similarity(string,string)" /> compared against <paramref name="threshold" />. The CLR body matches pg_trgm Jaccard; a provider-specific
+    /// <see cref="RewriteQueryablePredicate{TEntity}" /> may replace the call with a translatable EF method for SQL.
+    /// </summary>
+    protected virtual Expression BuildFuzzyComparison(Expression target, Expression value, double threshold, bool negate)
+    {
+        var targetAsString = AsStringExpression(target);
+        var valueAsString = AsStringExpression(value);
+        var notNull = Expression.NotEqual(targetAsString, Expression.Constant(null, typeof(string)));
+        var similarity = Expression.Call(FuzzyMatch.SimilarityMethod, targetAsString, valueAsString);
+        var meets = Expression.GreaterThanOrEqual(similarity, Expression.Constant(threshold));
+        var combined = Expression.AndAlso(notNull, meets);
+        return negate ? Expression.Not(combined) : combined;
+    }
+
+    private static double ResolveFuzzyThreshold(double? threshold)
+    {
+        var resolved = threshold ?? ConditionClause.DefaultFuzzyThreshold;
+        if (double.IsNaN(resolved) || resolved is < 0 or > 1)
+            throw new InvalidQueryException($"Fuzzy threshold must be between 0 and 1, inclusive. Received '{resolved}'.");
+
+        return resolved;
     }
 
     /// <summary>
@@ -949,6 +996,8 @@ public class WhereClauseEvaluator : IWhereClauseService
             var isCountPath = false;
             for (var i = 0; i < propertyParts.Length; i++) {
                 var part = propertyParts[i];
+                if (part.Contains('[') || part.Contains(']'))
+                    throw new InvalidQueryException($"Index is not valid in a filter ('{propertyName}').");
                 if (string.Equals(part, "Count", StringComparison.OrdinalIgnoreCase) && properties.Count > 0) {
                     var prevProp = properties[^1];
                     var prevType = prevProp.PropertyType;
@@ -1161,6 +1210,8 @@ public class WhereClauseEvaluator : IWhereClauseService
             ComparisonOperatorEnum.NotIn => new(ComparisonType.NotOneOf),
             ComparisonOperatorEnum.Regex when SupportsStringMethodComparisons(propertyType) => new(ComparisonType.Regex),
             ComparisonOperatorEnum.NotRegex when SupportsStringMethodComparisons(propertyType) => new(ComparisonType.NotRegex),
+            ComparisonOperatorEnum.Fuzzy when SupportsStringMethodComparisons(propertyType) => new(ComparisonType.Fuzzy),
+            ComparisonOperatorEnum.NotFuzzy when SupportsStringMethodComparisons(propertyType) => new(ComparisonType.NotFuzzy),
             var _ => throw new InvalidQueryException($"Comparison '{comparison}' is not supported for type '{propertyType.Name}'")
         };
 
@@ -1176,7 +1227,8 @@ public class WhereClauseEvaluator : IWhereClauseService
 
     private static bool IsStringOrRegexComparison(ComparisonOperatorEnum comparison)
         => comparison is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.StartsWith or ComparisonOperatorEnum.EndsWith
-            or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.NotEndsWith or ComparisonOperatorEnum.Regex or ComparisonOperatorEnum.NotRegex;
+            or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.NotEndsWith or ComparisonOperatorEnum.Regex or ComparisonOperatorEnum.NotRegex
+            or ComparisonOperatorEnum.Fuzzy or ComparisonOperatorEnum.NotFuzzy;
 
     /// <summary>Types that support Contains/StartsWith/EndsWith/Regex using string semantics (including Guid, matched via string representation).</summary>
     private static bool SupportsStringMethodComparisons(Type propertyType) => propertyType == typeof(string) || IsGuidLikeType(propertyType);

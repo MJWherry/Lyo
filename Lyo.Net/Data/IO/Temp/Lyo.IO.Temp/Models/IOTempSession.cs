@@ -9,6 +9,7 @@ using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 #if !NET5_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
@@ -135,26 +136,6 @@ public sealed class IOTempSession : IIOTempSession
 
     /// <inheritdoc />
     public override string ToString() => $"Session: {PathHelpers.GetFileName(_storage.PathStyle, SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
-
-    /// <summary>
-    /// Test helper: session under <c>{TempPath}/lyo-io-temp-tests/{subdirectoryName ?? new Guid}</c>. The root is created so tests need not call
-    /// <see cref="Directory.CreateDirectory(string)" /> first. Passing the test class or method as <paramref name="subdirectoryName" /> makes leftover folders from a failed CI
-    /// run easy to find.
-    /// </summary>
-    /// <param name="subdirectoryName">Stable parent folder name; a new GUID is used when null or whitespace.</param>
-    /// <param name="logger">Optional logger.</param>
-    /// <param name="metrics">Optional metrics sink.</param>
-    /// <param name="storageProvider">Optional storage; filesystem is the default.</param>
-    public static IOTempSession CreateForTests(
-        string? subdirectoryName = null,
-        ILogger<IOTempSession>? logger = null,
-        IMetrics? metrics = null,
-        IFileSystem? storageProvider = null)
-    {
-        var leaf = subdirectoryName.IsNullOrWhitespace() ? Guid.NewGuid().ToString("N") : subdirectoryName;
-        var rootDirectory = Path.Combine(Path.GetTempPath(), "lyo-io-temp-tests", leaf);
-        return new(new() { RootDirectory = rootDirectory }, logger, metrics, storageProvider: storageProvider);
-    }
 
 #region Inspection
 
@@ -373,7 +354,7 @@ public sealed class IOTempSession : IIOTempSession
         if (_storage.FileExists(dest)) {
             var ext = PathHelpers.GetExtension(_storage.PathStyle, destName);
             var stem = PathHelpers.GetFileNameWithoutExtension(_storage.PathStyle, destName);
-            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{stem}_{LyoGuid.CreateV7():N}{ext}");
         }
 
         dest = EnsurePathWithinSession(dest);
@@ -394,7 +375,7 @@ public sealed class IOTempSession : IIOTempSession
         var dirName = PathHelpers.GetFileName(_storage.PathStyle, PathHelpers.TrimTrailingSeparators(sourcePath, _storage.PathStyle));
         var dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, dirName);
         if (_storage.DirectoryExists(dest))
-            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{dirName}_{LyoGuid.CreateV7():N}");
 
         dest = EnsurePathWithinSession(dest);
         CopyDirectoryRecursive(sourcePath, dest);
@@ -775,7 +756,7 @@ public sealed class IOTempSession : IIOTempSession
         if (_storage.FileExists(dest)) {
             var ext = PathHelpers.GetExtension(_storage.PathStyle, destName);
             var stem = PathHelpers.GetFileNameWithoutExtension(_storage.PathStyle, destName);
-            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{stem}_{LyoGuid.CreateV7():N}{ext}");
         }
 
         dest = EnsurePathWithinSession(dest);
@@ -794,7 +775,7 @@ public sealed class IOTempSession : IIOTempSession
         var dirName = PathHelpers.GetFileName(_storage.PathStyle, PathHelpers.TrimTrailingSeparators(sourcePath, _storage.PathStyle));
         var dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, dirName);
         if (_storage.DirectoryExists(dest))
-            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{dirName}_{LyoGuid.CreateV7():N}");
 
         dest = EnsurePathWithinSession(dest);
         CopyDirectoryRecursive(sourcePath, dest);
@@ -812,12 +793,12 @@ public sealed class IOTempSession : IIOTempSession
         if (_storage.FileExists(dest)) {
             var ext = PathHelpers.GetExtension(_storage.PathStyle, destName);
             var stem = PathHelpers.GetFileNameWithoutExtension(_storage.PathStyle, destName);
-            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{stem}_{LyoGuid.CreateV7():N}{ext}");
         }
 
         dest = EnsurePathWithinSession(dest);
         if (IOTempExternalIo.IsOnStorage(_storage, sourcePath))
-            await _storage.CopyFileAsync(sourcePath, dest, ct).ConfigureAwait(false);
+            await _storage.CopyFileAsync(sourcePath, dest, ct: ct).ConfigureAwait(false);
         else
             await CopyHostFileAsync(sourcePath, dest, ct).ConfigureAwait(false);
         _files.Add(dest);
@@ -831,7 +812,7 @@ public sealed class IOTempSession : IIOTempSession
         var dirName = PathHelpers.GetFileName(_storage.PathStyle, PathHelpers.TrimTrailingSeparators(sourcePath, _storage.PathStyle));
         var dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, dirName);
         if (_storage.DirectoryExists(dest))
-            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
+            dest = PathHelpers.Combine(_storage.PathStyle, SessionDirectory, $"{dirName}_{LyoGuid.CreateV7():N}");
 
         dest = EnsurePathWithinSession(dest);
         await CopyDirectoryRecursiveAsync(sourcePath, dest, ct).ConfigureAwait(false);
@@ -859,7 +840,7 @@ public sealed class IOTempSession : IIOTempSession
             else {
                 ValidateFileSize(entry.Length);
                 var destFile = PathHelpers.Combine(_storage.PathStyle, dst, PathHelpers.GetFileName(_storage.PathStyle, entry.Path));
-                await _storage.CopyFileAsync(entry.Path, destFile, ct).ConfigureAwait(false);
+                await _storage.CopyFileAsync(entry.Path, destFile, ct: ct).ConfigureAwait(false);
                 _files.Add(destFile);
                 Interlocked.Add(ref _totalBytesUsed, entry.Length);
                 FileCreated?.Invoke(destFile);
@@ -1238,7 +1219,7 @@ public sealed class IOTempSession : IIOTempSession
     private static string GenerateName(string? prefix, string? suffix, TempNamingStrategy strategy)
     {
         var middle = strategy switch {
-            TempNamingStrategy.Guid => Guid.NewGuid().ToString("N"),
+            TempNamingStrategy.Guid => LyoGuid.CreateV7().ToString("N"),
             TempNamingStrategy.Timestamp => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
             TempNamingStrategy.Sequential => Interlocked.Increment(ref _nameSequence).ToString(),
             TempNamingStrategy.RandomChars => Path.GetRandomFileName().Replace(".", string.Empty),

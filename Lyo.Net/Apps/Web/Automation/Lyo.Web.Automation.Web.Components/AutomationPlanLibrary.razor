@@ -1,0 +1,12 @@
+@namespace Lyo.Web.Automation.Web.Components
+
+<MudStack Spacing="1">
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+        <MudTextField T="string" Label="New plan" @bind-Value="_name" Immediate="true" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create">Create</MudButton>
+    </MudStack>
+    @foreach (var plan in Plans) {
+        var name = plan.Name;
+        <MudButton Variant="Variant.Outlined" OnClick="@(() => OnOpen.InvokeAsync(name))">@name</MudButton>
+    }
+</MudStack>

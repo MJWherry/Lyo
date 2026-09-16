@@ -5,8 +5,9 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Tests.Fixtures;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
@@ -36,9 +37,9 @@ public class ApiEndpointPostgresTests : IDisposable
     [Fact]
     public async Task Metadata_Endpoint_ReturnsEntityRequestAndResponseSchemas()
     {
-        var response = await _client.GetAsync("/api/Job/Definition/Metadata", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync("/api/Job/Definition/Metadata", TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<EndpointMetadataResponse>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<EndpointMetadataResponse>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal("Id", result.KeyPropertyName);
         Assert.Equal("Guid", result.KeyType);
@@ -56,9 +57,9 @@ public class ApiEndpointPostgresTests : IDisposable
     {
         await _fixture.SeedJobDefinitionAsync("EndpointQueryTest");
         var request = new QueryConcreteReq { Start = 0, Amount = 10 };
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -72,9 +73,9 @@ public class ApiEndpointPostgresTests : IDisposable
         await _fixture.SeedJobDefinitionAsync("EndpointQueryFilterA");
         await _fixture.SeedJobDefinitionAsync("EndpointQueryFilterB");
         var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "EndpointQueryFilterA") };
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Single(result.Items!);
@@ -93,9 +94,9 @@ public class ApiEndpointPostgresTests : IDisposable
             WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "EndpointQueryInclude")
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Single(result.Items!);
@@ -106,7 +107,7 @@ public class ApiEndpointPostgresTests : IDisposable
     [Fact]
     public async Task Query_Endpoint_WithTotalCountModeHasMore_ReturnsHasMoreFlag()
     {
-        var prefix = $"EndpointHasMore_{Guid.NewGuid():N}";
+        var prefix = $"EndpointHasMore_{LyoGuid.CreateV7():N}";
         await _fixture.SeedJobDefinitionAsync($"{prefix}_A");
         await _fixture.SeedJobDefinitionAsync($"{prefix}_B");
         var request = new QueryConcreteReq {
@@ -117,9 +118,9 @@ public class ApiEndpointPostgresTests : IDisposable
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryConcrete", request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Single(result.Items!);
@@ -130,7 +131,7 @@ public class ApiEndpointPostgresTests : IDisposable
     [Fact]
     public async Task QueryProject_Endpoint_WithSelect_ReturnsProjectedRows()
     {
-        var name = $"EndpointProjected_{Guid.NewGuid():N}";
+        var name = $"EndpointProjected_{LyoGuid.CreateV7():N}";
         var defId = await _fixture.SeedJobDefinitionAsync(name, "Endpoint projected description");
         var request = new ProjectionQueryReq {
             Start = 0,
@@ -139,9 +140,9 @@ public class ApiEndpointPostgresTests : IDisposable
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Single(result.Items!);
@@ -157,14 +158,14 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task QueryProject_Endpoint_WithoutSelect_ReturnsBadRequest()
     {
         var request = new ProjectionQueryReq { Start = 0, Amount = 10 };
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestCt);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task QueryProject_Endpoint_WithWildcardAndNavigationPath_ReturnsProjectedNestedPayload()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"EndpointWildcard_{suffix}");
         await _fixture.SeedJobRunAsync(defId, $"endpoint-user-{suffix}");
         var request = new ProjectionQueryReq {
@@ -174,9 +175,9 @@ public class ApiEndpointPostgresTests : IDisposable
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -198,7 +199,7 @@ public class ApiEndpointPostgresTests : IDisposable
     [Fact]
     public async Task QueryProject_Endpoint_WithSingleCollectionWildcard_ReturnsArrayItem()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"EndpointSingleWildcard_{suffix}");
         await _fixture.SeedJobRunAsync(defId, $"endpoint-single-user-{suffix}");
         var request = new ProjectionQueryReq {
@@ -208,9 +209,9 @@ public class ApiEndpointPostgresTests : IDisposable
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -221,7 +222,7 @@ public class ApiEndpointPostgresTests : IDisposable
     [Fact]
     public async Task QueryProject_Endpoint_WithRootWildcard_DoesNotReturnWildcardWrapperKey()
     {
-        var name = $"EndpointRootWildcard_{Guid.NewGuid():N}";
+        var name = $"EndpointRootWildcard_{LyoGuid.CreateV7():N}";
         var defId = await _fixture.SeedJobDefinitionAsync(name);
         var request = new ProjectionQueryReq {
             Start = 0,
@@ -230,9 +231,9 @@ public class ApiEndpointPostgresTests : IDisposable
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -247,7 +248,7 @@ public class ApiEndpointPostgresTests : IDisposable
     [Fact]
     public async Task QueryProject_Endpoint_WithMatchedOnly_FiltersCollectionValues()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"EndpointMatchedOnly_{suffix}");
         await _fixture.SeedJobRunAsync(defId, $"keep-{suffix}");
         await _fixture.SeedJobRunAsync(defId, $"drop-{suffix}");
@@ -260,9 +261,9 @@ public class ApiEndpointPostgresTests : IDisposable
                 => and.AddCondition("jobruns.createdby", ComparisonOperatorEnum.Equals, $"keep-{suffix}").AddCondition("Id", ComparisonOperatorEnum.Equals, defId))
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -277,9 +278,9 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task Get_Endpoint_ReturnsJobDefinition()
     {
         var defId = await _fixture.SeedJobDefinitionAsync("EndpointGetTest");
-        var response = await _client.GetAsync($"/api/Job/Definition/{defId}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"/api/Job/Definition/{defId}", TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(defId, result.Id);
         Assert.Equal("EndpointGetTest", result.Name);
@@ -290,7 +291,7 @@ public class ApiEndpointPostgresTests : IDisposable
     [Fact]
     public async Task Get_Endpoint_WhenNotFound_Returns404()
     {
-        var response = await _client.GetAsync($"/api/Job/Definition/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"/api/Job/Definition/{LyoGuid.CreateV7()}", TestCt);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -298,9 +299,9 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task Get_Endpoint_WithInclude_LoadsNavigationProperties()
     {
         var defId = await _fixture.SeedJobDefinitionAsync("EndpointGetInclude");
-        var response = await _client.GetAsync($"/api/Job/Definition/{defId}?include=JobParameters&include=JobSchedules", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"/api/Job/Definition/{defId}?include=JobParameters&include=JobSchedules", TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.NotNull(result.JobParameters);
         Assert.NotNull(result.JobSchedules);
@@ -310,9 +311,9 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task Create_Endpoint_PersistsAndReturns201()
     {
         var req = new JobDefinitionReq("EndpointCreateTest", "Created via endpoint") { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition", req, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition", req, TestCt);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
@@ -324,9 +325,9 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task Create_BeforeCreate_SetsId()
     {
         var req = new JobDefinitionReq("BeforeCreateTest", "Test") { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition", req, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition", req, TestCt);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
@@ -339,9 +340,9 @@ public class ApiEndpointPostgresTests : IDisposable
         var defId = await _fixture.SeedJobDefinitionAsync("EndpointUpdateOriginal");
         var req = new JobDefinitionReq("EndpointUpdateModified", "Updated via endpoint", false) { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
         var updateRequest = new UpdateRequest<JobDefinitionReq>(req, defId);
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Update", updateRequest, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Update", updateRequest, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpdateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<UpdateResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(UpdateResultEnum.Updated, result.Result);
         Assert.NotNull(result.NewData);
@@ -357,9 +358,9 @@ public class ApiEndpointPostgresTests : IDisposable
     {
         var defId = await _fixture.SeedJobDefinitionAsync("EndpointPatchOriginal");
         var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new() { ["Name"] = "EndpointPatchModified" } };
-        var response = await _client.PatchAsJsonAsync("/api/Job/Definition", patchRequest, TestContext.Current.CancellationToken);
+        var response = await _client.PatchAsJsonAsync("/api/Job/Definition", patchRequest, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<PatchResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<PatchResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(PatchResultEnum.Updated, result.Result);
         Assert.Equal("EndpointPatchModified", result.NewData!.Name);
@@ -371,16 +372,16 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task Delete_Endpoint_RemovesEntity()
     {
         var defId = await _fixture.SeedJobDefinitionAsync("EndpointDeleteTest");
-        var response = await _client.DeleteAsync($"/api/Job/Definition/{defId}", TestContext.Current.CancellationToken);
+        var response = await _client.DeleteAsync($"/api/Job/Definition/{defId}", TestCt);
         response.EnsureSuccessStatusCode();
-        var getResponse = await _client.GetAsync($"/api/Job/Definition/{defId}", TestContext.Current.CancellationToken);
+        var getResponse = await _client.GetAsync($"/api/Job/Definition/{defId}", TestCt);
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
     [Fact]
     public async Task Delete_Endpoint_WhenNotFound_Returns404()
     {
-        var response = await _client.DeleteAsync($"/api/Job/Definition/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
+        var response = await _client.DeleteAsync($"/api/Job/Definition/{LyoGuid.CreateV7()}", TestCt);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -392,9 +393,9 @@ public class ApiEndpointPostgresTests : IDisposable
             new("EndpointBulk2") { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName }
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Bulk", requests, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Bulk", requests, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<CreateBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<CreateBulkResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(2, result.CreatedCount);
         Assert.Equal(0, result.FailedCount);
@@ -412,19 +413,19 @@ public class ApiEndpointPostgresTests : IDisposable
             new(new("EndpointUpdateBulk2Mod", "Mod2", false) { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName }, id2)
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Bulk/Update", requests, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Bulk/Update", requests, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpdateBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<UpdateBulkResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(2, result.UpdatedCount);
         Assert.Equal(0, result.NoChangeCount);
         Assert.Equal(0, result.FailedCount);
-        var get1 = await _client.GetAsync($"/api/Job/Definition/{id1}", TestContext.Current.CancellationToken);
-        var get2 = await _client.GetAsync($"/api/Job/Definition/{id2}", TestContext.Current.CancellationToken);
+        var get1 = await _client.GetAsync($"/api/Job/Definition/{id1}", TestCt);
+        var get2 = await _client.GetAsync($"/api/Job/Definition/{id2}", TestCt);
         get1.EnsureSuccessStatusCode();
         get2.EnsureSuccessStatusCode();
-        var fetched1 = await get1.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestContext.Current.CancellationToken);
-        var fetched2 = await get2.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestContext.Current.CancellationToken);
+        var fetched1 = await get1.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestCt);
+        var fetched2 = await get2.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestCt);
         Assert.Equal("EndpointUpdateBulk1Mod", fetched1!.Name);
         Assert.Equal("EndpointUpdateBulk2Mod", fetched2!.Name);
         Assert.Contains("[beforeUpdateBulk]", fetched1.Description ?? "");
@@ -440,9 +441,9 @@ public class ApiEndpointPostgresTests : IDisposable
             new() { Keys = [[id1]], Properties = new() { ["Name"] = "EndpointPatchBulk1Mod" } }, new() { Keys = [[id2]], Properties = new() { ["Name"] = "EndpointPatchBulk2Mod" } }
         };
 
-        var response = await _client.PatchAsJsonAsync("/api/Job/Definition/Bulk", requests, TestContext.Current.CancellationToken);
+        var response = await _client.PatchAsJsonAsync("/api/Job/Definition/Bulk", requests, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<PatchBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<PatchBulkResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(2, result.UpdatedCount);
         Assert.Equal(0, result.FailedCount);
@@ -455,9 +456,9 @@ public class ApiEndpointPostgresTests : IDisposable
     {
         var req = new JobDefinitionReq("EndpointUpsertCreate", "Upsert created") { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
         var upsertRequest = new UpsertRequest<JobDefinitionReq>(req, "Name", "EndpointUpsertCreate");
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Upsert", upsertRequest, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Upsert", upsertRequest, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpsertResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<UpsertResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(UpsertResultEnum.Created, result.Result);
         Assert.NotNull(result.NewData);
@@ -470,9 +471,9 @@ public class ApiEndpointPostgresTests : IDisposable
         var defId = await _fixture.SeedJobDefinitionAsync("EndpointUpsertOriginal");
         var req = new JobDefinitionReq("EndpointUpsertUpdated", "Upsert updated", false) { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
         var upsertRequest = new UpsertRequest<JobDefinitionReq>(req, "Id", defId);
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Upsert", upsertRequest, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Upsert", upsertRequest, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpsertResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<UpsertResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(UpsertResultEnum.Updated, result.Result);
         Assert.NotNull(result.NewData);
@@ -488,9 +489,9 @@ public class ApiEndpointPostgresTests : IDisposable
             new(new("EndpointUpsertBulkUpdated", "Updated", false) { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName }, "Id", existingId)
         };
 
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Bulk/Upsert", requests, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Bulk/Upsert", requests, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpsertBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<UpsertBulkResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(1, result.CreatedCount);
         Assert.Equal(1, result.UpdatedCount);
@@ -503,9 +504,9 @@ public class ApiEndpointPostgresTests : IDisposable
         var deleteRequest = new DeleteRequest { Keys = [[defId]] };
         using var msg = new HttpRequestMessage(HttpMethod.Delete, "/api/Job/Definition");
         msg.Content = JsonContent.Create(deleteRequest);
-        var response = await _client.SendAsync(msg, TestContext.Current.CancellationToken);
+        var response = await _client.SendAsync(msg, TestCt);
         response.EnsureSuccessStatusCode();
-        var getResponse = await _client.GetAsync($"/api/Job/Definition/{defId}", TestContext.Current.CancellationToken);
+        var getResponse = await _client.GetAsync($"/api/Job/Definition/{defId}", TestCt);
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
@@ -516,9 +517,9 @@ public class ApiEndpointPostgresTests : IDisposable
         var deleteRequest = new DeleteRequest("Name", "EndpointDeleteByIdentifier");
         using var msg = new HttpRequestMessage(HttpMethod.Delete, "/api/Job/Definition");
         msg.Content = JsonContent.Create(deleteRequest);
-        var response = await _client.SendAsync(msg, TestContext.Current.CancellationToken);
+        var response = await _client.SendAsync(msg, TestCt);
         response.EnsureSuccessStatusCode();
-        var getResponse = await _client.GetAsync($"/api/Job/Definition/{defId}", TestContext.Current.CancellationToken);
+        var getResponse = await _client.GetAsync($"/api/Job/Definition/{defId}", TestCt);
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
@@ -526,8 +527,8 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task Update_Endpoint_WhenNotFound_Returns404()
     {
         var req = new JobDefinitionReq("NonExistent", "Test", false) { Type = "Test", WorkerType = ProgrammingLanguageInfo.CSharp.ShortName };
-        var updateRequest = new UpdateRequest<JobDefinitionReq>(req, Guid.NewGuid());
-        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Update", updateRequest, TestContext.Current.CancellationToken);
+        var updateRequest = new UpdateRequest<JobDefinitionReq>(req, LyoGuid.CreateV7());
+        var response = await _client.PostAsJsonAsync("/api/Job/Definition/Update", updateRequest, TestCt);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -536,9 +537,9 @@ public class ApiEndpointPostgresTests : IDisposable
     {
         var defId = await _fixture.SeedJobDefinitionAsync("EndpointPatchNoChange");
         var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new() { ["Name"] = "EndpointPatchNoChange" } };
-        var response = await _client.PatchAsJsonAsync("/api/Job/Definition", patchRequest, TestContext.Current.CancellationToken);
+        var response = await _client.PatchAsJsonAsync("/api/Job/Definition", patchRequest, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<PatchResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<PatchResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.Result is PatchResultEnum.Updated or PatchResultEnum.NoChange);
     }
@@ -551,9 +552,9 @@ public class ApiEndpointPostgresTests : IDisposable
         var requests = new List<DeleteRequest> { new() { Keys = [[id1]] }, new() { Keys = [[id2]] } };
         using var msg = new HttpRequestMessage(HttpMethod.Delete, "/api/Job/Definition/Bulk");
         msg.Content = JsonContent.Create(requests);
-        var response = await _client.SendAsync(msg, TestContext.Current.CancellationToken);
+        var response = await _client.SendAsync(msg, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<DeleteBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<DeleteBulkResult<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.Equal(2, result.DeletedCount);
         Assert.Equal(0, result.FailedCount);

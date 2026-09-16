@@ -1,5 +1,8 @@
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Yaml
+@using Lyo.Web.Components.Export.Xml
+@using Lyo.Web.Components.Export.Toml
 @using Lyo.Web.Components.Export.Xlsx
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
@@ -11,6 +14,9 @@
         <LyoDataGridExportMenu Host="context">
             <ExportCsvMenuItem Host="context"/>
             <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
             <ExportXlsxMenuItem Host="context"/>
         </LyoDataGridExportMenu>
     </BulkExportControls>
@@ -32,7 +38,7 @@
                 @{
                     var directionText = ProjectedValueHelper.GetDisplayValue(item, "Direction");
                 }
-                <LyoChip Label="@directionText" Color="@SmsColorHelper.ForDirection(directionText)"/>
+                <LyoChip Label="@directionText" Hue="@SmsColorHelper.ForDirection(directionText)"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="IsSuccess" Title="Received" Align="Align.Center" HeaderStyle="width: 110px;">

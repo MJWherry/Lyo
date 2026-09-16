@@ -30,5 +30,9 @@ public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
     public string DirectUploadPutRouteRelativePath { get; set; } = "FileStorage/direct-upload";
 
     /// <summary>Throws when <see cref="RootDirectoryPath" /> is missing.</summary>
-    public void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(RootDirectoryPath);
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(RootDirectoryPath);
+        ValidateUploadFilters();
+    }
 }

@@ -1,0 +1,79 @@
+@namespace Lyo.Video.Web.Components
+
+@if (Title is null) {
+    <MudText Typo="Typo.body2">No title selected.</MudText>
+} else if (Title.Kind == VideoTitleKind.Series) {
+    <MudStack Spacing="3">
+        <MudText Typo="Typo.h5">@Title.Title</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">@Title.Status</MudText>
+        @if (Title.Seasons.Count == 0) {
+            <MudText Typo="Typo.body2">No seasons.</MudText>
+        }
+        @foreach (var season in Title.Seasons) {
+            <MudText Typo="Typo.subtitle1">Season @season.SeasonNumber @season.Name</MudText>
+            @if (season.Episodes.Count == 0) {
+                <MudText Typo="Typo.body2">No episodes.</MudText>
+            } else {
+                <MudSimpleTable Dense="true" Hover="true">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Runtime</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var episode in season.Episodes) {
+                        <tr>
+                            <td>@episode.EpisodeNumber</td>
+                            <td>@episode.Title</td>
+                            <td>@FormatRuntime(episode.RuntimeSeconds)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </MudSimpleTable>
+            }
+        }
+    </MudStack>
+} else {
+    <MudStack Spacing="3">
+        <MudStack Row="true" Spacing="3">
+            @if (!string.IsNullOrWhiteSpace(CoverImageUrl)) {
+                <MudImage Src="@CoverImageUrl" Alt="@Title.Title" Width="160" ObjectFit="ObjectFit.Contain"/>
+            }
+            <div>
+                <MudText Typo="Typo.h5">@Title.Title</MudText>
+                <MudText Typo="Typo.body2">@Title.Year · @FormatRuntime(Title.RuntimeSeconds)</MudText>
+                @if (Title.Youtube is { VideoId.Length: > 0 } link) {
+                    <MudText Typo="Typo.caption">YouTube @link.VideoId</MudText>
+                }
+            </div>
+        </MudStack>
+        @if (!string.IsNullOrWhiteSpace(Title.Overview)) {
+            <MudText Typo="Typo.body1">@Title.Overview</MudText>
+        }
+        <MudText Typo="Typo.subtitle1">Credits</MudText>
+        @if (Title.Credits.Count == 0) {
+            <MudText Typo="Typo.body2">None</MudText>
+        } else {
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Character</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var credit in Title.Credits) {
+                    <tr>
+                        <td>@credit.DisplayName</td>
+                        <td>@credit.Role</td>
+                        <td>@credit.CharacterName</td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </MudStack>
+}

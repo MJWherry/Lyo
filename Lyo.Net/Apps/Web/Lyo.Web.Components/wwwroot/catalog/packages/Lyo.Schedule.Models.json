@@ -36,6 +36,18 @@
         [
           "`CronExpression` / `CronFormat`",
           "Cron parser and evaluator that stand alone. Pass the expression plus a `CronFormat` into `CronExpression.Parse`."
+        ],
+        [
+          "`TimeFrame`",
+          "One concrete UTC span (or a point, when start equals end) with a key, title, optional description, hue (0–359), category, and `EntityRef` list. The calendar stores refs and does not load the entities."
+        ],
+        [
+          "`Calendar` / `CalendarDay` / `CalendarEntry`",
+          "A placed civil range. `ForMonth` pads to full weeks (Sunday start). `FromTimeFrames` drops spans outside the range and lists a midnight-crossing span on every day it touches. `WithTimeZone` keeps the UTC instants and rebuckets civil days. `Merge` unions entries that share a range and zone."
+        ],
+        [
+          "`CalendarClock`",
+          "Formats a UTC instant in a zone as `22:00` or `10:00 PM`, and the zone offset as `UTC-04:00`. The hour cycle changes the label only."
         ]
       ]
     }
@@ -53,6 +65,14 @@
     },
     {
       "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "direct",

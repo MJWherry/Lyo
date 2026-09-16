@@ -7,9 +7,9 @@
                       SelectedValues="@Select"
                       SelectedValuesChanged="@OnSelectedChanged"
                       SelectableChips="true"
-                      ValidationPattern="^[a-zA-Z.]+$"
-                      ValidationErrorMessage="Only letters (a-z, A-Z) and dots are allowed."
-                      Placeholder="Property path (e.g. Id or JobDefinition.Name), press Enter to add"/>
+                      ValidationPattern="^[A-Za-z]+(\[(?:\d+|\d*:\d*)\])?(?:\.[A-Za-z]+(\[(?:\d+|\d*:\d*)\])?)*$"
+                      ValidationErrorMessage="Only letters (a-z, A-Z), dots, and a window ([n], [start:], [:end], [start:end], [:]) are allowed."
+                      Placeholder="Property path (e.g. Id, JobDefinition.Name, or LastName[0]), press Enter to add"/>
     </MudStack>
 </LyoElementRoot>
 

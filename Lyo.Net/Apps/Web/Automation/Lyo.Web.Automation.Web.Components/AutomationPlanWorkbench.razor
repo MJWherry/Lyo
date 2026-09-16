@@ -1,0 +1,65 @@
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Automation plan</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Build a plan, or paste JSON. The runner tab sends it to the API.
+            </MudText>
+        </div>
+
+        <MudTextField T="string" Label="Plan name" Value="@(_plan.Name ?? "")" ValueChanged="OnName" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Spacing="1">
+                        <MudSelect T="string" @bind-Value="_addType" Label="Step" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            @foreach (var type in AutomationPlanDraft.FormStepTypes) {
+                                <MudSelectItem Value="@type">@AutomationPlanDraft.StepLabel(type)</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddStep">Add</MudButton>
+                    </MudStack>
+                    @for (var i = 0; i < _plan.Steps.Count; i++) {
+                        var index = i;
+                        var step = _plan.Steps[index];
+                        <MudButton Variant="@(_selected == index ? Variant.Filled : Variant.Outlined)" FullWidth="true" OnClick="@(() => Select(index))">
+                            @(index + 1). @AutomationPlanDraft.StepLabel(AutomationPlanDraft.StepType(step))
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudItem>
+            <MudItem xs="12" md="8">
+                <MudStack Spacing="2">
+                    @if (Selected is null) {
+                        <MudAlert Severity="Severity.Info">Add a step, or edit the JSON below.</MudAlert>
+                    } else if (!AutomationPlanDraft.HasForm(Selected)) {
+                        <MudAlert Severity="Severity.Info">This step stays in the plan. Edit it in the JSON pane.</MudAlert>
+                    } else {
+                        <MudStack Row="true" Spacing="1">
+                            <MudButton Disabled="@(_selected <= 0)" OnClick="@(() => Move(_selected - 1))">Up</MudButton>
+                            <MudButton Disabled="@(_selected >= _plan.Steps.Count - 1)" OnClick="@(() => Move(_selected + 1))">Down</MudButton>
+                            <MudButton Color="Color.Error" OnClick="RemoveSelected">Remove</MudButton>
+                        </MudStack>
+                        <AutomationPlanStepFields Step="Selected" StepChanged="OnStepChanged"/>
+                    }
+
+                    <JsonEditor T="JsonNode"
+                               Value="_jsonNode"
+                               ValueChanged="OnJsonNode"
+                               ParseErrorChanged="OnJsonError"
+                               JsonOptions="AutomationPlanDraft.JsonOptions"
+                               Editable="true"
+                               AllowTreeEditing="true"
+                               DefaultViewMode="JsonEditorViewMode.Tree"
+                               EditorSurfaceHeight="360px"/>
+                    @if (_jsonError != null) {
+                        <MudAlert Severity="Severity.Error">@_jsonError</MudAlert>
+                    }
+                    <MudButton Variant="Variant.Outlined" OnClick="ApplyJson">Apply JSON</MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+
+    </MudStack>
+</MudPaper>

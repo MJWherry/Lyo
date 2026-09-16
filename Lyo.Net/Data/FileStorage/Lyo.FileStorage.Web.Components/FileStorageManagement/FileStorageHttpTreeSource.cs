@@ -17,6 +17,9 @@ public sealed class FileStorageHttpTreeSource : IFileTreeSource
     /// <summary>True when the last list was truncated.</summary>
     public bool Truncated { get; private set; }
 
+    /// <summary>Backend kind from the last folder-list response.</summary>
+    public FileStorageBackendKind BackendKind { get; private set; }
+
     /// <summary>Builds a source against <paramref name="api" />. <paramref name="filesApi" /> maps a relative path such as <c>files/folder</c> to the host route.</summary>
     public FileStorageHttpTreeSource(IApiClient api, Func<string, string> filesApi)
     {
@@ -36,6 +39,8 @@ public sealed class FileStorageHttpTreeSource : IFileTreeSource
 
         var listed = await _api.GetAsAsync<FileStorageFolderListResponse>(_filesApi(query), ct: ct).ConfigureAwait(false);
         Truncated = listed?.Truncated == true;
+        if (listed != null)
+            BackendKind = listed.BackendKind;
         List<FileSystemEntry> entries = [];
         foreach (var row in listed?.Entries ?? [])
             entries.Add(ToEntry(row));

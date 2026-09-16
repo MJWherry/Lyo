@@ -12,7 +12,7 @@ Targets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions`, `Lyo.Common.Core`
 
 - **WhereClause AST.** Polymorphic `condition` / `group` JSON tree, with optional `SubClause` for two-phase filters.
 - **QueryConcreteReq.** Entity-graph body for `POST …/QueryConcrete` (includes, sort, keys, options).
-- **ProjectionQueryReq.** `Select` plus computed fields for `POST …/QueryProject`.
+- **ProjectionQueryReq.** `Select`, computed fields, and aggregates for `POST …/QueryProject`. When `Aggregates` is set, `Select` is the group key.
 - **QueryReq (root).** `From` / `Joins` / `Select` for dynamic-context `POST …/Query`.
 - **Builders.** `WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`.
 - **ParameterOptions.** Static key/label list, a root `QueryReq` template, or a `schema.func` sproc (`StoredProcName`, `SprocParameters` with `{{Key}}` placeholders) for Job/Reporting definition parameter pickers (`ParameterOptionsJson`, `ParameterOptionsBinder`, `ParameterOptionsResolveReq`).
@@ -40,6 +40,11 @@ var node = WhereClauseBuilder.And()
 // Explicit grouped node (same as AddAnd/AddOr, but useful for clarity)
 var grouped = WhereClauseBuilder.And()
     .AddGroupOr(g => g.Equals("Region", "US").Equals("Region", "CA"))
+    .Build();
+
+// Fuzzy / NotFuzzy (trigram Jaccard; omit threshold to use 0.3)
+var fuzzy = WhereClauseBuilder.And()
+    .Fuzzy("Name", "jon", threshold: 0.4)
     .Build();
 ```
 
@@ -106,6 +111,15 @@ var query = ProjectionQueryReqBuilder.New()
     .SetPagination(0, 20)
     .Build();
 // POST {baseRoute}/QueryProject
+
+// Aggregates switch the request to one row per distinct Select. Empty Select is one summary row.
+var counts = ProjectionQueryReqBuilder.New()
+    .AddSelects("Sex", "Age")
+    .AddCount()
+    .AddWhere(b => b.GreaterThan("Age", 20))
+    .AddSort("Count", SortDirection.Desc)
+    .SetPagination(0, 50)
+    .Build();
 ```
 
 ## Benchmarks
@@ -115,9 +129,9 @@ var query = ProjectionQueryReqBuilder.New()
 ## Where-clause tree
 
 | Type | Role |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `WhereClause` (abstract) | Root of the polymorphic filter tree. `[JsonDerivedType]` discriminators are `condition` / `group`. Carries optional `Description` and `SubClause` (two-phase filter chain). |
-| `ConditionClause` | Leaf: dotted `Field`, `Comparison` (`ComparisonOperatorEnum`), and `Value` (scalar, list, or CSV string for `In` / `NotIn`). Implements `IEquatable<ConditionClause>` and `Print(indent)`. |
+| `ConditionClause` | Leaf: dotted `Field`, `Comparison` (`ComparisonOperatorEnum`), and `Value` (scalar, list, or CSV string for `In` / `NotIn`). Optional `Threshold` (`0`–`1`) for `Fuzzy` / `NotFuzzy` (default `0.3`). Implements `IEquatable<ConditionClause>` and `Print(indent)`. |
 | `GroupClause` | Branch: `Operator` (`GroupOperatorEnum`) + `List<WhereClause> Children`; structural `Equals` / `GetHashCode` and `Print(indent)`. |
 
 Polymorphic JSON shape produced by `System.Text.Json`:
@@ -139,17 +153,19 @@ JSON property names match the C# property names under the default camelCase poli
 
 ## Enums
 
-- `ComparisonOperatorEnum`. `Unknown`, `Equals`, `NotEquals`, `Contains`, `NotContains`, `StartsWith`, `EndsWith`, `NotStartsWith`, `NotEndsWith`, `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`, `In`, `NotIn`, `Regex`, `NotRegex`. Each carries a `[Description]` symbol (`=`, `≠`, etc.) for UI use. `GreaterThan*` / `LessThan*` over collection navigations operate on the collection's count.
+- `ComparisonOperatorEnum`. `Unknown`, `Equals`, `NotEquals`, `Contains`, `NotContains`, `StartsWith`, `EndsWith`, `NotStartsWith`, `NotEndsWith`, `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`, `In`, `NotIn`, `Regex`, `NotRegex`, `Fuzzy`, `NotFuzzy`. Each carries a `[Description]` symbol (`=`, `≠`, etc.) for UI use. `GreaterThan*` / `LessThan*` over collection navigations operate on the collection's count. `Fuzzy` / `NotFuzzy` use trigram Jaccard similarity with optional `ConditionClause.Threshold` (default `0.3`).
 - `GroupOperatorEnum`. `And`, `Or`.
 - `QueryTotalCountMode`. `Exact`, `None`, `HasMore`.
 - `QueryIncludeFilterMode`. `Full`, `MatchedOnly`.
 - `JoinType`. `Inner`, `Left` (root `/Query` joins; v1).
+- `AggregateFunction`. `Count` (`COUNT(*)` with no field; a collection field totals its elements; a scalar field counts non-null values), `Sum`, `Average`, `Min`, `Max`, `CountDistinct` (`COUNT(DISTINCT field)`, nulls skipped). Used by `AggregateSelect` on `ProjectionQueryReq`.
 
 ## Request DTOs under `Common/Request`
 
 - `QueryRequestBase`. Shared fields: `Start`, `Amount` (paging), `Keys`. Polymorphic JSON (`$type`: `concrete` / `project` / `root`) so cache/API can deserialize `ProjectedQueryRes.QueryRequest` (`List<object[]>` of composite primary keys), `WhereClause`, `Include` (navigation paths for eager load), `SortBy` (`List<SortBy>`).
 - `QueryConcreteReq : QueryRequestBase, IQueryExecutionRequest`. Request body for `/QueryConcrete` (entity graphs). `Options : QueryRequestOptions` (TotalCount + IncludeFilter).
-- `ProjectionQueryReq : QueryRequestBase, IQueryExecutionRequest`. Request body for `/QueryProject`. Adds `Select` (required) and `ComputedField[] ComputedFields`. `Include` is ignored. Navigations are derived from `Select` and any collection paths referenced in `WhereClause`. `Options : ProjectedQueryRequestOptions` adds `ZipSiblingCollectionSelections` (default `true`).
+- `ProjectionQueryReq : QueryRequestBase, IQueryExecutionRequest`. Request body for `/QueryProject`. Adds `Select`, `ComputedField[] ComputedFields`, and `AggregateSelect[] Aggregates`. Omit `Aggregates` for one row per entity. When `Aggregates` is set, `Select` is the group key (empty `Select` is one summary row) and each aggregate is another column. A path segment may end with `[n]`, `[start:]`, `[:end]`, `[start:end]`, or `[:]`. On a string that is a slice (`[n]` is one character; `start` is inclusive and `end` is exclusive; a missing side is open). On a collection it is an ordered window: one element is a scalar, a longer window is a select list and cannot be a group key. Brackets are rejected on a filter. `Include` is ignored. Navigations are derived from `Select` and any collection paths referenced in `WhereClause`. `Options : ProjectedQueryRequestOptions` adds `ZipSiblingCollectionSelections` (default `true`).
+- `AggregateSelect(Function, Name, Field?)`. Output column for `Count`, `Sum`, `Average`, `Min`, `Max`, or `CountDistinct`. `Name` is the result key, not the thing being counted. `Field` is optional for `Count` and required for every other function. A `Count` field that is a collection, or ends in `.count`, totals the elements in the group. A scalar `Count` field skips nulls and keeps duplicates. `Field` accepts the same bracket syntax as `Select`.
 - `QueryReq : QueryRequestBase, IQueryExecutionRequest`. Request body for root `/Query` (dynamic context base). Required `From` (`FromClause`), optional `Joins` (`JoinClause`), required `Select` (alias.property), optional `ComputedFields`. `Include` forbidden. Nested `FromClause.Query` / `JoinClause.Query` is a `SourceQueryScope` (Where/Keys), not `WhereClause.SubClause`.
 - `FromClause` / `JoinClause` / `JoinOn` / `SourceQueryScope`. Join AST for root Query.
 - `ComputedField(Name, Template)`. Adds a column derived from a SmartFormat template evaluated against the projected row (requires `IFormatterService` in the host).
@@ -177,10 +193,10 @@ Maps onto `Lyo.Api` host routes (see [`Lyo.Api`](../../../Apps/Api/Lyo.Api/READM
 
 | Builder | Produces | Notes |
 | --- | --- | --- |
-| `WhereClauseBuilder` | `WhereClause` | `And()` / `Or()`; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, …); nested groups; `AddSubClause` / `AddConditionWithSubClause` for two-phase filters |
+| `WhereClauseBuilder` | `WhereClause` | `And()` / `Or()`; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, `Fuzzy`, …); nested groups; `AddSubClause` / `AddConditionWithSubClause` for two-phase filters |
 | `WhereClauseBuilderFor<T>` | `WhereClause` | From `WhereClauseBuilder.For<T>()`. Property paths via `Expression<Func<T, …>>` |
 | `QueryConcreteReqBuilder` | `QueryConcreteReq` | Includes, keys, where, sort, paging, total-count / include-filter modes; `For<T>()` typed helpers |
-| `ProjectionQueryReqBuilder` | `ProjectionQueryReq` | Same as concrete plus `AddSelect` / `AddComputedField` / zip sibling collections |
+| `ProjectionQueryReqBuilder` | `ProjectionQueryReq` | Same as concrete plus `AddSelect` / `AddComputedField` / `AddCount` / `AddSum` / `AddAverage` / `AddMin` / `AddMax` / zip sibling collections |
 | `QueryReqBuilder` | `QueryReq` | Root `/Query`: `From`, `Join`, selects, where/sort/paging |
 
 See Examples above for builder samples (also documented under Query & Request Builders in `Lyo.Api`).
@@ -209,11 +225,12 @@ Type checking accepts both storage conventions in the tree: Reporting persists J
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Parameters` (direct, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

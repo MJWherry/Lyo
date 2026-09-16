@@ -71,23 +71,6 @@ export interface JobScheduleParameterRes {
     enabled?: boolean;
 }
 
-export interface JobTriggerParameterReq {
-    jobTriggerId?: string;
-    key?: string;
-    type?: string;
-    value?: string | null;
-    description?: string | null;
-}
-
-export interface JobTriggerParameterRes {
-    id: string;
-    jobTriggerId: string;
-    key: string;
-    type: string;
-    value?: string | null;
-    description?: string | null;
-}
-
 export interface JobBlackoutWindowReq {
     jobBlackoutCalendarId?: string;
     name: string;
@@ -137,7 +120,10 @@ export interface JobBlackoutCalendarRes {
 }
 
 export interface JobScheduleReq {
-    jobDefinitionId: string;
+    /** Set exactly one of this and `jobWorkflowId`. */
+    jobDefinitionId?: string | null;
+    /** Workflow this schedule starts. Set exactly one of this and `jobDefinitionId`. */
+    jobWorkflowId?: string | null;
     monthFlags?: unknown;
     dayFlags?: unknown;
     type?: unknown;
@@ -159,7 +145,8 @@ export interface JobScheduleReq {
 
 export interface JobScheduleRes {
     id: string;
-    jobDefinitionId: string;
+    jobDefinitionId?: string | null;
+    jobWorkflowId?: string | null;
     monthFlags?: unknown;
     dayFlags?: unknown;
     type?: unknown;
@@ -177,30 +164,6 @@ export interface JobScheduleRes {
     timeZoneId?: string | null;
     jobBlackoutCalendarId?: string | null;
     jobBlackoutCalendar?: JobBlackoutCalendarRes | null;
-}
-
-export interface JobTriggerReq {
-    jobDefinitionId: string;
-    triggersJobDefinitionId: string;
-    jobResultKey: string;
-    comparison?: string;
-    jobResultValue?: string | null;
-    description?: string | null;
-    enabled?: boolean;
-    createTriggerParameters?: JobTriggerParameterReq[];
-}
-
-export interface JobTriggerRes {
-    id: string;
-    triggersJobDefinitionId: string;
-    jobResultKey: string;
-    comparison?: string;
-    jobResultValue?: string | null;
-    description?: string | null;
-    enabled: boolean;
-    jobDefinition?: JobDefinitionRes | null;
-    triggerParameters?: JobTriggerParameterRes[] | null;
-    triggersJobDefinition?: JobDefinitionRes | null;
 }
 
 export interface JobParallelRestrictionReq {
@@ -239,7 +202,6 @@ export interface JobDefinitionReq {
     createBlackoutCalendar?: JobBlackoutCalendarReq | null;
     createParameters?: JobParameterReq[];
     createSchedules?: JobScheduleReq[];
-    createTriggers?: JobTriggerReq[];
     createParallelRestrictions?: JobParallelRestrictionReq[];
 }
 
@@ -252,7 +214,6 @@ export interface JobDefinitionRes {
     enabled: boolean;
     jobParameters?: JobParameterRes[] | null;
     jobSchedules?: JobScheduleRes[] | null;
-    jobTriggers?: JobTriggerRes[] | null;
     jobParallelRestrictions?: JobParallelRestrictionRes[] | null;
     maxRetryCount?: number;
     retryBackoffSeconds?: number;
@@ -351,11 +312,8 @@ export interface JobRunLogRes {
 export interface JobRunReq {
     jobDefinitionId: string;
     jobScheduleId?: string | null;
-    jobTriggerId?: string | null;
-    triggeredByJobRunId?: string | null;
     reRanFromJobRunId?: string | null;
     createdBy: string;
-    allowTriggers?: boolean;
     result?: JobRunResult | null;
     scheduledSlotUtc?: string | null;
     retryAttempt?: number;
@@ -400,9 +358,6 @@ export interface JobRunRes {
     jobRunParameters?: JobRunParameterRes[] | null;
     jobScheduleId?: string | null;
     jobSchedule?: JobScheduleRes | null;
-    allowTriggers: boolean;
-    jobTriggerId?: string | null;
-    jobTrigger?: JobTriggerRes | null;
     jobRunResults?: JobRunResultRes[] | null;
     jobDefinitionId: string;
     jobDefinition?: JobDefinitionRes | null;
@@ -482,6 +437,14 @@ export interface JobWorkflowStepRes {
     parametersJson?: string | null;
     enabled: boolean;
     jobDefinition?: JobDefinitionRes | null;
+}
+
+/** Body of `POST /Job/Workflow/{id}/Start`. Every field is optional; omit the body to start once, immediately. */
+export interface JobWorkflowStartReq {
+    idempotencyKey?: string | null;
+    jobScheduleId?: string | null;
+    scheduledSlotUtc?: string | null;
+    inputs?: Record<string, string> | null;
 }
 
 export interface JobWorkflowReq {

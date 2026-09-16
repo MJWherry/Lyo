@@ -18,5 +18,6 @@ public sealed class FtpFileStorageOptions : FileStorageServiceBaseOptions
     {
         ArgumentHelpers.ThrowIfNull(Ftp);
         Ftp.Validate();
+        ValidateUploadFilters();
     }
 }

@@ -2,16 +2,18 @@
 @using Lyo.Common.Core.Enums;
 @using Lyo.Web.Components.FileUpload
 @using Lyo.Web.WebRenderer
+@using Lyo.Web.WebRenderer.Models
 @inject IWebRendererService WebRendererService
 @inject IJsInterop Js
 @inherits LyoWorkbenchBase
+@implements IDisposable
 
 <MudPaper Class="pa-4">
     <MudStack Spacing="3">
         <div>
             <MudText Typo="Typo.h5">HTML to PDF</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                Paste HTML or upload an HTML file, then convert it to PDF with the web renderer service.
+                Paste HTML or upload an HTML file, then capture it as a PDF or an image.
             </MudText>
         </div>
 
@@ -46,8 +48,37 @@
                                       FullWidth="true"
                                       @bind-Value="_htmlContent"/>
 
+                        <MudSelect T="WebRenderFormat" @bind-Value="_format" Label="Format" Variant="Variant.Outlined">
+                            <MudSelectItem Value="WebRenderFormat.Pdf">PDF</MudSelectItem>
+                            <MudSelectItem Value="WebRenderFormat.Png">PNG</MudSelectItem>
+                            <MudSelectItem Value="WebRenderFormat.Jpeg">JPEG</MudSelectItem>
+                            <MudSelectItem Value="WebRenderFormat.WebP">WebP</MudSelectItem>
+                        </MudSelect>
+
+                        @if (_format == WebRenderFormat.Pdf) {
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudSelect T="string" @bind-Value="_paper" Label="Paper" Variant="Variant.Outlined">
+                                        <MudSelectItem Value="@("Letter")">Letter</MudSelectItem>
+                                        <MudSelectItem Value="@("Legal")">Legal</MudSelectItem>
+                                        <MudSelectItem Value="@("Tabloid")">Tabloid</MudSelectItem>
+                                        <MudSelectItem Value="@("A3")">A3</MudSelectItem>
+                                        <MudSelectItem Value="@("A4")">A4</MudSelectItem>
+                                        <MudSelectItem Value="@("A5")">A5</MudSelectItem>
+                                        <MudSelectItem Value="@("CSS")">CSS page size</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudSelect T="string" @bind-Value="_orientation" Label="Orientation" Variant="Variant.Outlined">
+                                        <MudSelectItem Value="@("Portrait")">Portrait</MudSelectItem>
+                                        <MudSelectItem Value="@("Landscape")">Landscape</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                            </MudGrid>
+                        }
+
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConvertAsync" Disabled="@_busy">Convert to PDF</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConvertAsync" Disabled="@_busy">Convert</MudButton>
                         </MudStack>
 
                         <LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/>
@@ -59,18 +90,18 @@
                 <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
                         <MudText Typo="Typo.h6">Result</MudText>
-                        @if (_pdfBytes != null) {
-                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download PDF</MudButton>
+                        @if (_output != null) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download</MudButton>
                         }
                     </MudStack>
 
-                    @if (_pdfBytes == null) {
+                    @if (_output == null) {
                         <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Convert HTML to inspect the generated PDF details here.
+                            Convert HTML to preview the capture here.
                         </MudText>
                     }
                     else {
-                        <MudSimpleTable Dense="true">
+                        <MudSimpleTable Dense="true" Class="mb-3">
                             <tbody>
                             <tr>
                                 <td><strong>Source</strong></td>
@@ -81,15 +112,21 @@
                                 <td>@FileSizeUnitInfo.FormatBestFitAbbreviation(Encoding.UTF8.GetByteCount(_htmlContent), lowercaseAbbreviation: false)</td>
                             </tr>
                             <tr>
-                                <td><strong>PDF size</strong></td>
-                                <td>@FileSizeUnitInfo.FormatBestFitAbbreviation(_pdfBytes.LongLength, lowercaseAbbreviation: false)</td>
+                                <td><strong>Output size</strong></td>
+                                <td>@FileSizeUnitInfo.FormatBestFitAbbreviation(_output.LongLength, lowercaseAbbreviation: false)</td>
                             </tr>
                             <tr>
                                 <td><strong>File name</strong></td>
-                                <td>@_pdfFileName</td>
+                                <td>@OutputFileName</td>
                             </tr>
                             </tbody>
                         </MudSimpleTable>
+                        @if (_format == WebRenderFormat.Pdf) {
+                            <iframe title="PDF preview" src="@_previewUrl" style="width:100%;min-height:480px;border:0;"></iframe>
+                        }
+                        else if (_previewUrl is not null) {
+                            <img alt="Capture preview" src="@_previewUrl" style="max-width:100%;"/>
+                        }
                     }
                 </MudPaper>
             </MudItem>

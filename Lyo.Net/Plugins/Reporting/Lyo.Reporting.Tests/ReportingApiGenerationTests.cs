@@ -7,6 +7,7 @@ using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Models.Response;
 using Microsoft.AspNetCore.Http;
 using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 
@@ -61,7 +62,7 @@ public sealed class ReportingApiGenerationTests
     public async Task ExecuteAsync_Success_ReturnsGeneration()
     {
         var generation = new ReportGenerationRes(
-            Guid.NewGuid(), null, null, ReportFormat.Csv, ReportGenerationStatus.Succeeded, null, null, null, null, null, "tester", DateTime.UtcNow, null, null);
+            LyoGuid.CreateV7(), null, null, ReportFormat.Csv, ReportGenerationStatus.Succeeded, null, null, null, null, null, "tester", DateTime.UtcNow, null, null);
 
         var result = await Extensions.ExecuteGenerationAsync(() => Task.FromResult(generation), CancellationToken.None);
         Assert.NotNull(result);

@@ -13,6 +13,7 @@ public sealed class JobClient : IJobClient
         Definitions = new(apiClient, routePrefix);
         Runs = new(apiClient, routePrefix);
         WorkerInstances = new(apiClient, routePrefix);
+        Workflows = new(apiClient, routePrefix);
     }
 
     public JobDefinitionClient Definitions { get; }
@@ -20,4 +21,6 @@ public sealed class JobClient : IJobClient
     public JobRunClient Runs { get; }
 
     public JobWorkerInstanceClient WorkerInstances { get; }
+
+    public JobWorkflowClient Workflows { get; }
 }

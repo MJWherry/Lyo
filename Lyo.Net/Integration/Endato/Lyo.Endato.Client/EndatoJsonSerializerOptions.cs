@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Lyo.Common.Json;
-using Lyo.Common.Json.JsonConverters;
+using Lyo.Json;
+using Lyo.Json.JsonConverters;
 
 namespace Lyo.Endato.Client;
 

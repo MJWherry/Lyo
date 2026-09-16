@@ -1,8 +1,10 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Core;
 using Lyo.Web.Automation.Models;
+using Lyo.Web.Automation.Plan;
 using Lyo.Web.Automation.Playwright.Configuration;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
@@ -71,7 +73,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     {
         ArgumentHelpers.ThrowIfNull(options);
         Options = options;
-        ExecutionContext = executionContext ?? PlaywrightExecutionContextFactory.Create(options, Guid.NewGuid());
+        ExecutionContext = executionContext ?? PlaywrightExecutionContextFactory.Create(options, LyoGuid.CreateV7());
         var baseLogger = logger ?? NullLogger<PlaywrightBrowser>.Instance;
         Logger = ExecutionContext.BuildBrowserLogger(baseLogger);
         Metrics = Options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
@@ -268,6 +270,35 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         }
     }
 
+    async Task<IReadOnlyList<string>> IWebAutomationNavigator.CaptureNetworkAsync(string? urlPattern, int durationMilliseconds, CancellationToken ct)
+    {
+        EnsureStarted();
+        ArgumentHelpers.ThrowIfNegative(durationMilliseconds);
+        var urls = new List<string>();
+        Page!.Request += Handle;
+        try {
+            if (durationMilliseconds > 0)
+                await Task.Delay(durationMilliseconds, ct).ConfigureAwait(false);
+        }
+        finally {
+            Page.Request -= Handle;
+        }
+
+        lock (urls)
+            return urls.ToArray();
+
+        void Handle(object? _, IRequest req)
+        {
+            if (!NetworkUrlMatcher.Matches(urlPattern, req.Url))
+                return;
+
+            lock (urls) {
+                if (!urls.Contains(req.Url))
+                    urls.Add(req.Url);
+            }
+        }
+    }
+
     /// <summary>Resolved metric name for members of <see cref="Constants.Metrics" /> (Playwright-specific series).</summary>
     internal string ResolveMetric(string metricMemberName) => _metricNames[metricMemberName];
 
@@ -297,7 +328,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         var browserType = GetBrowserType(_playwright);
         var launchOptions = new BrowserTypeLaunchOptions {
             Headless = Options.Headless,
-            Channel = Options.BrowserKind == PlaywrightBrowserKind.Chromium ? Options.Channel : null,
+            Channel = ResolveChannel(),
             Args = Options.ResolveLaunchArguments(),
             SlowMo = Options.SlowMoMilliseconds,
             DownloadsPath = ExecutionContext?.DownloadDirectory
@@ -512,13 +543,10 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         ct.ThrowIfCancellationRequested();
         try {
             var loc = PlaywrightLocatorFactory.Locate(parent, child);
-            await loc.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = Options.LocatorDefaultTimeoutMs }).ConfigureAwait(false);
+            await WaitUntilVisibleAsync(loc, ct).ConfigureAwait(false);
             return new(loc, this);
         }
-        catch (Exception ex) {
-            if (ex is OperationCanceledException)
-                throw;
-
+        catch (Exception ex) when (ex is not OperationCanceledException and not TimeoutException) {
             return null;
         }
     }
@@ -655,13 +683,10 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         ct.ThrowIfCancellationRequested();
         try {
             var loc = BuildChainedLocator(segments);
-            await loc.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = Options.LocatorDefaultTimeoutMs }).ConfigureAwait(false);
+            await WaitUntilVisibleAsync(loc, ct).ConfigureAwait(false);
             return new(loc, this);
         }
-        catch (Exception ex) {
-            if (ex is OperationCanceledException)
-                throw;
-
+        catch (Exception ex) when (ex is not OperationCanceledException and not TimeoutException) {
             return null;
         }
     }
@@ -671,7 +696,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         ct.ThrowIfCancellationRequested();
         try {
             var loc = BuildChainedLocator(segments);
-            await loc.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = Options.LocatorDefaultTimeoutMs }).ConfigureAwait(false);
+            await WaitUntilVisibleAsync(loc.First, ct).ConfigureAwait(false);
             var count = await loc.CountAsync().ConfigureAwait(false);
             var list = new List<IWebAutomationElement>(count);
             for (var i = 0; i < count; i++)
@@ -679,13 +704,31 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
 
             return list;
         }
-        catch (Exception ex) {
-            if (ex is OperationCanceledException)
-                throw;
-
+        catch (Exception ex) when (ex is not OperationCanceledException and not TimeoutException) {
             return null;
         }
     }
+
+    /// <summary>One visible wait. A Playwright timeout fails the caller. Cancellation abandons the wait and throws.</summary>
+    private async Task WaitUntilVisibleAsync(ILocator locator, CancellationToken ct)
+    {
+        var wait = locator.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = Options.LocatorDefaultTimeoutMs });
+        if (ct.CanBeCanceled) {
+            var cancel = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (ct.Register(static state => ((TaskCompletionSource<bool>)state!).TrySetResult(true), cancel)) {
+                var done = await Task.WhenAny(wait, cancel.Task).ConfigureAwait(false);
+                if (done != wait) {
+                    Observe(wait);
+                    throw new OperationCanceledException(ct);
+                }
+            }
+        }
+
+        await wait.ConfigureAwait(false);
+    }
+
+    private static void Observe(Task wait)
+        => _ = wait.ContinueWith(static task => _ = task.Exception, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
 
     private ILocator BuildChainedLocator(IReadOnlyList<ElementLocator> segments)
     {
@@ -704,11 +747,24 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
 
     private void EnsureStarted() => OperationHelpers.ThrowIfNull(Page, "Browser not started. Call StartBrowserAsync first, or attach via the IPage constructor.");
 
+    private string? ResolveChannel()
+    {
+        if (Options.BrowserKind is not (AutomationBrowserKind.Chrome or AutomationBrowserKind.Chromium or AutomationBrowserKind.Edge))
+            return null;
+        if (!string.IsNullOrWhiteSpace(Options.Channel))
+            return Options.Channel;
+        return Options.BrowserKind switch {
+            AutomationBrowserKind.Chrome => "chrome",
+            AutomationBrowserKind.Edge => "msedge",
+            var _ => null
+        };
+    }
+
     private IBrowserType GetBrowserType(IPlaywright playwright)
         => Options.BrowserKind switch {
-            PlaywrightBrowserKind.Chromium => playwright.Chromium,
-            PlaywrightBrowserKind.Firefox => playwright.Firefox,
-            PlaywrightBrowserKind.Webkit => playwright.Webkit,
+            AutomationBrowserKind.Chrome or AutomationBrowserKind.Chromium or AutomationBrowserKind.Edge => playwright.Chromium,
+            AutomationBrowserKind.Firefox => playwright.Firefox,
+            AutomationBrowserKind.WebKit => playwright.Webkit,
             var _ => throw new ArgumentOutOfRangeException(nameof(Options.BrowserKind), Options.BrowserKind, null)
         };
 

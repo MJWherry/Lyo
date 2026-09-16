@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Audit;
@@ -57,8 +58,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
             throw new FilePolicyRejectedException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
 
         FileStorageServiceBase.ValidatePathPrefix(request.PathPrefix);
-        var sessionId = Guid.NewGuid();
-        var targetFileId = Guid.NewGuid();
+        var sessionId = LyoGuid.CreateV7();
+        var targetFileId = LyoGuid.CreateV7();
         var ttl = request.SessionTtl ?? TimeSpan.FromHours(24);
         var now = DateTime.UtcNow;
         var stagingDir = Path.Combine(_options.RootDirectoryPath, ".multipart", sessionId.ToString("N"));

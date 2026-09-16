@@ -3,6 +3,7 @@ using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
 using Lyo.Schedule.Models;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -145,7 +146,7 @@ public class JobScheduleSlotCalculatorTests
 
     private static JobScheduleRes CronSchedule(string cron)
         => new(
-            Guid.NewGuid(), Guid.NewGuid(), MonthFlags.EveryMonth, DayFlags.EveryDay, ScheduleType.Cron, null, null, null, null, cron, true, null, cron);
+            LyoGuid.CreateV7(), LyoGuid.CreateV7(), MonthFlags.EveryMonth, DayFlags.EveryDay, ScheduleType.Cron, null, null, null, null, cron, true, null, cron);
 
     private static JobBlackoutCalendarRes DeferCalendar(string start, string end) => Calendar(JobBlackoutPolicy.Defer, start, end);
 
@@ -153,8 +154,8 @@ public class JobScheduleSlotCalculatorTests
 
     private static JobBlackoutCalendarRes Calendar(JobBlackoutPolicy policy, string start, string end)
     {
-        var calendarId = Guid.NewGuid();
+        var calendarId = LyoGuid.CreateV7();
         return new(
-            calendarId, "Test calendar", null, true, [new(Guid.NewGuid(), calendarId, "Blackout", DayFlags.EveryDay, TimeOnly.Parse(start), TimeOnly.Parse(end), policy, true)]);
+            calendarId, "Test calendar", null, true, [new(LyoGuid.CreateV7(), calendarId, "Blackout", DayFlags.EveryDay, TimeOnly.Parse(start), TimeOnly.Parse(end), policy, true)]);
     }
 }

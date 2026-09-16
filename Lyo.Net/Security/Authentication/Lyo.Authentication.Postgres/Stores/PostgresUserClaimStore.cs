@@ -6,6 +6,7 @@ using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
@@ -55,7 +56,7 @@ public sealed class PostgresUserClaimStore : IUserClaimStore
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = ToEntity(claim);
         if (entity.Id == Guid.Empty)
-            entity.Id = Guid.NewGuid();
+            entity.Id = LyoGuid.CreateV7();
 
         entity.TenantId = resolvedTenant;
         if (entity.CreatedTimestamp == default)

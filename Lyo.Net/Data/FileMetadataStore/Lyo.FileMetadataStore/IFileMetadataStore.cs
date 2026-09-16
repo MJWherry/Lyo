@@ -61,4 +61,22 @@ public interface IFileMetadataStore
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Matching file metadata.</returns>
     Task<IEnumerable<FileStoreResult>> FindByKeyIdAndVersionAsync(string keyId, string? keyVersion = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Lists non-deleted <see cref="FileAvailability.PendingDirectUpload" /> rows whose <see cref="FileStoreResult.Timestamp" /> (set when the upload began) is earlier than
+    /// <paramref name="beganBefore" />, oldest first. Backs the FileStorage sweeper that aborts direct uploads nobody finalized.
+    /// </summary>
+    /// <param name="beganBefore">UTC cutoff. Rows that began at or after it are not returned.</param>
+    /// <param name="maxKeys">Maximum rows to return. Must be at least 1.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task<IReadOnlyList<FileStoreResult>> ListPendingDirectUploadsAsync(DateTime beganBefore, int maxKeys, CancellationToken ct = default);
+
+    /// <summary>Non-deleted files whose <see cref="FileStoreResult.OriginalFileName" /> contains <paramref name="text" />. This is a contains query, not full-text search.</summary>
+    Task<IReadOnlyList<FileStoreResult>> SearchByNameAsync(string text, int maxKeys, CancellationToken ct = default);
+
+    /// <summary>Records the current stored key as a prior revision, then stores <paramref name="storedKey" /> on the file. The previous key stays readable.</summary>
+    Task<FileRevision> SaveNewVersionAsync(Guid fileId, string storedKey, CancellationToken ct = default);
+
+    /// <summary>Loads a prior revision by id, or null when it was never recorded.</summary>
+    Task<FileRevision?> GetVersionAsync(Guid revisionId, CancellationToken ct = default);
 }

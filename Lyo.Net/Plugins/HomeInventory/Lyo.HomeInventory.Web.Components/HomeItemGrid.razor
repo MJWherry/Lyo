@@ -1,0 +1,49 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="HomeItemGrid"
+                      Route="@_itemsRoute"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <LeftControls>
+        <MudButton OnClick="@OpenCreate"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Size="Size.Small"
+                   Variant="Variant.Outlined">
+            Add item
+        </MudButton>
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit item" OnClick="@(() => OpenItem(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name"/>
+        <LyoProjectedColumn Field="Status" Title="Status">
+            <CellContent Context="item">
+                @{
+                    var stateText = ProjectedValueHelper.GetDisplayValue(item, "Status");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<HomeItemStatus>(stateText, HomeColorHelper.ForStatus))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Condition" Title="Condition">
+            <CellContent Context="item">
+                @{
+                    var conditionText = ProjectedValueHelper.GetDisplayValue(item, "Condition");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<HomeItemCondition>(conditionText, HomeColorHelper.ForCondition))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="Created" HiddenByDefault="true" Timestamp="LyoTimestampKind.Absolute"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenItem(item))">Edit</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

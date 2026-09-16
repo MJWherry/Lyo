@@ -14,7 +14,7 @@ public sealed class FileSystemWatcherStoreTests
     [Fact]
     public async Task SaveSnapshot_ThenGetLatest_RoundTripsTree()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = _fixture.ServiceProvider.GetRequiredService<IFileSystemWatcherStore>();
         var watchId = await store.CreateWatchAsync("/tmp/watch", new FileSystemWatchOptionsDto { IncludeSubdirectories = true }, ct);
         var tree = new FileSystemSnapshotTreeDto {
@@ -36,7 +36,7 @@ public sealed class FileSystemWatcherStoreTests
     [Fact]
     public async Task SaveSnapshot_SameHash_ReturnsExistingId()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = _fixture.ServiceProvider.GetRequiredService<IFileSystemWatcherStore>();
         var watchId = await store.CreateWatchAsync("/tmp/dedupe", new FileSystemWatchOptionsDto(), ct);
         var tree = new FileSystemSnapshotTreeDto { RootPath = "/tmp/dedupe", FileCount = 0, Root = new() };
@@ -48,7 +48,7 @@ public sealed class FileSystemWatcherStoreTests
     [Fact]
     public async Task SaveChanges_CanBeReadBack()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = _fixture.ServiceProvider.GetRequiredService<IFileSystemWatcherStore>();
         var watchId = await store.CreateWatchAsync("/tmp/changes", new FileSystemWatchOptionsDto(), ct);
         await store.SaveChangesAsync(

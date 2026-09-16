@@ -1,0 +1,51 @@
+@using Lyo.Query.Models.Common.Request
+@using Lyo.Query.Models.Enums
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-aggregates-list">
+    <MudStack Spacing="1">
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+            <MudSelect T="AggregateFunction"
+                       @bind-Value="_function"
+                       Label="Function"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Style="min-width: 120px;">
+                @foreach (var function in Functions) {
+                    <MudSelectItem Value="@function">@function</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField T="string"
+                          @bind-Value="_name"
+                          Label="Name"
+                          Variant="Variant.Outlined"
+                          Immediate
+                          Margin="Margin.Dense"
+                          OnKeyDown="@OnKeyDown"
+                          Style="flex: 1; min-width: 80px;"/>
+            <MudTextField T="string"
+                          @bind-Value="_field"
+                          Label="@(_function == AggregateFunction.Count ? "Field (optional)" : "Field")"
+                          Variant="Variant.Outlined"
+                          Immediate
+                          Margin="Margin.Dense"
+                          OnKeyDown="@OnKeyDown"
+                          Style="flex: 2; min-width: 120px;"/>
+            <MudIconButton Icon="@Icons.Material.Filled.Add"
+                           Color="Color.Primary"
+                           Size="Size.Small"
+                           OnClick="@AddAggregate"
+                           Disabled="@(!CanAdd)"
+                           aria-label="Add aggregate"/>
+        </MudStack>
+
+        @if (Items.Count > 0) {
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                @foreach (var (item, i) in Items.Select((aggregate, idx) => (aggregate, idx))) {
+                    var index = i;
+                    <LyoChip Color="Color.Primary"
+                             OnClose="@(() => RemoveAggregate(index))"
+                             Label="@ChipLabel(item)"/>
+                }
+            </MudStack>
+        }
+    </MudStack>
+</LyoElementRoot>

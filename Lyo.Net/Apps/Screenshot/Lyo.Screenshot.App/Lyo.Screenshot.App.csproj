@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <AssemblyName>lyo-shot</AssemblyName>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RootNamespace>Lyo.Screenshot.App</RootNamespace>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <BuiltInComInteropSupport Condition="$([MSBuild]::IsOSPlatform('windows'))">true</BuiltInComInteropSupport>
+        <ApplicationManifest Condition="$([MSBuild]::IsOSPlatform('windows'))">app.manifest</ApplicationManifest>
+        <Description>Desktop screenshot tool for a still, a GIF, or a scrolling receipt.</Description>
+        <PackageTags>screenshot gif receipt</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia"/>
+        <PackageReference Include="Avalonia.Desktop"/>
+        <PackageReference Include="Avalonia.Fonts.Inter"/>
+        <PackageReference Include="Avalonia.Themes.Fluent"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Desktop\Lyo.Desktop\Lyo.Desktop.csproj"/>
+        <ProjectReference Include="..\Lyo.Screenshot\Lyo.Screenshot.csproj"/>
+        <ProjectReference Include="..\..\Avalonia\Lyo.Avalonia.Components\Lyo.Avalonia.Components.csproj"/>
+    </ItemGroup>
+
+</Project>

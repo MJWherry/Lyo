@@ -66,7 +66,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestContext.Current.CancellationToken);
+        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestCt);
         Assert.True(pdf.GetInfo().PageCount >= 1);
     }
 
@@ -116,9 +116,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestContext.Current.CancellationToken);
+        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestCt);
         var outputPath = _tempSession.GetFilePath("output-async.pdf");
-        await File.WriteAllBytesAsync(outputPath, pdf.SourceBytes.ToArray(), TestContext.Current.CancellationToken);
+        await File.WriteAllBytesAsync(outputPath, pdf.SourceBytes.ToArray(), TestCt);
         Assert.True(File.Exists(outputPath));
         Assert.True(new FileInfo(outputPath).Length > 0);
     }
@@ -573,9 +573,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestContext.Current.CancellationToken);
+        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestCt);
         var sections = new[] { "NO_SUCH_SECTION_123" };
-        var section = await pdf.Text.GetSectionAsync("NO_SUCH_SECTION_123", sections, ct: TestContext.Current.CancellationToken);
+        var section = await pdf.Text.GetSectionAsync("NO_SUCH_SECTION_123", sections, ct: TestCt);
         Assert.Null(section);
     }
 
@@ -600,10 +600,10 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestContext.Current.CancellationToken);
+        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestCt);
         ColumnHeader[] headers = [new("A"), new("B")];
         var sections = new[] { "NO_SUCH_SECTION_FOR_EXTRACT" };
-        var rows = await pdf.Text.ExtractTableAsync("NO_SUCH_SECTION_FOR_EXTRACT", headers, sections, ct: TestContext.Current.CancellationToken);
+        var rows = await pdf.Text.ExtractTableAsync("NO_SUCH_SECTION_FOR_EXTRACT", headers, sections, ct: TestCt);
         Assert.Null(rows);
     }
 

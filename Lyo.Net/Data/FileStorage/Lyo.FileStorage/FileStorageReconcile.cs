@@ -27,7 +27,11 @@ public static class FileStorageReconcile
         var start = PhysicalDirectory(physical, pathPrefix);
         var physicalFiles = await FlattenFilesAsync(physical, start, maxKeys, ct).ConfigureAwait(false);
         var physicalById = new Dictionary<Guid, string>();
+
+        // Membership probe for the derived key below. Scanning the list instead made the join quadratic: 100M comparisons at the 10k default cap.
+        var physicalKeys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var key in physicalFiles) {
+            physicalKeys.Add(key);
             if (IsSkippedPhysicalKey(key))
                 continue;
 
@@ -39,7 +43,7 @@ public static class FileStorageReconcile
         var matched = new HashSet<Guid>();
         foreach (var row in rows) {
             var expected = CloudObjectKeyBuilder.FromMetadata(row.Id, row.SourceFileName, row.PathPrefix, storagePrefix);
-            var hit = physicalById.TryGetValue(row.Id, out var listed) || physicalFiles.Contains(expected);
+            var hit = physicalById.TryGetValue(row.Id, out var listed) || physicalKeys.Contains(expected);
             if (hit)
                 matched.Add(row.Id);
 

@@ -95,6 +95,18 @@ public sealed class FFmpegAudioConverter : IAudioConverter
     public Task<Result<IMediaProcessSession>> StartRawPcmAsync(string inputPathOrUrl, int sampleRate = 48000, int channels = 2, CancellationToken ct = default)
         => StartConvertAsync(inputPathOrUrl, AudioConversionOptions.ForRawPcm(sampleRate, channels), ct);
 
+    /// <inheritdoc />
+    public Task<Result<bool>> ExtractAsync(string inputPath, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
+        => ConvertFileToFileAsync(inputPath, outputPath, options ?? AudioConversionOptions.ForExtract(), ct);
+
+    /// <inheritdoc />
+    public Task<Result<bool>> ConcatAsync(IReadOnlyList<string> inputPaths, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
+    {
+        var request = new AudioConcatRequest { Inputs = inputPaths, OutputPath = outputPath, Options = options ?? new() };
+        request.Validate();
+        return _engine.ConcatAsync(request.Inputs, request.OutputPath, ConvertKnobs.FromAudio(request.Options), ct);
+    }
+
     private ConvertKnobs Prepare(AudioConversionOptions? options, bool fileToFile)
     {
         var opts = options ?? DefaultAudio();

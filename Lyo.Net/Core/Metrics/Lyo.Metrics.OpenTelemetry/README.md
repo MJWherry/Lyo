@@ -103,6 +103,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)
 - `OpenTelemetry` `1.16.0` (direct, third-party)

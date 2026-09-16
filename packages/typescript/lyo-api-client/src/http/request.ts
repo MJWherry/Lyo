@@ -26,6 +26,24 @@ export function fileNameFromDisposition(header: string | undefined): string | nu
     return plain?.[1]?.trim() ?? null;
 }
 
+/** JSON for ordinary bodies. FormData and Blob pass through so multipart and raw PUT stay intact. */
+export function encodeRequestBody(
+    body: unknown,
+    headers: Record<string, string>
+): string | FormData | Blob | undefined {
+    if (body === undefined) return undefined;
+    if (typeof FormData !== "undefined" && body instanceof FormData) {
+        delete headers["Content-Type"];
+        return body;
+    }
+    if (typeof Blob !== "undefined" && body instanceof Blob) {
+        if (!headers["Content-Type"] || headers["Content-Type"] === "application/json")
+            headers["Content-Type"] = body.type || "application/octet-stream";
+        return body;
+    }
+    return JSON.stringify(body);
+}
+
 export function buildUrl(
     baseUrl: string,
     path: string,

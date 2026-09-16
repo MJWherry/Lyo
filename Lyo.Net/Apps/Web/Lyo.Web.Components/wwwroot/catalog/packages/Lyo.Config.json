@@ -115,7 +115,7 @@
   "readmePath": "Lyo.Net/Plugins/Config/Lyo.Config/README.md",
   "dependencies": [
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -123,7 +123,7 @@
       ]
     },
     {
-      "name": "Lyo.EntityReference.Models",
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -256,6 +256,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     }
   ],

@@ -71,9 +71,10 @@ internal static class AeadStreamProcessor
     }
 
     /// <summary>
-    /// Decrypt: reads compact frames from <paramref name="input" />, rebuilds each nonce from <paramref name="noncePrefix" /> plus a local counter (the wire has
-    /// no nonce) and authenticates <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> per chunk. Throws if the stream ends before a final-flagged chunk (truncation) or
-    /// has bytes after it (extension).
+    /// Decrypt: reads compact frames from <paramref name="input" />, rebuilds each nonce from <paramref name="noncePrefix" /> plus a counter that starts at
+    /// <paramref name="startingChunkIndex" /> (the wire has no nonce) and authenticates <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> per chunk. The first
+    /// chunk discards <paramref name="skipPlaintextBytes" />. When <paramref name="maxPlaintextBytes" /> is set, writing stops after that many plaintext bytes and a missing
+    /// final chunk is not an error. Otherwise throws if the stream ends before a final-flagged chunk (truncation) or has bytes after it (extension).
     /// </summary>
     public static async Task DecryptChunksAsync(
         Stream input,
@@ -82,8 +83,14 @@ internal static class AeadStreamProcessor
         byte[] noncePrefix,
         byte[] aadNonFinal,
         byte[] aadFinal,
-        CancellationToken ct)
+        CancellationToken ct,
+        long startingChunkIndex = 0,
+        int skipPlaintextBytes = 0,
+        long? maxPlaintextBytes = null)
     {
+        if (maxPlaintextBytes is 0)
+            return;
+
         var nonceSize = cryptor.NonceSize;
         var tagSize = cryptor.TagSize;
         var lengthBuffer = ArrayPool<byte>.Shared.Rent(AeadChunkCodec.LengthPrefixSize);
@@ -93,7 +100,9 @@ internal static class AeadStreamProcessor
         noncePrefix.AsSpan(0, nonceSize - CounterSize).CopyTo(nonce);
         try {
             var sawFinalChunk = false;
-            long chunkIndex = 0;
+            long chunkIndex = startingChunkIndex;
+            long written = 0;
+            var pendingSkip = skipPlaintextBytes;
             while (true) {
                 ct.ThrowIfCancellationRequested();
                 var lengthRead = await AeadChunkCodec.ReadAtLeastAsync(input, lengthBuffer, AeadChunkCodec.LengthPrefixSize, ct).ConfigureAwait(false);
@@ -150,8 +159,23 @@ internal static class AeadStreamProcessor
                         ex);
                 }
 
-                if (plaintextLength > 0)
-                    await output.WriteAsync(plainBuffer, 0, plaintextLength, ct).ConfigureAwait(false);
+                var offset = pendingSkip;
+                pendingSkip = 0;
+                if (offset > plaintextLength)
+                    throw new InvalidDataException($"Plaintext skip {offset} exceeds the chunk plaintext length {plaintextLength}.");
+
+                var available = plaintextLength - offset;
+                var toWrite = available;
+                if (maxPlaintextBytes is { } room && written + available > room)
+                    toWrite = (int)(room - written);
+
+                if (toWrite > 0) {
+                    await output.WriteAsync(plainBuffer, offset, toWrite, ct).ConfigureAwait(false);
+                    written += toWrite;
+                }
+
+                if (maxPlaintextBytes is { } cap && written >= cap)
+                    break;
 
                 chunkIndex++;
                 sawFinalChunk = isFinal;

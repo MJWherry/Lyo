@@ -26,19 +26,19 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         var definitionId = LyoGuid.CreateCombPostgres();
         var created = await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-            BuildDefinitionReq(definitionId, true, false), ApplyDefinitionIds(definitionId), ct: TestContext.Current.CancellationToken);
+            BuildDefinitionReq(definitionId, true), ApplyDefinitionIds(definitionId), ct: TestCt);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var def = await db.JobDefinitions.AsNoTracking().SingleAsync(d => d.Id == definitionId, TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
+        var def = await db.JobDefinitions.AsNoTracking().SingleAsync(d => d.Id == definitionId, TestCt);
         Assert.NotEqual(default, def.CreatedTimestamp);
-        var param = await db.JobParameters.AsNoTracking().SingleAsync(p => p.JobDefinitionId == definitionId, TestContext.Current.CancellationToken);
+        var param = await db.JobParameters.AsNoTracking().SingleAsync(p => p.JobDefinitionId == definitionId, TestCt);
         Assert.NotEqual(default, param.CreatedTimestamp);
         var schedule = await db.JobSchedules.AsNoTracking()
             .Include(s => s.JobScheduleParameters)
             .Include(s => s.JobBlackoutCalendar!)
             .ThenInclude(c => c.JobBlackoutWindows)
-            .SingleAsync(s => s.JobDefinitionId == definitionId, TestContext.Current.CancellationToken);
+            .SingleAsync(s => s.JobDefinitionId == definitionId, TestCt);
 
         Assert.NotEqual(default, schedule.CreatedTimestamp);
         Assert.All(schedule.JobScheduleParameters, p => Assert.NotEqual(default, p.CreatedTimestamp));
@@ -114,19 +114,19 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                 }
 
                 JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
         var calendarIds = await db.JobSchedules.AsNoTracking()
             .Where(s => s.JobDefinitionId == definitionId)
             .Select(s => s.JobBlackoutCalendarId)
             .Distinct()
-            .ToListAsync(TestContext.Current.CancellationToken);
+            .ToListAsync(TestCt);
 
         Assert.Single(calendarIds);
         Assert.NotNull(calendarIds[0]);
-        Assert.Equal(1, await db.JobBlackoutCalendars.CountAsync(c => c.Id == calendarIds[0], TestContext.Current.CancellationToken));
+        Assert.Equal(1, await db.JobBlackoutCalendars.CountAsync(c => c.Id == calendarIds[0], TestCt));
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
         var delete = scope.ServiceProvider.GetRequiredService<IDeleteService<JobContext>>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         var sharedCalendarId = LyoGuid.CreateCombPostgres();
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var db = await factory.CreateDbContextAsync(TestCt)) {
             db.JobBlackoutCalendars.Add(
                 new() {
                     Id = sharedCalendarId,
@@ -146,14 +146,14 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                     CreatedTimestamp = DateTime.UtcNow
                 });
 
-            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await db.SaveChangesAsync(TestCt);
         }
 
         var exclusiveDefId = LyoGuid.CreateCombPostgres();
         var sharedDefId = LyoGuid.CreateCombPostgres();
         Assert.True(
             (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-                BuildDefinitionReq(exclusiveDefId, true, false), ApplyDefinitionIds(exclusiveDefId), ct: TestContext.Current.CancellationToken)).IsSuccess);
+                BuildDefinitionReq(exclusiveDefId, true), ApplyDefinitionIds(exclusiveDefId), ct: TestCt)).IsSuccess);
 
         Assert.True(
             (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
@@ -172,30 +172,30 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                             JobBlackoutCalendarId = sharedCalendarId
                         }
                     ]
-                }, ApplyDefinitionIds(sharedDefId), ct: TestContext.Current.CancellationToken)).IsSuccess);
+                }, ApplyDefinitionIds(sharedDefId), ct: TestCt)).IsSuccess);
 
         Guid exclusiveCalendarId;
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var db = await factory.CreateDbContextAsync(TestCt)) {
             exclusiveCalendarId = await db.JobSchedules.Where(s => s.JobDefinitionId == exclusiveDefId)
                 .Select(s => s.JobBlackoutCalendarId!.Value)
-                .SingleAsync(TestContext.Current.CancellationToken);
+                .SingleAsync(TestCt);
         }
 
         Assert.True(
             (await delete.DeleteAsync<JobDefinition, JobDefinitionRes>(
-                [exclusiveDefId], ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id), ct: TestContext.Current.CancellationToken)).IsSuccess);
+                [exclusiveDefId], ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id), ct: TestCt)).IsSuccess);
 
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            Assert.False(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == exclusiveCalendarId, TestContext.Current.CancellationToken));
-            Assert.True(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == sharedCalendarId, TestContext.Current.CancellationToken));
+        await using (var db = await factory.CreateDbContextAsync(TestCt)) {
+            Assert.False(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == exclusiveCalendarId, TestCt));
+            Assert.True(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == sharedCalendarId, TestCt));
         }
 
         Assert.True(
             (await delete.DeleteAsync<JobDefinition, JobDefinitionRes>(
-                [sharedDefId], ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id), ct: TestContext.Current.CancellationToken)).IsSuccess);
+                [sharedDefId], ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id), ct: TestCt)).IsSuccess);
 
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken))
-            Assert.False(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == sharedCalendarId, TestContext.Current.CancellationToken));
+        await using (var db = await factory.CreateDbContextAsync(TestCt))
+            Assert.False(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == sharedCalendarId, TestCt));
     }
 
     [Fact]
@@ -272,11 +272,11 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                             ]
                         }
                     ]
-                }, ApplyDefinitionIds(definitionId), ct: TestContext.Current.CancellationToken)).IsSuccess);
+                }, ApplyDefinitionIds(definitionId), ct: TestCt)).IsSuccess);
 
         Guid dropScheduleId, exclusiveCalendarId, sharedCalendarId;
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            var schedules = await db.JobSchedules.AsNoTracking().Where(s => s.JobDefinitionId == definitionId).ToListAsync(TestContext.Current.CancellationToken);
+        await using (var db = await factory.CreateDbContextAsync(TestCt)) {
+            var schedules = await db.JobSchedules.AsNoTracking().Where(s => s.JobDefinitionId == definitionId).ToListAsync(TestCt);
             var drop = schedules.Single(s => s.Description == "drop");
             var keep = schedules.Single(s => s.Description == "keep");
             dropScheduleId = drop.Id;
@@ -291,10 +291,9 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                     State = JobState.Finished,
                     CreatedBy = "test",
                     CreatedTimestamp = DateTime.UtcNow,
-                    AllowTriggers = false
                 });
 
-            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await db.SaveChangesAsync(TestCt);
         }
 
         Assert.True(
@@ -312,14 +311,14 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                         if (calendar is not null)
                             db.JobBlackoutCalendars.Remove(calendar);
                     }
-                }, ct: TestContext.Current.CancellationToken)).IsSuccess);
+                }, ct: TestCt)).IsSuccess);
 
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            Assert.False(await db.JobSchedules.AnyAsync(s => s.Id == dropScheduleId, TestContext.Current.CancellationToken));
-            Assert.False(await db.JobScheduleParameters.AnyAsync(p => p.Key == "Drop", TestContext.Current.CancellationToken));
-            Assert.False(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == exclusiveCalendarId, TestContext.Current.CancellationToken));
-            Assert.True(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == sharedCalendarId, TestContext.Current.CancellationToken));
-            Assert.True(await db.JobRuns.AnyAsync(r => r.JobDefinitionId == definitionId && r.JobScheduleId == null, TestContext.Current.CancellationToken));
+        await using (var db = await factory.CreateDbContextAsync(TestCt)) {
+            Assert.False(await db.JobSchedules.AnyAsync(s => s.Id == dropScheduleId, TestCt));
+            Assert.False(await db.JobScheduleParameters.AnyAsync(p => p.Key == "Drop", TestCt));
+            Assert.False(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == exclusiveCalendarId, TestCt));
+            Assert.True(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == sharedCalendarId, TestCt));
+            Assert.True(await db.JobRuns.AnyAsync(r => r.JobDefinitionId == definitionId && r.JobScheduleId == null, TestCt));
         }
     }
 
@@ -333,20 +332,20 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
         var definitionId = LyoGuid.CreateCombPostgres();
         Assert.True(
             (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-                BuildDefinitionReq(definitionId, true, false), ApplyDefinitionIds(definitionId), ct: TestContext.Current.CancellationToken)).IsSuccess);
+                BuildDefinitionReq(definitionId, true), ApplyDefinitionIds(definitionId), ct: TestCt)).IsSuccess);
 
         Guid calendarId;
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var db = await factory.CreateDbContextAsync(TestCt)) {
             calendarId = await db.JobSchedules.Where(s => s.JobDefinitionId == definitionId)
                 .Select(s => s.JobBlackoutCalendarId!.Value)
-                .SingleAsync(TestContext.Current.CancellationToken);
+                .SingleAsync(TestCt);
         }
 
         var deleted = await delete.DeleteAsync<JobBlackoutCalendar, JobBlackoutCalendarRes>(
             [calendarId], ctx => {
                 if (ctx.DbContext.JobSchedules.Any(s => s.JobBlackoutCalendarId == ctx.Entity.Id))
                     throw new InvalidOperationException($"Cannot delete blackout calendar '{ctx.Entity.Name}' ({ctx.Entity.Id}) while schedules still reference it.");
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.False(deleted.IsSuccess);
         Assert.Contains("still reference", deleted.Error?.Detail ?? "", StringComparison.OrdinalIgnoreCase);
@@ -362,13 +361,13 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
         var definitionId = LyoGuid.CreateCombPostgres();
         Assert.True(
             (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-                BuildDefinitionReq(definitionId, false, false), ApplyDefinitionIds(definitionId), ct: TestContext.Current.CancellationToken)).IsSuccess);
+                BuildDefinitionReq(definitionId, false), ApplyDefinitionIds(definitionId), ct: TestCt)).IsSuccess);
 
         var workflowId = LyoGuid.CreateCombPostgres();
         var stepId = LyoGuid.CreateCombPostgres();
         var runId = LyoGuid.CreateCombPostgres();
         var workflowRunId = LyoGuid.CreateCombPostgres();
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var db = await factory.CreateDbContextAsync(TestCt)) {
             db.JobWorkflows.Add(
                 new() {
                     Id = workflowId,
@@ -396,7 +395,6 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                     State = JobState.Finished,
                     CreatedBy = "test",
                     CreatedTimestamp = DateTime.UtcNow,
-                    AllowTriggers = false
                 });
 
             db.JobWorkflowRuns.Add(
@@ -417,93 +415,16 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                     CreatedTimestamp = DateTime.UtcNow
                 });
 
-            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await db.SaveChangesAsync(TestCt);
         }
 
         var deleted = await delete.DeleteAsync<JobDefinition, JobDefinitionRes>(
-            [definitionId], ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id), ct: TestContext.Current.CancellationToken);
+            [definitionId], ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id), ct: TestCt);
 
         Assert.True(deleted.IsSuccess, deleted.Error?.Detail ?? "delete failed");
     }
 
-    [Fact]
-    public async Task DeleteTrigger_WithParamsAndRunRefs_SucceedsWithoutFkViolation()
-    {
-        await using var scope = fixture.ServiceProvider.CreateAsyncScope();
-        var create = scope.ServiceProvider.GetRequiredService<ICreateService<JobContext>>();
-        var delete = scope.ServiceProvider.GetRequiredService<IDeleteService<JobContext>>();
-        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        var sourceDefId = LyoGuid.CreateCombPostgres();
-        var targetDefId = LyoGuid.CreateCombPostgres();
-        Assert.True(
-            (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-                new() {
-                    Name = $"Src-{sourceDefId:N}".Length <= 100 ? $"Src-{sourceDefId:N}" : $"Src-{sourceDefId:N}"[..100],
-                    Type = "Test",
-                    WorkerType = "cs",
-                    Enabled = true
-                }, ApplyDefinitionIds(sourceDefId), ct: TestContext.Current.CancellationToken)).IsSuccess);
-
-        Assert.True(
-            (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-                new() {
-                    Name = $"Tgt-{targetDefId:N}".Length <= 100 ? $"Tgt-{targetDefId:N}" : $"Tgt-{targetDefId:N}"[..100],
-                    Type = "Test",
-                    WorkerType = "cs",
-                    Enabled = true,
-                    CreateTriggers = [
-                        new() {
-                            TriggersJobDefinitionId = sourceDefId,
-                            JobResultKey = "Result",
-                            Comparison = ComparisonOperatorEnum.Equals,
-                            JobResultValue = "Ok",
-                            Enabled = true,
-                            CreateTriggerParameters = [
-                                new() {
-                                    Key = "P",
-                                    Type = LyoTypeInfo.String.FullName,
-                                    Value = "v",
-                                    Enabled = true
-                                }
-                            ]
-                        }
-                    ]
-                }, ApplyDefinitionIds(targetDefId), ct: TestContext.Current.CancellationToken)).IsSuccess);
-
-        Guid triggerId;
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            triggerId = await db.JobTriggers.Where(t => t.JobDefinitionId == targetDefId).Select(t => t.Id).SingleAsync(TestContext.Current.CancellationToken);
-            db.JobRuns.Add(
-                new() {
-                    Id = LyoGuid.CreateCombPostgres(),
-                    JobDefinitionId = targetDefId,
-                    JobTriggerId = triggerId,
-                    State = JobState.Finished,
-                    CreatedBy = "test",
-                    CreatedTimestamp = DateTime.UtcNow,
-                    AllowTriggers = false
-                });
-
-            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-        }
-
-        var deleted = await delete.DeleteAsync<JobTrigger, JobTriggerRes>(
-            [triggerId], ctx => {
-                var db = ctx.DbContext;
-                db.JobTriggerParameters.RemoveRange(db.JobTriggerParameters.Where(p => p.JobTriggerId == ctx.Entity.Id).ToList());
-                foreach (var run in db.JobRuns.Where(r => r.JobTriggerId == ctx.Entity.Id).ToList())
-                    run.JobTriggerId = null;
-            }, ct: TestContext.Current.CancellationToken);
-
-        Assert.True(deleted.IsSuccess, deleted.Error?.Detail ?? "delete failed");
-        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            Assert.False(await db.JobTriggers.AnyAsync(t => t.Id == triggerId, TestContext.Current.CancellationToken));
-            Assert.False(await db.JobTriggerParameters.AnyAsync(p => p.JobTriggerId == triggerId, TestContext.Current.CancellationToken));
-            Assert.True(await db.JobRuns.AnyAsync(r => r.JobDefinitionId == targetDefId && r.JobTriggerId == null, TestContext.Current.CancellationToken));
-        }
-    }
-
-    private static JobDefinitionReq BuildDefinitionReq(Guid definitionId, bool withBlackout, bool withTrigger)
+    private static JobDefinitionReq BuildDefinitionReq(Guid definitionId, bool withBlackout)
         => new() {
             Name = $"Def-{definitionId:N}".Length <= 100 ? $"Def-{definitionId:N}" : $"Def-{definitionId:N}"[..100],
             Type = "Test",
@@ -544,22 +465,12 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                         new() {
                             Key = "ClientId",
                             Type = LyoTypeInfo.Guid.FullName,
-                            Value = Guid.NewGuid().ToString("D"),
+                            Value = LyoGuid.CreateV7().ToString("D"),
                             Enabled = true
                         }
                     ]
                 }
             ],
-            CreateTriggers = withTrigger
-                ? [
-                    new() {
-                        TriggersJobDefinitionId = Guid.NewGuid(),
-                        JobResultKey = "Result",
-                        Comparison = ComparisonOperatorEnum.Equals,
-                        Enabled = true
-                    }
-                ]
-                : []
         };
 
     private static Action<CreateContext<JobDefinitionReq, JobDefinition, JobContext>> ApplyDefinitionIds(Guid definitionId)
@@ -584,19 +495,6 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                         sp.Id = LyoGuid.CreateCombPostgres();
 
                     sp.JobScheduleId = s.Id;
-                }
-            }
-
-            foreach (var t in ctx.Entity.JobTriggerJobDefinitions) {
-                if (t.Id == default)
-                    t.Id = LyoGuid.CreateCombPostgres();
-
-                t.JobDefinitionId = definitionId;
-                foreach (var tp in t.JobTriggerParameters) {
-                    if (tp.Id == default)
-                        tp.Id = LyoGuid.CreateCombPostgres();
-
-                    tp.JobTriggerId = t.Id;
                 }
             }
 

@@ -4,7 +4,7 @@ using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Error;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Query.Models.Common.Request;
 
 namespace Lyo.Seed.Tests;
@@ -19,7 +19,7 @@ public sealed class ApiSeedTransportTests
         var transport = CreateTransport(handler, max: 2000);
         var items = Enumerable.Range(0, 2501).Select(i => new ItemReq { Name = $"n-{i}" }).ToArray();
         var contributor = new ItemContributor(items);
-        var result = await new SeedRunner().SeedAsync(contributor, transport, new() { Conflict = SeedConflictMode.Append }, TestContext.Current.CancellationToken);
+        var result = await new SeedRunner().SeedAsync(contributor, transport, new() { Conflict = SeedConflictMode.Append }, TestCt);
         Assert.True(result.Success);
         var bulks = handler.Requests.Where(r => r.Path.EndsWith("/Bulk", StringComparison.OrdinalIgnoreCase) && r.Method == "POST").ToList();
         Assert.Equal(2, bulks.Count);
@@ -36,7 +36,7 @@ public sealed class ApiSeedTransportTests
         handler.OnQuery = () => OkQuery(total: 3);
         var transport = CreateTransport(handler);
         var result = await new SeedRunner().SeedAsync(
-            new ItemContributor([new() { Name = "x" }]), transport, new() { Conflict = SeedConflictMode.SkipIfNotEmpty }, TestContext.Current.CancellationToken);
+            new ItemContributor([new() { Name = "x" }]), transport, new() { Conflict = SeedConflictMode.SkipIfNotEmpty }, TestCt);
         Assert.True(result.Skipped);
         Assert.DoesNotContain(handler.Requests, r => r.Path.Contains("/Bulk", StringComparison.OrdinalIgnoreCase) && r.Method == "POST");
     }
@@ -52,7 +52,7 @@ public sealed class ApiSeedTransportTests
             results: [new CreateResult<ItemReq>(false, null, new LyoProblemDetails("row failed", 400, DateTime.UtcNow, []))]);
         var transport = CreateTransport(handler);
         var result = await new SeedRunner().SeedAsync(
-            new ItemContributor([new() { Name = "x" }]), transport, new() { Conflict = SeedConflictMode.Append }, TestContext.Current.CancellationToken);
+            new ItemContributor([new() { Name = "x" }]), transport, new() { Conflict = SeedConflictMode.Append }, TestCt);
         Assert.False(result.Success);
         Assert.Contains(result.Errors, e => e.Contains("row failed", StringComparison.Ordinal));
     }

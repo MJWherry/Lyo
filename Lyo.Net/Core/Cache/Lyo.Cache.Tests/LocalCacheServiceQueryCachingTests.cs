@@ -1,6 +1,7 @@
 using Lyo.Testing;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Cache.Tests;
 
@@ -35,13 +36,13 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
             key1, _ => {
                 calls++;
                 return Task.FromResult("miss")!;
-            }, token: TestContext.Current.CancellationToken)).ShouldBe("miss");
+            }, token: TestCt)).ShouldBe("miss");
 
         (await _cache.GetOrSetAsync<string>(
             key2, _ => {
                 calls++;
                 return Task.FromResult("miss")!;
-            }, token: TestContext.Current.CancellationToken)).ShouldBe("miss");
+            }, token: TestCt)).ShouldBe("miss");
 
         calls.ShouldBe(2);
     }
@@ -49,15 +50,15 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
     [Fact]
     public async Task InvalidateCacheItemByTag_EntityInstanceTag_RemovesOnlyKeysWithThatTag()
     {
-        var id1 = Guid.NewGuid().ToString("N");
-        var id2 = Guid.NewGuid().ToString("N");
+        var id1 = LyoGuid.CreateV7().ToString("N");
+        var id2 = LyoGuid.CreateV7().ToString("N");
         var keyA = $"query:person:includes:{id1}";
         var keyB = $"query:person:includes:{id2}";
         _cache.Set(keyA, "a", ["queries", $"entity:person:{id1}", "entity:address:aaa"]);
         _cache.Set(keyB, "b", ["queries", $"entity:person:{id2}"]);
         await _cache.InvalidateCacheItemByTag($"entity:person:{id1}");
-        (await _cache.GetOrSetAsync<string>(keyA, _ => Task.FromResult("miss-a")!, token: TestContext.Current.CancellationToken)).ShouldBe("miss-a");
-        (await _cache.GetOrSetAsync<string>(keyB, _ => Task.FromResult("miss-b")!, token: TestContext.Current.CancellationToken)).ShouldBe("b");
+        (await _cache.GetOrSetAsync<string>(keyA, _ => Task.FromResult("miss-a")!, token: TestCt)).ShouldBe("miss-a");
+        (await _cache.GetOrSetAsync<string>(keyB, _ => Task.FromResult("miss-b")!, token: TestCt)).ShouldBe("b");
     }
 
     [Fact]
@@ -68,8 +69,8 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
         _cache.Set(listKey, "list-payload", ["queries", "entity:person", "entity:person:p1"]);
         _cache.Set(getKey, "get-payload", ["entities", "entity:person", "entity:person:p1"]);
         await _cache.InvalidateAllCachedQueriesAsync();
-        (await _cache.GetOrSetAsync<string>(listKey, _ => Task.FromResult("list-miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("list-miss");
-        (await _cache.GetOrSetAsync<string>(getKey, _ => Task.FromResult("get-miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("get-payload");
+        (await _cache.GetOrSetAsync<string>(listKey, _ => Task.FromResult("list-miss")!, token: TestCt)).ShouldBe("list-miss");
+        (await _cache.GetOrSetAsync<string>(getKey, _ => Task.FromResult("get-miss")!, token: TestCt)).ShouldBe("get-payload");
     }
 
     [Fact]
@@ -80,10 +81,10 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
             key, async _ => {
                 await Task.Yield();
                 return ("payload", ["queries", "entity:widget", "entity:widget:w1"]);
-            }, ["queryproject"], TestContext.Current.CancellationToken);
+            }, ["queryproject"], TestCt);
 
         await _cache.InvalidateCacheItemByTag("entity:widget:w1");
-        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("miss");
+        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestCt)).ShouldBe("miss");
     }
 
     [Fact]
@@ -92,7 +93,7 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
         const string key = "k1";
         _cache.Set(key, "v", ["Queries", "ENTITY:Person"]);
         await _cache.InvalidateCacheItemByTag("queries");
-        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("miss");
+        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestCt)).ShouldBe("miss");
     }
 
     [Fact]
@@ -104,8 +105,8 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
         _cache.Set(key1, "a", [typeTag]);
         _cache.Set(key2, "b", [typeTag]);
         await _cache.InvalidateQueryCacheAsync<PersonTagTestStub>();
-        (await _cache.GetOrSetAsync<string>(key1, _ => Task.FromResult("m1")!, token: TestContext.Current.CancellationToken)).ShouldBe("m1");
-        (await _cache.GetOrSetAsync<string>(key2, _ => Task.FromResult("m2")!, token: TestContext.Current.CancellationToken)).ShouldBe("m2");
+        (await _cache.GetOrSetAsync<string>(key1, _ => Task.FromResult("m1")!, token: TestCt)).ShouldBe("m1");
+        (await _cache.GetOrSetAsync<string>(key2, _ => Task.FromResult("m2")!, token: TestCt)).ShouldBe("m2");
     }
 
     [Fact]
@@ -115,7 +116,7 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
         _cache.Set(key, "first", ["queries"]);
         _cache.Set(key, "second", ["entities"]);
         await _cache.InvalidateCacheItemByTag("queries");
-        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("second");
+        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestCt)).ShouldBe("second");
     }
 
     private sealed class PersonTagTestStub;

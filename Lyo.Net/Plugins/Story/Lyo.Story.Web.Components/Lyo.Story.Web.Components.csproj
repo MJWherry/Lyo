@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Blazor story builder for the Lyo Story API: library, play graph, and playthrough.</Description>
+        <PackageTags>blazor components story graph mudblazor</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Story\Lyo.Story.csproj"/>
+        <ProjectReference Include="..\Lyo.Story.Models\Lyo.Story.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Story\Lyo.Story.Client\Lyo.Story.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Diagram\Lyo.Diagram\Lyo.Diagram.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+</Project>

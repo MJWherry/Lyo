@@ -1,3 +1,5 @@
+using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.FileStorage.S3.Tests;
 
 public sealed class S3AwsCredentialHelpersTests
@@ -101,7 +103,7 @@ public sealed class S3AwsCredentialHelpersTests
 
     private static string WriteTempCredentialsFile(string contents)
     {
-        var path = Path.Combine(Path.GetTempPath(), "lyo-aws-creds-" + Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(Path.GetTempPath(), "lyo-aws-creds-" + LyoGuid.CreateV7().ToString("N"));
         File.WriteAllText(path, contents);
         return path;
     }

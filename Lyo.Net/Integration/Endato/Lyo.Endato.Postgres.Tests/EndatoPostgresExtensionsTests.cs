@@ -64,7 +64,7 @@ public class EndatoPostgresExtensionsTests
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<EndatoDbContext>>();
         await using var context = factory.CreateDbContext();
-        var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
+        var canConnect = await context.Database.CanConnectAsync(TestCt);
         Assert.True(canConnect);
     }
 
@@ -73,7 +73,7 @@ public class EndatoPostgresExtensionsTests
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<EndatoDbContext>>();
         await using var context = factory.CreateDbContext();
-        var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
+        var pending = await context.Database.GetPendingMigrationsAsync(TestCt);
         Assert.Empty(pending);
     }
 }

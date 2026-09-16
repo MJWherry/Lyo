@@ -41,7 +41,7 @@ public class CacheServiceRedisTests : RedisContainerFixtureBase
                 callCount++;
                 await Task.Delay(10, ct);
                 return expectedValue;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         Assert.Equal(expectedValue, result);
         Assert.Equal(1, callCount);
@@ -51,7 +51,7 @@ public class CacheServiceRedisTests : RedisContainerFixtureBase
             key, _ => {
                 callCount++;
                 return Task.FromResult("different-value")!;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         Assert.Equal(expectedValue, cachedResult);
         Assert.Equal(1, callCount); // Factory should not be called again
@@ -117,7 +117,7 @@ public class CacheServiceRedisTests : RedisContainerFixtureBase
                             Interlocked.Increment(ref callCount);
                             await Task.Delay(50, ct);
                             return expectedValue;
-                        }, token: TestContext.Current.CancellationToken)
+                        }, token: TestCt)
                     .AsTask()!);
         }
 
@@ -137,14 +137,14 @@ public class CacheServiceRedisTests : RedisContainerFixtureBase
         var shortExpiration = TimeSpan.FromMilliseconds(100);
 
         // Store via the value-based overload with a short TTL.
-        await _cacheService.GetOrSetAsync(key, "value", options => options.Duration = shortExpiration, token: TestContext.Current.CancellationToken);
+        await _cacheService.GetOrSetAsync(key, "value", options => options.Duration = shortExpiration, token: TestCt);
         Assert.Equal("value", _cacheService.GetOrSet<string>(key, _ => "default"));
 
         // Sleep until the TTL elapses.
-        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await Task.Delay(150, TestCt);
 
         // Factory should run again after expiry.
-        var result = await _cacheService.GetOrSetAsync<string>(key, _ => Task.FromResult("new-value")!, token: TestContext.Current.CancellationToken);
+        var result = await _cacheService.GetOrSetAsync<string>(key, _ => Task.FromResult("new-value")!, token: TestCt);
         Assert.Equal("new-value", result);
     }
 }

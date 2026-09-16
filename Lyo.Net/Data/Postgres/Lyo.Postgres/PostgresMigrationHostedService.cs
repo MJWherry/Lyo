@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Npgsql;
+
 namespace Lyo.Postgres;
 
 /// <summary>Applies EF Core migrations on host start when EnableAutoMigrations is on.</summary>
@@ -35,7 +37,8 @@ public sealed class PostgresMigrationHostedService<TContext, TOptions> : IHosted
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.Schema);
         _logger.LogInformation("Running PostgreSQL migrations for {Context} (schema: {Schema})", typeof(TContext).Name, options.Schema);
 
-        await using var context = PostgresSchema.CreateContext<TContext>(options.ConnectionString, options.Schema);
+        var connectionString = new NpgsqlConnectionStringBuilder(options.ConnectionString) { SearchPath = options.Schema }.ConnectionString;
+        await using var context = PostgresSchema.CreateContext<TContext>(connectionString, options.Schema);
         await PostgresSchema.EnsureAsync(context, options.Schema, ct).ConfigureAwait(false);
         await context.Database.MigrateAsync(ct).ConfigureAwait(false);
         _logger.LogInformation("PostgreSQL migrations completed for {Context}", typeof(TContext).Name);

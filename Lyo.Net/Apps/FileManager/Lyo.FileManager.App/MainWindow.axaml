@@ -1,0 +1,192 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:app="using:Lyo.FileManager.App"
+        xmlns:ui="using:Lyo.Desktop.Components"
+        x:Class="Lyo.FileManager.App.MainWindow"
+        x:CompileBindings="False"
+        Title="lyo-files"
+        Width="1100"
+        Height="720"
+        Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+        WindowStartupLocation="CenterScreen"
+        KeyDown="OnKeyDown"
+        Opened="OnOpened">
+    <Grid>
+    <DockPanel x:Name="Shell">
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_Server">
+                <MenuItem Header="_Add..." Click="OnAddServer"/>
+                <MenuItem Header="_Rename..." Click="OnRenameServer"/>
+                <MenuItem Header="_Remove" Click="OnRemoveServer"/>
+                <Separator/>
+                <MenuItem Header="_Authenticate..." Click="OnAuthenticate"/>
+                <MenuItem Header="_Connect" Click="OnConnect"/>
+            </MenuItem>
+            <MenuItem Header="_File">
+                <MenuItem Header="_Upload..." Click="OnUpload"/>
+                <MenuItem Header="_Download..." Click="OnDownload"/>
+                <MenuItem Header="_Zip..." Click="OnZip"/>
+                <MenuItem Header="_New folder..." Click="OnNewFolder"/>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Rename..." Click="OnRename" InputGesture="F2"/>
+                <MenuItem x:Name="EditMove" Header="_Move..." Click="OnMove"/>
+                <MenuItem x:Name="EditCopy" Header="_Copy..." Click="OnCopy"/>
+                <MenuItem Header="_Delete" Click="OnDelete" InputGesture="Delete"/>
+            </MenuItem>
+            <MenuItem Header="_Keys">
+                <MenuItem Header="_Key stores..." Click="OnKeyStore"/>
+                <Separator/>
+                <MenuItem x:Name="KeysAccess" Header="_Access link..." Click="OnAccessLink"/>
+                <MenuItem x:Name="KeysPresigned" Header="_Presigned read" Click="OnPresigned"/>
+                <MenuItem x:Name="KeysRotate" Header="_Rotate DEKs..." Click="OnRotate"/>
+                <MenuItem x:Name="KeysMigrate" Header="_Migrate keys..." Click="OnMigrate"/>
+            </MenuItem>
+            <MenuItem Header="_View" SubmenuOpened="OnViewOpened">
+                <MenuItem x:Name="ViewTree" Header="_Tree" ToggleType="CheckBox" Click="OnToggleTree"/>
+                <MenuItem x:Name="ViewMetadata" Header="_Metadata" ToggleType="CheckBox" Click="OnToggleMetadata"/>
+                <MenuItem x:Name="ViewLog" Header="_Log" ToggleType="CheckBox" Click="OnToggleLog"/>
+                <Separator/>
+                <MenuItem Header="_Files" Click="OnShowFiles"/>
+                <MenuItem Header="_Query" Click="OnShowQuery"/>
+                <MenuItem x:Name="ViewTreeFiles" Header="Files in _tree" ToggleType="CheckBox" Click="OnToggleTreeFiles"/>
+                <MenuItem Header="_Reset layout" Click="OnResetLayout"/>
+                <Separator/>
+                <MenuItem Header="_Dock to edge" Click="OnDock"/>
+            </MenuItem>
+        </Menu>
+        <ui:Tabber x:Name="Connections" DockPanel.Dock="Top"/>
+        <Border DockPanel.Dock="Top" Padding="8,6" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Refresh" Click="OnRefresh"/>
+                    <Button Content="Upload" Click="OnUpload"/>
+                    <Button Content="New folder" Click="OnNewFolder"/>
+                    <Button Content="Delete" Click="OnDelete"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="8">
+                    <ComboBox x:Name="KeyStoreBox" Width="180" PlaceholderText="Key store"/>
+                    <ComboBox x:Name="ServerBox" Width="220" PlaceholderText="Server" SelectionChanged="OnServerChanged"/>
+                    <Button Content="Connect" Click="OnConnect"/>
+                    <Button Content="Up" Click="OnUp"/>
+                </StackPanel>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="Breadcrumb" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center"/>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+        <Grid x:Name="DockArea">
+            <Grid x:Name="DockHost"/>
+            <Border x:Name="DropLeft" IsVisible="False" IsHitTestVisible="False" HorizontalAlignment="Left" Width="48" Background="#4080b0ff"/>
+            <Border x:Name="DropRight" IsVisible="False" IsHitTestVisible="False" HorizontalAlignment="Right" Width="48" Background="#4080b0ff"/>
+            <Border x:Name="DropBottom" IsVisible="False" IsHitTestVisible="False" VerticalAlignment="Bottom" Height="48" Background="#4080b0ff"/>
+            <Grid x:Name="Parts" IsVisible="False" IsHitTestVisible="False">
+            <DockPanel x:Name="TreePanel" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <TextBox x:Name="TreeSearch" DockPanel.Dock="Top" PlaceholderText="Search folders" Margin="4" TextChanged="OnTreeSearch"/>
+                <TreeView x:Name="Folders" SelectionMode="Multiple" SelectionChanged="OnFolderSelected" DoubleTapped="OnTreeDoubleTapped">
+                    <TreeView.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Open" Click="OnOpen"/>
+                            <MenuItem Header="New folder..." Click="OnNewFolder"/>
+                            <MenuItem Header="Rename..." Click="OnRename"/>
+                            <MenuItem x:Name="FolderMove" Header="Move..." Click="OnMove"/>
+                            <MenuItem x:Name="FolderCopy" Header="Copy..." Click="OnCopy"/>
+                            <MenuItem Header="Delete" Click="OnDelete"/>
+                            <MenuItem Header="Download..." Click="OnDownload"/>
+                            <MenuItem Header="Zip..." Click="OnZip"/>
+                        </ContextMenu>
+                    </TreeView.ContextMenu>
+                    <TreeView.ItemTemplate>
+                        <TreeDataTemplate x:DataType="app:FolderNode" ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowLabel}">
+                                <Border Width="16" Height="16" ClipToBounds="True" VerticalAlignment="Center">
+                                    <ui:FileGlyphView Glyph="{Binding Glyph}" Width="16" Height="16"/>
+                                </Border>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </TreeDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+            </DockPanel>
+            <ScrollViewer x:Name="MetadataPanel" HorizontalScrollBarVisibility="Disabled" Background="{DynamicResource SystemControlBackgroundChromeBlackHighBrush}">
+                <StackPanel x:Name="MetaRows" HorizontalAlignment="Stretch" Spacing="0"/>
+            </ScrollViewer>
+            <ui:LogView x:Name="AppLog" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+            <Border x:Name="CenterFrame" BorderThickness="1" CornerRadius="4" BorderBrush="#5C677A" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}">
+            <Grid x:Name="CenterPanel" RowDefinitions="Auto,*">
+                <StackPanel x:Name="FileBar" Orientation="Horizontal" Margin="4" Spacing="6">
+                    <TextBox x:Name="ListSearch" PlaceholderText="Filter this folder" Width="240" TextChanged="OnListSearch"/>
+                </StackPanel>
+                <StackPanel x:Name="QueryBar" Orientation="Horizontal" Margin="4" Spacing="6" IsVisible="False">
+                    <TextBox x:Name="NameFilter" PlaceholderText="Name contains" Width="200"/>
+                    <TextBox x:Name="PrefixFilter" PlaceholderText="Path prefix" Width="200"/>
+                    <Button Content="Run" Click="OnRunQuery"/>
+                </StackPanel>
+                <DataGrid x:Name="Files" Grid.Row="1" AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="True"
+                          CanUserReorderColumns="True" HorizontalScrollBarVisibility="Auto" RowHeight="32"
+                          IsReadOnly="True" SelectionMode="Extended" GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                          Background="Transparent" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                          RowBackground="Transparent"
+                          SelectionChanged="OnFileSelected" DoubleTapped="OnFileDoubleTapped">
+                    <DataGrid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Open" Click="OnOpen"/>
+                            <MenuItem Header="Rename..." Click="OnRename"/>
+                            <MenuItem x:Name="FileMove" Header="Move..." Click="OnMove"/>
+                            <MenuItem x:Name="FileCopy" Header="Copy..." Click="OnCopy"/>
+                            <MenuItem Header="Delete" Click="OnDelete"/>
+                            <MenuItem Header="Download..." Click="OnDownload"/>
+                            <MenuItem Header="Zip..." Click="OnZip"/>
+                            <MenuItem x:Name="FileAccess" Header="Access link..." Click="OnAccessLink"/>
+                            <MenuItem x:Name="FilePresigned" Header="Presigned read" Click="OnPresigned"/>
+                            <MenuItem x:Name="FileRotate" Header="Rotate DEKs..." Click="OnRotate"/>
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="Name" Width="280" MinWidth="120" CanUserResize="True" SortMemberPath="Name">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Border Width="16" Height="16" ClipToBounds="True" VerticalAlignment="Center">
+                                            <ui:FileGlyphView Glyph="{Binding Glyph}" Width="16" Height="16"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Size" Binding="{Binding SizeLabel}" Width="100" MinWidth="72" CanUserResize="True"/>
+                        <DataGridTemplateColumn Header="Type" Width="110" MinWidth="72" CanUserResize="True" SortMemberPath="TypeLabel">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ui:Chip Text="{Binding TypeLabel}" Hue="{Binding TypeHue}" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Compressed" Width="120" MinWidth="80" CanUserResize="True" SortMemberPath="CompressionLabel">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ui:Chip Text="{Binding CompressionLabel}" Hue="{Binding CompressionHue}" IsVisible="{Binding ShowCompression}" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Encrypted" Width="150" MinWidth="80" CanUserResize="True" SortMemberPath="EncryptionLabel">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ui:Chip Text="{Binding EncryptionLabel}" Hue="{Binding EncryptionHue}" IsVisible="{Binding ShowEncryption}" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Prefix" Binding="{Binding Prefix}" Width="180" MinWidth="80" CanUserResize="True" IsVisible="False"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <TextBlock x:Name="EmptyState" Grid.Row="1" Text="Add a server and connect." HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            </Grid>
+            </Border>
+        </Grid>
+        </Grid>
+    </DockPanel>
+    <ui:EdgeDockBar x:Name="DockBar" IsVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top" ToolTip.Tip="Open files"/>
+    </Grid>
+</Window>

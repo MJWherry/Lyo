@@ -1,0 +1,1752 @@
+{
+  "type": "micro",
+  "groups": [
+    {
+      "name": "TomlConvertBenchmarks",
+      "description": "Converts a TOML document of RowCount SampleRecords to JSON and back. Captures the read-then-rewrite cost between the two document forms.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows in the source document (100 to 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record. ConvertToJson starts from TOML text. ConvertFromJson starts from the JSON that conversion produced."
+      },
+      "measurements": [
+        {
+          "method": "ConvertToJson",
+          "description": "Convert the TOML document to a JSON string (baseline).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 469552.28095703124,
+          "stdDevNs": 6173.250727108876,
+          "allocatedBytes": 227924,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds."
+        },
+        {
+          "method": "ConvertFromJson",
+          "description": "Convert the JSON document back to a TOML string.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 208316.6841796875,
+          "stdDevNs": 2573.8432436591547,
+          "allocatedBytes": 326840,
+          "ratioToBaseline": 0.4436496054392515,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds."
+        },
+        {
+          "method": "ConvertToJson",
+          "description": "Convert the TOML document to a JSON string (baseline).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 4681555.790625,
+          "stdDevNs": 35511.854901580715,
+          "allocatedBytes": 2222167,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds."
+        },
+        {
+          "method": "ConvertFromJson",
+          "description": "Convert the JSON document back to a TOML string.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2525999.1107536764,
+          "stdDevNs": 48228.10295422152,
+          "allocatedBytes": 3258582,
+          "ratioToBaseline": 0.5395640303618915,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds."
+        },
+        {
+          "method": "ConvertToJson",
+          "description": "Convert the TOML document to a JSON string (baseline).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 68450072.94642857,
+          "stdDevNs": 597169.0912086989,
+          "allocatedBytes": 22506068,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds."
+        },
+        {
+          "method": "ConvertFromJson",
+          "description": "Convert the JSON document back to a TOML string.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 52020046.729166664,
+          "stdDevNs": 1147834.1715595191,
+          "allocatedBytes": 33024268,
+          "ratioToBaseline": 0.7599706543757723,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds."
+        },
+        {
+          "method": "ConvertToJson",
+          "description": "Convert the TOML document to a JSON string (baseline).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 685852682,
+          "stdDevNs": 4633834.1358723,
+          "allocatedBytes": 224814928,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds."
+        },
+        {
+          "method": "ConvertFromJson",
+          "description": "Convert the JSON document back to a TOML string.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 581951398.5535715,
+          "stdDevNs": 24839638.212426484,
+          "allocatedBytes": 330502888,
+          "ratioToBaseline": 0.8485078703148842,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds."
+        }
+      ]
+    },
+    {
+      "name": "TomlEncodingBenchmarks",
+      "description": "Round-trips SampleRecords through TOML in UTF-8, UTF-16, and UTF-32. Export writes typed rows to bytes. Parse reads those bytes back into typed rows. UTF-8 is the baseline.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows round-tripped (10,000 or 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record; only the byte encoding differs between algorithms."
+      },
+      "measurements": [
+        {
+          "method": "Utf8_Export",
+          "description": "Serialize the rows to UTF-8 TOML bytes (baseline encoding).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 55142240.309523806,
+          "stdDevNs": 1049186.5733639707,
+          "allocatedBytes": 37457374,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Export",
+          "description": "Serialize the rows to UTF-16 TOML bytes.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 56521396.56666667,
+          "stdDevNs": 1013099.8934125906,
+          "allocatedBytes": 38998176,
+          "ratioToBaseline": 1.025010885473666,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Export",
+          "description": "Serialize the rows to UTF-32 TOML bytes.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 60230022.609375,
+          "stdDevNs": 1060228.5109952474,
+          "allocatedBytes": 42080104,
+          "ratioToBaseline": 1.0922665142238057,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf8_Parse",
+          "description": "Parse UTF-8 TOML bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 71961976.84722222,
+          "stdDevNs": 1817521.4224051707,
+          "allocatedBytes": 29304683,
+          "ratioToBaseline": 1.3050245409560086,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Parse",
+          "description": "Parse UTF-16 TOML bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 73344331.56349204,
+          "stdDevNs": 2669375.712453967,
+          "allocatedBytes": 30847072,
+          "ratioToBaseline": 1.3300934302233,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Parse",
+          "description": "Parse UTF-32 TOML bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 84972674.45333333,
+          "stdDevNs": 2185880.4305679933,
+          "allocatedBytes": 33927885,
+          "ratioToBaseline": 1.5409724736674766,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf8_Export",
+          "description": "Serialize the rows to UTF-8 TOML bytes (baseline encoding).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 570682830,
+          "stdDevNs": 4522109.08263679,
+          "allocatedBytes": 376019048,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Export",
+          "description": "Serialize the rows to UTF-16 TOML bytes.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 599140994.1481482,
+          "stdDevNs": 16593797.42377587,
+          "allocatedBytes": 391825064,
+          "ratioToBaseline": 1.049866865887919,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Export",
+          "description": "Serialize the rows to UTF-32 TOML bytes.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 679911459.3571428,
+          "stdDevNs": 6498823.03446068,
+          "allocatedBytes": 423437280,
+          "ratioToBaseline": 1.1913998873194465,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf8_Parse",
+          "description": "Parse UTF-8 TOML bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 740898155,
+          "stdDevNs": 8958144.502905004,
+          "allocatedBytes": 293518056,
+          "ratioToBaseline": 1.29826607013917,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf16_Parse",
+          "description": "Parse UTF-16 TOML bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 769076170.7333333,
+          "stdDevNs": 4703202.501575685,
+          "allocatedBytes": 309326880,
+          "ratioToBaseline": 1.3476420356528571,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        },
+        {
+          "method": "Utf32_Parse",
+          "description": "Parse UTF-32 TOML bytes back into typed rows.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 896835281.6923077,
+          "stdDevNs": 5653179.396481202,
+          "allocatedBytes": 340939616,
+          "ratioToBaseline": 1.5715126416056844,
+          "isBaseline": false,
+          "slaTarget": "<= 3000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding."
+        }
+      ]
+    },
+    {
+      "name": "TomlNestedBenchmarks",
+      "description": "Serializes and parses NestedRecord rows. TOML keeps Address and Geo as nested tables.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of NestedRecord rows round-tripped (1,000 or 10,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "NestedRecord",
+        "columnCount": 3,
+        "maxNestingDepth": 2,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Address",
+            "type": "NestedAddress",
+            "kind": "object",
+            "children": [
+              {
+                "name": "City",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "Country",
+                "type": "string",
+                "kind": "scalar"
+              },
+              {
+                "name": "PostalCode",
+                "type": "int",
+                "kind": "scalar"
+              },
+              {
+                "name": "Geo",
+                "type": "NestedGeo",
+                "kind": "object",
+                "children": [
+                  {
+                    "name": "Latitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  },
+                  {
+                    "name": "Longitude",
+                    "type": "double",
+                    "kind": "scalar"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": "Address nests a Geo coordinate (depth 2). TOML preserves the object graph."
+      },
+      "measurements": [
+        {
+          "method": "ExportNestedBytes",
+          "description": "Serialize the nested records to TOML bytes.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 3822751.0959821427,
+          "stdDevNs": 64231.17286767813,
+          "allocatedBytes": 4812779,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through TOML should stay within a couple of seconds."
+        },
+        {
+          "method": "ParseNestedBytes",
+          "description": "Parse the TOML bytes back into typed NestedRecords.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 6636243.845424107,
+          "stdDevNs": 39967.426934787305,
+          "allocatedBytes": 3889442,
+          "ratioToBaseline": 1.7359863822677477,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through TOML should stay within a couple of seconds."
+        },
+        {
+          "method": "ExportNestedBytes",
+          "description": "Serialize the nested records to TOML bytes.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 86873812.9111111,
+          "stdDevNs": 1206545.958740628,
+          "allocatedBytes": 48420829,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through TOML should stay within a couple of seconds."
+        },
+        {
+          "method": "ParseNestedBytes",
+          "description": "Parse the TOML bytes back into typed NestedRecords.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 95485835.06666668,
+          "stdDevNs": 2092330.4267119942,
+          "allocatedBytes": 39225531,
+          "ratioToBaseline": 1.0991325448598344,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Round-tripping up to 10k nested records through TOML should stay within a couple of seconds."
+        }
+      ]
+    },
+    {
+      "name": "TomlReadBenchmarks",
+      "description": "Parses a TOML array of tables of RowCount SampleRecords from bytes, a string, a UTF-8 span, a stream, a file, and the async byte path.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows in the document (100 to 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record serialized as [[items]] tables."
+      },
+      "measurements": [
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 495422.7459635417,
+          "stdDevNs": 8184.2061767882215,
+          "allocatedBytes": 292492,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseString",
+          "description": "Parse all rows into typed SampleRecords from a TOML string.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 483317.91064453125,
+          "stdDevNs": 2289.753974892415,
+          "allocatedBytes": 248275,
+          "ratioToBaseline": 0.9755666540996863,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseSpan",
+          "description": "Parse all rows into typed SampleRecords from a UTF-8 span.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 486416.1063058036,
+          "stdDevNs": 4769.075867823178,
+          "allocatedBytes": 292492,
+          "ratioToBaseline": 0.9818202944230564,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 485786.7384207589,
+          "stdDevNs": 3605.016688768107,
+          "allocatedBytes": 313913,
+          "ratioToBaseline": 0.9805499290832079,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 492305.5787760417,
+          "stdDevNs": 4559.536294412656,
+          "allocatedBytes": 318212,
+          "ratioToBaseline": 0.9937080660649978,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed list via the async byte path.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 494964.4971454327,
+          "stdDevNs": 2805.864495888568,
+          "allocatedBytes": 292636,
+          "ratioToBaseline": 0.999075034762044,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 5115049.559895833,
+          "stdDevNs": 43219.90752066353,
+          "allocatedBytes": 2874114,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseString",
+          "description": "Parse all rows into typed SampleRecords from a TOML string.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 5081625.841145833,
+          "stdDevNs": 32285.46199854234,
+          "allocatedBytes": 2422647,
+          "ratioToBaseline": 0.9934656119440062,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseSpan",
+          "description": "Parse all rows into typed SampleRecords from a UTF-8 span.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 5118264.452566965,
+          "stdDevNs": 69113.28087751644,
+          "allocatedBytes": 2874282,
+          "ratioToBaseline": 1.0006285164265734,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 5233210.6513671875,
+          "stdDevNs": 97988.82545936489,
+          "allocatedBytes": 3033412,
+          "ratioToBaseline": 1.0231006738229456,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 5202655.533333333,
+          "stdDevNs": 39980.31251649334,
+          "allocatedBytes": 3037698,
+          "ratioToBaseline": 1.0171271015875132,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed list via the async byte path.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 5113499.15625,
+          "stdDevNs": 45354.068904340325,
+          "allocatedBytes": 2874085,
+          "ratioToBaseline": 0.9996968937196643,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 70737762.38095239,
+          "stdDevNs": 672528.527327563,
+          "allocatedBytes": 29305504,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseString",
+          "description": "Parse all rows into typed SampleRecords from a TOML string.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 71975442.60784313,
+          "stdDevNs": 1409656.066212346,
+          "allocatedBytes": 24681557,
+          "ratioToBaseline": 1.01749673986329,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseSpan",
+          "description": "Parse all rows into typed SampleRecords from a UTF-8 span.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 72896836.38775508,
+          "stdDevNs": 585789.9326509408,
+          "allocatedBytes": 29305610,
+          "ratioToBaseline": 1.0305222265184921,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 70960477.63636364,
+          "stdDevNs": 1680035.3605287487,
+          "allocatedBytes": 30873857,
+          "ratioToBaseline": 1.0031484633937364,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 71607708.16149066,
+          "stdDevNs": 1786792.697453369,
+          "allocatedBytes": 30878634,
+          "ratioToBaseline": 1.0122981806500078,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed list via the async byte path.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 72089599.86813186,
+          "stdDevNs": 766257.2561610432,
+          "allocatedBytes": 29304830,
+          "ratioToBaseline": 1.019110549184455,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseBytes",
+          "description": "Parse all rows into typed SampleRecords from an in-memory byte buffer (baseline).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 757662223.3076923,
+          "stdDevNs": 4601488.894357825,
+          "allocatedBytes": 293520128,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseString",
+          "description": "Parse all rows into typed SampleRecords from a TOML string.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 746782541.7333333,
+          "stdDevNs": 10776358.667288432,
+          "allocatedBytes": 246103544,
+          "ratioToBaseline": 0.9856404592446724,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseSpan",
+          "description": "Parse all rows into typed SampleRecords from a UTF-8 span.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 768185951.7333333,
+          "stdDevNs": 9539341.805947684,
+          "allocatedBytes": 293520824,
+          "ratioToBaseline": 1.0138897362200507,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseStream",
+          "description": "Parse all rows into typed SampleRecords from a MemoryStream.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 767679283.2857143,
+          "stdDevNs": 4740650.589126323,
+          "allocatedBytes": 309485392,
+          "ratioToBaseline": 1.0132210101940822,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseFile",
+          "description": "Parse rows from disk into typed SampleRecords.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 779489466.0714285,
+          "stdDevNs": 4670101.129069583,
+          "allocatedBytes": 309490320,
+          "ratioToBaseline": 1.0288086723770469,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ParseBytesAsync",
+          "description": "Parse all rows into a typed list via the async byte path.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 758355576.3571428,
+          "stdDevNs": 9988697.693540432,
+          "allocatedBytes": 293518968,
+          "ratioToBaseline": 1.0009151215780874,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Parsing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        }
+      ]
+    },
+    {
+      "name": "TomlWriteBenchmarks",
+      "description": "Serializes RowCount SampleRecords to TOML across the same write surfaces as CSV: bytes, string, stream, file, and the async byte path, plus a pre-sized span.",
+      "parameters": [
+        {
+          "name": "RowCount",
+          "unit": "rows",
+          "description": "Number of SampleRecord rows serialized (100 to 100,000)."
+        }
+      ],
+      "dataset": {
+        "typeName": "SampleRecord",
+        "columnCount": 7,
+        "maxNestingDepth": 0,
+        "columns": [
+          {
+            "name": "Id",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Name",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "kind": "scalar"
+          },
+          {
+            "name": "Age",
+            "type": "int",
+            "kind": "scalar"
+          },
+          {
+            "name": "Balance",
+            "type": "decimal",
+            "kind": "scalar"
+          },
+          {
+            "name": "IsActive",
+            "type": "bool",
+            "kind": "scalar"
+          },
+          {
+            "name": "CreatedAt",
+            "type": "DateTime",
+            "kind": "scalar"
+          }
+        ],
+        "notes": "Flat 7-column record generated by SampleRecord.Generate."
+      },
+      "measurements": [
+        {
+          "method": "ExportBytes",
+          "description": "Serialize the typed record list straight to UTF-8 TOML bytes (baseline).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 217150.70034555288,
+          "stdDevNs": 2275.6606158882687,
+          "allocatedBytes": 369502,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportString",
+          "description": "Serialize the typed record list to a TOML string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 232545.58999399038,
+          "stdDevNs": 1789.030952840722,
+          "allocatedBytes": 354756,
+          "ratioToBaseline": 1.070894957391063,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportStream",
+          "description": "Serialize the typed record list into a MemoryStream.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 228375.0251953125,
+          "stdDevNs": 5995.654498968024,
+          "allocatedBytes": 384312,
+          "ratioToBaseline": 1.0516891026918096,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportFile",
+          "description": "Serialize the typed record list to a file on disk.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 243745.640625,
+          "stdDevNs": 4715.326025677568,
+          "allocatedBytes": 369580,
+          "ratioToBaseline": 1.1224722749552567,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportBytesAsync",
+          "description": "Serialize the typed record list to TOML bytes via the async path.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 219505.14186789774,
+          "stdDevNs": 5313.857707982052,
+          "allocatedBytes": 369646,
+          "ratioToBaseline": 1.0108424311715238,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "TryExport",
+          "description": "Serialize the rows into a pre-sized UTF-8 span.",
+          "parameters": {
+            "RowCount": "100"
+          },
+          "meanNs": 217058.958984375,
+          "stdDevNs": 3666.833296864655,
+          "allocatedBytes": 369502,
+          "ratioToBaseline": 0.9995775221492176,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportBytes",
+          "description": "Serialize the typed record list straight to UTF-8 TOML bytes (baseline).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2696214.701041667,
+          "stdDevNs": 19552.964583702,
+          "allocatedBytes": 3691015,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportString",
+          "description": "Serialize the typed record list to a TOML string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2689868.833934295,
+          "stdDevNs": 91976.69232951062,
+          "allocatedBytes": 3540550,
+          "ratioToBaseline": 0.9976463791607841,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportStream",
+          "description": "Serialize the typed record list into a MemoryStream.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2807738.1684570312,
+          "stdDevNs": 86493.05723727481,
+          "allocatedBytes": 3841334,
+          "ratioToBaseline": 1.0413629772778399,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportFile",
+          "description": "Serialize the typed record list to a file on disk.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2875092.1824776786,
+          "stdDevNs": 24053.312587704724,
+          "allocatedBytes": 3691222,
+          "ratioToBaseline": 1.0663439307585199,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportBytesAsync",
+          "description": "Serialize the typed record list to TOML bytes via the async path.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2749051.426339286,
+          "stdDevNs": 25692.257984750904,
+          "allocatedBytes": 3691159,
+          "ratioToBaseline": 1.0195966312613034,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "TryExport",
+          "description": "Serialize the rows into a pre-sized UTF-8 span.",
+          "parameters": {
+            "RowCount": "1000"
+          },
+          "meanNs": 2706979.8251201925,
+          "stdDevNs": 32647.78752189751,
+          "allocatedBytes": 3691015,
+          "ratioToBaseline": 1.0039926805808035,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportBytes",
+          "description": "Serialize the typed record list straight to UTF-8 TOML bytes (baseline).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 55118783.97692307,
+          "stdDevNs": 746134.1260113213,
+          "allocatedBytes": 37458206,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportString",
+          "description": "Serialize the typed record list to a TOML string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 54228521.666666664,
+          "stdDevNs": 650690.4076326643,
+          "allocatedBytes": 35916404,
+          "ratioToBaseline": 0.9838482955170212,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportStream",
+          "description": "Serialize the typed record list into a MemoryStream.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 55375543.36111111,
+          "stdDevNs": 1436426.7764556676,
+          "allocatedBytes": 38998235,
+          "ratioToBaseline": 1.004658291886402,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportFile",
+          "description": "Serialize the typed record list to a file on disk.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 55090748.25,
+          "stdDevNs": 796788.1647209134,
+          "allocatedBytes": 37457572,
+          "ratioToBaseline": 0.999491358028965,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportBytesAsync",
+          "description": "Serialize the typed record list to TOML bytes via the async path.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 55110658.928571425,
+          "stdDevNs": 863455.3554715741,
+          "allocatedBytes": 37457852,
+          "ratioToBaseline": 0.9998525902103529,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "TryExport",
+          "description": "Serialize the rows into a pre-sized UTF-8 span.",
+          "parameters": {
+            "RowCount": "10000"
+          },
+          "meanNs": 54250280.188034184,
+          "stdDevNs": 519174.589136043,
+          "allocatedBytes": 37457613,
+          "ratioToBaseline": 0.9842430524364887,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportBytes",
+          "description": "Serialize the typed record list straight to UTF-8 TOML bytes (baseline).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 574366969.2666667,
+          "stdDevNs": 9490976.920339756,
+          "allocatedBytes": 376019152,
+          "ratioToBaseline": 1,
+          "isBaseline": true,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportString",
+          "description": "Serialize the typed record list to a TOML string (extra UTF-16 materialization vs bytes).",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 559959204.8666667,
+          "stdDevNs": 5249452.878339715,
+          "allocatedBytes": 360213152,
+          "ratioToBaseline": 0.9749154022237815,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportStream",
+          "description": "Serialize the typed record list into a MemoryStream.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 583230570.5,
+          "stdDevNs": 8785073.04854116,
+          "allocatedBytes": 391825256,
+          "ratioToBaseline": 1.0154319480534373,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportFile",
+          "description": "Serialize the typed record list to a file on disk.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 577510226.0714285,
+          "stdDevNs": 6780264.331238596,
+          "allocatedBytes": 376019392,
+          "ratioToBaseline": 1.0054725584390327,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "ExportBytesAsync",
+          "description": "Serialize the typed record list to TOML bytes via the async path.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 571577889,
+          "stdDevNs": 8001102.396918109,
+          "allocatedBytes": 376019216,
+          "ratioToBaseline": 0.9951440796286951,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        },
+        {
+          "method": "TryExport",
+          "description": "Serialize the rows into a pre-sized UTF-8 span.",
+          "parameters": {
+            "RowCount": "100000"
+          },
+          "meanNs": 571728224.2142857,
+          "stdDevNs": 9936480.38694948,
+          "allocatedBytes": 376019152,
+          "ratioToBaseline": 0.9954058203316427,
+          "isBaseline": false,
+          "slaTarget": "<= 2000 ms",
+          "slaResult": "Exceeds",
+          "slaStandard": "Serializing up to 100k TOML records should stay within a couple of seconds on the byte path."
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "baseline": "Utf8",
+    "description": "Round-trips SampleRecords through TOML in UTF-8, UTF-16, and UTF-32. Export writes typed rows to bytes. Parse reads those bytes back into typed rows. UTF-8 is the baseline.",
+    "parameters": [
+      {
+        "name": "RowCount",
+        "unit": "rows",
+        "description": "Number of SampleRecord rows round-tripped (10,000 or 100,000)."
+      }
+    ],
+    "groups": [
+      {
+        "axis": "Export",
+        "rows": [
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 55142240.309523806,
+            "allocatedBytes": 37457374,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 56521396.56666667,
+            "allocatedBytes": 38998176,
+            "ratioToBaseline": 1.025010885473666,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 60230022.609375,
+            "allocatedBytes": 42080104,
+            "ratioToBaseline": 1.0922665142238057,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 570682830,
+            "allocatedBytes": 376019048,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 599140994.1481482,
+            "allocatedBytes": 391825064,
+            "ratioToBaseline": 1.049866865887919,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 679911459.3571428,
+            "allocatedBytes": 423437280,
+            "ratioToBaseline": 1.1913998873194465,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          }
+        ]
+      },
+      {
+        "axis": "Parse",
+        "rows": [
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 71961976.84722222,
+            "allocatedBytes": 29304683,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 73344331.56349204,
+            "allocatedBytes": 30847072,
+            "ratioToBaseline": 1.0192095155918883,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "10000"
+            },
+            "paramLabel": "10,000",
+            "meanNs": 84972674.45333333,
+            "allocatedBytes": 33927885,
+            "ratioToBaseline": 1.1807996135755592,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf8",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 740898155,
+            "allocatedBytes": 293518056,
+            "ratioToBaseline": 1,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf16",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 769076170.7333333,
+            "allocatedBytes": 309326880,
+            "ratioToBaseline": 1.0380322390374064,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          },
+          {
+            "algorithm": "Utf32",
+            "parameters": {
+              "RowCount": "100000"
+            },
+            "paramLabel": "100,000",
+            "meanNs": 896835281.6923077,
+            "allocatedBytes": 340939616,
+            "ratioToBaseline": 1.2104703941290118,
+            "slaTarget": "<= 3000 ms",
+            "slaResult": "Exceeds"
+          }
+        ]
+      }
+    ]
+  },
+  "slo": [
+    {
+      "area": "ConvertFromJson",
+      "target": "<= 2000 ms \u2014 Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds.",
+      "latest": "208.32 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ConvertToJson",
+      "target": "<= 2000 ms \u2014 Converting up to 100k TOML rows to or from JSON should stay within a couple of seconds.",
+      "latest": "469.55 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportBytes",
+      "target": "<= 2000 ms \u2014 Serializing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "217.15 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportBytesAsync",
+      "target": "<= 2000 ms \u2014 Serializing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "219.51 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportFile",
+      "target": "<= 2000 ms \u2014 Serializing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "243.75 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportNestedBytes",
+      "target": "<= 2000 ms \u2014 Round-tripping up to 10k nested records through TOML should stay within a couple of seconds.",
+      "latest": "3.82 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportStream",
+      "target": "<= 2000 ms \u2014 Serializing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "228.38 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ExportString",
+      "target": "<= 2000 ms \u2014 Serializing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "232.55 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseBytes",
+      "target": "<= 2000 ms \u2014 Parsing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "495.42 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseBytesAsync",
+      "target": "<= 2000 ms \u2014 Parsing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "494.96 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseFile",
+      "target": "<= 2000 ms \u2014 Parsing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "492.31 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseNestedBytes",
+      "target": "<= 2000 ms \u2014 Round-tripping up to 10k nested records through TOML should stay within a couple of seconds.",
+      "latest": "6.64 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseSpan",
+      "target": "<= 2000 ms \u2014 Parsing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "486.42 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseStream",
+      "target": "<= 2000 ms \u2014 Parsing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "485.79 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "ParseString",
+      "target": "<= 2000 ms \u2014 Parsing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "483.32 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "TryExport",
+      "target": "<= 2000 ms \u2014 Serializing up to 100k TOML records should stay within a couple of seconds on the byte path.",
+      "latest": "217.06 \u00b5s",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf16_Export",
+      "target": "<= 3000 ms \u2014 Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding.",
+      "latest": "56.52 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf16_Parse",
+      "target": "<= 3000 ms \u2014 Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding.",
+      "latest": "73.34 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf32_Export",
+      "target": "<= 3000 ms \u2014 Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding.",
+      "latest": "60.23 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf32_Parse",
+      "target": "<= 3000 ms \u2014 Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding.",
+      "latest": "84.97 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf8_Export",
+      "target": "<= 3000 ms \u2014 Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding.",
+      "latest": "55.14 ms",
+      "result": "Exceeds"
+    },
+    {
+      "area": "Utf8_Parse",
+      "target": "<= 3000 ms \u2014 Round-trips of up to 100k TOML rows should stay within a few seconds regardless of encoding.",
+      "latest": "71.96 ms",
+      "result": "Exceeds"
+    }
+  ],
+  "grades": [
+    {
+      "category": "TomlConvertBenchmarks",
+      "grade": "A",
+      "rationale": "8 exceed of 8 SLA targets vs declared standards"
+    },
+    {
+      "category": "TomlEncodingBenchmarks",
+      "grade": "A",
+      "rationale": "12 exceed of 12 SLA targets vs declared standards"
+    },
+    {
+      "category": "TomlNestedBenchmarks",
+      "grade": "A",
+      "rationale": "4 exceed of 4 SLA targets vs declared standards"
+    },
+    {
+      "category": "TomlReadBenchmarks",
+      "grade": "A",
+      "rationale": "24 exceed of 24 SLA targets vs declared standards"
+    },
+    {
+      "category": "TomlWriteBenchmarks",
+      "grade": "A",
+      "rationale": "24 exceed of 24 SLA targets vs declared standards"
+    }
+  ],
+  "schema": "lyo.bench/v1",
+  "name": "toml",
+  "title": "TOML",
+  "description": "TOML write, read, nested, encoding, and JSON conversion for Lyo.Toml over a flat 7-column SampleRecord (int/string/decimal/bool/DateTime). Write covers bytes, string, stream, file, async, and a pre-sized span. Read covers the same sources. Encoding compares UTF-8, UTF-16, and UTF-32. NestedRecord round-trips a depth-2 address. RowCount is the number of records.",
+  "runId": "BenchmarkRun-joined-2026-10-06-23-04-42",
+  "generatedAt": "2026-10-07T03:04:42.4328261+00:00",
+  "runStarted": "2026-10-07T02:46:39.3201863+00:00",
+  "runEnded": "2026-10-07T03:04:42.4328261+00:00",
+  "durationSeconds": 1083.1126398,
+  "environment": {
+    "tool": "BenchmarkDotNet",
+    "toolVersion": "0.15.8",
+    "runtime": ".NET 10.0.12",
+    "cpu": "Intel(R) Core(TM) Ultra 7 155U",
+    "os": "Linux Mint 22.1",
+    "architecture": "X64",
+    "logicalCores": 14,
+    "physicalCores": 12,
+    "memoryBytes": 66857267200,
+    "gcMode": "Workstation",
+    "configuration": "Release",
+    "dotnetSdkVersion": "10.0.112",
+    "dependencies": {
+      "BenchmarkDotNet": "0.15.8",
+      "Microsoft.Extensions.Configuration.Binder": "10.0.5",
+      "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+      "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+      "System.Text.Encoding.CodePages": "10.0.5",
+      "Testcontainers.Redis": "4.13.0",
+      "Tomlyn": "2.10.1"
+    }
+  },
+  "notes": [],
+  "history": [
+    {
+      "file": "20261007T030442Z_BenchmarkRun-joined-2026-10-06-23-04-42.json",
+      "runId": "BenchmarkRun-joined-2026-10-06-23-04-42",
+      "runStarted": "2026-10-07T02:46:39.3201863+00:00",
+      "runEnded": "2026-10-07T03:04:42.4328261+00:00",
+      "generatedAt": "2026-10-07T03:04:42.4328261+00:00",
+      "isCurrent": true,
+      "measurementCount": 72,
+      "medianMeanNs": 55142240.309523806
+    }
+  ]
+}

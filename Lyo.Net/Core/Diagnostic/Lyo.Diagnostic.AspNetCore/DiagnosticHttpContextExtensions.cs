@@ -3,6 +3,7 @@ using Lyo.Diagnostic.Context;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Lyo.Exceptions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Diagnostic.AspNetCore;
 
@@ -51,6 +52,6 @@ public static class DiagnosticHttpContextExtensions
         if (!string.IsNullOrWhiteSpace(activityId))
             return activityId!;
 
-        return Guid.NewGuid().ToString("N");
+        return LyoGuid.CreateV7().ToString("N");
     }
 }

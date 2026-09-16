@@ -1,0 +1,20 @@
+<MudTabs @bind-ActivePanelIndex="_tabIndex" Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2">
+    <MudTabPanel Text="Recipes">
+        <RecipeGrid ApiClient="ApiClient"
+                    RecipeClient="RecipeClient"
+                    BaseRoute="@BaseRoute"
+                    FileStorageApiRoutePrefix="@FileStorageApiRoutePrefix"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Ingredients">
+        <IngredientGrid ApiClient="ApiClient"
+                        RecipeClient="RecipeClient"
+                        BaseRoute="@BaseRoute"
+                        FileStorageApiRoutePrefix="@FileStorageApiRoutePrefix"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Categories">
+        <RecipeCategoryGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Units">
+        <RecipeUnitGrid RecipeClient="RecipeClient"/>
+    </MudTabPanel>
+</MudTabs>

@@ -30,7 +30,7 @@ public static class Extensions
             var op = sp.GetService<IFileOperationContextAccessor>();
             var auditHandlers = sp.GetServices<IFileAuditEventHandler>();
             var policy = sp.GetService<IFileContentPolicy>();
-            return new(opts, metadataStore, ftp, loggerFactory, compression, encryption, metrics, op, auditHandlers, policy);
+            return new(opts, metadataStore, ftp, loggerFactory, compression, encryption, metrics, op, auditHandlers, policy, sp.GetService<IFileTypeSniffer>());
         });
     }
 

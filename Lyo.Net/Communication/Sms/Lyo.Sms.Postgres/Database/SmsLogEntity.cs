@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Sms.Postgres.Database;
 
@@ -7,7 +8,7 @@ public class SmsLogEntity
 {
     /// <summary>Primary key.</summary>
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = LyoGuid.CreateV7();
 
     /// <summary>Recipient number (E.164).</summary>
     [Required]

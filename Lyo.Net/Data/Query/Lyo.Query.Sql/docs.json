@@ -1,0 +1,115 @@
+{
+  "id": "Lyo.Query.Sql",
+  "name": "Lyo.Query.Sql",
+  "area": "Data",
+  "tagline": "Prints concrete, projection, and root query requests as parameterized Postgres SQL. No IQueryable and no EF query pipeline.",
+  "description": "Walks a `QueryConcreteReq`, `ProjectionQueryReq`, or `QueryReq` and returns command text plus positional parameters. Column names come from a caller-supplied `SqlColumnMap`, not from an EF model. The translator does not open a connection.\n\nString compares use `lower()`. `Contains` / `StartsWith` / `EndsWith` become `LIKE` with bound, escaped patterns. Fuzzy prints `similarity()` and does not require `pg_trgm` to be installed at translate time. Regex, collection paths, sub-clauses, computed fields, includes, and keys throw `SqlTranslationException`.\n\nTargets `net10.0`. Depends on `Lyo.Query.Models`.",
+  "features": [
+    "**Concrete.** `SELECT` of every mapped column, plus `WHERE`, `ORDER BY`, `OFFSET`, and `LIMIT`.",
+    "**Projection.** Listed scalar columns. Aggregates become `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, or `COUNT(DISTINCT)`, with `GROUP BY` when `Select` is the group key.",
+    "**Root.** `FROM` alias, `INNER` / `LEFT` / `RIGHT` / `FULL OUTER` joins, and `alias.property` paths.",
+    "**Parameters.** Values stay in `$1`, `$2`, … and are never interpolated."
+  ],
+  "examples": [
+    {
+      "title": "Translate a concrete filter",
+      "language": "csharp",
+      "code": "var map = new SqlColumnMap(\"people\", \"person\", new Dictionary<string, string> { [\"Status\"] = \"status\" });\nvar request = new QueryConcreteReq { WhereClause = new ConditionClause(\"Status\", ComparisonOperatorEnum.Equals, \"Active\") };\nvar sql = new SqlQueryTranslator().Translate(request, map);\n// SELECT \"status\" FROM \"people\".\"person\" WHERE lower(\"status\") = lower($1)"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Query/Lyo.Query.Sql/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

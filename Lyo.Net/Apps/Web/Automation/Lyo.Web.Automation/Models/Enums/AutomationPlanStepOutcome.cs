@@ -13,5 +13,8 @@ public enum AutomationPlanStepOutcome
     TimedOut,
 
     /// <summary>Some other exception from the step.</summary>
-    Failed
+    Failed,
+
+    /// <summary>The step was not executed because the run started at a later index.</summary>
+    Skipped
 }

@@ -1,0 +1,38 @@
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="JobWorkflowRunGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.RawId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      BeforeQuery="@ApplyQuery"
+                      AutoRefreshEnabled="true"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" title="View run details" aria-label="View workflow run details"
+                               OnClick="@(() => ViewRun(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Id" Title="ID" Identifier="true" HeaderStyle="width: 140px;" CellStyle="white-space: nowrap;"/>
+        <LyoProjectedColumn Field="JobWorkflow.Name" Title="Workflow"/>
+        <LyoProjectedColumn Field="State" Title="State" Align="Align.Center" HeaderStyle="width: 120px;">
+            <CellContent Context="item">
+                @{
+                    var stateText = ProjectedValueHelper.GetDisplayValue(item, "State");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<JobWorkflowRunState>(stateText, JobColorHelper.ForWorkflowRunState, JobColorHelper.WorkflowRunStateIcon))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="ScheduledSlotUtc" Title="Scheduled Slot" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="StartedTimestamp" Title="Started" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+        <LyoProjectedColumn Field="FinishedTimestamp" Title="Finished" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewRun(item))">View Details</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

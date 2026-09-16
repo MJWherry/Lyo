@@ -17,12 +17,12 @@ public class DirectUploadTests
             return o;
         });
 
-        var begin = await scope.Storage.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 8, OriginalFileName = "tiny.bin" }, TestContext.Current.CancellationToken);
+        var begin = await scope.Storage.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 8, OriginalFileName = "tiny.bin" }, TestCt);
 
         var oversized = new byte[32];
         await using var ms = new MemoryStream(oversized);
         await Assert.ThrowsAnyAsync<FilePolicyRejectedException>(async ()
-            => await scope.Storage.ReceiveDirectPutAsync(begin.FileId, ms, TestContext.Current.CancellationToken));
+            => await scope.Storage.ReceiveDirectPutAsync(begin.FileId, ms, TestCt));
     }
 
     [Fact]
@@ -36,8 +36,8 @@ public class DirectUploadTests
                 return o;
             }, new[] { sink });
 
-        var begin = await scope.Storage.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 1024, OriginalFileName = "missing.bin" }, TestContext.Current.CancellationToken);
-        await Assert.ThrowsAnyAsync<FileNotFoundException>(() => scope.Storage.CompleteDirectUploadAsync(begin.FileId, ct: TestContext.Current.CancellationToken));
+        var begin = await scope.Storage.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 1024, OriginalFileName = "missing.bin" }, TestCt);
+        await Assert.ThrowsAnyAsync<FileNotFoundException>(() => scope.Storage.CompleteDirectUploadAsync(begin.FileId, ct: TestCt));
         Assert.Contains(
             sink.Events,
             e => (e.EventType == FileAuditEventType.DirectUploadFailed || e.EventType == FileAuditEventType.DirectUploadComplete) && e.Outcome == FileAuditOutcome.Failure);

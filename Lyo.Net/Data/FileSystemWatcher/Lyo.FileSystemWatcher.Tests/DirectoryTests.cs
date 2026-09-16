@@ -168,7 +168,7 @@ public class DirectoryTests : IDisposable
             fired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(5));
     }
 

@@ -28,8 +28,21 @@ public sealed record DirectUploadBeginRequest
     /// <summary>Opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</summary>
     public JsonElement? Metadata { get; init; }
 
-    /// <summary>How long the URL stays valid. Starts at one hour when unset.</summary>
+    /// <summary>How long the URL stays valid. Starts at one hour when unset. Cannot exceed <see cref="FileStorageServiceBaseOptions.PendingDirectUploadTtl" />.</summary>
     public TimeSpan? UrlExpiration { get; init; }
+
+    /// <summary>
+    /// Optional SHA-256 (32 bytes) of the exact bytes the client will PUT. S3 signs it into the URL as <c>x-amz-checksum-sha256</c> and rejects a body that does not
+    /// match, so finalize needs no download. Backends that hash at finalize compare it only when their configured <c>HashAlgorithm</c> is SHA-256. A mismatch leaves
+    /// the upload pending.
+    /// </summary>
+    public byte[]? ExpectedSha256 { get; init; }
+
+    /// <summary>
+    /// Optional MD5 (16 bytes) of the exact bytes the client will PUT. Azure Blob returns it as a required <c>Content-MD5</c> header, validates the body on write, and
+    /// reports the stored digest at finalize. Ignored by backends that verify SHA-256 instead.
+    /// </summary>
+    public byte[]? ExpectedContentMd5 { get; init; }
 
     /// <inheritdoc />
     public override string ToString()

@@ -6,12 +6,13 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Tests.Fixtures;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Response;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests;
 
@@ -37,11 +38,11 @@ public class CompressionPostgresTests : IDisposable
         var id = await _fixture.SeedJobDefinitionAsync("CompressionGet");
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/Job/Definition/{id}");
         request.Headers.AcceptEncoding.Add(new("br"));
-        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await _client.SendAsync(request, TestCt);
         response.EnsureSuccessStatusCode();
         Assert.Contains("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
         Assert.Contains("Accept-Encoding", response.Headers.Vary, StringComparer.OrdinalIgnoreCase);
-        var compressedBytes = await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken);
+        var compressedBytes = await response.Content.ReadAsByteArrayAsync(TestCt);
         var jsonBytes = DecompressBrotli(compressedBytes);
         using var doc = JsonDocument.Parse(jsonBytes);
         var json = doc.RootElement.GetRawText();
@@ -63,9 +64,9 @@ public class CompressionPostgresTests : IDisposable
         content.Headers.ContentEncoding.Add("gzip");
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/Definition/QueryConcrete");
         request.Content = content;
-        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await _client.SendAsync(request, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -76,7 +77,7 @@ public class CompressionPostgresTests : IDisposable
     [Fact]
     public async Task ExportCsv_WithBrotliAcceptEncoding_ReturnsCompressedCsv()
     {
-        var name = $"CompressionCsv_{Guid.NewGuid():N}";
+        var name = $"CompressionCsv_{LyoGuid.CreateV7():N}";
         await _fixture.SeedJobDefinitionAsync(name);
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/JobDefinition/Export") {
             Content = JsonContent.Create(
@@ -85,17 +86,17 @@ public class CompressionPostgresTests : IDisposable
                 }, options: JsonOptions)
         };
         request.Headers.AcceptEncoding.Add(new("br"));
-        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await _client.SendAsync(request, TestCt);
         response.EnsureSuccessStatusCode();
         Assert.Contains("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
-        var csv = Encoding.UTF8.GetString(DecompressBrotli(await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken)));
+        var csv = Encoding.UTF8.GetString(DecompressBrotli(await response.Content.ReadAsByteArrayAsync(TestCt)));
         Assert.Contains(name, csv, StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task ExportXlsx_WithBrotliAcceptEncoding_IsNotCompressed()
     {
-        var name = $"CompressionXlsx_{Guid.NewGuid():N}";
+        var name = $"CompressionXlsx_{LyoGuid.CreateV7():N}";
         await _fixture.SeedJobDefinitionAsync(name);
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/JobDefinition/Export") {
             Content = JsonContent.Create(
@@ -104,7 +105,7 @@ public class CompressionPostgresTests : IDisposable
                 }, options: JsonOptions)
         };
         request.Headers.AcceptEncoding.Add(new("br"));
-        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await _client.SendAsync(request, TestCt);
         response.EnsureSuccessStatusCode();
         Assert.DoesNotContain("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
     }

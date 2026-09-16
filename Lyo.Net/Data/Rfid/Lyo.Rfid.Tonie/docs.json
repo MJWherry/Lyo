@@ -1,0 +1,88 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Rfid.Tonie",
+  "name": "Lyo.Rfid.Tonie",
+  "area": "Data",
+  "tagline": "Tonie SLIX-L content path, privacy XOR, and custom-tag frames.",
+  "description": "ICODE SLIX-L helpers for a Toniebox tag you program yourself. `TonieContentPath.FromUid` turns an 8-byte UID that starts with `E0 04 03` into the SD-card directory and file name (each half reversed). `SlixPrivacy.XorPassword` applies the NXP formula `Password XOR {Random, Random}` to the two-byte GET RANDOM NUMBER result. Custom tags use the datasheet factory privacy password `0F0F0F0F` (`ToniePrivacy.NxpDefault`). `TonieTagSession` sends GET RANDOM, SET PASSWORD, block read/write, and ENABLE PRIVACY through `Lyo.Rfid.IIso15693Transceiver`. A Type 2 NFC reader cannot carry those frames.",
+  "features": [
+    "**Content path.** File name is the first four UID bytes reversed. Directory name is the last four reversed. `E004035012345678` is file `500304E0` and directory `78563412`.",
+    "**Privacy XOR.** A 4-byte password and a 2-byte random become the session password. `0F0F0F0F` with random `1234` is `1D3B1D3B`.",
+    "**Prepare.** `PrepareCustomTagAsync` writes 32 bytes (zeros when omitted) and enables privacy so the box will accept the tag."
+  ],
+  "examples": [
+    {
+      "title": "Content path from a UID",
+      "language": "csharp",
+      "code": "var path = TonieContentPath.FromUid(Convert.FromHexString(\"E004035012345678\"));\n// path.FileName == \"500304E0\"\n// path.DirectoryName == \"78563412\""
+    },
+    {
+      "title": "Session password",
+      "language": "csharp",
+      "code": "var xor = SlixPrivacy.XorPassword(ToniePrivacy.NxpDefault.Span, new byte[] { 0x12, 0x34 });\n// 1D 3B 1D 3B"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Rfid/Lyo.Rfid.Tonie/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Rfid",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

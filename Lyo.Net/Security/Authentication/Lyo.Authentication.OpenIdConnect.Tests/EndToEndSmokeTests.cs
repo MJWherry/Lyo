@@ -46,44 +46,44 @@ public sealed class EndToEndSmokeTests
             });
 
         var coordinator = fx.Services.GetRequiredService<IExternalLoginCoordinator>();
-        var result = await coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestContext.Current.CancellationToken);
+        var result = await coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestCt);
         Assert.NotNull(result);
         Assert.False(result.Issued.AccessToken.IsNullOrEmpty());
         using (var meRequest = new HttpRequestMessage(HttpMethod.Get, "/protected")) {
             meRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
-            var resp = await fx.Client.SendAsync(meRequest, TestContext.Current.CancellationToken);
+            var resp = await fx.Client.SendAsync(meRequest, TestCt);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestCt);
             Assert.False(json.GetProperty("sub").GetString().IsNullOrEmpty());
         }
 
         using (var createTokenRequest = new HttpRequestMessage(HttpMethod.Post, "/tokens")) {
             createTokenRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
             createTokenRequest.Content = JsonContent.Create(new { displayName = "smoke-pat", scopes = new[] { "people.read" } });
-            var resp = await fx.Client.SendAsync(createTokenRequest, TestContext.Current.CancellationToken);
+            var resp = await fx.Client.SendAsync(createTokenRequest, TestCt);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestCt);
             var plaintext = json.GetProperty("plaintext").GetString();
             Assert.False(plaintext.IsNullOrEmpty());
             using var patRequest = new HttpRequestMessage(HttpMethod.Get, "/protected");
             patRequest.Headers.Authorization = new("Bearer", plaintext);
-            var patResp = await fx.Client.SendAsync(patRequest, TestContext.Current.CancellationToken);
+            var patResp = await fx.Client.SendAsync(patRequest, TestCt);
             Assert.Equal(HttpStatusCode.OK, patResp.StatusCode);
         }
 
         using (var listRequest = new HttpRequestMessage(HttpMethod.Get, "/tokens?includeRevoked=true")) {
             listRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
-            var listResp = await fx.Client.SendAsync(listRequest, TestContext.Current.CancellationToken);
+            var listResp = await fx.Client.SendAsync(listRequest, TestCt);
             Assert.Equal(HttpStatusCode.OK, listResp.StatusCode);
-            var listed = await listResp.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+            var listed = await listResp.Content.ReadFromJsonAsync<JsonElement>(TestCt);
             Assert.Equal(JsonValueKind.Array, listed.ValueKind);
             Assert.Contains(listed.EnumerateArray(), e => e.GetProperty("displayName").GetString() == "smoke-pat");
             Assert.DoesNotContain(listed.EnumerateArray(), e => e.GetProperty("kind").GetString() == "internal");
         }
 
-        var user = await fx.Services.GetRequiredService<IUserStore>().GetByEmailAsync("smoke@example.com", null, TestContext.Current.CancellationToken);
+        var user = await fx.Services.GetRequiredService<IUserStore>().GetByEmailAsync("smoke@example.com", null, TestCt);
         Assert.NotNull(user);
-        var stored = await fx.Services.GetRequiredService<IApiTokenStore>().ListForUserAsync(user.Id, true, null, TestContext.Current.CancellationToken);
+        var stored = await fx.Services.GetRequiredService<IApiTokenStore>().ListForUserAsync(user.Id, true, null, TestCt);
         Assert.Contains(stored, t => t.Kind == ApiTokenKind.Internal && t.RevokedAt is null);
     }
 
@@ -99,7 +99,7 @@ public sealed class EndToEndSmokeTests
         public async ValueTask DisposeAsync()
         {
             if (Host is not null) {
-                await Host.StopAsync(TestContext.Current.CancellationToken);
+                await Host.StopAsync(TestCt);
                 Host.Dispose();
             }
         }
@@ -159,7 +159,7 @@ public sealed class EndToEndSmokeTests
                             });
                         });
                 })
-                .StartAsync(TestContext.Current.CancellationToken);
+                .StartAsync(TestCt);
 
             fx.Host = host;
             return fx;

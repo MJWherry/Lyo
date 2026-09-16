@@ -69,16 +69,6 @@ public class JobDefinition
     /// <summary>Minutes after a run is queued within which it must start, or SLA is breached. 0 means not configured.</summary>
     public int MustStartByMinutes { get; set; }
 
-    /// <summary>Whether an alert is emitted when a run fails.</summary>
-    public bool AlertOnFailure { get; set; }
-
-    /// <summary>Consecutive failures before an alert is emitted. 0 alerts on every failure when <see cref="AlertOnFailure" /> is true.</summary>
-    public int AlertAfterConsecutiveFailures { get; set; }
-
-    /// <summary>Optional webhook URL that receives POSTed alert payloads.</summary>
-    [MaxLength(500)]
-    public string? AlertWebhookUrl { get; set; }
-
     /// <summary>Monotonic version bumped when the definition changes, for audit correlation with runs.</summary>
     public int DefinitionVersion { get; set; } = 1;
 
@@ -95,10 +85,6 @@ public class JobDefinition
     public virtual ICollection<JobRun> JobRuns { get; set; } = new List<JobRun>();
 
     public virtual ICollection<JobSchedule> JobSchedules { get; set; } = new List<JobSchedule>();
-
-    public virtual ICollection<JobTrigger> JobTriggerJobDefinitions { get; set; } = new List<JobTrigger>();
-
-    public virtual ICollection<JobTrigger> JobTriggerTriggersJobDefinitions { get; set; } = new List<JobTrigger>();
 
     public virtual ICollection<JobWorkflowStep> JobWorkflowSteps { get; set; } = new List<JobWorkflowStep>();
 }

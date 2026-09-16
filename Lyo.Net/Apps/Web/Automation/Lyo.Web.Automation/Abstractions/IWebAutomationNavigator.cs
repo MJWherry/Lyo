@@ -1,6 +1,6 @@
 namespace Lyo.Web.Automation.Abstractions;
 
-/// <summary>Engine-neutral navigation for the active tab/window (URL transitions and reload).</summary>
+/// <summary>Engine-neutral navigation for the active tab/window (URL transitions, reload, and a timed network listen).</summary>
 public interface IWebAutomationNavigator
 {
     Task NavigateAsync(string url, CancellationToken ct = default);
@@ -15,4 +15,11 @@ public interface IWebAutomationNavigator
 
     /// <summary>Reloads the current page (same tab).</summary>
     Task ReloadAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Listens for outgoing request URLs for <paramref name="durationMilliseconds" /> and returns the distinct matches.
+    /// A null or blank <paramref name="urlPattern" /> keeps every URL. Otherwise the pattern is a regular expression, matched without case.
+    /// Chromium Selenium sessions need performance logging enabled.
+    /// </summary>
+    Task<IReadOnlyList<string>> CaptureNetworkAsync(string? urlPattern, int durationMilliseconds, CancellationToken ct = default);
 }

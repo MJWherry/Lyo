@@ -44,5 +44,9 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
     public string? ServerSideEncryptionAwsKmsKeyId { get; set; }
 
     /// <summary>Throws when BucketName is missing. Access keys stay optional (IAM / profile / default chain).</summary>
-    public void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(BucketName);
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(BucketName);
+        ValidateUploadFilters();
+    }
 }

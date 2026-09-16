@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Lyo.Common.Metadata.Extensions;
+using Lyo.Web.Primitives;
 using MudBlazor;
 using Direction = Lyo.Sms.Models.Direction;
 
@@ -24,9 +25,9 @@ public static class SmsColorHelper
         };
     }
 
-    /// <summary>Chip color for inbound versus outbound (including Twilio outbound-api, call, and reply).</summary>
-    public static Color ForDirection(string? direction)
-        => IsInbound(direction) ? Color.Info : IsOutbound(direction) ? Color.Primary : Color.Default;
+    /// <summary>Identity hue for inbound versus outbound (including Twilio outbound-api, call, and reply). Unknown directions stay uncolored.</summary>
+    public static LyoChipHue? ForDirection(string? direction)
+        => IsInbound(direction) ? LyoChipHue.Teal : IsOutbound(direction) ? LyoChipHue.Blue : null;
 
     /// <summary>Chip color for a successful send or receive.</summary>
     public static Color ForSuccess(bool? success)

@@ -30,6 +30,11 @@ public class FakeAmazonS3 : DispatchProxy
 
     public List<GetObjectRequest> GetObjectRequests { get; } = [];
 
+    public List<GetObjectAttributesRequest> GetObjectAttributesRequests { get; } = [];
+
+    /// <summary>Unset means the endpoint does not implement GetObjectAttributes (501), as with some S3-compatible stores.</summary>
+    public Func<GetObjectAttributesRequest, GetObjectAttributesResponse>? OnGetObjectAttributes { get; set; }
+
     public Func<PutObjectRequest, PutObjectResponse>? OnPutObject { get; set; }
 
     public Func<InitiateMultipartUploadRequest, InitiateMultipartUploadResponse>? OnInitiateMultipart { get; set; }
@@ -45,6 +50,8 @@ public class FakeAmazonS3 : DispatchProxy
     public Func<GetObjectMetadataRequest, GetObjectMetadataResponse>? OnGetObjectMetadata { get; set; }
 
     public Func<DeleteObjectRequest, DeleteObjectResponse>? OnDeleteObject { get; set; }
+
+    public Func<DeleteObjectsRequest, DeleteObjectsResponse>? OnDeleteObjects { get; set; }
 
     public Func<GetObjectRequest, GetObjectResponse>? OnGetObject { get; set; }
 
@@ -152,9 +159,25 @@ public class FakeAmazonS3 : DispatchProxy
                 var delResp = OnDeleteObject?.Invoke(delReq2) ?? new DeleteObjectResponse();
                 return Task.FromResult(delResp);
             }
+            case "DeleteObjectsAsync" when args is { Length: 2 } && args[0] is DeleteObjectsRequest delManyReq: {
+                var delManyResp = OnDeleteObjects?.Invoke(delManyReq) ?? new DeleteObjectsResponse();
+                return Task.FromResult(delManyResp);
+            }
             case "ListObjectsV2Async" when args is { Length: 2 } && args[0] is ListObjectsV2Request listReq: {
                 var listResp = OnListObjectsV2?.Invoke(listReq) ?? new ListObjectsV2Response { S3Objects = [], CommonPrefixes = [] };
                 return Task.FromResult(listResp);
+            }
+            case "GetObjectAttributesAsync" when args is { Length: 2 } && args[0] is GetObjectAttributesRequest attrReq: {
+                GetObjectAttributesRequests.Add(attrReq);
+                if (OnGetObjectAttributes == null)
+                    return Task.FromException<GetObjectAttributesResponse>(new AmazonS3Exception("Not Implemented") { StatusCode = HttpStatusCode.NotImplemented });
+
+                try {
+                    return Task.FromResult(OnGetObjectAttributes(attrReq));
+                }
+                catch (Exception ex) {
+                    return Task.FromException<GetObjectAttributesResponse>(ex);
+                }
             }
             case "CopyObjectAsync" when args is { Length: 2 } && args[0] is CopyObjectRequest copyReq: {
                 var copyResp = OnCopyObject?.Invoke(copyReq) ?? new CopyObjectResponse();

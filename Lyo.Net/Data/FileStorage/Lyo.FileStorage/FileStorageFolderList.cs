@@ -15,6 +15,10 @@ namespace Lyo.FileStorage;
 /// <param name="OriginalFileName">Display name from metadata when known.</param>
 /// <param name="OriginalFileSize">Size from metadata when known.</param>
 /// <param name="PhysicalKey">Object key relative to the physical root, when known.</param>
+/// <param name="IsCompressed">True when metadata says the object was compressed.</param>
+/// <param name="Compression">Compression algorithm name, when known.</param>
+/// <param name="IsEncrypted">True when metadata says the object was encrypted.</param>
+/// <param name="Encryption">Data-encryption algorithm name, when known.</param>
 public sealed record FileStorageFolderEntry(
     string Name,
     bool IsDirectory,
@@ -23,7 +27,11 @@ public sealed record FileStorageFolderEntry(
     FileStoragePresence Presence,
     string? OriginalFileName,
     long OriginalFileSize,
-    string? PhysicalKey);
+    string? PhysicalKey,
+    bool IsCompressed = false,
+    string? Compression = null,
+    bool IsEncrypted = false,
+    string? Encryption = null);
 
 /// <summary>Immediate children of one PathPrefix: catalog files, child folders, and physical-only orphans.</summary>
 public static class FileStorageFolderList
@@ -78,7 +86,7 @@ public static class FileStorageFolderList
             entries.Add(
                 new(
                     row.OriginalFileName ?? row.Id.ToString("D"), false, row.PathPrefix, row.Id, presence, row.OriginalFileName, row.OriginalFileSize,
-                    joined?.PhysicalKey));
+                    joined?.PhysicalKey, row.IsCompressed, row.CompressionAlgorithm?.Name, row.IsEncrypted, row.DataEncryptionKeyAlgorithm?.ToString()));
         }
 
         if (physical != null) {

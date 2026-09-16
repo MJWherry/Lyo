@@ -1,5 +1,6 @@
 using System.Reflection;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Formatter;
 using Lyo.Job.Models.Enums;
@@ -21,11 +22,11 @@ public class JobSchedulerScheduleParameterTests
     [Fact]
     public async Task ScheduleParameters_OverrideDefinitionDefaultsByKey()
     {
-        var definitionId = Guid.NewGuid();
-        var clientId = Guid.NewGuid().ToString("D");
+        var definitionId = LyoGuid.CreateV7();
+        var clientId = LyoGuid.CreateV7().ToString("D");
         var schedule = BuildSchedule(
-            definitionId, new JobScheduleParameterRes(Guid.NewGuid(), Guid.NewGuid(), "ClientId", LyoTypeInfo.Guid.FullName, clientId, "ClientName client", null, true),
-            new JobScheduleParameterRes(Guid.NewGuid(), Guid.NewGuid(), "emailto", LyoTypeInfo.String.FullName, "to@example.com", "ClientName To", null, true));
+            definitionId, new JobScheduleParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "ClientId", LyoTypeInfo.Guid.FullName, clientId, "ClientName client", null, true),
+            new JobScheduleParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "emailto", LyoTypeInfo.String.FullName, "to@example.com", "ClientName To", null, true));
 
         var definition = BuildDefinition(
             definitionId, schedule, BuildDefinitionParameter(definitionId, "ClientId", LyoTypeInfo.Guid.FullName, null, true),
@@ -48,10 +49,10 @@ public class JobSchedulerScheduleParameterTests
     [Fact]
     public async Task DisabledScheduleParameters_AreIgnored()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = BuildSchedule(
-            definitionId, new JobScheduleParameterRes(Guid.NewGuid(), Guid.NewGuid(), "EmailTo", LyoTypeInfo.String.FullName, "to@example.com", null, null, true),
-            new JobScheduleParameterRes(Guid.NewGuid(), Guid.NewGuid(), "EmailToCc", LyoTypeInfo.String.FullName, "cc@example.com", null, null, false));
+            definitionId, new JobScheduleParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "EmailTo", LyoTypeInfo.String.FullName, "to@example.com", null, null, true),
+            new JobScheduleParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "EmailToCc", LyoTypeInfo.String.FullName, "cc@example.com", null, null, false));
 
         var definition = BuildDefinition(definitionId, schedule, BuildDefinitionParameter(definitionId, "EmailTo", LyoTypeInfo.String.FullName, null, true));
         var runReq = await BuildRunRequestAsync(definition, schedule);
@@ -62,9 +63,9 @@ public class JobSchedulerScheduleParameterTests
     [Fact]
     public async Task ScheduleParameterStringValues_AreTemplateFormatted()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = BuildSchedule(
-            definitionId, new JobScheduleParameterRes(Guid.NewGuid(), Guid.NewGuid(), "Note", LyoTypeInfo.String.FullName, "Run of {Definition.Name}", null, null, true));
+            definitionId, new JobScheduleParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "Note", LyoTypeInfo.String.FullName, "Run of {Definition.Name}", null, null, true));
 
         var definition = BuildDefinition(definitionId, schedule);
         var runReq = await BuildRunRequestAsync(definition, schedule);
@@ -75,9 +76,9 @@ public class JobSchedulerScheduleParameterTests
     [Fact]
     public async Task ScheduleParameterStringValues_UnwrapLegacyDoubleBracePlaceholders()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = BuildSchedule(
-            definitionId, new JobScheduleParameterRes(Guid.NewGuid(), Guid.NewGuid(), "Note", LyoTypeInfo.String.FullName, "Run of {{Definition.Name}}", null, null, true));
+            definitionId, new JobScheduleParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "Note", LyoTypeInfo.String.FullName, "Run of {{Definition.Name}}", null, null, true));
 
         var definition = BuildDefinition(definitionId, schedule);
         var runReq = await BuildRunRequestAsync(definition, schedule);
@@ -88,10 +89,10 @@ public class JobSchedulerScheduleParameterTests
     [Fact]
     public async Task ScheduleParameterStringValues_LeaveUnresolvedClientTokens()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = BuildSchedule(
             definitionId,
-            new JobScheduleParameterRes(Guid.NewGuid(), Guid.NewGuid(), "EmailTo", LyoTypeInfo.String.FullName, "{client.contact.emailAddress}", null, null, true));
+            new JobScheduleParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "EmailTo", LyoTypeInfo.String.FullName, "{client.contact.emailAddress}", null, null, true));
 
         var definition = BuildDefinition(definitionId, schedule);
         var runReq = await BuildRunRequestAsync(definition, schedule);
@@ -102,10 +103,10 @@ public class JobSchedulerScheduleParameterTests
     [Fact]
     public async Task ScheduleParameterJsonValues_AreNotFormatted()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var json = "{\"name\":\"{Definition.Name}\"}";
         var schedule = BuildSchedule(
-            definitionId, new JobScheduleParameterRes(Guid.NewGuid(), Guid.NewGuid(), "Payload", LyoTypeInfo.JsonNode.FullName, json, null, null, true));
+            definitionId, new JobScheduleParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "Payload", LyoTypeInfo.JsonNode.FullName, json, null, null, true));
 
         var definition = BuildDefinition(definitionId, schedule);
         var runReq = await BuildRunRequestAsync(definition, schedule);
@@ -116,11 +117,11 @@ public class JobSchedulerScheduleParameterTests
     [Fact]
     public async Task ScheduleParameterFormatterValues_AreTemplateFormatted()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = BuildSchedule(
             definitionId,
             new JobScheduleParameterRes(
-                Guid.NewGuid(), Guid.NewGuid(), "When", FormatterLyoType.Template.FullName, FormatterLyoType.Template.ToJson("{Definition.Name}"), null, null, true));
+                LyoGuid.CreateV7(), LyoGuid.CreateV7(), "When", FormatterLyoType.Template.FullName, FormatterLyoType.Template.ToJson("{Definition.Name}"), null, null, true));
 
         var definition = BuildDefinition(definitionId, schedule);
         var runReq = await BuildRunRequestAsync(definition, schedule);
@@ -131,7 +132,7 @@ public class JobSchedulerScheduleParameterTests
     [Fact]
     public async Task ExpressionDefault_ResolvesToAValueOfTheDeclaredType()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = BuildSchedule(definitionId);
         var definition = BuildDefinition(definitionId, schedule, YesterdayParameter(definitionId));
 
@@ -147,9 +148,9 @@ public class JobSchedulerScheduleParameterTests
     [Fact]
     public async Task ExpressionDefault_IsOverriddenByAScheduleParameter()
     {
-        var definitionId = Guid.NewGuid();
+        var definitionId = LyoGuid.CreateV7();
         var schedule = BuildSchedule(
-            definitionId, new JobScheduleParameterRes(Guid.NewGuid(), Guid.NewGuid(), "AsOfDate", LyoTypeInfo.DateTime.FullName, "2020-01-01", null, null, true));
+            definitionId, new JobScheduleParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "AsOfDate", LyoTypeInfo.DateTime.FullName, "2020-01-01", null, null, true));
 
         var definition = BuildDefinition(definitionId, schedule, YesterdayParameter(definitionId));
         var runReq = await BuildRunRequestAsync(definition, schedule, FrozenClock);
@@ -177,17 +178,17 @@ public class JobSchedulerScheduleParameterTests
                 EnableMisfireCatchUp = false
             }, api, clock is null ? new FormatterService() : new FormatterService(clock), new FakeEventPublisher());
 
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
         var method = typeof(JobScheduler).GetMethod("BuildRunRequest", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        return (JobRunReq)method.Invoke(scheduler, [definition.Id, schedule, null, null])!;
+        return (JobRunReq)method.Invoke(scheduler, [definition.Id, schedule])!;
     }
 
     private static JobDefinitionRes BuildDefinition(Guid definitionId, JobScheduleRes schedule, params JobParameterRes[] parameters)
-        => new(definitionId, "ScheduleParamDef", null, "Test", "cs", true, parameters, [schedule], [], null);
+        => new(definitionId, "ScheduleParamDef", null, "Test", "cs", true, parameters, [schedule], null);
 
     private static JobParameterRes BuildDefinitionParameter(Guid definitionId, string key, string type, string? value, bool required)
-        => new(Guid.NewGuid(), definitionId, key, null, type, value, null, true, required);
+        => new(LyoGuid.CreateV7(), definitionId, key, null, type, value, null, true, required);
 
     private static JobScheduleRes BuildSchedule(Guid definitionId, params JobScheduleParameterRes[] parameters)
-        => new(Guid.NewGuid(), definitionId, MonthFlags.None, DayFlags.None, ScheduleType.SetTimes, [new(12, 0)], null, null, null, "test schedule", true, parameters);
+        => new(LyoGuid.CreateV7(), definitionId, MonthFlags.None, DayFlags.None, ScheduleType.SetTimes, [new(12, 0)], null, null, null, "test schedule", true, parameters);
 }

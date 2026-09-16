@@ -122,8 +122,8 @@ public class JobRunLifecycleFixTests
     public async Task CreateJobRun_WithSuppressDispatch_PersistsQueuedWithoutPublishing()
     {
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
-        var req = new JobRunReq(_fixture.JobDefinitionId, "test-user", false) { SuppressDispatch = true };
-        var result = await _fixture.JobService.CreateJobRun(req, TestContext.Current.CancellationToken);
+        var req = new JobRunReq(_fixture.JobDefinitionId, "test-user") { SuppressDispatch = true };
+        var result = await _fixture.JobService.CreateJobRun(req, TestCt);
         Assert.True(result.IsSuccess);
         Assert.Equal(JobState.Queued, result.Data!.State);
         Assert.DoesNotContain(_fixture.FakePublisher.Published.Skip(publishCountBefore), e => e.Event == "RunCreated" && e.RunId == result.Data.Id);
@@ -133,8 +133,8 @@ public class JobRunLifecycleFixTests
     public async Task CreateJobRun_WithFutureScheduledSlot_SuppressesImmediateDispatch()
     {
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
-        var req = new JobRunReq(_fixture.JobDefinitionId, "test-user", false) { ScheduledSlotUtc = DateTime.UtcNow.AddMinutes(5) };
-        var result = await _fixture.JobService.CreateJobRun(req, TestContext.Current.CancellationToken);
+        var req = new JobRunReq(_fixture.JobDefinitionId, "test-user") { ScheduledSlotUtc = DateTime.UtcNow.AddMinutes(5) };
+        var result = await _fixture.JobService.CreateJobRun(req, TestCt);
 
         // Delayed retry: the run must wait for its slot (maintenance redispatch), not be delivered immediately.
         Assert.True(result.IsSuccess);
@@ -149,8 +149,8 @@ public class JobRunLifecycleFixTests
         using var sp = BuildServiceProvider(disconnectedPublisher);
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
-        var req = new JobRunReq(_fixture.JobDefinitionId, "test-user", false) { SuppressDispatch = true };
-        var result = await jobService.CreateJobRun(req, TestContext.Current.CancellationToken);
+        var req = new JobRunReq(_fixture.JobDefinitionId, "test-user") { SuppressDispatch = true };
+        var result = await jobService.CreateJobRun(req, TestCt);
 
         // The caller owns dispatch, so a disconnected MQ cannot block persistence.
         Assert.True(result.IsSuccess);
@@ -160,10 +160,10 @@ public class JobRunLifecycleFixTests
     [Fact]
     public async Task CreateJobRun_WithDuplicateIdempotencyKey_ReturnsExistingRunWithoutThrowing()
     {
-        var key = $"lifecycle-{Guid.NewGuid():N}";
-        var first = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user", false) { IdempotencyKey = key }, TestContext.Current.CancellationToken);
+        var key = $"lifecycle-{LyoGuid.CreateV7():N}";
+        var first = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user") { IdempotencyKey = key }, TestCt);
         Assert.True(first.IsSuccess);
-        var second = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user", false) { IdempotencyKey = key }, TestContext.Current.CancellationToken);
+        var second = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user") { IdempotencyKey = key }, TestCt);
         Assert.True(second.IsSuccess);
         Assert.Equal(first.Data!.Id, second.Data!.Id);
     }
@@ -171,9 +171,9 @@ public class JobRunLifecycleFixTests
     [Fact]
     public async Task CreateJobRun_ConcurrentDuplicateIdempotencyKeys_AllResolveToOneRun()
     {
-        var key = $"race-{Guid.NewGuid():N}";
+        var key = $"race-{LyoGuid.CreateV7():N}";
         var tasks = Enumerable.Range(0, 4)
-            .Select(_ => _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user", false) { IdempotencyKey = key }, TestContext.Current.CancellationToken))
+            .Select(_ => _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user") { IdempotencyKey = key }, TestCt))
             .ToList();
 
         var results = await Task.WhenAll(tasks);
@@ -187,8 +187,8 @@ public class JobRunLifecycleFixTests
     [Fact]
     public async Task RerunJob_WhenOriginalHasIdempotencyKey_CreatesFreshRun()
     {
-        var key = $"rerun-{Guid.NewGuid():N}";
-        var original = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user", false) { IdempotencyKey = key }, TestContext.Current.CancellationToken);
+        var key = $"rerun-{LyoGuid.CreateV7():N}";
+        var original = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user") { IdempotencyKey = key }, TestCt);
         Assert.True(original.IsSuccess);
         await FinishRunAsync(original.Data!.Id);
         var rerun = await _fixture.JobService.RerunJob(original.Data.Id);
@@ -204,11 +204,11 @@ public class JobRunLifecycleFixTests
     [Fact]
     public async Task CreateChildRuns_WhenParentHasIdempotencyKey_CreatesRealChildren()
     {
-        var key = $"parent-{Guid.NewGuid():N}";
-        var parent = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user", false) { IdempotencyKey = key }, TestContext.Current.CancellationToken);
+        var key = $"parent-{LyoGuid.CreateV7():N}";
+        var parent = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user") { IdempotencyKey = key }, TestCt);
         Assert.True(parent.IsSuccess);
         var children = await _fixture.JobService.CreateChildRunsAsync(
-            parent.Data!.Id, new JobCreateChildRunsReq { Children = [new() { BatchIndex = 0 }, new() { BatchIndex = 1 }] }, TestContext.Current.CancellationToken);
+            parent.Data!.Id, new JobCreateChildRunsReq { Children = [new() { BatchIndex = 0 }, new() { BatchIndex = 1 }] }, TestCt);
 
         // With the key copied from the parent, both "children" silently resolved to the parent run via the idempotency lookup.
         Assert.Equal(2, children.Count);
@@ -227,11 +227,11 @@ public class JobRunLifecycleFixTests
         var scheduleId = await SeedScheduleAsync(_fixture.JobDefinitionId);
         var slot = DateTime.UtcNow.AddMinutes(-1);
         var first = await _fixture.JobService.CreateJobRun(
-            new(_fixture.JobDefinitionId, "test-user", false, scheduleId: scheduleId) { ScheduledSlotUtc = slot }, TestContext.Current.CancellationToken);
+            new(_fixture.JobDefinitionId, "test-user", scheduleId: scheduleId) { ScheduledSlotUtc = slot }, TestCt);
         Assert.True(first.IsSuccess, first.Error?.Detail ?? "first create failed");
 
         var second = await _fixture.JobService.CreateJobRun(
-            new(_fixture.JobDefinitionId, "test-user", false, scheduleId: scheduleId) { ScheduledSlotUtc = slot }, TestContext.Current.CancellationToken);
+            new(_fixture.JobDefinitionId, "test-user", scheduleId: scheduleId) { ScheduledSlotUtc = slot }, TestCt);
         Assert.True(second.IsSuccess, second.Error?.Detail ?? "duplicate slot must be idempotent");
         Assert.Equal(first.Data!.Id, second.Data!.Id);
     }
@@ -244,7 +244,7 @@ public class JobRunLifecycleFixTests
         var tasks = Enumerable.Range(0, 4)
             .Select(
                 _ => _fixture.JobService.CreateJobRun(
-                    new(_fixture.JobDefinitionId, "test-user", false, scheduleId: scheduleId) { ScheduledSlotUtc = slot }, TestContext.Current.CancellationToken))
+                    new(_fixture.JobDefinitionId, "test-user", scheduleId: scheduleId) { ScheduledSlotUtc = slot }, TestCt))
             .ToList();
 
         var results = await Task.WhenAll(tasks);
@@ -281,7 +281,7 @@ public class JobRunLifecycleFixTests
                 r.FinishedTimestamp = now.AddMinutes(-9);
             });
 
-        var results = await _fixture.JobService.GetLatestRuns([definitionId], TestContext.Current.CancellationToken);
+        var results = await _fixture.JobService.GetLatestRuns([definitionId], TestCt);
         var latest = Assert.Single(results);
         Assert.Equal(definitionId, latest.JobDefinitionId);
         Assert.Equal(latestFailureId, latest.LastRun!.Id);
@@ -309,30 +309,29 @@ public class JobRunLifecycleFixTests
             State = state,
             CreatedBy = "test",
             CreatedTimestamp = DateTime.UtcNow,
-            AllowTriggers = false
         };
 
         configure?.Invoke(run);
         await using var db = await CreateDbContextAsync();
         db.JobRuns.Add(run);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return run.Id;
     }
 
     private async Task FinishRunAsync(Guid runId)
     {
         await using var db = await CreateDbContextAsync();
-        var run = await db.JobRuns.FirstAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
+        var run = await db.JobRuns.FirstAsync(r => r.Id == runId, TestCt);
         run.State = JobState.Finished;
         run.Result = JobRunResultEnum.Success;
         run.FinishedTimestamp = DateTime.UtcNow;
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
     }
 
     private async Task<JobRun> GetRunAsync(Guid runId)
     {
         await using var db = await CreateDbContextAsync();
-        return await db.JobRuns.AsNoTracking().FirstAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
+        return await db.JobRuns.AsNoTracking().FirstAsync(r => r.Id == runId, TestCt);
     }
 
     private async Task<Guid> CreateDefinitionAsync()
@@ -349,7 +348,7 @@ public class JobRunLifecycleFixTests
                 CreatedTimestamp = DateTime.UtcNow
             });
 
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return id;
     }
 
@@ -369,7 +368,7 @@ public class JobRunLifecycleFixTests
                 Enabled = true,
                 CreatedTimestamp = DateTime.UtcNow
             });
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return scheduleId;
     }
 
@@ -377,6 +376,6 @@ public class JobRunLifecycleFixTests
     {
         using var scope = _fixture.ServiceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        return await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        return await factory.CreateDbContextAsync(TestCt);
     }
 }

@@ -9,6 +9,7 @@ using Lyo.Http.Client.Session;
 using Lyo.Query.Models.Common.Request;
 using System.Text.Json;
 using Lyo.Common.Metadata.Records;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Drift.Tests;
 
@@ -19,7 +20,7 @@ public sealed class DriftClientTests
     {
         var api = new RecordingApiClient();
         var client = new DriftClient(api, new() { RoutePrefix = "https://api.test" });
-        await client.UpsertInstanceAsync(new() { InstanceKey = "k" }, TestContext.Current.CancellationToken);
+        await client.UpsertInstanceAsync(new() { InstanceKey = "k" }, TestCt);
         Assert.Equal("https://api.test/Drift/Instance/Upsert", api.LastUri);
         Assert.IsType<DriftInstanceReq>(api.LastBody);
     }
@@ -29,8 +30,8 @@ public sealed class DriftClientTests
     {
         var api = new RecordingApiClient();
         var client = new DriftClient(api);
-        var id = Guid.NewGuid();
-        await client.HeartbeatAsync(id, new() { LastHeartbeatUtc = DateTime.UtcNow }, TestContext.Current.CancellationToken);
+        var id = LyoGuid.CreateV7();
+        await client.HeartbeatAsync(id, new() { LastHeartbeatUtc = DateTime.UtcNow }, TestCt);
         Assert.Equal($"Drift/Instance/{id}/Heartbeat", api.LastUri);
     }
 
@@ -39,9 +40,9 @@ public sealed class DriftClientTests
     {
         var api = new RecordingApiClient();
         var client = new DriftClient(api);
-        var a = Guid.NewGuid();
-        var b = Guid.NewGuid();
-        await client.DiffAgainstAsync(a, b, TestContext.Current.CancellationToken);
+        var a = LyoGuid.CreateV7();
+        var b = LyoGuid.CreateV7();
+        await client.DiffAgainstAsync(a, b, TestCt);
         Assert.Equal($"Drift/Snapshot/{a}/DiffAgainst/{b}", api.LastUri);
     }
 }
@@ -173,6 +174,13 @@ internal sealed class RecordingApiClient : IApiClient
     public Task<TResult?> QueryConcreteAsync<TResult>(
         string route,
         QueryConcreteReq request,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
+        => throw new NotImplementedException();
+
+    public Task<TResult?> QuerySqlAsync<TResult>(
+        string route,
+        QueryRequestBase request,
         Action<HttpRequestMessage>? before = null,
         CancellationToken ct = default)
         => throw new NotImplementedException();

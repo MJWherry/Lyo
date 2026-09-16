@@ -1,0 +1,49 @@
+@namespace Lyo.Billing.Web.Components.Views
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IBillingClient Billing
+@inject IPaymentCollector Collector
+
+<LyoDialog Busy="@_busy" DebugData="@_invoice">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_invoice?.Number ?? "Draft")</MudText>
+    </TitleContent>
+    <TitleChips>
+        @if (_invoice != null) {
+            <LyoChip Spec="@(LyoChips.FromEnum<InvoiceStatus>(_invoice.Status.ToString(), BillingColorHelper.ForInvoiceStatus))"/>
+        }
+    </TitleChips>
+    <ExtraActions>
+        @if (_invoice != null) {
+            @if (_invoice.Status == InvoiceStatus.Draft) {
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="@_busy" OnClick="DeleteDraftAsync">Delete draft</MudButton>
+            }
+            @if (_invoice.Status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid) {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@_busy" OnClick="PayAsync">Pay</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="@_busy" OnClick="VoidAsync">Void</MudButton>
+            }
+            @if (_invoice.Status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid or InvoiceStatus.Paid) {
+                <MudButton Variant="Variant.Outlined" Href="@Billing.InvoicePdfHref(_invoice.Id)" Target="_blank">PDF</MudButton>
+            }
+        }
+    </ExtraActions>
+    <ChildContent>
+        @if (_invoice != null) {
+            <MudGrid>
+                <MudItem xs="12" md="8">
+                    <LyoRecordCard Title="@(_invoice.BillToName ?? "Bill to")">
+                        <LyoRecordField Label="Contact" Value="@_invoice.BillToContactName"/>
+                        <LyoRecordField Label="Address" Value="@_invoice.BillToLine1"/>
+                        <LyoRecordField Label="Currency" Value="@_invoice.Currency"/>
+                        <LyoRecordField Label="Issued" Value="@_invoice.IssuedAt?.ToString("u")"/>
+                        <LyoRecordField Label="Due" Value="@_invoice.DueAt?.ToString("u")"/>
+                    </LyoRecordCard>
+                    <InvoiceLineEditor Lines="_invoice.Lines" AllowEdit="false"/>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <InvoiceTotalsPanel Invoice="_invoice"/>
+                </MudItem>
+            </MudGrid>
+        }
+    </ChildContent>
+</LyoDialog>

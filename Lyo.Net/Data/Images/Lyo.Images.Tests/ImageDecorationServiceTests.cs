@@ -39,7 +39,7 @@ public class ImageDecorationServiceTests
         await using var outMs = new MemoryStream();
         var result = await svc.OverlayAsync(
             bgMs, logoMs, outMs, OverlayOptionsBuilder.New().WithOverlaySizePercent(20).WithPadColor("#FFFFFF").Build(), ImageFormat.Png,
-            ct: TestContext.Current.CancellationToken);
+            ct: TestCt);
 
         Assert.True(result.IsSuccess);
         var bytes = outMs.ToArray();
@@ -47,7 +47,7 @@ public class ImageDecorationServiceTests
         Assert.Equal(200, w);
         Assert.Equal(200, h);
         await using var pngMs = new MemoryStream(bytes);
-        using var img = await Image.LoadAsync<Rgba32>(pngMs, TestContext.Current.CancellationToken);
+        using var img = await Image.LoadAsync<Rgba32>(pngMs, TestCt);
         // Overlay center should be the orange-red logo (allow modest decode tolerance).
         var center = img[100, 100];
         Assert.True(center.R > 200 && center.G < 80, $"Expected orange-red center, got R={center.R} G={center.G} B={center.B}.");
@@ -64,7 +64,7 @@ public class ImageDecorationServiceTests
         await using var logoMs = new MemoryStream(logo);
         await using var outMs = new MemoryStream();
         var result = await svc.OverlayAsync(
-            bgMs, logoMs, outMs, OverlayOptionsBuilder.New().WithOverlaySizePercent(15).WithBorder("#000000").Build(), ImageFormat.Svg, ct: TestContext.Current.CancellationToken);
+            bgMs, logoMs, outMs, OverlayOptionsBuilder.New().WithOverlaySizePercent(15).WithBorder("#000000").Build(), ImageFormat.Svg, ct: TestCt);
 
         Assert.True(result.IsSuccess);
         var withIcon = Encoding.UTF8.GetString(outMs.ToArray());
@@ -81,7 +81,7 @@ public class ImageDecorationServiceTests
         await using var outMs = new MemoryStream();
         var result = await svc.AddFrameAsync(
             inMs, outMs, FrameOptionsBuilder.New().WithStrokeColor("#000000").WithStrokeWidth(4).WithPadding(12).WithCornerRadius(16).Build(), ImageFormat.Png,
-            ct: TestContext.Current.CancellationToken);
+            ct: TestCt);
 
         Assert.True(result.IsSuccess);
         var (w, h) = await GetSizeAsync(outMs.ToArray());
@@ -97,7 +97,7 @@ public class ImageDecorationServiceTests
         await using var inMs = new MemoryStream(qr);
         await using var outMs = new MemoryStream();
         var result = await svc.AddCaptionAsync(
-            inMs, outMs, CaptionOptionsBuilder.New().WithText("Scan Me").WithBandHeight(48).Build(), ImageFormat.Png, ct: TestContext.Current.CancellationToken);
+            inMs, outMs, CaptionOptionsBuilder.New().WithText("Scan Me").WithBandHeight(48).Build(), ImageFormat.Png, ct: TestCt);
 
         Assert.True(result.IsSuccess);
         var (w, h) = await GetSizeAsync(outMs.ToArray());
@@ -114,7 +114,7 @@ public class ImageDecorationServiceTests
         await using var outMs = new MemoryStream();
         var result = await svc.AddOuterPaddingAsync(
             inMs, outMs, PaddingOptionsBuilder.New().WithPadding(20).WithMargin(15).WithCornerRadius(24).WithShadow("#33000000", 8).Build(), ImageFormat.Png,
-            ct: TestContext.Current.CancellationToken);
+            ct: TestCt);
 
         Assert.True(result.IsSuccess);
         var (w, h) = await GetSizeAsync(outMs.ToArray());
@@ -135,7 +135,7 @@ public class ImageDecorationServiceTests
             .AddOuterPadding(PaddingOptionsBuilder.New().WithPanelColor("#FFFFFF").WithCornerRadius(16).Build())
             .AddFrame(FrameOptionsBuilder.New().WithStrokeColor("#1e293b").WithStrokeWidth(2).WithCornerRadius(16).WithPadding(0).Build());
 
-        var result = await pipeline.ToByteArrayAsync(ImageFormat.Png, ct: TestContext.Current.CancellationToken);
+        var result = await pipeline.ToByteArrayAsync(ImageFormat.Png, ct: TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.True(result.Data!.Length > qr.Length, $"Expected chained output {result.Data!.Length} > bare {qr.Length}.");

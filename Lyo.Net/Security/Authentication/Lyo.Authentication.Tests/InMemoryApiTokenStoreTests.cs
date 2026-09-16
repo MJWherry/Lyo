@@ -4,6 +4,7 @@ using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Refresh;
 using Lyo.Exceptions;
 using Lyo.Testing;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Tests;
 
@@ -13,24 +14,24 @@ public class InMemoryApiTokenStoreTests
     public async Task DeleteAsync_RemovesRow()
     {
         var store = new InMemoryApiTokenStore();
-        var token = NewToken("abcdefghjkm", Guid.NewGuid());
-        await store.InsertAsync(token, null, TestContext.Current.CancellationToken);
-        await store.DeleteAsync(token.Id, null, TestContext.Current.CancellationToken);
-        Assert.Null(await store.GetByIdAsync(token.Id, null, TestContext.Current.CancellationToken));
+        var token = NewToken("abcdefghjkm", LyoGuid.CreateV7());
+        await store.InsertAsync(token, null, TestCt);
+        await store.DeleteAsync(token.Id, null, TestCt);
+        Assert.Null(await store.GetByIdAsync(token.Id, null, TestCt));
     }
 
     [Fact]
     public async Task DeleteAsync_Missing_Throws()
     {
         var store = new InMemoryApiTokenStore();
-        await Assert.ThrowsAsync<NotFoundException>(() => store.DeleteAsync("missingid01", null, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<NotFoundException>(() => store.DeleteAsync("missingid01", null, TestCt));
     }
 
     [Fact]
     public async Task RevokeRefreshTokensForUserAsync_RevokesLiveRefreshForProvider()
     {
         var store = new InMemoryApiTokenStore();
-        var userId = Guid.NewGuid();
+        var userId = LyoGuid.CreateV7();
         var live = NewToken("abcdefghjkn", userId, [LyoRefreshTokenScopes.Refresh], ApiTokenKind.Internal, new Dictionary<string, object?> {
             [DefaultLyoRefreshTokenIssuer.ProviderMetadataKey] = "google"
         });
@@ -38,15 +39,15 @@ public class InMemoryApiTokenStoreTests
             [DefaultLyoRefreshTokenIssuer.ProviderMetadataKey] = "keycloak"
         });
         var pat = NewToken("abcdefghjkq", userId, ["people.read"], ApiTokenKind.Pat);
-        await store.InsertAsync(live, null, TestContext.Current.CancellationToken);
-        await store.InsertAsync(otherProvider, null, TestContext.Current.CancellationToken);
-        await store.InsertAsync(pat, null, TestContext.Current.CancellationToken);
+        await store.InsertAsync(live, null, TestCt);
+        await store.InsertAsync(otherProvider, null, TestCt);
+        await store.InsertAsync(pat, null, TestCt);
 
-        await store.RevokeRefreshTokensForUserAsync(userId, "google", DateTime.UtcNow, "login_replaced", null, TestContext.Current.CancellationToken);
+        await store.RevokeRefreshTokensForUserAsync(userId, "google", DateTime.UtcNow, "login_replaced", null, TestCt);
 
-        var google = await store.GetByIdAsync(live.Id, null, TestContext.Current.CancellationToken);
-        var keycloak = await store.GetByIdAsync(otherProvider.Id, null, TestContext.Current.CancellationToken);
-        var remainingPat = await store.GetByIdAsync(pat.Id, null, TestContext.Current.CancellationToken);
+        var google = await store.GetByIdAsync(live.Id, null, TestCt);
+        var keycloak = await store.GetByIdAsync(otherProvider.Id, null, TestCt);
+        var remainingPat = await store.GetByIdAsync(pat.Id, null, TestCt);
         Assert.NotNull(google?.RevokedAt);
         Assert.Equal("login_replaced", google.RevokedReason);
         Assert.Null(keycloak?.RevokedAt);

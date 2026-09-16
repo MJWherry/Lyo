@@ -113,6 +113,14 @@ public partial class QueryNodeEditor
         }
     }
 
+    private void OnThresholdChanged(double? value)
+    {
+        if (Node is ConditionClause conditionNode) {
+            conditionNode.Threshold = value;
+            OnNodeChanged.InvokeAsync(Node);
+        }
+    }
+
     private async Task OnStringValueChanged(string? value)
     {
         if (Node is ConditionClause conditionNode) {

@@ -10,6 +10,7 @@ using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.IO.Temp;
 
@@ -291,7 +292,7 @@ public sealed class IOTempService : IIOTempService
     private string CreateServiceDirectory()
     {
         var stopwatch = Stopwatch.StartNew();
-        var serviceDirName = $"service-{Guid.NewGuid():N}";
+        var serviceDirName = $"service-{LyoGuid.CreateV7():N}";
         var serviceDirectory = PathHelpers.Combine(_storage.PathStyle, _storage.RootPath, serviceDirName);
         try {
             _storage.CreateDirectory(serviceDirectory);
@@ -398,7 +399,7 @@ public sealed class IOTempService : IIOTempService
     private static string GenerateName(string? prefix, string? suffix, TempNamingStrategy strategy)
     {
         var middle = strategy switch {
-            TempNamingStrategy.Guid => Guid.NewGuid().ToString("N"),
+            TempNamingStrategy.Guid => LyoGuid.CreateV7().ToString("N"),
             TempNamingStrategy.Timestamp => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
             TempNamingStrategy.Sequential => Interlocked.Increment(ref _nameSequence).ToString(),
             TempNamingStrategy.RandomChars => Path.GetRandomFileName().Replace(".", string.Empty),

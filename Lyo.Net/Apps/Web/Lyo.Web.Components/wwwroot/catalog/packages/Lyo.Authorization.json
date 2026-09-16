@@ -1,0 +1,123 @@
+{
+  "id": "Lyo.Authorization",
+  "name": "Lyo.Authorization",
+  "area": "Security",
+  "tagline": "Resource grants. A check asks whether a subject may perform an action on a resource.",
+  "description": "A grant is a subject, an action, a resource type, an optional resource id, and an optional tenant. It does not sign anyone in and it does not parse tokens. A null resource id covers every id of that type. A set id matches only that id. The same split applies to tenant. There are no deny rows.",
+  "features": [
+    "**Expired at utc now is denied.** An expired row still occupies the active key until it is revoked. Save supersedes an expired row and inserts a new one.",
+    "**Checks are not audited.** Saves, revokes, and supersedes are. A throwing audit recorder does not fail the save."
+  ],
+  "examples": [
+    {
+      "title": "Register and check",
+      "language": "csharp",
+      "code": "services.AddInMemoryAuthorization();\nvar auth = app.Services.GetRequiredService<IResourceAuthorization>();\nvar allowed = await auth.IsAllowedAsync(new GrantCheck {\n    Subject = userId,\n    Action = \"read\",\n    ResourceType = \"note\",\n    ResourceId = noteId.ToString(\"D\")\n}, ct);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Security/Authorization/Lyo.Authorization/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Audit",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

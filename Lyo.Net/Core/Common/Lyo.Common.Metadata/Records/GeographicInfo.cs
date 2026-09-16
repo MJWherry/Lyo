@@ -64,6 +64,11 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
     public static readonly GeographicInfo Wisconsin = new(USState.WI, null, CountryCode.US, "United States", "America/Chicago");
     public static readonly GeographicInfo Wyoming = new(USState.WY, null, CountryCode.US, "United States", "America/Denver");
 
+    // USPS military mail codes. These span many time zones, so no single IANA id is assigned.
+    public static readonly GeographicInfo ArmedForcesAmericas = new(USState.AA, null, CountryCode.US, "United States", null);
+    public static readonly GeographicInfo ArmedForcesEurope = new(USState.AE, null, CountryCode.US, "United States", null);
+    public static readonly GeographicInfo ArmedForcesPacific = new(USState.AP, null, CountryCode.US, "United States", null);
+
     // Locations outside the US
     public static readonly GeographicInfo Canada = new(null, null, CountryCode.CA, "Canada", "America/Toronto");
     public static readonly GeographicInfo UnitedKingdom = new(null, null, CountryCode.GB, "United Kingdom", "Europe/London");

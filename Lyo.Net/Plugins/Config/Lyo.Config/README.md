@@ -85,8 +85,8 @@ PostgreSQL stores **append-only definition revisions** in `config.config_definit
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.EntityReference.Models` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Validation` (direct, lyo)
 - `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
 - `Lyo.Common.Core` (transitive, lyo)
@@ -102,3 +102,4 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)

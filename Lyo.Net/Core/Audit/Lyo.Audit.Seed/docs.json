@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Audit.Seed",
+  "name": "Lyo.Audit.Seed",
+  "area": "Core",
+  "tagline": "EF seed of audit events and change rows.",
+  "description": "EF seed of Count audit events, each paired with one change row. Schema audit.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Audit/Lyo.Audit.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

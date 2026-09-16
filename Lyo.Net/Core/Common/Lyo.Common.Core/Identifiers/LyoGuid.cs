@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using System.Text;
+using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Security;
 using Lyo.Exceptions;
@@ -292,7 +292,7 @@ public static class LyoGuid
     private static byte[] BuildNameInput(Guid ns, string name)
     {
         var nsBytes = ToRfcBytes(ns);
-        var nameBytes = Encoding.UTF8.GetBytes(name);
+        var nameBytes = ByteConvert.GetBytes(name);
         var input = new byte[nsBytes.Length + nameBytes.Length];
         nsBytes.CopyTo(input, 0);
         nameBytes.CopyTo(input, nsBytes.Length);

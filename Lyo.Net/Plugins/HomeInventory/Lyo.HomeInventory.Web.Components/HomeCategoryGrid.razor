@@ -1,0 +1,40 @@
+@inject ISnackbar Snackbar
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="HomeCategoryGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <LeftControls>
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+            <MudTextField @bind-Value="_draftName" Label="Name" Margin="Margin.Dense" Style="min-width: 12rem;"/>
+            <MudButton OnClick="@AddOrUpdate"
+                       StartIcon="@(_editingId is null ? Icons.Material.Filled.Add : Icons.Material.Filled.Save)"
+                       Size="Size.Small"
+                       Variant="Variant.Outlined"
+                       Disabled="@string.IsNullOrWhiteSpace(_draftName)">
+                @(_editingId is null ? "Add" : "Update")
+            </MudButton>
+            @if (_editingId is not null) {
+                <MudButton OnClick="@CancelEdit" Size="Size.Small" Variant="Variant.Text">Cancel</MudButton>
+            }
+        </MudStack>
+    </LeftControls>
+    <Columns>
+        <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                        HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                        CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+            <CellTemplate Context="cell">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit category" OnClick="@(() => BeginEdit(cell.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+        <LyoProjectedColumn Field="Name" Title="Name" QuickSearchPropertyName="Name"/>
+        <LyoProjectedColumn Field="Slug" Title="Slug"/>
+        <LyoProjectedColumn Field="SortOrder" Title="Sort"/>
+    </Columns>
+    <RowMenuControls Context="item">
+        <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => BeginEdit(item))">Edit</MudMenuItem>
+    </RowMenuControls>
+</LyoDataGridProjected>

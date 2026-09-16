@@ -4,7 +4,10 @@
   "area": "Apps",
   "tagline": "Playwright backend for the `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, owns session-scoped browser contexts, and matches the Selenium helpers.",
   "description": "Playwright backend for the `Lyo.Web.Automation` abstractions: launches Chromium / Firefox / WebKit, owns session-scoped browser contexts, and exposes the same tab, frame, dialog, keyboard, and locator helpers as [`Lyo.Web.Automation.Selenium`](../Lyo.Web.Automation.Selenium/README.md) so JSON automation plans and scripted runners behave the same on both engines.",
-  "features": [],
+  "features": [
+    "**Automation studio.** `PlaywrightAutomationStudio` opens a visible browser with Record, Play, and Tools. Record turns clicks, typing, and selects into an `AutomationPlan`. The drawer starts on the left, can be dragged wider, and Save writes JSON into a directory above the plan. Stop pauses so Start can record another plan in the same window. Add step, on Record, chooses a step that does not point at the page: delay, store literal, page URL, page title, or download URLs. Tools listens to network traffic, picks images, links, text, and attributes, and drags an arrow onto text to store it in a variable. Play loads plan JSON and runs it in the same window without appending those steps. Collapse and dock clicks stay out of the plan.",
+    "**Session factory.** `AddPlaywrightBrowserSessionFactory` registers `IAutomationBrowserSessionFactory`. `CreateSession` applies the browser kind and headless flag, and throws before a browser starts when the kind is not one Playwright can launch."
+  ],
   "examples": [
     {
       "title": "First steps",
@@ -12,12 +15,26 @@
       "code": "services.AddPlaywrightBrowserServiceFromConfiguration(builder.Configuration);\n\n// per operation:\nvar service = sp.GetRequiredService<IPlaywrightBrowserService>();\nusing var session = service.CreateSession();\nawait session.StartBrowserAsync();\nawait session.Browser.NavigateAsync(\"https://example.com\");"
     },
     {
+      "title": "Record a plan",
+      "language": "csharp",
+      "code": "services.AddWebAutomationPlanRunner();\nvar studio = new PlaywrightAutomationStudio(playwright, runner);\nawait using var recording = await studio.StartAsync(new PlaywrightAutomationStudioOptions {\n    StartUrl = \"https://example.com\",\n    PlanName = \"checkout\"\n});\n// Record builds the plan. Tools aims at the page. Play runs JSON in this window.\nvar plan = await recording.StopAsync();"
+    },
+    {
       "title": "Flared cookie handoff (host-owned)",
       "language": "csharp",
-      "code": "// Playwright does not reference Lyo.Http.Client. Copy UA/cookies in the host (see Lyo.TestConsole).\nusing var session = playwright.CreateSession(o => {\n    o.BrowserKind = PlaywrightBrowserKind.Chromium;\n    if (!string.IsNullOrWhiteSpace(flared.Session.UserAgent))\n        o.UserAgents = [flared.Session.UserAgent];\n    o.ProxyUrl = flaredOpts.ProxyUrl;\n});\nawait session.StartBrowserAsync();\nawait session.Browser.CookieJar!.AddCookiesAsync(\n    flared.Session.CookieJar.Export().Select(c => new BrowserCookie {\n        Name = c.Name, Value = c.Value, Domain = c.Domain, Path = c.Path,\n        Secure = c.Secure, HttpOnly = c.HttpOnly, Expiry = c.Expiry\n    }));\nawait session.Browser.NavigateToAsync(url);"
+      "code": "// Playwright does not reference Lyo.Http.Client. Copy UA/cookies in the host (see Lyo.TestConsole).\nusing var session = playwright.CreateSession(o => {\n    o.BrowserKind = AutomationBrowserKind.Chromium;\n    if (!string.IsNullOrWhiteSpace(flared.Session.UserAgent))\n        o.UserAgents = [flared.Session.UserAgent];\n    o.ProxyUrl = flaredOpts.ProxyUrl;\n});\nawait session.StartBrowserAsync();\nawait session.Browser.CookieJar!.AddCookiesAsync(\n    flared.Session.CookieJar.Export().Select(c => new BrowserCookie {\n        Name = c.Name, Value = c.Value, Domain = c.Domain, Path = c.Path,\n        Secure = c.Secure, HttpOnly = c.HttpOnly, Expiry = c.Expiry\n    }));\nawait session.Browser.NavigateToAsync(url);"
     }
   ],
   "sections": [
+    {
+      "type": "list",
+      "title": "Automation studio ([`Record/`](Record))",
+      "items": [
+        "**`PlaywrightAutomationStudio`.** `StartAsync` launches the session (`Headless` defaults to false) and installs the drawer. Pass `IAutomationPlanRunner` so Play can run a plan on that session; without it, Run says play is unavailable. `OutputDirectory` is where Save writes, and it defaults to `./plans`. `StopAsync` commits pending typing, closes the browser, and returns the plan. Closing the window completes `Completion`. The drawer Stop control pauses the plan and leaves the window open. While Play is running, clicks, keys, and navigations are not appended.",
+        "**Drawer.** Shadow-DOM panel docked to the left edge of the top window by default. Drag the inner edge to resize it. It is not installed in frames, and it stays on the viewport when the page uses transforms. Pause, Start, Stop, and Save stay above Record, Play, and Tools. The status line shows Recording, Paused, or Stopped, the dock side, and an armed extract tool. Pause holds the same plan and Play continues it. Start begins another plan. Record shows the output directory, numbered steps with up, down, and remove, and the step list: click, extract images, links, text, and attribute, drag to text, delay, store literal, page URL, page title, download URLs, capture network, and store captured URLs. JSON stays hidden until Show JSON, where it opens as a tree; Raw shows the text and Apply replaces the steps. Invalid JSON leaves them. A click or select is stored with a selector that matches that element only, so a bare `input` is not used when other inputs are on the page. Enter, Tab, and the arrow keys become `sendKeys` steps. Tools starts and stops a live network list that survives navigation and filters it with a URL regular expression. Store captured URLs on Record writes the shown URLs as `storeStringList`. Click a row to open a popup that stays the same height while you switch Headers, Request, and Response. The popup shows the status, separate request and response properties and header lists, and the body. JSON opens in a tree with the same kind colors as the JSON editor, with a Raw view. Select a value and Extract stores it on the plan. XML is indented. An image response is shown. Replay in new tab resends the request in another tab. Add capture step writes a URL regular expression onto the plan. That fills the Record tab's download form with the same variable. Extract images, links, text, and attribute arm a pick, then you click the page. Drag to text drops an arrow on a unique control and adds find-element plus extract-text; a target that is not unique is reported and does not add a step. Play has a file picker, the JSON files already in the output directory, a JSON box, and Run.",
+        "**CLI.** [`Lyo.Web.Automation.Studio`](../Lyo.Web.Automation.Studio) opens the window and registers the plan runner so Play works. `--out` is an optional directory (default `./plans`). Save from the drawer after Stop. Close the browser or press Enter to exit."
+      ]
+    },
     {
       "type": "list",
       "title": "Browser layer ([`Browser/`](Browser))",
@@ -52,7 +69,7 @@
         [
           "`BrowserKind`",
           "`Chromium`",
-          "`PlaywrightBrowserKind`: `Chromium`, `Firefox`, `Webkit`. Firefox is Playwright Nightly. Flared handoff requires Chromium."
+          "`AutomationBrowserKind`: `Chrome`, `Chromium`, `Edge`, `Firefox`, `WebKit`. Chrome and Edge launch Chromium with channel `chrome` or `msedge`. Firefox is Playwright Nightly. Flared handoff allows Chrome, Chromium, and Edge."
         ],
         [
           "`Headless`",
@@ -62,7 +79,7 @@
         [
           "`Channel`",
           "`null`",
-          "Optional Playwright channel (`msedge`, `chrome`, …). Chromium only; ignored for Firefox/WebKit."
+          "When empty, Chrome uses channel `chrome` and Edge uses `msedge`. An explicit channel wins for Chrome, Chromium, and Edge. Ignored for Firefox and WebKit."
         ],
         [
           "`ProxyUrl`",
@@ -71,13 +88,13 @@
         ],
         [
           "`LaunchArguments`",
-          "`--disable-infobars`, `--disable-extensions`, `--disable-dev-shm-usage`, `--no-sandbox` (Chromium only)",
-          "Every entry **must** start with `-` (`ResolveLaunchArguments` throws otherwise). Adds `--window-size` for Chromium only. Firefox/WebKit drop Chromium defaults: Playwright treats unknown tokens as start URLs (`http://1920,1080`). `--disable-gpu` is omitted (SwiftShader tell)."
+          "`--disable-infobars`, `--disable-extensions`, `--disable-dev-shm-usage`, `--no-sandbox` (Chrome, Chromium, and Edge)",
+          "Every entry **must** start with `-` (`ResolveLaunchArguments` throws otherwise). Adds `--window-size` for Chrome, Chromium, and Edge. Firefox and WebKit drop Chromium defaults: Playwright treats unknown tokens as start URLs (`http://1920,1080`). `--disable-gpu` is omitted (SwiftShader tell)."
         ],
         [
           "`UserAgents`",
-          "one Chrome UA on Linux",
-          "First entry is used as the context User-Agent. Firefox/WebKit skip the default Chrome UA and keep the engine UA."
+          "empty",
+          "An empty list is generated for `BrowserKind` on this host (`UserAgentGenerator`). A list the host sets is used as-is; the first entry is the context User-Agent."
         ],
         [
           "`ViewportWidth/Height`",

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>JSON parse and export for a typed document: file, stream, string, and bytes, over System.Text.Json and the Lyo JSON contract.</Description>
+        <PackageTags>json parse export serialization</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Text.Json"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Text.Encoding.CodePages"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
+        <ProjectReference Include="..\..\DataTable\Lyo.DataTable.Models\Lyo.DataTable.Models.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Json.Tests"/>
+        <InternalsVisibleTo Include="Lyo.Yaml"/>
+        <InternalsVisibleTo Include="Lyo.Xml"/>
+        <InternalsVisibleTo Include="Lyo.Toml"/>
+    </ItemGroup>
+
+</Project>

@@ -10,7 +10,9 @@ internal static class SeedCli
     {
         var name = args.Length > 1 ? args[1] : "";
         if (string.IsNullOrWhiteSpace(name) || name.StartsWith('-')) {
-            Console.Error.WriteLine("Usage: seed {people|people-api|comic} [--via ef|api] [--count N] [--seed N] [--skip] [--replace] [--base-url URL]");
+            Console.Error.WriteLine(
+                "Usage: seed {people|people-api|comic|book|story|comment|favorite|note|rating|tag|contactus|shorturl|homeinventory|config|job|reporting|billing|ledger} "
+                + "[--via ef|api] [--count N] [--seed N] [--skip] [--replace] [--base-url URL]");
             return 2;
         }
 
@@ -37,11 +39,23 @@ internal static class SeedCli
                 : SeedTransportKind.Ef;
         if (contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase) && count == 50 && ParseInt(args, "--count") is null)
             count = 20;
+        if (contributor.Name.Equals("Story", StringComparison.OrdinalIgnoreCase) && count == 50 && ParseInt(args, "--count") is null)
+            count = 1;
 
         var options = new SeedOptions { Count = count, RandomSeed = randomSeed, Conflict = conflict };
         var runner = sp.GetRequiredService<ISeedRunner>();
         var conn = sp.GetRequiredService<ConnectionStringProvider>();
-        var result = await SeedExecution.RunAsync(contributor, runner, conn, via.Value, options, baseUrl, ct).ConfigureAwait(false);
+        SeedResult result;
+        try {
+            result = await SeedExecution.RunAsync(contributor, runner, conn, via.Value, options, baseUrl, ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) {
+            throw;
+        }
+        catch (Exception ex) {
+            Console.Error.WriteLine($"Failed {contributor.Name}: {SeedFailureText.Format(ex)}");
+            return 1;
+        }
         if (result.Skipped) {
             Console.WriteLine($"Skipped {result.Contributor} — destination already has rows.");
             return 0;

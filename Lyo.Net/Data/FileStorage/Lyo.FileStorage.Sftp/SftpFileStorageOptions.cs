@@ -18,5 +18,6 @@ public sealed class SftpFileStorageOptions : FileStorageServiceBaseOptions
     {
         ArgumentHelpers.ThrowIfNull(Sftp);
         Sftp.Validate();
+        ValidateUploadFilters();
     }
 }

@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Exceptions;
 using Lyo.Xlsx;
 using Lyo.Xlsx.Models;

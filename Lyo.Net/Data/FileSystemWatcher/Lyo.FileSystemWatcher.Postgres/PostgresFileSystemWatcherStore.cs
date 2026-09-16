@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Common.Json;
+using Lyo.Json;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Models;
 using Lyo.FileSystemWatcher.Postgres.Database;

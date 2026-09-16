@@ -33,8 +33,8 @@ public class ErrorHandlingTests : IDisposable
             caughtException = ex;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestCt);
+        await Task.Delay(500, TestCt);
         Assert.True(errorFired);
         Assert.NotNull(caughtException);
         Assert.IsType<InvalidOperationException>(caughtException);
@@ -57,8 +57,8 @@ public class ErrorHandlingTests : IDisposable
             errorFired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestCt);
+        await Task.Delay(500, TestCt);
         Assert.True(handlerCalled);
         Assert.True(errorFired);
     }
@@ -75,8 +75,8 @@ public class ErrorHandlingTests : IDisposable
             errorCount++;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestCt);
+        await Task.Delay(500, TestCt);
 
         // Both exceptions must be caught here
         Assert.True(errorCount >= 2);
@@ -98,8 +98,8 @@ public class ErrorHandlingTests : IDisposable
         var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.FileCreated += (_, _) => eventFired = true;
         watcher.Dispose();
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestCt);
+        await Task.Delay(500, TestCt);
         Assert.False(eventFired);
     }
 }

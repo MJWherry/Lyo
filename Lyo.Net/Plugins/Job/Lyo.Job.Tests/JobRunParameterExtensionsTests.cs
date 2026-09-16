@@ -2,6 +2,7 @@ using Lyo.Parameters;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -15,10 +16,10 @@ public class JobRunParameterExtensionsTests
     }
 
     private static IReadOnlyList<JobRunParameterRes> Params(params (string Key, string? Value)[] entries)
-        => entries.Select(e => new JobRunParameterRes(Guid.NewGuid(), Guid.NewGuid(), e.Key, LyoTypeInfo.String.FullName, e.Value, null, null, true)).ToList();
+        => entries.Select(e => new JobRunParameterRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), e.Key, LyoTypeInfo.String.FullName, e.Value, null, null, true)).ToList();
 
     private static IReadOnlyList<JobRunResultRes> Results(params (string Key, string? Value)[] entries)
-        => entries.Select(e => new JobRunResultRes(Guid.NewGuid(), Guid.NewGuid(), e.Key, LyoTypeInfo.String.FullName, e.Value)).ToList();
+        => entries.Select(e => new JobRunResultRes(LyoGuid.CreateV7(), LyoGuid.CreateV7(), e.Key, LyoTypeInfo.String.FullName, e.Value)).ToList();
 
     // ---- GetString and key handling ----
 
@@ -61,7 +62,7 @@ public class JobRunParameterExtensionsTests
     [Fact]
     public void GetGuid_ParsesAndMisses()
     {
-        var guid = Guid.NewGuid();
+        var guid = LyoGuid.CreateV7();
         var parameters = Params(("Id", guid.ToString()), ("Bad", "nope"));
         Assert.Equal(guid, parameters.GetGuid("Id"));
         Assert.Null(parameters.GetGuid("Bad"));
@@ -189,7 +190,7 @@ public class JobRunParameterExtensionsTests
     [Fact]
     public void JobRunRes_GetParameterValueAs_DelegatesToExtensions()
     {
-        var run = new JobRunRes { Id = Guid.NewGuid(), JobRunParameters = Params(("N", "42"), ("Payload", """{"Name":"abc","Count":3}""")) };
+        var run = new JobRunRes { Id = LyoGuid.CreateV7(), JobRunParameters = Params(("N", "42"), ("Payload", """{"Name":"abc","Count":3}""")) };
         Assert.Equal(42, run.GetParameterValueAs<int>("n"));
         Assert.Equal(new("abc", 3), run.GetParameterValueAs<SamplePayload>("Payload"));
     }
@@ -197,7 +198,7 @@ public class JobRunParameterExtensionsTests
     [Fact]
     public void JobRunRes_GetResultValueAs_DelegatesToExtensions()
     {
-        var run = new JobRunRes { Id = Guid.NewGuid(), JobRunResults = Results(("Result", "Success"), ("CreateCount", "5")) };
+        var run = new JobRunRes { Id = LyoGuid.CreateV7(), JobRunResults = Results(("Result", "Success"), ("CreateCount", "5")) };
         Assert.Equal("Success", run.GetResultValueAs<string?>("Result"));
         Assert.Equal(5, run.GetResultValueAs<int?>("CreateCount"));
     }

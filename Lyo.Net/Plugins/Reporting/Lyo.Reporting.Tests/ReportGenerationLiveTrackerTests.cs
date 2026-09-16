@@ -1,4 +1,5 @@
 using Lyo.Reporting.Postgres;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 
@@ -12,7 +13,7 @@ public class ReportGenerationLiveTrackerTests
     public void Track_MarksLiveUntilTheScopeIsDisposed()
     {
         var tracker = new ReportGenerationLiveTracker();
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         Assert.False(tracker.IsLive(id));
 
         var scope = tracker.Track(id);
@@ -28,8 +29,8 @@ public class ReportGenerationLiveTrackerTests
     public void Track_HandlesConcurrentGenerationsIndependently()
     {
         var tracker = new ReportGenerationLiveTracker();
-        var first = Guid.NewGuid();
-        var second = Guid.NewGuid();
+        var first = LyoGuid.CreateV7();
+        var second = LyoGuid.CreateV7();
 
         using var firstScope = tracker.Track(first);
         var secondScope = tracker.Track(second);
@@ -44,7 +45,7 @@ public class ReportGenerationLiveTrackerTests
     public void Dispose_IsIdempotent()
     {
         var tracker = new ReportGenerationLiveTracker();
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         var scope = tracker.Track(id);
         scope.Dispose();
         scope.Dispose();
@@ -56,7 +57,7 @@ public class ReportGenerationLiveTrackerTests
     public void LiveIds_IsASnapshot()
     {
         var tracker = new ReportGenerationLiveTracker();
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         var scope = tracker.Track(id);
         var snapshot = tracker.LiveIds;
         scope.Dispose();

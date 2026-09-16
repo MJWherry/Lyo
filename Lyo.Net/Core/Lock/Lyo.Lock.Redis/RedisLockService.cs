@@ -4,6 +4,7 @@ using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using StackExchange.Redis;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Lock.Redis;
 
@@ -45,7 +46,7 @@ public sealed class RedisLockService : ILockService
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var normalizedKey = _options.SkipKeyNormalization ? key : key.ToLowerInvariant();
         var redisKey = _options.KeyPrefix + normalizedKey;
-        var token = Guid.NewGuid().ToString("N");
+        var token = LyoGuid.CreateV7().ToString("N");
         var effectiveDuration = (lockDuration ?? _options.DefaultLockDuration).TotalMilliseconds;
         var effectiveTimeout = timeout ?? _options.DefaultAcquireTimeout;
         var deadline = DateTime.UtcNow + effectiveTimeout;

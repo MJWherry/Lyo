@@ -21,6 +21,15 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
     /// </summary>
     public object? Value { get; set; }
 
+    /// <summary>
+    /// Similarity cutoff for <see cref="ComparisonOperatorEnum.Fuzzy" /> / <see cref="ComparisonOperatorEnum.NotFuzzy" /> in <c>[0, 1]</c>. Omitted uses
+    /// <see cref="DefaultFuzzyThreshold" /> (Postgres <c>pg_trgm.similarity_threshold</c> default). Ignored for every other operator.
+    /// </summary>
+    public double? Threshold { get; set; }
+
+    /// <summary>Default Fuzzy / NotFuzzy cutoff when <see cref="Threshold" /> is omitted. Matches Postgres <c>pg_trgm.similarity_threshold</c>.</summary>
+    public const double DefaultFuzzyThreshold = 0.3;
+
     /// <summary>Builds a condition with an empty field and default <see cref="ComparisonOperatorEnum.Equals" />.</summary>
     public ConditionClause()
     {
@@ -29,20 +38,23 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
         Value = null!;
     }
 
-    /// <summary>Builds a condition with the given field, operator, value, and optional description.</summary>
+    /// <summary>Builds a condition with the given field, operator, value, optional description, and optional Fuzzy threshold.</summary>
     /// <param name="field">Dotted property path.</param>
     /// <param name="comparison">Comparison operator.</param>
     /// <param name="value">Filter literal.</param>
     /// <param name="description">Optional <see cref="WhereClause.Description" />.</param>
-    public ConditionClause(string field, ComparisonOperatorEnum comparison, object? value, string? description = null)
+    /// <param name="threshold">Optional Fuzzy / NotFuzzy cutoff in <c>[0, 1]</c>.</param>
+    public ConditionClause(string field, ComparisonOperatorEnum comparison, object? value, string? description = null, double? threshold = null)
     {
         Field = field;
         Comparison = comparison;
         Value = value;
         Description = description;
+        Threshold = threshold;
     }
 
-    public bool Equals(ConditionClause? other) => other is not null && Field == other.Field && Comparison == other.Comparison && ValueEquals(Value, other.Value);
+    public bool Equals(ConditionClause? other)
+        => other is not null && Field == other.Field && Comparison == other.Comparison && Nullable.Equals(Threshold, other.Threshold) && ValueEquals(Value, other.Value);
 
     public override string Print(int indent = 0)
     {
@@ -59,7 +71,7 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
         }
 
         // Scalar value.
-        return $"{pad}{Field} {Comparison} {(Value is not null ? $"'{Value}'" : "NULL")}";
+        return $"{pad}{Field} {Comparison} {(Value is not null ? $"'{Value}'" : "NULL")}{ThresholdSuffix()}";
     }
 
     public override string ToString()
@@ -68,15 +80,15 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
             return Description;
 
         if (Value is string || Value is not IEnumerable many)
-            return $"{Field} {Comparison} {(Value is not null ? $"'{Value}'" : "NULL")}";
+            return $"{Field} {Comparison} {(Value is not null ? $"'{Value}'" : "NULL")}{ThresholdSuffix()}";
 
         var items = many.Cast<object?>().Select(x => x?.ToString() ?? string.Empty);
-        return $"{Field} {Comparison} '{string.Join(",", items)}'";
+        return $"{Field} {Comparison} '{string.Join(",", items)}'{ThresholdSuffix()}";
     }
 
     public override bool Equals(object? obj) => Equals(obj as ConditionClause);
 
-    public override int GetHashCode() => HashCodeHelpers.Combine(Field, Comparison, ValueHash(Value));
+    public override int GetHashCode() => HashCodeHelpers.Combine(Field, Comparison, ValueHash(Value), Threshold);
 
     private static bool ValueEquals(object? a, object? b)
     {
@@ -102,4 +114,7 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
 
         return v.GetHashCode();
     }
+
+    private string ThresholdSuffix()
+        => Comparison is ComparisonOperatorEnum.Fuzzy or ComparisonOperatorEnum.NotFuzzy && Threshold is { } t ? $" threshold={t}" : string.Empty;
 }

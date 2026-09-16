@@ -2,7 +2,7 @@ using System.CommandLine;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Cli.Services;
-using Lyo.Common.Json;
+using Lyo.Json;
 
 namespace Lyo.Cli.Commands;
 

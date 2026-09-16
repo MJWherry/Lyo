@@ -5,6 +5,7 @@ using Lyo.Formatter;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Response;
 using Lyo.MessageQueue;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -19,7 +20,7 @@ public class JobSchedulerCompletionRequeueTests
         var api = new FakeSchedulerApiClient(BuildDefinition()) { ThrowStatusOnRunGet = 404 };
         var mq = new RecordingDelayedMqService();
         var scheduler = CreateScheduler(api, mq);
-        var requeue = await InvokeOnJobRunCompleteAsync(scheduler, JsonSerializer.SerializeToUtf8Bytes(Guid.NewGuid()));
+        var requeue = await InvokeOnJobRunCompleteAsync(scheduler, JsonSerializer.SerializeToUtf8Bytes(LyoGuid.CreateV7()));
         Assert.False(requeue);
         Assert.Empty(mq.DelayedSends);
         Assert.Empty(mq.QueueSends);
@@ -28,7 +29,7 @@ public class JobSchedulerCompletionRequeueTests
     [Fact]
     public async Task OnJobRunComplete_WhenRunGetReturns500_RepublishesEnvelopeCount1()
     {
-        var runId = Guid.NewGuid();
+        var runId = LyoGuid.CreateV7();
         var api = new FakeSchedulerApiClient(BuildDefinition()) { ThrowStatusOnRunGet = 500 };
         var mq = new RecordingDelayedMqService();
         var scheduler = CreateScheduler(api, mq);
@@ -47,11 +48,11 @@ public class JobSchedulerCompletionRequeueTests
     [Fact]
     public async Task OnJobRunComplete_WhenEnvelopeAtMaxRequeueAnd500_DropsWithoutRepublish()
     {
-        var runId = Guid.NewGuid();
+        var runId = LyoGuid.CreateV7();
         var api = new FakeSchedulerApiClient(BuildDefinition()) { ThrowStatusOnRunGet = 500 };
         var mq = new RecordingDelayedMqService();
         var scheduler = CreateScheduler(api, mq);
-        var body = JsonSerializer.SerializeToUtf8Bytes(new QueueMessageEnvelope<Guid>(runId, JobScheduler.MaxRequeueCount, Guid.NewGuid().ToString("D"), DateTime.UtcNow));
+        var body = JsonSerializer.SerializeToUtf8Bytes(new QueueMessageEnvelope<Guid>(runId, JobScheduler.MaxRequeueCount, LyoGuid.CreateV7().ToString("D"), DateTime.UtcNow));
         var requeue = await InvokeOnJobRunCompleteAsync(scheduler, body);
         Assert.False(requeue);
         Assert.Empty(mq.DelayedSends);
@@ -75,7 +76,7 @@ public class JobSchedulerCompletionRequeueTests
     {
         var api = new FakeSchedulerApiClient(BuildDefinition()) { ThrowStatusOnRunGet = 500 };
         var scheduler = CreateScheduler(api, null);
-        var requeue = await InvokeOnJobRunCompleteAsync(scheduler, JsonSerializer.SerializeToUtf8Bytes(Guid.NewGuid()));
+        var requeue = await InvokeOnJobRunCompleteAsync(scheduler, JsonSerializer.SerializeToUtf8Bytes(LyoGuid.CreateV7()));
         Assert.False(requeue);
     }
 
@@ -89,7 +90,7 @@ public class JobSchedulerCompletionRequeueTests
             }, api, new FormatterService(), new FakeEventPublisher(), mqService: mqService);
 
     private static JobDefinitionRes BuildDefinition()
-        => new(Guid.NewGuid(), "CompletionDef", null, "Test", "cs", true, [], [], [], null, 0, 0);
+        => new(LyoGuid.CreateV7(), "CompletionDef", null, "Test", "cs", true, [], [], null, 0, 0);
 
     private static async Task<bool> InvokeOnJobRunCompleteAsync(JobScheduler scheduler, byte[] body)
     {

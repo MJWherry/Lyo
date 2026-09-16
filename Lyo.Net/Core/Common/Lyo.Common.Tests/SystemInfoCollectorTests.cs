@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Lyo.SystemInformation;
 using Microsoft.Extensions.Logging;
 
@@ -25,7 +26,16 @@ public class SystemInfoCollectorTests
         Assert.False(string.IsNullOrEmpty(hardware.OsArchitecture));
         Assert.NotNull(hardware.Drives);
         Assert.NotNull(hardware.Monitors);
+        Assert.NotNull(hardware.AudioDevices);
+        Assert.NotNull(hardware.Printers);
+        Assert.NotNull(hardware.PowerPolicy);
         Assert.All(hardware.Monitors, monitor => Assert.False(string.IsNullOrEmpty(monitor.Connector)));
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+            if (File.Exists("/sys/firmware/acpi/platform_profile"))
+                Assert.False(string.IsNullOrEmpty(hardware.PowerPolicy.Profile));
+            if (HasLinuxCpuSysfs("scaling_governor"))
+                Assert.False(string.IsNullOrEmpty(hardware.PowerPolicy.CpuGovernor));
+        }
     }
 
     [Fact]
@@ -136,6 +146,64 @@ public class SystemInfoCollectorTests
         finally {
             Environment.SetEnvironmentVariable("LYO_TEST_LOG_SECRET", null);
         }
+    }
+
+    [Fact]
+    public void LogHardwareInfo_LogsPowerWhenAnyFieldSet()
+    {
+        var logger = new CapturingLogger(LogLevel.Trace);
+        var hardware = new HardwareInfo(1, "cpu", "X64", "X64", 1, [], [], [], [], new PowerPolicyInfo("balanced", "schedutil", null, null, true));
+        logger.LogHardwareInfo(hardware, LogLevel.Information);
+        Assert.Contains(logger.Entries, entry => entry.Message.StartsWith("Power:"));
+    }
+
+    [Fact]
+    public void LogHardwareInfo_OmitsPowerWhenAllFieldsNull()
+    {
+        var logger = new CapturingLogger(LogLevel.Trace);
+        var hardware = new HardwareInfo(1, "cpu", "X64", "X64", 1, [], [], [], [], new PowerPolicyInfo(null, null, null, null, null));
+        logger.LogHardwareInfo(hardware, LogLevel.Information);
+        Assert.DoesNotContain(logger.Entries, entry => entry.Message.StartsWith("Power:"));
+        Assert.DoesNotContain(logger.Entries, entry => entry.Message.StartsWith("Audio "));
+        Assert.DoesNotContain(logger.Entries, entry => entry.Message.StartsWith("Printer "));
+    }
+
+    [Fact]
+    public void GetHardwareInfo_AudioAndPrinters_AreNonNullAndNamed()
+    {
+        var hardware = SystemInfoCollector.GetHardwareInfo();
+        Assert.NotNull(hardware.AudioDevices);
+        Assert.NotNull(hardware.Printers);
+        Assert.All(hardware.AudioDevices, device => Assert.False(string.IsNullOrEmpty(device.Name)));
+        Assert.All(hardware.Printers, printer => Assert.False(string.IsNullOrEmpty(printer.Name)));
+    }
+
+    [Fact]
+    public void LogHardwareInfo_AudioAndPrintersPresent_LogsEachDevice()
+    {
+        var logger = new CapturingLogger(LogLevel.Trace);
+        var hardware = new HardwareInfo(
+            1, "cpu", "X64", "X64", 1, [], [], [new AudioDeviceInfo("Speakers", AudioDeviceInfo.Playback, "Realtek", "Speakers", true)],
+            [new PrinterInfo("Office", "HP", "ipp://print", true, "Idle")], new PowerPolicyInfo(null, null, null, null, null));
+        logger.LogHardwareInfo(hardware, LogLevel.Information);
+        Assert.Contains(logger.Entries, entry => entry.Message.StartsWith("Audio ") && entry.Message.Contains("Speakers"));
+        Assert.Contains(logger.Entries, entry => entry.Message.StartsWith("Printer ") && entry.Message.Contains("Office"));
+    }
+
+    private static bool HasLinuxCpuSysfs(string fileName)
+    {
+        if (!Directory.Exists("/sys/devices/system/cpu"))
+            return false;
+
+        foreach (var cpuDirectory in Directory.EnumerateDirectories("/sys/devices/system/cpu")) {
+            var name = Path.GetFileName(cpuDirectory);
+            if (name.Length < 4 || !name.StartsWith("cpu", StringComparison.Ordinal) || !char.IsDigit(name[3]))
+                continue;
+            if (File.Exists(Path.Combine(cpuDirectory, "cpufreq", fileName)))
+                return true;
+        }
+
+        return false;
     }
 
     private sealed class CapturingLogger(LogLevel minLevel) : ILogger

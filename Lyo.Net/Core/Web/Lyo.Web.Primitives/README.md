@@ -14,6 +14,7 @@ The small end of the Lyo Blazor stack: record cards, chips, the responsive table
 
 ```razor
 <LyoChip Label="Succeeded" Color="Color.Success" Icon="@Icons.Material.Filled.Check"/>
+<LyoChip Label="Pdf" Hue="LyoChipHue.Rose"/>
 
 <LyoResponsiveTable>
     <TableContent>
@@ -59,8 +60,8 @@ The small end of the Lyo Blazor stack: record cards, chips, the responsive table
 ## Components
 
 | Component | What it does |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LyoChip` / `LyoChips` / `LyoChipSpec` / `LyoChipHue` | MudChip wrapper taking either a spec or individual color, label, variant, and icon. Named `LyoChipHue` values (Blue, Teal, Rose, …) set `--lyo-chip-hue`; the chip mixes that into `--mud-palette-surface` so identity colors stay readable in light and dark themes. |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LyoChip` / `LyoChips` / `LyoChipSpec` / `LyoChipHue` | MudChip wrapper taking either a spec or individual color, label, variant, and icon. Twelve named `LyoChipHue` values (Rose, Coral, Amber, Lime, Green, Teal, Cyan, Blue, Indigo, Violet, Purple, Magenta) set `--lyo-chip-hue`. The chip mixes that hue into `--mud-palette-surface` on the chip style, so the fill follows light and dark themes. |
 | `LyoChipInput` | Chip-style multi-value input for emails, tags, and freeform lists, with bulk paste splitting. |
 | `LyoCheckSelect` / `LyoSelectOption` | Checkbox-backed multi-select dropdown, with optional search. |
 | `LyoResponsiveTable` | Cards on narrow viewports, table on wide ones, for hand-rolled tables that cannot use the shared grids. |
@@ -73,6 +74,7 @@ The small end of the Lyo Blazor stack: record cards, chips, the responsive table
 | `LyoTabSet` / `LyoTab` | Tabs that persist the active panel per user and deep-link it. |
 | `LyoLogViewer` / `LyoCodeBlock` | A read-only code surface with copy and line numbers, plus a virtualized log pane. |
 | `LyoWorkbenchHost` / `LyoNavMenu` | Registry-driven workbench page and drawer links. Packages call `AddLyoWorkbench`. |
+| `LyoCalendar` | Month, week, and day grid bound to `Lyo.Schedule.Models.Calendar`. The toolbar shows the zone id and UTC offset, a zone picker, and a 12/24-hour switch. Changing the zone rebuckets via `Calendar.WithTimeZone` and raises `TimeZoneChanged`. A month cell groups fires that share a local hour, shows at most three rows, and opens that day's hourly column from a magnifying glass. Clicking a day opens that day. Week and day use the hourly grid, with a list switch. Clicking an entry opens a dialog; `DetailContent` supplies the body. A muted entry is drawn gray. Overlapping entries sit side by side on the hourly grid. Each `EntityRef` is a chip of type plus a short id unless the host supplies `RefContent`. |
 
 ## Options and services
 
@@ -93,11 +95,14 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
+- `Lyo.Schedule.Models` (direct, lyo)
 - `Lyo.Validation` (direct, lyo)
 - `MudBlazor` `9.3` (direct, third-party)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
@@ -107,4 +112,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

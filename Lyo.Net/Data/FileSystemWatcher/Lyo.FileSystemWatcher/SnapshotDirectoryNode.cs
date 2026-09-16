@@ -18,6 +18,14 @@ public sealed class SnapshotDirectoryNode
     /// <summary>Files in this directory keyed by file name.</summary>
     public Dictionary<string, DirectorySnapshotEntry> Files { get; }
 
+    /// <summary>
+    /// Snapshot entry for this directory itself, built on first use and reused afterwards. Diffing walks every directory on every poll, and building a fresh
+    /// <see cref="DirectoryInfo" /> each time dominated the per-poll allocation.
+    /// </summary>
+    public DirectorySnapshotEntry Entry => _entry ??= new(FullPath, new DirectoryInfo(FullPath));
+
+    private DirectorySnapshotEntry? _entry;
+
     /// <summary>Builds a node in the snapshot tree.</summary>
     /// <param name="parent">Parent node, or null at the root.</param>
     /// <param name="name">Directory segment name. Empty at the root.</param>

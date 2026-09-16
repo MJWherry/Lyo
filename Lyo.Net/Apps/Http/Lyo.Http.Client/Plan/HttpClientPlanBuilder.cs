@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Net;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
@@ -50,7 +51,7 @@ public sealed class HttpClientPlanBuilder
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(method);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri);
         AutoCommit();
-        _open = new(method, uri) { StepId = Guid.NewGuid() };
+        _open = new(method, uri) { StepId = LyoGuid.CreateV7() };
         return this;
     }
 
@@ -310,7 +311,7 @@ public sealed class HttpClientPlanBuilder
     {
         AutoCommit();
         _steps.Add(new HttpFilterListPlanStep(sourceVariable, targetVariable) {
-            StepId = Guid.NewGuid(),
+            StepId = LyoGuid.CreateV7(),
             IncludeRegex = includeRegex,
             ExcludeRegex = excludeRegex,
             Skip = skip,
@@ -324,7 +325,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder MapList(string sourceVariable, string targetVariable, string? prefix = null, string? suffix = null)
     {
         AutoCommit();
-        _steps.Add(new HttpMapListPlanStep(sourceVariable, targetVariable, prefix, suffix) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpMapListPlanStep(sourceVariable, targetVariable, prefix, suffix) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -332,7 +333,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder DownloadFile(string uri, string destination, string? savePathAs = null)
     {
         AutoCommit();
-        _steps.Add(new HttpDownloadFilePlanStep(uri, destination) { StepId = Guid.NewGuid(), SavePathAs = savePathAs });
+        _steps.Add(new HttpDownloadFilePlanStep(uri, destination) { StepId = LyoGuid.CreateV7(), SavePathAs = savePathAs });
         return this;
     }
 
@@ -340,7 +341,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder DownloadUrls(string variableName, string directory, string? prefix = null)
     {
         AutoCommit();
-        _steps.Add(new HttpDownloadUrlsPlanStep(variableName, directory, prefix) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpDownloadUrlsPlanStep(variableName, directory, prefix) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -351,7 +352,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder Delay(TimeSpan min, TimeSpan? max = null)
     {
         AutoCommit();
-        _steps.Add(new HttpDelayPlanStep(min, max) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpDelayPlanStep(min, max) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -359,7 +360,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenSetHeader(string name, string value)
     {
         AutoCommit();
-        _steps.Add(new HttpSetHeaderPlanStep(name, value) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpSetHeaderPlanStep(name, value) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -367,7 +368,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenRemoveHeader(string name)
     {
         AutoCommit();
-        _steps.Add(new HttpRemoveHeaderPlanStep(name) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpRemoveHeaderPlanStep(name) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -375,7 +376,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenSetCookie(string name, string value, string? domain = null, string? path = null)
     {
         AutoCommit();
-        _steps.Add(new HttpSetCookiePlanStep(new() { Name = name, Value = value, Domain = domain, Path = path }) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpSetCookiePlanStep(new() { Name = name, Value = value, Domain = domain, Path = path }) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -383,7 +384,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenRemoveCookie(string name, string? domain = null)
     {
         AutoCommit();
-        _steps.Add(new HttpRemoveCookiePlanStep(name, domain) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpRemoveCookiePlanStep(name, domain) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -391,7 +392,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenClearCookies()
     {
         AutoCommit();
-        _steps.Add(new HttpClearCookiesPlanStep { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpClearCookiesPlanStep { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -399,7 +400,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenExportCookies(string variableName)
     {
         AutoCommit();
-        _steps.Add(new HttpExportCookiesPlanStep(variableName) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpExportCookiesPlanStep(variableName) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -407,7 +408,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenLoadCookies(string? variableName = null, string? cookieFile = null)
     {
         AutoCommit();
-        _steps.Add(new HttpLoadCookiesPlanStep(variableName, cookieFile) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpLoadCookiesPlanStep(variableName, cookieFile) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -415,7 +416,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder StoreLiteral(string variableName, string value)
     {
         AutoCommit();
-        _steps.Add(new HttpStoreLiteralPlanStep(variableName, value) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpStoreLiteralPlanStep(variableName, value) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -423,7 +424,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder StoreTemplate(string variableName, string template)
     {
         AutoCommit();
-        _steps.Add(new HttpStoreTemplatePlanStep(variableName, template) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpStoreTemplatePlanStep(variableName, template) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
