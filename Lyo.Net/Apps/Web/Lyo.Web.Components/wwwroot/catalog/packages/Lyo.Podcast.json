@@ -1,0 +1,23 @@
+{
+  "id": "Lyo.Podcast",
+  "name": "Lyo.Podcast",
+  "area": "Plugins",
+  "tagline": "Domain contracts for podcasts: shows, seasons, episodes, credits, and `IPodcastStore`.",
+  "description": "Domain contracts for a podcast catalog. Episodes live on seasons. A show may have zero seasons. Credits use an opaque `PersonRef`. `CoverImageRef` and `AudioFileRef` are opaque file refs. Favorite and Tag attach via `PodcastEntityTypes`.",
+  "features": [
+    "**Show.** `SaveShowAsync` replaces credits, identifiers, seasons, and episodes. A null episode transcript leaves the stored text in place.",
+    "**Identifiers.** Show table: `itunes`, `podcast-guid`, and `custom`. Episode table: `episode-guid` and `custom`. iTunes, podcast-guid, and episode-guid values are lowercased.",
+    "**Seasons and episodes.** Unique `(show, season number)` and `(season, episode number)`. Episode 1 on two seasons is allowed.",
+    "**Discovery.** Genre trees and `SearchShowsAsync`. `FilterIds` null means no filter. An empty list returns no rows.",
+    "**Transcripts.** Optional plain text on an episode. Show reads omit it. `SearchTranscriptsAsync` uses the stored full-text index."
+  ],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Audio/Podcast/Lyo.Podcast/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

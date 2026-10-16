@@ -3,14 +3,16 @@
   "name": "Lyo.FeatureFlags",
   "area": "Core",
   "tagline": "Named flags for apps and workers: on, off, percentage rollout, and caller rules.",
-  "description": "IFeatureFlagService.IsEnabled reads a snapshot taken at registration. An unknown name is off. AddFeatureFlags, an options instance, or AddFeatureFlagsFromConfiguration all register that service. The first registration wins. Percentage hashes the flag name with a stickiness key into a stable bucket. Rules match user, tenant, claim, and attribute. Apps pass a FeatureFlagContext. HTTP hosts use Lyo.FeatureFlags.AspNetCore.",
+  "description": "IFeatureFlagService.IsEnabled reads an immutable snapshot. An unknown name is off. AddFeatureFlags, an options instance, or AddFeatureFlagsFromConfiguration all register that service. The first registration wins. AddFeatureFlagsFromConfiguration follows the configuration reload token and replaces the whole set when the new document is valid. A bad reload keeps the last good snapshot. IFeatureFlagUpdater.TryApply is that same swap. IOptions stays the first document. IOptionsMonitor.CurrentValue follows the snapshot. Percentage hashes the flag name with a stickiness key into a stable bucket. Rules match user, tenant, claim, and attribute. Apps pass a FeatureFlagContext. HTTP hosts use Lyo.FeatureFlags.AspNetCore.",
   "features": [
     "**IFeatureFlagService.** IsEnabled(name, context). Whitespace names throw. Names compare ordinal-ignore-case.",
     "**Modes.** Off, On, Percentage, and Rules. On ignores the caller. Percentage 0 is off and 100 is on. A missing name is off.",
     "**Stickiness.** User, Tenant, or a named attribute. StickinessKey on the context overrides that choice for a partial percentage.",
     "**Rules.** Rules are OR. Predicates inside one rule are AND. A claim or attribute matches when any caller pair equals.",
     "**Fluent Add.** On, Percentage, StickToTenant, StickToAttribute, WhenClaim, and When for an AND rule. The last mode call wins.",
-    "**Configuration.** Section FeatureFlags. Each Flags child is bound on its own. A bad Mode throws ConfigurationException. A missing section leaves every flag off."
+    "**Configuration.** Section FeatureFlags. Each Flags child is bound on its own. A bad Mode throws ConfigurationException on the first document. A missing section leaves every flag off.",
+    "**Reload.** A later configuration reload replaces the whole set when it is valid. A bad Mode, unknown property, or validation failure keeps the last snapshot and does not throw. AddFeatureFlags does not watch a file. IFeatureFlagUpdater.TryApply pushes a document.",
+    "**WithEnabled.** Copies the current document and sets one existing flag on or off. Percentage, stickiness, and rules on that flag are cleared. A missing name returns null. The previous document is not changed."
   ],
   "examples": [
     {
@@ -50,7 +52,25 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Primitives",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

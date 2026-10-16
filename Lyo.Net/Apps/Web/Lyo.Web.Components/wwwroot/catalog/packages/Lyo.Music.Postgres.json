@@ -19,7 +19,7 @@
   ],
   "sections": [],
   "links": [],
-  "readmePath": "Lyo.Net/Plugins/Music/Lyo.Music.Postgres/README.md",
+  "readmePath": "Lyo.Net/Plugins/Audio/Music/Lyo.Music.Postgres/README.md",
   "dependencies": [
     {
       "name": "Lyo.Common.Core",

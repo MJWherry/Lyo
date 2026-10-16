@@ -15,6 +15,10 @@ using Lyo.Book;
 using Lyo.Book.Postgres.Database;
 using Lyo.Music;
 using Lyo.Music.Postgres.Database;
+using Lyo.Audiobook;
+using Lyo.Audiobook.Postgres.Database;
+using Lyo.Podcast;
+using Lyo.Podcast.Postgres.Database;
 using Lyo.Video;
 using Lyo.Video.Postgres.Database;
 using Lyo.Comic.Api;
@@ -53,6 +57,8 @@ public static class Setup
                 .BuildBookGroup()
                 .BuildMusicGroup()
                 .BuildVideoGroup()
+                .BuildAudiobookGroup()
+                .BuildPodcastGroup()
                 .BuildComicGroup()
                 .BuildStoryGroup(allowAnonymous: true)
                 .BuildAlgorithmsGroup()
@@ -207,6 +213,89 @@ public static class Setup
                 await store.SaveEpisodeTranscriptAsync(id, body.Text, ct);
                 return Results.NoContent();
             }).WithTags("Video").AllowAnonymous();
+            return app;
+        }
+
+        public WebApplication BuildAudiobookGroup()
+        {
+            app.MapDynamicCrudEndpoints<AudiobookDbContext>(c => c.AllowAnonymous()
+                .WithDefaults(d => d.BaseRoute = "Audiobook")
+                .DenySelectFields("Transcript", "SearchVector")
+                .IncludeOnly(
+                    typeof(AudiobookWorkEntity),
+                    typeof(AudiobookChapterEntity),
+                    typeof(AudiobookCreditEntity),
+                    typeof(AudiobookIdentifierEntity),
+                    typeof(AudiobookSeriesEntity),
+                    typeof(AudiobookGenreEntity),
+                    typeof(AudiobookWorkGenreEntity)));
+
+            app.MapPost("/Audiobook/search", async (AudiobookQuery query, IAudiobookStore store, CancellationToken ct) => Results.Ok(await store.SearchWorksAsync(query, ct)))
+                .WithTags("Audiobook")
+                .AllowAnonymous();
+            app.MapPost("/Audiobook/transcripts/search", async (AudiobookTranscriptQuery query, IAudiobookStore store, CancellationToken ct) => Results.Ok(await store.SearchTranscriptsAsync(query, ct)))
+                .WithTags("Audiobook")
+                .AllowAnonymous();
+            app.MapGet("/Audiobook/work/{id:guid}/transcript", async (Guid id, IAudiobookStore store, CancellationToken ct) => {
+                try {
+                    return Results.Ok(await store.GetWorkTranscriptAsync(id, ct));
+                }
+                catch (NotFoundException) {
+                    return Results.NotFound();
+                }
+            }).WithTags("Audiobook").AllowAnonymous();
+            app.MapPut("/Audiobook/work/{id:guid}/transcript", async (Guid id, CatalogTextBody body, IAudiobookStore store, CancellationToken ct) => {
+                await store.SaveWorkTranscriptAsync(id, body.Text, ct);
+                return Results.NoContent();
+            }).WithTags("Audiobook").AllowAnonymous();
+            app.MapGet("/Audiobook/chapter/{id:guid}/transcript", async (Guid id, IAudiobookStore store, CancellationToken ct) => {
+                try {
+                    return Results.Ok(await store.GetChapterTranscriptAsync(id, ct));
+                }
+                catch (NotFoundException) {
+                    return Results.NotFound();
+                }
+            }).WithTags("Audiobook").AllowAnonymous();
+            app.MapPut("/Audiobook/chapter/{id:guid}/transcript", async (Guid id, CatalogTextBody body, IAudiobookStore store, CancellationToken ct) => {
+                await store.SaveChapterTranscriptAsync(id, body.Text, ct);
+                return Results.NoContent();
+            }).WithTags("Audiobook").AllowAnonymous();
+            return app;
+        }
+
+        public WebApplication BuildPodcastGroup()
+        {
+            app.MapDynamicCrudEndpoints<PodcastDbContext>(c => c.AllowAnonymous()
+                .WithDefaults(d => d.BaseRoute = "Podcast")
+                .DenySelectFields("Transcript", "SearchVector")
+                .IncludeOnly(
+                    typeof(PodcastShowEntity),
+                    typeof(PodcastSeasonEntity),
+                    typeof(PodcastEpisodeEntity),
+                    typeof(PodcastCreditEntity),
+                    typeof(PodcastShowIdentifierEntity),
+                    typeof(PodcastEpisodeIdentifierEntity),
+                    typeof(PodcastGenreEntity),
+                    typeof(PodcastShowGenreEntity)));
+
+            app.MapPost("/Podcast/search", async (PodcastShowQuery query, IPodcastStore store, CancellationToken ct) => Results.Ok(await store.SearchShowsAsync(query, ct)))
+                .WithTags("Podcast")
+                .AllowAnonymous();
+            app.MapPost("/Podcast/transcripts/search", async (PodcastTranscriptQuery query, IPodcastStore store, CancellationToken ct) => Results.Ok(await store.SearchTranscriptsAsync(query, ct)))
+                .WithTags("Podcast")
+                .AllowAnonymous();
+            app.MapGet("/Podcast/episode/{id:guid}/transcript", async (Guid id, IPodcastStore store, CancellationToken ct) => {
+                try {
+                    return Results.Ok(await store.GetEpisodeTranscriptAsync(id, ct));
+                }
+                catch (NotFoundException) {
+                    return Results.NotFound();
+                }
+            }).WithTags("Podcast").AllowAnonymous();
+            app.MapPut("/Podcast/episode/{id:guid}/transcript", async (Guid id, CatalogTextBody body, IPodcastStore store, CancellationToken ct) => {
+                await store.SaveEpisodeTranscriptAsync(id, body.Text, ct);
+                return Results.NoContent();
+            }).WithTags("Podcast").AllowAnonymous();
             return app;
         }
 

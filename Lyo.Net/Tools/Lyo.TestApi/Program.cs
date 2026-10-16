@@ -21,10 +21,16 @@ using Lyo.Authentication.OpenIdConnect;
 using Lyo.Authentication.OpenIdConnect.Endpoints;
 using Lyo.Authentication.Postgres;
 using Lyo.Cache;
+using Lyo.FeatureFlags;
+using Lyo.FeatureFlags.AspNetCore;
 using Lyo.Book.Postgres;
 using Lyo.Book.Postgres.Database;
 using Lyo.Music.Postgres;
 using Lyo.Music.Postgres.Database;
+using Lyo.Audiobook.Postgres;
+using Lyo.Audiobook.Postgres.Database;
+using Lyo.Podcast.Postgres;
+using Lyo.Podcast.Postgres.Database;
 using Lyo.Video.Postgres;
 using Lyo.Video.Postgres.Database;
 using Lyo.Google.Youtube.Client;
@@ -217,6 +223,10 @@ builder.Services.AddPostgresMusicStore(new PostgresMusicOptions { ConnectionStri
 builder.Services.AddLyoCrudServices<MusicDbContext>();
 builder.Services.AddPostgresVideoStore(new PostgresVideoOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddLyoCrudServices<VideoDbContext>();
+builder.Services.AddPostgresAudiobookStore(new PostgresAudiobookOptions { ConnectionString = connStr, EnableAutoMigrations = true });
+builder.Services.AddLyoCrudServices<AudiobookDbContext>();
+builder.Services.AddPostgresPodcastStore(new PostgresPodcastOptions { ConnectionString = connStr, EnableAutoMigrations = true });
+builder.Services.AddLyoCrudServices<PodcastDbContext>();
 var youtube = new GoogleYoutubeClientOptions();
 builder.Configuration.GetSection(GoogleYoutubeClientOptions.SectionName).Bind(youtube);
 if (!string.IsNullOrWhiteSpace(youtube.ApiKey))
@@ -300,6 +310,7 @@ builder.Services.AddPostgresAuthenticationStores(o => {
 
 builder.Services.AddLyoApiTokenAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddFeatureFlagsFromConfiguration(builder.Configuration);
 builder.Services.AddLyoOpenIdConnect(builder.Configuration);
 if (!string.IsNullOrWhiteSpace(builder.Configuration.GetSection("GoogleAuth")["ClientId"]))
     builder.Services.AddGoogleProviderFromConfiguration(builder.Configuration);
@@ -317,8 +328,12 @@ if (app.Environment.IsDevelopment()) {
 
 app.UseLyoApiCompression();
 app.UseAuthentication();
+app.UseFeatureFlags();
 app.UseAuthorization();
 app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Lyo.TestApi" })).AllowAnonymous().WithTags("Health");
+app.MapFeatureFlags();
+app.MapFeatureFlagManagement();
+app.MapGet("/feature-flags/sample", () => Results.Ok(new { feature = "sample" })).RequireFeature("sample");
 app.MapLyoJwks();
 app.MapLyoAuthEndpoints();
 app.MapLyoTokenManagementEndpoints();

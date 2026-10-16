@@ -1,7 +1,5 @@
-using System.Security.Claims;
 using Lyo.Exceptions;
 using Lyo.FeatureFlags;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.FeatureFlags.AspNetCore;
@@ -31,7 +29,7 @@ public sealed class FeatureFlagMiddleware(RequestDelegate next, FeatureFlagEndpo
             return;
         }
 
-        var caller = options.ContextFactory is null ? MapCaller(context) : options.ContextFactory(context) ?? FeatureFlagContext.Create().Build();
+        var caller = FeatureFlagCaller.Create(context, options);
         foreach (var feature in required)
         {
             if (service.IsEnabled(feature.Name, caller))
@@ -42,56 +40,5 @@ public sealed class FeatureFlagMiddleware(RequestDelegate next, FeatureFlagEndpo
         }
 
         await next(context).ConfigureAwait(false);
-    }
-
-    private FeatureFlagContext MapCaller(HttpContext context)
-    {
-        var user = context.User;
-        var builder = FeatureFlagContext.Create();
-        var userId = First(user, "lyo:user", "sub", ClaimTypes.NameIdentifier) ?? Named(user);
-        if (userId is not null)
-            builder.WithUser(userId);
-
-        if (!string.IsNullOrWhiteSpace(options.TenantClaimType))
-        {
-            var tenant = user.FindFirst(options.TenantClaimType)?.Value;
-            if (!string.IsNullOrWhiteSpace(tenant))
-                builder.WithTenant(tenant);
-        }
-
-        foreach (var claim in user.Claims)
-        {
-            if (string.IsNullOrWhiteSpace(claim.Type) || string.IsNullOrWhiteSpace(claim.Value))
-                continue;
-
-            if (claim.Type == "scope" && claim.Value.Contains(' '))
-            {
-                foreach (var scope in claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                    builder.WithClaim("scope", scope);
-                continue;
-            }
-
-            builder.WithClaim(claim.Type, claim.Value);
-        }
-
-        return builder.Build();
-    }
-
-    private static string? First(ClaimsPrincipal user, params string[] types)
-    {
-        foreach (var type in types)
-        {
-            var value = user.FindFirst(type)?.Value;
-            if (!string.IsNullOrWhiteSpace(value))
-                return value;
-        }
-
-        return null;
-    }
-
-    private static string? Named(ClaimsPrincipal user)
-    {
-        var name = user.Identity?.Name;
-        return string.IsNullOrWhiteSpace(name) ? null : name;
     }
 }

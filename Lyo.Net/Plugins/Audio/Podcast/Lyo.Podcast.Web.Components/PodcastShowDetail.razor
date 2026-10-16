@@ -1,0 +1,51 @@
+@namespace Lyo.Podcast.Web.Components
+
+@if (Show is null) {
+    <MudText Typo="Typo.body2">No show selected.</MudText>
+} else {
+    <MudStack Spacing="3">
+        <MudStack Row="true" Spacing="3">
+            @if (!string.IsNullOrWhiteSpace(CoverImageUrl)) {
+                <MudImage Src="@CoverImageUrl" Alt="@Show.Title" Width="160" ObjectFit="ObjectFit.Contain"/>
+            }
+            <div>
+                <MudText Typo="Typo.h5">@Show.Title</MudText>
+                @if (!string.IsNullOrWhiteSpace(Show.Subtitle)) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">@Show.Subtitle</MudText>
+                }
+                <MudText Typo="Typo.body2">@Show.Status</MudText>
+            </div>
+        </MudStack>
+        @if (!string.IsNullOrWhiteSpace(Show.Overview)) {
+            <MudText Typo="Typo.body1">@Show.Overview</MudText>
+        }
+        @if (Show.Seasons.Count == 0) {
+            <MudText Typo="Typo.body2">No seasons.</MudText>
+        }
+        @foreach (var season in Show.Seasons) {
+            <MudText Typo="Typo.subtitle1">Season @season.SeasonNumber @season.Name</MudText>
+            @if (season.Episodes.Count == 0) {
+                <MudText Typo="Typo.body2">No episodes.</MudText>
+            } else {
+                <MudSimpleTable Dense="true" Hover="true">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Runtime</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var episode in season.Episodes) {
+                        <tr>
+                            <td>@episode.EpisodeNumber</td>
+                            <td>@episode.Title</td>
+                            <td>@FormatRuntime(episode.RuntimeSeconds)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </MudSimpleTable>
+            }
+        }
+    </MudStack>
+}

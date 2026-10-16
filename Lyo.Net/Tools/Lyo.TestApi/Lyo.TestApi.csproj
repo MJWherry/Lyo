@@ -28,7 +28,9 @@
         <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Book\Lyo.Book\Lyo.Book.csproj"/>
         <ProjectReference Include="..\..\Plugins\Book\Lyo.Book.Postgres\Lyo.Book.Postgres.csproj"/>
-        <ProjectReference Include="..\..\Plugins\Music\Lyo.Music.Postgres\Lyo.Music.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Audio\Music\Lyo.Music.Postgres\Lyo.Music.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Audio\Audiobook\Lyo.Audiobook.Postgres\Lyo.Audiobook.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Audio\Podcast\Lyo.Podcast.Postgres\Lyo.Podcast.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Video\Lyo.Video.Postgres\Lyo.Video.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Google\Lyo.Google.Youtube.Client\Lyo.Google.Youtube.Client.csproj"/>
         <ProjectReference Include="..\..\Plugins\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>
@@ -89,6 +91,8 @@
         <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
         <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage.S3\Lyo.FileStorage.S3.csproj"/>
         <ProjectReference Include="..\..\Data\IO\Temp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\Core\FeatureFlags\Lyo.FeatureFlags\Lyo.FeatureFlags.csproj"/>
+        <ProjectReference Include="..\..\Core\FeatureFlags\Lyo.FeatureFlags.AspNetCore\Lyo.FeatureFlags.AspNetCore.csproj"/>
         <ProjectReference Include="..\..\Core\Metrics\Lyo.Metrics.OpenTelemetry\Lyo.Metrics.OpenTelemetry.csproj"/>
         <ProjectReference Include="..\..\Core\Lock\Lyo.Lock\Lyo.Lock.csproj"/>
         <ProjectReference Include="..\..\Core\Lock\Lyo.Lock.Redis\Lyo.Lock.Redis.csproj"/>

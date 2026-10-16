@@ -1,0 +1,11 @@
+# Lyo.Podcast
+
+Domain contracts for a podcast catalog. Episodes live on seasons. A show may have zero seasons. Credits use an opaque `PersonRef`. `CoverImageRef` and `AudioFileRef` are opaque file refs. Favorite and Tag attach via `PodcastEntityTypes`.
+
+## Features
+
+- **Show.** `SaveShowAsync` replaces credits, identifiers, seasons, and episodes. A null episode transcript leaves the stored text in place.
+- **Identifiers.** Show table: `itunes`, `podcast-guid`, and `custom`. Episode table: `episode-guid` and `custom`. iTunes, podcast-guid, and episode-guid values are lowercased.
+- **Seasons and episodes.** Unique `(show, season number)` and `(season, episode number)`. Episode 1 on two seasons is allowed.
+- **Discovery.** Genre trees and `SearchShowsAsync`. `FilterIds` null means no filter. An empty list returns no rows.
+- **Transcripts.** Optional plain text on an episode. Show reads omit it. `SearchTranscriptsAsync` uses the stored full-text index.

@@ -21,7 +21,9 @@ using Lyo.Job.Seed;
 using Lyo.Law.Seed;
 using Lyo.Leaderboard.Seed;
 using Lyo.Ledger.Seed;
+using Lyo.Audiobook.Seed;
 using Lyo.Music.Seed;
+using Lyo.Podcast.Seed;
 using Lyo.Note.Seed;
 using Lyo.Rating.Seed;
 using Lyo.Reporting.Seed;
@@ -79,6 +81,8 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddSeedContributor<LedgerEfSeedContributor>();
         services.AddSeedContributor<LawEfSeedContributor>();
         services.AddSeedContributor<MusicEfSeedContributor>();
+        services.AddSeedContributor<AudiobookEfSeedContributor>();
+        services.AddSeedContributor<PodcastEfSeedContributor>();
         services.AddSeedContributor<VideoEfSeedContributor>();
         services.AddSeedContributor<AlgorithmEfSeedContributor>();
         services.AddSeedContributor<LeaderboardEfSeedContributor>();

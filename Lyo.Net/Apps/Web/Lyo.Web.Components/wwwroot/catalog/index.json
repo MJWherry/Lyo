@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-10-07T00:31:52.491800+00:00",
-  "packageCount": 394,
+  "packageCount": 406,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -4114,6 +4114,130 @@
       "name": "Lyo.FeatureFlags.AspNetCore",
       "tagline": "RequireFeature returns 404 when a flag is off.",
       "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FeatureFlags.Web.Components",
+      "area": "Core",
+      "topic": "Lyo.FeatureFlags",
+      "name": "Lyo.FeatureFlags.Web.Components",
+      "tagline": "Blazor switch list and show/hide wrapper for feature flags.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Audiobook",
+      "area": "Plugins",
+      "topic": "Lyo.Audiobook",
+      "name": "Lyo.Audiobook",
+      "tagline": "Domain contracts for audiobooks: works, series, chapters, credits, and `IAudiobookStore`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Audiobook.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Audiobook",
+      "name": "Lyo.Audiobook.Postgres",
+      "tagline": "PostgreSQL and EF Core implementation of `Lyo.Audiobook.IAudiobookStore`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Audiobook.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Audiobook",
+      "name": "Lyo.Audiobook.Seed",
+      "tagline": "EF seed of audiobook genres, one series, and works with a narrator, an ISBN, and a chapter.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Audiobook.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.Audiobook",
+      "name": "Lyo.Audiobook.Web.Components",
+      "tagline": "Blazor search and detail for audiobooks.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Music.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Music",
+      "name": "Lyo.Music.Seed",
+      "tagline": "EF seed of music genres, formats, release groups, releases, tracks, and credits.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Podcast",
+      "area": "Plugins",
+      "topic": "Lyo.Podcast",
+      "name": "Lyo.Podcast",
+      "tagline": "Domain contracts for podcasts: shows, seasons, episodes, credits, and `IPodcastStore`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Podcast.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.Podcast",
+      "name": "Lyo.Podcast.Postgres",
+      "tagline": "PostgreSQL and EF Core implementation of `Lyo.Podcast.IPodcastStore`.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Podcast.Seed",
+      "area": "Plugins",
+      "topic": "Lyo.Podcast",
+      "name": "Lyo.Podcast.Seed",
+      "tagline": "EF seed of podcast genres, shows, a season, and two episodes.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Podcast.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.Podcast",
+      "name": "Lyo.Podcast.Web.Components",
+      "tagline": "Blazor search and detail for podcast shows.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.OpenSubtitles.Client",
+      "area": "Integration",
+      "topic": "Lyo.OpenSubtitles",
+      "name": "Lyo.OpenSubtitles.Client",
+      "tagline": "Typed HTTP client for the OpenSubtitles consumer REST API.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Trakt.Client",
+      "area": "Integration",
+      "topic": "Lyo.Trakt",
+      "name": "Lyo.Trakt.Client",
+      "tagline": "Typed HTTP client for the Trakt catalog and OAuth APIs.",
+      "targetFrameworks": [
+        "netstandard2.0",
         "net10.0"
       ]
     }

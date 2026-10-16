@@ -11,9 +11,6 @@ public sealed record FantasyFilterReq
 
     /// <summary>Per-topic filter options.</summary>
     public TopicsFilterReq? Topics { get; init; }
-
-    /// <summary>Topic groups keyed by ESPN topic type id.</summary>
-    public IReadOnlyDictionary<string, TopicTypeFilterReq>? TopicsByType { get; init; }
 }
 
 /// <summary>Model for a filter value block with a single value.</summary>
@@ -86,11 +83,4 @@ public sealed record TopicsFilterReq
 
     /// <summary>ESPN message type ids to include.</summary>
     public FilterValueReq<IReadOnlyList<int>>? FilterIncludeMessageTypeIds { get; init; }
-}
-
-/// <summary>A single topic type group sort settings.</summary>
-public sealed record TopicTypeFilterReq
-{
-    /// <summary>The topic group sort definition.</summary>
-    public SortReq? SortMessageDate { get; init; }
 }

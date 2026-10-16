@@ -57,7 +57,9 @@
         <ProjectReference Include="..\..\Plugins\ShortUrl\Lyo.ShortUrl.Seed\Lyo.ShortUrl.Seed.csproj"/>
         <ProjectReference Include="..\..\Plugins\Tag\Lyo.Tag.Seed\Lyo.Tag.Seed.csproj"/>
         <ProjectReference Include="..\..\Plugins\Law\Lyo.Law.Seed\Lyo.Law.Seed.csproj"/>
-        <ProjectReference Include="..\..\Plugins\Music\Lyo.Music.Seed\Lyo.Music.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Audio\Music\Lyo.Music.Seed\Lyo.Music.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Audio\Audiobook\Lyo.Audiobook.Seed\Lyo.Audiobook.Seed.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Audio\Podcast\Lyo.Podcast.Seed\Lyo.Podcast.Seed.csproj"/>
         <ProjectReference Include="..\..\Plugins\Video\Lyo.Video.Seed\Lyo.Video.Seed.csproj"/>
         <ProjectReference Include="..\..\Plugins\Leaderboard\Lyo.Leaderboard.Seed\Lyo.Leaderboard.Seed.csproj"/>
         <ProjectReference Include="..\..\Data\Algorithms\Lyo.Algorithms.Seed\Lyo.Algorithms.Seed.csproj"/>

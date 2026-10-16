@@ -196,6 +196,89 @@ public sealed class FeatureFlagMiddlewareTests
         Assert.Equal(StatusCodes.Status200OK, matched.Status);
     }
 
+    [Fact]
+    public async Task MapFeatureFlags_ReturnsEnabledNamesOnly()
+    {
+        await using var host = await HostAsync(app => app.MapFeatureFlags(), o => {
+            o.Add("on").On();
+            o.Add("off");
+        });
+        var response = await SendAsync(host, "/features");
+        Assert.Equal(StatusCodes.Status200OK, response.Status);
+        Assert.Equal("[\"on\"]", response.Body);
+    }
+
+    [Fact]
+    public async Task MapFeatureFlags_UsesLyoUserClaim()
+    {
+        await using var host = await HostAsync(app => app.MapFeatureFlags(), o => o.Add("me").WhenUser("user-a"));
+        var miss = await SendAsync(host, "/features");
+        Assert.Equal(StatusCodes.Status200OK, miss.Status);
+        Assert.Equal("[]", miss.Body);
+        var hit = await SendAsync(host, "/features", lyoUser: "user-a");
+        Assert.Equal("[\"me\"]", hit.Body);
+    }
+
+    [Fact]
+    public async Task MapFeatureFlags_MissingService_Returns500EmptyBody()
+    {
+        await using var host = await HostAsync(app => app.MapFeatureFlags(), registerService: false);
+        var response = await SendAsync(host, "/features");
+        Assert.Equal(StatusCodes.Status500InternalServerError, response.Status);
+        Assert.Equal(string.Empty, response.Body);
+    }
+
+    [Fact]
+    public async Task MapFeatureFlagManagement_ListsModes()
+    {
+        await using var host = await HostAsync(app => {
+            app.MapFeatureFlags();
+            app.MapFeatureFlagManagement();
+        }, o => {
+            o.Add("on").On();
+            o.Add("off");
+        });
+        var manage = await SendAsync(host, "/features/manage");
+        Assert.Equal(StatusCodes.Status200OK, manage.Status);
+        Assert.Contains("\"name\":\"on\"", manage.Body, StringComparison.Ordinal);
+        Assert.Contains("\"mode\":\"On\"", manage.Body, StringComparison.Ordinal);
+        Assert.Contains("\"name\":\"off\"", manage.Body, StringComparison.Ordinal);
+        Assert.Contains("\"mode\":\"Off\"", manage.Body, StringComparison.Ordinal);
+        var enabled = await SendAsync(host, "/features");
+        Assert.Equal("[\"on\"]", enabled.Body);
+    }
+
+    [Fact]
+    public async Task MapFeatureFlagManagement_SetEnabled_FlipsFlag()
+    {
+        await using var host = await HostAsync(app => app.MapFeatureFlagManagement(), o => o.Add("sample").On());
+        var response = await PutAsync(host, "/features/manage/sample", """{"enabled":false}""");
+        Assert.Equal(StatusCodes.Status200OK, response.Status);
+        Assert.Contains("\"mode\":\"Off\"", response.Body, StringComparison.Ordinal);
+        Assert.False(host.Services.GetRequiredService<IFeatureFlagService>().IsEnabled("sample"));
+        var manage = await SendAsync(host, "/features/manage");
+        Assert.Contains("\"mode\":\"Off\"", manage.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task MapFeatureFlagManagement_UnknownName_Returns404()
+    {
+        await using var host = await HostAsync(app => app.MapFeatureFlagManagement(), o => o.Add("sample").On());
+        var response = await PutAsync(host, "/features/manage/missing", """{"enabled":true}""");
+        Assert.Equal(StatusCodes.Status404NotFound, response.Status);
+        Assert.Equal(string.Empty, response.Body);
+        Assert.True(host.Services.GetRequiredService<IFeatureFlagService>().IsEnabled("sample"));
+    }
+
+    [Fact]
+    public async Task MapFeatureFlagManagement_MissingService_Returns500EmptyBody()
+    {
+        await using var host = await HostAsync(app => app.MapFeatureFlagManagement(), registerService: false);
+        var response = await SendAsync(host, "/features/manage");
+        Assert.Equal(StatusCodes.Status500InternalServerError, response.Status);
+        Assert.Equal(string.Empty, response.Body);
+    }
+
     private static IResult Hit(RunCounter counter)
     {
         counter.Runs++;
@@ -264,6 +347,17 @@ public sealed class FeatureFlagMiddlewareTests
         if (tenant is not null)
             request.Headers.TryAddWithoutValidation("X-Test-Tenant", tenant);
 
+        var response = await host.GetTestClient().SendAsync(request, TestCt);
+        var body = await response.Content.ReadAsStringAsync(TestCt);
+        return new Captured((int)response.StatusCode, body);
+    }
+
+    private static async Task<Captured> PutAsync(WebApplication host, string path, string json)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, path)
+        {
+            Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+        };
         var response = await host.GetTestClient().SendAsync(request, TestCt);
         var body = await response.Content.ReadAsStringAsync(TestCt);
         return new Captured((int)response.StatusCode, body);

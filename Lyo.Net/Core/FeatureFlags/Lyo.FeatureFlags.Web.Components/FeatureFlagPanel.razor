@@ -1,0 +1,45 @@
+@namespace Lyo.FeatureFlags.Web.Components
+
+@if (Service is null || Monitor is null) {
+    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined">
+        No <code>IFeatureFlagService</code> is registered on this host. Register <code>AddFeatureFlags</code> or <code>AddFeatureFlagsFromConfiguration</code>.
+    </MudAlert>
+}
+else if (_rows.Count == 0) {
+    <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined">No flags.</MudAlert>
+}
+else {
+    <MudSimpleTable Dense="true" Hover="true">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Mode</th>
+            @if (AllowEdit) {
+                <th></th>
+            }
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in _rows) {
+            <tr>
+                <td>@row.Name</td>
+                <td>
+                    @row.Mode
+                    @if (AllowEdit && row.Mode is FeatureFlagMode.Percentage or FeatureFlagMode.Rules) {
+                        <MudText Typo="Typo.caption">Switching replaces this flag with on or off.</MudText>
+                    }
+                </td>
+                @if (AllowEdit) {
+                    <td>
+                        <MudSwitch T="bool"
+                                   Value="@(row.Mode == FeatureFlagMode.On)"
+                                   ValueChanged="@(enabled => SetAsync(row.Name, enabled))"
+                                   Color="Color.Primary"
+                                   AriaLabel="@row.Name"/>
+                    </td>
+                }
+            </tr>
+        }
+        </tbody>
+    </MudSimpleTable>
+}

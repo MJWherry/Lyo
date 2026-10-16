@@ -21,17 +21,17 @@ services.AddFantasyFootballClient(o => {
 [`FantasyFootballClient`](FantasyFootballClient.cs) exposes four manager properties; seasons before **2018** are rejected (checked by `ValidateSeason`).
 
 | Property | Manager | Calls |
-| --------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| --------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `League` | [`LeagueManager`](LeagueManager.cs) | `GetAsync(leagueId, seasonId)` (settings + teams + standings), `GetTeamsAsync` (rosters for each scoring period), `GetTeamAsync` (one team), `GetDraftAsync` (draft picks), `GetMatchupsAsync` (scoreboard). |
 | `Players` | [`PlayerManager`](PlayerManager.cs) | `GetInfoAsync(leagueId, seasonId, query)` (player cards through `kona_playercard`), `GetPlayerAsync` (one player). |
-| `Communication` | [`CommunicationManager`](CommunicationManager.cs) | `GetLeagueChatAsync` (message board, optional topic-type filter), `GetRecentActivityAsync` (adds/drops/trades feed through `kona_league_communication`). |
+| `Communication` | [`CommunicationManager`](CommunicationManager.cs) | `GetLeagueChatAsync` (lists Fantasy Chat topics on `lm-api-communication`, then loads each conversation), `GetConversationAsync` (one topic; newest 25 messages by default), `GetRecentActivityAsync` (adds/drops/trades feed through `kona_league_communication`). |
 | `Transactions` | [`TransactionsManager`](TransactionsManager.cs) | `GetRecentAsync` (`mTransactions2` view, optional type filter), `GetRecentTradesAsync` (TRADE_* shorthand). |
 
-URL composition, the `x-fantasy-filter` header, and cookie auth go through internal helpers `BuildLeaguePath`, `GetLeagueViewAsync`, and `ApplyAuthentication`. [`FantasyFilterReqBuilder`](Builders) builds the
-`x-fantasy-filter` JSON per call (player ids, transaction types, message-board topics, recent activity windows).
+URL composition, the `x-fantasy-filter` header, and cookie auth go through internal helpers `BuildLeaguePath`, `BuildCommunicationPath`, `GetLeagueViewAsync`, `GetCommunicationAsync`, and `ApplyAuthentication`. [`FantasyFilterReqBuilder`](Builders) builds the
+`x-fantasy-filter` JSON per call (player ids, transaction types, recent activity windows). Chat list and conversation calls use `CommunicationBaseUrl` and append `platform=chat`.
 
-Request types sit under [`Models/Request`](Models) (`PlayerInfoQuery`, `LeagueChatQuery`, `RecentActivityQuery`, `TransactionsQuery`, `FantasyFilterReq`); response types sit under `Models/Response`
-(`LeagueRes`, `TeamRes`, `MatchupRes`, `DraftResponseRes`, `PlayerInfoItemRes`, `CommunicationTopicRes`, `TransactionRes`, `LeagueChatRes`, etc.).
+Request types sit under [`Models/Request`](Models) (`PlayerInfoQuery`, `ChatConversationQuery`, `RecentActivityQuery`, `TransactionsQuery`, `FantasyFilterReq`); response types sit under `Models/Response`
+(`LeagueRes`, `TeamRes`, `MatchupRes`, `DraftResponseRes`, `PlayerInfoItemRes`, `CommunicationTopicRes`, `TransactionRes`, `ChatConversationRes`, etc.).
 
 ## Settings ([`FantasyFootballClientOptions`](FantasyFootballClientOptions.cs))
 
@@ -39,11 +39,12 @@ Binds from section `FantasyFootballClient` (overrides the base `ApiClient` secti
 [`ApiClientOptions`](../../Api/Lyo.Api.Client/README.md#options-apiclientoptions) flag and adds:
 
 | Property | Description |
-| -------- | ---------------------------------------------------------------- |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- |
 | `EspnS2` | Optional `espn_s2` cookie value. Needed for **private leagues**. |
 | `Swid` | Optional `SWID` cookie value. Needed for **private leagues**. |
+| `CommunicationBaseUrl` | Fantasy Chat host root. Defaults to `https://lm-api-communication.fantasy.espn.com/apis/v3/games/ffl/`. |
 
-`BaseUrl` defaults to `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/`. Public leagues skip cookies; both values must be set before the client attaches them.
+`BaseUrl` defaults to `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/`. `CommunicationBaseUrl` defaults to the Fantasy Chat host. Public leagues skip cookies; both cookie values must be set before the client attaches them.
 
 ## Wire into DI ([`Extensions.cs`](Extensions.cs))
 
@@ -67,10 +68,13 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `AngleSharp` `1.5.0` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
 - `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)

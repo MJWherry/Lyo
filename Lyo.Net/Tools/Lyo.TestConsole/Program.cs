@@ -66,6 +66,7 @@ using Lyo.Tts;
 using Lyo.Tts.AwsPolly;
 using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
+using Lyo.Validation;
 using Lyo.Web.Automation.Plan;
 using Lyo.Web.Automation.Playwright.Service;
 using Lyo.Web.Automation.Selenium.Service;
@@ -216,5 +217,5 @@ var host = Host.CreateDefaultBuilder(args)
 await host.StartAsync();
 var clr = host.Services.GetRequiredService<FantasyFootballClient>();
 var league = await clr.League.GetAsync(1874757777, 2026);
-var a = await clr.Communication.GetLeagueChatAsync(league.Id, 2026, new());
+var a = await clr.Communication.GetLeagueChatAsync(league.Id, 2026);
 Console.ReadLine();

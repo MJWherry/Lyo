@@ -17,6 +17,9 @@ public class FantasyFootballClientOptions : LyoHttpClientOptions
     /// <summary>Value of the <c>SWID</c> cookie for private leagues.</summary>
     public string? Swid { get; set; }
 
+    /// <summary>Host root for Fantasy Chat. Defaults to <c>https://lm-api-communication.fantasy.espn.com/apis/v3/games/ffl/</c>.</summary>
+    public string CommunicationBaseUrl { get; set; } = "https://lm-api-communication.fantasy.espn.com/apis/v3/games/ffl/";
+
     /// <summary>Fills defaults for the public ESPN fantasy API.</summary>
     public FantasyFootballClientOptions() => BaseUrl = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/";
 }

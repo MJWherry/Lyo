@@ -39,6 +39,7 @@
         <Project Path="Core/FeatureFlags/Lyo.FeatureFlags.AspNetCore/Lyo.FeatureFlags.AspNetCore.csproj" />
         <Project Path="Core/FeatureFlags/Lyo.FeatureFlags.Tests/Lyo.FeatureFlags.Tests.csproj" />
         <Project Path="Core/FeatureFlags/Lyo.FeatureFlags.AspNetCore.Tests/Lyo.FeatureFlags.AspNetCore.Tests.csproj" />
+        <Project Path="Core/FeatureFlags/Lyo.FeatureFlags.Web.Components/Lyo.FeatureFlags.Web.Components.csproj" />
     </Folder>
     <Folder Name="/Core/Benchmark/">
         <Project Path="Core/Benchmark/Lyo.Benchmark.Models/Lyo.Benchmark.Models.csproj" />
@@ -597,13 +598,29 @@
         <Project Path="Plugins/People/Lyo.People.Postgres/Lyo.People.Postgres.csproj" />
         <Project Path="Plugins/People/Lyo.People.Postgres.Tests/Lyo.People.Postgres.Tests.csproj" />
     </Folder>
-    <Folder Name="/Plugins/Music/">
-        <Project Path="Plugins/Music/Lyo.Music.Postgres.Tests/Lyo.Music.Postgres.Tests.csproj" />
-        <Project Path="Plugins/Music/Lyo.Music.Postgres/Lyo.Music.Postgres.csproj" />
-        <Project Path="Plugins/Music/Lyo.Music/Lyo.Music.csproj" />
-        <Project Path="Plugins/Music/Lyo.Music.Web.Components/Lyo.Music.Web.Components.csproj" />
-        <Project Path="Plugins/Music/Lyo.Music.Seed/Lyo.Music.Seed.csproj" />
-        <Project Path="Plugins/Music/Lyo.Music.Seed.Tests/Lyo.Music.Seed.Tests.csproj" />
+    <Folder Name="/Plugins/Audio/Music/">
+        <Project Path="Plugins/Audio/Music/Lyo.Music.Postgres.Tests/Lyo.Music.Postgres.Tests.csproj" />
+        <Project Path="Plugins/Audio/Music/Lyo.Music.Postgres/Lyo.Music.Postgres.csproj" />
+        <Project Path="Plugins/Audio/Music/Lyo.Music/Lyo.Music.csproj" />
+        <Project Path="Plugins/Audio/Music/Lyo.Music.Web.Components/Lyo.Music.Web.Components.csproj" />
+        <Project Path="Plugins/Audio/Music/Lyo.Music.Seed/Lyo.Music.Seed.csproj" />
+        <Project Path="Plugins/Audio/Music/Lyo.Music.Seed.Tests/Lyo.Music.Seed.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Plugins/Audio/Audiobook/">
+        <Project Path="Plugins/Audio/Audiobook/Lyo.Audiobook.Postgres.Tests/Lyo.Audiobook.Postgres.Tests.csproj" />
+        <Project Path="Plugins/Audio/Audiobook/Lyo.Audiobook.Postgres/Lyo.Audiobook.Postgres.csproj" />
+        <Project Path="Plugins/Audio/Audiobook/Lyo.Audiobook/Lyo.Audiobook.csproj" />
+        <Project Path="Plugins/Audio/Audiobook/Lyo.Audiobook.Web.Components/Lyo.Audiobook.Web.Components.csproj" />
+        <Project Path="Plugins/Audio/Audiobook/Lyo.Audiobook.Seed/Lyo.Audiobook.Seed.csproj" />
+        <Project Path="Plugins/Audio/Audiobook/Lyo.Audiobook.Seed.Tests/Lyo.Audiobook.Seed.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Plugins/Audio/Podcast/">
+        <Project Path="Plugins/Audio/Podcast/Lyo.Podcast.Postgres.Tests/Lyo.Podcast.Postgres.Tests.csproj" />
+        <Project Path="Plugins/Audio/Podcast/Lyo.Podcast.Postgres/Lyo.Podcast.Postgres.csproj" />
+        <Project Path="Plugins/Audio/Podcast/Lyo.Podcast/Lyo.Podcast.csproj" />
+        <Project Path="Plugins/Audio/Podcast/Lyo.Podcast.Web.Components/Lyo.Podcast.Web.Components.csproj" />
+        <Project Path="Plugins/Audio/Podcast/Lyo.Podcast.Seed/Lyo.Podcast.Seed.csproj" />
+        <Project Path="Plugins/Audio/Podcast/Lyo.Podcast.Seed.Tests/Lyo.Podcast.Seed.Tests.csproj" />
     </Folder>
     <Folder Name="/Plugins/Law/">
         <Project Path="Plugins/Law/Lyo.Law/Lyo.Law.csproj" />
@@ -900,6 +917,15 @@
     </Folder>
     <Folder Name="/Integration/Espn/">
         <Project Path="Integration/Espn/Lyo.Espn.Fantasy.Football.Client/Lyo.Espn.Fantasy.Football.Client.csproj" />
+        <Project Path="Integration/Espn/Lyo.Espn.Fantasy.Football.Client.Tests/Lyo.Espn.Fantasy.Football.Client.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Integration/OpenSubtitles/">
+        <Project Path="Integration/OpenSubtitles/Lyo.OpenSubtitles.Client/Lyo.OpenSubtitles.Client.csproj" />
+        <Project Path="Integration/OpenSubtitles/Lyo.OpenSubtitles.Client.Tests/Lyo.OpenSubtitles.Client.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Trakt/">
+        <Project Path="Integration/Trakt/Lyo.Trakt.Client/Lyo.Trakt.Client.csproj" />
+        <Project Path="Integration/Trakt/Lyo.Trakt.Client.Tests/Lyo.Trakt.Client.Tests.csproj" />
     </Folder>
     <Folder Name="/Apps/Drift/">
         <Project Path="Apps/Drift/Lyo.Drift.Client/Lyo.Drift.Client.csproj" />

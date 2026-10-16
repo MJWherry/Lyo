@@ -286,9 +286,9 @@ Individual projects are mostly **one folder per NuGet-style package** (for examp
 - [Lyo.Ledger](Lyo.Net/Plugins/Ledger/Lyo.Ledger/README.md): Double-entry ledger contracts: chart of accounts, journals, post/void, and client AR balance.
 - [Lyo.Ledger.Postgres](Lyo.Net/Plugins/Ledger/Lyo.Ledger.Postgres/README.md): EF Core implementation of `ILedgerStore` in PostgreSQL schema `ledger`.
 - [Lyo.Ledger.Seed](Lyo.Net/Plugins/Ledger/Lyo.Ledger.Seed/README.md): EF seed of a cash account, a revenue account, and balanced journals.
-- [Lyo.Music](Lyo.Net/Plugins/Music/Lyo.Music/README.md): Domain contracts for a music catalog: releases, release groups, tracks, credits, identifiers, and `IMusicStore`.
-- [Lyo.Music.Postgres](Lyo.Net/Plugins/Music/Lyo.Music.Postgres/README.md): PostgreSQL and EF Core implementation of `Lyo.Music.IMusicStore` via `MusicDbContext` and `PostgresMusicOptions`.
-- [Lyo.Music.Web.Components](Lyo.Net/Plugins/Music/Lyo.Music.Web.Components/README.md): Blazor search and detail for music releases.
+- [Lyo.Music](Lyo.Net/Plugins/Audio/Music/Lyo.Music/README.md): Domain contracts for a music catalog: releases, release groups, tracks, credits, identifiers, and `IMusicStore`.
+- [Lyo.Music.Postgres](Lyo.Net/Plugins/Audio/Music/Lyo.Music.Postgres/README.md): PostgreSQL and EF Core implementation of `Lyo.Music.IMusicStore` via `MusicDbContext` and `PostgresMusicOptions`.
+- [Lyo.Music.Web.Components](Lyo.Net/Plugins/Audio/Music/Lyo.Music.Web.Components/README.md): Blazor search and detail for music releases.
 - [Lyo.Note](Lyo.Net/Plugins/Note/Lyo.Note/README.md): Contracts for notes hung on entities. A note has a **subject** (what it is about) and an **actor** (who wrote it), both as `EntityRef`.
 - [Lyo.Note.Postgres](Lyo.Net/Plugins/Note/Lyo.Note.Postgres/README.md): Entity Framework Core store for `Lyo.Note` on PostgreSQL. Rows live in `note.note` (`PostgresNoteOptions.Schema = "note"`), and the package includes migrations.
 - [Lyo.Note.Seed](Lyo.Net/Plugins/Note/Lyo.Note.Seed/README.md): EF seed of notes on a fixed seed subject.

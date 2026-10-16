@@ -59,6 +59,26 @@ public class FantasyFootballClient : LyoHttpClient
         return queryParts.Count == 0 ? path : $"{path}?{string.Join("&", queryParts)}";
     }
 
+    internal string BuildCommunicationPath(int leagueId, int seasonId, string view, string? topicId = null)
+    {
+        ValidateSeason(seasonId, nameof(BuildCommunicationPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.CommunicationBaseUrl);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(view);
+        var path = $"{_options.CommunicationBaseUrl.TrimEnd('/')}/seasons/{seasonId}/segments/0/leagues/{leagueId}/communication/";
+        if (!string.IsNullOrWhiteSpace(topicId))
+            path += $"topics/{Uri.EscapeDataString(topicId)}";
+
+        return $"{path}?view={Uri.EscapeDataString(view)}&platform=chat";
+    }
+
+    internal async Task<TResult?> GetCommunicationAsync<TResult>(string url, object fantasyFilter, CancellationToken ct)
+        => await GetAsAsync<TResult>(
+                url, request => {
+                    ApplyAuthentication(request);
+                    request.Headers.TryAddWithoutValidation("x-fantasy-filter", JsonSerializer.Serialize(fantasyFilter, GetSerializerOptions()));
+                }, ct)
+            .ConfigureAwait(false);
+
     internal async Task<TResult?> GetLeagueViewAsync<TResult>(string path, FantasyFilterReq? xFantasyFilter = null, CancellationToken ct = default)
         => await GetAsAsync<TResult?>(
                 path, request => {

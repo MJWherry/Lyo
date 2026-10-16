@@ -1,30 +1,38 @@
 using Lyo.Exceptions;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.FeatureFlags;
 
 /// <summary>
-/// Evaluates <see cref="FeatureFlagOptions" /> from a copy taken at construction. Changing the options afterward does not change answers.
+/// Evaluates <see cref="FeatureFlagOptions" /> from an immutable snapshot. Changing the registered options instance does not change answers.
+/// <see cref="IFeatureFlagUpdater.TryApply" /> and a configuration reload replace that snapshot. Readers see the old set or the new set.
 /// Register it with <c>AddFeatureFlags</c>. Apps pass a <see cref="FeatureFlagContext" />; the ASP.NET package builds one from the request.
 /// </summary>
-public sealed class FeatureFlagService : IFeatureFlagService
+public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdater, IOptionsMonitor<FeatureFlagOptions>
 {
-    private readonly Dictionary<string, Snapshot> _flags;
+    private readonly object _gate = new();
+    private readonly List<Action<FeatureFlagOptions, string?>> _listeners = [];
+    private volatile Dictionary<string, Snapshot> _flags;
+    private volatile FeatureFlagOptions _current;
 
     /// <summary>Copies <paramref name="options" /> after <see cref="FeatureFlagOptions.Validate" />.</summary>
     public FeatureFlagService(FeatureFlagOptions options)
     {
         ArgumentHelpers.ThrowIfNull(options);
         options.Validate();
-        _flags = new Dictionary<string, Snapshot>(StringComparer.OrdinalIgnoreCase);
-        foreach (var pair in options.Flags)
-            _flags[pair.Key] = Snapshot.Copy(pair.Value);
+        _current = options;
+        _flags = Copy(options);
     }
+
+    /// <summary>The snapshot <see cref="TryApply" /> last accepted. This follows reloads. <see cref="IOptions{FeatureFlagOptions}" /> does not.</summary>
+    public FeatureFlagOptions CurrentValue => _current;
 
     /// <inheritdoc />
     public bool IsEnabled(string name, FeatureFlagContext? context = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
-        if (!_flags.TryGetValue(name, out var flag))
+        var flags = _flags;
+        if (!flags.TryGetValue(name, out var flag))
             return false;
 
         return flag.Mode switch
@@ -34,6 +42,62 @@ public sealed class FeatureFlagService : IFeatureFlagService
             FeatureFlagMode.Rules => Rules(flag, context),
             _ => false
         };
+    }
+
+    /// <inheritdoc />
+    public FeatureFlagOptions Get(string? name)
+    {
+        if (string.IsNullOrEmpty(name) || string.Equals(name, Options.DefaultName, StringComparison.Ordinal))
+            return CurrentValue;
+
+        throw new InvalidOperationException($"Named options are not supported (requested name '{name}').");
+    }
+
+    /// <summary>Registers <paramref name="listener" /> for a later swap. The listener is not called now.</summary>
+    public IDisposable OnChange(Action<FeatureFlagOptions, string?> listener)
+    {
+        ArgumentHelpers.ThrowIfNull(listener);
+        lock (_gate)
+            _listeners.Add(listener);
+
+        return new ChangeRegistration(this, listener);
+    }
+
+    /// <inheritdoc />
+    public bool TryApply(FeatureFlagOptions options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        try
+        {
+            options.Validate();
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+
+        var next = Copy(options);
+        Action<FeatureFlagOptions, string?>[] listeners;
+        lock (_gate)
+        {
+            _flags = next;
+            _current = options;
+            listeners = _listeners.ToArray();
+        }
+
+        foreach (var listener in listeners)
+            listener(options, Options.DefaultName);
+
+        return true;
+    }
+
+    private static Dictionary<string, Snapshot> Copy(FeatureFlagOptions options)
+    {
+        var flags = new Dictionary<string, Snapshot>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pair in options.Flags)
+            flags[pair.Key] = Snapshot.Copy(pair.Value);
+
+        return flags;
     }
 
     private static bool Percentage(Snapshot flag, FeatureFlagContext? context)
@@ -133,6 +197,15 @@ public sealed class FeatureFlagService : IFeatureFlagService
         }
 
         return false;
+    }
+
+    private sealed class ChangeRegistration(FeatureFlagService service, Action<FeatureFlagOptions, string?> listener) : IDisposable
+    {
+        public void Dispose()
+        {
+            lock (service._gate)
+                service._listeners.Remove(listener);
+        }
     }
 
     private sealed class Snapshot

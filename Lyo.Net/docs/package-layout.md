@@ -177,6 +177,8 @@ Stays under `Communication/Translation/`.
 | `Lyo.Google.Youtube.Client` | C | `Integration/Google/` | - | - | Data API. Hosts pass models into `IVideoStore` |
 | `Lyo.Typecast.Client` | C | `Integration/Typecast/` | - | - | Used by `Lyo.Tts.Typecast` |
 | `Lyo.Espn.Fantasy.Football.Client` | C | `Integration/Espn/` | - | 2 | Name lacks `.Client` suffix; acceptable |
+| `Lyo.OpenSubtitles.Client` | C | `Integration/OpenSubtitles/` | - | - | Consumer REST. Host stores subtitle files |
+| `Lyo.Trakt.Client` | C | `Integration/Trakt/` | - | - | Catalog and OAuth. Host stores tokens |
 | `Lyo.Discord.Models` | D | `Integration/Discord/` | - | - | |
 | `Lyo.Discord.Client` | D | `Integration/Discord/` | - | - | |
 | `Lyo.Discord.Postgres` | D | `Integration/Discord/` | - | - | |
@@ -277,7 +279,9 @@ Drop-in modules. No `Build*Group` route mapping.
 | `Lyo.Config`, `.Postgres`, `.Web.Components`, `.Seed` | E | `Plugins/Config/` | - | - | HTTP is `Apps/Config`. `.Seed` writes plaintext definitions |
 | `Lyo.Book`, `.Postgres`, `.Postgres.Tests` | E | `Plugins/Book/` | - | - | Library catalog. TestApi CRUD/search this slice |
 | `Lyo.People.Models`, `.Postgres`, `.Postgres.Tests` | E | `Plugins/People/` | - | - | Person graph. Schema `people`. References Geolocation and EntityReference. Endato maps in at the host |
-| `Lyo.Music`, `.Postgres`, `.Postgres.Tests`, `.Web.Components` | E | `Plugins/Music/` | - | - | Music catalog. Schema `music`. TestApi CRUD/search this slice |
+| `Lyo.Music`, `.Postgres`, `.Postgres.Tests`, `.Web.Components`, `.Seed` | E | `Plugins/Audio/Music/` | - | - | Music catalog. Schema `music`. TestApi CRUD/search this slice |
+| `Lyo.Audiobook`, `.Postgres`, `.Postgres.Tests`, `.Web.Components`, `.Seed` | E | `Plugins/Audio/Audiobook/` | - | - | Spoken-word catalog. Schema `audiobook`. TestApi CRUD/search this slice |
+| `Lyo.Podcast`, `.Postgres`, `.Postgres.Tests`, `.Web.Components`, `.Seed` | E | `Plugins/Audio/Podcast/` | - | - | Podcast catalog. Schema `podcast`. TestApi CRUD/search this slice |
 | `Lyo.Video`, `.Postgres`, `.Postgres.Tests`, `.Web.Components` | E | `Plugins/Video/` | - | - | Movie and television catalog. Schema `video`. References `Lyo.Google.Youtube.Models` |
 | `Lyo.Story`, `.Postgres`, `.Tests`, `.Postgres.Tests`, `.Web.Components`, `.Web.Components.Tests` | E | `Plugins/Story/` | - | - | Play graph. HTTP is `Apps/Story`. Blazor builder is `.Web.Components` |
 | `Lyo.Comic`, `.Postgres`, `.Web.Components` | E | `Plugins/Comic/` | - | - | HTTP is `Apps/Comic` |
@@ -350,6 +354,7 @@ Drop-in modules. No `Build*Group` route mapping.
 | `Lyo.Idempotency.AspNetCore` | A | `Core/Idempotency/` |
 | `Lyo.FeatureFlags` | A | `Core/FeatureFlags/` |
 | `Lyo.FeatureFlags.AspNetCore` | A | `Core/FeatureFlags/` |
+| `Lyo.FeatureFlags.Web.Components` | A | `Core/FeatureFlags/` |
 | `Lyo.Outbox` | A | `Core/Outbox/` |
 | `Lyo.Outbox.Postgres` | A | `Core/Outbox/` |
 | `Lyo.Geolocation` | A | `Core/Geolocation/` |
