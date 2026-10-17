@@ -85,7 +85,7 @@ public static class FileStorageReconcile
         return Guid.TryParseExact(last.Substring(0, 32), "N", out fileId);
     }
 
-    /// <summary>True for health probes, <c>.meta</c> sidecars, and temp leftovers that are not catalog files.</summary>
+    /// <summary>True for health probes, <c>.meta</c> and <c>.tags.json</c> sidecars, and temp leftovers that are not catalog files.</summary>
     public static bool IsSkippedPhysicalKey(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
@@ -96,7 +96,8 @@ public static class FileStorageReconcile
             || normalized.IndexOf(".lyo-fs-health", StringComparison.Ordinal) >= 0)
             return true;
 
-        if (normalized.EndsWith(".meta", StringComparison.OrdinalIgnoreCase))
+        if (normalized.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)
+            || normalized.EndsWith(".tags.json", StringComparison.OrdinalIgnoreCase))
             return true;
 
         var last = PathHelpersLastSegment(normalized);

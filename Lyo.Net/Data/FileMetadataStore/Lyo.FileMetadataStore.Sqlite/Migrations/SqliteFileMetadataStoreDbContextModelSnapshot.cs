@@ -212,6 +212,55 @@ namespace Lyo.FileMetadataStore.Sqlite.Migrations
                     b.ToTable("file_revision", (string)null);
                 });
 
+            modelBuilder.Entity("Lyo.FileMetadataStore.Models.FileTagEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Automatic")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false)
+                        .HasColumnName("automatic");
+
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("file_id");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("TagType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("tag_type");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("value");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagType")
+                        .HasDatabaseName("ix_file_tag_tag_type");
+
+                    b.HasIndex("FileId", "TagType", "Value")
+                        .IsUnique()
+                        .HasDatabaseName("uq_file_tag_file_type_value");
+
+                    b.ToTable("file_tag", (string)null);
+                });
+
             modelBuilder.Entity("Lyo.FileMetadataStore.Sqlite.Database.FileAuditEventEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -487,6 +536,15 @@ namespace Lyo.FileMetadataStore.Sqlite.Migrations
                         .HasDatabaseName("ix_multipart_upload_session_target_file_id");
 
                     b.ToTable("multipart_upload_session", (string)null);
+                });
+
+            modelBuilder.Entity("Lyo.FileMetadataStore.Models.FileTagEntity", b =>
+                {
+                    b.HasOne("Lyo.FileMetadataStore.Models.FileMetadataEntity", null)
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

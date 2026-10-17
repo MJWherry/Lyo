@@ -28,17 +28,20 @@
                     }
                 </MudStack>
 
-                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.End">
-                    <MudTextField T="string"
-                                  Class="flex-grow-1"
-                                  Variant="Variant.Outlined"
-                                  Margin="Margin.Dense"
-                                  Label="Folder name"
-                                  Placeholder="single segment"
-                                  @bind-Value="_newFolderName"/>
-                    <MudButton Variant="Variant.Outlined" OnClick="AddFolderAsync">Add</MudButton>
-                </MudStack>
+                @if (AllowPrefixChanges) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.End">
+                        <MudTextField T="string"
+                                      Class="flex-grow-1"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Label="Folder name"
+                                      Placeholder="single segment"
+                                      @bind-Value="_newFolderName"/>
+                        <MudButton Variant="Variant.Outlined" OnClick="AddFolderAsync">Add</MudButton>
+                    </MudStack>
+                }
 
+                @if (AllowPrefixChanges) {
                 <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Primary"
@@ -92,6 +95,7 @@
                     </MudStack>
                     <MudText Typo="Typo.caption" Color="Color.Secondary">@_uploadStatus</MudText>
                 }
+                }
             </MudStack>
         </div>
         <div class="file-storage-tree-scroll">
@@ -136,8 +140,10 @@
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Info" Disabled="@(!InCatalog)" OnClick="ViewMetadataAsync">View metadata</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Link" Disabled="@(!CatalogActionsEnabled)" OnClick="AccessLinkAsync">Access link…</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" Disabled="@(!CanDownload)" OnClick="DownloadAsync">Download</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!ObjectActionsEnabled)" OnClick="MoveAsync">Move…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!ObjectActionsEnabled)" OnClick="CopyAsync">Copy…</MudButton>
+                    @if (AllowPrefixChanges) {
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!ObjectActionsEnabled)" OnClick="MoveAsync">Move…</MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!ObjectActionsEnabled)" OnClick="CopyAsync">Copy…</MudButton>
+                    }
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@(!ObjectActionsEnabled)" OnClick="RenameAsync">Rename…</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!CatalogActionsEnabled)" OnClick="RotateDekAsync">Rotate DEK…</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!ObjectActionsEnabled)" OnClick="DeleteAsync">Delete</MudButton>

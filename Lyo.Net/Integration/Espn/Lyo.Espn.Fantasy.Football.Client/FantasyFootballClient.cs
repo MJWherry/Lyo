@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Lyo.Http.Client;
 using Lyo.Json;
 using Lyo.Espn.Fantasy.Football.Client.Models.Request;
+using Lyo.Espn.Fantasy.Football.Client.Models.Response;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -18,6 +19,12 @@ public class FantasyFootballClient : LyoHttpClient
     public readonly TransactionsManager Transactions;
     private readonly FantasyFootballClientOptions _options;
 
+    /// <summary>Members and teams from the last <see cref="Remember" /> or league <c>GetAsync</c>. Replaced as a whole, not updated in place.</summary>
+    public LeagueIndex? LeagueDirectory { get; private set; }
+
+    /// <summary>Player cards filled by player, free-agent, and cached lookups.</summary>
+    public PlayerCache PlayerCache { get; } = new();
+
     public FantasyFootballClient(FantasyFootballClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(
             loggerFactory?.CreateLogger<FantasyFootballClient>() ?? NullLoggerFactory.Instance.CreateLogger<FantasyFootballClient>(), httpClient,
@@ -31,6 +38,17 @@ public class FantasyFootballClient : LyoHttpClient
         Players = new(this);
         Transactions = new(this);
     }
+
+    /// <summary>Replaces <see cref="LeagueDirectory" /> with the members and teams on <paramref name="league" />.</summary>
+    public void Remember(LeagueRes league)
+    {
+        ArgumentHelpers.ThrowIfNull(league);
+        LeagueDirectory = new LeagueIndex(league);
+    }
+
+    internal string? Swid => _options.Swid;
+
+    internal string NewsBaseUrl => _options.NewsBaseUrl;
 
     internal static void ValidateSeason(int seasonId, string methodName)
     {
@@ -78,6 +96,31 @@ public class FantasyFootballClient : LyoHttpClient
                     request.Headers.TryAddWithoutValidation("x-fantasy-filter", JsonSerializer.Serialize(fantasyFilter, GetSerializerOptions()));
                 }, ct)
             .ConfigureAwait(false);
+
+    internal string BuildWritesPath(int leagueId, int seasonId)
+    {
+        ValidateSeason(seasonId, nameof(BuildWritesPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.WritesBaseUrl);
+        return $"{_options.WritesBaseUrl.TrimEnd('/')}/seasons/{seasonId}/segments/0/leagues/{leagueId}/transactions/";
+    }
+
+    internal string BuildChatMessagePath(int leagueId, int seasonId, string topicId)
+    {
+        ValidateSeason(seasonId, nameof(BuildChatMessagePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.CommunicationBaseUrl);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(topicId);
+        var swid = _options.Swid;
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(swid);
+        var topic = Uri.EscapeDataString(topicId);
+        var source = Uri.EscapeDataString(swid);
+        return $"{_options.CommunicationBaseUrl.TrimEnd('/')}/seasons/{seasonId}/segments/0/leagues/{leagueId}/communication/topics/{topic}/messages/?source={source}";
+    }
+
+    internal Task<TResult?> GetAuthenticatedAsync<TResult>(string url, CancellationToken ct)
+        => GetAsAsync<TResult>(url, ApplyAuthentication, ct);
+
+    internal Task<TResult> PostAuthenticatedAsync<TRequest, TResult>(string url, TRequest body, CancellationToken ct)
+        => PostAsAsync<TRequest, TResult>(url, body, ApplyAuthentication, ct);
 
     internal async Task<TResult?> GetLeagueViewAsync<TResult>(string path, FantasyFilterReq? xFantasyFilter = null, CancellationToken ct = default)
         => await GetAsAsync<TResult?>(

@@ -115,6 +115,19 @@ describe("createAsyncFileStorageApiClient_hitsRoutes", () => {
     });
 });
 
+describe("listTagGroup_buildsTheGroupQuery", () => {
+    it("builds FileStorage/files/tags/group?groupBy=client&groupBy=imported:year&path=clienta/2026", async () => {
+        const calls: string[] = [];
+        const transport: AsyncApiTransport = async (req) => {
+            calls.push(req.url);
+            return ok({entries: [], truncated: false});
+        };
+        const files = createAsyncFileStorageApiClient(createAsyncApiClient({baseUrl: "http://x", transport}));
+        await files.listTagGroup(["client", "imported:year"], "clienta/2026");
+        expect(calls).toEqual(["http://x/FileStorage/files/tags/group?groupBy=client&groupBy=imported:year&path=clienta/2026"]);
+    });
+});
+
 describe("capabilities_getsTheCapabilitiesRoute", () => {
     it("gets FileStorage/capabilities on the async and sync clients", async () => {
         const calls: string[] = [];

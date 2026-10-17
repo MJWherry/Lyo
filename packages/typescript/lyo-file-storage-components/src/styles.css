@@ -33,6 +33,18 @@
   gap: 0.4rem;
 }
 
+.lyo-fs-structure {
+  flex-wrap: wrap;
+}
+
+.lyo-fs-structure select {
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.2));
+  border-radius: 4px;
+  padding: 0.2rem 0.35rem;
+}
+
 .lyo-fs-title {
   flex: 1 1 auto;
   font-size: 0.95rem;

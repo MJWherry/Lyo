@@ -42,7 +42,7 @@ namespace Lyo.FileStorage;
 /// </para>
 /// </remarks>
 public abstract class FileStorageServiceBase
-    : IFileStorageService, IDisposable, IFileStoragePhysicalIO, IFileAuditPublisher, IFileStorageMetadataNormalization, IFileStorageMetadataLookup
+    : IFileStorageService, IFileStorageTags, IDisposable, IFileStoragePhysicalIO, IFileAuditPublisher, IFileStorageMetadataNormalization, IFileStorageMetadataLookup
 {
 #region Core
 
@@ -849,6 +849,7 @@ public abstract class FileStorageServiceBase
                     dekKeyMaterialBytes, Metadata: metadata);
 
                 await MetadataService.SaveMetadataAsync(fileId, stored, ct).ConfigureAwait(false);
+                await EnsureAutomaticTagsAsync(stored, ct).ConfigureAwait(false);
                 FileSaved?.Invoke(this, new(fileId, FileStoreSnapshot.From(stored), actualSize, finalSize, compress, encrypt));
                 return stored;
             }
@@ -993,6 +994,7 @@ public abstract class FileStorageServiceBase
 
             // Persist metadata through the metadata service
             await MetadataService.SaveMetadataAsync(fileId, stored, ct).ConfigureAwait(false);
+            await EnsureAutomaticTagsAsync(stored, ct).ConfigureAwait(false);
             FileSaved?.Invoke(this, new(fileId, FileStoreSnapshot.From(stored), actualOriginalSize, finalSize, compress, encrypt));
             return stored;
         }
@@ -1662,8 +1664,12 @@ public abstract class FileStorageServiceBase
         => _plainDirectUpload.PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalizedPathPrefix, ct, verifiedChecksumAlgorithm);
 
     /// <inheritdoc cref="PlainDirectUploadCoordinator.FinalizePendingPlainDirectUploadCoreAsync" />
-    protected Task<FileStoreResult> FinalizePendingPlainDirectUploadCoreAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest, CancellationToken ct)
-        => _plainDirectUpload.FinalizePendingPlainDirectUploadCoreAsync(fileId, completeRequest, ct);
+    protected async Task<FileStoreResult> FinalizePendingPlainDirectUploadCoreAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest, CancellationToken ct)
+    {
+        var stored = await _plainDirectUpload.FinalizePendingPlainDirectUploadCoreAsync(fileId, completeRequest, ct).ConfigureAwait(false);
+        await EnsureAutomaticTagsAsync(stored, ct).ConfigureAwait(false);
+        return stored;
+    }
 
     /// <summary>
     /// Matches stored <see cref="FileStoreResult.SourceFileName" /> suffix rules (plaintext uses <see cref="Guid.ToString()" />; hashed paths append extensions).
@@ -1671,16 +1677,140 @@ public abstract class FileStorageServiceBase
     protected static string InferTrailingSuffixAfterFileId(Guid id, string? sourceFileName) => PlainDirectUploadCoordinator.InferTrailingSuffixAfterFileId(id, sourceFileName);
 
     /// <inheritdoc cref="PlainDirectUploadCoordinator.RecordCopyMetadataAsync" />
-    protected Task<FileStoreResult> RecordCopyMetadataAsync(Guid sourceFileId, FileStoreResult sourceMeta, Guid destId, CopyFileRequest? request, CancellationToken ct)
-        => _plainDirectUpload.RecordCopyMetadataAsync(sourceFileId, sourceMeta, destId, request, ct);
+    protected async Task<FileStoreResult> RecordCopyMetadataAsync(Guid sourceFileId, FileStoreResult sourceMeta, Guid destId, CopyFileRequest? request, CancellationToken ct)
+    {
+        var stored = await _plainDirectUpload.RecordCopyMetadataAsync(sourceFileId, sourceMeta, destId, request, ct).ConfigureAwait(false);
+        foreach (var tag in await MetadataService.ListFileTagsAsync(sourceFileId, ct).ConfigureAwait(false)) {
+            if (!tag.Automatic)
+                await MetadataService.AddFileTagAsync(destId, tag.TagType, tag.Value, tag.Slug, false, ct).ConfigureAwait(false);
+        }
+
+        await EnsureAutomaticTagsAsync(stored, ct).ConfigureAwait(false);
+        return stored;
+    }
 
     /// <inheritdoc cref="PlainDirectUploadCoordinator.RecordMoveMetadataAsync" />
     protected Task<FileStoreResult> RecordMoveMetadataAsync(FileStoreResult sourceMeta, string? destPathPrefix, CancellationToken ct)
         => _plainDirectUpload.RecordMoveMetadataAsync(sourceMeta, destPathPrefix, ct);
 
     /// <inheritdoc cref="PlainDirectUploadCoordinator.RecordRenameMetadataAsync" />
-    protected Task<FileStoreResult> RecordRenameMetadataAsync(FileStoreResult sourceMeta, string originalFileName, CancellationToken ct)
-        => _plainDirectUpload.RecordRenameMetadataAsync(sourceMeta, originalFileName, ct);
+    protected async Task<FileStoreResult> RecordRenameMetadataAsync(FileStoreResult sourceMeta, string originalFileName, CancellationToken ct)
+    {
+        var stored = await _plainDirectUpload.RecordRenameMetadataAsync(sourceMeta, originalFileName, ct).ConfigureAwait(false);
+        await EnsureAutomaticTagsAsync(stored, ct).ConfigureAwait(false);
+        return stored;
+    }
+
+    /// <summary>
+    /// Copies every tag onto the destination catalog for a byte-preserving transfer that keeps <paramref name="row" />'s id, then fills <c>imported</c> when the source had none.
+    /// </summary>
+    internal async Task CopyCatalogTagsAsync(FileStorageServiceBase source, FileStoreResult row, CancellationToken ct)
+    {
+        ArgumentHelpers.ThrowIfNull(source);
+        ArgumentHelpers.ThrowIfNull(row);
+        var tags = await source.MetadataService.ListFileTagsAsync(row.Id, ct).ConfigureAwait(false);
+        foreach (var tag in tags)
+            await MetadataService.AddFileTagAsync(row.Id, tag.TagType, tag.Value, tag.Slug, tag.Automatic, ct).ConfigureAwait(false);
+
+        if (!tags.Any(t => t.Automatic && t.TagType == FileTagTypes.Imported))
+            await EnsureAutomaticTagsAsync(row, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Inserts <c>imported</c> once and replaces <c>file-type</c> from the display name. No-ops when this service has no tag store.</summary>
+    protected async Task EnsureAutomaticTagsAsync(FileStoreResult stored, CancellationToken ct)
+    {
+        var existing = await MetadataService.ListFileTagsAsync(stored.Id, ct).ConfigureAwait(false);
+        if (!existing.Any(t => t.Automatic && t.TagType == FileTagTypes.Imported))
+            await MetadataService.AddFileTagAsync(stored.Id, FileTagTypes.Imported, FileTagTypes.FormatImported(stored.Timestamp), null, true, ct).ConfigureAwait(false);
+
+        var fileType = FileTagTypes.FileTypeValue(stored.OriginalFileName);
+        var current = existing.Where(t => t.Automatic && t.TagType == FileTagTypes.FileType).ToArray();
+        if (current.Length == 1 && current[0].Value == fileType)
+            return;
+
+        foreach (var old in current)
+            await MetadataService.RemoveFileTagAsync(stored.Id, old.TagType, old.Value, ct).ConfigureAwait(false);
+
+        await MetadataService.AddFileTagAsync(stored.Id, FileTagTypes.FileType, fileType, null, true, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<FileTag> AddTagAsync(Guid fileId, string tagType, string value, string? slug = null, CancellationToken ct = default)
+    {
+        FileTagTypes.Validate(tagType, value, slug);
+        if (FileTagTypes.IsReserved(tagType))
+            throw new ArgumentException($"Tag type '{tagType}' is reserved.", nameof(tagType));
+
+        _ = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+        return await MetadataService.AddFileTagAsync(fileId, tagType, value, slug, false, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> RemoveTagAsync(Guid fileId, string tagType, string value, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
+        if (FileTagTypes.IsReserved(tagType))
+            throw new ArgumentException($"Tag type '{tagType}' is reserved.", nameof(tagType));
+
+        return await MetadataService.RemoveFileTagAsync(fileId, tagType, value, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<FileTag>> GetTagsAsync(Guid fileId, CancellationToken ct = default)
+    {
+        return MetadataService.ListFileTagsAsync(fileId, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileTagTypeInfo>> GetTagTypesAsync(CancellationToken ct = default)
+    {
+        var manual = await MetadataService.ListManualTagTypesAsync(ct).ConfigureAwait(false);
+        var types = new List<FileTagTypeInfo> {
+            new(FileTagTypes.FileType, true, FileTagValueKind.String, FileTagSort.Ordinal, [FileTagGrain.Value]),
+            new(FileTagTypes.Imported, true, FileTagValueKind.DateTime, FileTagSort.Chronological, [FileTagGrain.Year, FileTagGrain.Month, FileTagGrain.Day])
+        };
+        foreach (var name in manual.OrderBy(static n => n, StringComparer.OrdinalIgnoreCase)) {
+            if (!FileTagTypes.IsReserved(name))
+                types.Add(new(name, false, FileTagValueKind.String, FileTagSort.Ordinal, [FileTagGrain.Value]));
+        }
+
+        return types;
+    }
+
+    /// <inheritdoc />
+    public async Task<int> StampAutomaticTagsAsync(CancellationToken ct = default)
+    {
+        var files = await MetadataService.ListByPathPrefixAsync(null, true, int.MaxValue, ct).ConfigureAwait(false);
+        var checkedFiles = 0;
+        foreach (var file in files) {
+            if (file.Availability == FileAvailability.PendingDirectUpload)
+                continue;
+
+            await EnsureAutomaticTagsAsync(file, ct).ConfigureAwait(false);
+            checkedFiles++;
+        }
+
+        return checkedFiles;
+    }
+
+    /// <inheritdoc />
+    public async Task<(IReadOnlyList<FileStorageFolderEntry> Entries, bool Truncated)> ListTagGroupAsync(
+        IReadOnlyList<FileTagGroupKey> groupBy,
+        string? path,
+        int maxKeys = 10_000,
+        CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(groupBy);
+        var page = await MetadataService.ListTagGroupAsync(groupBy, path, maxKeys, ct).ConfigureAwait(false);
+        var entries = new List<FileStorageFolderEntry>(page.Entries.Count);
+        foreach (var entry in page.Entries)
+            entries.Add(
+                new(
+                    entry.Name, entry.IsDirectory, entry.VirtualPath, entry.FileId, FileStoragePresence.Store, entry.OriginalFileName, entry.OriginalFileSize, null));
+
+        return (entries, page.Truncated);
+    }
 
 #endregion
 }

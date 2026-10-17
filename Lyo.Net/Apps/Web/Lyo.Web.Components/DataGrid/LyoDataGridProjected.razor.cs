@@ -436,7 +436,7 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
             return SortDirection.None;
 
         foreach (var sort in sorts.Values) {
-            var field = ResolveSortFieldFromGuid(sort.SortBy) ?? sort.SortBy;
+            var field = FieldNameForSavedSort(sort.SortBy);
             if (string.Equals(field, column.Field, StringComparison.OrdinalIgnoreCase))
                 return sort.Descending ? SortDirection.Descending : SortDirection.Ascending;
         }
@@ -530,8 +530,11 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
             if (_savedSorts?.Count > 0) {
                 foreach (var savedSort in _savedSorts.OrderBy(s => s.Index)) {
                     var sortDirection = savedSort.Descending ? SortDirection.Descending : SortDirection.Ascending;
-                    var columnId = Guid.TryParse(savedSort.SortBy, out var _) ? savedSort.SortBy : FindColumnIdByTag(savedSort.SortBy);
-                    var fieldName = Guid.TryParse(savedSort.SortBy, out var _) ? ResolveSortFieldFromGuid(savedSort.SortBy) ?? savedSort.SortBy : savedSort.SortBy;
+                    var fieldName = FieldNameForSavedSort(savedSort.SortBy);
+                    if (fieldName is null)
+                        continue;
+
+                    var columnId = FindColumnIdByTag(fieldName);
                     if (columnId != null)
                         await _dataGrid.SetSortAsync(columnId, sortDirection, x => GetPropertyValueForSort(x, fieldName));
                 }
@@ -592,7 +595,9 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
             List<SavedSort>? sorts = null;
             if (_dataGrid?.SortDefinitions?.Any() == true) {
                 sorts = _dataGrid.SortDefinitions.Values.OrderBy(s => s.Index)
-                    .Select(sd => new SavedSort { SortBy = ResolveSortFieldFromGuid(sd.SortBy) ?? sd.SortBy, Descending = sd.Descending, Index = sd.Index })
+                    .Select(sd => (Field: FieldNameForSavedSort(sd.SortBy), sd.Descending, sd.Index))
+                    .Where(s => s.Field is not null)
+                    .Select(s => new SavedSort { SortBy = s.Field!, Descending = s.Descending, Index = s.Index })
                     .ToList();
             }
 
@@ -731,11 +736,20 @@ public partial class LyoDataGridProjected : IDataGridExportHost, ILyoDataGridToo
         return queryBuilder;
     }
 
-    /// <summary>Resolves sort field for API. TemplateColumns use GUID as SortBy; we use Tag to store the actual field name.</summary>
+    /// <summary>Resolves sort field for API. TemplateColumns use GUID as SortBy; we use Tag to store the actual field name. An unresolved column id is omitted.</summary>
     private string? ResolveSortField(SortDefinition<object?> sort)
+        => FieldNameForSavedSort(sort.SortBy);
+
+    /// <summary>Field name to query and persist. A TemplateColumn GUID that does not map to a column tag is dropped.</summary>
+    private string? FieldNameForSavedSort(string? sortBy)
     {
-        var resolved = ResolveSortFieldFromGuid(sort.SortBy);
-        return resolved ?? sort.SortBy;
+        if (string.IsNullOrWhiteSpace(sortBy))
+            return null;
+
+        if (!Guid.TryParse(sortBy, out _))
+            return sortBy;
+
+        return ResolveSortFieldFromGuid(sortBy);
     }
 
     /// <summary>When SortBy is a GUID (TemplateColumn), resolves to the actual field name via column Tag.</summary>

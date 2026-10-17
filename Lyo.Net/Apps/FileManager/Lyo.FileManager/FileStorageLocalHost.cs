@@ -284,23 +284,33 @@ public sealed class FileStorageLocalHost : IFileManagerApi, IFileManagerTransfer
     }
 
     /// <inheritdoc />
-    public Task<Lyo.Api.FileStorage.Models.FileStorageCapabilitiesResponse> GetCapabilitiesAsync(CancellationToken ct)
+    public async Task<Lyo.Api.FileStorage.Models.FileStorageCapabilitiesResponse> GetCapabilitiesAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         var features = ((FileStorageServiceBase)_storage).GetCapabilities();
-        return Task.FromResult(
-            new Lyo.Api.FileStorage.Models.FileStorageCapabilitiesResponse(
-                features.PresignedRead,
-                features.DirectUpload,
-                true,
-                _multipart is not null && _multipart is not LocalMultipartUploadService,
-                features.Copy,
-                features.Move,
-                features.Physical,
-                _keys != null,
-                true,
-                true));
+        var tagTypes = _storage is IFileStorageTags tags
+            ? (await tags.GetTagTypesAsync(ct).ConfigureAwait(false)).Select(ToTagType).ToArray()
+            : [];
+        return new(
+            features.PresignedRead,
+            features.DirectUpload,
+            true,
+            _multipart is not null && _multipart is not LocalMultipartUploadService,
+            features.Copy,
+            features.Move,
+            features.Physical,
+            _keys != null,
+            true,
+            true,
+            tagTypes,
+            FileTagValueKinds.All.Select(ToKind).ToArray());
     }
+
+    private static Lyo.Api.FileStorage.Models.FileStorageTagTypeResponse ToTagType(FileTagTypeInfo type)
+        => new(type.TagType, type.Automatic, type.Sort.ToString(), type.Grains.Select(static grain => grain.ToString()).ToArray(), FileTagValueKinds.Name(type.ValueKind));
+
+    private static Lyo.Api.FileStorage.Models.FileStorageTagValueKindResponse ToKind(FileTagValueKind kind)
+        => new(FileTagValueKinds.Name(kind), FileTagValueKinds.SortFor(kind).ToString(), FileTagValueKinds.GrainsFor(kind).Select(static grain => grain.ToString()).ToArray());
 
     /// <inheritdoc />
     public async Task<FileManagerListing> ListAsync(string? pathPrefix, CancellationToken ct)

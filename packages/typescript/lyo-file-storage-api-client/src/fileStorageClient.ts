@@ -46,6 +46,7 @@ import {
     filePresignedReadPath,
     joinRoutePrefix,
     multipartAbortPath,
+    tagGroupQuery,
     multipartPartUrlPath,
 } from "./routes.js";
 
@@ -136,6 +137,7 @@ export interface AsyncFileStorageApiClient {
     capabilities(): Promise<ApiResponse<FileStorageCapabilitiesResponse>>;
     listKeyIds(): Promise<ApiResponse<string[]>>;
     listFolder(query?: {pathPrefix?: string; maxKeys?: number}): Promise<ApiResponse<FileStorageFolderListResponse>>;
+    listTagGroup(groupBy: readonly string[], path?: string): Promise<ApiResponse<FileStorageFolderListResponse>>;
     listStorageKeys(query?: {prefix?: string; maxKeys?: number}): Promise<ApiResponse<string[]>>;
     saveBytes(request: SaveFileRequest): Promise<ApiResponse<FileStoreResult>>;
     saveStream(request: SaveStreamRequest): Promise<ApiResponse<FileStoreResult>>;
@@ -174,6 +176,7 @@ export interface FileStorageApiClient {
     capabilities(): ApiResponse<FileStorageCapabilitiesResponse>;
     listKeyIds(): ApiResponse<string[]>;
     listFolder(query?: {pathPrefix?: string; maxKeys?: number}): ApiResponse<FileStorageFolderListResponse>;
+    listTagGroup(groupBy: readonly string[], path?: string): ApiResponse<FileStorageFolderListResponse>;
     listStorageKeys(query?: {prefix?: string; maxKeys?: number}): ApiResponse<string[]>;
     saveBytes(request: SaveFileRequest): ApiResponse<FileStoreResult>;
     saveStream(request: SaveStreamRequest): ApiResponse<FileStoreResult>;
@@ -215,6 +218,7 @@ export function createAsyncFileStorageApiClient(api: AsyncApiClient, options?: F
         capabilities: () => api.request({method: "GET", path: p(FileStorageRoutes.capabilities)}),
         listKeyIds: () => api.request({method: "GET", path: p(FileStorageRoutes.keyIds)}),
         listFolder: (query) => api.request({method: "GET", path: p(FileStorageRoutes.folder), query}),
+        listTagGroup: (groupBy, path) => api.request({method: "GET", path: p(tagGroupQuery(groupBy, path))}),
         listStorageKeys: (query) => api.request({method: "GET", path: p(FileStorageRoutes.storageKeys), query}),
         saveBytes: (request) => api.request({method: "POST", path: p(FileStorageRoutes.save), body: request}),
         saveStream: (request) =>
@@ -297,6 +301,7 @@ export function createFileStorageApiClient(api: ApiClient, options?: FileStorage
         capabilities: () => api.request({method: "GET", path: p(FileStorageRoutes.capabilities)}),
         listKeyIds: () => api.request({method: "GET", path: p(FileStorageRoutes.keyIds)}),
         listFolder: (query) => api.request({method: "GET", path: p(FileStorageRoutes.folder), query}),
+        listTagGroup: (groupBy, path) => api.request({method: "GET", path: p(tagGroupQuery(groupBy, path))}),
         listStorageKeys: (query) => api.request({method: "GET", path: p(FileStorageRoutes.storageKeys), query}),
         saveBytes: (request) => api.request({method: "POST", path: p(FileStorageRoutes.save), body: request}),
         saveStream: (request) =>

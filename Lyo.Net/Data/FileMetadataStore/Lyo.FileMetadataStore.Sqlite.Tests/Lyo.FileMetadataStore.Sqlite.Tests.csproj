@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <Compile Include="..\test-shared\FileMetadataStoreContractTests.cs" Link="FileMetadataStoreContractTests.cs"/>
+        <Compile Include="..\test-shared\FileTagStoreContractTests.cs" Link="FileTagStoreContractTests.cs"/>
     </ItemGroup>
 
     <ItemGroup>

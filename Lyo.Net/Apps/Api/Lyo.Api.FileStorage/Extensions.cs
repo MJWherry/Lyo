@@ -12,6 +12,7 @@ using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
+using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Multipart;
 using Lyo.KeyStore;
 using Domain = Lyo.FileStorage.Models;
@@ -89,7 +90,7 @@ public static class Extensions
             });
 
         group.MapGet(
-            "capabilities", (IServiceProvider services) => {
+            "capabilities", async (IServiceProvider services, CancellationToken ct) => {
                 var fileStorage = GetFileStorage(services, serviceKey);
                 var multipart = services.GetKeyedService<IMultipartUploadService>(serviceKey);
                 var keyed = services.GetKeyedService<IKeyStore>(serviceKey);
@@ -100,10 +101,52 @@ public static class Extensions
                     inventory = services.GetService<IKeyInventoryStore>();
                 }
 
+                IReadOnlyList<FileStorageTagTypeResponse> tagTypes = [];
+                if (fileStorage is IFileStorageTags tags)
+                    tagTypes = (await tags.GetTagTypesAsync(ct).ConfigureAwait(false)).Select(ToTagType).ToArray();
+
                 var composed = FileStorageCapabilitiesComposer.Compose(
                     fileStorage, multipart, FileStorageCapabilitiesComposer.HasEncryptionStore(keyed, unkeyed, inventory),
-                    services.GetKeyedService<IFileStorageArchiveService>(serviceKey) != null, services.GetService<IFileDownloadAccessService>() != null);
+                    services.GetKeyedService<IFileStorageArchiveService>(serviceKey) != null, services.GetService<IFileDownloadAccessService>() != null, tagTypes,
+                    FileTagValueKinds.All.Select(ToKind).ToArray());
                 return Results.Ok(composed);
+            });
+
+        group.MapGet(
+            "files/{fileId:guid}/tags", async (Guid fileId, IServiceProvider services, CancellationToken ct) => {
+                var tags = Tags(services, serviceKey);
+                var rows = await tags.GetTagsAsync(fileId, ct).ConfigureAwait(false);
+                return Results.Ok(rows.Select(static row => new FileTagResponse(row.Id, row.FileId, row.TagType, row.Value, row.Slug, row.Automatic)).ToArray());
+            });
+
+        group.MapPut(
+            "files/{fileId:guid}/tags", async (Guid fileId, [FromBody] FileTagWriteRequest request, IServiceProvider services, CancellationToken ct) => {
+                ArgumentHelpers.ThrowIfNull(request);
+                var tags = Tags(services, serviceKey);
+                var row = await tags.AddTagAsync(fileId, request.TagType, request.Value, request.Slug, ct).ConfigureAwait(false);
+                return Results.Ok(new FileTagResponse(row.Id, row.FileId, row.TagType, row.Value, row.Slug, row.Automatic));
+            });
+
+        group.MapDelete(
+            "files/{fileId:guid}/tags", async (Guid fileId, string tagType, string value, IServiceProvider services, CancellationToken ct) => {
+                var tags = Tags(services, serviceKey);
+                var removed = await tags.RemoveTagAsync(fileId, tagType, value, ct).ConfigureAwait(false);
+                return Results.Ok(removed);
+            });
+
+        group.MapGet(
+            "files/tags/group", async (string[] groupBy, string? path, int? maxKeys, IServiceProvider services, CancellationToken ct) => {
+                var tags = Tags(services, serviceKey);
+                var fileStorage = GetFileStorage(services, serviceKey);
+                var keys = groupBy.Select(FileTagGroupKey.Parse).ToArray();
+                var cap = Math.Clamp(maxKeys ?? 10_000, 1, 10_000);
+                var (entries, truncated) = await tags.ListTagGroupAsync(keys, path, cap, ct).ConfigureAwait(false);
+                var dtos = entries.Select(
+                    static e => new FileStorageFolderEntryDto(
+                        e.Name, e.IsDirectory, e.PathPrefix, e.FileId, (Lyo.Api.FileStorage.Models.FileStoragePresence)(int)e.Presence, e.OriginalFileName,
+                        e.OriginalFileSize, e.PhysicalKey, e.IsCompressed, e.Compression, e.IsEncrypted, e.Encryption)).ToList();
+                var backend = (Lyo.Api.FileStorage.Models.FileStorageBackendKind)(int)FileStorageBackend.Detect(fileStorage);
+                return Results.Ok(new FileStorageFolderListResponse(dtos, truncated, backend));
             });
 
         group.MapPost(
@@ -473,6 +516,21 @@ public static class Extensions
 
     private static IFileStorageService GetFileStorage(IServiceProvider services, string serviceKey)
         => services.GetRequiredKeyedService<IFileStorageService>(serviceKey);
+
+    private static IFileStorageTags Tags(IServiceProvider services, string serviceKey)
+    {
+        var storage = GetFileStorage(services, serviceKey);
+        if (storage is IFileStorageTags tags)
+            return tags;
+
+        throw new InvalidOperationException("File tags are not configured for this storage service.");
+    }
+
+    private static FileStorageTagTypeResponse ToTagType(FileTagTypeInfo type)
+        => new(type.TagType, type.Automatic, type.Sort.ToString(), type.Grains.Select(static grain => grain.ToString()).ToArray(), FileTagValueKinds.Name(type.ValueKind));
+
+    private static FileStorageTagValueKindResponse ToKind(FileTagValueKind kind)
+        => new(FileTagValueKinds.Name(kind), FileTagValueKinds.SortFor(kind).ToString(), FileTagValueKinds.GrainsFor(kind).Select(static grain => grain.ToString()).ToArray());
 
     private static IFileMetadataStore GetMetadataStore(IFileStorageService fileStorage, IServiceProvider services, string serviceKey)
     {

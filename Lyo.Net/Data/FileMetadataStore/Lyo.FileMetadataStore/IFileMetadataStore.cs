@@ -79,4 +79,25 @@ public interface IFileMetadataStore
 
     /// <summary>Loads a prior revision by id, or null when it was never recorded.</summary>
     Task<FileRevision?> GetVersionAsync(Guid revisionId, CancellationToken ct = default);
+
+    /// <summary>Adds a tag on <paramref name="fileId" />. A second add of the same type and value returns the existing row.</summary>
+    Task<FileTag> AddFileTagAsync(Guid fileId, string tagType, string value, string? slug, bool automatic, CancellationToken ct = default);
+
+    /// <summary>Removes one tag. Returns false when that pair is not stored.</summary>
+    Task<bool> RemoveFileTagAsync(Guid fileId, string tagType, string value, CancellationToken ct = default);
+
+    /// <summary>Tags on one file. Empty when the file has none.</summary>
+    Task<IReadOnlyList<FileTag>> ListFileTagsAsync(Guid fileId, CancellationToken ct = default);
+
+    /// <summary>Copies every tag from <paramref name="sourceFileId" /> onto <paramref name="destinationFileId" />.</summary>
+    Task CopyFileTagsAsync(Guid sourceFileId, Guid destinationFileId, CancellationToken ct = default);
+
+    /// <summary>Deletes every tag for a file. Local purge calls this because the sidecar has no foreign key.</summary>
+    Task DeleteFileTagsAsync(Guid fileId, CancellationToken ct = default);
+
+    /// <summary>Distinct manual tag types on non-deleted files, unordered.</summary>
+    Task<IReadOnlyList<string>> ListManualTagTypesAsync(CancellationToken ct = default);
+
+    /// <summary>One level of the virtual folder tree for <paramref name="groupBy" />. Blob keys are not moved.</summary>
+    Task<FileTagGroupPage> ListTagGroupAsync(IReadOnlyList<FileTagGroupKey> groupBy, string? virtualPath, int maxKeys, CancellationToken ct = default);
 }

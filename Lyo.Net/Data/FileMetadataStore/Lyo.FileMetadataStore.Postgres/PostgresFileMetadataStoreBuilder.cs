@@ -1,4 +1,5 @@
 using Lyo.Exceptions;
+using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage.Multipart;
 using Microsoft.EntityFrameworkCore;

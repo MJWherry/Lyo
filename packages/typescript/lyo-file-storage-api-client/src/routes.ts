@@ -6,6 +6,7 @@ export const FileStorageRoutes = {
     capabilities: "FileStorage/capabilities",
     keyIds: "FileStorage/key-ids",
     folder: "FileStorage/files/folder",
+    tagGroup: "FileStorage/files/tags/group",
     storageKeys: "FileStorage/diagnostics/storage-keys",
     save: "FileStorage/files/save",
     saveStream: "FileStorage/files/save-stream",
@@ -63,6 +64,14 @@ export function multipartPartUrlPath(sessionId: string): string {
 
 export function multipartAbortPath(sessionId: string): string {
     return `${FileStorageRoutes.route}/multipart/${sessionId}/abort`;
+}
+
+/** `FileStorage/files/tags/group?groupBy=client&groupBy=imported:year&path=clienta/2026`. */
+export function tagGroupQuery(groupBy: readonly string[], path?: string): string {
+    const parts = groupBy.filter((key) => key.length > 0).map((key) => `groupBy=${key}`);
+    if (path) parts.push(`path=${path}`);
+    const qs = parts.join("&");
+    return qs ? `${FileStorageRoutes.tagGroup}?${qs}` : FileStorageRoutes.tagGroup;
 }
 
 export function joinRoutePrefix(routePrefix: string | undefined, relativePath: string): string {

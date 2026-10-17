@@ -22,6 +22,21 @@ public sealed class FantasyFilterReqBuilder
         return this;
     }
 
+    /// <summary>Selects free agents and waiver-wire players, most owned first.</summary>
+    public FantasyFilterReqBuilder WithFreeAgents(int limit = 50, int offset = 0)
+    {
+        ArgumentHelpers.ThrowIf(limit <= 0, "Value must be greater than zero.", nameof(limit));
+        ArgumentHelpers.ThrowIf(offset < 0, "Value cannot be negative.", nameof(offset));
+        _players = (_players ?? new()) with {
+            FilterStatus = new() { Value = ["FREEAGENT", "WAIVERS"] },
+            Limit = limit,
+            Offset = offset,
+            SortPercOwned = new() { SortPriority = 1, SortAsc = false }
+        };
+
+        return this;
+    }
+
     /// <summary>Assigns the scoring period filter ESPN expects for player-card stats.</summary>
     public FantasyFilterReqBuilder WithTopScoringPeriod(int scoringPeriodId, IEnumerable<string>? additionalPeriodIds = null)
     {
@@ -75,6 +90,8 @@ public sealed class FantasyFilterReqBuilder
     public static FantasyFilterReqBuilder Create() => new();
 
     public static FantasyFilterReqBuilder ForPlayers(IEnumerable<int> playerIds) => Create().WithPlayerIds(playerIds);
+
+    public static FantasyFilterReqBuilder ForFreeAgents(int limit = 50, int offset = 0) => Create().WithFreeAgents(limit, offset);
 
     public static FantasyFilterReqBuilder ForTransactions(IEnumerable<string> types) => Create().WithTransactionTypes(types);
 

@@ -107,6 +107,20 @@ export interface FileStorageHealthResponse {
     message?: string | null;
 }
 
+export interface FileStorageTagTypeResponse {
+    tagType: string;
+    automatic: boolean;
+    sort: string;
+    grains: string[];
+    valueKind: string;
+}
+
+export interface FileStorageTagValueKindResponse {
+    kind: string;
+    sort: string;
+    grains: string[];
+}
+
 export interface FileStorageCapabilitiesResponse {
     presignedRead: boolean;
     directUpload: boolean;
@@ -118,6 +132,8 @@ export interface FileStorageCapabilitiesResponse {
     encryption: boolean;
     archive: boolean;
     accessLinks: boolean;
+    tagTypes?: FileStorageTagTypeResponse[] | null;
+    tagValueKinds?: FileStorageTagValueKindResponse[] | null;
 }
 
 export interface FileStorageFolderEntry {

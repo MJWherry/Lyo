@@ -44,14 +44,31 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
         IFileContentPolicy? contentPolicy = null,
         IFileTypeSniffer? fileTypeSniffer = null)
+        : this(
+            ArgumentHelpers.ThrowIfNullReturn(options), loggerFactory, compressionService, twoKeyEncryptionService, metrics, operationContextAccessor, auditHandlers,
+            contentPolicy, fileTypeSniffer, OpenCatalog(options, loggerFactory, metadataService))
+    {
+    }
+
+    private LocalFileStorageService(
+        DiskFileStorageOptions options,
+        ILoggerFactory? loggerFactory,
+        ICompressionService? compressionService,
+        ITwoKeyEncryptionService? twoKeyEncryptionService,
+        IMetrics? metrics,
+        IFileOperationContextAccessor? operationContextAccessor,
+        IEnumerable<IFileAuditEventHandler>? auditHandlers,
+        IFileContentPolicy? contentPolicy,
+        IFileTypeSniffer? fileTypeSniffer,
+        LocalCatalog catalog)
         : base(
-            ArgumentHelpers.ThrowIfNullReturn(options), metadataService ?? new LocalFileMetadataStore(options.RootDirectoryPath, loggerFactory),
+            options, catalog.Metadata,
             (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalFileStorageService>(), compressionService, twoKeyEncryptionService,
             options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance, operationContextAccessor, auditHandlers, contentPolicy, fileTypeSniffer)
     {
         _options = options;
         _storageRootFull = NormalizeAndTrim(options.RootDirectoryPath);
-        _ownsMetadataService = metadataService == null;
+        _ownsMetadataService = catalog.OwnsMetadata;
         if (_ownsMetadataService)
             Logger.LogInformation("Using JSON file-based metadata storage");
 
@@ -62,10 +79,18 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         Logger.LogInformation("Created root directory: {RootPath}", _options.RootDirectoryPath);
     }
 
-    /// <inheritdoc />
-    public IFileSystem Physical => _physicalFs ??= new LocalFileSystem(_options.RootDirectoryPath);
+    private readonly record struct LocalCatalog(IFileMetadataStore Metadata, bool OwnsMetadata);
 
-    private IFileSystem? _physicalFs;
+    private static LocalCatalog OpenCatalog(DiskFileStorageOptions options, ILoggerFactory? loggerFactory, IFileMetadataStore? metadataService)
+    {
+        if (metadataService != null)
+            return new(metadataService, false);
+
+        return new(new LocalFileMetadataStore(options.RootDirectoryPath, loggerFactory), true);
+    }
+
+    /// <inheritdoc />
+    public IFileSystem Physical => field ??= new LocalFileSystem(_options.RootDirectoryPath);
 
     /// <inheritdoc />
     Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct)

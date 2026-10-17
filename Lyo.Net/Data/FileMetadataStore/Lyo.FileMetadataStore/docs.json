@@ -3,7 +3,7 @@
   "name": "Lyo.FileMetadataStore",
   "area": "Data",
   "tagline": "File identity without the bytes. Canonical Guid identifiers and metadata, not blob I/O.",
-  "description": "File identity without the bytes. Large systems split:\n\n1. **Blob storage** (Lyo.FileStorage). Throughput, multipart uploads, CDN URLs.\n2. **Metadata OLTP** (this abstraction). Dedupe fingerprints, encryption key ids, multipart session pointers, archival flags.\n\nDepend on IFileMetadataStore only where you manipulate canonical Guid file identifiers. `ListByPathPrefixAsync` lists non-deleted rows for a PathPrefix (immediate children or descendants) without a schema change.",
+  "description": "File identity without the bytes. Large systems split:\n\n1. **Blob storage** (Lyo.FileStorage). Throughput, multipart uploads, CDN URLs.\n2. **Metadata OLTP** (this abstraction). Dedupe fingerprints, encryption key ids, multipart session pointers, archival flags.\n\nDepend on IFileMetadataStore only where you manipulate canonical Guid file identifiers. `ListByPathPrefixAsync` lists non-deleted rows for a PathPrefix (immediate children or descendants) without a schema change. The same store keeps file tags (type plus value), including automatic `file-type` and `imported` rows, and lists a virtual folder for an ordered group-by. Postgres and SQLite use `file_tag`. The local store uses a `{id}.tags.json` sidecar next to `.meta`.",
   "features": [],
   "examples": [],
   "sections": [

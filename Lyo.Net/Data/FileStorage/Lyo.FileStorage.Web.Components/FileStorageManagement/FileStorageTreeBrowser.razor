@@ -5,13 +5,48 @@
 <MudPaper Class="pa-4 mt-1" Outlined="true">
     <div class="file-storage-tree-browser">
         <MudText Typo="Typo.h6">Path tree</MudText>
-        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
-            Folders from FileMetadata <code>PathPrefix</code> joined to objects on
-            <strong>@FileStoragePresenceUi.DisplayName(BackendKind)</strong>
-            (<code>Catalog</code> / backend / <code>Both</code>). Files with no prefix sit under
-            <strong>@FileStoragePathTreeBuilder.RootDisplayName</strong>. Opening a folder loads that directory only.
-            Search loads unloaded folders. New folders stay in the browser until a file is uploaded there. The Files grid stays QueryProject.
-        </MudText>
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="my-2">
+            <MudButton Variant="@(BlobStructure ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" Size="Size.Small" OnClick="UseBlobAsync">Blob</MudButton>
+            @foreach (var row in _structure) {
+                var current = row;
+                <MudChip T="string" Size="Size.Small" OnClose="@(() => RemoveStructureAsync(current))">@current.Label</MudChip>
+            }
+            <MudSelect T="string" Value="_addType" ValueChanged="TypeChanged" Label="Tag type" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true"
+                       Style="min-width:12rem;">
+                @foreach (var type in _tagTypes) {
+                    <MudSelectItem T="string" Value="@type.TagType">@type.TagType</MudSelectItem>
+                }
+            </MudSelect>
+            @if (SelectedType != null) {
+                <MudSelect T="string" Value="EffectiveKind" ValueChanged="KindChanged" Label="Kind" Disabled="@SelectedType.Automatic" Variant="Variant.Outlined"
+                           Margin="Margin.Dense" Dense="true" Style="min-width:8rem;">
+                    @foreach (var kind in KindChoices) {
+                        <MudSelectItem T="string" Value="@kind.Kind">@kind.Kind</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            @if (SelectedTypeNeedsGrain) {
+                <MudSelect T="string" @bind-Value="_addGrain" Label="Grain" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Style="min-width:8rem;">
+                    @foreach (var grain in SelectedGrains) {
+                        <MudSelectItem T="string" Value="@grain">@grain</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" Disabled="@string.IsNullOrWhiteSpace(_addType)" OnClick="AddStructureAsync">Add</MudButton>
+        </MudStack>
+        @if (BlobStructure) {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                Folders come from <code>PathPrefix</code> on
+                <strong>@FileStoragePresenceUi.DisplayName(BackendKind)</strong>.
+                Files with no prefix sit under <strong>@FileStoragePathTreeBuilder.RootDisplayName</strong>.
+                Opening a folder loads that directory only. New folders stay in the browser until a file is uploaded there.
+            </MudText>
+        }
+        else {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                Folders come from the tag grouping. They are not blob prefixes. Opening a file, metadata, download, and delete still use the file id.
+            </MudText>
+        }
         <div class="file-storage-tree-layout">
             <div class="file-storage-tree-col">
                 <LyoFileTree @ref="_tree"
@@ -31,8 +66,10 @@
                         </MudText>
                         <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
                             <MudText Typo="Typo.caption" Class="mud-text-secondary">@_bulkCatalogCount catalog, @_bulkPhysicalCount on @FileStoragePresenceUi.DisplayName(BackendKind)</MudText>
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkMoveAsync">Move…</MudButton>
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkCopyAsync">Copy…</MudButton>
+                            @if (BlobStructure) {
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkMoveAsync">Move…</MudButton>
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkCopyAsync">Copy…</MudButton>
+                            }
                             <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!BulkCatalogActionsEnabled)" OnClick="OnBulkRotateAsync">Rotate DEKs…</MudButton>
                             <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkDownloadAsync">Download</MudButton>
                             <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkDeleteAsync">Delete</MudButton>
@@ -52,6 +89,7 @@
                     <FileStoragePathInspector Actions="_actions"
                                             FolderSource="FolderSource"
                                             ListingRevision="_listingRevision"
+                                            AllowPrefixChanges="BlobStructure"
                                             Selected="_selected"
                                             SelectedChanged="OnInspectorSelectedAsync"
                                             TreeChanged="OnTreeChangedAsync"/>

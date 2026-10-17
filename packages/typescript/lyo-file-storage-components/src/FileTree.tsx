@@ -25,7 +25,7 @@ import TableChartIcon from "@mui/icons-material/TableChart";
 import VideoFileIcon from "@mui/icons-material/VideoFile";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import IconButton from "@mui/material/IconButton";
-import type {AsyncFileStorageApiClient, FileStoreResult} from "lyo-file-storage-api-client";
+import type {AsyncFileStorageApiClient, FileStorageTagTypeResponse, FileStorageTagValueKindResponse, FileStoreResult} from "lyo-file-storage-api-client";
 import {LyoAlert, LyoButton, LyoChip, LyoTextField, LyoTooltip, useLyoSnackbar} from "lyo-web-components";
 import type {FileDialogKind} from "./dialogs.js";
 import {triggerBlobDownload} from "./downloadBlob.js";
@@ -155,14 +155,51 @@ export function FileTree({
     const [metadata, setMetadata] = useState<FileStoreResult | null>(null);
     const [metadataBusy, setMetadataBusy] = useState(false);
     const [metadataStatus, setMetadataStatus] = useState("");
+    const [groupBy, setGroupBy] = useState<string[]>([]);
+    const [tagTypes, setTagTypes] = useState<FileStorageTagTypeResponse[]>([]);
+    const [tagValueKinds, setTagValueKinds] = useState<FileStorageTagValueKindResponse[]>([]);
+    const [addType, setAddType] = useState("");
+    const [addKind, setAddKind] = useState("string");
+    const [addGrain, setAddGrain] = useState("Value");
+
+    useEffect(() => {
+        let cancelled = false;
+        void files.capabilities().then(
+            (response) => {
+                if (!cancelled) {
+                    setTagTypes(response.data?.tagTypes ?? []);
+                    setTagValueKinds(response.data?.tagValueKinds ?? []);
+                }
+            },
+            () => {
+                if (!cancelled) {
+                    setTagTypes([]);
+                    setTagValueKinds([]);
+                }
+            }
+        );
+        return () => {
+            cancelled = true;
+        };
+    }, [files]);
+
+    const selectedType = tagTypes.find((type) => type.tagType === addType);
+    const effectiveKind = selectedType?.automatic ? selectedType.valueKind || "string" : addKind || selectedType?.valueKind || "string";
+    const grains = grainsForKind(effectiveKind, tagValueKinds, selectedType);
+    const needsGrain = grains.some((grain) => grain.toLowerCase() !== "value");
+    const grainValue = grains.includes(addGrain) ? addGrain : grains.find((grain) => grain.toLowerCase() !== "value") ?? "Value";
+    const kindChoices = tagValueKinds.length > 0 ? tagValueKinds : [{kind: effectiveKind, sort: selectedType?.sort ?? "Ordinal", grains}];
+    const blobStructure = groupBy.length === 0;
 
     const loadFolder = useCallback(
         async (pathPrefix: string | null) => {
-            const response = await files.listFolder({pathPrefix: pathPrefix ?? undefined});
+            const response = blobStructure
+                ? await files.listFolder({pathPrefix: pathPrefix ?? undefined})
+                : await files.listTagGroup(groupBy, pathPrefix ?? undefined);
             if (response.data?.backendKind != null) setBackendKind(response.data.backendKind);
             return folderEntriesToNodes(response.data?.entries ?? [], pathPrefix);
         },
-        [files]
+        [blobStructure, files, groupBy]
     );
 
     useEffect(() => {
@@ -366,6 +403,83 @@ export function FileTree({
         <div className="lyo-fs-tree">
             <div className="lyo-fs-panel">
                 <div className="lyo-fs-toolbar">
+                    <div className="lyo-fs-toolbar-row lyo-fs-structure">
+                        <LyoButton size="small" variant={blobStructure ? "contained" : "outlined"} onClick={() => setGroupBy([])}>
+                            Blob
+                        </LyoButton>
+                        {groupBy.map((key, index) => (
+                            <LyoChip
+                                key={`${key}-${index}`}
+                                size="small"
+                                label={key.split(":").join(" ")}
+                                onDelete={() => setGroupBy((current) => current.filter((_, item) => item !== index))}
+                            />
+                        ))}
+                        <select
+                            aria-label="Tag type"
+                            value={addType}
+                            onChange={(event) => {
+                                const nextType = event.target.value;
+                                const next = tagTypes.find((type) => type.tagType === nextType);
+                                const kind = next?.valueKind || "string";
+                                setAddType(nextType);
+                                setAddKind(kind);
+                                setAddGrain(firstGrain(kind, tagValueKinds, next));
+                            }}
+                        >
+                            <option value="">Tag type</option>
+                            {tagTypes.map((type) => (
+                                <option key={type.tagType} value={type.tagType}>
+                                    {type.tagType}
+                                </option>
+                            ))}
+                        </select>
+                        {addType ? (
+                            <select
+                                aria-label="Kind"
+                                value={effectiveKind}
+                                disabled={selectedType?.automatic === true}
+                                onChange={(event) => {
+                                    const kind = event.target.value;
+                                    setAddKind(kind);
+                                    setAddGrain(firstGrain(kind, tagValueKinds, selectedType));
+                                }}
+                            >
+                                {kindChoices.map((kind) => (
+                                    <option key={kind.kind} value={kind.kind}>
+                                        {kind.kind}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : null}
+                        {needsGrain ? (
+                            <select aria-label="Grain" value={grainValue} onChange={(event) => setAddGrain(event.target.value)}>
+                                {grains
+                                    .filter((grain) => grain.toLowerCase() !== "value")
+                                    .map((grain) => (
+                                        <option key={grain} value={grain}>
+                                            {grain}
+                                        </option>
+                                    ))}
+                            </select>
+                        ) : null}
+                        <LyoButton
+                            size="small"
+                            variant="outlined"
+                            disabled={!addType}
+                            onClick={() => {
+                                const grain = needsGrain ? grainValue : "Value";
+                                setGroupBy((current) => [...current, formatGroupKey(addType, effectiveKind, grain)]);
+                            }}
+                        >
+                            Add
+                        </LyoButton>
+                    </div>
+                    <p className="lyo-fs-muted">
+                        {blobStructure
+                            ? "Folders come from PathPrefix."
+                            : "Folders come from the tag grouping. They are not blob prefixes."}
+                    </p>
                     <div className="lyo-fs-toolbar-row">
                         <span className="lyo-fs-title">Paths</span>
                         <LyoTooltip title="Refresh tree">
@@ -429,6 +543,7 @@ export function FileTree({
                     metadataBusy={metadataBusy}
                     metadataStatus={metadataStatus}
                     folderKids={folderKids}
+                    allowPrefixChanges={blobStructure}
                     catalog={catalog}
                     canDownload={canDownload}
                     onSelect={selectNode}
@@ -458,6 +573,7 @@ function FileInspector({
     metadataBusy,
     metadataStatus,
     folderKids,
+    allowPrefixChanges,
     catalog,
     canDownload,
     fileId,
@@ -472,6 +588,7 @@ function FileInspector({
     metadataBusy: boolean;
     metadataStatus: string;
     folderKids: FileTreeNode[] | undefined;
+    allowPrefixChanges: boolean;
     catalog: boolean;
     canDownload: boolean;
     fileId: string | null | undefined;
@@ -540,12 +657,16 @@ function FileInspector({
                 <ActionIcon label="Access link" disabled={!catalog || !fileId} onClick={() => open("access")}>
                     <LinkIcon fontSize="small" />
                 </ActionIcon>
-                <ActionIcon label="Move" disabled={!catalog || !fileId} onClick={() => open("move")}>
-                    <DriveFileMoveIcon fontSize="small" />
-                </ActionIcon>
-                <ActionIcon label="Copy" disabled={!catalog || !fileId} onClick={() => open("copy")}>
-                    <ContentCopyIcon fontSize="small" />
-                </ActionIcon>
+                {allowPrefixChanges ? (
+                    <ActionIcon label="Move" disabled={!catalog || !fileId} onClick={() => open("move")}>
+                        <DriveFileMoveIcon fontSize="small" />
+                    </ActionIcon>
+                ) : null}
+                {allowPrefixChanges ? (
+                    <ActionIcon label="Copy" disabled={!catalog || !fileId} onClick={() => open("copy")}>
+                        <ContentCopyIcon fontSize="small" />
+                    </ActionIcon>
+                ) : null}
                 <ActionIcon label="Rename" disabled={!catalog || !fileId} onClick={() => open("rename")}>
                     <DriveFileRenameOutlineIcon fontSize="small" />
                 </ActionIcon>
@@ -563,4 +684,37 @@ function FileInspector({
             </div>
         </div>
     );
+}
+
+const impliedKindByGrain: Record<string, string> = {
+    value: "string",
+    year: "datetime",
+    month: "datetime",
+    day: "datetime",
+    hour: "timeonly",
+    minute: "timeonly",
+    second: "timeonly",
+    days: "timespan",
+    hours: "timespan",
+    minutes: "timespan",
+    seconds: "timespan",
+};
+
+function grainsForKind(kind: string, kinds: FileStorageTagValueKindResponse[], type?: FileStorageTagTypeResponse): string[] {
+    const match = kinds.find((item) => item.kind === kind);
+    if (match) return match.grains;
+    return type?.grains ?? [];
+}
+
+function firstGrain(kind: string, kinds: FileStorageTagValueKindResponse[], type?: FileStorageTagTypeResponse): string {
+    const grains = grainsForKind(kind, kinds, type);
+    return grains.find((grain) => grain.toLowerCase() !== "value") ?? "Value";
+}
+
+function formatGroupKey(tagType: string, kind: string, grain: string): string {
+    const grainToken = grain.toLowerCase();
+    if (kind === "string" && grainToken === "value") return tagType;
+    if (grainToken !== "value" && impliedKindByGrain[grainToken] === kind) return `${tagType}:${grainToken}`;
+    if (grainToken === "value") return `${tagType}:${kind}`;
+    return `${tagType}:${kind}:${grainToken}`;
 }

@@ -51,6 +51,18 @@ public sealed record PlayerFilterReq
 
     /// <summary>Player card stats the scoring period filter ESPN expects.</summary>
     public FilterValueReq<int, string>? FilterStatsForTopScoringPeriodIds { get; init; }
+
+    /// <summary>Roster statuses to include, such as <c>FREEAGENT</c> and <c>WAIVERS</c>.</summary>
+    public FilterValueReq<IReadOnlyList<string>>? FilterStatus { get; init; }
+
+    /// <summary>Upper bound on players returned.</summary>
+    public int? Limit { get; init; }
+
+    /// <summary>How many players to skip.</summary>
+    public int? Offset { get; init; }
+
+    /// <summary>Percent-owned sort. Free-agent reads use priority 1, descending.</summary>
+    public SortReq? SortPercOwned { get; init; }
 }
 
 /// <summary>ESPN filter settings for transactions.</summary>

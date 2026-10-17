@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
@@ -97,6 +98,11 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
             _logger.LogDebug("Metadata not found in database for {FileId}, nothing to purge", fileId);
             return false;
         }
+
+        var fileKey = fileId.ToString();
+        var tags = await _dbContext.FileTags.Where(t => t.FileId == fileKey).ToListAsync(ct).ConfigureAwait(false);
+        if (tags.Count > 0)
+            _dbContext.FileTags.RemoveRange(tags);
 
         _dbContext.FileMetadata.Remove(entity);
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -224,4 +230,89 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     /// <inheritdoc />
     public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
         => PostgresHealth.CheckAsync(_dbContext, PostgresFileMetadataStoreOptions.Schema, ct);
+
+    /// <inheritdoc />
+    public async Task<FileTag> AddFileTagAsync(Guid fileId, string tagType, string value, string? slug, bool automatic, CancellationToken ct = default)
+    {
+        FileTagTypes.Validate(tagType, value, slug);
+        var fileKey = fileId.ToString();
+        var existing = await _dbContext.FileTags.FirstOrDefaultAsync(t => t.FileId == fileKey && t.TagType == tagType && t.Value == value, ct).ConfigureAwait(false);
+        if (existing != null)
+            return existing.ToFileTag();
+
+        var entity = new FileTagEntity {
+            Id = LyoGuid.CreateV7(),
+            FileId = fileKey,
+            TagType = tagType,
+            Value = value,
+            Slug = slug ?? "",
+            Automatic = automatic
+        };
+        _dbContext.FileTags.Add(entity);
+        await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+        return entity.ToFileTag();
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> RemoveFileTagAsync(Guid fileId, string tagType, string value, CancellationToken ct = default)
+    {
+        var fileKey = fileId.ToString();
+        var existing = await _dbContext.FileTags.FirstOrDefaultAsync(t => t.FileId == fileKey && t.TagType == tagType && t.Value == value, ct).ConfigureAwait(false);
+        if (existing == null)
+            return false;
+
+        _dbContext.FileTags.Remove(existing);
+        await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileTag>> ListFileTagsAsync(Guid fileId, CancellationToken ct = default)
+    {
+        var fileKey = fileId.ToString();
+        var rows = await _dbContext.FileTags.AsNoTracking().Where(t => t.FileId == fileKey).ToListAsync(ct).ConfigureAwait(false);
+        return rows.Select(static t => t.ToFileTag()).ToArray();
+    }
+
+    /// <inheritdoc />
+    public async Task CopyFileTagsAsync(Guid sourceFileId, Guid destinationFileId, CancellationToken ct = default)
+    {
+        var source = await ListFileTagsAsync(sourceFileId, ct).ConfigureAwait(false);
+        foreach (var tag in source)
+            await AddFileTagAsync(destinationFileId, tag.TagType, tag.Value, tag.Slug, tag.Automatic, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteFileTagsAsync(Guid fileId, CancellationToken ct = default)
+    {
+        var fileKey = fileId.ToString();
+        var rows = await _dbContext.FileTags.Where(t => t.FileId == fileKey).ToListAsync(ct).ConfigureAwait(false);
+        if (rows.Count == 0)
+            return;
+
+        _dbContext.FileTags.RemoveRange(rows);
+        await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> ListManualTagTypesAsync(CancellationToken ct = default)
+    {
+        var deleted = _dbContext.FileMetadata.Where(f => f.DeletedAt != null).Select(f => f.Id);
+        return await _dbContext.FileTags.AsNoTracking()
+            .Where(t => !t.Automatic && !deleted.Contains(t.FileId))
+            .Select(t => t.TagType)
+            .Distinct()
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<FileTagGroupPage> ListTagGroupAsync(IReadOnlyList<FileTagGroupKey> groupBy, string? virtualPath, int maxKeys, CancellationToken ct = default)
+    {
+        var files = await _dbContext.FileMetadata.AsNoTracking().Where(e => e.DeletedAt == null).ToListAsync(ct).ConfigureAwait(false);
+        var ids = files.Select(f => f.Id).ToArray();
+        var tagRows = await _dbContext.FileTags.AsNoTracking().Where(t => ids.Contains(t.FileId)).ToListAsync(ct).ConfigureAwait(false);
+        return FileTagGrouper.Group(
+            groupBy, virtualPath, files.Select(static f => f.ToFileStoreResult()).ToArray(), tagRows.Select(static t => t.ToFileTag()).ToArray(), maxKeys);
+    }
 }

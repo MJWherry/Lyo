@@ -16,7 +16,9 @@ public sealed record FileStorageCapabilitiesResponse(
     bool Physical,
     bool Encryption,
     bool Archive,
-    bool AccessLinks)
+    bool AccessLinks,
+    IReadOnlyList<FileStorageTagTypeResponse>? TagTypes = null,
+    IReadOnlyList<FileStorageTagValueKindResponse>? TagValueKinds = null)
 {
     /// <summary>Every flag false. Used before a client has loaded the server.</summary>
     public static FileStorageCapabilitiesResponse None { get; } = new(false, false, false, false, false, false, false, false, false, false);

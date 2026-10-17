@@ -1,4 +1,5 @@
 using Lyo.Api.FileStorage.Models;
+using Lyo.FileMetadataStore.Models;
 using Lyo.IO.FileSystem;
 using Lyo.IO.FileSystem.Web.Components;
 using Microsoft.AspNetCore.Components;
@@ -20,6 +21,12 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
     private bool _bulkBusy;
     private bool _truncated;
     private int _listingRevision;
+    private readonly List<StructureRow> _structure = [];
+    private List<FileStorageTagTypeResponse> _tagTypes = [];
+    private List<FileStorageTagValueKindResponse> _tagValueKinds = [];
+    private string? _addType;
+    private string _addKind = "string";
+    private string _addGrain = "Value";
 
     /// <summary>Cascaded parent (API client, dialogs).</summary>
     [CascadingParameter]
@@ -28,13 +35,117 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
     /// <inheritdoc />
     public void Dispose() => Host.FilesChanged -= RefreshAsync;
 
+    private bool BlobStructure => _folderSource?.IsBlobStructure != false;
+
+    private FileStorageTagTypeResponse? SelectedType => _tagTypes.FirstOrDefault(type => type.TagType == _addType);
+
+    private string EffectiveKind => SelectedType is { Automatic: true } type ? type.ValueKind : _addKind;
+
+    private IReadOnlyList<FileStorageTagValueKindResponse> KindChoices
+        => _tagValueKinds.Count > 0 ? _tagValueKinds : [new(EffectiveKind, SelectedType?.Sort ?? "Ordinal", SelectedType?.Grains ?? ["Value"])];
+
+    private bool SelectedTypeNeedsGrain => SelectedGrains.Any(grain => !string.Equals(grain, "Value", StringComparison.OrdinalIgnoreCase));
+
+    private IReadOnlyList<string> SelectedGrains
+    {
+        get
+        {
+            foreach (var kind in _tagValueKinds) {
+                if (string.Equals(kind.Kind, EffectiveKind, StringComparison.OrdinalIgnoreCase))
+                    return kind.Grains;
+            }
+
+            return SelectedType?.Grains ?? [];
+        }
+    }
+
     /// <inheritdoc />
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _actions = new FileStorageBrowserActions(Host, RefreshAsync);
         Host.FilesChanged += RefreshAsync;
         _folderSource = new FileStorageHttpTreeSource(Host.ApiClient, Host.FilesApi);
         _selected = FileStorageHttpTreeSource.DirectoryNode(null);
+        try {
+            var capabilities = await Host.ApiClient.GetAsAsync<FileStorageCapabilitiesResponse>(Host.FilesApi("capabilities")).ConfigureAwait(true);
+            _tagTypes = capabilities?.TagTypes?.ToList() ?? [];
+            _tagValueKinds = capabilities?.TagValueKinds?.ToList() ?? [];
+        }
+        catch (Exception ex) {
+            Host.SetStatus($"Tag types were not loaded: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task UseBlobAsync()
+    {
+        _structure.Clear();
+        _folderSource?.UseBlobStructure();
+        _selected = FileStorageHttpTreeSource.DirectoryNode(null);
+        await RefreshAsync().ConfigureAwait(true);
+    }
+
+    private void TypeChanged(string? type)
+    {
+        _addType = type;
+        _addKind = SelectedType?.ValueKind ?? "string";
+        _addGrain = FirstGrain(EffectiveKind);
+    }
+
+    private void KindChanged(string kind)
+    {
+        if (SelectedType is { Automatic: true })
+            return;
+
+        _addKind = kind;
+        _addGrain = FirstGrain(kind);
+    }
+
+    private async Task AddStructureAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_addType) || !FileTagValueKinds.TryParse(EffectiveKind, out var kind))
+            return;
+
+        var grainName = SelectedTypeNeedsGrain ? _addGrain : "Value";
+        if (!Enum.TryParse<FileTagGrain>(grainName, true, out var grain))
+            return;
+
+        var key = new FileTagGroupKey(_addType, kind, grain);
+        _structure.Add(new(key.Format(), key.Format().Replace(':', ' ')));
+        ApplyStructure();
+        _selected = FileStorageHttpTreeSource.DirectoryNode(null);
+        await RefreshAsync().ConfigureAwait(true);
+    }
+
+    private string FirstGrain(string kindName)
+    {
+        if (!FileTagValueKinds.TryParse(kindName, out var kind))
+            return "Value";
+
+        foreach (var grain in FileTagValueKinds.GrainsFor(kind)) {
+            if (grain != FileTagGrain.Value)
+                return grain.ToString();
+        }
+
+        return "Value";
+    }
+
+    private async Task RemoveStructureAsync(StructureRow row)
+    {
+        _structure.Remove(row);
+        ApplyStructure();
+        _selected = FileStorageHttpTreeSource.DirectoryNode(null);
+        await RefreshAsync().ConfigureAwait(true);
+    }
+
+    private void ApplyStructure()
+    {
+        if (_folderSource == null)
+            return;
+
+        if (_structure.Count == 0)
+            _folderSource.UseBlobStructure();
+        else
+            _folderSource.UseTagStructure(_structure.Select(static row => row.Key).ToArray());
     }
 
     private IFileTreeSource FolderSource => _folderSource ??= new FileStorageHttpTreeSource(Host.ApiClient, Host.FilesApi);
@@ -192,5 +303,12 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 
         foreach (var child in node.Children)
             CollectPending(child);
+    }
+
+    private sealed class StructureRow(string key, string label)
+    {
+        public string Label { get; } = label;
+
+        public string Key { get; } = key;
     }
 }

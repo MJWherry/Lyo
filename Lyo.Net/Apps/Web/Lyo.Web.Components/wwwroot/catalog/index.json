@@ -2562,7 +2562,7 @@
       "area": "Integration",
       "topic": "Lyo.Espn",
       "name": "Lyo.Espn.Fantasy.Football.Client",
-      "tagline": "Read-only typed client for ESPN's fantasy football v3 API (`lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/`).",
+      "tagline": "Typed client for ESPN fantasy football reads, writes, and Fantasy Chat.",
       "targetFrameworks": [
         "netstandard2.0",
         "net10.0"

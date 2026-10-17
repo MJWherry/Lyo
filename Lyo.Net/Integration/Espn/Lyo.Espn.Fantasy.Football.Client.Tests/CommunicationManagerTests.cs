@@ -2,21 +2,22 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Lyo.Espn.Fantasy.Football.Client.Models.Request;
+using Lyo.Espn.Fantasy.Football.Client.Models.Response;
 
 namespace Lyo.Espn.Fantasy.Football.Client.Tests;
 
 public sealed class CommunicationManagerTests
 {
-    private const int LeagueId = 1874757777;
+    private const int LeagueId = 1001;
     private const int SeasonId = 2026;
     private const string TopicId = "622adbe6-5001-33d1-82b0-d9d70c0cefcd";
     private const string DeletedTopicId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 
     private const string ListUrl =
-        "https://lm-api-communication.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leagues/1874757777/communication/?view=chat_conversations&platform=chat";
+        "https://lm-api-communication.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leagues/1001/communication/?view=chat_conversations&platform=chat";
 
     private const string ConversationUrl =
-        "https://lm-api-communication.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leagues/1874757777/communication/topics/622adbe6-5001-33d1-82b0-d9d70c0cefcd?view=chat_conversation&platform=chat";
+        "https://lm-api-communication.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leagues/1001/communication/topics/622adbe6-5001-33d1-82b0-d9d70c0cefcd?view=chat_conversation&platform=chat";
 
     [Fact]
     public async Task GetLeagueChatAsync_ListsThenLoadsEachTopic_BindsConversation()
@@ -34,6 +35,7 @@ public sealed class CommunicationManagerTests
         Assert.Equal(ListUrl, list.Uri.AbsoluteUri);
         Assert.Contains("espn_s2=s2-token", list.Headers["Cookie"]);
         Assert.Contains("SWID={SWID-1}", list.Headers["Cookie"]);
+        Assert.False(string.IsNullOrWhiteSpace(list.Headers["User-Agent"]));
         using (var filter = JsonDocument.Parse(list.Headers["x-fantasy-filter"])) {
             var types = filter.RootElement.GetProperty("topics").GetProperty("filterType").GetProperty("value").EnumerateArray().Select(item => item.GetString()!).ToArray();
             Assert.Equal(["CHAT_ALL_MEMBERS", "CHAT_DIRECT_MESSAGE"], types);
@@ -43,6 +45,7 @@ public sealed class CommunicationManagerTests
         Assert.Equal(HttpMethod.Get, conversationCall.Method);
         Assert.Equal(ConversationUrl, conversationCall.Uri.AbsoluteUri);
         Assert.DoesNotContain(handler.Calls, call => call.Uri.AbsoluteUri.Contains(DeletedTopicId, StringComparison.Ordinal));
+        Assert.DoesNotContain(handler.Calls, call => call.Uri.AbsoluteUri.Contains("kona_playercard", StringComparison.Ordinal));
         using (var filter = JsonDocument.Parse(conversationCall.Headers["x-fantasy-filter"])) {
             Assert.Equal(25, filter.RootElement.GetProperty("limit").GetInt32());
             Assert.Equal(0, filter.RootElement.GetProperty("offset").GetInt32());
@@ -55,16 +58,23 @@ public sealed class CommunicationManagerTests
         Assert.Equal(68, conversation.TotalMessageCount);
         Assert.Equal(0, conversation.UnreadMessageCount);
         Assert.True(conversation.IsEdited);
-        Assert.Equal("{83B30A97-98B3-4CC8-A7E8-6616E3CF674E}", conversation.Author);
-        Assert.Equal(1790187181538, conversation.DateEdited);
-        var addDrop = Assert.Single(conversation.Messages!, message => message.MessageTypeId == 266);
+        Assert.Equal("{83B30A97-98B3-4CC8-A7E8-6616E3CF674E}", conversation.AuthorId);
+        Assert.Null(conversation.Author);
+        Assert.Equal(1693303072165, conversation.DateUnix);
+        Assert.Equal(DateTimeOffset.FromUnixTimeMilliseconds(1693303072165), conversation.Date);
+        Assert.Equal(1790187181538, conversation.DateEditedUnix);
+        Assert.Equal(DateTimeOffset.FromUnixTimeMilliseconds(1790187181538), conversation.DateEdited);
+        var addDrop = Assert.Single(conversation.Messages!, message => message.Kind == ChatMessageKind.AddDrop);
         Assert.Null(addDrop.Content);
-        Assert.Equal("12", addDrop.Attributes!["team1"]);
-        Assert.Equal("4832955", addDrop.Attributes["addP1"]);
-        Assert.Equal("3149687", addDrop.Attributes["dropP1"]);
-        var recap = Assert.Single(conversation.Messages!, message => message.MessageTypeId == 270);
+        Assert.Equal(12, addDrop.Side1!.TeamId);
+        Assert.Equal(4832955, Assert.Single(addDrop.Side1.Added).PlayerId);
+        Assert.Null(Assert.Single(addDrop.Side1.Added).Player);
+        Assert.Equal(3149687, Assert.Single(addDrop.Side1.Dropped).PlayerId);
+        Assert.Null(addDrop.Side2);
+        var recap = Assert.Single(conversation.Messages!, message => message.Kind == ChatMessageKind.Text);
         Assert.Equal("What a matchup! Check out your league's recap in the Fantasy app.", recap.Content);
-        Assert.Null(recap.Attributes);
+        Assert.Null(recap.Side1);
+        Assert.Null(recap.Side2);
     }
 
     [Fact]
@@ -83,6 +93,20 @@ public sealed class CommunicationManagerTests
         Assert.Equal(25, filter.RootElement.GetProperty("offset").GetInt32());
         Assert.Equal(1, filter.RootElement.GetProperty("sortDate").GetProperty("sortPriority").GetInt32());
         Assert.False(filter.RootElement.GetProperty("sortDate").GetProperty("sortAsc").GetBoolean());
+    }
+
+    [Fact]
+    public async Task GetLeagueChatAsync_League_UsesLeagueIdAndSeason()
+    {
+        var handler = new RecordingHandler { Respond = _ => Json("""{"topics":[]}""") };
+        var client = Client(handler);
+
+        var chats = await client.Communication.GetLeagueChatAsync(new LeagueRes(LeagueId, SeasonId, 6), TestCt);
+
+        Assert.Empty(chats!);
+        var call = Assert.Single(handler.Calls);
+        Assert.Contains($"/seasons/{SeasonId}/", call.Uri.AbsoluteUri, StringComparison.Ordinal);
+        Assert.Contains($"/leagues/{LeagueId}/", call.Uri.AbsoluteUri, StringComparison.Ordinal);
     }
 
     private static FantasyFootballClient Client(HttpMessageHandler handler)

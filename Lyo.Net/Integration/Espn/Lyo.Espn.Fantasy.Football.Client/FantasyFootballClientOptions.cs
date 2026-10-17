@@ -20,6 +20,16 @@ public class FantasyFootballClientOptions : LyoHttpClientOptions
     /// <summary>Host root for Fantasy Chat. Defaults to <c>https://lm-api-communication.fantasy.espn.com/apis/v3/games/ffl/</c>.</summary>
     public string CommunicationBaseUrl { get; set; } = "https://lm-api-communication.fantasy.espn.com/apis/v3/games/ffl/";
 
-    /// <summary>Fills defaults for the public ESPN fantasy API.</summary>
-    public FantasyFootballClientOptions() => BaseUrl = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/";
+    /// <summary>Host root for lineup, waiver, and trade writes. Defaults to <c>https://lm-api-writes.fantasy.espn.com/apis/v3/games/ffl/</c>.</summary>
+    public string WritesBaseUrl { get; set; } = "https://lm-api-writes.fantasy.espn.com/apis/v3/games/ffl/";
+
+    /// <summary>Absolute URL of the fantasy player news feed. Defaults to <c>https://site.api.espn.com/apis/fantasy/v3/games/ffl/news/players</c>.</summary>
+    public string NewsBaseUrl { get; set; } = "https://site.api.espn.com/apis/fantasy/v3/games/ffl/news/players";
+
+    /// <summary>Fills the reads host and turns on the browser User-Agent. The chat host returns 403 when that header is missing.</summary>
+    public FantasyFootballClientOptions()
+    {
+        BaseUrl = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/";
+        UserAgent.Enabled = true;
+    }
 }

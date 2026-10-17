@@ -46,6 +46,10 @@ public partial class FileStoragePathInspector : IAsyncDisposable
     [Parameter]
     public int ListingRevision { get; set; }
 
+    /// <summary>False while a tag grouping is selected. New folder, upload-into-prefix, move, and copy stay hidden.</summary>
+    [Parameter]
+    public bool AllowPrefixChanges { get; set; } = true;
+
     /// <summary>Currently selected path.</summary>
     [Parameter]
     public FileStoragePathTreeNode? Selected { get; set; }

@@ -22,12 +22,14 @@ using Lyo.Email.Postgres;
 using Lyo.Endato.Client;
 using Lyo.Endato.Postgres;
 using Lyo.Espn.Fantasy.Football.Client;
+using Lyo.Espn.Fantasy.Football.Client.Builders;
 using Lyo.Espn.Fantasy.Football.Client.Models.Request;
 using Lyo.FFmpeg;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileStorage;
+using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.S3;
 using Lyo.Formatter;
 using Lyo.HomeInventory.Postgres;
@@ -215,7 +217,10 @@ var host = Host.CreateDefaultBuilder(args)
     .Build();
 
 await host.StartAsync();
-var clr = host.Services.GetRequiredService<FantasyFootballClient>();
-var league = await clr.League.GetAsync(1874757777, 2026);
-var a = await clr.Communication.GetLeagueChatAsync(league.Id, 2026);
-Console.ReadLine();
+await using var scope = host.Services.CreateAsyncScope();
+var storage = scope.ServiceProvider.GetRequiredKeyedService<IFileStorageService>("client-files");
+if (storage is not IFileStorageTags tags)
+    throw new InvalidOperationException("client-files does not support file tags.");
+
+//var checkedFiles = await tags.StampAutomaticTagsAsync();
+//Console.WriteLine($"Checked {checkedFiles} files and wrote missing file-type and imported tags.");

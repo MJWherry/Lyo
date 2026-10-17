@@ -218,6 +218,55 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                     b.ToTable("file_revision", "filestore");
                 });
 
+            modelBuilder.Entity("Lyo.FileMetadataStore.Models.FileTagEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Automatic")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("automatic");
+
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("file_id");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasDefaultValue("")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("TagType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tag_type");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("value");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TagType")
+                        .HasDatabaseName("ix_file_tag_tag_type");
+
+                    b.HasIndex("FileId", "TagType", "Value")
+                        .IsUnique()
+                        .HasDatabaseName("uq_file_tag_file_type_value");
+
+                    b.ToTable("file_tag", "filestore");
+                });
+
             modelBuilder.Entity("Lyo.FileMetadataStore.Postgres.Database.FileAuditEventEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -493,6 +542,15 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasDatabaseName("ix_multipart_upload_session_target_file_id");
 
                     b.ToTable("multipart_upload_session", "filestore");
+                });
+
+            modelBuilder.Entity("Lyo.FileMetadataStore.Models.FileTagEntity", b =>
+                {
+                    b.HasOne("Lyo.FileMetadataStore.Models.FileMetadataEntity", null)
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

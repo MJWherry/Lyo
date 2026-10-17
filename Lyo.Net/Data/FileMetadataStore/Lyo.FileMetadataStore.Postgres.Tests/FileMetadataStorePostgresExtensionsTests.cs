@@ -1,3 +1,4 @@
+using Lyo.FileMetadataStore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -152,4 +153,5 @@ public class FileMetadataStorePostgresExtensionsTests
         var ex = Assert.Throws<ArgumentException>(() => services.AddPostgresFileMetadataStoreKeyed(""));
         Assert.Equal("keyName", ex.ParamName);
     }
+
 }

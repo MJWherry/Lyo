@@ -18,7 +18,9 @@ internal static class FileStorageCapabilitiesComposer
         IMultipartUploadService? multipart,
         bool encryption,
         bool archive,
-        bool accessLinks)
+        bool accessLinks,
+        IReadOnlyList<ApiModels.FileStorageTagTypeResponse>? tagTypes = null,
+        IReadOnlyList<ApiModels.FileStorageTagValueKindResponse>? tagValueKinds = null)
     {
         ArgumentHelpers.ThrowIfNull(storage);
         var features = storage is FileStorageServiceBase service
@@ -35,7 +37,9 @@ internal static class FileStorageCapabilitiesComposer
             features.Physical,
             encryption,
             archive,
-            accessLinks);
+            accessLinks,
+            tagTypes,
+            tagValueKinds);
     }
 
     /// <summary>True when a keyed store, an unkeyed <see cref="IKeyStore" />, or an <see cref="IKeyInventoryStore" /> is registered.</summary>

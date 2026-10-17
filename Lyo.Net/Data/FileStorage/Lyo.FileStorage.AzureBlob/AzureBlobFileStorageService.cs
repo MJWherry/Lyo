@@ -362,6 +362,7 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
                     availabilityOverride ?? Options.DefaultAvailability, Metadata: metadata);
 
                 await MetadataService.SaveMetadataAsync(targetFileId, stored, ct).ConfigureAwait(false);
+                await EnsureAutomaticTagsAsync(stored, ct).ConfigureAwait(false);
                 RaiseFileSaved(targetFileId, FileStoreSnapshot.From(stored), observedLength, observedLength, false, false);
                 return stored;
             }

@@ -464,6 +464,9 @@ public static class FileStorageTransfer
         if (!sharedCatalog)
             await destination.Metadata.SaveMetadataAsync(row.Id, row, ct).ConfigureAwait(false);
 
+        if (!sharedCatalog && source.Storage is FileStorageServiceBase sourceStorage && destination.Storage is FileStorageServiceBase destinationStorage)
+            await destinationStorage.CopyCatalogTagsAsync(sourceStorage, row, ct).ConfigureAwait(false);
+
         await VerifyDestinationAsync(destination, row, preserveBytes: true, ct).ConfigureAwait(false);
         return true;
     }

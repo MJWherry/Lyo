@@ -1366,7 +1366,7 @@ public class LocalFileStorageServiceTests : IDisposable
         var originalData = "DEK encoding must follow the KEK across migration"u8.ToArray();
         var saveResult = await service.SaveFileAsync(originalData, "encoding.txt", encrypt: true, keyId: sourceKeyId, ct: TestCt);
         var filePath = Directory.GetFiles(_tempSession.SessionDirectory, saveResult.Id.ToString("N") + "*", SearchOption.AllDirectories)
-            .Single(p => !p.EndsWith(".meta", StringComparison.Ordinal));
+            .Single(p => !p.EndsWith(".meta", StringComparison.Ordinal) && !p.EndsWith(".tags.json", StringComparison.OrdinalIgnoreCase));
 
         using (var headerStream = File.OpenRead(filePath))
             Assert.Equal(EncryptionHeader.DekEncodingAesKeyWrap, EncryptionHeader.Read(headerStream).DekEncoding);

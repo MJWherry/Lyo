@@ -848,5 +848,23 @@ public sealed class FileStorageTransferTests
         public Task<FileRevision> SaveNewVersionAsync(Guid fileId, string storedKey, CancellationToken ct = default) => inner.SaveNewVersionAsync(fileId, storedKey, ct);
 
         public Task<FileRevision?> GetVersionAsync(Guid revisionId, CancellationToken ct = default) => inner.GetVersionAsync(revisionId, ct);
+
+        public Task<FileTag> AddFileTagAsync(Guid fileId, string tagType, string value, string? slug, bool automatic, CancellationToken ct = default)
+            => inner.AddFileTagAsync(fileId, tagType, value, slug, automatic, ct);
+
+        public Task<bool> RemoveFileTagAsync(Guid fileId, string tagType, string value, CancellationToken ct = default)
+            => inner.RemoveFileTagAsync(fileId, tagType, value, ct);
+
+        public Task<IReadOnlyList<FileTag>> ListFileTagsAsync(Guid fileId, CancellationToken ct = default) => inner.ListFileTagsAsync(fileId, ct);
+
+        public Task CopyFileTagsAsync(Guid sourceFileId, Guid destinationFileId, CancellationToken ct = default)
+            => inner.CopyFileTagsAsync(sourceFileId, destinationFileId, ct);
+
+        public Task DeleteFileTagsAsync(Guid fileId, CancellationToken ct = default) => inner.DeleteFileTagsAsync(fileId, ct);
+
+        public Task<IReadOnlyList<string>> ListManualTagTypesAsync(CancellationToken ct = default) => inner.ListManualTagTypesAsync(ct);
+
+        public Task<FileTagGroupPage> ListTagGroupAsync(IReadOnlyList<FileTagGroupKey> groupBy, string? virtualPath, int maxKeys, CancellationToken ct = default)
+            => inner.ListTagGroupAsync(groupBy, virtualPath, maxKeys, ct);
     }
 }
