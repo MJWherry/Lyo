@@ -1,4 +1,4 @@
-namespace Lyo.Authentication.OpenIdConnect.Handoff;
+namespace Lyo.Authentication.Sso.Handoff;
 
 /// <summary>
 /// Persistence contract for short-TTL, single-use <see cref="LyoHandoffCode" /> values. Implementations MUST enforce single-use atomically: a concurrent

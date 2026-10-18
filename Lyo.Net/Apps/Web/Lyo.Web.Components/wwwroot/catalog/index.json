@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-10-07T00:31:52.491800+00:00",
-  "packageCount": 406,
+  "packageCount": 410,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -4238,6 +4238,46 @@
       "tagline": "Typed HTTP client for the Trakt catalog and OAuth APIs.",
       "targetFrameworks": [
         "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Entra",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Entra",
+      "tagline": "Microsoft Entra SAML profile. Federation metadata includes the appid query. Request verification and assertion encryption stay off.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Okta",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Okta",
+      "tagline": "Okta SAML profile. The metadata URL uses the public exk key. Request signing and assertion encryption stay off.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Saml",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Saml",
+      "tagline": "SAML 2.0 service provider for the SSO host. SP-initiated HTTP-Redirect login and HTTP-POST assertion consumption.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Authentication.Sso",
+      "area": "Security",
+      "topic": "Lyo.Authentication",
+      "name": "Lyo.Authentication.Sso",
+      "tagline": "Protocol-neutral SSO host. Browser handoff, `/auth/*` endpoints, and the one-time user link plus JWT mint shared by OpenID Connect and SAML.",
+      "targetFrameworks": [
         "net10.0"
       ]
     }

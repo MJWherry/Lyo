@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Protocol-neutral SSO host for Lyo.Authentication. Maps /auth login, callback, handoff, token, refresh, and logout, then links an external subject to a Lyo user and mints one Lyo JWT. OpenID Connect and SAML plug in as protocols.</Description>
+        <PackageTags>authentication sso bff handoff</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Authentication\Lyo.Authentication.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Authentication.Sso.Tests"/>
+    </ItemGroup>
+
+</Project>

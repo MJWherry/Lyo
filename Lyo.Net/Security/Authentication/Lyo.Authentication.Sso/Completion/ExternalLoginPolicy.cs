@@ -1,6 +1,6 @@
-namespace Lyo.Authentication.OpenIdConnect.Coordinator;
+namespace Lyo.Authentication.Sso.Completion;
 
-/// <summary>Controls what happens when a successful OIDC login arrives for a (provider, subject) tuple not yet linked to a Lyo user.</summary>
+/// <summary>Controls what happens when an external login arrives for a (provider, subject) tuple not yet linked to a Lyo user.</summary>
 public enum ExternalLoginPolicy
 {
     /// <summary>Auto-create the Lyo user from id_token claims. Default for most deployments.</summary>

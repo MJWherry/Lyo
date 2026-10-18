@@ -1,6 +1,7 @@
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.OpenIdConnect.Client;
 using Lyo.Authentication.OpenIdConnect.Coordinator;
+using Lyo.Authentication.Sso.Completion;
 using Lyo.Authentication.OpenIdConnect.Discovery;
 using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
@@ -193,6 +194,21 @@ public sealed class ExternalLoginCoordinatorTests
             "fake", code2, sealedState2, state2, TestCt));
 
         Assert.Equal("UserDisabled", ex.Reason);
+    }
+
+    [Fact]
+    public async Task HandleCallbackAsync_MintsOneJwt()
+    {
+        await using var fx = await CoordinatorFixture.CreateAsync(ExternalLoginPolicy.JustInTime);
+        var (sealedState, nonce, state) = await fx.BuildRedirectAsync("fake");
+        var code = fx.IssueCode("user-once", "once@example.com", nonce);
+        await fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestCt);
+        var user = await fx.UserStore.GetByEmailAsync("once@example.com", null, TestCt);
+        Assert.NotNull(user);
+        var tokens = await fx.TokenStore.ListForUserAsync(user.Id, true, null, TestCt);
+        var internalTokens = tokens.Where(t => t.Kind == "internal").ToArray();
+        Assert.Single(internalTokens);
+        Assert.Null(internalTokens[0].RevokedAt);
     }
 
     private static System.Text.Json.JsonElement DecodeJwtPayload(string jwt)

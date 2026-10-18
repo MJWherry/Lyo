@@ -1,6 +1,6 @@
-using Lyo.Authentication.OpenIdConnect.Endpoints;
+using Lyo.Authentication.Sso.Endpoints;
 
-namespace Lyo.Authentication.OpenIdConnect.Tests;
+namespace Lyo.Authentication.Sso.Tests;
 
 public sealed class SanitizeReturnTests
 {

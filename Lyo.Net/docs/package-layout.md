@@ -331,7 +331,11 @@ Drop-in modules. No `Build*Group` route mapping.
 | `Lyo.RequestSigning.AspNetCore` | B | `Security/RequestSigning/` | - | - | Middleware returns 401 when the signature fails. |
 | `Lyo.Authentication.Google` | B | `Security/Authentication/` | - | - | Stays |
 | `Lyo.Authentication.Keycloak` | B | `Security/Authentication/` | - | - | Stays |
-| `Lyo.Authentication.OpenIdConnect` | B | `Security/Authentication/` | - | - | |
+| `Lyo.Authentication.OpenIdConnect` | B | `Security/Authentication/` | - | - | Protocol plugin. Handoff and `/auth/*` live in `Lyo.Authentication.Sso`. |
+| `Lyo.Authentication.Sso` | B | `Security/Authentication/` | - | - | Shared login host: endpoints, handoff, user completion. |
+| `Lyo.Authentication.Saml` | B | `Security/Authentication/` | - | - | SAML 2.0 service provider. Unsigned AuthnRequest. Encrypted assertions rejected. |
+| `Lyo.Authentication.Okta` | B | `Security/Authentication/` | - | - | Okta SAML profile. Metadata key is the public `exk` id. |
+| `Lyo.Authentication.Entra` | B | `Security/Authentication/` | - | - | Entra SAML profile. Federation metadata URL includes `?appid=`. |
 | `Lyo.Authentication.Postgres` | A-like | `Security/Authentication/` | - | - | Identity store |
 | `Lyo.Encryption` + algorithm packages | E/B | `Security/Encryption/` | - | - | |
 | `Lyo.KeyStore` | E/B | `Security/KeyStore/` | - | - | |

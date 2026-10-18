@@ -25,8 +25,8 @@
         "`OidcAuthorizationUrlBuilder.` Composes the `/authorize` URL with `code_challenge`, `state`, `nonce`.",
         "`OidcTokenExchangeClient.` Typed `HttpClient` that POSTs the authorization code back for tokens.",
         "`OidcIdTokenValidator.` Validates issuer, audience, nonce, exp, signature.",
-        "`IExternalLoginCoordinator` / `DefaultExternalLoginCoordinator.` Wraps the whole flow: discover-or-link-or-create the Lyo user, refresh `linked_identity.scopes_json`, and call `ILyoJwtIssuer.IssueAsync`. Emits `AuthAuditEventKind.{ExternalLoginSucceeded,ExternalLoginRejected,UserProvisioned,IdentityLinked}` along the way.",
-        "`IHandoffCodeStore` / `InMemoryHandoffCodeStore.` Single-use, TTL-bounded handoff codes (browser handoff path)."
+        "`OidcSsoProtocol.` OpenID Connect `ISsoProtocol`. `CompleteAsync` validates the code and id_token, then calls SSO completion once.",
+        "`IExternalLoginCoordinator` / `DefaultExternalLoginCoordinator.` Facade over `OidcSsoProtocol`. It returns the token that completion already minted. It does not mint a second JWT."
       ]
     },
     {
@@ -46,7 +46,12 @@
         [
           "GET",
           "`/auth/callback/{provider}`",
-          "IdP redirects back here. Browser mode mints a handoff code and 302s to `{returnUrl}?lyo_handoff=lyoh_...`. API mode returns 200 OK with `{access_token, refresh_token, expires_in, token_type}`."
+          "OpenID Connect redirect. Browser mode mints a handoff code and 302s to `{returnUrl}?lyo_handoff=lyoh_...`. API mode returns 200 OK with `{access_token, refresh_token, expires_in, token_type}`."
+        ],
+        [
+          "POST",
+          "`/auth/callback/{provider}`",
+          "SAML HTTP-POST. Form fields `SAMLResponse` and `RelayState`. Antiforgery is disabled; the login ticket is the cross-site control. Browser handoff only."
         ],
         [
           "POST",
@@ -79,17 +84,17 @@
           "Returns the same shape as `/auth/me` for an arbitrary user id. Requires the `auth.users.read` scope (policy `scope:auth.users.read`). `Scopes` reflects the target user's baseline scopes, not the caller's."
         ]
       ],
-      "lead": "`app.MapLyoAuthEndpoints()` wires:"
+      "lead": "`Lyo.Authentication.Sso` maps these with `app.MapLyoAuthEndpoints()`. The OpenID Connect package keeps an obsolete forwarder of that method."
     },
     {
       "type": "paragraph",
       "title": "Registration",
-      "text": "That call binds two option sections. `LyoExternalLogin` sets `Sealing.{Purpose,DefaultExpiration}` and the cookie name for the PKCE/state envelope. `LyoOidcBff` is documented under BFF options below. The per-provider packages register their `IOpenIdConnectProvider` implementation under their canonical name (`google`, `keycloak:<realm>`)."
+      "text": "`AddLyoOpenIdConnect(IConfiguration)` does not bind BFF options. `AddLyoSso(IConfiguration)` binds `LyoExternalLogin` and `LyoSso`. When the `LyoSso` section is absent, that same call binds `LyoOidcBff` instead. The per-provider packages register their `IOpenIdConnectProvider` under their canonical name (`google`, `keycloak:<realm>`), and that name is also registered on `SsoProtocolRegistry`."
     },
     {
       "type": "markdown",
       "title": "BFF options",
-      "body": "```json\n{\n  \"LyoOidcBff\": {\n    \"AllowedReturnOrigins\": [ \"http://localhost:5138\", \"https://localhost:7116\", \"https://app.example.com\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}\n```\n\n- `AllowedReturnOrigins.` Exact origin (`scheme://host[:port]`) match for absolute `returnUrl` values and `Origin` checks on `/auth/handoff/exchange`. Same-origin relative `returnUrl` starting with `/` is always allowed. Absolute URLs outside the allowlist are rejected at `GET /auth/login/{provider}` (400) so a bad origin cannot complete Google login and then dump the browser on the API's `/`.\n- `DefaultReturnUrl.` Used when `returnUrl` is missing. Relative `/` stays on the API origin, so local BFF setups should always send an absolute consumer handoff URL.\n- `HandoffCodeTtl.` Short. 30s is plenty. The consumer redeems immediately on the redirect."
+      "body": "Bind this on `Lyo.Authentication.Sso`. If `LyoSso` is absent, `AddLyoSso(IConfiguration)` reads `LyoOidcBff` so existing appsettings keep working. If `LyoSso` is present, `LyoOidcBff` is not read.\n\n```json\n{\n  \"LyoSso\": {\n    \"AllowedReturnOrigins\": [ \"http://localhost:5138\", \"https://localhost:7116\", \"https://app.example.com\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}\n```\n\n- `AllowedReturnOrigins.` Exact origin (`scheme://host[:port]`) match for absolute `returnUrl` values. Same-origin relative `returnUrl` starting with `/` is always allowed. Absolute URLs outside the allowlist are rejected at `GET /auth/login/{provider}` (400) before the protocol starts. The error names `LyoSso:AllowedReturnOrigins`.\n- `DefaultReturnUrl.` Used when `returnUrl` is missing. Relative `/` stays on the API origin, so local BFF setups should always send an absolute consumer handoff URL.\n- `HandoffCodeTtl.` Short. 30s is plenty. The consumer redeems immediately on the redirect. The handoff `IssuedTo` origin is the return URL's origin, not the callback request's origin."
     },
     {
       "type": "table",
@@ -171,6 +176,14 @@
       ]
     },
     {
+      "name": "Lyo.Authentication.Sso",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
@@ -205,6 +218,14 @@
     },
     {
       "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -253,6 +274,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

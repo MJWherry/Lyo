@@ -1,6 +1,6 @@
-namespace Lyo.Authentication.OpenIdConnect.Coordinator;
+namespace Lyo.Authentication.Sso.Completion;
 
-/// <summary>Tuning knobs for <see cref="DefaultExternalLoginCoordinator" />.</summary>
+/// <summary>Tuning knobs for external-login completion. Bound from section <c>LyoExternalLogin</c>.</summary>
 public sealed class ExternalLoginOptions
 {
     /// <summary>Configuration section.</summary>

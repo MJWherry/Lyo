@@ -1,7 +1,7 @@
 using Lyo.Api;
 using Lyo.Api.Middleware;
 using Lyo.Authentication.AspNetCore.Endpoints;
-using Lyo.Authentication.OpenIdConnect.Endpoints;
+using Lyo.Authentication.Sso.Endpoints;
 using Lyo.Json;
 using Lyo.Config.Api;
 using Scalar.AspNetCore;

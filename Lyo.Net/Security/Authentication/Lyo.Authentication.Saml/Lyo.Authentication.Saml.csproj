@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>SAML 2.0 service provider for Lyo.Authentication.Sso. SP-initiated HTTP-Redirect login and HTTP-POST assertion consumption. Unsigned AuthnRequests. Encrypted assertions are rejected.</Description>
+        <PackageTags>authentication saml sso</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+        <InternalsVisibleTo Include="Lyo.Authentication.Saml.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Authentication.Sso\Lyo.Authentication.Sso.csproj"/>
+        <ProjectReference Include="..\Lyo.Authentication\Lyo.Authentication.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

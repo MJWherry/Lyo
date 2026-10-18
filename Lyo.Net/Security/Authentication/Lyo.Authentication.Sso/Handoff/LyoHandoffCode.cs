@@ -1,4 +1,4 @@
-namespace Lyo.Authentication.OpenIdConnect.Handoff;
+namespace Lyo.Authentication.Sso.Handoff;
 
 /// <summary>
 /// A single-use, short-TTL code that lets the API hand off a freshly issued JWT (plus rotating refresh token) to a trusted consumer origin without putting tokens into a URL

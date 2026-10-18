@@ -28,7 +28,7 @@ services.AddScope("people.write", "Modify people records", implies: "people.read
 {
   "LyoAuthentication": { "Ring": "live" },
   "LyoJwt": { "Issuer": "https://auth.lyo", "Audience": "lyo-api", "SigningKeyId": "lyo-sig" },
-  "LyoOidcBff": {
+  "LyoSso": {
     "AllowedReturnOrigins": [ "https://app.example.com" ],
     "DefaultReturnUrl": "/",
     "HandoffCodeTtl": "00:00:30"
@@ -50,9 +50,7 @@ The auth stack is split so consumer-side libraries (including Blazor WebAssembly
 | `Lyo.Authentication.Web.Components.Server` | Blazor Server host adapter. Wires the shared pages to `Lyo.Authentication.Client`. | n/a (server-only) |
 | `Lyo.Authentication.Web.Components.Wasm` | Blazor WebAssembly host adapter. Pure-browser token flow. References `Models` only. | n/a (it *is* the WASM client) |
 
-ASP.NET wiring lives in `Lyo.Authentication.AspNetCore`. Postgres persistence and the Postgres audit recorder live in `Lyo.Authentication.Postgres`. OIDC flow lives in
-`Lyo.Authentication.OpenIdConnect` with provider profiles `Lyo.Authentication.Google` and `Lyo.Authentication.Keycloak`. The consumer-side BFF runtime lives in
-`Lyo.Authentication.Client`.
+ASP.NET wiring lives in `Lyo.Authentication.AspNetCore`. Postgres persistence and the Postgres audit recorder live in `Lyo.Authentication.Postgres`. The shared login host is `Lyo.Authentication.Sso` (`MapLyoAuthEndpoints`). OpenID Connect lives in `Lyo.Authentication.OpenIdConnect` with profiles `Lyo.Authentication.Google` and `Lyo.Authentication.Keycloak`. SAML lives in `Lyo.Authentication.Saml` with profiles `Lyo.Authentication.Okta` and `Lyo.Authentication.Entra`. The consumer-side BFF runtime lives in `Lyo.Authentication.Client`.
 
 ## Typical host wiring (API/auth server)
 
@@ -70,7 +68,7 @@ services.AddKeycloakProviderFromConfiguration(builder.Configuration);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapLyoJwks(); // /.well-known/jwks.json
-app.MapLyoAuthEndpoints(); // /auth/login/{provider}, /auth/callback/{provider}, /auth/handoff/exchange, /auth/token, /auth/refresh, /auth/logout, /auth/me
+app.MapLyoAuthEndpoints(); // Lyo.Authentication.Sso: /auth/login/{provider}, /auth/callback/{provider}, /auth/handoff/exchange, /auth/token, /auth/refresh, /auth/logout, /auth/me
 app.MapLyoTokenManagementEndpoints(); // /tokens (PAT lifecycle)
 ```
 

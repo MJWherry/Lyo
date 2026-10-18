@@ -1,6 +1,6 @@
-namespace Lyo.Authentication.OpenIdConnect.Coordinator;
+namespace Lyo.Authentication.Sso.Completion;
 
-/// <summary>Thrown when the coordinator rejects an external login per <see cref="ExternalLoginPolicy" />. The wire-level response should be a generic 401.</summary>
+/// <summary>Thrown when external-login completion or a protocol rejects a login. The wire-level response should be a generic 401.</summary>
 public sealed class ExternalLoginRejectedException : Exception
 {
     /// <summary>

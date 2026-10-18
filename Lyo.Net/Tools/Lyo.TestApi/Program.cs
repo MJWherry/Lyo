@@ -18,7 +18,7 @@ using Lyo.Authentication.AspNetCore.Endpoints;
 using Lyo.Authentication.Google;
 using Lyo.Authentication.Keycloak;
 using Lyo.Authentication.OpenIdConnect;
-using Lyo.Authentication.OpenIdConnect.Endpoints;
+using Lyo.Authentication.Sso.Endpoints;
 using Lyo.Authentication.Postgres;
 using Lyo.Cache;
 using Lyo.FeatureFlags;

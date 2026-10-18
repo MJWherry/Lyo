@@ -69,7 +69,7 @@
                 <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, "Id")"/>
             </CellContent>
         </LyoProjectedColumn>
-        <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition" QuickSearchPropertyName="JobDefinition.Name" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
         <LyoProjectedColumn Field="WorkerMachineName" Title="Worker" HeaderStyle="width: 180px;" CellStyle="white-space: nowrap;">
             <CellContent Context="item">
                 @{

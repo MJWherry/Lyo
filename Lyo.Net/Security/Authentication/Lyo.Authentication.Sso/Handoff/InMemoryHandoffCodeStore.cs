@@ -4,7 +4,7 @@ using Lyo.Common.Core.Extensions;
 using Lyo.Common.Core.Security;
 using Lyo.Exceptions;
 
-namespace Lyo.Authentication.OpenIdConnect.Handoff;
+namespace Lyo.Authentication.Sso.Handoff;
 
 /// <summary>
 /// Single-process <see cref="IHandoffCodeStore" /> backed by a <see cref="ConcurrentDictionary{TKey,TValue}" />. Fine for single-instance dev/test and for

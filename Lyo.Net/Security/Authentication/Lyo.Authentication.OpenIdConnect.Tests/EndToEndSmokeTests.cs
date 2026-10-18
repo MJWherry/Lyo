@@ -9,7 +9,8 @@ using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
 using Lyo.Authentication.OpenIdConnect.Coordinator;
 using Lyo.Authentication.OpenIdConnect.Discovery;
-using Lyo.Authentication.OpenIdConnect.Endpoints;
+using Lyo.Authentication.Sso.Completion;
+using Lyo.Authentication.Sso.Endpoints;
 using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Authentication.Options;
@@ -85,6 +86,36 @@ public sealed class EndToEndSmokeTests
         Assert.NotNull(user);
         var stored = await fx.Services.GetRequiredService<IApiTokenStore>().ListForUserAsync(user.Id, true, null, TestCt);
         Assert.Contains(stored, t => t.Kind == ApiTokenKind.Internal && t.RevokedAt is null);
+    }
+
+    [Fact]
+    public async Task OidcCallback_ApiMode_ReturnsJsonWithoutHandoff()
+    {
+        await using var fx = await SmokeFixture.CreateAsync();
+        var coordinator = fx.Services.GetRequiredService<IExternalLoginCoordinator>();
+        var protector = fx.Services.GetRequiredService<StateNonceProtector>();
+        var redirect = await coordinator.BuildLoginRedirectAsync("fake", "/", "api", TestCt);
+        var unsealed = protector.Unseal(redirect.SealedState) ?? throw new InvalidOperationException("could not unseal state");
+        var code = fx.Idp.IssueCode(
+            new Dictionary<string, object?> {
+                ["sub"] = "api-user",
+                ["iss"] = FakeOidcIdentityProvider.Issuer,
+                ["aud"] = "test-client",
+                ["email"] = "api@example.com",
+                ["email_verified"] = true,
+                ["name"] = "Api User",
+                ["exp"] = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds(),
+                ["iat"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                ["nonce"] = unsealed.Nonce
+            });
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/auth/callback/fake?code={Uri.EscapeDataString(code)}&state={Uri.EscapeDataString(unsealed.State)}");
+        request.Headers.Add("Cookie", $"{AuthEndpointsMapper.StateCookieName}={redirect.SealedState}");
+        var response = await fx.Client.SendAsync(request, TestCt);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(TestCt);
+        Assert.False(json.GetProperty("access_token").GetString().IsNullOrEmpty());
+        Assert.False(response.Headers.Location is not null);
     }
 
     private sealed class SmokeFixture : IAsyncDisposable
