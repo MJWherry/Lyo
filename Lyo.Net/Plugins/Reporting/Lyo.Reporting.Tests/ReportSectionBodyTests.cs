@@ -189,7 +189,7 @@ public sealed class ReportSectionBodyTests
     }
 
     [Fact]
-    public void Deserialize_LegacyColumnsContentBlocksAndTableGrids_Migrate()
+    public void Deserialize_ColumnsContentBlocksAndGrids_LeavesControlsEmpty()
     {
         const string json = """
             {
@@ -212,16 +212,6 @@ public sealed class ReportSectionBodyTests
             """;
         var report = ReportJson.Deserialize<object>(json);
         var section = Assert.Single(report.Sections);
-        var kpi = Assert.Single(section.Controls.OfType<Grid>());
-        var card = Assert.Single(kpi.Controls.OfType<Card>());
-        Assert.Equal("Revenue", card.Label);
-        Assert.Equal("hello", Assert.Single(section.Controls.OfType<Block>()).Content);
-        var table = Assert.Single(SectionBody.CollectTables([section]));
-        Assert.Equal("Lines", table.Title);
-        Assert.Equal("Name", table.Columns[0].Header);
-        var written = ReportJson.Serialize(report);
-        Assert.Contains("\"controls\"", written, StringComparison.Ordinal);
-        Assert.DoesNotContain("contentBlocks", written, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("columnBandOrder", written, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(section.Controls);
     }
 }

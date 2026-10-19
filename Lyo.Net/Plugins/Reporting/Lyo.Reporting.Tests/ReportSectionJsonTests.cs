@@ -55,7 +55,7 @@ public sealed class ReportSectionJsonTests
     }
 
     [Fact]
-    public void Deserialize_LegacyLayoutGrid_StaysGrid()
+    public void Deserialize_GridsWithoutControls_LeavesControlsEmpty()
     {
         const string json = """
             {
@@ -69,9 +69,6 @@ public sealed class ReportSectionJsonTests
             }
             """;
         var report = ReportJson.Deserialize<object>(json);
-        var grid = Assert.Single(report.Sections[0].Controls.OfType<Grid>());
-        Assert.Equal("kpi", grid.Title);
-        Assert.Equal(3, grid.ColumnCount);
-        Assert.Empty(SectionBody.CollectTables(report.Sections));
+        Assert.Empty(report.Sections[0].Controls);
     }
 }

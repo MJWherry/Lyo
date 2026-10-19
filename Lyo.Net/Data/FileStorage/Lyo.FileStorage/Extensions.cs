@@ -13,7 +13,6 @@ using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileStorage;
 
@@ -254,7 +253,7 @@ public static class Extensions
         /// <paramref name="configureMetadataStore" />.
         /// </summary>
         /// <param name="keyName">Key for the file storage service</param>
-        /// <param name="configSectionName">Configuration section name (for example <c>LocalFileStorageService</c>)</param>
+        /// <param name="configSectionName">Configuration section name (for example <c>DiskFileStorage</c>)</param>
         /// <param name="configureMetadataStore">Factory that builds the metadata store</param>
         /// <param name="encryptionServiceKeyName">Key of the existing encryption service</param>
         /// <returns>The same collection, for chaining</returns>
@@ -299,7 +298,7 @@ public static class Extensions
         /// metadata from <paramref name="configureMetadataStore" />.
         /// </summary>
         /// <param name="keyName">Key for the file storage service</param>
-        /// <param name="configSectionName">Configuration section name (for example <c>LocalFileStorageService</c>)</param>
+        /// <param name="configSectionName">Configuration section name (for example <c>DiskFileStorage</c>)</param>
         /// <param name="configureMetadataStore">Factory that builds the metadata store</param>
         /// <param name="configEncryptionService">Factory that builds the encryption service (registered under <paramref name="keyName" />)</param>
         /// <returns>The same collection, for chaining</returns>
@@ -417,7 +416,6 @@ public static class Extensions
         {
             var configuration = provider.GetRequiredService<IConfiguration>();
             var options = new DiskFileStorageOptions();
-            var lf = provider.GetService<ILoggerFactory>();
             foreach (var name in OrderedSectionCandidates(preferredSection)) {
                 var section = configuration.GetSection(name);
                 if (!section.Exists())
@@ -425,13 +423,6 @@ public static class Extensions
 
                 section.Bind(options);
                 options.Validate();
-                if (string.Equals(name, DiskFileStorageOptions.LegacySectionName, StringComparison.Ordinal)) {
-                    (lf ?? NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.Disk")
-                        .LogWarning(
-                            "Disk file storage options were loaded from legacy configuration section [{Legacy}]; migrate appsettings to [{Current}].",
-                            DiskFileStorageOptions.LegacySectionName, DiskFileStorageOptions.SectionName);
-                }
-
                 return options;
             }
 
@@ -446,9 +437,6 @@ public static class Extensions
 
             if (!string.Equals(preferredSection, DiskFileStorageOptions.SectionName, StringComparison.Ordinal))
                 yield return DiskFileStorageOptions.SectionName;
-
-            if (!string.Equals(preferredSection, DiskFileStorageOptions.LegacySectionName, StringComparison.Ordinal))
-                yield return DiskFileStorageOptions.LegacySectionName;
         }
     }
 }

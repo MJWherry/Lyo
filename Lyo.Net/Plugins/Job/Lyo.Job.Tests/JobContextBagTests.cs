@@ -12,19 +12,19 @@ namespace Lyo.Job.Tests;
 
 /// <summary>
 /// <see cref="JobContextBag" /> is the single template context the scheduler, the worker, and the parameter editor all build. These lock the parts a caller depends on: the
-/// dotted keys templates resolve against, the underscore aliases that keep already-persisted templates working, and the per-step isolation a workflow DAG needs.
+/// dotted keys templates resolve against, and the per-step isolation a workflow DAG needs.
 /// </summary>
 public class JobContextBagTests
 {
     private static readonly DateTimeOffset Frozen = new(2026, 8, 22, 16, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public void TryGetValue_LegacyUnderscoreKey_ResolvesDottedEntry()
+    public void TryGetValue_UnderscoreKey_IsAbsent()
     {
         var bag = new JobContextBag().WithLastRuns(BuildRun(), null, null);
 
-        // Templates already stored in JobScheduleParameter.Value use the flat underscore form. They have to keep resolving without a data migration.
-        Assert.True(bag.TryGetValue("LastRun_Result_RowCount", out var value));
+        Assert.False(bag.TryGetValue("LastRun_Result_RowCount", out _));
+        Assert.True(bag.TryGetValue("LastRun.Result.RowCount", out var value));
         Assert.Equal("42", value);
     }
 
@@ -49,12 +49,12 @@ public class JobContextBagTests
     }
 
     [Fact]
-    public void TryGetValue_LegacyUnderscoreKeyWhoseTailContainsUnderscores_ResolvesDottedEntry()
+    public void TryGetValue_UnderscoreKeyWhoseTailContainsUnderscores_IsAbsent()
     {
         var bag = new JobContextBag().WithLastRuns(BuildRun("Row_Count"), null, null);
 
-        // Only the prefix segments are separators: "Row_Count" is one result key, not two path steps.
-        Assert.True(bag.TryGetValue("LastRun_Result_Row_Count", out var value));
+        Assert.False(bag.TryGetValue("LastRun_Result_Row_Count", out _));
+        Assert.True(bag.TryGetValue("LastRun.Result.Row_Count", out var value));
         Assert.Equal("42", value);
     }
 

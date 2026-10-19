@@ -1,6 +1,6 @@
 # Lyo.FileStorage.AzureBlob
 
-Azure.Storage.Blobs [`IFileStorageService`](../Lyo.FileStorage/README.md) for Azure Blob Storage. The package id and namespace Lyo.FileStorage.AzureBlob match the blob abstraction. Configuration and types use Blob* naming, with a legacy AzureFileStorageOptions appsettings subsection for migration.
+Azure.Storage.Blobs [`IFileStorageService`](../Lyo.FileStorage/README.md) for Azure Blob Storage. The package id and namespace Lyo.FileStorage.AzureBlob match the blob abstraction. Configuration and types use Blob* naming. The appsettings section is AzureBlobFileStorage.
 
 Also exposes `AzureBlobFileSystem` (`IFileSystem`) for the raw blob-name tree (`GetBlobsByHierarchy`). That is not the FileStorage metadata tree. Blob storage has no directories, so an otherwise empty directory is kept visible by a zero-byte `.lyo-dir` child blob.
 
@@ -32,7 +32,7 @@ services.AddAzureBlobFileStorageService(new AzureBlobFileStorageOptions
     BlobPrefix = "files"
 });
 
-// Or bind from configuration (prefers AzureBlobFileStorage, then legacy BlobFileStorage / AzureFileStorageOptions section)
+// Or bind from configuration (section AzureBlobFileStorage)
 services.AddAzureBlobFileStorageService(AzureBlobFileStorageOptions.SectionName);
 
 // Multipart uploads (uses in-memory session store unless you replace it)
@@ -55,7 +55,7 @@ var urlWithHeaders = await fileStorage.GetPreSignedReadUrlAsync(
 
 ```json
 {
-  "BlobFileStorage": {
+  "AzureBlobFileStorage": {
     "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...",
     "ContainerName": "my-container",
     "BlobPrefix": "files",
@@ -83,9 +83,8 @@ Concrete implementation registered as IFileStorageService (scoped). Mirrors S3Fi
 ## AzureBlobFileStorageOptions
 
 | Property / constant | Typical use |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | SectionName (AzureBlobFileStorage) | Default configuration section name |
-| LegacyAzureConfigurationSectionName (AzureFileStorageOptions) | Obsolete subsections. AddAzureBlobFileStorageService(string) falls back to BlobFileStorage, then AzureFileStorageOptions, and logs a migration warning. |
 | ConnectionString | Connection string for the storage account |
 | ContainerName | Container to target |
 | BlobPrefix | Optional key prefix within the container |
@@ -106,7 +105,7 @@ BeginDirectUploadAsync returns a SAS URL plus a RequiredPutHeaders map. Clients 
 
 ## Sample configuration
 
-If AzureBlobFileStorage is absent, legacy sections BlobFileStorage and AzureFileStorageOptions still bind.
+Bind section AzureBlobFileStorage.
 
 ## Health
 

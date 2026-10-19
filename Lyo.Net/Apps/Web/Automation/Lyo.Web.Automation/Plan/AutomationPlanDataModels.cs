@@ -29,8 +29,7 @@ public sealed class AutomationPlanRuntimeOptions
     public AutomationPlanRunDirectoryOptions? PlanRunDirectory { get; init; }
 
     /// <summary>
-    /// If set, step templates are validated with <see cref="IFormatterService" /> (SmartFormat) before expansion. Placeholders use single braces, for example <c>{page.url}</c>, or
-    /// legacy double braces <c>{{page.url}}</c> which are normalized first.
+    /// If set, step templates are validated with <see cref="IFormatterService" /> (SmartFormat) before expansion. Placeholders use single braces, for example <c>{page.url}</c>.
     /// </summary>
     public IFormatterService? Formatter { get; init; }
 

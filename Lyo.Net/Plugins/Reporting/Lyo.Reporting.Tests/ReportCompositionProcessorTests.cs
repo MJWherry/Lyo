@@ -53,12 +53,12 @@ public sealed class ReportCompositionProcessorTests
     }
 
     [Fact]
-    public void Deserialize_LegacyCompositionJson_Succeeds()
+    public void Deserialize_ContentBlocksJson_LeavesControlsEmpty()
     {
         const string json = """{"Title":"{ReportTitle}","Sections":[{"Title":"S","ContentBlocks":[{"Content":"Hello {Name}"}]}]}""";
         var report = ReportJson.Deserialize<object>(json);
         Assert.Equal("{ReportTitle}", report.Title);
-        Assert.Equal("Hello {Name}", Assert.Single(report.Sections[0].Controls.OfType<Block>()).Content);
+        Assert.Empty(report.Sections[0].Controls);
     }
 
     [Fact]

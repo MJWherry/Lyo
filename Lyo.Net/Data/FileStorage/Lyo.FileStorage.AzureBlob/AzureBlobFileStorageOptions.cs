@@ -9,12 +9,6 @@ public sealed class AzureBlobFileStorageOptions : FileStorageServiceBaseOptions
 {
     public const string SectionName = "AzureBlobFileStorage";
 
-    /// <summary>Obsolete section name from <c>Lyo.FileStorage.Blob</c> before the AzureBlob rename.</summary>
-    public const string LegacyBlobConfigurationSectionName = "BlobFileStorage";
-
-    /// <summary>Obsolete subsection name when migrating from the pre-<c>Lyo.FileStorage.AzureBlob</c> packages.</summary>
-    public const string LegacyAzureConfigurationSectionName = "AzureFileStorageOptions";
-
     /// <summary>Azure Storage account connection string.</summary>
     public string ConnectionString { get; set; } = null!;
 

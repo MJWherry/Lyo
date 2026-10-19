@@ -11,9 +11,7 @@ namespace Lyo.Job.Models.Context;
 /// when it starts a step, and the parameter editor when it advertises tokens. One type with one set of seeders, so the four cannot drift apart.
 /// <para>
 /// Nested data is stored under dotted keys (<c>LastRun.Result.RowCount</c>), which <c>IFormatterService</c> resolves both as a whole key and segment by segment, so
-/// <c>{LastRun.Result.RowCount}</c> works. Templates authored before this type used an underscore form (<c>LastRun_Result_RowCount</c>), so run, schedule, and trigger
-/// entries are stored under both spellings and no persisted template needs rewriting. The alias has to be a real entry rather than a lookup fallback: the formatter copies
-/// a bag's entries into its own before resolving, which would drop any override.
+/// <c>{LastRun.Result.RowCount}</c> works.
 /// </para>
 /// <para>
 /// Inherited from <see cref="ContextBag" />: not thread-safe, and intended for one execution. Build a fresh bag per run creation and per step start rather than caching one
@@ -112,9 +110,7 @@ public sealed class JobContextBag : ContextBag
     public JobContextBag WithUpstreamRun(string stepName, JobRunRes? run)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(stepName);
-
-        // No underscore alias here: workflow steps are new, so no persisted template uses a flat Step_Extract_Result_X spelling.
-        SetRun($"Step.{stepName}", run, legacyAlias: false);
+        SetRun($"Step.{stepName}", run);
         return this;
     }
 
@@ -164,26 +160,22 @@ public sealed class JobContextBag : ContextBag
     protected override ContextBag<string> CreateShell() => new JobContextBag();
 
     /// <summary>Stores <paramref name="run" /> under <paramref name="name" />, then its results and parameters as <c>{name}.Result.{key}</c> and <c>{name}.Parameter.{key}</c>.</summary>
-    private void SetRun(string name, JobRunRes? run, bool legacyAlias = true)
+    private void SetRun(string name, JobRunRes? run)
     {
         Set(name, run);
         if (run is null)
             return;
 
         foreach (var result in run.GetResultDictionary())
-            SetNested(name, "Result", result.Key, result.Value, legacyAlias);
+            SetNested(name, "Result", result.Key, result.Value);
 
         foreach (var parameter in run.GetParameterDictionary())
-            SetNested(name, "Parameter", parameter.Key, parameter.Value, legacyAlias);
+            SetNested(name, "Parameter", parameter.Key, parameter.Value);
     }
 
-    /// <summary>Stores <c>{prefix}.{section}.{key}</c>, and the <c>{prefix}_{section}_{key}</c> spelling older templates use when <paramref name="legacyAlias" /> is set.</summary>
-    private void SetNested(string prefix, string section, string key, object? value, bool legacyAlias = true)
-    {
-        Set($"{prefix}.{section}.{key}", value);
-        if (legacyAlias)
-            Set($"{prefix}_{section}_{key}", value);
-    }
+    /// <summary>Stores <c>{prefix}.{section}.{key}</c>.</summary>
+    private void SetNested(string prefix, string section, string key, object? value)
+        => Set($"{prefix}.{section}.{key}", value);
 
     private static Dictionary<string, string?> ParseInputs(string? inputsJson)
     {

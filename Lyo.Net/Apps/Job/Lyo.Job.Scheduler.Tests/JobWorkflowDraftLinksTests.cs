@@ -54,9 +54,9 @@ public class JobWorkflowDraftLinksTests
         Assert.Equal("{Step.Sync Twilio.Result.RowCount}", load.Parameters["Rows"]);
     }
 
-    /// <summary>Drafts saved before links were ids still name their dependencies. Loading resolves those names once so the open workflow is not dropped.</summary>
+    /// <summary>A draft whose dependencies are step names does not link those names to ids.</summary>
     [Fact]
-    public void Load_LegacyNameDependencies_ResolvesToIds()
+    public void Load_NameDependencies_AreNotResolvedToIds()
     {
         const string json = """
             {"steps":[{"stepName":"Extract","dependsOn":[]},{"stepName":"Load","dependsOn":["Extract"]}]}
@@ -67,6 +67,6 @@ public class JobWorkflowDraftLinksTests
         var load = state.Steps.Single(s => s.StepName == "Load");
 
         Assert.NotEqual(Guid.Empty, extract.Id);
-        Assert.Equal(extract.Id, Assert.Single(load.DependsOn));
+        Assert.Empty(load.DependsOn);
     }
 }

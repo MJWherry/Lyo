@@ -58,19 +58,4 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
-
-    /// <summary>Sets the primary handler to a new <see cref="LyoHttpClientHandler" /> from <see cref="ApiClientOptions" />.</summary>
-    [Obsolete("Use Lyo.Http.Client.Extensions.UseLyoHttpClientHandler.")]
-    public static IHttpClientBuilder UseLyoHttpClientHandler(this IHttpClientBuilder builder) => builder.UseLyoHttpClientHandler<ApiClientOptions>();
-
-    /// <summary>Sets the primary handler from <typeparamref name="TOptions" />.</summary>
-    [Obsolete("Use Lyo.Http.Client.Extensions.UseLyoHttpClientHandler.")]
-    public static IHttpClientBuilder UseLyoHttpClientHandler<TOptions>(this IHttpClientBuilder builder)
-        where TOptions : LyoHttpClientOptions
-        => Lyo.Http.Client.Extensions.UseLyoHttpClientHandler<TOptions>(builder);
-
-    /// <summary>Copies supported values from <paramref name="encodings" /> onto Accept-Encoding.</summary>
-    [Obsolete("Use Lyo.Http.Client.LyoHttpClient.ApplyAcceptEncodingHeaders.")]
-    public static void ApplyAcceptEncodingHeaders(HttpClient client, IEnumerable<string>? encodings)
-        => LyoHttpClient.ApplyAcceptEncodingHeaders(client, encodings);
 }

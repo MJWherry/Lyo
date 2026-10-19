@@ -50,7 +50,7 @@ public class JobFormatterContextTests
         Assert.True(editor.TryGetValue("LastRun.Parameter.EmailTo", out _));
     }
 
-    /// <summary>Every token the editor lists has to resolve, and the underscore form templates were authored with has to keep resolving alongside the dotted form.</summary>
+    /// <summary>Every token the editor lists has to resolve. Underscore spellings are not aliases of the dotted keys.</summary>
     [Fact]
     public void Build_AdvertisedEditorTokens_AllResolve()
     {
@@ -63,8 +63,8 @@ public class JobFormatterContextTests
 
         var formatter = new FormatterService(() => Frozen);
         Assert.Equal("42", formatter.Format("{LastRun.Result.RowCount}", editor));
-        Assert.Equal("42", formatter.Format("{LastRun_Result_RowCount}", editor));
-        Assert.Equal("to@example.com", formatter.Format("{Schedule_Parameter_EmailTo}", editor));
+        Assert.NotEqual("42", formatter.Format("{LastRun_Result_RowCount}", editor));
+        Assert.NotEqual("to@example.com", formatter.Format("{Schedule_Parameter_EmailTo}", editor));
     }
 
     /// <summary>Run paths have to resolve even for a definition that has never run, otherwise a new definition offers no autocomplete at all.</summary>

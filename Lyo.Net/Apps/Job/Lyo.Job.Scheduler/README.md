@@ -123,7 +123,7 @@ flowchart TB
 
 ## Templates on string parameters
 
-When creating a run, Formatter and String parameter values (schedule and definition) are formatted with `IFormatterService` against `Schedule`, `Definition`, last-run snapshots, and related objects. Pick type `formatter` in the catalog for Guid/DateTime templates (`{-}`, `{DateTime.UtcNow}`). Write `{Definition.Name}` — unresolved tokens such as `{client.contact.emailAddress}` stay in the value until the worker `AddContext`s them. Xml and Json values are not formatted. Legacy `{{Definition.Name}}` is unwrapped to `{Definition.Name}` in the scheduler only so existing schedules keep working; `{{` is not the placeholder standard (SmartFormat uses it as a literal brace).
+When creating a run, Formatter and String parameter values (schedule and definition) are formatted with `IFormatterService` against `Schedule`, `Definition`, last-run snapshots, and related objects. Pick type `formatter` in the catalog for Guid/DateTime templates (`{-}`, `{DateTime.UtcNow}`). Write `{Definition.Name}` — unresolved tokens such as `{client.contact.emailAddress}` stay in the value until the worker `AddContext`s them. Xml and Json values are not formatted. `{{` is not a placeholder (SmartFormat uses it as a literal brace).
 
 ## Backoff on retry
 
@@ -171,6 +171,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)
@@ -179,11 +180,13 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Json` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `AngleSharp` `1.5.0` (transitive, third-party)
 - `DynamicExpresso.Core` `2.19.3` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)

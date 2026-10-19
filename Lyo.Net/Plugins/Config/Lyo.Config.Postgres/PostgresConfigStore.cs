@@ -238,14 +238,13 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var bindingEntity = await context.ConfigBindings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == bindingId && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(bindingEntity);
-        var definition = await context.ConfigDefinitions.AsNoTracking().FirstAsync(x => x.Id == bindingEntity.DefinitionId, ct).ConfigureAwait(false);
         var rows = await context.ConfigBindingRevisions.AsNoTracking()
             .Where(x => x.BindingId == bindingId && x.TenantId == resolvedTenant)
             .OrderByDescending(x => x.Revision)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        return rows.Select(r => ToRevisionRecord(r, ResolveBindingValueType(bindingEntity, definition.ForValueType))).ToList();
+        return rows.Select(r => ToRevisionRecord(r, ResolveBindingValueType(bindingEntity))).ToList();
     }
 
     /// <inheritdoc />
@@ -267,12 +266,11 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         if (bindingEntity == null)
             return null;
 
-        var definition = await context.ConfigDefinitions.AsNoTracking().FirstAsync(x => x.Id == bindingEntity.DefinitionId, ct).ConfigureAwait(false);
         var row = await context.ConfigBindingRevisions.AsNoTracking()
             .FirstOrDefaultAsync(x => x.BindingId == bindingId && x.Revision == revision && x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
 
-        return row == null ? null : ToRevisionRecord(row, ResolveBindingValueType(bindingEntity, definition.ForValueType));
+        return row == null ? null : ToRevisionRecord(row, ResolveBindingValueType(bindingEntity));
     }
 
     /// <inheritdoc />
@@ -288,7 +286,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         OperationHelpers.ThrowIfNull(revEntity, $"No revision {revision} for binding '{bindingId}'.");
         var definition = await context.ConfigDefinitions.FindAsync([binding.DefinitionId], ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(definition);
-        var valueType = ResolveBindingValueType(binding, definition.ForValueType);
+        var valueType = ResolveBindingValueType(binding);
         var cv = new ConfigValue { TypeName = valueType, Json = ResolveRevisionJson(revEntity) };
         OperationHelpers.ThrowIf(!cv.MatchesType(definition.ForValueType), "Revision JSON does not match the current definition type.");
         await AppendRevisionRowAsync(context, binding, cv.Json, definition.IsEncrypted, resolvedTenant, ct).ConfigureAwait(false);
@@ -344,11 +342,9 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             return [];
 
         var latestByBinding = await LoadLatestRevisionJsonByBindingIdAsync(context, entities.Select(e => e.Id).ToList(), resolvedTenant, ct).ConfigureAwait(false);
-        var defIds = entities.Select(e => e.DefinitionId).Distinct().ToList();
-        var defsById = await context.ConfigDefinitions.AsNoTracking().Where(d => defIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, ct).ConfigureAwait(false);
         var result = new List<ConfigBindingRecord>(entities.Count);
         foreach (var entity in entities)
-            result.Add(ToBindingRecord(entity, ResolveBindingValueType(entity, defsById[entity.DefinitionId].ForValueType), latestByBinding[entity.Id]));
+            result.Add(ToBindingRecord(entity, ResolveBindingValueType(entity), latestByBinding[entity.Id]));
 
         return result;
     }
@@ -411,7 +407,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         foreach (var definition in definitions) {
             ConfigBindingRecord? bindingRecord = null;
             if (bindingsByDefinitionId.TryGetValue(definition.Id, out var bindingEntity) && latestJson != null)
-                bindingRecord = ToBindingRecord(bindingEntity, ResolveBindingValueType(bindingEntity, definition.ForValueType), latestJson[bindingEntity.Id]);
+                bindingRecord = ToBindingRecord(bindingEntity, ResolveBindingValueType(bindingEntity), latestJson[bindingEntity.Id]);
 
             items.Add(new() { Definition = ToRecord(definition), Binding = bindingRecord });
         }
@@ -564,7 +560,6 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
 
     private async Task<ConfigBindingRecord> ToBindingRecordAsync(ConfigDbContext context, ConfigBindingEntity entity, CancellationToken ct)
     {
-        var definition = await context.ConfigDefinitions.AsNoTracking().FirstAsync(d => d.Id == entity.DefinitionId, ct).ConfigureAwait(false);
         var latest = await context.ConfigBindingRevisions.AsNoTracking()
             .Where(r => r.BindingId == entity.Id && r.TenantId == entity.TenantId)
             .OrderByDescending(r => r.Revision)
@@ -572,12 +567,11 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             .ConfigureAwait(false);
 
         OperationHelpers.ThrowIfNull(latest, $"Binding '{entity.Id}' has no revision rows.");
-        return ToBindingRecord(entity, ResolveBindingValueType(entity, definition.ForValueType), ResolveRevisionJson(latest));
+        return ToBindingRecord(entity, ResolveBindingValueType(entity), ResolveRevisionJson(latest));
     }
 
-    /// <summary>Prefers <see cref="ConfigBindingEntity.ValueType" /> when set; otherwise the definition (for legacy rows missing the column).</summary>
-    private static string ResolveBindingValueType(ConfigBindingEntity entity, string definitionForValueType)
-        => string.IsNullOrWhiteSpace(entity.ValueType) ? definitionForValueType : entity.ValueType;
+    /// <summary>Returns the binding's stored <see cref="ConfigBindingEntity.ValueType" />.</summary>
+    private static string ResolveBindingValueType(ConfigBindingEntity entity) => entity.ValueType;
 
     private static ConfigBindingRecord ToBindingRecord(ConfigBindingEntity entity, string valueType, string valueJson)
         => new() {

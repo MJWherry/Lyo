@@ -5,7 +5,7 @@ namespace Lyo.FileManager.Tests;
 public class FileManagerKeyStoreTests
 {
     [Fact]
-    public void Load_LegacyPassphrase_BecomesANamedKeyStore()
+    public void Load_PassphraseWithoutKeyStoreId_DoesNotCreateACatalogEntry()
     {
         var path = Path.Combine(Path.GetTempPath(), "lyo-fm-keys-" + LyoGuid.CreateV7().ToString("N") + ".json");
         try {
@@ -28,22 +28,11 @@ public class FileManagerKeyStoreTests
                 }
                 """);
             var loaded = FileManagerSettingsStore.LoadDocument(path);
+            Assert.Empty(loaded.KeyStores);
             var photos = Assert.Single(loaded.Servers, server => server.Name == "photos");
-            var photosStore = Assert.Single(loaded.KeyStores, store => store.Id == photos.KeyStoreId);
-            Assert.Equal("photos", photosStore.Name);
-            Assert.Equal(FileManagerKeyStoreKind.Local, photosStore.Kind);
-            Assert.Equal("secret", photosStore.Passphrase);
-            Assert.Equal("k", Assert.Single(photosStore.Keys).Id);
-
+            Assert.Null(photos.KeyStoreId);
             var cloud = Assert.Single(loaded.Servers, server => server.Name == "cloud");
-            var cloudStore = Assert.Single(loaded.KeyStores, store => store.Id == cloud.KeyStoreId);
-            Assert.Equal("cloud", cloudStore.Name);
-            Assert.Equal(FileManagerKeyStoreKind.Aws, cloudStore.Kind);
-            Assert.Equal("eu-west-1", cloudStore.AwsRegion);
-            Assert.Equal("lyo/kek", cloudStore.AwsSecretPrefix);
-            Assert.Equal("dev", cloudStore.AwsProfile);
-            Assert.Null(cloudStore.Passphrase);
-            Assert.Empty(cloudStore.Keys);
+            Assert.Null(cloud.KeyStoreId);
         }
         finally {
             if (File.Exists(path))

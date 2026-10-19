@@ -25,7 +25,6 @@ public static class FileManagerSettingsStore
                 document = new() { Servers = JsonSerializer.Deserialize<List<FileManagerServer>>(text, Json) ?? [] };
             else
                 document = JsonSerializer.Deserialize<FileManagerSettingsDocument>(text, Json) ?? new();
-            FileManagerKeyStores.AdoptLegacy(document);
             return document;
         }
         catch (Exception) {

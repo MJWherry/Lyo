@@ -6,9 +6,6 @@ public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
 {
     public const string SectionName = "DiskFileStorage";
 
-    /// <summary>Older appsettings subsection. Prefer <see cref="SectionName" />.</summary>
-    public const string LegacySectionName = "LocalFileStorageService";
-
     public string RootDirectoryPath { get; set; } = null!;
 
     /// <summary>

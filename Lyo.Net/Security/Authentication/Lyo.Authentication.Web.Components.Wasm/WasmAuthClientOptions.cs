@@ -8,7 +8,7 @@ public sealed class WasmAuthClientOptions
 
     /// <summary>
     /// Absolute base URL of the Lyo API hosting OIDC endpoints (e.g. <c>https://api.example.com</c>). Required. The API must include this client's origin in
-    /// <c>LyoOidcBff.AllowedReturnOrigins</c>.
+    /// <c>LyoSso.AllowedReturnOrigins</c>.
     /// </summary>
     public string AuthBaseUrl { get; set; } = string.Empty;
 

@@ -4,6 +4,8 @@ Save, stream-save, read, delete, and file metadata. Optional compression ([Lyo.C
 
 Catalog listing is `IFileMetadataStore`. Bytes go through `IFileStorageService`. Backends that can list keys expose `IFileStoragePhysical.Physical` (`IFileSystem`). `FileStorageReconcile` joins them on file id with flags `Store` / `Physical` / `Both`.
 
+`IFileStorageTags` adds manual tags and stamps automatic `file-type` and `imported` tags. `ListTagGroupAsync` builds a virtual folder from an ordered list of tag types (including import year, month, and day) without moving object keys. `GET capabilities` includes those tag types.
+
 With GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.
 
 ## Examples
@@ -218,7 +220,7 @@ When EnableDuplicateDetection is true, saves hash plaintext and call IFileMetada
 
 Reads stay the same: GetFileAsync / GetFileStreamAsync decode according to stored metadata, not per-request compress/encrypt flags.
 
-Legacy appsettings LocalFileStorage vs DiskFileStorage binder details are documented on DiskFileStorageOptions.LegacySectionName and DiskFileStorageConfigurationBinder. The internal BindDiskFileStorage(IServiceProvider, string? preferredSection) is invoked by the keyed-disk AddFileStorageServiceKeyed overloads that accept a configSectionName. It tries the preferred section, then DiskFileStorageOptions.SectionName (DiskFileStorage), then DiskFileStorageOptions.LegacySectionName (LocalFileStorage) and logs a warning when the legacy section is matched.
+Disk options bind from the preferred section, then DiskFileStorage.
 
 ## Keyed registration overload matrix
 

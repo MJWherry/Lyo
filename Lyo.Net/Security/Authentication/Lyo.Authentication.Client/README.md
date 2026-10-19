@@ -43,7 +43,7 @@ app.MapLyoAuthSignOut();
 
 ```json
 {
-  "LyoOidcBff": {
+  "LyoSso": {
     "AllowedReturnOrigins": [ "http://localhost:5138" ],
     "DefaultReturnUrl": "/",
     "HandoffCodeTtl": "00:00:30"
@@ -127,6 +127,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Diagnostic.AspNetCore` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
@@ -134,6 +135,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)

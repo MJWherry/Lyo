@@ -19,7 +19,7 @@
     {
       "type": "markdown",
       "title": "Message envelopes (`QueueMessageEnvelope<T>`)",
-      "body": "`QueueMessageEnvelope<T>` holds `Payload`, `RequeueCount`, `MessageId`, `EnqueuedAt`, `TraceId`, and\n`Version` alongside the payload. The internal `QueueWorkerHelpers.DeserializeMessage<T>` detects JSON\nshaped like `{ Payload, RequeueCount, … }` vs raw DTO JSON so you can:\n\n- Attach `RequeueCount` / identifiers / timestamps without wrapping every caller manually.\n- Migrate legacy producers that still emit bare JSON objects. The first requeue from a legacy message\n  is wrapped in an envelope by `QueueWorkerBase` so subsequent requeues count correctly.\n\n`MessageProcessingExceptionHandling` (`IgnoreAndRemoveFromQueue`, `ThrowAndRemoveFromQueue`,\n`RequeueOnException`) is the shared enum implementations expose for tuning how thrown exceptions in\nmessage handlers map onto ack/nack/requeue."
+      "body": "`QueueMessageEnvelope<T>` holds `Payload`, `RequeueCount`, `MessageId`, `EnqueuedAt`, `TraceId`, and\n`Version` alongside the payload. The internal `QueueWorkerHelpers.DeserializeMessage<T>` detects JSON\nshaped like `{ Payload, RequeueCount, … }`. Bare DTO JSON is not accepted.\n\n- Attach `RequeueCount` / identifiers / timestamps without wrapping every caller manually.\n\n`MessageProcessingExceptionHandling` (`IgnoreAndRemoveFromQueue`, `ThrowAndRemoveFromQueue`,\n`RequeueOnException`) is the shared enum implementations expose for tuning how thrown exceptions in\nmessage handlers map onto ack/nack/requeue."
     },
     {
       "type": "list",
@@ -169,6 +169,14 @@
     },
     {
       "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
         "transitive",

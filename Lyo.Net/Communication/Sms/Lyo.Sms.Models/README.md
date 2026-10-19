@@ -16,7 +16,7 @@ Cursor listing used by `ISmsService.GetMessagesAsync`:
 | `DateSentAfter`, `DateSentBefore` | Inclusive-ish window (the provider maps it to APIs). `DateSentBefore` also acts as the next-page cursor: copy `NextCursor` from the previous page into `DateSentBefore`. |
 | `PageSize` | 1 to 1000 (default 50). |
 
-`SmsMessageQueryResults<T>` exposes `Items`, `HasMore`, `NextCursor`, plus legacy `Start`, `Amount`, `Total` fields for callers that assumed offset paging.
+`SmsMessageQueryResults<T>` exposes `Items`, `PageSize`, `HasMore`, and `NextCursor`.
 
 ## `SmsServiceOptions` (abstract)
 

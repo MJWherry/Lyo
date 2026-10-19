@@ -165,7 +165,7 @@
     {
       "type": "paragraph",
       "title": "Templates on string parameters",
-      "text": "When creating a run, Formatter and String parameter values (schedule and definition) are formatted with `IFormatterService` against `Schedule`, `Definition`, last-run snapshots, and related objects. Pick type `formatter` in the catalog for Guid/DateTime templates (`{-}`, `{DateTime.UtcNow}`). Write `{Definition.Name}` — unresolved tokens such as `{client.contact.emailAddress}` stay in the value until the worker `AddContext`s them. Xml and Json values are not formatted. Legacy `{{Definition.Name}}` is unwrapped to `{Definition.Name}` in the scheduler only so existing schedules keep working; `{{` is not the placeholder standard (SmartFormat uses it as a literal brace)."
+      "text": "When creating a run, Formatter and String parameter values (schedule and definition) are formatted with `IFormatterService` against `Schedule`, `Definition`, last-run snapshots, and related objects. Pick type `formatter` in the catalog for Guid/DateTime templates (`{-}`, `{DateTime.UtcNow}`). Write `{Definition.Name}` — unresolved tokens such as `{client.contact.emailAddress}` stay in the value until the worker `AddContext`s them. Xml and Json values are not formatted. `{{` is not a placeholder (SmartFormat uses it as a literal brace)."
     },
     {
       "type": "markdown",
@@ -306,6 +306,14 @@
       ]
     },
     {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.DateAndTime",
       "kind": "lyo",
       "tags": [
@@ -370,6 +378,14 @@
       ]
     },
     {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
@@ -407,6 +423,16 @@
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",

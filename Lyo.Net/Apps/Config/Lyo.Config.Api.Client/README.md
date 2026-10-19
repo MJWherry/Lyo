@@ -59,14 +59,14 @@ services.AddConfigApiClientFromConfiguration(configuration);
 Section: `ConfigApi` by default. Subclasses `Lyo.Api.Client.ApiClientOptions`.
 
 | Property | Default | Purpose |
-| --------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `BaseUrl` | `null` | Base URL of the Config API host. Trimmed and suffixed with `/`. |
 | `ApiKey` | `null` | When set, forwarded as `X-Api-Key`. The server only enforces it if `ConfigApiSecurity.RequireApiKey == true` (see Config.Api README). |
 | `PollInterval` (`TimeSpan?`) | `null` | **Advisory only.** Not consumed by `ConfigApiClient`; bring your own scheduler, or pass an explicit `TimeSpan` to `ConfigPolling.PollUntilChangedAsync`. |
 | `EnsureStatusCode` (`bool`) | `true` | When `true`, non-success responses (other than `304 Not Modified`) call `EnsureSuccessStatusCode()` and throw `HttpRequestException`. When `false`, `ResolveForAppAsync` returns a `ConfigResolveConditionalResult` with `Outcome = Failed` and a populated `Failure` so the caller can inspect the status code without an exception. |
 | `AcceptEncodings` | `["gzip", "deflate", "br"]` | Advertised encodings; only `gzip` / `deflate` / `br` are honored (and `br` requires a non-`netstandard2.0` target). |
 | `EnableAutoResponseDecompression` | `true` | Toggles `LyoHttpClientHandler.AutomaticDecompression` via `UseLyoHttpClientHandler<ConfigApiClientOptions>()`. |
-| `RequestCompression` | `ApiRequestCompressionType.None` | Inherited request-body compression, unused by the resolve route (GET / HEAD). |
+| `RequestCompression` | `LyoHttpRequestCompressionType.None` | Inherited request-body compression, unused by the resolve route (GET / HEAD). |
 | `RequestCompressionMinBytes` | `1024` | Inherited threshold for request-body compression. |
 
 ## `IConfigApiClient`
@@ -147,6 +147,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)
@@ -158,11 +159,13 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
 - `AngleSharp` `1.5.0` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)

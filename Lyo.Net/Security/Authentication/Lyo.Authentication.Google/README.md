@@ -53,7 +53,7 @@ dotnet user-secrets set "LyoJwt:SigningKeyId" "lyo-sig"
 
 ```json
 {
-  "LyoOidcBff": {
+  "LyoSso": {
     "AllowedReturnOrigins": [ "http://localhost:5138", "https://localhost:5138", "https://localhost:7116" ],
     "DefaultReturnUrl": "/",
     "HandoffCodeTtl": "00:00:30"
@@ -150,11 +150,11 @@ The Gateway uses `Lyo.Authentication.Client`. The relevant `appsettings.json` bl
 ## 5. Common local pitfalls
 
 | Symptom | Cause / fix |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `redirect_uri_mismatch` | The URI in Google Cloud doesn't exactly equal `GoogleAuth:RedirectUri`. Check scheme (`http` vs `https`), port, trailing slash. |
 | `Error 403: access_denied` after consent | App is in *Testing* and the Google account you logged in with isn't in the **Test users** list. |
 | `HostedDomainMismatch` from the callback | `HostedDomain` is set but the account's `hd` claim doesn't match (personal `@gmail.com` accounts have no `hd`). |
-| Callback redirects back to the API instead of the Gateway | The Gateway HTTPS launch profile (`https://localhost:7116`) stamps a `returnUrl` origin that must be in `LyoOidcBff:AllowedReturnOrigins` (exact `scheme://host:port`, no trailing slash). Off-list absolute URLs now 400 at `/auth/login`. Local TestApi allow-lists both `:5138` and `:7116`. |
+| Callback redirects back to the API instead of the Gateway | The Gateway HTTPS launch profile (`https://localhost:7116`) stamps a `returnUrl` origin that must be in `LyoSso:AllowedReturnOrigins` (exact `scheme://host:port`, no trailing slash). Off-list absolute URLs now 400 at `/auth/login`. Local TestApi allow-lists both `:5138` and `:7116`. |
 | `/auth/handoff/exchange` returns 403 `origin_mismatch` | Consumer's `Origin` header didn't match the origin the code was issued to. Ensure browser, Gateway, and API agree on `localhost` (not a mix of `localhost` / `127.0.0.1`). |
 | `lyo_session` not sent on Gateway requests | The cookie is `SameSite=Lax`; cross-site iframe scenarios won't carry it. Plain top-level navigation works. |
 | JWT signature fails | Mismatched `LyoJwt:Issuer`/`Audience`/`SigningKeyId` between TestApi and Gateway. Both must agree, and both `AddLocalKeyStore` calls must seed the same `lyo-sig` material (they do by default). |
@@ -163,8 +163,8 @@ The Gateway uses `Lyo.Authentication.Client`. The relevant `appsettings.json` bl
 
 When you move off localhost, replace the user-secrets values with the deployed equivalents and **add a second OAuth client** in Google Cloud, or extra redirect URIs on the same client, for each environment:
 
-- Staging: `https://api-staging.example.com/auth/callback/google` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app-staging.example.com`
-- Production: `https://api.example.com/auth/callback/google` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app.example.com`
+- Staging: `https://api-staging.example.com/auth/callback/google` + `LyoSso:AllowedReturnOrigins` includes `https://app-staging.example.com`
+- Production: `https://api.example.com/auth/callback/google` + `LyoSso:AllowedReturnOrigins` includes `https://app.example.com`
 
 Production must be on HTTPS. Google rejects non-`localhost` plain-HTTP redirect URIs. Submit the OAuth consent screen for verification before you remove the *Testing* gate, otherwise external users will still get the unverified-app screen, and personal accounts beyond the 100-test-user cap will be blocked.
 
@@ -178,13 +178,16 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Authentication` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
+- `Lyo.Authentication.Sso` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)

@@ -7,7 +7,6 @@ namespace Lyo.Compression.JsonConverters;
 /// <summary>JSON converter for <see cref="CompressionAlgorithm" /> that serializes and deserializes using the stable algorithm <see cref="CompressionAlgorithm.Name" />.</summary>
 public sealed class CompressionAlgorithmJsonConverter : JsonConverter<CompressionAlgorithm?>
 {
-    private const string NameProperty = "Name";
 
     public override CompressionAlgorithm? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -16,9 +15,6 @@ public sealed class CompressionAlgorithmJsonConverter : JsonConverter<Compressio
 
         if (reader.TokenType == JsonTokenType.String)
             return CompressionAlgorithm.TryFromName(reader.GetString());
-
-        if (reader.TokenType == JsonTokenType.StartObject)
-            return ReadLegacyObject(ref reader);
 
         throw new JsonException($"Unexpected token {reader.TokenType} when parsing CompressionAlgorithm.");
     }
@@ -31,28 +27,5 @@ public sealed class CompressionAlgorithmJsonConverter : JsonConverter<Compressio
         }
 
         writer.WriteStringValue(value.Name);
-    }
-
-    private static CompressionAlgorithm? ReadLegacyObject(ref Utf8JsonReader reader)
-    {
-        string? name = null;
-        while (reader.Read()) {
-            if (reader.TokenType == JsonTokenType.EndObject)
-                break;
-
-            if (reader.TokenType != JsonTokenType.PropertyName) {
-                reader.Skip();
-                continue;
-            }
-
-            var propertyName = reader.GetString();
-            reader.Read();
-            if (string.Equals(propertyName, NameProperty, StringComparison.OrdinalIgnoreCase))
-                name = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
-            else
-                reader.Skip();
-        }
-
-        return CompressionAlgorithm.TryFromName(name);
     }
 }

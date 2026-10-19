@@ -141,8 +141,7 @@ public class TwilioSmsServiceTests
         var result = await service.GetMessagesAsync(filter, TestCt);
         result.ShouldNotBeNull();
         result.Items.ShouldNotBeNull();
-        result.Start.ShouldBe(0);
-        result.Amount.ShouldBeGreaterThan(0);
+        result.PageSize.ShouldBeGreaterThan(0);
     }
 
     [Fact]

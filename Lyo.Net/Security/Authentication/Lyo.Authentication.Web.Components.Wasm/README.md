@@ -35,7 +35,7 @@ builder.Services.AddLyoAuthWebComponentsWasm(builder.Configuration);
 
 ```json
 {
-  "LyoOidcBff": {
+  "LyoSso": {
     "AllowedReturnOrigins": [ "https://spa.example.com" ],
     "DefaultReturnUrl": "/",
     "HandoffCodeTtl": "00:00:30"
@@ -77,7 +77,7 @@ browser ── POST /auth/handoff/exchange { code } ──► API
 
 ## Quick start
 
-Register in the consuming WASM host's `Program.cs`. Serve `appsettings.json` from the WASM client's `wwwroot/`. On the API side, the WASM origin must appear in `LyoOidcBff.AllowedReturnOrigins`:
+Register in the consuming WASM host's `Program.cs`. Serve `appsettings.json` from the WASM client's `wwwroot/`. On the API side, the WASM origin must appear in `LyoSso.AllowedReturnOrigins`:
 
 ## Outbound API calls
 
@@ -106,7 +106,10 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.AspNetCore.Components.WebAssembly` `10.0.5` (direct, microsoft)
 - `Lyo.Api.Client` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Audit` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
+- `Lyo.Authorization` (transitive, lyo)
+- `Lyo.Authorization.Web.Components` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
@@ -114,6 +117,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
@@ -124,6 +128,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
@@ -141,6 +146,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)

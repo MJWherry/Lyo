@@ -26,9 +26,9 @@ internal static class QueueWorkerHelpers
     }
 
     /// <summary>
-    /// Deserializes a queue message through an autocorrect ladder. Envelope-shaped JSON is tried first as a full <see cref="QueueMessageEnvelope{T}" />; on failure the
-    /// <c>Payload</c> element is deserialized as <typeparamref name="TRequest" /> and envelope metadata is rebuilt from the root JSON. Non-envelope JSON is treated
-    /// as a raw legacy <typeparamref name="TRequest" />. Returns false when no path recovers the message (caller should treat it as poison).
+    /// Deserializes a queue message. Envelope-shaped JSON is tried first as a full <see cref="QueueMessageEnvelope{T}" />; on failure the
+    /// <c>Payload</c> element is deserialized as <typeparamref name="TRequest" /> and envelope metadata is rebuilt from the root JSON.
+    /// JSON that is not an envelope is poison.
     /// </summary>
     internal static bool TryDeserializeMessage<TRequest>(byte[] messageBytes, JsonSerializerOptions options, out TRequest? payload, out QueueMessageEnvelope<TRequest>? envelope)
     {
@@ -77,15 +77,7 @@ internal static class QueueWorkerHelpers
             }
         }
 
-        // Older producers send bare TRequest JSON with no envelope.
-        try {
-            payload = JsonSerializer.Deserialize<TRequest>(messageBytes, options);
-        }
-        catch (JsonException) {
-            return false;
-        }
-
-        return payload is not null;
+        return false;
     }
 
     /// <summary>Deserializes a payload element as <typeparamref name="TRequest" />, including double-encoded payloads (a JSON string that itself holds payload JSON).</summary>
@@ -361,8 +353,8 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     }
 
     /// <summary>
-    /// Retries a failed message by republishing with an incremented <see cref="QueueMessageEnvelope{T}.RequeueCount" />. Legacy (non-enveloped) messages are wrapped so the
-    /// count is tracked afterward. When the count hits the max requeue limit the message goes to the DLQ (or is dropped). Always returns false — the original delivery is acked
+    /// Retries a failed message by republishing with an incremented <see cref="QueueMessageEnvelope{T}.RequeueCount" />.
+    /// When the count hits the max requeue limit the message goes to the DLQ (or is dropped). Always returns false — the original delivery is acked
     /// and the republished copy is the retry.
     /// </summary>
     private async Task<bool> ApplicationRequeueAsync(TRequest payload, QueueMessageEnvelope<TRequest>? envelope, byte[] originalBytes)

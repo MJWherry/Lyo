@@ -63,62 +63,6 @@ public static class FileManagerKeyStores
         }
     }
 
-    /// <summary>
-    /// Gives each server that still has a passphrase, saved keys, or an AWS key store, and no <see cref="FileManagerServer.KeyStoreId" />,
-    /// one catalog entry named after the server. An AWS server copies only the AWS fields. A local server copies the passphrase and keys.
-    /// </summary>
-    public static void AdoptLegacy(FileManagerSettingsDocument document)
-    {
-        ArgumentHelpers.ThrowIfNull(document);
-        document.Servers ??= [];
-        document.KeyStores ??= [];
-        foreach (var server in document.Servers) {
-            if (server.KeyStoreId != null)
-                continue;
-            if (server.KeyStoreKind == FileManagerKeyStoreKind.Aws) {
-                var aws = new FileManagerKeyStore {
-                    Name = NameOf(server),
-                    Kind = FileManagerKeyStoreKind.Aws,
-                    AwsRegion = server.AwsRegion,
-                    AwsSecretPrefix = server.AwsSecretPrefix,
-                    AwsAccessKeyId = server.AwsAccessKeyId,
-                    AwsSecretAccessKey = server.AwsSecretAccessKey,
-                    AwsProfile = server.AwsProfile
-                };
-                document.KeyStores.Add(aws);
-                server.KeyStoreId = aws.Id;
-                continue;
-            }
-
-            if (!HasLocalMaterial(server))
-                continue;
-            var local = new FileManagerKeyStore {
-                Name = NameOf(server),
-                Kind = FileManagerKeyStoreKind.Local,
-                Passphrase = string.IsNullOrWhiteSpace(server.Passphrase) ? null : server.Passphrase,
-                Keys = CopyKeys(server.Keys)
-            };
-            document.KeyStores.Add(local);
-            server.KeyStoreId = local.Id;
-        }
-    }
-
-    private static bool HasLocalMaterial(FileManagerServer server)
-    {
-        if (!string.IsNullOrWhiteSpace(server.Passphrase))
-            return true;
-        return server.Keys?.Any(key => !string.IsNullOrWhiteSpace(key.Id) && (!string.IsNullOrWhiteSpace(key.Secret) || !string.IsNullOrWhiteSpace(key.RawKey))) == true;
-    }
-
-    private static List<FileManagerStoredKey> CopyKeys(List<FileManagerStoredKey>? keys)
-        => keys?.Select(CopyKey).ToList() ?? [];
-
-    private static FileManagerStoredKey CopyKey(FileManagerStoredKey key)
-        => new() { Id = key.Id, Version = key.Version, Secret = key.Secret, RawKey = key.RawKey, Current = key.Current, Metadata = key.Metadata };
-
-    private static string NameOf(FileManagerServer server)
-        => string.IsNullOrWhiteSpace(server.Name) ? "Key store" : server.Name.Trim();
-
     private static bool TryProperty(JsonElement element, string name, out JsonElement value)
     {
         if (element.TryGetProperty(name, out value))

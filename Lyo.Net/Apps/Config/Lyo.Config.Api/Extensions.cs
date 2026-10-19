@@ -56,7 +56,6 @@ public static class Extensions
         services.AddScope("config.read", "Read Lyo config bindings and definitions.");
         services.AddScope("config.write", "Mutate Lyo config bindings and definitions.", "config.read");
         services.AddScope("config.admin", "Admin Lyo config (delete, revert, bulk).", "config.write");
-        services.AddHostedService<ConfigApiLegacyBootstrap>();
         return services;
     }
 

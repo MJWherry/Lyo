@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Lyo.Common.Metadata.Records;
 using Lyo.Formatter;
 using Lyo.Job.Models;
@@ -22,8 +21,6 @@ namespace Lyo.Job.Scheduler;
 /// <param name="logger">Optional logger for unresolved templates and defaults.</param>
 public sealed class JobRunRequestFactory(IFormatterService formatter, string createdBy, ILogger? logger = null)
 {
-    private static readonly Regex LegacyDoubleBracePlaceholderRegex = new(@"\{\{([^{}]+)\}\}", RegexOptions.Compiled);
-
     private readonly ILogger _logger = logger ?? NullLogger.Instance;
 
     /// <summary>
@@ -127,7 +124,7 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
 
     /// <summary>
     /// Formats String and Formatter parameter templates with <see cref="IFormatterService" />. Unresolved <c>{client...}</c> tokens stay in the value (<c>MaintainTokens</c>).
-    /// Legacy <c>{{Definition.Name}}</c> is unwrapped to <c>{Definition.Name}</c> here only so existing schedules keep working. Json/Xml values are not formatted.
+    /// Json/Xml values are not formatted.
     /// </summary>
     /// <param name="template">Raw parameter value.</param>
     /// <param name="templateData">Data the template resolves against.</param>
@@ -136,9 +133,8 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
         if (string.IsNullOrEmpty(template) || template.IndexOf('{') < 0)
             return template;
 
-        var normalized = UnwrapLegacyDoubleBracePlaceholders(template);
         try {
-            return formatter.Format(normalized, templateData);
+            return formatter.Format(template, templateData);
         }
         catch (Exception ex) {
             _logger.LogWarning(ex, "Template format failed: {Template}", template);
@@ -192,11 +188,4 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
         req.Value = FormatterLyoType.IsFormattable(known) ? FormatTemplateValue(p.Value ?? "", templateData) : p.Value;
         return req;
     }
-
-    /// <summary>
-    /// Scheduler-only: <c>{{selector}}</c> → <c>{selector}</c>. Does not run inside <see cref="IFormatterService" />.
-    /// SmartFormat uses <c>{{</c> as a literal brace.
-    /// </summary>
-    private static string UnwrapLegacyDoubleBracePlaceholders(string template)
-        => LegacyDoubleBracePlaceholderRegex.Replace(template, static m => "{" + m.Groups[1].Value.Trim() + "}");
 }

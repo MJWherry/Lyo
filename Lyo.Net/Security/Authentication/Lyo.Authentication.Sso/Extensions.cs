@@ -34,7 +34,6 @@ public static class Extensions
 
         /// <summary>
         /// Like <see cref="AddLyoSso()" /> plus binding <see cref="ExternalLoginOptions" /> from <c>LyoExternalLogin</c> and <see cref="SsoBffOptions" /> from <c>LyoSso</c>.
-        /// When <c>LyoSso</c> is absent, the whole <c>LyoOidcBff</c> section is bound instead.
         /// </summary>
         public IServiceCollection AddLyoSso(IConfiguration configuration, string externalLoginSectionName = ExternalLoginOptions.SectionName)
         {
@@ -47,17 +46,11 @@ public static class Extensions
         }
     }
 
-    /// <summary>Binds <c>LyoSso</c> when that section exists. Otherwise binds <c>LyoOidcBff</c>.</summary>
+    /// <summary>Binds <c>LyoSso</c> when that section exists.</summary>
     public static void BindBff(IConfiguration configuration, SsoBffOptions options)
     {
         ArgumentHelpers.ThrowIfNull(configuration);
         ArgumentHelpers.ThrowIfNull(options);
-        var sso = configuration.GetSection(SsoBffOptions.SectionName);
-        if (sso.Exists()) {
-            sso.Bind(options);
-            return;
-        }
-
-        configuration.GetSection(SsoBffOptions.LegacySectionName).Bind(options);
+        configuration.GetSection(SsoBffOptions.SectionName).Bind(options);
     }
 }

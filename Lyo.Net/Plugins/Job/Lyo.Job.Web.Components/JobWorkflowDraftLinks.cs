@@ -46,9 +46,7 @@ public static class JobWorkflowDraftLinks
         return [.. step.DependsOn.Where(byId.ContainsKey).Select(id => byId[id].StepName)];
     }
 
-    /// <summary>
-    /// Reads a persisted workbench draft. <c>DependsOn</c> may be draft ids or, for a draft saved before links were ids, step names. Names are resolved once.
-    /// </summary>
+    /// <summary>Reads a persisted workbench draft. <c>DependsOn</c> entries that are not ids are ignored.</summary>
     public static JobWorkflowWorkbenchState Load(string json, JsonSerializerOptions? options = null)
     {
         ArgumentHelpers.ThrowIfNull(json);
@@ -59,7 +57,7 @@ public static class JobWorkflowDraftLinks
         return state;
     }
 
-    /// <summary>Assigns an id to any step missing one and turns pending dependency names into those ids.</summary>
+    /// <summary>Assigns an id to any step missing one and keeps dependency entries that are already ids.</summary>
     public static void Repair(JobWorkflowWorkbenchState state)
     {
         ArgumentHelpers.ThrowIfNull(state);
@@ -76,8 +74,6 @@ public static class JobWorkflowDraftLinks
             foreach (var raw in step.PendingDependsOn) {
                 if (Guid.TryParse(raw, out var id) && id != Guid.Empty)
                     step.DependsOn.Add(id);
-                else if (byName.TryGetValue(raw, out var named))
-                    step.DependsOn.Add(named.Id);
             }
 
             step.PendingDependsOn.Clear();

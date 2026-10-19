@@ -337,7 +337,7 @@
         ]
       ],
       "lead": "When EnableDuplicateDetection is true, saves hash plaintext and call IFileMetadataStore.FindByHashAsync before persisting transformed bytes.",
-      "trail": "Reads stay the same: GetFileAsync / GetFileStreamAsync decode according to stored metadata, not per-request compress/encrypt flags.\n\nLegacy appsettings LocalFileStorage vs DiskFileStorage binder details are documented on DiskFileStorageOptions.LegacySectionName and DiskFileStorageConfigurationBinder. The internal BindDiskFileStorage(IServiceProvider, string? preferredSection) is invoked by the keyed-disk AddFileStorageServiceKeyed overloads that accept a configSectionName. It tries the preferred section, then DiskFileStorageOptions.SectionName (DiskFileStorage), then DiskFileStorageOptions.LegacySectionName (LocalFileStorage) and logs a warning when the legacy section is matched."
+      "trail": "Reads stay the same: GetFileAsync / GetFileStreamAsync decode according to stored metadata, not per-request compress/encrypt flags.\n\nDisk options bind from the preferred section, then DiskFileStorage."
     },
     {
       "type": "table",

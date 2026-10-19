@@ -19,7 +19,7 @@
     {
       "title": "Quick start (3)",
       "language": "json",
-      "code": "{\n  \"LyoOidcBff\": {\n    \"AllowedReturnOrigins\": [ \"http://localhost:5138\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}"
+      "code": "{\n  \"LyoSso\": {\n    \"AllowedReturnOrigins\": [ \"http://localhost:5138\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}"
     },
     {
       "title": "Quick start (4)",
@@ -115,6 +115,14 @@
       ]
     },
     {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.DateAndTime",
       "kind": "lyo",
       "tags": [
@@ -164,6 +172,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

@@ -87,7 +87,7 @@ dictionary when you want the validator to confirm coverage.
 
 ## SmartFormat behavior
 
-This library does not fork SmartFormat. Simple selectors (`{Name}`, `{Count:N0}`, `{Items:list:{}|, }`) still go through a configured `SmartFormatter`. See the [SmartFormat documentation](https://github.com/axuno/SmartFormat/wiki) for list formatting, plural rules, and built-in extensions. `{{` / `}}` emit a literal `{` / `}`; they are not a second placeholder form. Write `{Name}`, not `{{Name}}`. `Lyo.Web.Automation` step templates use single-brace placeholders (`{page.url}`). Legacy `{{page.url}}` is normalized there.
+This library does not fork SmartFormat. Simple selectors (`{Name}`, `{Count:N0}`, `{Items:list:{}|, }`) still go through a configured `SmartFormatter`. See the [SmartFormat documentation](https://github.com/axuno/SmartFormat/wiki) for list formatting, plural rules, and built-in extensions. `{{` / `}}` emit a literal `{` / `}`; they are not a second placeholder form. Write `{Name}`, not `{{Name}}`. `Lyo.Web.Automation` step templates use single-brace placeholders (`{page.url}`).
 
 ## Expressions
 

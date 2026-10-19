@@ -137,6 +137,31 @@ public sealed class ConfigPostgresStoreTests
     }
 
     [Fact]
+    public async Task GetBinding_BlankValueType_StaysBlank()
+    {
+        var ct = TestCt;
+        var store = Store();
+        var definition = NewDefinition("blank-type", typeof(string));
+        await store.SaveDefinitionAsync(definition, ct);
+        var binding = new ConfigBindingRecord {
+            DefinitionId = definition.Id,
+            Key = definition.Key,
+            SubjectEntityType = definition.SubjectEntityType,
+            SubjectEntityId = "gateway:local",
+            Value = ConfigValue.From("bound-plain")
+        };
+        await store.SaveBindingAsync(binding, null, ct);
+        await using (var db = await CreateDbAsync(ct)) {
+            var row = await db.ConfigBindings.SingleAsync(b => b.Id == binding.Id, ct);
+            row.ValueType = "";
+            await db.SaveChangesAsync(ct);
+        }
+
+        var loaded = await store.GetBindingByIdAsync(binding.Id, null, ct);
+        Assert.Equal("", loaded!.Value.TypeName);
+    }
+
+    [Fact]
     public void MaskValue_ReturnsPlaceholderWhenEncrypted()
     {
         var encryption = _fixture.ServiceProvider.GetRequiredService<IConfigValueEncryptionService>();

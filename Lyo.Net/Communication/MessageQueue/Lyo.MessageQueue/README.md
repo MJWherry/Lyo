@@ -14,11 +14,9 @@ Implements `Lyo.Health.IHealth` so dashboards can ping broker connectivity along
 
 `QueueMessageEnvelope<T>` holds `Payload`, `RequeueCount`, `MessageId`, `EnqueuedAt`, `TraceId`, and
 `Version` alongside the payload. The internal `QueueWorkerHelpers.DeserializeMessage<T>` detects JSON
-shaped like `{ Payload, RequeueCount, … }` vs raw DTO JSON so you can:
+shaped like `{ Payload, RequeueCount, … }`. Bare DTO JSON is not accepted.
 
 - Attach `RequeueCount` / identifiers / timestamps without wrapping every caller manually.
-- Migrate legacy producers that still emit bare JSON objects. The first requeue from a legacy message
-  is wrapped in an envelope by `QueueWorkerBase` so subsequent requeues count correctly.
 
 `MessageProcessingExceptionHandling` (`IgnoreAndRemoveFromQueue`, `ThrowAndRemoveFromQueue`,
 `RequeueOnException`) is the shared enum implementations expose for tuning how thrown exceptions in
@@ -108,6 +106,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Result` (direct, lyo)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
 - `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)

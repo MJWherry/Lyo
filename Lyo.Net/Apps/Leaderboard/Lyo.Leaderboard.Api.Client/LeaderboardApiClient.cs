@@ -1,5 +1,6 @@
 using Lyo.Api.Client;
 using Lyo.Exceptions;
+using Lyo.Http.Client;
 using Lyo.Leaderboard;
 using Lyo.Leaderboard.Api.Models;
 using Microsoft.Extensions.Configuration;
@@ -222,7 +223,7 @@ public static class LeaderboardApiHttpClientRegistration
             if (!string.IsNullOrWhiteSpace(options.BaseUrl))
                 client.BaseAddress = new(options.BaseUrl!.TrimEnd('/') + "/");
 
-            Lyo.Api.Client.ServiceCollectionExtensions.ApplyAcceptEncodingHeaders(client, options.AcceptEncodings);
+            LyoHttpClient.ApplyAcceptEncodingHeaders(client, options.AcceptEncodings);
         }).UseLyoHttpClientHandler<LeaderboardApiClientOptions>();
     }
 }

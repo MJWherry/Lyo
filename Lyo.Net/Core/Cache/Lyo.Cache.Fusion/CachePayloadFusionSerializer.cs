@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using System.Text.Json;
 using Lyo.Cache.Fusion.Internal;
 using Lyo.Exceptions;
 using ZiggyCreatures.Caching.Fusion.Internals.Distributed;
@@ -70,10 +69,7 @@ internal sealed class CachePayloadFusionSerializer : IFusionCacheSerializer
             return DecodeClrValue<T>(valueBytes);
         }
 
-        if (data[0] is (byte)'{' or (byte)'[')
-            return JsonSerializer.Deserialize<T>(data);
-
-        throw new InvalidDataException("Fusion L2 blob is neither a LYO2 frame nor JSON.");
+        throw new InvalidDataException("Fusion L2 blob is not a LYO2 frame.");
     }
 
     /// <inheritdoc />

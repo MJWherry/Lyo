@@ -34,7 +34,7 @@
         ]
       ],
       "lead": "Cursor listing used by `ISmsService.GetMessagesAsync`:",
-      "trail": "`SmsMessageQueryResults<T>` exposes `Items`, `HasMore`, `NextCursor`, plus legacy `Start`, `Amount`, `Total` fields for callers that assumed offset paging."
+      "trail": "`SmsMessageQueryResults<T>` exposes `Items`, `PageSize`, `HasMore`, and `NextCursor`."
     },
     {
       "type": "list",

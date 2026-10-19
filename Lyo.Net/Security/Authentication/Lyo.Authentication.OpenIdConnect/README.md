@@ -45,11 +45,11 @@ services.AddKeycloakProviderFromConfiguration(builder.Configuration);
 
 ## Registration
 
-`AddLyoOpenIdConnect(IConfiguration)` does not bind BFF options. `AddLyoSso(IConfiguration)` binds `LyoExternalLogin` and `LyoSso`. When the `LyoSso` section is absent, that same call binds `LyoOidcBff` instead. The per-provider packages register their `IOpenIdConnectProvider` under their canonical name (`google`, `keycloak:<realm>`), and that name is also registered on `SsoProtocolRegistry`.
+`AddLyoOpenIdConnect(IConfiguration)` does not bind BFF options. `AddLyoSso(IConfiguration)` binds `LyoExternalLogin` and `LyoSso`. The per-provider packages register their `IOpenIdConnectProvider` under their canonical name (`google`, `keycloak:<realm>`), and that name is also registered on `SsoProtocolRegistry`.
 
 ## BFF options
 
-Bind this on `Lyo.Authentication.Sso`. If `LyoSso` is absent, `AddLyoSso(IConfiguration)` reads `LyoOidcBff` so existing appsettings keep working. If `LyoSso` is present, `LyoOidcBff` is not read.
+Bind this on `Lyo.Authentication.Sso`.
 
 ```json
 {

@@ -39,13 +39,12 @@ public static class QueueMessageExtensions
     }
 
     /// <summary>
-    /// Subscribes with typed handling — the consume side of <see cref="SendToQueueWithEnvelopeAsync{T}" />. Deserialization uses the same
-    /// autocorrect ladder as <see cref="QueueWorkerBase{TRequest, TResult}" /> (full envelope → payload-only → bare legacy <typeparamref name="T" />), so both enveloped and legacy
-    /// producers work. Messages that cannot be deserialized on any path are acked (dropped) instead of being redelivered forever.
+    /// Subscribes with typed handling — the consume side of <see cref="SendToQueueWithEnvelopeAsync{T}" />. Deserialization accepts an envelope
+    /// (full envelope, then payload-only autocorrect). Messages that are not an envelope are acked (dropped) instead of being redelivered forever.
     /// </summary>
     /// <param name="mqService">Queue service.</param>
     /// <param name="queueName">Queue to subscribe to.</param>
-    /// <param name="handler">Receives the deserialized payload and the envelope (null for legacy non-enveloped messages). Return true to requeue, false to ack.</param>
+    /// <param name="handler">Receives the deserialized payload and the envelope. Return true to requeue, false to ack.</param>
     /// <param name="serializerOptions">Optional serializer options.</param>
     /// <param name="ct">Token used to cancel the call.</param>
     /// <returns>True when the subscription was established.</returns>

@@ -12,7 +12,7 @@ services.AddDiscordClientFromConfiguration(builder.Configuration);
 // or:
 services.AddDiscordClient(o => {
     o.BaseUrl = "https://api.example.com/";
-    o.RequestCompression = ApiRequestCompressionType.Gzip;
+    o.RequestCompression = LyoHttpRequestCompressionType.Gzip;
 });
 ```
 
@@ -67,12 +67,15 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `AngleSharp` `1.5.0` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
 - `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)

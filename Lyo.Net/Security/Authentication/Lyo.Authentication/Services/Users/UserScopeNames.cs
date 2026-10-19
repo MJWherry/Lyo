@@ -8,19 +8,16 @@ namespace Lyo.Authentication.Services.Users;
 public static class UserScopeNames
 {
     /// <summary>
-    /// Prefers <paramref name="store" /> rows when any exist; otherwise falls back to <see cref="LyoUser.Scopes" /> (legacy <c>ScopesJson</c>) so existing users keep working
-    /// until an admin assigns rows.
+    /// Prefers store rows. An empty or missing store returns no scopes.
     /// </summary>
     public static async Task<IReadOnlyList<string>> ResolveAsync(IUserScopeStore? store, LyoUser user, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(user);
-        if (store is not null) {
-            var rows = await store.ListForUserAsync(user.Id, null, ct).ConfigureAwait(false);
-            if (rows.Count > 0)
-                return DistinctNames(rows.Select(r => r.Name));
-        }
+        if (store is null)
+            return [];
 
-        return user.Scopes;
+        var rows = await store.ListForUserAsync(user.Id, null, ct).ConfigureAwait(false);
+        return DistinctNames(rows.Select(r => r.Name));
     }
 
     /// <summary>Inserts missing names for <paramref name="userId" />. Existing names are left alone.</summary>

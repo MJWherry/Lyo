@@ -38,7 +38,7 @@ A browser login stores an access token and a refresh token. When the access toke
 
 ## Auth
 
-Browser login listens on `http://127.0.0.1:8734`. Add that origin to `LyoOidcBff:AllowedReturnOrigins` on the API host. If port 8734 is taken, the command exits and does not pick another port.
+Browser login listens on `http://127.0.0.1:8734`. Add that origin to `LyoSso:AllowedReturnOrigins` on the API host. If port 8734 is taken, the command exits and does not pick another port.
 
 ```bash
 lyo auth login --base-url http://localhost:5251 --provider google

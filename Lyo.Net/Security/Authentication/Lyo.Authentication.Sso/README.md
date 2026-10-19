@@ -40,7 +40,7 @@ app.MapLyoAuthEndpoints();
 
 ## Options
 
-`AddLyoSso(IConfiguration)` binds `LyoExternalLogin` and `LyoSso`. When the `LyoSso` section is absent, the whole `LyoOidcBff` section is bound instead (`AllowedReturnOrigins`, `DefaultReturnUrl`, `HandoffCodeTtl`). When `LyoSso` is present, `LyoOidcBff` is not read, even if the origin list is empty. `AddLyoOpenIdConnect(IConfiguration)` does not bind these options itself.
+`AddLyoSso(IConfiguration)` binds `LyoExternalLogin` and `LyoSso`. `AddLyoOpenIdConnect(IConfiguration)` does not bind these options itself.
 
 ## Completion
 

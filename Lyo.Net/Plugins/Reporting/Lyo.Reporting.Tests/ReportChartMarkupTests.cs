@@ -22,15 +22,11 @@ public sealed class ReportChartMarkupTests
     }
 
     [Fact]
-    public void Deserialize_LegacyHtmlChart_HasNoKind()
+    public void Deserialize_ContentBlocksChart_LeavesControlsEmpty()
     {
         const string json = """{"title":"Old","sections":[{"contentBlocks":[{"contentType":6,"content":"<canvas data-lyo-chart=\"{}\"></canvas>"}]}]}""";
         var report = ReportJson.Deserialize<object>(json);
-        var block = Assert.Single(report.Sections[0].Controls.OfType<Block>());
-        Assert.Equal(ContentType.Chart, block.ContentType);
-        Assert.Null(block.ChartKind);
-        Assert.Contains("data-lyo-chart", block.Content, StringComparison.Ordinal);
-        Assert.Null(ReportChartMarkup.TryBuild(block));
+        Assert.Empty(report.Sections[0].Controls);
     }
 
     [Fact]

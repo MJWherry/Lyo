@@ -74,7 +74,7 @@ public class JobSchedulerScheduleParameterTests
     }
 
     [Fact]
-    public async Task ScheduleParameterStringValues_UnwrapLegacyDoubleBracePlaceholders()
+    public async Task ScheduleParameterStringValues_DoubleBracePlaceholders_AreNotSubstituted()
     {
         var definitionId = LyoGuid.CreateV7();
         var schedule = BuildSchedule(
@@ -83,7 +83,7 @@ public class JobSchedulerScheduleParameterTests
         var definition = BuildDefinition(definitionId, schedule);
         var runReq = await BuildRunRequestAsync(definition, schedule);
         var noteParam = Assert.Single(runReq.JobRunParameters, p => p.Key == "Note");
-        Assert.Equal("Run of ScheduleParamDef", noteParam.Value);
+        Assert.NotEqual("Run of ScheduleParamDef", noteParam.Value);
     }
 
     [Fact]

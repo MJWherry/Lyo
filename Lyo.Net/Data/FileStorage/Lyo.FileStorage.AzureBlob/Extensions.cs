@@ -12,7 +12,6 @@ using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileStorage.AzureBlob;
 
@@ -61,7 +60,7 @@ public static class Extensions
             return services.AddAzureBlobFileStorageService(options);
         }
 
-        /// <summary>Binds from configuration (primary <see cref="AzureBlobFileStorageOptions.SectionName" />, else obsolete <c>BlobFileStorage</c> / <c>AzureFileStorageOptions</c>).</summary>
+        /// <summary>Binds <see cref="AzureBlobFileStorageOptions" /> from <paramref name="configSectionName" />.</summary>
         public IServiceCollection AddAzureBlobFileStorageService(string configSectionName = AzureBlobFileStorageOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -69,27 +68,7 @@ public static class Extensions
             services.AddSingleton(provider => {
                 var config = provider.GetRequiredService<IConfiguration>();
                 var options = new AzureBlobFileStorageOptions();
-                var section = config.GetSection(configSectionName);
-                if (section.Exists())
-                    section.Bind(options);
-                else {
-                    var legacyName = AzureBlobFileStorageOptions.LegacyBlobConfigurationSectionName;
-                    var legacy = config.GetSection(legacyName);
-                    if (!legacy.Exists()) {
-                        legacyName = AzureBlobFileStorageOptions.LegacyAzureConfigurationSectionName;
-                        legacy = config.GetSection(legacyName);
-                    }
-
-                    if (!legacy.Exists())
-                        return options;
-
-                    legacy.Bind(options);
-                    (provider.GetService<ILoggerFactory>() ?? NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.AzureBlob")
-                        .LogWarning(
-                            "Loaded blob file storage configuration from obsolete section [{Legacy}]. Migrate to [{Current}] in appsettings.", legacyName,
-                            AzureBlobFileStorageOptions.SectionName);
-                }
-
+                config.GetSection(configSectionName).Bind(options);
                 return options;
             });
 

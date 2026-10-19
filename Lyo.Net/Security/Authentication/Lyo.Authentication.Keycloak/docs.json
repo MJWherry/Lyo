@@ -99,7 +99,7 @@
     {
       "type": "markdown",
       "title": "4. Wire the secrets into Lyo.TestApi",
-      "body": "The TestApi only registers the Keycloak provider when `KeycloakAuth:ClientId` is non-empty. Use `dotnet user-secrets` instead of committing secrets to `appsettings.json`:\n\nRole-to-scope mapping must live in JSON. User-secrets can hold the keys but the array values are awkward to set on the CLI. Add this to\n`Lyo.TestApi/appsettings.Development.json` or to the secrets file directly:\n\nAlso seed the JWT issuer/audience and Gateway allow-list as documented in the Google walkthrough (`LyoJwt:Issuer`, `LyoJwt:Audience`, `LyoJwt:SigningKeyId`,\n`LyoOidcBff:AllowedReturnOrigins`). See [`Lyo.Authentication.Google/README.md` sections 2 and 3](../Lyo.Authentication.Google/README.md#2-wire-the-secrets-into-lyotestapi) for the same\nblock. It is identical no matter which IdP you pair Lyo with."
+      "body": "The TestApi only registers the Keycloak provider when `KeycloakAuth:ClientId` is non-empty. Use `dotnet user-secrets` instead of committing secrets to `appsettings.json`:\n\nRole-to-scope mapping must live in JSON. User-secrets can hold the keys but the array values are awkward to set on the CLI. Add this to\n`Lyo.TestApi/appsettings.Development.json` or to the secrets file directly:\n\nAlso seed the JWT issuer/audience and Gateway allow-list as documented in the Google walkthrough (`LyoJwt:Issuer`, `LyoJwt:Audience`, `LyoJwt:SigningKeyId`,\n`LyoSso:AllowedReturnOrigins`). See [`Lyo.Authentication.Google/README.md` sections 2 and 3](../Lyo.Authentication.Google/README.md#2-wire-the-secrets-into-lyotestapi) for the same\nblock. It is identical no matter which IdP you pair Lyo with."
     },
     {
       "type": "list",
@@ -137,7 +137,7 @@
         ],
         [
           "Callback redirects to the API origin instead of the Gateway",
-          "Same root cause as in the Google guide. Gateway origin isn't in `LyoOidcBff:AllowedReturnOrigins`."
+          "Same root cause as in the Google guide. Gateway origin isn't in `LyoSso:AllowedReturnOrigins`."
         ],
         [
           "Keycloak loses all state between restarts",
@@ -156,7 +156,7 @@
     {
       "type": "markdown",
       "title": "8. Promote to deployed environments",
-      "body": "Replace localhost URLs with the deployed equivalents and add more `Valid redirect URIs` on the Keycloak client, one per environment:\n\n- Staging: `https://api-staging.example.com/auth/callback/keycloak:lyo` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app-staging.example.com`\n- Production: `https://api.example.com/auth/callback/keycloak:lyo` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app.example.com`\n\nProduction Keycloak must terminate TLS, either directly via `KC_HTTPS_*` settings or behind a reverse proxy with `KC_PROXY=edge`/`KC_HOSTNAME=...`. The Lyo provider only requires HTTPS in non-loopback deployments. Confirm with `curl https://sso.example.com/realms/lyo/.well-known/openid-configuration` from the API host before flipping any traffic over."
+      "body": "Replace localhost URLs with the deployed equivalents and add more `Valid redirect URIs` on the Keycloak client, one per environment:\n\n- Staging: `https://api-staging.example.com/auth/callback/keycloak:lyo` + `LyoSso:AllowedReturnOrigins` includes `https://app-staging.example.com`\n- Production: `https://api.example.com/auth/callback/keycloak:lyo` + `LyoSso:AllowedReturnOrigins` includes `https://app.example.com`\n\nProduction Keycloak must terminate TLS, either directly via `KC_HTTPS_*` settings or behind a reverse proxy with `KC_PROXY=edge`/`KC_HOSTNAME=...`. The Lyo provider only requires HTTPS in non-loopback deployments. Confirm with `curl https://sso.example.com/realms/lyo/.well-known/openid-configuration` from the API host before flipping any traffic over."
     }
   ],
   "links": [],
@@ -211,7 +211,23 @@
       ]
     },
     {
+      "name": "Lyo.Authentication.Sso",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -260,6 +276,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",

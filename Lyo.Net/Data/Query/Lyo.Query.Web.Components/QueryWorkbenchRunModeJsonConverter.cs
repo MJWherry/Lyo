@@ -3,37 +3,23 @@ using System.Text.Json.Serialization;
 
 namespace Lyo.Query.Web.Components;
 
-/// <summary>Serializes <see cref="QueryWorkbenchRunMode" />; accepts legacy <c>QuerySelect</c> and numeric ordinals.</summary>
+/// <summary>Serializes <see cref="QueryWorkbenchRunMode" /> as <c>Query</c>, <c>QueryProject</c>, or <c>RootQuery</c>.</summary>
 public sealed class QueryWorkbenchRunModeJsonConverter : JsonConverter<QueryWorkbenchRunMode>
 {
     public override QueryWorkbenchRunMode Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        switch (reader.TokenType) {
-            case JsonTokenType.String: {
-                var s = reader.GetString();
-                if (string.IsNullOrEmpty(s))
-                    return QueryWorkbenchRunMode.Query;
+        if (reader.TokenType != JsonTokenType.String)
+            throw new JsonException($"Unrecognized {nameof(QueryWorkbenchRunMode)} value.");
 
-                if (s.Equals("Query", StringComparison.OrdinalIgnoreCase) || s.Equals("QueryConcrete", StringComparison.OrdinalIgnoreCase))
-                    return QueryWorkbenchRunMode.Query;
+        var name = reader.GetString();
+        if (string.Equals(name, "Query", StringComparison.OrdinalIgnoreCase))
+            return QueryWorkbenchRunMode.Query;
 
-                if (s.Equals("QuerySelect", StringComparison.OrdinalIgnoreCase) || s.Equals("QueryProject", StringComparison.OrdinalIgnoreCase))
-                    return QueryWorkbenchRunMode.QueryProject;
+        if (string.Equals(name, "QueryProject", StringComparison.OrdinalIgnoreCase))
+            return QueryWorkbenchRunMode.QueryProject;
 
-                if (s.Equals("RootQuery", StringComparison.OrdinalIgnoreCase) || s.Equals("QueryRoot", StringComparison.OrdinalIgnoreCase))
-                    return QueryWorkbenchRunMode.RootQuery;
-
-                break;
-            }
-            case JsonTokenType.Number: {
-                var n = reader.GetInt32();
-                return n switch {
-                    1 => QueryWorkbenchRunMode.QueryProject,
-                    2 => QueryWorkbenchRunMode.RootQuery,
-                    var _ => QueryWorkbenchRunMode.Query
-                };
-            }
-        }
+        if (string.Equals(name, "RootQuery", StringComparison.OrdinalIgnoreCase))
+            return QueryWorkbenchRunMode.RootQuery;
 
         throw new JsonException($"Unrecognized {nameof(QueryWorkbenchRunMode)} value.");
     }

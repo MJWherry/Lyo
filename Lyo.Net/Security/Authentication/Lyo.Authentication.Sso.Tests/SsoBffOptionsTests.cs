@@ -7,7 +7,7 @@ namespace Lyo.Authentication.Sso.Tests;
 public sealed class SsoBffOptionsTests
 {
     [Fact]
-    public void Bind_LyoSsoAbsent_ReadsLyoOidcBff()
+    public void Bind_LyoOidcBff_LeavesDefaults()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
             ["LyoOidcBff:AllowedReturnOrigins:0"] = "https://app.example",
@@ -21,9 +21,9 @@ public sealed class SsoBffOptionsTests
         services.AddLyoSso(configuration);
         using var provider = services.BuildServiceProvider();
         var options = provider.GetRequiredService<SsoBffOptions>();
-        Assert.Equal(["https://app.example"], options.AllowedReturnOrigins);
-        Assert.Equal("/app", options.DefaultReturnUrl);
-        Assert.Equal(TimeSpan.FromSeconds(45), options.HandoffCodeTtl);
+        Assert.Empty(options.AllowedReturnOrigins);
+        Assert.Equal("/", options.DefaultReturnUrl);
+        Assert.Equal(TimeSpan.FromSeconds(30), options.HandoffCodeTtl);
         Assert.Equal(ExternalLoginPolicy.RequireExistingUser, provider.GetRequiredService<ExternalLoginOptions>().Policy);
     }
 

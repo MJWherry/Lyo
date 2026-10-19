@@ -62,11 +62,8 @@ public class CompressionAlgorithmJsonConverterTests
     [Theory]
     [InlineData("{\"Name\":\"GZip\",\"Extension\":\".gz\"}")]
     [InlineData("{\"name\":\"GZip\",\"extension\":\".gz\"}")]
-    public void Deserialize_LegacyObjectFormat_ResolvesRegisteredAlgorithm(string json)
-    {
-        var algorithm = JsonSerializer.Deserialize<CompressionAlgorithm>(json, Options);
-        Assert.Same(CompressionAlgorithm.GZip, algorithm);
-    }
+    public void Deserialize_ObjectFormat_Throws(string json)
+        => Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<CompressionAlgorithm>(json, Options));
 
     [Fact]
     public void NestedProperty_RoundTrip_PreservesCompressionAlgorithm()
@@ -81,12 +78,10 @@ public class CompressionAlgorithmJsonConverterTests
     }
 
     [Fact]
-    public void NestedProperty_Deserialize_LegacyObjectCompressionAlgorithm()
+    public void NestedProperty_Deserialize_ObjectCompressionAlgorithm_Throws()
     {
         const string json = """{"IsCompressed":true,"CompressionAlgorithm":{"Name":"GZip","Extension":".gz"}}""";
-        var dto = JsonSerializer.Deserialize<MetadataWithCompression>(json, Options);
-        Assert.NotNull(dto);
-        Assert.Same(CompressionAlgorithm.GZip, dto.CompressionAlgorithm);
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<MetadataWithCompression>(json, Options));
     }
 
     private sealed record MetadataWithCompression(bool IsCompressed, CompressionAlgorithm? CompressionAlgorithm);

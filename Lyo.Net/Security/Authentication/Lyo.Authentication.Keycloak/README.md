@@ -127,7 +127,7 @@ Role-to-scope mapping must live in JSON. User-secrets can hold the keys but the 
 `Lyo.TestApi/appsettings.Development.json` or to the secrets file directly:
 
 Also seed the JWT issuer/audience and Gateway allow-list as documented in the Google walkthrough (`LyoJwt:Issuer`, `LyoJwt:Audience`, `LyoJwt:SigningKeyId`,
-`LyoOidcBff:AllowedReturnOrigins`). See [`Lyo.Authentication.Google/README.md` sections 2 and 3](../Lyo.Authentication.Google/README.md#2-wire-the-secrets-into-lyotestapi) for the same
+`LyoSso:AllowedReturnOrigins`). See [`Lyo.Authentication.Google/README.md` sections 2 and 3](../Lyo.Authentication.Google/README.md#2-wire-the-secrets-into-lyotestapi) for the same
 block. It is identical no matter which IdP you pair Lyo with.
 
 ## 5. Run everything and exercise the flow
@@ -145,7 +145,7 @@ block. It is identical no matter which IdP you pair Lyo with.
 | `Invalid client or Invalid client credentials` | Client secret mismatch (regenerate in Keycloak's *Credentials* tab and re-set the user-secret), or the realm name differs from `KeycloakAuth:Realm`. |
 | Login succeeds but `LinkedIdentity.Scopes` is empty | Either the user has no realm roles assigned, none of those roles are in `RolesToScopes`, or the `roles` scope wasn't requested. Lyo requests `roles` by default. That last case only happens if you've overridden `KeycloakAuth:Scopes`. |
 | `Realm does not exist` from Lyo on startup | `KeycloakAuth:BaseUrl` includes a `/realms/...` segment. Keep `BaseUrl` at the server root (e.g. `http://localhost:8080`); the provider appends `/realms/{Realm}` itself. |
-| Callback redirects to the API origin instead of the Gateway | Same root cause as in the Google guide. Gateway origin isn't in `LyoOidcBff:AllowedReturnOrigins`. |
+| Callback redirects to the API origin instead of the Gateway | Same root cause as in the Google guide. Gateway origin isn't in `LyoSso:AllowedReturnOrigins`. |
 | Keycloak loses all state between restarts | Expected with `start-dev` (in-memory dev DB). For persistence, swap the run command for `start` with `KC_DB=postgres`, mount a Postgres volume, and supply real DB credentials. |
 
 ## 7. Peer vs broker (recap)
@@ -157,8 +157,8 @@ block. It is identical no matter which IdP you pair Lyo with.
 
 Replace localhost URLs with the deployed equivalents and add more `Valid redirect URIs` on the Keycloak client, one per environment:
 
-- Staging: `https://api-staging.example.com/auth/callback/keycloak:lyo` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app-staging.example.com`
-- Production: `https://api.example.com/auth/callback/keycloak:lyo` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app.example.com`
+- Staging: `https://api-staging.example.com/auth/callback/keycloak:lyo` + `LyoSso:AllowedReturnOrigins` includes `https://app-staging.example.com`
+- Production: `https://api.example.com/auth/callback/keycloak:lyo` + `LyoSso:AllowedReturnOrigins` includes `https://app.example.com`
 
 Production Keycloak must terminate TLS, either directly via `KC_HTTPS_*` settings or behind a reverse proxy with `KC_PROXY=edge`/`KC_HOSTNAME=...`. The Lyo provider only requires HTTPS in non-loopback deployments. Confirm with `curl https://sso.example.com/realms/lyo/.well-known/openid-configuration` from the API host before flipping any traffic over.
 
@@ -172,13 +172,16 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Authentication` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
+- `Lyo.Authentication.Sso` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)

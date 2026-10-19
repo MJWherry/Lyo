@@ -55,18 +55,13 @@ public class CachePayloadFusionSerializerTests
     }
 
     [Fact]
-    public void Deserialize_LegacyJsonEntry_RoundtripsValue()
+    public void Deserialize_RawJsonEntry_Throws()
     {
         var (serializer, _) = CreateSerializer(autoCompress: false, minSize: 1024);
         var entry = new FusionCacheDistributedEntry<string>("hello-legacy", 3, 4, ["legacy-tag"], null);
         var json = JsonSerializer.SerializeToUtf8Bytes(entry);
         json[0].ShouldBe((byte)'{');
-        var roundtrip = serializer.Deserialize<FusionCacheDistributedEntry<string>>(json);
-        roundtrip.ShouldNotBeNull();
-        roundtrip.Value.ShouldBe("hello-legacy");
-        roundtrip.Timestamp.ShouldBe(3);
-        roundtrip.LogicalExpirationTimestamp.ShouldBe(4);
-        roundtrip.Tags.ShouldBe(["legacy-tag"]);
+        Assert.Throws<InvalidDataException>(() => serializer.Deserialize<FusionCacheDistributedEntry<string>>(json));
     }
 
     private static (CachePayloadFusionSerializer Serializer, ICachePayloadCodec Codec) CreateSerializer(bool autoCompress, int minSize)
