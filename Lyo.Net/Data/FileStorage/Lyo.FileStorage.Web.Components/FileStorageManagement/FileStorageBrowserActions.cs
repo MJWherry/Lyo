@@ -2,7 +2,9 @@ using Lyo.Api.FileStorage.Models;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
+using Lyo.FileStorage.Web.Components;
 using Lyo.FileStorage.Web.Components.FileAccessLink;
+using Lyo.FileStorage.Web.Components.FileMetadata;
 using Lyo.Web.Components.Dialog;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -74,6 +76,38 @@ public sealed class FileStorageBrowserActions
             { d => d.PublicBaseUrl, _host.ResolvePublicBaseUrl() }
         };
         await _host.DialogService.ShowAsync<FileAccessLinkDialog>("Create access link", parameters, LyoDialogPresets.Medium);
+    }
+
+    /// <summary>Opens the image, audio, or video viewer for an active catalog file. Other types are ignored.</summary>
+    public Task PreviewFromRowAsync(object? row)
+    {
+        if (!TryGetActiveFileId(row, "Deleted files cannot be previewed.", out var fileId))
+            return Task.CompletedTask;
+
+        var kind = FileMediaPreview.PreviewKind(FileStorageColorHelper.ResolveFileType(row));
+        return kind is null
+            ? Task.CompletedTask
+            : PreviewAsync(fileId, kind.Value, FileStorageGridRowHelper.GetOriginalFileNameFromRow(row));
+    }
+
+    /// <summary>
+    /// Opens <see cref="FileMediaPreviewDialog" /> against <c>files/{id}/download?inline=true</c>.
+    /// When the API base URL is missing, reports the same warning as download.
+    /// </summary>
+    public async Task PreviewAsync(Guid fileId, FileMediaPreviewKind kind, string? fileName)
+    {
+        var url = _host.GetApiAbsoluteUrl(_host.FilesApi(FileMediaPreview.InlineDownloadPath(fileId)));
+        if (url == null) {
+            _host.SetStatus("ApiClient:BaseUrl is not configured; cannot download.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<FileMediaPreviewDialog> {
+            { d => d.Kind, kind },
+            { d => d.Src, url },
+            { d => d.FileName, fileName }
+        };
+        await _host.DialogService.ShowAsync<FileMediaPreviewDialog>(string.IsNullOrWhiteSpace(fileName) ? "Preview" : fileName, parameters, LyoDialogPresets.Large);
     }
 
     /// <summary>Opens the API download endpoint, which streams bytes through the host (decrypt/decompress). Direct-to-bucket URLs are access-link or presigned-read only.</summary>

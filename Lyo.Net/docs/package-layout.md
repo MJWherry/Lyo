@@ -223,6 +223,7 @@ Stays under `Communication/Translation/`.
 | `Lyo.Algorithms.Client` | E | `Apps/Algorithms/` | - | - | Typed HTTP client over the catalog |
 | `Lyo.Story.Api` | E | `Apps/Story/` | - | - | HTTP over `Plugins/Story`. Req/Res CRUD plus graph and play |
 | `Lyo.Story.Client` | E | `Apps/Story/` | - | - | Typed HTTP client for graph and play. Query stays on `IApiClient` |
+| `Lyo.FantasyFootball.Api` | E | `Apps/FantasyFootball/` | - | - | HTTP over `Plugins/FantasyFootball`. Syncs chats and trades through the ESPN client |
 | `Lyo.Leaderboard.Api` | E | `Apps/Leaderboard/` | - | - | HTTP over `Plugins/Leaderboard` |
 | `Lyo.Leaderboard.Api.Models` | E | `Apps/Leaderboard/` | - | - | Wire DTOs |
 | `Lyo.Leaderboard.Api.Client` | E | `Apps/Leaderboard/` | - | - | Typed HTTP client |
@@ -289,6 +290,7 @@ Drop-in modules. No `Build*Group` route mapping.
 | `Lyo.Recipe`, `.Models`, `.Postgres`, `.FileStorage`, `.Web.Components`, `.Seed`, `.Tests` | E | `Plugins/Recipe/` | - | - | HTTP is `Apps/Recipe`. `.Seed` writes a category, ingredients, recipes, lines, and steps |
 | `Lyo.Ledger`, `.Postgres`, `.Seed` | E | `Plugins/Ledger/` | - | - | Double-entry CoA/journals. HTTP is `Apps/Ledger`. `.Seed` writes balanced journals |
 | `Lyo.Law`, `.Models`, `.Postgres`, `.Postgres.Tests`, `.Web.Components` | E | `Plugins/Law/` | - | - | State statutes, any US state. Schema `law`. Jurisdiction `US` is rejected. HTTP is `Apps/Law` |
+| `Lyo.FantasyFootball`, `.Postgres`, `.Postgres.Tests`, `.Web.Components`, `.Web.Components.Tests` | E | `Plugins/FantasyFootball/` | - | - | Chats and trades. Schema `fantasy_football`. HTTP is `Apps/FantasyFootball`. The plugin does not reference the ESPN client |
 | `Lyo.Leaderboard`, `.Postgres`, `.Postgres.Tests`, `.Tests`, `.Web.Components` | E | `Plugins/Leaderboard/` | - | - | Boards, membership, invites, entries. Schema `leaderboard`. Entry points come from `Lyo.Algorithms`. HTTP is `Apps/Leaderboard` |
 | `Lyo.Billing`, `.Postgres`, `.Seed` | E | `Plugins/Billing/` | - | - | Invoices post journals. HTTP is `Apps/Billing`. No PDF. `.Seed` writes draft invoices |
 | `Lyo.Job.Models`, `.Postgres`, `.Web.Components`, `.Seed`, `.Tests` | E | `Plugins/Job/` | - | - | Store/domain. HTTP/process stay in `Apps/Job`. `.Seed` writes disabled definitions |

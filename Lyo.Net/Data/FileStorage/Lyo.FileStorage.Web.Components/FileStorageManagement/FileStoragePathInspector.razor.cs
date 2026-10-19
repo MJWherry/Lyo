@@ -1,5 +1,7 @@
 using Lyo.Api.FileStorage.Models;
+using Lyo.Common.Metadata.Records;
 using Lyo.FileMetadataStore.Models;
+using Lyo.FileStorage.Web.Components;
 using Lyo.IO.FileSystem;
 using Lyo.IO.Temp.Models;
 using Lyo.Web.Components.FileUpload;
@@ -329,6 +331,9 @@ public partial class FileStoragePathInspector : IAsyncDisposable
 
     private bool CatalogActionsEnabled => InCatalog && Selected is { IsDeleted: false };
 
+    private bool CanPreview
+        => CatalogActionsEnabled && FileMediaPreview.PreviewKind(FileTypeInfo.FromFilePath(Selected?.Name)) is not null;
+
     private bool PhysicalActionsEnabled
         => IsPhysicalOnly && Selected is { IsDeleted: false } && !string.IsNullOrEmpty(Selected.PhysicalKey);
 
@@ -341,6 +346,15 @@ public partial class FileStoragePathInspector : IAsyncDisposable
 
     private Task ViewMetadataAsync()
         => InCatalog && Selected?.FileId is { } id ? Actions.ViewAsync(id) : Task.CompletedTask;
+
+    private Task PreviewAsync()
+    {
+        if (!CanPreview || Selected?.FileId is not { } id)
+            return Task.CompletedTask;
+
+        var kind = FileMediaPreview.PreviewKind(FileTypeInfo.FromFilePath(Selected.Name));
+        return kind is null ? Task.CompletedTask : Actions.PreviewAsync(id, kind.Value, Selected.Name);
+    }
 
     private Task AccessLinkAsync()
         => CatalogActionsEnabled && Selected?.FileId is { } id ? Actions.AccessLinkAsync(id, Selected.Name) : Task.CompletedTask;

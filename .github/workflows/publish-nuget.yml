@@ -6,8 +6,8 @@
 # Setup: docs/publishing.md and docs/ci.md
 #
 # Do not attach a GitHub Environment to the OIDC login job. Leave the
-# nuget.org policy Environment empty. No required-reviewer gate — solo
-# pushes to main publish without waiting.
+# nuget.org policy Environment empty. No required-reviewer gate — a
+# manual release publishes without waiting. A push does not start this workflow.
 
 name: Publish - NuGet
 run-name: Publish - ${{ github.ref_name }} - v${{ inputs.version }}

@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-10-07T00:31:52.491800+00:00",
-  "packageCount": 410,
+  "packageCount": 414,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -4277,6 +4277,47 @@
       "topic": "Lyo.Authentication",
       "name": "Lyo.Authentication.Sso",
       "tagline": "Protocol-neutral SSO host. Browser handoff, `/auth/*` endpoints, and the one-time user link plus JWT mint shared by OpenID Connect and SAML.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FantasyFootball",
+      "area": "Plugins",
+      "topic": "Lyo.FantasyFootball",
+      "name": "Lyo.FantasyFootball",
+      "tagline": "Records and store contract for fantasy football chats and trades.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FantasyFootball.Postgres",
+      "area": "Plugins",
+      "topic": "Lyo.FantasyFootball",
+      "name": "Lyo.FantasyFootball.Postgres",
+      "tagline": "PostgreSQL store for fantasy football chats and trades.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FantasyFootball.Web.Components",
+      "area": "Plugins",
+      "topic": "Lyo.FantasyFootball",
+      "name": "Lyo.FantasyFootball.Web.Components",
+      "tagline": "Blazor workbench for fantasy football chats and trades.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.FantasyFootball.Api",
+      "area": "Apps",
+      "topic": "Lyo.FantasyFootball",
+      "name": "Lyo.FantasyFootball.Api",
+      "tagline": "HTTP API that syncs fantasy football chats and trades.",
       "targetFrameworks": [
         "net10.0"
       ]

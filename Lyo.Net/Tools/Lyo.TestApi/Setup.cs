@@ -22,6 +22,7 @@ using Lyo.Podcast.Postgres.Database;
 using Lyo.Video;
 using Lyo.Video.Postgres.Database;
 using Lyo.Comic.Api;
+using Lyo.FantasyFootball.Api;
 using Lyo.Algorithms.Api;
 using Lyo.Story.Api;
 using Lyo.Leaderboard.Api;
@@ -90,6 +91,7 @@ public static class Setup
             app.MapCacheEndpoints("Cache", auth: EndpointAuth.Anonymous());
             app.MapConfigApiEndpoints(requireAuthentication: false);
             app.MapLeaderboardApiEndpoints(requireAuthentication: false);
+            app.MapFantasyFootballApi(allowAnonymous: true);
             return app;
         }
 

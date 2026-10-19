@@ -414,6 +414,10 @@
         <Project Path="Apps/Leaderboard/Lyo.Leaderboard.Api/Lyo.Leaderboard.Api.csproj" />
         <Project Path="Apps/Leaderboard/Lyo.Leaderboard.Api.Client/Lyo.Leaderboard.Api.Client.csproj" />
     </Folder>
+    <Folder Name="/Apps/FantasyFootball/">
+        <Project Path="Apps/FantasyFootball/Lyo.FantasyFootball.Api/Lyo.FantasyFootball.Api.csproj" />
+        <Project Path="Apps/FantasyFootball/Lyo.FantasyFootball.Api.Tests/Lyo.FantasyFootball.Api.Tests.csproj" />
+    </Folder>
     <Folder Name="/Apps/Billing/">
         <Project Path="Apps/Billing/Lyo.Billing.Api/Lyo.Billing.Api.csproj" />
         <Project Path="Apps/Billing/Lyo.Billing.Client/Lyo.Billing.Client.csproj" />
@@ -471,6 +475,13 @@
         <Project Path="Plugins/Comment/Lyo.Comment/Lyo.Comment.csproj" />
         <Project Path="Plugins/Comment/Lyo.Comment.Seed/Lyo.Comment.Seed.csproj" />
         <Project Path="Plugins/Comment/Lyo.Comment.Seed.Tests/Lyo.Comment.Seed.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Plugins/FantasyFootball/">
+        <Project Path="Plugins/FantasyFootball/Lyo.FantasyFootball/Lyo.FantasyFootball.csproj" />
+        <Project Path="Plugins/FantasyFootball/Lyo.FantasyFootball.Postgres/Lyo.FantasyFootball.Postgres.csproj" />
+        <Project Path="Plugins/FantasyFootball/Lyo.FantasyFootball.Postgres.Tests/Lyo.FantasyFootball.Postgres.Tests.csproj" />
+        <Project Path="Plugins/FantasyFootball/Lyo.FantasyFootball.Web.Components/Lyo.FantasyFootball.Web.Components.csproj" />
+        <Project Path="Plugins/FantasyFootball/Lyo.FantasyFootball.Web.Components.Tests/Lyo.FantasyFootball.Web.Components.Tests.csproj" />
     </Folder>
     <Folder Name="/Plugins/Favorite/">
         <Project Path="Plugins/Favorite/Lyo.Favorite.Postgres/Lyo.Favorite.Postgres.csproj" />

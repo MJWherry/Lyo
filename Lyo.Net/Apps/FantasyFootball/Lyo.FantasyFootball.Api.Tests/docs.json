@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.FantasyFootball.Api.Tests",
+  "name": "Lyo.FantasyFootball.Api.Tests",
+  "area": "Apps",
+  "tagline": "API tests for fantasy football refresh, chat, and trades.",
+  "description": "Postgres fixture plus a recording HTTP handler standing in for ESPN. Refresh persists groups, messages, and trades. Reads of a stored league do not call ESPN.",
+  "features": [
+    "Posting a topic message and a direct message stores the user text.",
+    "Proposing a trade stores both sides.",
+    "Accepting a trade posts an accept with no items."
+  ],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/FantasyFootball/Lyo.FantasyFootball.Api.Tests/README.md"
+}

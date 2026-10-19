@@ -35,6 +35,8 @@ using Lyo.Video.Postgres;
 using Lyo.Video.Postgres.Database;
 using Lyo.Google.Youtube.Client;
 using Lyo.Comic.Api;
+using Lyo.Espn.Fantasy.Football.Client;
+using Lyo.FantasyFootball.Api;
 using Lyo.Comic.Postgres;
 using Lyo.Algorithms.Api;
 using Lyo.Algorithms.Postgres;
@@ -235,6 +237,8 @@ builder.Services.AddComicApi(new PostgresComicOptions { ConnectionString = connS
 builder.Services.AddStoryApi(new PostgresStoryOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddAlgorithmsApi(new PostgresAlgorithmOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddLeaderboardApiForWorkbench(connStr, "http://localhost:5251");
+builder.Services.AddFantasyFootballClientFromConfiguration(builder.Configuration);
+builder.Services.AddFantasyFootballApiForWorkbench(connStr);
 builder.Services.AddHomeInventoryApi(new PostgresHomeInventoryOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddRecipeApi(new PostgresRecipeOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddLedgerApi(new PostgresLedgerOptions { ConnectionString = connStr, EnableAutoMigrations = true });

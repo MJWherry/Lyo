@@ -1,15 +1,13 @@
 # Dispatcher: build / pack / publish Lyo libraries.
-# Auto-runs only on push to main (release → nuget.org).
-# Every other branch, including dev, is Actions → Run workflow.
-# Tests run from _test.yml on workflow_dispatch when channel=preview (Category=Fast). Never auto on main/release.
+# Manual only. A push, including main, does not build or publish.
+# Run it from Actions → Run workflow.
+# Tests run from _test.yml on workflow_dispatch when channel=preview (Category=Fast). Never on main/release.
 name: CI - Pipeline
 # Same shape as job titles (CI - {branch} - v{version}). run-name is frozen at
 # dispatch, so empty version uses preview.{run_number} (off main) or #{run_number}.
 run-name: "${{ format('CI - {0} - {1}{2}', github.ref_name, github.event_name == 'workflow_dispatch' && inputs.version && format('v{0}{1}', inputs.version, (github.ref_name != 'main' || inputs.channel == 'preview') && !contains(inputs.version, '-') && format('-preview.{0}', github.run_number) || '') || github.ref_name != 'main' && format('preview.{0}', github.run_number) || format('#{0}', github.run_number), github.event_name == 'workflow_dispatch' && inputs.dry_run && ' dry-run' || '') }}"
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       scope:

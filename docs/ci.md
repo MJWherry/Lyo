@@ -2,31 +2,31 @@
 
 Lyo is a library monorepo. Consumer apps live in other repos and restore `Lyo.*` from nuget.org (stable or prerelease). There is no in-repo app deploy.
 
-The dispatcher is [CI - Pipeline](../.github/workflows/pipeline.yml). Run it from **Actions → CI - Pipeline → Run workflow**, or merge to `main` for an automatic release.
+The dispatcher is [CI - Pipeline](../.github/workflows/pipeline.yml). Run it from **Actions → CI - Pipeline → Run workflow**. A push, including a merge to `main`, does not build or publish.
 
 ## Branch model
 
-Daily work is on `dev`. Feature and agent branches PR into `dev`. Promote `dev` to `main` when you want a public stable release.
+Daily work is on `dev`. Feature and agent branches PR into `dev`. Promote `dev` to `main` when that commit is the stable line, then run the workflow on `main` to publish.
 
 | Branch | Auto-run? | Manual Run workflow | Default channel / destination |
 |--------|-----------|---------------------|-------------------------------|
-| `main` | Yes, `on: push` | Yes | `release` → nuget.org |
+| `main` | No | Yes | `release` → nuget.org |
 | `dev` | No | Yes | `preview` → nuget.org |
 | any other branch | No | Yes | `preview` → artifacts only (`none`) |
 
-There is no `pull_request` workflow and no auto-build on `dev`. Agents (or you) trigger `workflow_dispatch` when a preview pack is needed. Nothing in this repo requires a review or a green check to merge a PR or push to `main`.
+There is no `pull_request` workflow and no auto-build on any branch. Agents (or you) trigger `workflow_dispatch` when a preview pack or a stable release is needed. Nothing in this repo requires a review or a green check to merge a PR or push to `main`.
 
-### Version on auto-`main`
+### Version on `main`
 
-A push to `main` has no version text box. nuget.org versions are immutable, so the job picks one:
+Run workflow on `main` with an empty version. nuget.org versions are immutable, so the job picks one:
 
 1. If `HEAD` is tagged `vX.Y.Z`, use `X.Y.Z`.
 2. Else patch-bump the latest `v*` tag (`v1.2.3` → `1.2.4`).
 3. If there are no tags, the job **fails**. It will not publish `1.0.0`.
 
-Auto-`main` also defaults to `scope=changed` since that last tag. Use Run workflow on `main` if you need `all` or `named`.
+A `main` run also defaults to `scope=changed` since that last tag. Set `all` or `named` when you need a wider pack set.
 
-After a successful nuget.org push on `main` (`channel=release`), the pipeline tags `HEAD` as `v{version}` so the next auto-`main` run patch-bumps from what actually shipped. It does not tag previews, dry runs, or a failed push. If `v{version}` already points at `HEAD`, the tag job is a no-op. It will not move a tag that points at another commit.
+After a successful nuget.org push on `main` (`channel=release`), the pipeline tags `HEAD` as `v{version}` so the next `main` run patch-bumps from what actually shipped. It does not tag previews, dry runs, or a failed push. If `v{version}` already points at `HEAD`, the tag job is a no-op. It will not move a tag that points at another commit.
 
 Each run writes a Markdown report to the Actions **Summary** tab, rendered through the same JSON-to-Markdown path as package READMEs (`scripts/docs/markdown.py`). Resolve posts the plan as soon as config is known: which libraries are in the pack set, the version/channel/destination, and the commits since the change window. After every job finishes, the Summary job posts what actually happened: a one-line verdict, per-package nupkg sizes and nuget.org / GitHub Packages outcomes, and why skipped jobs did not run.
 
@@ -56,7 +56,7 @@ Job titles look like `Pack CI - dev - v1.2.0-preview.47`. The workflow `name` st
 
 ## Feeds
 
-- **nuget.org release** (`1.2.0`). Auto-`main` or dispatch on `main` with `channel=release`. Publishes immediately (no approval environment). The OIDC login job has **no** GitHub Environment so the Trusted Publishing policy can keep Environment empty.
+- **nuget.org release** (`1.2.0`). Dispatch on `main` with `channel=release` (the default on `main`). Publishes immediately (no approval environment). The OIDC login job has **no** GitHub Environment so the Trusted Publishing policy can keep Environment empty.
 - **nuget.org preview** (`1.2.0-preview.N`). Dispatch on `dev` (default). Apps must use `--prerelease` or an exact version.
 - **GitHub Packages.** Optional (`destination=github` or `both`).
 - **Actions artifacts.** Always uploaded after a successful pack. The nuget.org / GitHub Packages push fails if every nupkg already exists (409 Conflict) or any package hits a non-duplicate error.
@@ -83,7 +83,7 @@ GitHub Packages (`https://nuget.pkg.github.com/OWNER/index.json`) is optional if
 The test job is **commented out** in `pipeline.yml`. When you enable it:
 
 - Run only on `workflow_dispatch` with `channel=preview`.
-- Do not run on auto-`main` or `channel=release`.
+- Do not run on `channel=release`.
 - Do not add `on: pull_request` (that would auto-build branches).
 
 Uncomment the `test` job in `pipeline.yml` and drop `if: false`.
@@ -92,7 +92,7 @@ Uncomment the `test` job in `pipeline.yml` and drop `if: false`.
 
 1. Create a `dev` branch from `main` if it does not exist. Do **not** turn on required reviews, required status checks, or “no direct push” unless you want those later — this pipeline does not depend on them.
 2. Keep the nuget.org Trusted Publishing policy **Environment empty**, workflow file `publish-nuget.yml`, repository `mjwherry/Lyo`. Secret `NUGET_USER` is the nuget.org username. Details: [Publishing](publishing.md).
-3. Tag the current nuget.org line (`v1.0.0` or whatever is live) once so auto-`main` can patch-bump. Later stable nuget.org pushes on `main` create `v{version}` themselves.
+3. Tag the current nuget.org line (`v1.0.0` or whatever is live) once so a `main` release can patch-bump. Later stable nuget.org publishes on `main` create `v{version}` themselves.
 
 ## Local pack
 

@@ -1,0 +1,28 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.FantasyFootball",
+  "name": "Lyo.FantasyFootball",
+  "area": "Plugins",
+  "tagline": "Records and store contract for fantasy football chats and trades.",
+  "description": "League, member, team, roster, conversation, message, and trade records, plus `IFantasyFootballStore`. No Entity Framework and no ESPN types. The HTTP API maps ESPN into these records.",
+  "features": [
+    "`IFantasyFootballStore` upserts a league by ESPN league id and season, then stores chats and trades under that league.",
+    "A roster row is one player for the league scoring period, so the trade form does not call ESPN.",
+    "Conversation members are SWIDs already saved on the league."
+  ],
+  "examples": [
+    {
+      "title": "Save a league",
+      "language": "csharp",
+      "code": "await store.SaveLeagueAsync(league, cancellationToken);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/FantasyFootball/Lyo.FantasyFootball/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

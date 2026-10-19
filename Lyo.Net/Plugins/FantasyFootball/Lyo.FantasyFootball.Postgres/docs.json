@@ -1,0 +1,161 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.FantasyFootball.Postgres",
+  "name": "Lyo.FantasyFootball.Postgres",
+  "area": "Plugins",
+  "tagline": "PostgreSQL store for fantasy football chats and trades.",
+  "description": "Schema `fantasy_football`. `AddPostgresFantasyFootballStore` and `AddPostgresFantasyFootballStoreFromConfiguration` register an `IDbContextFactory` and `IFantasyFootballStore`. Refresh upserts ESPN ids. A later league save does not delete members or teams that were omitted.",
+  "features": [
+    "`AddPostgresFantasyFootballStore` takes options, an action, or configuration.",
+    "Unique keys are the ESPN league and season, member SWID, team id, topic id, message id, and transaction id.",
+    "Roster replace updates a player still on the period and removes only players that left."
+  ],
+  "examples": [
+    {
+      "title": "Register the store",
+      "language": "csharp",
+      "code": "services.AddPostgresFantasyFootballStoreFromConfiguration(configuration);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/FantasyFootball/Lyo.FantasyFootball.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FantasyFootball",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

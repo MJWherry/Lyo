@@ -403,19 +403,38 @@ export function FileTree({
         <div className="lyo-fs-tree">
             <div className="lyo-fs-panel">
                 <div className="lyo-fs-toolbar">
-                    <div className="lyo-fs-toolbar-row lyo-fs-structure">
+                    <div className="lyo-fs-toolbar-row">
                         <LyoButton size="small" variant={blobStructure ? "contained" : "outlined"} onClick={() => setGroupBy([])}>
                             Blob
                         </LyoButton>
-                        {groupBy.map((key, index) => (
-                            <LyoChip
-                                key={`${key}-${index}`}
+                    </div>
+                    <p className="lyo-fs-muted">
+                        {blobStructure
+                            ? "Folders come from PathPrefix."
+                            : "Folders come from the tag grouping. They are not blob prefixes."}
+                    </p>
+                    <div className="lyo-fs-toolbar-row">
+                        <span className="lyo-fs-title">Paths</span>
+                        <LyoTooltip title="Refresh tree">
+                            <IconButton
                                 size="small"
-                                label={key.split(":").join(" ")}
-                                onDelete={() => setGroupBy((current) => current.filter((_, item) => item !== index))}
-                            />
-                        ))}
+                                aria-label="Refresh tree"
+                                onClick={() => {
+                                    setChildren({});
+                                    setExpanded(new Set([treeNodeKey(ROOT)]));
+                                    void loadFolder(null).then(
+                                        (nodes) => setRoots(nodes),
+                                        (err: unknown) => snackbar.show(err instanceof Error ? err.message : "Failed to list folder", "error")
+                                    );
+                                }}
+                            >
+                                <RefreshIcon fontSize="small" />
+                            </IconButton>
+                        </LyoTooltip>
+                    </div>
+                    <div className="lyo-fs-toolbar-row lyo-fs-structure">
                         <select
+                            className="lyo-fs-tag-type"
                             aria-label="Tag type"
                             value={addType}
                             onChange={(event) => {
@@ -475,30 +494,18 @@ export function FileTree({
                             Add
                         </LyoButton>
                     </div>
-                    <p className="lyo-fs-muted">
-                        {blobStructure
-                            ? "Folders come from PathPrefix."
-                            : "Folders come from the tag grouping. They are not blob prefixes."}
-                    </p>
-                    <div className="lyo-fs-toolbar-row">
-                        <span className="lyo-fs-title">Paths</span>
-                        <LyoTooltip title="Refresh tree">
-                            <IconButton
-                                size="small"
-                                aria-label="Refresh tree"
-                                onClick={() => {
-                                    setChildren({});
-                                    setExpanded(new Set([treeNodeKey(ROOT)]));
-                                    void loadFolder(null).then(
-                                        (nodes) => setRoots(nodes),
-                                        (err: unknown) => snackbar.show(err instanceof Error ? err.message : "Failed to list folder", "error")
-                                    );
-                                }}
-                            >
-                                <RefreshIcon fontSize="small" />
-                            </IconButton>
-                        </LyoTooltip>
-                    </div>
+                    {groupBy.length > 0 ? (
+                        <div className="lyo-fs-toolbar-row lyo-fs-tag-list">
+                            {groupBy.map((key, index) => (
+                                <LyoChip
+                                    key={`${key}-${index}`}
+                                    size="small"
+                                    label={key.split(":").join(" ")}
+                                    onDelete={() => setGroupBy((current) => current.filter((_, item) => item !== index))}
+                                />
+                            ))}
+                        </div>
+                    ) : null}
                     <div className="lyo-fs-toolbar-row">
                         <LyoTextField
                             size="small"

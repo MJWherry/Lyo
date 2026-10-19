@@ -1,0 +1,15 @@
+@namespace Lyo.Web.Components.Media
+
+@{
+    var src = MediaSource.Normalize(Src);
+}
+@if (src is null) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">No audio.</MudText>
+}
+else {
+    <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-audio">
+        <audio src="@src" controls="@Controls" preload="metadata" style="width: 100%;">
+            <MediaTracks Captions="@Captions"/>
+        </audio>
+    </LyoElementRoot>
+}

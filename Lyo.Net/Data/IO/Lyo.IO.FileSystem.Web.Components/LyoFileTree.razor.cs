@@ -56,6 +56,10 @@ public partial class LyoFileTree : ComponentBase
     [Parameter]
     public bool EnableFilter { get; set; } = true;
 
+    /// <summary>Rendered immediately above the search field. Hosts use this for controls that should sit with the filter, such as a tag picker and its tag list.</summary>
+    [Parameter]
+    public RenderFragment? AboveFilter { get; set; }
+
     /// <summary>Shows a multi-select toggle and checkboxes for bulk actions in the host.</summary>
     [Parameter]
     public bool EnableSelection { get; set; }

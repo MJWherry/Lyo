@@ -45,6 +45,15 @@
   padding: 0.2rem 0.35rem;
 }
 
+.lyo-fs-tag-type {
+  flex: 1 1 12rem;
+  min-width: 8rem;
+}
+
+.lyo-fs-tag-list {
+  flex-wrap: wrap;
+}
+
 .lyo-fs-title {
   flex: 1 1 auto;
   font-size: 0.95rem;

@@ -44,6 +44,7 @@ public partial class MainLayout
         ]),
         new("Communication", Icons.Material.Filled.Forum, [
             new("Profanity", Constants.Page.Profanity, Icons.Material.Filled.Warning),
+            new("Fantasy football", Constants.Page.FantasyFootball, Icons.Material.Filled.SportsFootball),
             new("SMS / email", Constants.Page.Messaging, Icons.Material.Filled.Textsms),
             new("Translate", Constants.Page.Translation, Icons.Material.Filled.Translate),
             new("TTS", Constants.Page.Tts, Icons.Material.Filled.AudioFile)

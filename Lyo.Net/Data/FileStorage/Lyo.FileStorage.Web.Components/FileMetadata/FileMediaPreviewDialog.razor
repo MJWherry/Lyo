@@ -1,0 +1,17 @@
+@namespace Lyo.FileStorage.Web.Components.FileMetadata
+@using Lyo.FileStorage.Web.Components
+@using Lyo.Web.Components.Media
+
+<LyoDialog>
+    <ChildContent>
+        @if (Kind == FileMediaPreviewKind.Image) {
+            <LyoImage Src="@Src" Alt="@(FileName ?? "")"/>
+        }
+        else if (Kind == FileMediaPreviewKind.Audio) {
+            <LyoAudio Src="@Src"/>
+        }
+        else {
+            <LyoVideo Src="@Src"/>
+        }
+    </ChildContent>
+</LyoDialog>

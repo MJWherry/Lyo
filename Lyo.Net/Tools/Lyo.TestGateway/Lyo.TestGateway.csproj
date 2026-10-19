@@ -62,6 +62,7 @@
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Web.Components.Server\Lyo.Authentication.Web.Components.Server.csproj"/>
         <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Client\Lyo.Endato.Client.csproj"/>
         <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Web.Components\Lyo.Endato.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Plugins\FantasyFootball\Lyo.FantasyFootball.Web.Components\Lyo.FantasyFootball.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Apps\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
         <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Client\Lyo.Authentication.Client.csproj"/>

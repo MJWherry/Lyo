@@ -118,6 +118,7 @@ Ports of `Lyo.Web.Primitives` and the shared parts of `Lyo.Web.Components`. Each
 | Toolbar | `LyoToolbar` (start/middle/end, or `rows` with collapsible extras and toolbar-wide `disabled`), `LyoToolbarRow`, `LyoToolbarGroup`, `LyoToolbarButton`, `LyoToolbarIconButton`, `LyoToolbarMenu`, `LyoToolbarField`, `LyoToolbarSeparator` | |
 | Page layout | `LyoPageHeader`, `LyoBreadcrumbs`, `LyoSection`, `LyoTabSet` (syncs `?tab=` and a stored preference) | `slugTab`, `resolveActiveTab` |
 | State and output | `LyoEmptyState`, `LyoSkeletonPanel`, `LyoResultBoundary`, `LyoCodeBlock`, `LyoLogViewer` | `resolveResultPhase`, `formatResultErrors`, `withLineNumbers`, `filterLogEntries`, `formatLogEntries` |
+| Media | `LyoImage` (src, or poster when src is blank), `LyoAudio`, `LyoVideo` (poster only when src is set; controls default on) | `normalizeMediaSrc`, `imageSrc`, `resolveCaptions`, `htmlCaptionKind` |
 | Responsive | `LyoResponsiveTable`, `LyoRecordCard`, `LyoRecordField`, `useViewport` | `breakpointOf`, `isAtOrBelow` |
 | Overlays | `LyoHoverPopover` (hover delay, pin on click), `LyoExpandableCard`, `LyoDialog` `titleChips` + `debugData` | |
 

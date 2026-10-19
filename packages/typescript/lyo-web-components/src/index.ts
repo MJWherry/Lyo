@@ -99,6 +99,10 @@ export { LyoCodeBlock } from "./display/LyoCodeBlock.js";
 export type { LyoCodeBlockProps } from "./display/LyoCodeBlock.js";
 export { LyoExpandableCard } from "./display/LyoExpandableCard.js";
 export type { LyoExpandableCardProps } from "./display/LyoExpandableCard.js";
+export { normalizeMediaSrc, imageSrc, resolveCaptions, htmlCaptionKind, MediaCaptionKinds } from "./media/media.js";
+export type { MediaCaptionKind, MediaCaptionTrack } from "./media/media.js";
+export { LyoImage, LyoAudio, LyoVideo } from "./media/LyoMedia.js";
+export type { LyoImageProps, LyoAudioProps, LyoVideoProps } from "./media/LyoMedia.js";
 
 export {
   LyoToolbar,

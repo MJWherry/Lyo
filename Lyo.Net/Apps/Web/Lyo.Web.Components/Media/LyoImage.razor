@@ -1,0 +1,13 @@
+@namespace Lyo.Web.Components.Media
+
+@{
+    var src = MediaSource.ImageSrc(Src, Poster);
+}
+@if (src is null) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">No image.</MudText>
+}
+else {
+    <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-image">
+        <img src="@src" alt="@Alt" style="width: 100%; object-fit: contain;"/>
+    </LyoElementRoot>
+}

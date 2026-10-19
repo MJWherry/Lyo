@@ -1,0 +1,28 @@
+{
+  "name": "lyo-fantasy-football-api-client",
+  "version": "0.1.0",
+  "description": "HTTP client for the Lyo Fantasy Football plugin API.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "lyo-api-client": "file:../lyo-api-client"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.0"
+  }
+}

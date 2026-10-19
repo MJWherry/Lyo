@@ -138,6 +138,7 @@
                 }
                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Info" Disabled="@(!InCatalog)" OnClick="ViewMetadataAsync">View metadata</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!CanPreview)" OnClick="PreviewAsync">Preview</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Link" Disabled="@(!CatalogActionsEnabled)" OnClick="AccessLinkAsync">Access link…</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" Disabled="@(!CanDownload)" OnClick="DownloadAsync">Download</MudButton>
                     @if (AllowPrefixChanges) {

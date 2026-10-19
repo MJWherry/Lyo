@@ -46,7 +46,17 @@ public class FantasyFootballClient : LyoHttpClient
         LeagueDirectory = new LeagueIndex(league);
     }
 
-    internal string? Swid => _options.Swid;
+    internal string? Swid => Cookie(RequestCredentials.Value?.Swid, _options.Swid);
+
+    private static readonly AsyncLocal<FantasyFootballCredentialsOverride?> RequestCredentials = new();
+
+    /// <summary>Uses these ESPN cookies on the current async flow. A blank value keeps the option cookie. Dispose when the call finishes.</summary>
+    public IDisposable UseCredentials(string? espnS2, string? swid)
+    {
+        var previous = RequestCredentials.Value;
+        RequestCredentials.Value = new FantasyFootballCredentialsOverride(espnS2, swid);
+        return new RestoreCredentials(previous);
+    }
 
     internal string NewsBaseUrl => _options.NewsBaseUrl;
 
@@ -109,7 +119,7 @@ public class FantasyFootballClient : LyoHttpClient
         ValidateSeason(seasonId, nameof(BuildChatMessagePath));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.CommunicationBaseUrl);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(topicId);
-        var swid = _options.Swid;
+        var swid = Swid;
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(swid);
         var topic = Uri.EscapeDataString(topicId);
         var source = Uri.EscapeDataString(swid);
@@ -133,14 +143,30 @@ public class FantasyFootballClient : LyoHttpClient
 
     private void ApplyAuthentication(HttpRequestMessage request)
     {
+        var current = RequestCredentials.Value;
+        var espnS2 = Cookie(current?.EspnS2, _options.EspnS2);
+        var swid = Cookie(current?.Swid, _options.Swid);
         var cookies = new List<string>();
-        if (!string.IsNullOrWhiteSpace(_options.EspnS2))
-            cookies.Add($"espn_s2={_options.EspnS2}");
+        if (!string.IsNullOrWhiteSpace(espnS2))
+            cookies.Add($"espn_s2={espnS2}");
 
-        if (!string.IsNullOrWhiteSpace(_options.Swid))
-            cookies.Add($"SWID={_options.Swid}");
+        if (!string.IsNullOrWhiteSpace(swid))
+            cookies.Add($"SWID={swid}");
 
-        if (cookies.Count > 0)
-            request.Headers.TryAddWithoutValidation("Cookie", string.Join("; ", cookies) + ";");
+        if (cookies.Count == 0)
+            return;
+
+        request.Headers.Remove("Cookie");
+        request.Headers.TryAddWithoutValidation("Cookie", string.Join("; ", cookies));
+    }
+
+    private static string? Cookie(string? requestValue, string? configured)
+        => string.IsNullOrWhiteSpace(requestValue) ? configured : requestValue;
+
+    private sealed record FantasyFootballCredentialsOverride(string? EspnS2, string? Swid);
+
+    private sealed class RestoreCredentials(FantasyFootballCredentialsOverride? previous) : IDisposable
+    {
+        public void Dispose() => RequestCredentials.Value = previous;
     }
 }

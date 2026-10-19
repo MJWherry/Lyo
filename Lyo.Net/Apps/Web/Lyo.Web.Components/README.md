@@ -39,6 +39,16 @@ Every visual component joins the `LyoElementRoot` element-id scheme. Each contro
 </LyoDataGrid>
 ```
 
+### Image, audio, and video
+
+```razor
+@using Lyo.Web.Components.Media
+
+<LyoImage Src="@url" Alt="Cover" Poster="@fallback"/>
+<LyoAudio Src="@clip" Captions="@tracks"/>
+<LyoVideo Src="@clip" Poster="@poster" Captions="@tracks"/>
+```
+
 ### TypeScript — createLyoIdColumn
 
 ```tsx
@@ -189,6 +199,13 @@ Completed chips always render the shortened display name, so truncation stays co
 - **`IdWorkbench`.** Interactive generator for GUID / KSUID / ULID / NanoID / Snowflake identifiers (V3 / V4 / V5 / V6 / V7 / COMB Postgres + SQL Server). Uses `Lyo.Common.Core.Identifiers`.
 - **`IdResultPanel` + `IdEntry`.** Result display.
 
+## Media (`Media/`)
+
+- **`LyoImage`.** Shows `Src`. When `Src` is blank, `Poster` is the image. Both blank renders “No image.” `Alt` defaults to empty (decorative). DOM id defaults to `lyo-image`.
+- **`LyoAudio`.** Native audio element with controls on and `preload="metadata"`. A blank `Src` renders “No audio.” `Captions` become `<track>` elements.
+- **`LyoVideo`.** Native video element. `Poster` is applied only when `Src` is present. A blank `Src` renders “No video.” Controls default on.
+- **Captions.** `MediaCaptionTrack` (`Src`, `Label`, `Language`, `Kind`, `Default`). `MediaCaptions.Resolve` drops a blank `Src`, trims the rest, and keeps only the first default. `HtmlKind` maps to `subtitles`, `captions`, `descriptions`, `chapters`, and `metadata`.
+
 ## Other top-level pieces
 
 - **`ClientStore`.** `Blazored.LocalStorage`-backed key/value store used by the grid and form state binders.
@@ -239,6 +256,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
@@ -246,6 +264,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>HTTP API for fantasy football chats and trades. Reads the plugin store and syncs through the ESPN client.</Description>
+        <PackageTags>fantasy football api aspnetcore chat trades</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Plugins\FantasyFootball\Lyo.FantasyFootball\Lyo.FantasyFootball.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\FantasyFootball\Lyo.FantasyFootball.Postgres\Lyo.FantasyFootball.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Espn\Lyo.Espn.Fantasy.Football.Client\Lyo.Espn.Fantasy.Football.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

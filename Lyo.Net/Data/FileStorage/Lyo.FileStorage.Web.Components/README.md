@@ -7,7 +7,7 @@ Files, Tree, and Browser talk only to a backend host (typically Lyo.Gateway.Api,
 ## Components
 
 | Component | Role |
-| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | FileStorageManagement (FileStorageManagement.razor / .razor.cs) | Top-level UI with Files / Tree / Browser tabs plus an API health check. |
 | FileStorageManagementHeader | Title bar. |
 | FileStorageRegistrationAlerts | Shows the IApiClient base URL and GET {prefix}/health. |
@@ -17,10 +17,11 @@ Files, Tree, and Browser talk only to a backend host (typically Lyo.Gateway.Api,
 | FileStorageTreeBrowser (.razor, .razor.cs, .razor.css) | Tree tab: LyoFileTree over GET files/folder (store PathPrefix plus reconcile). Inspector on the right. Subscribes to FilesChanged. QueryProject stays on the Files/Browser grids. |
 | FileStorageHttpTreeSource | IFileTreeSource that calls GET {prefix}/files/folder and maps FileStoragePresence onto FileSystemEntry.Properties. |
 | FileStoragePathTree | Optional MudTreeView of virtual folders and file leaves (Store / Physical / Both badges). The Tree tab hosts LyoFileTree instead. |
-| FileStoragePathInspector | Directory: breadcrumb, new folder, multi-file browse with selectable chips, per-file original name / compress / encrypt / upload, contents list. File: metadata table plus view / access link / download / move / copy / rename / rotate DEK / delete. |
+| FileStoragePathInspector | Directory: breadcrumb, new folder, multi-file browse with selectable chips, per-file original name / compress / encrypt / upload, contents list. File: metadata table plus view / preview / access link / download / move / copy / rename / rotate DEK / delete. Preview is enabled for catalog image, audio, and video files. |
 | FileStoragePathTreeNode / FileStoragePathTreeBuilder | Non-UI tree model: split PathPrefix segments, build the full folder/file tree, collect descendant file ids / drag-and-drop destinations, and keep pending folders until a file is uploaded. |
-| FileStorageBrowser (.razor, .razor.cs, .razor.css) | Two LyoDataGridProjected views over QueryProject file metadata (active files only): operator columns (type / encryption / compression as color-coded chips), and expected storage keys from metadata (same shard layout as the storage engine). Row and bulk actions (view, access link, download, move, copy, rename, rotate DEK, delete). Optional Exists chip from GET diagnostics/storage-keys. |
+| FileStorageBrowser (.razor, .razor.cs, .razor.css) | Two LyoDataGridProjected views over QueryProject file metadata (active files only): operator columns (type / encryption / compression as color-coded chips), and expected storage keys from metadata (same shard layout as the storage engine). Row and bulk actions (view, preview, access link, download, move, copy, rename, rotate DEK, delete). Preview opens image, audio, and video files in a dialog from files/{id}/download?inline=true. Optional Exists chip from GET diagnostics/storage-keys. |
 | FileStorageBrowserActions | Shared handlers and dialogs used by Browser grids and the Tree inspector (Guid overloads plus projected-row wrappers). Tree bulk selection and drag-and-drop reuse the same move / rotate / delete / archive-download APIs. All mutations go through IApiClient. |
+| FileMediaPreviewDialog | Large dialog that plays one catalog file with LyoImage, LyoAudio, or LyoVideo. The source is the inline download URL. Deleted rows, physical-only objects, and non-media files do not open it. |
 | FileMetadataGrid | Host-agnostic QueryProject grid over active file metadata. View (CSV/XLSX/HTML preview, else new tab), view metadata, download, zip, create access link. Soft-deleted files are omitted. Parameters: ApiRoutePrefix, FileMetadataQueryRoute, PublicBaseUrl, ShowAdvancedAccessLink. |
 | FileAccessLinkDialog (`Lyo.FileStorage.Web.Components.FileAccessLink`) | Create-link dialog (POST {ApiRoutePrefix}/files/{id}/access-links) that shows copyable public URLs. |
 | FileStoreMetadataTable | Read-only metadata fields (encryption header, hashes, audit fields, deletion state). Shared by the dialog and the Tree inspector. |
@@ -96,6 +97,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
@@ -112,6 +114,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `ExcelDataReader.DataSet` `3.9.0` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)

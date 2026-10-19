@@ -17,6 +17,11 @@
       "code": "<LyoDataGrid T=\"PersonRes\" ApiClient=\"ApiClient\" GridKey=\"PersonGrid\" Route=\"Person\"\n             KeySelector=\"@(i => new object[] { i.Id })\"\n             BeforeQuery=\"@(query => query.AddIncludes(\"contactaddresses.address\"))\">\n    <Columns>\n        <LyoPropertyColumn T=\"PersonRes\" TProperty=\"string?\" Property=\"x => x.FirstName\" Title=\"Firstname\"/>\n        <LyoIdColumn T=\"PersonRes\" TRes=\"PersonAddressRes\"\n                     Property=\"x => x.MostRecentAddressId\"\n                     Route=\"PersonAddress\"\n                     Title=\"Most recent address\"\n                     Select=\"@(new[] { \"FullAddress\", \"City\" })\"\n                     Context=\"address\">\n            @(address?.FullAddress)\n        </LyoIdColumn>\n    </Columns>\n</LyoDataGrid>"
     },
     {
+      "title": "Image, audio, and video",
+      "language": "razor",
+      "code": "@using Lyo.Web.Components.Media\n\n<LyoImage Src=\"@url\" Alt=\"Cover\" Poster=\"@fallback\"/>\n<LyoAudio Src=\"@clip\" Captions=\"@tracks\"/>\n<LyoVideo Src=\"@clip\" Poster=\"@poster\" Captions=\"@tracks\"/>"
+    },
+    {
       "title": "TypeScript — createLyoIdColumn",
       "language": "tsx",
       "code": "createLyoIdColumn({\n  id: \"recentAddr\",\n  field: \"MostRecentAddress.Id\",\n  header: \"Most recent address\",\n  related: { route: \"PersonAddress\", select: [\"FullAddress\", \"City\"] },\n  cell: (_row, address) => {\n    const rec = address as { FullAddress?: string } | null;\n    return rec?.FullAddress ?? \"—\";\n  },\n})"
@@ -162,6 +167,16 @@
       "items": [
         "**`IdWorkbench`.** Interactive generator for GUID / KSUID / ULID / NanoID / Snowflake identifiers (V3 / V4 / V5 / V6 / V7 / COMB Postgres + SQL Server). Uses `Lyo.Common.Core.Identifiers`.",
         "**`IdResultPanel` + `IdEntry`.** Result display."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Media (`Media/`)",
+      "items": [
+        "**`LyoImage`.** Shows `Src`. When `Src` is blank, `Poster` is the image. Both blank renders “No image.” `Alt` defaults to empty (decorative). DOM id defaults to `lyo-image`.",
+        "**`LyoAudio`.** Native audio element with controls on and `preload=\"metadata\"`. A blank `Src` renders “No audio.” `Captions` become `<track>` elements.",
+        "**`LyoVideo`.** Native video element. `Poster` is applied only when `Src` is present. A blank `Src` renders “No video.” Controls default on.",
+        "**Captions.** `MediaCaptionTrack` (`Src`, `Label`, `Language`, `Kind`, `Default`). `MediaCaptions.Resolve` drops a blank `Src`, trims the rest, and keeps only the first default. `HtmlKind` maps to `subtitles`, `captions`, `descriptions`, `chapters`, and `metadata`."
       ]
     },
     {
@@ -414,6 +429,14 @@
       ]
     },
     {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Schedule.Models",
       "kind": "lyo",
       "tags": [
@@ -469,6 +492,16 @@
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",

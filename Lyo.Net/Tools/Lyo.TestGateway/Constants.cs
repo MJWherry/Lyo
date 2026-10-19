@@ -75,6 +75,8 @@ public static class Constants
 
         public const string Endato = "endato";
 
+        public const string FantasyFootball = "fantasy-football";
+
         public const string Config = "config";
 
         public const string Seed = "seed";

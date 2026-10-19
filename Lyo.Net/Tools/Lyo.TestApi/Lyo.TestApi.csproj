@@ -33,6 +33,8 @@
         <ProjectReference Include="..\..\Plugins\Audio\Podcast\Lyo.Podcast.Postgres\Lyo.Podcast.Postgres.csproj"/>
         <ProjectReference Include="..\..\Plugins\Video\Lyo.Video.Postgres\Lyo.Video.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Google\Lyo.Google.Youtube.Client\Lyo.Google.Youtube.Client.csproj"/>
+        <ProjectReference Include="..\..\Integration\Espn\Lyo.Espn.Fantasy.Football.Client\Lyo.Espn.Fantasy.Football.Client.csproj"/>
+        <ProjectReference Include="..\..\Apps\FantasyFootball\Lyo.FantasyFootball.Api\Lyo.FantasyFootball.Api.csproj"/>
         <ProjectReference Include="..\..\Plugins\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>
         <ProjectReference Include="..\..\Apps\Comic\Lyo.Comic.Api\Lyo.Comic.Api.csproj"/>
         <ProjectReference Include="..\..\Plugins\Story\Lyo.Story.Postgres\Lyo.Story.Postgres.csproj"/>
