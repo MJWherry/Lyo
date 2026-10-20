@@ -4,7 +4,7 @@
   "name": "Lyo.FileManager",
   "area": "Apps",
   "tagline": "Session for a remote FileStorage API or a local disk folder.",
-  "description": "`FileManagerSession` keeps a server list, the open connections, and the file, folder, transfer, and key actions. Several connections stay open. The selected one is the tree and the actions. A remote server uses `FileStorageHttpApi` (`Lyo.Http.Client` against `Lyo.Api.FileStorage.Models`). An in-process server uses `FileStorageLocalHost`: local disk, S3, Azure Blob, FTP, or SFTP, plus SQLite or Postgres for the catalog. A local SQLite file defaults to beside the folder (`/data/photos.file-metadata.db`). A path inside that folder is rejected. S3, Azure Blob, FTP, and SFTP ask for a catalog path because they have no local folder to sit beside. The session talks to `IFileManagerApi`. Transfer uses `IFileManagerTransfer`, which only an in-process store exposes. Settings, including bearer tokens, API keys, and the dock layout, persist at `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\\Lyo\\file-manager.json`. The log is `file-manager.log` beside that file and is also written to the console. The desktop window is `lyo-files` in `Lyo.FileManager.App`.",
+  "description": "`FileManagerSession` keeps a server list, the open connections, and the file, folder, transfer, and key actions. Several connections stay open. The selected one is the tree and the actions. A remote server uses `FileStorageHttpApi` (`Lyo.Http.Client` against `Lyo.Api.FileStorage.Models`). An in-process server uses `FileStorageLocalHost`: local disk, S3, Azure Blob, FTP, or SFTP, plus SQLite or Postgres for the catalog. A local SQLite file defaults to beside the folder (`/data/photos.file-metadata.db`). A path inside that folder is rejected. S3, Azure Blob, FTP, and SFTP ask for a catalog path because they have no local folder to sit beside. The session talks to `IFileManagerApi`. Transfer uses `IFileManagerTransfer`, which only an in-process store exposes. Settings, including bearer tokens, API keys, and the dock layout, persist at `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\\Lyo\\file-manager.json`. The log is `file-manager.log` beside that file and is also written to the console. The desktop window is `lyo-files` in `Lyo.FileManager.App`. Appsettings stores are `FileManagerConfiguredHost`. Opening one creates a scope and calls `IFileStorageFactory.Get(name)`. Saved servers stay on `FileStorageLocalHost.Open`.",
   "features": [
     "**Servers.** Add, rename, and remove a remote API, a local folder, or an in-process S3, Azure Blob, FTP, or SFTP store. Each successful connect stays open, once per key store for an in-process server. Selecting a connection shows that folder. Closing it disposes the client and keeps the saved server. Authenticate stores a bearer token or an `X-Api-Key` value on a remote server. Connect calls `GET {route}/health`, or migrates the metadata database and opens the store with the key store named by `KeyStoreId`. A remote server ignores that id. A failed connect sets that connection's error and leaves its tree.",
     "**Catalog.** SQLite or a Postgres connection string. The default SQLite file for a local folder sits beside it (`/data/photos.file-metadata.db`). A path inside the folder is rejected. S3, Azure Blob, FTP, and SFTP require a catalog path. The selected key store supplies the passphrase or AWS Secrets Manager settings. With no key store, upload stays plaintext and encrypt or rotate reports that no key is configured. A server that still has a passphrase or AWS key fields and no `KeyStoreId` becomes a named key store on load. Query filters the metadata store by name and path prefix and returns the same row shape as remote `QueryProject`.",
@@ -23,6 +23,11 @@
       "title": "Connect to a remote API",
       "language": "csharp",
       "code": "var session = new FileManagerSession();\nsession.AddRemote(\"Workbench\", \"http://localhost:5000\", \"Workbench/FileStorage\");\nsession.SetAuth(FileManagerAuthKind.ApiKey, apiKey);\nawait session.ConnectAsync(cancellationToken);"
+    },
+    {
+      "title": "Open an appsettings store",
+      "language": "csharp",
+      "code": "using var configured = FileManagerConfiguredHost.Load(configuration);\nusing var photos = configured.Open(configured.Servers.Single(server => server.Name == \"photos\"));"
     }
   ],
   "sections": [],
@@ -199,6 +204,24 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.DependencyInjection",
       "kind": "package",
       "version": "10.0.5",
@@ -298,6 +321,14 @@
     },
     {
       "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.RateLimit",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -429,6 +460,16 @@
       ]
     },
     {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
       "name": "Microsoft.EntityFrameworkCore",
       "kind": "package",
       "version": "10.0.5",
@@ -457,15 +498,6 @@
     },
     {
       "name": "Microsoft.EntityFrameworkCore.Sqlite",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

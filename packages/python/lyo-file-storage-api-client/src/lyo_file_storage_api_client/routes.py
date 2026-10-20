@@ -65,6 +65,25 @@ def multipart_abort_path(session_id: str) -> str:
     return f"{ROUTE}/multipart/{session_id}/abort"
 
 
+def apply_file_storage_store(relative: str, store_route: str | None) -> str:
+    """Replace a leading FileStorage base with ``store_route``. Metadata stays on FileStorage/FileMetadata."""
+    base = (store_route or "").strip().strip("/")
+    if not base:
+        return relative
+    query_at = relative.find("?")
+    path_only = relative[:query_at] if query_at >= 0 else relative
+    query = relative[query_at:] if query_at >= 0 else ""
+    if path_only == FILE_METADATA or path_only.startswith(FILE_METADATA + "/"):
+        return relative
+    if path_only == ROUTE or path_only.startswith(ROUTE + "/"):
+        return f"{base}{path_only[len(ROUTE):]}{query}"
+    return relative
+
+
+def stores_path(file_base: str = ROUTE) -> str:
+    return f"{file_base.rstrip('/')}/stores"
+
+
 def join_route_prefix(route_prefix: str | None, relative: str) -> str:
     query_at = relative.find("?")
     path_only = relative[:query_at] if query_at >= 0 else relative

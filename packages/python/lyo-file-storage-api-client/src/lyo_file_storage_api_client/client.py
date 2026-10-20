@@ -49,9 +49,13 @@ def _stream_query(args: SaveStreamRequest) -> dict[str, Any]:
 class FileStorageApiClient:
     """FileStorage HTTP client. Downloads use the API blob routes."""
 
-    def __init__(self, api_client: ApiClient, *, route_prefix: str | None = None) -> None:
+    def __init__(self, api_client: ApiClient, *, route_prefix: str | None = None, store_route: str | None = None) -> None:
         self._api = api_client
         self._prefix = route_prefix
+        self._store_route = store_route
+
+    def stores(self) -> ApiResponse:
+        return self._send("GET", routes.stores_path())
 
     def health(self) -> ApiResponse:
         return self._send("GET", routes.HEALTH)
@@ -198,5 +202,11 @@ class FileStorageApiClient:
         headers: dict[str, str] | None = None,
     ) -> ApiResponse:
         return self._api.request(
-            ApiRequest(method=method, path=join_route_prefix(self._prefix, relative), body=body, query=query, headers=headers)
+            ApiRequest(
+                method=method,
+                path=join_route_prefix(self._prefix, routes.apply_file_storage_store(relative, self._store_route)),
+                body=body,
+                query=query,
+                headers=headers,
+            )
         )

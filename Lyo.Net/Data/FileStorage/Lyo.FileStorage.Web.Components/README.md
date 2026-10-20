@@ -2,7 +2,17 @@
 
 Blazor Server / Interactive UI for Lyo.FileStorage. Trees, grids, and dialogs for file metadata, expected storage keys, download access links, and DEK migrate/rotate.
 
-Files, Tree, and Browser talk only to a backend host (typically Lyo.Gateway.Api, or Lyo.TestApi for kitchen-sink) over Lyo.Api.Client.IApiClient. The UI never sees raw storage credentials and does not resolve IFileStorageService or IKeyStore. Encryption key ids come from GET {prefix}/key-ids. Keystore CRUD is not part of this package.
+Files, Tree, and Browser talk only to a backend host (typically Lyo.Gateway.Api, or Lyo.TestApi for kitchen-sink) over Lyo.Api.Client.IApiClient. The UI never sees raw storage credentials and does not resolve IFileStorageService or IKeyStore. Encryption key ids come from GET {prefix}/key-ids. Keystore CRUD is not part of this package. FileStorageManagement loads GET {prefix}/stores. The choice is private. One store uses that store's route. A failed list leaves the prefix. FileMetadataQueryRoute does not change.
+
+## Examples
+
+### Store select
+
+```razor
+<FileStorageManagement ApiClient="Api" FileStorageApiRoutePrefix="FileStorage" FileMetadataQueryRoute="FileStorage/FileMetadata" />
+
+@* Choosing archive sets file, health, and key-id calls to FileStorage/archive. FileMetadataQueryRoute stays FileStorage/FileMetadata. *@
+```
 
 ## Components
 

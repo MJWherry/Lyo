@@ -12,7 +12,6 @@ using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
-using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Multipart;
 using Lyo.KeyStore;
 using Domain = Lyo.FileStorage.Models;
@@ -31,18 +30,68 @@ public static class Extensions
 {
     /// <summary>
     /// Maps <c>{Route}</c> file, multipart, and archive routes, optional <c>POST {DirectUploadPath}</c>, and read-only FileMetadata Query/QueryProject.
-    /// Resolve keyed <c>IFileStorageService</c>, <c>IMultipartUploadService</c>, and <c>IFileStorageArchiveService</c> with
-    /// <see cref="FileStorageApiOptions.ServiceKey" />.
+    /// Without <see cref="IFileStorageFactory" />, storage, multipart, and archive resolve with <see cref="FileStorageApiOptions.ServiceKey" />.
+    /// With a factory, <c>GET {Route}/stores</c> lists each name and <c>{Route}/{name}</c> serves that store. <c>FileStorage:Default</c> serves the bare route and direct upload.
     /// </summary>
     public static WebApplication BuildFileStorageApi(this WebApplication app, FileStorageApiOptions? options = null)
     {
         ArgumentHelpers.ThrowIfNull(app);
         options ??= new();
         options.Validate();
-        MapFileStorageGroup(app, options);
-        MapDirectUpload(app, options);
+        var route = options.Route.Trim().Trim('/');
+        using (var scope = app.Services.CreateScope()) {
+            var factory = scope.ServiceProvider.GetService<IFileStorageFactory>();
+            if (factory == null)
+                MapKeyedFileStorage(app, options, route);
+            else
+                MapFactoryFileStorage(app, options, route, factory, scope.ServiceProvider);
+        }
+
         MapFileMetadataQuery(app, options);
         return app;
+    }
+
+    private static void MapKeyedFileStorage(WebApplication app, FileStorageApiOptions options, string route)
+    {
+        var key = options.ServiceKey;
+        MapFileStorageGroup(app, route, services => GetFileStorage(services, key), key, new(key, Required: false), mapAccessLinks: true);
+        MapDirectUpload(app, options, services => GetFileStorage(services, key));
+    }
+
+    private static void MapFactoryFileStorage(WebApplication app, FileStorageApiOptions options, string route, IFileStorageFactory factory, IServiceProvider services)
+    {
+        var stores = factory.Names.Select(name => (Name: name, EncryptionKey: factory.GetEncryptionServiceKey(name))).ToArray();
+        foreach (var store in stores) {
+            if (ReservedStoreNames.Contains(store.Name))
+                throw new InvalidOperationException($"File storage '{store.Name}' uses a reserved route name.");
+        }
+
+        var defaultName = factory.DefaultName;
+        string? canonicalDefault = null;
+        if (!string.IsNullOrWhiteSpace(defaultName)) {
+            canonicalDefault = stores.FirstOrDefault(store => string.Equals(store.Name, defaultName, StringComparison.OrdinalIgnoreCase)).Name;
+            if (canonicalDefault == null)
+                throw new InvalidOperationException($"File storage default '{defaultName}' is not registered.");
+        }
+
+        app.MapGet(route + "/stores", (IFileStorageFactory current) => Results.Ok(current.Names.Select(name => new FileStorageStoreResponse(name, route + "/" + name, null)).ToArray()))
+            .WithTags("FileStorage");
+
+        var hasKeyed = services is IServiceProviderIsKeyedService keyedServices && keyedServices.IsKeyedService(typeof(IFileStorageService), options.ServiceKey);
+        if (canonicalDefault != null) {
+            var name = canonicalDefault;
+            var encryptionKey = stores.First(store => store.Name == name).EncryptionKey;
+            MapFileStorageGroup(app, route, current => current.GetRequiredService<IFileStorageFactory>().Get(name), name, new(encryptionKey, Required: true), mapAccessLinks: true);
+            MapDirectUpload(app, options, current => current.GetRequiredService<IFileStorageFactory>().Get(name));
+        }
+        else if (hasKeyed) {
+            MapKeyedFileStorage(app, options, route);
+        }
+
+        foreach (var store in stores)
+            MapFileStorageGroup(
+                app, route + "/" + store.Name, current => current.GetRequiredService<IFileStorageFactory>().Get(store.Name), store.Name,
+                new(store.EncryptionKey, Required: true), mapAccessLinks: false);
     }
 
     private static void MapFileMetadataQuery(WebApplication app, FileStorageApiOptions options)
@@ -53,7 +102,7 @@ public static class Extensions
             .Build();
     }
 
-    private static void MapDirectUpload(WebApplication app, FileStorageApiOptions options)
+    private static void MapDirectUpload(WebApplication app, FileStorageApiOptions options, Func<IServiceProvider, IFileStorageService> resolveStorage)
     {
         if (string.IsNullOrWhiteSpace(options.DirectUploadPath))
             return;
@@ -64,7 +113,7 @@ public static class Extensions
                     [FromQuery] string? pathPrefix, [FromQuery] int? chunkSize, [FromQuery] string? contentType, [FromQuery] string? charset, [FromQuery] string? tenantId,
                     IServiceProvider services,
                     ICacheService cache, CancellationToken ct) => {
-                    var fileStorage = GetFileStorage(services, options.ServiceKey);
+                    var fileStorage = resolveStorage(services);
                     return await SaveStreamFromFormAsync(
                         file, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, fileStorage, cache, ct);
                 })
@@ -72,15 +121,19 @@ public static class Extensions
             .WithTags("DirectFileUpload");
     }
 
-    private static void MapFileStorageGroup(WebApplication app, FileStorageApiOptions options)
+    private static void MapFileStorageGroup(
+        WebApplication app,
+        string route,
+        Func<IServiceProvider, IFileStorageService> resolveStorage,
+        string serviceKey,
+        KeyStoreLookup keyStore,
+        bool mapAccessLinks)
     {
-        var route = options.Route.Trim().Trim('/');
-        var serviceKey = options.ServiceKey;
         var group = app.MapGroup(route).WithTags("FileStorage");
 
         group.MapGet(
             "health", async (IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var health = await fileStorage.CheckHealthAsync(ct);
                 var message = health.Message;
                 if (!health.IsHealthy && string.IsNullOrWhiteSpace(message) && health.Exception != null)
@@ -91,15 +144,9 @@ public static class Extensions
 
         group.MapGet(
             "capabilities", async (IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var multipart = services.GetKeyedService<IMultipartUploadService>(serviceKey);
-                var keyed = services.GetKeyedService<IKeyStore>(serviceKey);
-                IKeyStore? unkeyed = null;
-                IKeyInventoryStore? inventory = null;
-                if (keyed == null) {
-                    unkeyed = services.GetService<IKeyStore>();
-                    inventory = services.GetService<IKeyInventoryStore>();
-                }
+                var (keyed, unkeyed, inventory) = ResolveKeyStores(services, keyStore);
 
                 IReadOnlyList<FileStorageTagTypeResponse> tagTypes = [];
                 if (fileStorage is IFileStorageTags tags)
@@ -114,7 +161,7 @@ public static class Extensions
 
         group.MapGet(
             "files/{fileId:guid}/tags", async (Guid fileId, IServiceProvider services, CancellationToken ct) => {
-                var tags = Tags(services, serviceKey);
+                var tags = Tags(resolveStorage(services));
                 var rows = await tags.GetTagsAsync(fileId, ct).ConfigureAwait(false);
                 return Results.Ok(rows.Select(static row => new FileTagResponse(row.Id, row.FileId, row.TagType, row.Value, row.Slug, row.Automatic)).ToArray());
             });
@@ -122,22 +169,22 @@ public static class Extensions
         group.MapPut(
             "files/{fileId:guid}/tags", async (Guid fileId, [FromBody] FileTagWriteRequest request, IServiceProvider services, CancellationToken ct) => {
                 ArgumentHelpers.ThrowIfNull(request);
-                var tags = Tags(services, serviceKey);
+                var tags = Tags(resolveStorage(services));
                 var row = await tags.AddTagAsync(fileId, request.TagType, request.Value, request.Slug, ct).ConfigureAwait(false);
                 return Results.Ok(new FileTagResponse(row.Id, row.FileId, row.TagType, row.Value, row.Slug, row.Automatic));
             });
 
         group.MapDelete(
             "files/{fileId:guid}/tags", async (Guid fileId, string tagType, string value, IServiceProvider services, CancellationToken ct) => {
-                var tags = Tags(services, serviceKey);
+                var tags = Tags(resolveStorage(services));
                 var removed = await tags.RemoveTagAsync(fileId, tagType, value, ct).ConfigureAwait(false);
                 return Results.Ok(removed);
             });
 
         group.MapGet(
             "files/tags/group", async (string[] groupBy, string? path, int? maxKeys, IServiceProvider services, CancellationToken ct) => {
-                var tags = Tags(services, serviceKey);
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var tags = Tags(resolveStorage(services));
+                var fileStorage = resolveStorage(services);
                 var keys = groupBy.Select(FileTagGroupKey.Parse).ToArray();
                 var cap = Math.Clamp(maxKeys ?? 10_000, 1, 10_000);
                 var (entries, truncated) = await tags.ListTagGroupAsync(keys, path, cap, ct).ConfigureAwait(false);
@@ -151,7 +198,7 @@ public static class Extensions
 
         group.MapPost(
             "files/save", async ([FromBody] SaveFileRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var result = await fileStorage.SaveFileAsync(
                     request.Data, request.OriginalFileName, request.Compress, request.Encrypt, request.KeyId, request.PathPrefix, request.ChunkSize, request.ContentType,
                     request.Charset, request.TenantId, request.Metadata, ct);
@@ -160,7 +207,8 @@ public static class Extensions
                 return Results.Ok(result);
             });
 
-        group.MapPost(
+        if (mapAccessLinks)
+            group.MapPost(
             "files/{fileId:guid}/access-links", async (
                 Guid fileId, [FromBody] CreateDownloadAccessLinkRequest request, HttpContext http, IServiceProvider services, CancellationToken ct) => {
                 var accessService = services.GetRequiredService<IFileDownloadAccessService>();
@@ -180,7 +228,7 @@ public static class Extensions
                     [FromQuery] string? pathPrefix, [FromQuery] int? chunkSize, [FromQuery] string? contentType, [FromQuery] string? charset, [FromQuery] string? tenantId,
                     IServiceProvider services,
                     ICacheService cache, CancellationToken ct) => {
-                    var fileStorage = GetFileStorage(services, serviceKey);
+                    var fileStorage = resolveStorage(services);
                     return await SaveStreamFromFormAsync(
                         file, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, fileStorage, cache, ct);
                 })
@@ -189,7 +237,7 @@ public static class Extensions
         group.MapGet(
             "files/{fileId:guid}/presigned-read", async (
                 Guid fileId, double? expiresHours, string? pathPrefix, string? contentDisposition, string? contentType, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var expiration = expiresHours.HasValue ? TimeSpan.FromHours(expiresHours.Value) : (TimeSpan?)null;
                 var opts = BuildPreSignedReadUrlOptions(contentDisposition, contentType);
                 var url = opts == null
@@ -201,7 +249,7 @@ public static class Extensions
 
         group.MapPost(
             "direct-upload/begin", async ([FromBody] DirectUploadBeginRequest request, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var result = await fileStorage.BeginDirectUploadAsync(ToDomain(request), ct);
                 return Results.Ok(result);
             });
@@ -209,7 +257,7 @@ public static class Extensions
         group.MapPost(
             "direct-upload/{fileId:guid}/complete", async (
                 Guid fileId, [FromBody] DirectUploadCompleteRequest? request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var result = await fileStorage.CompleteDirectUploadAsync(fileId, ToDomain(request), ct);
                 await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
                 return Results.Ok(result);
@@ -217,7 +265,7 @@ public static class Extensions
 
         group.MapPut(
                 "direct-upload/{fileId:guid}/put", async (Guid fileId, HttpContext http, IServiceProvider services, CancellationToken ct) => {
-                    var fileStorage = GetFileStorage(services, serviceKey);
+                    var fileStorage = resolveStorage(services);
                     if (fileStorage is not LocalFileStorageService local)
                         throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, "Not implemented."));
 
@@ -228,7 +276,7 @@ public static class Extensions
 
         group.MapPost(
             "files/copy", async ([FromBody] CopyFileRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var result = await fileStorage.CopyFileAsync(request.SourceFileId, new Domain.CopyFileRequest { PathPrefix = request.PathPrefix }, ct);
                 await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
                 return Results.Ok(result);
@@ -236,7 +284,7 @@ public static class Extensions
 
         group.MapPost(
             "files/move", async ([FromBody] MoveFileRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var result = await fileStorage.MoveFileAsync(request.FileId, new Domain.MoveFileRequest { PathPrefix = request.PathPrefix }, ct);
                 await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
                 return Results.Ok(result);
@@ -244,7 +292,7 @@ public static class Extensions
 
         group.MapPost(
             "files/rename", async ([FromBody] RenameFileRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var result = await fileStorage.RenameFileAsync(request.FileId, new Domain.RenameFileRequest { OriginalFileName = request.OriginalFileName }, ct);
                 await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
                 return Results.Ok(result);
@@ -252,7 +300,7 @@ public static class Extensions
 
         group.MapGet(
             "files/physical/download", async (string physicalKey, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 return await RunPhysicalAsync(
                     async () => {
                         var (stream, fileName) = await FileStoragePhysicalRead.OpenAsync(fileStorage, physicalKey, ct).ConfigureAwait(false);
@@ -262,7 +310,7 @@ public static class Extensions
 
         group.MapDelete(
             "files/physical", async (string physicalKey, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 return await RunPhysicalAsync(
                     async () => {
                         await FileStoragePhysicalMutate.DeleteAsync(fileStorage, physicalKey, ct).ConfigureAwait(false);
@@ -272,7 +320,7 @@ public static class Extensions
 
         group.MapPost(
             "files/physical/move", async ([FromBody] MovePhysicalObjectRequest request, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 return await RunPhysicalAsync(
                     async () => {
                         var key = await FileStoragePhysicalMutate
@@ -284,7 +332,7 @@ public static class Extensions
 
         group.MapPost(
             "files/physical/copy", async ([FromBody] CopyPhysicalObjectRequest request, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 return await RunPhysicalAsync(
                     async () => {
                         var key = await FileStoragePhysicalMutate
@@ -296,7 +344,7 @@ public static class Extensions
 
         group.MapPost(
             "files/physical/rename", async ([FromBody] RenamePhysicalObjectRequest request, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 return await RunPhysicalAsync(
                     async () => {
                         var key = await FileStoragePhysicalMutate
@@ -308,7 +356,7 @@ public static class Extensions
 
         group.MapGet(
             "files/folder", async (string? pathPrefix, int? maxKeys, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var store = GetMetadataStore(fileStorage, services, serviceKey);
                 var cap = Math.Clamp(maxKeys ?? 10_000, 1, 10_000);
                 var (entries, truncated) = await FileStorageFolderList.ListAsync(store, fileStorage, pathPrefix, cap, ct).ConfigureAwait(false);
@@ -322,7 +370,7 @@ public static class Extensions
 
         group.MapGet(
             "diagnostics/storage-keys", async (string? prefix, int? maxKeys, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 if (fileStorage is not IFileStorageDiagnosticsService dx)
                     throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, "Not implemented."));
 
@@ -333,7 +381,7 @@ public static class Extensions
 
         group.MapGet(
             "key-ids", async (IServiceProvider services, CancellationToken ct) => {
-                var ids = await ListEncryptionKeyIdsAsync(services, serviceKey, ct).ConfigureAwait(false);
+                var ids = await ListEncryptionKeyIdsAsync(services, keyStore, ct).ConfigureAwait(false);
                 return Results.Ok(ids);
             });
 
@@ -400,13 +448,13 @@ public static class Extensions
                     return Results.Ok(entity.ToFileStoreResult());
                 }
 
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 return Results.Ok(await fileStorage.GetMetadataAsync(fileId, ct).ConfigureAwait(false));
             });
 
         group.MapGet(
             "files/{fileId:guid}/integrity", async (Guid fileId, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 return Results.Ok(await fileStorage.GetContentIntegrityAsync(fileId, ct).ConfigureAwait(false));
             });
 
@@ -437,25 +485,27 @@ public static class Extensions
 
         group.MapGet(
             "files/{fileId:guid}/download", async (HttpContext http, Guid fileId, bool? inline, IServiceProvider services, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var metadata = await fileStorage.GetMetadataAsync(fileId, ct);
                 return await StreamStoredFileAsync(http, fileStorage, fileId, metadata, inline == true, ct);
             });
 
-        group.MapGet(
+        if (mapAccessLinks)
+            group.MapGet(
             "files/access/{token}/download", async (HttpContext http, string token, IServiceProvider services, CancellationToken ct) => {
                 var accessService = services.GetRequiredService<IFileDownloadAccessService>();
                 var access = await accessService.ValidateAndConsumeDownloadAsync(token, http.User.Identity?.Name, http.Connection.RemoteIpAddress?.ToString(), ct: ct);
                 if (!access.IsAllowed || access.FileId == null)
                     return Results.StatusCode(MapFailureStatusCode(access.FailureReason));
 
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var fileId = access.FileId.Value;
                 var metadata = await fileStorage.GetMetadataAsync(fileId, ct);
                 return await StreamStoredFileAsync(http, fileStorage, fileId, metadata, inline: false, ct);
             });
 
-        group.MapGet(
+        if (mapAccessLinks)
+            group.MapGet(
             "files/access/{token}/presigned-read", async (
                 string token, double? expiresHours, string? contentDisposition, string? contentType, IServiceProvider services, HttpContext http, CancellationToken ct) => {
                 var accessService = services.GetRequiredService<IFileDownloadAccessService>();
@@ -463,7 +513,7 @@ public static class Extensions
                 if (!access.IsAllowed || access.FileId == null)
                     return Results.StatusCode(MapFailureStatusCode(access.FailureReason));
 
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var metadata = await fileStorage.GetMetadataAsync(access.FileId.Value, ct);
                 var expiration = expiresHours.HasValue ? TimeSpan.FromHours(expiresHours.Value) : (TimeSpan?)null;
                 var opts = BuildPreSignedReadUrlOptions(contentDisposition, contentType);
@@ -476,7 +526,7 @@ public static class Extensions
 
         group.MapDelete(
             "files/{fileId:guid}", async (Guid fileId, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 try {
                     var deleted = await fileStorage.DeleteFileAsync(fileId, ct: ct).ConfigureAwait(false);
                     if (deleted)
@@ -497,7 +547,7 @@ public static class Extensions
 
         group.MapPost(
             "files/migrate-deks", async ([FromBody] MigrateDeksRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var result = await fileStorage.MigrateDeksAsync(
                     request.SourceKeyId, request.SourceKeyVersion, request.TargetKeyId, request.TargetKeyVersion, request.BatchSize, ct);
 
@@ -507,7 +557,7 @@ public static class Extensions
 
         group.MapPost(
             "files/rotate-deks", async ([FromBody] RotateDeksRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
-                var fileStorage = GetFileStorage(services, serviceKey);
+                var fileStorage = resolveStorage(services);
                 var result = await fileStorage.RotateDeksAsync(request.FileIds, request.TargetKeyId, request.TargetKeyVersion, request.BatchSize, ct);
                 await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
                 return Results.Ok(result);
@@ -517,9 +567,8 @@ public static class Extensions
     private static IFileStorageService GetFileStorage(IServiceProvider services, string serviceKey)
         => services.GetRequiredKeyedService<IFileStorageService>(serviceKey);
 
-    private static IFileStorageTags Tags(IServiceProvider services, string serviceKey)
+    private static IFileStorageTags Tags(IFileStorageService storage)
     {
-        var storage = GetFileStorage(services, serviceKey);
         if (storage is IFileStorageTags tags)
             return tags;
 
@@ -679,21 +728,44 @@ public static class Extensions
     private static MultipartPartUrlResponse ToHttp(MultipartPartDescriptor descriptor)
         => new(descriptor.PartNumber, descriptor.PresignedPutUrl, descriptor.HttpMethod);
 
-    private static async Task<IReadOnlyList<string>> ListEncryptionKeyIdsAsync(IServiceProvider services, string serviceKey, CancellationToken ct)
+    private static async Task<IReadOnlyList<string>> ListEncryptionKeyIdsAsync(IServiceProvider services, KeyStoreLookup keyStore, CancellationToken ct)
     {
-        var keyed = services.GetKeyedService<IKeyStore>(serviceKey);
+        var (keyed, unkeyedStore, inventory) = ResolveKeyStores(services, keyStore);
         if (keyed is IKeyInventoryStore keyedInventory)
             return await keyedInventory.GetAvailableKeyIdsAsync(ct).ConfigureAwait(false);
 
         if (keyed != null)
             return [];
 
-        var unkeyed = services.GetService<IKeyStore>() as IKeyInventoryStore ?? services.GetService<IKeyInventoryStore>();
+        var unkeyed = unkeyedStore as IKeyInventoryStore ?? inventory;
         if (unkeyed == null)
             return [];
 
         return await unkeyed.GetAvailableKeyIdsAsync(ct).ConfigureAwait(false);
     }
+
+    private static (IKeyStore? Keyed, IKeyStore? Unkeyed, IKeyInventoryStore? Inventory) ResolveKeyStores(IServiceProvider services, KeyStoreLookup keyStore)
+    {
+        if (keyStore.Required && keyStore.Key != null) {
+            var required = services.GetRequiredKeyedService<IKeyStore>(keyStore.Key);
+            return (required, null, required as IKeyInventoryStore);
+        }
+
+        if (!keyStore.Required && keyStore.Key != null) {
+            var keyed = services.GetKeyedService<IKeyStore>(keyStore.Key);
+            if (keyed != null)
+                return (keyed, null, keyed as IKeyInventoryStore);
+        }
+
+        var unkeyed = services.GetService<IKeyStore>();
+        return (null, unkeyed, services.GetService<IKeyInventoryStore>());
+    }
+
+    private readonly record struct KeyStoreLookup(string? Key, bool Required);
+
+    private static readonly HashSet<string> ReservedStoreNames = new(StringComparer.OrdinalIgnoreCase) {
+        "stores", "health", "capabilities", "files", "key-ids", "multipart", "direct-upload", "diagnostics"
+    };
 
     private static TimeSpan? Hours(double? hours) => hours is null ? null : TimeSpan.FromHours(hours.Value);
 

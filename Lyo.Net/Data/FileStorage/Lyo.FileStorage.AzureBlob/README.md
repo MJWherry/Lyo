@@ -68,6 +68,32 @@ var urlWithHeaders = await fileStorage.GetPreSignedReadUrlAsync(
 }
 ```
 
+### Factory and single-store builder
+
+```csharp
+using Lyo.FileStorage;
+using Lyo.FileStorage.AzureBlob;
+
+services.AddAzureBlobFileStorage(azure => azure.Configure(options =>
+{
+    options.ConnectionString = connectionString;
+    options.ContainerName = "files";
+}));
+
+services.AddFileStorageFactory(stores =>
+{
+    stores.AddAzureBlob("archive", azure =>
+    {
+        azure.Configure(options =>
+        {
+            options.ConnectionString = connectionString;
+            options.ContainerName = "archive";
+        });
+        azure.WithMultipart();
+    });
+});
+```
+
 ## Where to read next
 
 | Document | Scope |

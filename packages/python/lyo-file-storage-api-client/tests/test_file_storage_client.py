@@ -238,3 +238,23 @@ def test_integrity_and_content_digest():
     assert integrity.data["hashAlgorithm"] == "sha256"
     assert integrity.data["originalFileHash"] == "AQIDBA=="
     assert saved.content_digest == digest
+
+
+def test_stores_uses_file_storage_base_and_store_route_does_not_double_it() -> None:
+    calls: list[str] = []
+
+    def handler(request: TransportRequest) -> ApiResponse:
+        calls.append(request.url)
+        return ApiResponse(status=200, ok=True, data=[])
+
+    transport = _ScriptedTransport(handler)
+    files = FileStorageApiClient(ApiClient("http://x", transport=transport))
+    files.stores()
+    archive = FileStorageApiClient(ApiClient("http://x", transport=transport), store_route="FileStorage/archive")
+    archive.health()
+    archive.query_project({"Amount": 1})
+    assert calls == [
+        "http://x/FileStorage/stores",
+        "http://x/FileStorage/archive/health",
+        "http://x/FileStorage/FileMetadata/QueryProject",
+    ]

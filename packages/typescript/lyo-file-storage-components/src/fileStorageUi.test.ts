@@ -6,6 +6,7 @@ import {
     compressionChip,
     encryptionChip,
     fileGlyph,
+    selectedStoreRoute,
     fileTypeChip,
     folderEntriesToNodes,
     formatFileSize,
@@ -18,6 +19,18 @@ import {
     visibleTreeNodes,
     type FileTreeNode,
 } from "./fileStorageUi.js";
+
+describe("selectedStoreRoute_replacesTheFileBase", () => {
+    it("uses the only store, the selection, or nothing when the list failed", () => {
+        const stores = [
+            {name: "a", route: "FileStorage/a", fileMetadataRoute: null},
+            {name: "b", route: "FileStorage/b", fileMetadataRoute: null},
+        ];
+        expect(selectedStoreRoute(stores, "b")).toBe("FileStorage/b");
+        expect(selectedStoreRoute([{name: "only", route: "FileStorage/only", fileMetadataRoute: null}], null)).toBe("FileStorage/only");
+        expect(selectedStoreRoute(null, null)).toBeUndefined();
+    });
+});
 
 describe("folderEntriesToNodes_splitsDirectoriesAndFiles", () => {
     it("keeps the API path prefix and joins a name when the prefix is missing", () => {

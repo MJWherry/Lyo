@@ -17,7 +17,9 @@ namespace Lyo.FileStorage.Ftp;
 /// <summary>FTP-backed <see cref="IFileStorageService" />. Physical IO only. Presigned and multipart are not supported.</summary>
 public sealed class FtpFileStorageService : RemoteFileStorageServiceBase
 {
-    /// <summary>Builds an FTP file storage service.</summary>
+    private readonly IFtpClient? _ownedClient;
+
+    /// <summary>Builds an FTP file storage service. Pass <paramref name="ownsClient" /> when this service should dispose <paramref name="ftpClient" />.</summary>
     public FtpFileStorageService(
         FtpFileStorageOptions options,
         IFileMetadataStore metadataService,
@@ -29,9 +31,24 @@ public sealed class FtpFileStorageService : RemoteFileStorageServiceBase
         IFileOperationContextAccessor? operationContextAccessor = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
         IFileContentPolicy? contentPolicy = null,
-        IFileTypeSniffer? fileTypeSniffer = null)
+        IFileTypeSniffer? fileTypeSniffer = null,
+        bool ownsClient = false)
         : base(
             options, metadataService, new FtpRemoteFileTransport(ArgumentHelpers.ThrowIfNullReturn(ftpClient)),
             (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<FtpFileStorageService>(), compressionService, twoKeyEncryptionService, metrics, operationContextAccessor,
-            auditHandlers, contentPolicy, fileTypeSniffer) { }
+            auditHandlers, contentPolicy, fileTypeSniffer)
+    {
+        if (ownsClient)
+            _ownedClient = ftpClient;
+    }
+
+    /// <inheritdoc />
+    public override void Dispose()
+    {
+        if (Disposed)
+            return;
+
+        base.Dispose();
+        _ownedClient?.Dispose();
+    }
 }

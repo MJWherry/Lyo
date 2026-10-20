@@ -1,6 +1,6 @@
 # Lyo.FileManager.App
 
-Avalonia window named `lyo-files`. Menus hold the server, file, edit, and key actions. A tab is a key store and a file store. The toolbar is the key store picker, the server picker, Connect, Up, a breadcrumb, and the frequent buttons. Connect opens that pair. The file list stays in the center and follows the selected connection. Tree, metadata, and log dock to the left, right, or bottom, resize, and hide. Drag a title bar to another edge. The log starts on the bottom. Quick search filters the loaded tree, and another box filters the open folder. The file grid sorts and resizes columns. Query uses that grid with a prefix column. Drag a file onto the list to upload it. Double-click a file to open it, or a folder to enter it. Copy and move open a dialog with a local prefix or another open connection. Servers, key stores, and the layout persist under `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\Lyo\file-manager.json`. Session logic lives in `Lyo.FileManager`.
+Avalonia window named `lyo-files`. Menus hold the server, file, edit, and key actions. A tab is a key store and a file store. The toolbar is the key store picker, the server picker, Connect, Up, a breadcrumb, and the frequent buttons. Connect opens that pair. The file list stays in the center and follows the selected connection. Tree, metadata, and log dock to the left, right, or bottom, resize, and hide. Drag a title bar to another edge. The log starts on the bottom. Quick search filters the loaded tree, and another box filters the open folder. The file grid sorts and resizes columns. Query uses that grid with a prefix column. Drag a file onto the list to upload it. Double-click a file to open it, or a folder to enter it. Copy and move open a dialog with a local prefix or another open connection. Servers, key stores, and the layout persist under `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\Lyo\file-manager.json`. Session logic lives in `Lyo.FileManager`. `appsettings.json` beside the app adds `FileStorage:Stores`. Those names join the server list and are not written back to the settings file. A saved server with the same name throws when the second one is added.
 
 ## Features
 
@@ -20,6 +20,27 @@ Avalonia window named `lyo-files`. Menus hold the server, file, edit, and key ac
 dotnet run --project Lyo.Net/Apps/FileManager/Lyo.FileManager.App
 ```
 
+### appsettings.json
+
+```json
+{
+  "FileStorage": {
+    "Stores": {
+      "photos": {
+        "Provider": "Disk",
+        "RootDirectoryPath": "/data/photos"
+      },
+      "archive": {
+        "Provider": "S3",
+        "BucketName": "archive",
+        "CatalogConnectionString": "Data Source=/data/archive.file-metadata.db",
+        "MetadataKind": "Sqlite"
+      }
+    }
+  }
+}
+```
+
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
@@ -31,6 +52,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Avalonia.Desktop` `12.1.3` (direct, third-party)
 - `Avalonia.Fonts.Inter` `12.1.3` (direct, third-party)
 - `Avalonia.Themes.Fluent` `12.1.3` (direct, third-party)
+- `Microsoft.Extensions.Configuration` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Json` `10.0.5` (direct, microsoft)
 - `Lyo.Api.FileStorage.Models` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
@@ -64,6 +87,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Postgres` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Sftp.Client` (transitive, lyo)
 - `Lyo.Sqlite` (transitive, lyo)
@@ -79,6 +103,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `FluentFTP` `54.2.0` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)

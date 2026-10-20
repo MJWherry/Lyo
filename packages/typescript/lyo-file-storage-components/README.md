@@ -22,4 +22,6 @@ export function FilesPage() {
 }
 ```
 
+`routePrefix` is omitted so the store select chooses the store. File calls use that store's route. The metadata grid stays on `FileStorage/FileMetadata`.
+
 Files uploads through the service. Presigned download and upload actions are shown only when the file is neither encrypted nor compressed. Download always uses the API, which decrypts and decompresses. Access links also go through the API.

@@ -40,7 +40,8 @@ public sealed class FileStorageLocalHost : IFileManagerApi, IFileManagerTransfer
     private const string KeyService = "file-manager-keys";
 
     private readonly FileManagerServer _server;
-    private readonly ServiceProvider _provider;
+    private readonly ServiceProvider? _provider;
+    private readonly bool _ownsProvider;
     private readonly IServiceScope _scope;
     private readonly IFileMetadataStore _store;
     private readonly IFileStorageService _storage;
@@ -52,17 +53,19 @@ public sealed class FileStorageLocalHost : IFileManagerApi, IFileManagerTransfer
 
     private FileStorageLocalHost(
         FileManagerServer server,
-        ServiceProvider provider,
+        ServiceProvider? provider,
         IServiceScope scope,
         IFileMetadataStore store,
         IFileStorageService storage,
         IMultipartUploadService? multipart,
         IFileStorageArchiveService archive,
         IFileDownloadAccessService access,
-        IKeyStore? keys)
+        IKeyStore? keys,
+        bool ownsProvider = true)
     {
         _server = server;
         _provider = provider;
+        _ownsProvider = ownsProvider;
         _scope = scope;
         _store = store;
         _storage = storage;
@@ -228,7 +231,8 @@ public sealed class FileStorageLocalHost : IFileManagerApi, IFileManagerTransfer
         var plan = Describe(server);
         if (server.Kind == FileManagerServerKind.Local)
             Directory.CreateDirectory(plan.RootDirectory);
-        var services = CreateServices(server);
+        var services = new ServiceCollection();
+        AddCatalog(services, plan.MetadataKind, plan.ConnectionString);
         services.AddLocalLock();
         services.AddSingleton<ICompressionAlgorithmSelector, UploadCompressionSelector>();
         services.AddCompressionService();
@@ -240,24 +244,11 @@ public sealed class FileStorageLocalHost : IFileManagerApi, IFileManagerTransfer
             services.AddKeyedSingleton<ITwoKeyEncryptionService>(KeyService, encryption);
         }
 
-        if (plan.MetadataKind == FileManagerMetadataKind.Sqlite) {
-            services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<SqliteFileMetadataStoreDbContext>>().CreateDbContext());
-            services.AddSqliteFileDownloadAccessService();
-            services.AddSqliteMultipartUploadSessionStore();
-        }
-        else {
-            services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<FileMetadataStoreDbContext>>().CreateDbContext());
-            services.AddPostgresFileDownloadAccessService();
-            services.AddPostgresMultipartUploadSessionStore();
-        }
-
         var provider = services.BuildServiceProvider();
         var scope = provider.CreateScope();
         try {
             Migrate(scope.ServiceProvider, plan.MetadataKind);
-            IFileMetadataStore store = plan.MetadataKind == FileManagerMetadataKind.Sqlite
-                ? scope.ServiceProvider.GetRequiredService<SqliteFileMetadataStore>()
-                : scope.ServiceProvider.GetRequiredService<PostgresFileMetadataStore>();
+            IFileMetadataStore store = CatalogMetadata(scope.ServiceProvider, plan.MetadataKind);
             var compression = scope.ServiceProvider.GetRequiredService<CompressionService>();
             var storage = CreateStorage(server, plan, store, logs, compression, encryption);
             IMultipartUploadService? multipart = null;
@@ -460,13 +451,64 @@ public sealed class FileStorageLocalHost : IFileManagerApi, IFileManagerTransfer
     /// <inheritdoc />
     public void Dispose()
     {
-        if (_storage is IDisposable disposable)
-            disposable.Dispose();
-        if (_store is IDisposable store)
-            store.Dispose();
+        if (_ownsProvider) {
+            if (_storage is IDisposable disposable)
+                disposable.Dispose();
+            if (_store is IDisposable store)
+                store.Dispose();
+        }
+
         _scope.Dispose();
-        _provider.Dispose();
+        if (_ownsProvider)
+            _provider?.Dispose();
     }
+
+    /// <summary>Opens a store the factory already created. Disposing the host disposes <paramref name="scope" /> and leaves the root provider running.</summary>
+    internal static FileStorageLocalHost FromFactory(
+        FileManagerServer server,
+        IServiceScope scope,
+        IFileStorageService storage,
+        IFileDownloadAccessService access,
+        IMultipartUploadSessionStore sessions,
+        IKeyStore? keys)
+    {
+        IMultipartUploadService? multipart = scope.ServiceProvider.GetKeyedService<IMultipartUploadService>(server.Name);
+        if (multipart == null && storage is LocalFileStorageService local && !string.IsNullOrWhiteSpace(server.RootDirectory)) {
+            multipart = new LocalMultipartUploadService(
+                local, sessions, new DiskFileStorageOptions { RootDirectoryPath = server.RootDirectory, AllowFileUriPresignedUrls = true });
+        }
+
+        var archive = new FileStorageArchiveService(storage, scope.ServiceProvider.GetRequiredService<IIOTempService>(), new FileStorageArchiveOptions());
+        if (storage is not FileStorageServiceBase backed)
+            throw new InvalidOperationException($"File storage '{server.Name}' has no catalog.");
+        return new(server, null, scope, backed.MetadataStore, storage, multipart, archive, access, keys, ownsProvider: false);
+    }
+
+    /// <summary>Registers the catalog, download access, and multipart sessions a saved server uses when it opens.</summary>
+    internal static void AddCatalog(IServiceCollection services, FileManagerMetadataKind kind, string connection)
+    {
+        if (kind == FileManagerMetadataKind.Postgres)
+            services.AddPostgresFileMetadataStore(connection);
+        else
+            services.AddSqliteFileMetadataStore(connection);
+
+        if (kind == FileManagerMetadataKind.Sqlite) {
+            services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<SqliteFileMetadataStoreDbContext>>().CreateDbContext());
+            services.AddSqliteFileDownloadAccessService();
+            services.AddSqliteMultipartUploadSessionStore();
+        }
+        else {
+            services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<FileMetadataStoreDbContext>>().CreateDbContext());
+            services.AddPostgresFileDownloadAccessService();
+            services.AddPostgresMultipartUploadSessionStore();
+        }
+    }
+
+    /// <summary>The catalog store resolved after <see cref="Migrate" />.</summary>
+    internal static IFileMetadataStore CatalogMetadata(IServiceProvider services, FileManagerMetadataKind kind)
+        => kind == FileManagerMetadataKind.Sqlite
+            ? services.GetRequiredService<SqliteFileMetadataStore>()
+            : services.GetRequiredService<PostgresFileMetadataStore>();
 
     private async Task UploadMultipartAsync(string filePath, string? pathPrefix, FileManagerUploadOptions options, long length, CancellationToken ct)
     {
@@ -507,7 +549,7 @@ public sealed class FileStorageLocalHost : IFileManagerApi, IFileManagerTransfer
     private static IKeyStore? CreateKeyStore(FileManagerServer server)
         => BuildKeyStore(server.KeyStoreKind, server.Passphrase, server.Keys, server.AwsRegion, server.AwsSecretPrefix, server.AwsAccessKeyId, server.AwsSecretAccessKey);
 
-    private static IKeyStore? CreateKeyStore(FileManagerKeyStore store)
+    internal static IKeyStore? CreateKeyStore(FileManagerKeyStore store)
         => BuildKeyStore(store.Kind, store.Passphrase, store.Keys, store.AwsRegion, store.AwsSecretPrefix, store.AwsAccessKeyId, store.AwsSecretAccessKey);
 
     private static IKeyStore? BuildKeyStore(
@@ -560,7 +602,7 @@ public sealed class FileStorageLocalHost : IFileManagerApi, IFileManagerTransfer
         return any ? store : null;
     }
 
-    private static void Migrate(IServiceProvider services, FileManagerMetadataKind kind)
+    internal static void Migrate(IServiceProvider services, FileManagerMetadataKind kind)
     {
         if (kind == FileManagerMetadataKind.Sqlite) {
             using var db = services.GetRequiredService<IDbContextFactory<SqliteFileMetadataStoreDbContext>>().CreateDbContext();

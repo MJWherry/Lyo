@@ -36,6 +36,8 @@ import type {
 import {assertProviderDownload, assertProviderUpload} from "./providerGuard.js";
 import {
     FileStorageRoutes,
+    applyFileStorageStore,
+    storesPath,
     directUploadCompletePath,
     directUploadPutPath,
     fileAccessLinkPath,
@@ -52,6 +54,14 @@ import {
 
 export interface FileStorageClientOptions {
     routePrefix?: string;
+    /** Per-store route such as `FileStorage/archive`. Replaces the `FileStorage` base. Metadata stays put. */
+    storeRoute?: string;
+}
+
+export interface FileStorageStoreResponse {
+    name: string;
+    route: string;
+    fileMetadataRoute: string | null;
 }
 
 /** Plaintext download. `contentDigest` is the `Content-Digest` header, or null when the response omitted it. */
@@ -133,6 +143,7 @@ function beginBody(request: PresignedUploadRequest): DirectUploadBeginRequest {
 }
 
 export interface AsyncFileStorageApiClient {
+    stores(): Promise<ApiResponse<FileStorageStoreResponse[]>>;
     health(): Promise<ApiResponse<FileStorageHealthResponse>>;
     capabilities(): Promise<ApiResponse<FileStorageCapabilitiesResponse>>;
     listKeyIds(): Promise<ApiResponse<string[]>>;
@@ -172,6 +183,7 @@ export interface AsyncFileStorageApiClient {
 }
 
 export interface FileStorageApiClient {
+    stores(): ApiResponse<FileStorageStoreResponse[]>;
     health(): ApiResponse<FileStorageHealthResponse>;
     capabilities(): ApiResponse<FileStorageCapabilitiesResponse>;
     listKeyIds(): ApiResponse<string[]>;
@@ -211,9 +223,10 @@ export interface FileStorageApiClient {
 }
 
 export function createAsyncFileStorageApiClient(api: AsyncApiClient, options?: FileStorageClientOptions): AsyncFileStorageApiClient {
-    const p = (relative: string) => joinRoutePrefix(options?.routePrefix, relative);
-    const metadataRoute = p(FileStorageRoutes.fileMetadata);
+    const p = (relative: string) => joinRoutePrefix(options?.routePrefix, applyFileStorageStore(relative, options?.storeRoute));
+    const metadataRoute = joinRoutePrefix(options?.routePrefix, FileStorageRoutes.fileMetadata);
     return {
+        stores: () => api.request({method: "GET", path: p(storesPath())}),
         health: () => api.request({method: "GET", path: p(FileStorageRoutes.health)}),
         capabilities: () => api.request({method: "GET", path: p(FileStorageRoutes.capabilities)}),
         listKeyIds: () => api.request({method: "GET", path: p(FileStorageRoutes.keyIds)}),
@@ -294,9 +307,10 @@ export function createAsyncFileStorageApiClient(api: AsyncApiClient, options?: F
 }
 
 export function createFileStorageApiClient(api: ApiClient, options?: FileStorageClientOptions): FileStorageApiClient {
-    const p = (relative: string) => joinRoutePrefix(options?.routePrefix, relative);
-    const metadataRoute = p(FileStorageRoutes.fileMetadata);
+    const p = (relative: string) => joinRoutePrefix(options?.routePrefix, applyFileStorageStore(relative, options?.storeRoute));
+    const metadataRoute = joinRoutePrefix(options?.routePrefix, FileStorageRoutes.fileMetadata);
     return {
+        stores: () => api.request({method: "GET", path: p(storesPath())}),
         health: () => api.request({method: "GET", path: p(FileStorageRoutes.health)}),
         capabilities: () => api.request({method: "GET", path: p(FileStorageRoutes.capabilities)}),
         listKeyIds: () => api.request({method: "GET", path: p(FileStorageRoutes.keyIds)}),

@@ -15,6 +15,11 @@
       "title": "DI setup",
       "language": "csharp",
       "code": "services.AddSftpFileStorageService(o =>\n{\n    o.Sftp.Host = \"sftp.example.com\";\n    o.Sftp.Username = \"lyo\";\n    o.Sftp.Password = secret;\n    o.Sftp.RootRemoteDirectory = \"/files\";\n    o.Sftp.HostKeyPolicy = SftpHostKeyPolicy.FingerprintAllowList;\n    o.Sftp.AllowedHostKeyFingerprints.Add(\"SHA256:...\");\n});"
+    },
+    {
+      "title": "Factory and single-store builder",
+      "language": "csharp",
+      "code": "using Lyo.FileStorage;\nusing Lyo.FileStorage.Sftp;\n\nservices.AddSftpFileStorage(sftp => sftp.Configure(options => options.Sftp.Host = \"sftp.example.com\"));\n\nservices.AddFileStorageFactory(stores => stores.AddSftp(\"drop\", sftp => sftp.Configure(options =>\n{\n    options.Sftp.Host = \"sftp.example.com\";\n    options.Sftp.Username = \"lyo\";\n    options.Sftp.RootRemoteDirectory = \"/files\";\n})));"
     }
   ],
   "sections": [],

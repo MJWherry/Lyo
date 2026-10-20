@@ -3,7 +3,7 @@
   "name": "Lyo.FileStorage",
   "area": "Data",
   "tagline": "Save, stream-save, read, delete, and file metadata. Optional compression (Lyo.Compression), two-key encryption (Lyo.Encryption), duplicate hashing, access policies, audit hooks, multipart (IMultipartUploadService), and presigned/direct-upload/copy on cloud backends.",
-  "description": "Save, stream-save, read, delete, and file metadata. Optional compression ([Lyo.Compression](../../Compression/Lyo.Compression/README.md)), two-key encryption ([Lyo.Encryption](../../../Security/Encryption/Lyo.Encryption/README.md)), duplicate hashing, access policies, audit hooks, multipart uploads (via [IMultipartUploadService](Multipart/IMultipartUploadService.cs)), and presigned/direct-upload/copy on cloud-capable backends.\n\nCatalog listing is `IFileMetadataStore`. Bytes go through `IFileStorageService`. Backends that can list keys expose `IFileStoragePhysical.Physical` (`IFileSystem`). `FileStorageReconcile` joins them on file id with flags `Store` / `Physical` / `Both`.\n\n`IFileStorageTags` adds manual tags and stamps automatic `file-type` and `imported` tags. `ListTagGroupAsync` builds a virtual folder from an ordered list of tag types (including import year, month, and day) without moving object keys. `GET capabilities` includes those tag types.\n\nWith GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.",
+  "description": "Save, stream-save, read, delete, and file metadata. Optional compression ([Lyo.Compression](../../Compression/Lyo.Compression/README.md)), two-key encryption ([Lyo.Encryption](../../../Security/Encryption/Lyo.Encryption/README.md)), duplicate hashing, access policies, audit hooks, multipart uploads (via [IMultipartUploadService](Multipart/IMultipartUploadService.cs)), and presigned/direct-upload/copy on cloud-capable backends.\n\nCatalog listing is `IFileMetadataStore`. Bytes go through `IFileStorageService`. Backends that can list keys expose `IFileStoragePhysical.Physical` (`IFileSystem`). `FileStorageReconcile` joins them on file id with flags `Store` / `Physical` / `Both`.\n\n`IFileStorageTags` adds manual tags and stamps automatic `file-type` and `imported` tags. `ListTagGroupAsync` builds a virtual folder from an ordered list of tag types (including import year, month, and day) without moving object keys. `GET capabilities` includes those tag types.\n\nWith GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.\n\nNamed stores are recorded with `AddFileStorageFactory`. Inject the scoped `IFileStorageFactory` and call `Get(name)`. Disk is built in. S3, Azure Blob, FTP, and SFTP add their own builder methods. `FileStorage:Stores` binds `Provider`, plus optional `EncryptionServiceKey` and `CompressionServiceKey`. Omitted encryption passes null. Omitted compression uses the unkeyed `ICompressionService`.",
   "features": [],
   "examples": [
     {
@@ -15,6 +15,16 @@
       "title": "Store files on S3-compatible backends",
       "language": "csharp",
       "code": "using Lyo.FileStorage.S3;\nusing Lyo.FileStorage.Models;\n\nvar options = new S3FileStorageOptions\n{\n    BucketName = \"my-bucket\",\n    Region = \"us-east-1\",\n    AccessKeyId = \"your-access-key\",\n    SecretAccessKey = \"your-secret-key\"\n};\n\nvar metadataStore = new YourMetadataStore(); // IFileMetadataStore\nvar service = new S3FileStorageService(options, metadataStore);\n\n// Same IFileStorageService contract as LocalFileStorageService"
+    },
+    {
+      "title": "Named disk store",
+      "language": "csharp",
+      "code": "using Lyo.FileStorage;\n\nservices.AddFileStorageFactory(stores =>\n{\n    stores.AddDisk(\"photos\", disk =>\n    {\n        disk.FromConfiguration(configuration, \"FileStorage:Stores:photos\");\n        disk.Configure(options => options.RootDirectoryPath = \"/data/photos\");\n        disk.UseEncryption(\"kek\");\n        disk.UseCompression(\"gzip\");\n    });\n});\n\nvar photos = scope.ServiceProvider.GetRequiredService<IFileStorageFactory>().Get(\"photos\");"
+    },
+    {
+      "title": "FileStorage:Stores",
+      "language": "json",
+      "code": "{\n  \"FileStorage\": {\n    \"Default\": \"photos\",\n    \"Stores\": {\n      \"photos\": {\n        \"Provider\": \"Disk\",\n        \"RootDirectoryPath\": \"/data/photos\",\n        \"EncryptionServiceKey\": \"kek\",\n        \"CompressionServiceKey\": \"gzip\"\n      }\n    }\n  }\n}"
     }
   ],
   "sections": [

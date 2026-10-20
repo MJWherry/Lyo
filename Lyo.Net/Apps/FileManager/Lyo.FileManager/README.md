@@ -1,6 +1,6 @@
 # Lyo.FileManager
 
-`FileManagerSession` keeps a server list, the open connections, and the file, folder, transfer, and key actions. Several connections stay open. The selected one is the tree and the actions. A remote server uses `FileStorageHttpApi` (`Lyo.Http.Client` against `Lyo.Api.FileStorage.Models`). An in-process server uses `FileStorageLocalHost`: local disk, S3, Azure Blob, FTP, or SFTP, plus SQLite or Postgres for the catalog. A local SQLite file defaults to beside the folder (`/data/photos.file-metadata.db`). A path inside that folder is rejected. S3, Azure Blob, FTP, and SFTP ask for a catalog path because they have no local folder to sit beside. The session talks to `IFileManagerApi`. Transfer uses `IFileManagerTransfer`, which only an in-process store exposes. Settings, including bearer tokens, API keys, and the dock layout, persist at `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\Lyo\file-manager.json`. The log is `file-manager.log` beside that file and is also written to the console. The desktop window is `lyo-files` in `Lyo.FileManager.App`.
+`FileManagerSession` keeps a server list, the open connections, and the file, folder, transfer, and key actions. Several connections stay open. The selected one is the tree and the actions. A remote server uses `FileStorageHttpApi` (`Lyo.Http.Client` against `Lyo.Api.FileStorage.Models`). An in-process server uses `FileStorageLocalHost`: local disk, S3, Azure Blob, FTP, or SFTP, plus SQLite or Postgres for the catalog. A local SQLite file defaults to beside the folder (`/data/photos.file-metadata.db`). A path inside that folder is rejected. S3, Azure Blob, FTP, and SFTP ask for a catalog path because they have no local folder to sit beside. The session talks to `IFileManagerApi`. Transfer uses `IFileManagerTransfer`, which only an in-process store exposes. Settings, including bearer tokens, API keys, and the dock layout, persist at `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\Lyo\file-manager.json`. The log is `file-manager.log` beside that file and is also written to the console. The desktop window is `lyo-files` in `Lyo.FileManager.App`. Appsettings stores are `FileManagerConfiguredHost`. Opening one creates a scope and calls `IFileStorageFactory.Get(name)`. Saved servers stay on `FileStorageLocalHost.Open`.
 
 ## Features
 
@@ -31,6 +31,13 @@ session.SetAuth(FileManagerAuthKind.ApiKey, apiKey);
 await session.ConnectAsync(cancellationToken);
 ```
 
+### Open an appsettings store
+
+```csharp
+using var configured = FileManagerConfiguredHost.Load(configuration);
+using var photos = configured.Open(configured.Servers.Single(server => server.Name == "photos"));
+```
+
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
@@ -56,6 +63,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Lock` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `AWSSDK.SecretsManager` `4.0.100.3` (direct, third-party)
+- `Microsoft.Extensions.Configuration` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Metadata` (transitive, lyo)
@@ -69,6 +78,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Postgres` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Sftp.Client` (transitive, lyo)
 - `Lyo.Sqlite` (transitive, lyo)
@@ -83,11 +93,11 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `FluentFTP` `54.2.0` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Sqlite` `10.0.5` (transitive, microsoft)
-- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)

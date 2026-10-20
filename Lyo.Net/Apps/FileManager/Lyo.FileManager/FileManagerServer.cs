@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileManager;
@@ -10,6 +11,10 @@ public sealed class FileManagerServer
 
     /// <summary>Name shown in the server picker.</summary>
     public string Name { get; set; } = "";
+
+    /// <summary>True when this server came from <c>FileStorage:Stores</c>. It is not written back to the settings file.</summary>
+    [JsonIgnore]
+    public bool Configured { get; set; }
 
     /// <summary>Remote HTTP API or an in-process store.</summary>
     public FileManagerServerKind Kind { get; set; }

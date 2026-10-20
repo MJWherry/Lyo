@@ -4,7 +4,7 @@
   "name": "Lyo.FileManager.App",
   "area": "Apps",
   "tagline": "lyo-files desktop window for a FileStorage server or a local folder.",
-  "description": "Avalonia window named `lyo-files`. Menus hold the server, file, edit, and key actions. A tab is a key store and a file store. The toolbar is the key store picker, the server picker, Connect, Up, a breadcrumb, and the frequent buttons. Connect opens that pair. The file list stays in the center and follows the selected connection. Tree, metadata, and log dock to the left, right, or bottom, resize, and hide. Drag a title bar to another edge. The log starts on the bottom. Quick search filters the loaded tree, and another box filters the open folder. The file grid sorts and resizes columns. Query uses that grid with a prefix column. Drag a file onto the list to upload it. Double-click a file to open it, or a folder to enter it. Copy and move open a dialog with a local prefix or another open connection. Servers, key stores, and the layout persist under `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\\Lyo\\file-manager.json`. Session logic lives in `Lyo.FileManager`.",
+  "description": "Avalonia window named `lyo-files`. Menus hold the server, file, edit, and key actions. A tab is a key store and a file store. The toolbar is the key store picker, the server picker, Connect, Up, a breadcrumb, and the frequent buttons. Connect opens that pair. The file list stays in the center and follows the selected connection. Tree, metadata, and log dock to the left, right, or bottom, resize, and hide. Drag a title bar to another edge. The log starts on the bottom. Quick search filters the loaded tree, and another box filters the open folder. The file grid sorts and resizes columns. Query uses that grid with a prefix column. Drag a file onto the list to upload it. Double-click a file to open it, or a folder to enter it. Copy and move open a dialog with a local prefix or another open connection. Servers, key stores, and the layout persist under `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\\Lyo\\file-manager.json`. Session logic lives in `Lyo.FileManager`. `appsettings.json` beside the app adds `FileStorage:Stores`. Those names join the server list and are not written back to the settings file. A saved server with the same name throws when the second one is added.",
   "features": [
     "**Add a server.** A blank name, file folder, or base URL stays in the dialog with the error. Local asks for a file folder, then the catalog folder and filename. Those default to a SQLite file beside the folder. Postgres asks for a connection string instead. S3 asks for a bucket and a catalog. Azure Blob asks for a storage connection string, a container, and a catalog. FTP asks for host, username, password, and a catalog. SFTP also asks for a host-key fingerprint, or a private key instead of a password. The key store is chosen on the toolbar.",
     "**Key stores.** Key stores opens a window for the saved list. Add, rename, and remove stores. Load reads a key file: `{ \"keys\": [ { \"keyId\", \"version\", \"current\", \"key\", \"metadata\" } ] }`. `key` is the key bytes, including the salt in metadata. Each store is local keys, with a passphrase and key versions, or AWS Secrets Manager. The toolbar lists `(None)` and every saved name, in front of the server picker. Connect uses that choice. A remote server ignores it. Each open pair is a tab named for the key store and the server. Choosing one shows that pair and does not reconnect. The same server can stay open with another key store.",
@@ -19,6 +19,11 @@
       "title": "Run the window",
       "language": "text",
       "code": "dotnet run --project Lyo.Net/Apps/FileManager/Lyo.FileManager.App"
+    },
+    {
+      "title": "appsettings.json",
+      "language": "json",
+      "code": "{\n  \"FileStorage\": {\n    \"Stores\": {\n      \"photos\": {\n        \"Provider\": \"Disk\",\n        \"RootDirectoryPath\": \"/data/photos\"\n      },\n      \"archive\": {\n        \"Provider\": \"S3\",\n        \"BucketName\": \"archive\",\n        \"CatalogConnectionString\": \"Data Source=/data/archive.file-metadata.db\",\n        \"MetadataKind\": \"Sqlite\"\n      }\n    }\n  }\n}"
     }
   ],
   "sections": [],
@@ -84,6 +89,24 @@
       "tags": [
         "direct",
         "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
       ]
     },
     {
@@ -351,6 +374,14 @@
       ]
     },
     {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
@@ -477,6 +508,16 @@
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",

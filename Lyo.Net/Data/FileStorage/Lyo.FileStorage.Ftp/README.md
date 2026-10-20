@@ -23,6 +23,22 @@ services.AddFtpFileStorageService(o =>
 });
 ```
 
+### Factory and single-store builder
+
+```csharp
+using Lyo.FileStorage;
+using Lyo.FileStorage.Ftp;
+
+services.AddFtpFileStorage(ftp => ftp.Configure(options => options.Ftp.Host = "ftp.example.com"));
+
+services.AddFileStorageFactory(stores => stores.AddFtp("drop", ftp => ftp.Configure(options =>
+{
+    options.Ftp.Host = "ftp.example.com";
+    options.Ftp.Username = "lyo";
+    options.Ftp.RootRemoteDirectory = "/files";
+})));
+```
+
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).

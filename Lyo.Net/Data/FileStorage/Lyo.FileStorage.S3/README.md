@@ -52,6 +52,24 @@ services
     .Build(configuration);
 ```
 
+### Factory and single-store builder
+
+```csharp
+using Lyo.FileStorage;
+using Lyo.FileStorage.S3;
+
+services.AddS3FileStorage(s3 => s3.Configure(options => options.BucketName = "one"));
+
+services.AddFileStorageFactory(stores =>
+{
+    stores.AddS3("archive", s3 => s3.Configure(options =>
+    {
+        options.BucketName = "archive";
+        options.Region = "us-east-1";
+    }));
+});
+```
+
 ## Where to read next
 
 | Document | Scope |

@@ -1,6 +1,6 @@
 # Lyo.Api.FileStorage
 
-HTTP endpoints for Lyo file storage. After a keyed `IFileStorageService` (plus multipart and archive) is registered, hosts map `BuildFileStorageApi`. FileMetadata Query/QueryProject is included. `GET capabilities` lists feature flags for presigned read, direct upload, multipart, copy, move, physical listing, encryption, archive, and access links. It does not include bucket, disk root, or keystore location. `GET key-ids` lists encryption key identifiers; keystore CRUD is not part of this API.
+HTTP endpoints for Lyo file storage. After a keyed `IFileStorageService` (plus multipart and archive) is registered, hosts map `BuildFileStorageApi`. When `IFileStorageFactory` is registered, `GET {Route}/stores` lists each name and `{Route}/{name}`. File and multipart calls for that store use the name. `FileStorage:Default` serves the bare route. FileMetadata Query/QueryProject stays on the host route. Access links stay on the bare route. `GET capabilities` lists feature flags for presigned read, direct upload, multipart, copy, move, physical listing, encryption, archive, and access links. It does not include bucket, disk root, or keystore location. `GET key-ids` lists encryption key identifiers; keystore CRUD is not part of this API.
 
 ## Examples
 
@@ -13,6 +13,17 @@ app.BuildFileStorageApi(new FileStorageApiOptions {
     Route = "FileStorage",
     ServiceKey = "gateway-filestorage"
 });
+```
+
+### Stores
+
+```text
+GET FileStorage/stores
+[{ "name": "archive", "route": "FileStorage/archive", "fileMetadataRoute": null }]
+
+POST FileStorage/archive/files/save
+
+FileMetadata QueryProject stays at FileStorage/FileMetadata. The grid does not switch catalogs.
 ```
 
 ## Routes this maps
@@ -56,6 +67,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Query.Sql` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
@@ -66,6 +78,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.AspNetCore.OpenApi` `10.0.5` (transitive, microsoft)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)

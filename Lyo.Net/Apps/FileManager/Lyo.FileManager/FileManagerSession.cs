@@ -13,6 +13,7 @@ public sealed class FileManagerSession : IDisposable
     private readonly List<FileManagerServer> _servers = [];
     private readonly List<FileManagerKeyStore> _keyStores = [];
     private readonly List<FileManagerConnection> _connections = [];
+    private FileManagerConfiguredHost? _configured;
     private bool _keyStoresLoaded;
     private string? _looseError;
 
@@ -90,6 +91,7 @@ public sealed class FileManagerSession : IDisposable
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(baseUrl);
+        EnsureUnique(name);
         var server = new FileManagerServer {
             Name = name.Trim(),
             Kind = FileManagerServerKind.Remote,
@@ -112,6 +114,7 @@ public sealed class FileManagerSession : IDisposable
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(rootDirectory);
+        EnsureUnique(name);
         var server = new FileManagerServer {
             Name = name.Trim(),
             Kind = FileManagerServerKind.Local,
@@ -130,6 +133,7 @@ public sealed class FileManagerSession : IDisposable
     {
         ArgumentHelpers.ThrowIfNull(server);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(server.Name);
+        EnsureUnique(server.Name);
         _servers.Add(server);
         Active = server;
         return server;
@@ -153,6 +157,17 @@ public sealed class FileManagerSession : IDisposable
         if (server?.KeyStoreId is not Guid id)
             return null;
         return _keyStores.FirstOrDefault(store => store.Id == id);
+    }
+
+    /// <summary>Adds appsettings stores. A name that matches a saved server throws. The active server stays when one is already selected.</summary>
+    public void UseConfiguredStores(FileManagerConfiguredHost host)
+    {
+        ArgumentHelpers.ThrowIfNull(host);
+        if (_configured != null)
+            throw new InvalidOperationException("Configured stores are already loaded.");
+        _configured = host;
+        foreach (var server in host.Servers)
+            Include(server);
     }
 
     /// <summary>Replaces the list. Used when settings load.</summary>
@@ -203,6 +218,7 @@ public sealed class FileManagerSession : IDisposable
     public void Rename(Guid id, string name)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        EnsureUnique(name, id);
         Find(id).Name = name.Trim();
     }
 
@@ -542,6 +558,8 @@ public sealed class FileManagerSession : IDisposable
         foreach (var connection in _connections)
             connection.Api.Dispose();
         _connections.Clear();
+        _configured?.Dispose();
+        _configured = null;
     }
 
     private async Task<FileManagerActionResult> RunFilesAsync(
@@ -722,10 +740,36 @@ public sealed class FileManagerSession : IDisposable
 
     private IFileManagerApi OpenSaved(FileManagerServer server)
     {
+        if (server.Configured)
+            return OpenConfigured(server);
         if (!_keyStoresLoaded)
             return FileManagerApis.Open(server, Logs);
         var store = server.KeyStoreId is Guid id ? _keyStores.FirstOrDefault(item => item.Id == id) : null;
         return FileManagerApis.Open(server, Logs, store);
+    }
+
+    private IFileManagerApi OpenConfigured(FileManagerServer server)
+    {
+        if (_configured == null)
+            throw new InvalidOperationException($"File storage '{server.Name}' is not registered.");
+        var store = _keyStoresLoaded && server.KeyStoreId is Guid id ? _keyStores.FirstOrDefault(item => item.Id == id) : null;
+        return _configured.Open(server, store);
+    }
+
+    private void Include(FileManagerServer server)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(server.Name);
+        EnsureUnique(server.Name);
+        server.Configured = true;
+        _servers.Add(server);
+        Active ??= server;
+    }
+
+    private void EnsureUnique(string name, Guid? except = null)
+    {
+        var trimmed = name.Trim();
+        if (_servers.Any(server => server.Id != except && string.Equals(server.Name, trimmed, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException($"File storage '{trimmed}' is already registered.");
     }
 
     private static string? EmptyToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

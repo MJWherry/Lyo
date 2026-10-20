@@ -8,6 +8,8 @@ Catalog listing is `IFileMetadataStore`. Bytes go through `IFileStorageService`.
 
 With GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.
 
+Named stores are recorded with `AddFileStorageFactory`. Inject the scoped `IFileStorageFactory` and call `Get(name)`. Disk is built in. S3, Azure Blob, FTP, and SFTP add their own builder methods. `FileStorage:Stores` binds `Provider`, plus optional `EncryptionServiceKey` and `CompressionServiceKey`. Omitted encryption passes null. Omitted compression uses the unkeyed `ICompressionService`.
+
 ## Examples
 
 ### Store files on disk
@@ -59,6 +61,43 @@ var metadataStore = new YourMetadataStore(); // IFileMetadataStore
 var service = new S3FileStorageService(options, metadataStore);
 
 // Same IFileStorageService contract as LocalFileStorageService
+```
+
+### Named disk store
+
+```csharp
+using Lyo.FileStorage;
+
+services.AddFileStorageFactory(stores =>
+{
+    stores.AddDisk("photos", disk =>
+    {
+        disk.FromConfiguration(configuration, "FileStorage:Stores:photos");
+        disk.Configure(options => options.RootDirectoryPath = "/data/photos");
+        disk.UseEncryption("kek");
+        disk.UseCompression("gzip");
+    });
+});
+
+var photos = scope.ServiceProvider.GetRequiredService<IFileStorageFactory>().Get("photos");
+```
+
+### FileStorage:Stores
+
+```json
+{
+  "FileStorage": {
+    "Default": "photos",
+    "Stores": {
+      "photos": {
+        "Provider": "Disk",
+        "RootDirectoryPath": "/data/photos",
+        "EncryptionServiceKey": "kek",
+        "CompressionServiceKey": "gzip"
+      }
+    }
+  }
+}
 ```
 
 ## Where the docs live

@@ -28,6 +28,11 @@
       "title": "Sample configuration",
       "language": "json",
       "code": "{\n  \"AzureBlobFileStorage\": {\n    \"ConnectionString\": \"DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...\",\n    \"ContainerName\": \"my-container\",\n    \"BlobPrefix\": \"files\",\n    \"EncryptionScope\": null,\n    \"CustomerProvidedKeyBase64\": null,\n    \"EnableMetrics\": false,\n    \"HealthCheckMode\": \"Lightweight\",\n    \"MaxUploadSizeBytes\": 104857600\n  }\n}"
+    },
+    {
+      "title": "Factory and single-store builder",
+      "language": "csharp",
+      "code": "using Lyo.FileStorage;\nusing Lyo.FileStorage.AzureBlob;\n\nservices.AddAzureBlobFileStorage(azure => azure.Configure(options =>\n{\n    options.ConnectionString = connectionString;\n    options.ContainerName = \"files\";\n}));\n\nservices.AddFileStorageFactory(stores =>\n{\n    stores.AddAzureBlob(\"archive\", azure =>\n    {\n        azure.Configure(options =>\n        {\n            options.ConnectionString = connectionString;\n            options.ContainerName = \"archive\";\n        });\n        azure.WithMultipart();\n    });\n});"
     }
   ],
   "sections": [

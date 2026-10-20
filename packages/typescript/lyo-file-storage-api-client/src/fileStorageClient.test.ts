@@ -14,6 +14,48 @@ function plaintext(): FileStoreResult {
     return {id: fileId, isEncrypted: false, isCompressed: false, originalFileName: "a.bin"};
 }
 
+describe("stores_andStoreRoute", () => {
+    it("requests FileStorage/stores and replaces the FileStorage base without doubling it", async () => {
+        const calls: string[] = [];
+        const transport: AsyncApiTransport = async (req) => {
+            calls.push(req.url);
+            return ok([]);
+        };
+        const api = createAsyncApiClient({baseUrl: "http://x", transport});
+        const files = createAsyncFileStorageApiClient(api);
+        await files.stores();
+        await files.health();
+        await files.queryProject({Amount: 1, Select: ["Id"]});
+
+        const archive = createAsyncFileStorageApiClient(api, {storeRoute: "FileStorage/archive"});
+        await archive.health();
+        await archive.stores();
+        await archive.queryProject({Amount: 1, Select: ["Id"]});
+
+        expect(calls).toEqual([
+            "http://x/FileStorage/stores",
+            "http://x/FileStorage/health",
+            "http://x/FileStorage/FileMetadata/QueryProject",
+            "http://x/FileStorage/archive/health",
+            "http://x/FileStorage/archive/stores",
+            "http://x/FileStorage/FileMetadata/QueryProject",
+        ]);
+    });
+
+    it("sync stores requests FileStorage/stores", () => {
+        const calls: string[] = [];
+        const transport: ApiTransport = (req) => {
+            calls.push(req.url);
+            return ok([]);
+        };
+        const files = createFileStorageApiClient(createApiClient({baseUrl: "http://x", transport}));
+        files.stores();
+        const archive = createFileStorageApiClient(createApiClient({baseUrl: "http://x", transport}), {storeRoute: "FileStorage/archive"});
+        archive.health();
+        expect(calls).toEqual(["http://x/FileStorage/stores", "http://x/FileStorage/archive/health"]);
+    });
+});
+
 describe("joinRoutePrefix_joinsOptionalPrefix", () => {
     it("joins FileStorage/files/folder and an api prefix", () => {
         expect(joinRoutePrefix(undefined, "FileStorage/files/folder")).toBe("/FileStorage/files/folder");

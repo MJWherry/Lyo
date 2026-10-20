@@ -66,6 +66,11 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
         Host.FilesChanged += RefreshAsync;
         _folderSource = new FileStorageHttpTreeSource(Host.ApiClient, Host.FilesApi);
         _selected = FileStorageHttpTreeSource.DirectoryNode(null);
+        await LoadCapabilitiesAsync().ConfigureAwait(true);
+    }
+
+    private async Task LoadCapabilitiesAsync()
+    {
         try {
             var capabilities = await Host.ApiClient.GetAsAsync<FileStorageCapabilitiesResponse>(Host.FilesApi("capabilities")).ConfigureAwait(true);
             _tagTypes = capabilities?.TagTypes?.ToList() ?? [];
@@ -155,6 +160,7 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
     private async Task RefreshAsync()
     {
         _listingRevision++;
+        await LoadCapabilitiesAsync().ConfigureAwait(true);
         if (_tree != null)
             await _tree.RefreshAsync().ConfigureAwait(true);
 

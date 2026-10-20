@@ -74,6 +74,25 @@ export function tagGroupQuery(groupBy: readonly string[], path?: string): string
     return qs ? `${FileStorageRoutes.tagGroup}?${qs}` : FileStorageRoutes.tagGroup;
 }
 
+/** Replaces a leading `FileStorage` base with `storeRoute`. Metadata stays on `FileStorage/FileMetadata`. */
+export function applyFileStorageStore(relativePath: string, storeRoute?: string): string {
+    const base = (storeRoute ?? "").replace(/\/+$/, "").replace(/^\/+/, "");
+    if (!base) return relativePath;
+    const queryAt = relativePath.indexOf("?");
+    const pathOnly = queryAt >= 0 ? relativePath.slice(0, queryAt) : relativePath;
+    const query = queryAt >= 0 ? relativePath.slice(queryAt) : "";
+    const metadata = FileStorageRoutes.fileMetadata;
+    if (pathOnly === metadata || pathOnly.startsWith(`${metadata}/`)) return relativePath;
+    const route = FileStorageRoutes.route;
+    if (pathOnly === route || pathOnly.startsWith(`${route}/`))
+        return `${base}${pathOnly.slice(route.length)}${query}`;
+    return relativePath;
+}
+
+export function storesPath(fileBase = FileStorageRoutes.route): string {
+    return `${fileBase.replace(/\/+$/, "")}/stores`;
+}
+
 export function joinRoutePrefix(routePrefix: string | undefined, relativePath: string): string {
     const queryAt = relativePath.indexOf("?");
     const pathOnly = queryAt >= 0 ? relativePath.slice(0, queryAt) : relativePath;

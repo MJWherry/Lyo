@@ -10,6 +10,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using Lyo.Desktop.Components;
 using Lyo.FileStorage;
+using Microsoft.Extensions.Configuration;
 
 namespace Lyo.FileManager.App;
 
@@ -68,6 +69,11 @@ public partial class MainWindow : Window
         _session.Logs = new LogSinkLoggerFactory(new LogSinkLoggerProvider(_logs));
         _session.ReplaceServers(document.Servers);
         _session.ReplaceKeyStores(document.KeyStores ?? []);
+        var configuration = new ConfigurationBuilder().SetBasePath(AppContext.BaseDirectory).AddJsonFile("appsettings.json", optional: true).Build();
+        var configured = FileManagerConfiguredHost.Load(configuration, _session.Logs);
+        foreach (var note in configured.Skipped)
+            Log(note);
+        _session.UseConfiguredStores(configured);
         BindServers();
         BindKeyStores(resetToServer: true);
         Folders.ItemsSource = _roots;
@@ -184,7 +190,8 @@ public partial class MainWindow : Window
     private void SaveSettings()
     {
         CopyBubble();
-        FileManagerSettingsStore.Save(FileManagerSettingsStore.ConfigPath(), _session.Servers, _layout, _bubble, _treeFiles, _session.KeyStores);
+        FileManagerSettingsStore.Save(
+            FileManagerSettingsStore.ConfigPath(), _session.Servers.Where(server => !server.Configured).ToArray(), _layout, _bubble, _treeFiles, _session.KeyStores);
     }
 
     private void BindServers()
@@ -212,12 +219,23 @@ public partial class MainWindow : Window
 
     private void OnServerChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (_fillingServers || ServerBox.SelectedItem is not FileManagerServer server)
+        if (_fillingServers || ServerBox.SelectedItem is not FileManagerServer server || _session.Active?.Id == server.Id)
             return;
+
         _session.Select(server.Id);
-        if (_treeServer != server.Id)
-            ClearBrowser();
-        _ = ConnectCurrent();
+        BindKeyStores(resetToServer: true);
+        if (_treeServer == server.Id && _treeKey == OpenKey(server)) {
+            ApplyCapabilities();
+            return;
+        }
+
+        ClearBrowser();
+        _treeServer = null;
+        _treeKey = null;
+        EmptyState.Text = "Add a server and connect.";
+        EmptyState.IsVisible = true;
+        Breadcrumb.Children.Clear();
+        ApplyCapabilities();
     }
 
     private async void OnAddServer(object? sender, RoutedEventArgs e)

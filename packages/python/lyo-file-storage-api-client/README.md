@@ -22,3 +22,16 @@ pytest
 ```
 
 Import the client as `lyo_file_storage_api_client`.
+
+```python
+from lyo_api_client import ApiClient
+from lyo_file_storage_api_client import FileStorageApiClient
+
+files = FileStorageApiClient(ApiClient("http://localhost:5251"))
+files.stores()
+
+archive = FileStorageApiClient(ApiClient("http://localhost:5251"), store_route="FileStorage/archive")
+archive.health()
+```
+
+`stores()` requests `GET FileStorage/stores`. `store_route` replaces the `FileStorage` base. The metadata query stays `FileStorage/FileMetadata`.

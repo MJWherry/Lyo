@@ -67,6 +67,12 @@ public partial class FileStorageManagement : ComponentBase
     /// <summary>Fired after file mutations so the Browser and Tree tabs can reload.</summary>
     public event Func<Task>? FilesChanged;
 
+    /// <summary>Stores returned by <c>GET {prefix}/stores</c>. Empty when that call failed or the host has no factory.</summary>
+    public IReadOnlyList<FileStorageStoreResponse> Stores { get; private set; } = [];
+
+    /// <summary>Selected store name. Private to this component; it is not written back to <see cref="FileStorageApiRoutePrefix" />.</summary>
+    public string? SelectedStoreName { get; private set; }
+
     /// <summary>True after <c>GET {prefix}/health</c> succeeds (HTTP API is reachable).</summary>
     public bool ApiHealthy { get; private set; }
 
@@ -85,9 +91,32 @@ public partial class FileStorageManagement : ComponentBase
     public Task NotifyFilesChangedAsync() => FilesChanged?.Invoke() ?? Task.CompletedTask;
 
     /// <summary>Combines <see cref="FileStorageApiRoutePrefix" /> with an API-relative path such as <c>files/{id}/metadata</c>.</summary>
+    /// <summary>Records a successful store list. A null list is a failed call and leaves the current prefix alone. One store selects that route.</summary>
+    public void UseStores(IReadOnlyList<FileStorageStoreResponse>? stores)
+    {
+        if (stores == null)
+            return;
+
+        Stores = stores;
+        if (stores.Count == 1)
+            SelectedStoreName = stores[0].Name;
+    }
+
+    /// <summary>Selects a store by name. Health, key ids, and capabilities reload through <see cref="ChangeStoreAsync" />.</summary>
+    public void SelectStore(string? name) => SelectedStoreName = name;
+
+    /// <summary>Selects <paramref name="name" /> and reloads health and key ids.</summary>
+    public async Task ChangeStoreAsync(string? name)
+    {
+        SelectStore(name);
+        await RefreshApiHealthAsync().ConfigureAwait(false);
+        await RefreshEncryptionKeyIdsAsync().ConfigureAwait(false);
+        await NotifyFilesChangedAsync().ConfigureAwait(false);
+    }
+
     public string FilesApi(string relativePath)
     {
-        var prefix = FileStorageApiRoutePrefix.Trim().Trim('/');
+        var prefix = FileStorageStoreRoutes.Prefix(FileStorageApiRoutePrefix, Stores, SelectedStoreName).Trim().Trim('/');
         var relative = relativePath.Trim().TrimStart('/');
         return string.IsNullOrEmpty(prefix) ? relative : $"{prefix}/{relative}";
     }
@@ -158,14 +187,27 @@ public partial class FileStorageManagement : ComponentBase
 
         var qs = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
         var streamPath = StreamUploadRelativePath?.Trim().Trim('/');
-        var basePath = string.IsNullOrEmpty(streamPath) ? FilesApi("files/save-stream") : streamPath;
+        var storeSelected = Stores.Count == 1 || !string.IsNullOrWhiteSpace(SelectedStoreName);
+        var basePath = storeSelected || string.IsNullOrEmpty(streamPath) ? FilesApi("files/save-stream") : streamPath;
         return $"{basePath}{qs}";
     }
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadStoresAsync().ConfigureAwait(false);
         await RefreshApiHealthAsync().ConfigureAwait(false);
         await RefreshEncryptionKeyIdsAsync().ConfigureAwait(false);
+    }
+
+    private async Task LoadStoresAsync()
+    {
+        try {
+            var stores = await ApiClient.GetAsAsync<List<FileStorageStoreResponse>>(FilesApi("stores")).ConfigureAwait(false);
+            UseStores(stores);
+        }
+        catch {
+            // A failed list leaves FileStorageApiRoutePrefix alone.
+        }
     }
 
     /// <summary>Fetches encryption key identifiers from <c>GET {prefix}/key-ids</c>.</summary>

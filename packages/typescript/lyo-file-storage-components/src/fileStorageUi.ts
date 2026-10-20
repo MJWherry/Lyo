@@ -1,4 +1,4 @@
-import type {FileStorageFolderEntry, FileStoreResult} from "lyo-file-storage-api-client";
+import type {FileStorageFolderEntry, FileStorageStoreResponse, FileStoreResult} from "lyo-file-storage-api-client";
 import type {WhereClause} from "lyo-query";
 import {chipOf, LyoChipHueList, LyoChipHues, type LyoChipColor, type LyoChipSpec} from "lyo-web-components";
 
@@ -20,6 +20,17 @@ export function presenceLabel(presence: string | number | null | undefined): Pre
     if (presence === 2 || presence === "2" || presence === "physical" || presence === "Physical") return "Physical";
     if (presence === 3 || presence === "3" || presence === "both" || presence === "Both") return "Both";
     return "None";
+}
+
+/** Store route for file calls. A failed list leaves the caller on the API prefix. Metadata is not part of this value. */
+export function selectedStoreRoute(
+    stores: readonly FileStorageStoreResponse[] | null,
+    selectedName: string | null
+): string | undefined {
+    if (!stores) return undefined;
+    if (stores.length === 1) return stores[0]?.route;
+    if (!selectedName) return undefined;
+    return stores.find((store) => store.name.toLowerCase() === selectedName.toLowerCase())?.route;
 }
 
 export function joinPathPrefix(parent: string | null | undefined, name: string): string {
