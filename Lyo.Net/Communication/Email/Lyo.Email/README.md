@@ -7,7 +7,7 @@ MailKit SMTP sender. `EmailService` is the `IEmailService` implementation.
 - **EmailRequestBuilder.** Fluent helper for assembling emails.
 - **SMTP.** Delivery goes through MailKit.
 - **Bulk.** Sequential batch send on one SMTP connection, with a result per message.
-- **Attachments.** File attachments plus `ZipFileBuilder` to pack files into one ZIP.
+- **Attachments.** File attachments. Pack several files into one ZIP with `AddZippedFile` or `AddAttachmentsAsZip`, which call `ZipFileBuilder` in `Lyo.Common.Core`.
 - **HTML and text.** HTML bodies and plain-text bodies.
 - **Results.** Failures come back as `Result<EmailRequest>` (`EmailResult` for a single send).
 - **Logging.** Writes through Microsoft.Extensions.Logging.
@@ -178,18 +178,15 @@ var result = await _emailService.SendEmailAsync(builder);
 ### Several files in one ZIP
 
 ```csharp
-var zipBytes = ZipFileBuilder.New()
-    .AddFile("file1.txt", Encoding.UTF8.GetBytes("Content 1"))
-    .AddFile("file2.txt", "Content 2") // text overload (UTF-8 by default)
-    .AddFileFromPath("/path/to/report.pdf") // from disk; entry name defaults to file name
-    .AddDirectory("/path/to/docs", "docs/") // recurse a directory under a prefix
-    .Build();
-
 var builder = EmailRequestBuilder.New()
     .SetSubject("Files Attached")
     .SetTextBody("Please find the attached files.")
     .AddTo("recipient@example.com")
-    .AddAttachment("files.zip", zipBytes);
+    .AddZippedFile("files.zip", zip =>
+    {
+        zip.AddFile("file1.txt", "Content 1");
+        zip.AddFile("file2.txt", "Content 2");
+    });
 
 var result = await _emailService.SendEmailAsync(builder);
 ```
@@ -414,7 +411,7 @@ dotnet test
 
 ## Several files in one ZIP
 
-`ZipFileBuilder` packs several files into one ZIP byte array that can be attached like any other file. `ZipFileBuilder` is a one-shot builder. After `Build()`/`BuildToFile()`/`BuildToStream()` the archive is closed and the instance cannot be reused.
+`AddZippedFile` and `AddAttachmentsAsZip` pack several files into one ZIP attachment. The packer is `ZipFileBuilder` in `Lyo.Common.Core`. It queues entries until `Build`, and further adds throw after that.
 
 ## Resilience
 
@@ -558,18 +555,11 @@ Log levels:
 - `SetTextBody(...)`. Assign the plain-text body.
 - `AppendHtmlBody(...)`. Append onto the HTML body.
 - `AppendTextBody(...)`. Append onto the text body.
-- `AddAttachment(...)`. Attach files (use `ZipFileBuilder` first if you want a ZIP attachment).
+- `AddAttachment(...)`. Attach files.
+- `AddZippedFile(...)` / `AddAttachmentsAsZip(...)`. Attach one ZIP built by `ZipFileBuilder` from `Lyo.Common.Core`.
 - `AddHeader(...)`. Attach custom headers.
 - `ClearTo()` / `ClearCc()` / `ClearBcc()` / `ClearAttachments()`. Empty the collections.
 - `Build()`. Produce the MimeMessage.
-
-## `ZipFileBuilder`
-
-- `AddFile(name, byte[] | Stream | string)`. Add a single entry. The `string` overload defaults to UTF-8.
-- `AddFiles(Dictionary<string, byte[]>)` / `AddFiles(params string[] filePaths)`. Add several entries.
-- `AddFileFromPath(path, entryName?)`. Add one entry from a disk file.
-- `AddDirectory(path, entryPrefix = "")`. Recursively add a whole directory tree.
-- `Build()` / `BuildToFile(path)` / `BuildToStream()`. Build the archive (one-shot). The instance cannot be reused after a build.
 
 ## `BulkEmailRequestBuilder`
 

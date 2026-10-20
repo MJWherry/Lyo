@@ -7,7 +7,7 @@ Exception types and argument-validation helpers shared by Lyo packages.
 - **ArgumentHelpers.** Argument checks: `ThrowIfNull`, `ThrowIfNullOrWhiteSpace`, `ThrowIfNullOrEmpty`, `ThrowIf`, `ThrowIfNotInRange`, `ThrowIfFileNotFound`, `ThrowIfNullReturn` (for constructor chaining), plus `ThrowIfEmpty` (GUIDs), `ThrowIfDefault` (structs such as `DateTime`), `ThrowIfNotDefined` (enum casts), and `ThrowIfIndexOutOfRange`.
 - **UriHelpers.** URI checks: `GetValidWebUri`, `ThrowIfInvalidUri`, `ThrowIfInvalidAbsoluteUri`.
 - **OperationHelpers.** Operation/state checks (`ThrowIf`, `ThrowIfNull`, `ThrowIfNullOrWhiteSpace`, stream checks, disposition/cancellation/not-supported) plus numeric parity with `ArgumentHelpers`: `ThrowIfNotInRange` (scalar, `DateTime`, `TimeSpan`, array lengths), `ThrowIfGreaterThan`, `ThrowIfGreaterThanOrEqual`, `ThrowIfLessThan`, `ThrowIfLessThanOrEqual`, `ThrowIfZero`, sign helpers, `ThrowIfEqual`, `ThrowIfNotEqual`.
-- **OrThrow / StringOr.** Fluent `string?.Or` / `.OrIfWhiteSpace` chains and terminals (`OrThrow(Func<…>)`, `OrThrowInvalidOperation`, etc.) plus generic `OrThrow`/`OrThrowInvalidOperation` unwraps. Lives here so callers do not pull in `Lyo.Common.Core` for throw-only ergonomics.
+- **OrThrow / StringOr / ValueWhen.** Fluent `string?.Or` / `.OrIfWhiteSpace` chains and terminals (`OrThrow`, `OrThrowInvalidOperation`) plus generic `OrThrow` unwraps. `ValueWhenExtensions` adds same-type `OrIfNull` / `OrDefault`, and `ValueOrChain` checks whose result type is independent of the subject: inclusive `IfInRange` for numbers, `string`, `DateTime`, `DateTimeOffset`, `TimeSpan`, `DateOnly`, and `TimeOnly`; ordering, equality, and sign checks; `IfNull`, `IfDefault`, `IfEmpty` (GUID), `IfDefined`, and string empty, whitespace, and length. A failed check leaves the chain open for `OrDefault` or `OrThrow`. Lives here so callers do not pull in `Lyo.Common.Core`.
 - **FileHelpers.** File-name checks: `ThrowIfFileNameInvalid`, `GetValidFileName`, and path-prefix safety helpers `NormalizePathPrefix`, `ThrowIfPathPrefixTraversal`, `NormalizeAndValidatePathPrefix`. Shared by every Lyo.FileStorage backend's save/direct-upload/diagnostics paths.
 - **FormatHelpers.** Format checks that throw `InvalidFormatException` (`ThrowIfInvalidGuid`, `GetValidGuid`, hex color, `ThrowIfInvalidFormat` with custom regex, `ThrowIfInvalidPort` / `IsValidPort` for ports 1 to 65535, `ThrowIfNotInRange` for numeric options checks).
 - **ConfigurationHelpers.** Configuration checks that throw `ConfigurationException` (`ThrowIf`, `ThrowIfNull`, `ThrowIfNullOrWhiteSpace`) with caller-expression setting names.
@@ -60,4 +60,22 @@ var errors = new ValidationErrorsBuilder()
     .AddIf(string.IsNullOrWhiteSpace(req.Email), nameof(req.Email), "Email is required.")
     .AddIf(req.Age < 0, nameof(req.Age), "Age must be positive.");
 errors.ThrowIfAny();
+```
+
+### Coalesce and range picks
+
+```csharp
+using Lyo.Exceptions;
+
+string? primary = null;
+string? backup = null;
+string name = primary.OrIfNull(backup).OrIfNull("guest");
+
+var created = new DateTime(2024, 6, 1);
+var start = new DateTime(2024, 1, 1);
+var end = new DateTime(2024, 12, 31);
+string when = created.IfInRange(start, end, "in").OrIfGreaterThan(end, "after").OrDefault("before");
+
+long unixSeconds = 1_700_000_000;
+string window = unixSeconds.IfInRange(1_600_000_000, 1_800_000_000, "in-window").OrDefault("outside");
 ```

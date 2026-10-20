@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common.Core.Archives;
 using Lyo.Common.Core.Extensions;
 using Lyo.Common.Metadata.Records;
 using Lyo.Email.Models;
@@ -352,7 +353,7 @@ public sealed class EmailRequestBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName);
         ArgumentHelpers.ThrowIfNull(files);
-        var zipData = ZipFileBuilder.New().AddFiles(files).Build();
+        var zipData = ZipFileBuilder.Create().AddFiles(files).Build();
         _bodyBuilder.Attachments.Add(zipFileName, zipData, ContentType.Parse(FileTypeInfo.Zip.MimeType));
         _attachmentMetadata.Add(new(zipFileName, zipData, FileTypeInfo.Zip.MimeType));
         return this;
@@ -366,7 +367,7 @@ public sealed class EmailRequestBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName);
         ArgumentHelpers.ThrowIfNull(filePaths);
-        var zipData = ZipFileBuilder.New().AddFiles(filePaths).Build();
+        var zipData = ZipFileBuilder.Create().AddFiles(filePaths).Build();
         _bodyBuilder.Attachments.Add(zipFileName, zipData, ContentType.Parse(FileTypeInfo.Zip.MimeType));
         _attachmentMetadata.Add(new(zipFileName, zipData, FileTypeInfo.Zip.MimeType));
         return this;
@@ -380,7 +381,7 @@ public sealed class EmailRequestBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName);
         ArgumentHelpers.ThrowIfNull(configure);
-        var zipBuilder = ZipFileBuilder.New();
+        var zipBuilder = ZipFileBuilder.Create();
         configure(zipBuilder);
         var zipData = zipBuilder.Build();
         _bodyBuilder.Attachments.Add(zipFileName, zipData, ContentType.Parse(FileTypeInfo.Zip.MimeType));

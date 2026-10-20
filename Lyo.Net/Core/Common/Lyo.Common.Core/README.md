@@ -4,7 +4,7 @@ The slice of the old `Lyo.Common` that nothing else has to pay for is `Lyo.Commo
 
 Reference this directly when you only need primitives. If you also need the record catalogs (`LyoTypeInfo`, `FileTypeInfo`, `LanguageCodeInfo`) reference [`Lyo.Common.Metadata`](../Lyo.Common.Metadata/README.md), which includes this package; for `LyoJsonSerializerOptions` and the scalar converters use [`Lyo.Common.Json`](../Lyo.Common.Json/README.md).
 
-Every namespace here sits under the package name — `Lyo.Common.Core` plus `.Conversion`, `.Attributes`, `.Extensions`, `.Enums`, `.Records`, `.Net`, `.Identifiers`, `.Security`, and `.Pathing`. There is no longer a `Lyo.Common` package or namespace: the facade that once carried that name is gone, and each sibling owns its own.
+Every namespace here sits under the package name — `Lyo.Common.Core` plus `.Conversion`, `.Attributes`, `.Extensions`, `.Enums`, `.Records`, `.Net`, `.Identifiers`, `.Security`, `.Pathing`, and `.Archives`. There is no longer a `Lyo.Common` package or namespace: the facade that once carried that name is gone, and each sibling owns its own.
 
 ## Features
 
@@ -20,6 +20,7 @@ Every namespace here sits under the package name — `Lyo.Common.Core` plus `.Co
 - **`ByteConvert`** (`Conversion/`). `GetBytes` / `GetString` take an `Encoding` and use UTF-8 when it is omitted, including span overloads on `netstandard2.0`. Hex has no separators. Upper hex matches `Convert.ToHexString`. `FromHex` accepts either letter case and rejects whitespace. `CharsetEncoding` buffer methods, `HexEncoding`, and `BinaryEncoding` call this.
 - **`LyoReflection`.** Extension members on `Type`, `object`, `Expression`, `MemberInfo`, `PropertyInfo`, and `FieldInfo`: ignore-case `FindProperty` / `FindField` / `FindMethod`, dotted `GetPropertyValue` / `SetPropertyValue`, `TryGetMemberPath`, `PublicStaticFields<T>` catalog discovery, `IsScalar` / `IsSimple`, and `TryCreateInstance` / `DefaultValue`. Named so it does not clash with `System.Reflection`.
 - **Temp and path handling** (`Pathing/`). `PathHelpers` for cross-platform joining, normalization, and traversal rejection against a `PathStyle` (`Windows` / `Posix` / `Native`), and `TempSpool` for scratch directories and files with best-effort cleanup. `TryDeleteDirectory` / `TryDelete` return `false` rather than logging, so the caller decides whether a failed cleanup is worth a log line.
+- **ZIP archives** (`Archives/`). `ZipFileBuilder.Create()` queues bytes, text, streams, and disk files. `Open` loads an existing archive for update, and `Remove` drops an entry. `Build` returns bytes. `BuildTo` / `BuildToAsync` write a caller stream, and `BuildToFile` writes a path. `WithCompressionLevel` (default optimal) and `WithComment` are archive options. `ZipEntryOptions` overrides compression, last-write time, comment, and Unix mode (`0755` is `0x1ED`) on one entry. Disk adds on non-Windows hosts keep the file mode. `AddDirectory` keeps relative paths, includes empty directories, and takes an include filter. Entry names must be relative and must not contain a `..` segment. Adds after build throw; a second `Build` returns the same bytes. `ZipFileReader` lists entries, reads one, and `ExtractTo` restores time and mode while refusing a path that escapes the destination.
 - **`Utilities`.** File-size conversion across `FileSizeUnit` (1024-based), URI redaction for secret-looking query values, SHA256 over a buffer, path, or stream, and `GetPropertyPath` / `GetPropertyName` / `IsScalarType` wrappers over `LyoReflection`.
 - **`Disposable`.** Base class plus lambda `IAsyncDisposable` / `IDisposable` factories.
 - **Context bags.** `ContextBag<TKey>` is a single-threaded map. `new ContextBag()` ignores case; `caseSensitive: true` keeps ordinal keys. `Set` stores a value or a factory that runs on the first read. `TryGetAs<T>` and `GetRequired<T>` convert through `TypeConversion`. `CreateScope` reads the parent and writes only the child. `Freeze` locks that bag's own slots. `BindableBag` reads public properties from bound objects on lookup.
@@ -66,6 +67,24 @@ bool isScalar = typeof(Guid?).IsScalar();
 string? path = expr.TryGetMemberPath(); // Convert-wrapped Guid? lambdas included
 ```
 
+### Pack a ZIP
+
+```csharp
+using System.Text;
+using Lyo.Common.Core.Archives;
+
+var zipBytes = ZipFileBuilder.Create()
+    .WithComment("bundle")
+    .AddFile("file1.txt", Encoding.UTF8.GetBytes("Content 1"))
+    .AddFile("run.sh", "#!/bin/sh", options: new() { UnixMode = 0x1ED })
+    .AddFileFromPath("/path/to/report.pdf")
+    .AddDirectory("/path/to/docs", "docs/")
+    .Build();
+
+using var reader = ZipFileReader.Open(new MemoryStream(zipBytes));
+reader.ExtractTo("/path/to/out");
+```
+
 ### Downloads and secure randomness
 
 ```csharp
@@ -89,6 +108,25 @@ string token = CryptographicRandom.GetString(32);
 | `Snowflake` | | int64 | Configurable worker + datacenter ids. |
 | `Ulid` | | 26 chars (Crockford base32) | ULID spec. |
 | `AutoIncrementIdGenerator` | | int64 | Pure in-process counter for tests / fixtures. |
+
+## `ZipFileBuilder`
+
+- `Create()`. Start an empty builder. Entries and options are queued until build.
+- `Open(path)` / `Open(stream, leaveOpen)`. Load an existing archive for update. The stream must be seekable. Opening records entry names and the archive comment and does not read entry bodies.
+- `Remove(entryName)`. Drop a queued entry, or mark an existing entry for deletion. An unknown name throws. Adding that name again is allowed after it is removed.
+- `WithCompressionLevel(CompressionLevel)` / `WithComment(string?)`. Archive-wide options. Compression defaults to optimal and applies to entries that do not override it.
+- `AddFile(name, byte[] | Stream | string, ZipEntryOptions?)`. Queue one entry. The string overload encodes as UTF-8 unless an `Encoding` is passed. Streams stay open until build and are not disposed. `ZipEntryOptions.UnixMode` stores permission bits in the high half of the external attributes.
+- `AddFiles(IReadOnlyDictionary<string, byte[]>)` / `AddFiles(params string[] filePaths)`. Queue several entries. Disk paths use the file name, the file's last-write time, and, off Windows, the file mode.
+- `AddFileFromPath(path, entryName?)` / `AddDirectory(path, entryPrefix, include?)`. Queue a file or a directory tree. Empty directories become trailing-slash entries. `include` receives the relative path. Disk adds copy the Unix mode unless `UnixMode` is set.
+- `Build()` / `BuildAsync(CancellationToken)`. Write the archive to a byte array. Further adds throw. A later build returns the same bytes.
+- `BuildTo(Stream)` / `BuildToAsync(Stream, CancellationToken)` / `BuildToFile(path)` / `BuildToFileAsync(path, CancellationToken)`. Write the archive to a stream or path. `BuildToFile` calls `BuildTo`. Updating a different destination copies the original archive, then updates it. Untouched entries stay compressed.
+
+## `ZipFileReader`
+
+- `Open(path)` / `Open(stream, leaveOpen)`. Read an archive. `Open(path)` owns the file stream.
+- `Comment` and `Entries`. Each `ZipFileEntry` exposes `Name`, `Length`, `CompressedLength`, `LastWriteTime`, `Comment`, `UnixMode`, and `IsDirectory`.
+- `Read(entryName)` returns the uncompressed bytes. `OpenEntry(entryName)` returns a stream; dispose it before opening another entry.
+- `ExtractTo(directory)` / `ExtractToAsync(directory, CancellationToken)`. Create directories and files under the destination, restore last-write time and Unix mode, and throw `InvalidFormatException` when an entry path escapes the destination.
 
 ## Why this package exists
 
